@@ -22,8 +22,8 @@ import { deleteRule, insertRule } from './safeCSSRules';
 
 type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
-const IGNORED_ATTRS = [ "autocomplete" ];
-const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
+const IGNORED_ATTRS = [ "autocomplete" ]
+const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/
 
 export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
@@ -31,7 +31,7 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map()
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
-   * */
+   */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map()
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map()
@@ -139,7 +139,7 @@ export default class DOMManager extends ListWalker<Message> {
     if (!vn) { logger.error("SetNodeAttribute: Node not found", msg); return }
 
     if (vn.tagName === "INPUT" && name === "name") {
-      // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
+      // Otherwise binds local autocomplete values (maybe should ignore on the tracker level?)
       return
     }
     if (name === "href" && vn.tagName === "LINK") {
@@ -148,15 +148,17 @@ export default class DOMManager extends ListWalker<Message> {
       //   value = value.replace("?", "%3F");
       // }
       if (!value.startsWith("http")) {
+        /* blob:... value can happen here for some reason.
+         * which will result in that link being unable to load and having 4sec timeout in the below function.
+         */
         return
       }
-      // blob:... value can happen here for some reason.
-      // which will result in that link being unable to load and having 4sec timeout in the below function.
 
       // TODO: check if node actually exists on the page, not just in memory
       this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
     }
     if (vn.isSVG && value.startsWith("url(")) {
+      /* SVG shape ID-s for masks etc. Sometimes referred with the full-page url, which we don't have in replay */
       value = "url(#" + (value.split("#")[1] ||")")
     }
     vn.setAttribute(name, value)
@@ -185,7 +187,7 @@ export default class DOMManager extends ListWalker<Message> {
         this.olVRoots.clear()
         this.olVRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
-        // todo: start from 0-node (sync logic with tracker)
+        // Maybetodo: start Document as 0-node in tracker
         this.vTexts.clear()
         this.stylesManager.reset()
         this.stringDict = {}
@@ -339,7 +341,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("No stylesheet was created for ", msg)
           return
         }
-        // @ts-ignore
+        // @ts-ignore (configure ts with recent WebaAPI)
         styleSheet.replaceSync(msg.text)
         return
       }
@@ -359,7 +361,7 @@ export default class DOMManager extends ListWalker<Message> {
           olStyleSheet = OnloadStyleSheet.fromVRootContext(vRoot)
           this.olStyleSheets.set(msg.sheetID, olStyleSheet)
         }
-        olStyleSheet.doNext(styleSheet => {
+        olStyleSheet.whenReady(styleSheet => {
           vRoot.onNode(node => {
             // @ts-ignore
             node.adoptedStyleSheets = [...node.adoptedStyleSheets, styleSheet]
@@ -375,7 +377,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         const vRoot = this.olVRoots.get(msg.id)
         if (!vRoot) { logger.error("AdoptedSsRemoveOwner: Owner node not found", msg); return }
-        olStyleSheet.doNext(styleSheet => {
+        olStyleSheet.whenReady(styleSheet => {
           vRoot.onNode(node => {
             // @ts-ignore
             node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets].filter(s => s !== styleSheet)
@@ -386,7 +388,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.LoadFontFace: {
         const vRoot = this.olVRoots.get(msg.parentID)
         if (!vRoot) { logger.error("LoadFontFace: Node not found", msg); return }
-        vRoot.doNext(vNode => {
+        vRoot.whenReady(vNode => {
           if (vNode instanceof VShadowRoot) { logger.error(`Node ${vNode} expected to be a Document`, msg); return }
           let descr: Object | undefined
           try {
@@ -397,7 +399,7 @@ export default class DOMManager extends ListWalker<Message> {
           }
           const ff = new FontFace(msg.family, msg.source, descr)
           vNode.node.fonts.add(ff)
-          ff.load() // TODO: wait for this one in StylesManager in a common way with styles
+          ff.load() // TODOTODO: wait for this one in StylesManager in a common way with styles
         })
         return
       }
@@ -437,7 +439,10 @@ export default class DOMManager extends ListWalker<Message> {
    * to the one with msg.time >= `t`
    * 
    * This function autoresets pointer if necessary (better name?)
-   * */
+   * 
+   * @returns Promise that fulfulls when necessary changes get applied 
+   *   (the async part exists mostly due to styles loading)
+   */
   async moveReady(t: number): Promise<void> {
     /**
      * Basically just skipping all set attribute with attrs being "href" if user is 'jumping'
@@ -447,7 +452,7 @@ export default class DOMManager extends ListWalker<Message> {
      * */
     // http://0.0.0.0:3333/5/session/8452905874437457
     // 70 iframe, 8 create element - STYLE tag
-    await this.moveWait(t, this.applyMessage)
+    this.moveApply(t, this.applyMessage)
 
     this.attrsBacktrack.forEach(msg => {
       this.applyBacktrack(msg)
@@ -458,10 +463,12 @@ export default class DOMManager extends ListWalker<Message> {
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
-      // Apply focus
+      /* Waiting for styles to be applied first */
+      /* Applying focus */
       this.focusManager.move(t)
+      /* Applying text selections */
       this.selectionManager.move(t)
-      // Apply all scrolls after the styles got applied
+      /* Applying all scrolls */
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)
         if (msg) {
@@ -470,7 +477,7 @@ export default class DOMManager extends ListWalker<Message> {
             scrollVHost.node.scrollLeft = msg.x
             scrollVHost.node.scrollTop = msg.y
           } else if ((scrollVHost = this.olVRoots.get(msg.id))) {
-            scrollVHost.doNext(vNode => {
+            scrollVHost.whenReady(vNode => {
               if (vNode instanceof VDocument) {
                 vNode.node.defaultView?.scrollTo(msg.x, msg.y)
               }
