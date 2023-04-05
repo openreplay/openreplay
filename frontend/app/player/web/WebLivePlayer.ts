@@ -90,6 +90,9 @@ export default class WebLivePlayer extends WebPlayer {
   clean = () => {
     this.incomingMessages.length = 0
     this.assistManager.clean()
+    this.screen.clean()
+    // @ts-ignore
+    this.screen = undefined;
     super.clean()
   }
 }
