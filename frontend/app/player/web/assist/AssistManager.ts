@@ -286,6 +286,7 @@ export default class AssistManager {
     this.remoteControl?.clean()
     this.callManager?.clean()
     this.socket?.close()
+    this.socket = null
     this.clearDisconnectTimeout()
     this.clearInactiveTimeout()
     this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout)
