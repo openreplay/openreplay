@@ -6,14 +6,14 @@ import { Button, Icon } from 'UI'
 export default function InstallOpenReplayTab() {
   return (
     <>
-      <h1 className="flex items-center mb-4 px-4 py-3 border-b text-2xl">
+      <h1 className="flex items-center px-4 py-3 border-b text-2xl">
         <span>👋</span>
         <div className="ml-3 flex items-end">
           <span>Hey there! Setup</span>
           <ProjectFormButton />
         </div>
       </h1>
-      <div className="px-4">
+      <div className="p-4">
         <div className="mb-6 text-lg font-medium">Setup OpenReplay through NPM package <span className="text-sm">(recommended)</span> or script.</div>
         <OnboardingTabs />
       </div>

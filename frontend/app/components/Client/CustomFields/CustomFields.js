@@ -29,6 +29,7 @@ function CustomFields(props) {
         props.save(currentSite.id, field).then((response) => {
             if (!response || !response.errors || response.errors.size === 0) {
                 hideModal();
+                toast.success('Metadata added successfully!');
             } else {
                 toast.error(response.errors[0]);
             }

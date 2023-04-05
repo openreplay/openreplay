@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'UI';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import InstallDocs from './InstallDocs';
+import DocCard from 'Shared/DocCard/DocCard';
 
 const PROJECT = 'SCRIPT';
 const DOCUMENTATION = 'NPM';
@@ -20,9 +21,31 @@ class TrackingCodeModal extends React.PureComponent {
   renderActiveTab = () => {
     switch (this.state.activeTab) {
       case PROJECT:
-        return <ProjectCodeSnippet />;
+        return (
+          <div className="grid grid-cols-6 gap-4">
+            <div className="col-span-4">
+              <ProjectCodeSnippet />
+            </div>
+
+            <div className="col-span-2">
+              <DocCard title="Need help from team member?">Invite and Collaborate</DocCard>
+              <DocCard title="Project Key">Invite and Collaborate</DocCard>
+              <DocCard title="Other ways to install">Invite and Collaborate</DocCard>
+            </div>
+          </div>
+        );
       case DOCUMENTATION:
-        return <InstallDocs />;
+        return (
+          <div className="grid grid-cols-6 gap-4">
+            <div className="col-span-4">
+              <InstallDocs />
+            </div>
+
+            <div className="col-span-2">
+              <DocCard title="Need help from team member?">Invite and Collaborate</DocCard>
+            </div>
+          </div>
+        );
     }
     return null;
   };

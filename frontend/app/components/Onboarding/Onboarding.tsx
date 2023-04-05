@@ -1,7 +1,7 @@
 import React from 'react';
 import SideMenu from './components/SideMenu';
 import { withRouter } from 'react-router-dom';
-import { Switch, Route, Redirect } from 'react-router';
+import { Switch, Route, Redirect, RouteComponentProps } from 'react-router';
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
 import InstallOpenReplayTab from './components/InstallOpenReplayTab';
 import IdentifyUsersTab from './components/IdentifyUsersTab';
@@ -9,18 +9,27 @@ import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import { withSiteId } from 'App/routes';
 
-const Onboarding = (props) => {
+interface Props {
+  match: {
+    params: {
+      activeTab: string;
+      siteId: string;
+    };
+  };
+  history: RouteComponentProps['history'];
+}
+const Onboarding = (props: Props) => {
   const {
     match: {
       params: { activeTab, siteId },
     },
   } = props;
 
-  const route = (path) => {
+  const route = (path: string) => {
     return withSiteId(onboardingRoute(path));
   };
 
-  const onMenuItemClick = (tab) => {
+  const onMenuItemClick = (tab: string) => {
     props.history.push(withSiteId(onboardingRoute(tab), siteId));
   }
 
