@@ -38,9 +38,9 @@ function LivePlayer({
   const [fullView, setFullView] = useState(false);
   const openedFromMultiview = query?.get('multi') === 'true'
   const usedSession = isMultiview ? customSession! : session;
+  let playerInst: ILivePlayerContext['player'];
 
   useEffect(() => {
-    let playerInst: ILivePlayerContext['player'];
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
     const sessionWithAgentData = {
       ...usedSession,
@@ -50,6 +50,7 @@ function LivePlayer({
       },
     };
     if (isEnterprise) {
+      console.log('building')
       new APIClient().get('/config/assist/credentials').then(r => r.json())
         .then(({ data }) => {
           const [player, store] = createLiveWebPlayer(sessionWithAgentData, data, (state) =>
@@ -65,13 +66,15 @@ function LivePlayer({
       setContextValue({ player, store });
       playerInst = player;
     }
+  }, [usedSession.sessionId]);
 
+  useEffect(() => {
     return () => {
       playerInst?.clean?.();
       // @ts-ignore default empty
-      setContextValue(defaultContextValue);
+      setContextValue(defaultContextValue)
     }
-  }, [usedSession.sessionId]);
+  }, [])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
@@ -122,5 +125,5 @@ export default withPermissions(
           userName: state.getIn(['user', 'account', 'name']),
         };
       }
-    )(withLocationHandlers()(LivePlayer))
+    )(withLocationHandlers()(React.memo(LivePlayer)))
   )
