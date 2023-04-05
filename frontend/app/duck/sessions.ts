@@ -83,6 +83,7 @@ const initObj = {
     lastPlayedSessionId: null,
     timeLineTooltip: { time: 0, offset: 0, isVisible: false, timeStr: '' },
     createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
+    fetchFailed: false,
 }
 
 const initialState = Map(initObj);
@@ -141,6 +142,8 @@ const reducer = (state = initialState, action: IAction) => {
               .set('visitedEvents', List())
               .set('host', '');
         }
+        case FETCH.FAILURE:
+            return state.set('fetchFailed', true);
         case FETCH.SUCCESS: {
             // TODO: more common.. or TEMP filters', 'appliedFilter
             const events = action.filter.events;

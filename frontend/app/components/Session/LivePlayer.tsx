@@ -14,7 +14,6 @@ import APIClient from 'App/api_client';
 
 interface Props {
   session: Session;
-  loadingCredentials: boolean;
   assistCredentials: RTCIceServer[];
   isEnterprise: boolean;
   userEmail: string;
@@ -27,7 +26,6 @@ interface Props {
 
 function LivePlayer({
   session,
-  loadingCredentials,
   userEmail,
   userName,
   isMultiview,
@@ -42,7 +40,8 @@ function LivePlayer({
   const usedSession = isMultiview ? customSession! : session;
 
   useEffect(() => {
-    if (loadingCredentials || !usedSession.sessionId) return;
+    let playerInst: ILivePlayerContext['player'];
+    if (!usedSession.sessionId || contextValue.player !== undefined) return;
     const sessionWithAgentData = {
       ...usedSession,
       agentInfo: {
@@ -57,14 +56,22 @@ function LivePlayer({
             makeAutoObservable(state)
           );
           setContextValue({ player, store });
+          playerInst = player;
         })
     } else {
       const [player, store] = createLiveWebPlayer(sessionWithAgentData, null, (state) =>
         makeAutoObservable(state)
       );
       setContextValue({ player, store });
+      playerInst = player;
     }
-  }, [session.sessionId]);
+
+    return () => {
+      playerInst?.clean?.();
+      // @ts-ignore default empty
+      setContextValue(defaultContextValue);
+    }
+  }, [usedSession.sessionId]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
@@ -74,12 +81,6 @@ function LivePlayer({
       location.pathname.includes('multiview')
     ) {
       setFullView(true);
-    }
-
-    return () => {
-      contextValue.player?.clean?.();
-      // @ts-ignore default empty
-      setContextValue(defaultContextValue)
     }
   }, []);
 
