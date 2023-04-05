@@ -1,3 +1,4 @@
+const uWS = require("uWebSockets.js");
 const helper = require('./helper');
 let debug = process.env.debug === "1";
 const getBodyFromUWSResponse = async function (res) {
@@ -130,9 +131,48 @@ const getCompressionConfig = function () {
     }
     return perMessageDeflate;
 }
+const getUWSCompressionConfig = function () {
+    let compression = uWS.DISABLED;
+    if (process.env.UWS_COMPRESSION_LEVEL) {
+        switch (process.env.UWS_COMPRESSION_LEVEL) {
+            case 'SHARED_C':
+                compression = uWS.SHARED_COMPRESSOR;
+                break;
+            case 'D_C_3':
+                compression = uWS.DEDICATED_COMPRESSOR_3KB;
+                break;
+            case 'D_C_4':
+                compression = uWS.DEDICATED_COMPRESSOR_4KB;
+                break;
+            case 'D_C_8':
+                compression = uWS.DEDICATED_COMPRESSOR_8KB;
+                break;
+            case 'D_C_16':
+                compression = uWS.DEDICATED_COMPRESSOR_16KB;
+                break;
+            case 'D_C_32':
+                compression = uWS.DEDICATED_COMPRESSOR_32KB;
+                break;
+            case 'D_C_64':
+                compression = uWS.DEDICATED_COMPRESSOR_64KB;
+                break;
+            case 'D_C_128':
+                compression = uWS.DEDICATED_COMPRESSOR_128KB;
+                break;
+            case 'D_C_256':
+                compression = uWS.DEDICATED_COMPRESSOR_256KB;
+                break;
+        }
+        console.log(`WS UWS compression level: ${process.env.UWS_COMPRESSION_LEVEL} => ${compression}`);
+    } else {
+        console.log(`WS UWS compression level: disabled`);
+    }
+    return compression;
+}
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
-    getCompressionConfig
+    getCompressionConfig,
+    getUWSCompressionConfig
 };

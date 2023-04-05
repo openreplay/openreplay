@@ -20,7 +20,8 @@ const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
-    getCompressionConfig
+    getCompressionConfig,
+    getUWSCompressionConfig
 } = require('../utils/helper-ee');
 const wsRouter = express.Router();
 
@@ -46,7 +47,8 @@ const createSocketIOServer = function (server, prefix) {
                 methods: ["GET", "POST", "PUT"]
             },
             path: (prefix ? prefix : '') + '/socket',
-            perMessageDeflate: getCompressionConfig()
+            // perMessageDeflate: getCompressionConfig(),
+            compression: getUWSCompressionConfig()
         });
         io.attachApp(server);
     }
