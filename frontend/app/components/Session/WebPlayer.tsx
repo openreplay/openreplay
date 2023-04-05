@@ -34,15 +34,17 @@ function WebPlayer(props: any) {
   const [visuallyAdjusted, setAdjusted] = useState(false);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+  let playerInst: IPlayerContext['player'];
 
   useEffect(() => {
-    if (!session.sessionId) return;
+    if (!session.sessionId || contextValue.player !== undefined) return;
     fetchList('issues');
 
     const [WebPlayerInst, PlayerStore] = createWebPlayer(session, (state) =>
       makeAutoObservable(state)
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
+    playerInst = WebPlayerInst;
 
     notesStore.fetchSessionNotes(session.sessionId).then((r) => {
       const note = props.query.get('note');
@@ -60,12 +62,6 @@ function WebPlayer(props: any) {
     }
     if (freeze) {
       WebPlayerInst.freeze()
-    }
-
-    return () => {
-      WebPlayerInst.clean();
-      // @ts-ignore
-      setContextValue(defaultContextValue);
     }
   }, [session.sessionId]);
 
@@ -97,6 +93,9 @@ function WebPlayer(props: any) {
     () => () => {
       toggleFullscreen(false);
       closeBottomBlock();
+      playerInst?.clean();
+      // @ts-ignore
+      setContextValue(defaultContextValue);
     },
     []
   );
