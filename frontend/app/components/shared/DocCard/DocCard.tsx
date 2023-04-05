@@ -15,7 +15,7 @@ function DocCard(props: Props) {
 
   return (
     <div className={cn('p-5 bg-gray-lightest mb-4 rounded', className)}>
-      <div className="font-bold mb-2 flex items-center">
+      <div className="font-medium mb-2 flex items-center">
         {props.icon && (
           <div
             className={cn(

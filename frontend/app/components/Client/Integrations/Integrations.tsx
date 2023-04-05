@@ -82,7 +82,7 @@ function Integrations(props: Props) {
   };
 
   return (
-    <div className="mb-4 p-5">
+    <div className="mb-4">
       {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
       {integrations.map((cat: any) => (
         <div className="mb-2 border-b last:border-none py-3" key={cat.key}>

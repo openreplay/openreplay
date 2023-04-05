@@ -1,7 +1,7 @@
 import React from 'react';
 import CircleNumber from '../CircleNumber';
 import MetadataList from '../MetadataList/MetadataList';
-import { HighlightCode, Icon } from 'UI';
+import { HighlightCode, Icon, Button } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 
 export default function IdentifyUsersTab() {
@@ -73,6 +73,13 @@ export default function IdentifyUsersTab() {
             and searching for specific session replays.
           </DocCard>
         </div>
+      </div>
+
+      <div className="border-t px-4 py-3 flex justify-end">
+        <Button variant="primary" className="">
+          Identify Users
+          <Icon name="arrow-right-short" color="white" size={20} />
+        </Button>
       </div>
     </>
   );

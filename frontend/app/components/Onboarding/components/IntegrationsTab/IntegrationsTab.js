@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Button, Icon } from 'UI';
 import Integrations from '../../../Client/Integrations';
 
 function IntegrationItem({ icon, title, onClick = () => null }) {
@@ -13,15 +13,15 @@ function IntegrationItem({ icon, title, onClick = () => null }) {
 
 function IntegrationsTab() {
   return (
-    <div className="">
-      <h1 className="flex items-center mb-4 px-4 py-3 border-b text-2xl">
+    <>
+      <h1 className="flex items-center px-4 py-3 border-b text-2xl">
         <span>🔌</span>
         <div className="ml-3">Integrations</div>
       </h1>
-      <div className="w-8/12 px-4">
+      <div className="p-4">
         <Integrations hideHeader={true} />
       </div>
-      <div className="py-6 w-4/12">
+      {/* <div className="py-6 w-4/12">
         <div className="p-5 bg-gray-lightest mb-4">
           <div className="font-bold mb-2">Why Use Plugins?</div>
           <div className="text-sm">
@@ -36,8 +36,14 @@ function IntegrationsTab() {
             Sync your backend errors with sessions replays and see what happened front-to-back.
           </div>
         </div>
+      </div> */}
+      <div className="border-t px-4 py-3 flex justify-end">
+        <Button variant="primary" className="">
+          Identify Users
+          <Icon name="arrow-right-short" color="white" size={20} />
+        </Button>
       </div>
-    </div>
+    </>
   );
 }
 
