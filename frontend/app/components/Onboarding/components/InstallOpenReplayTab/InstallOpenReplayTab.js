@@ -2,8 +2,9 @@ import React from 'react'
 import OnboardingTabs from '../OnboardingTabs'
 import ProjectFormButton from '../ProjectFormButton'
 import { Button, Icon } from 'UI'
+import withOnboarding from '../withOnboarding'
 
-export default function InstallOpenReplayTab() {
+function InstallOpenReplayTab() {
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b text-2xl">
@@ -26,3 +27,5 @@ export default function InstallOpenReplayTab() {
     </>
   )
 }
+
+export default withOnboarding(InstallOpenReplayTab)
