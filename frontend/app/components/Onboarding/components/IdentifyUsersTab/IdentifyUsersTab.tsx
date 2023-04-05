@@ -3,8 +3,12 @@ import CircleNumber from '../CircleNumber';
 import MetadataList from '../MetadataList/MetadataList';
 import { HighlightCode, Icon, Button } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
+import { OB_TABS } from 'App/routes';
 
-export default function IdentifyUsersTab() {
+interface Props extends WithOnboardingProps {}
+
+function IdentifyUsersTab(props: Props) {
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b text-2xl">
@@ -75,12 +79,21 @@ export default function IdentifyUsersTab() {
         </div>
       </div>
 
-      <div className="border-t px-4 py-3 flex justify-end">
-        <Button variant="primary" className="">
-          Identify Users
+      <div className="border-t px-4 py-3 flex justify-end gap-4">
+        <Button variant="text-primary" onClick={() => (props.skip ? props.skip() : null)}>
+          Skip
+        </Button>
+        <Button
+          variant="primary"
+          className=""
+          onClick={() => (props.navTo ? props.navTo(OB_TABS.MANAGE_USERS) : null)}
+        >
+          Invite Team Members
           <Icon name="arrow-right-short" color="white" size={20} />
         </Button>
       </div>
     </>
   );
 }
+
+export default withOnboarding(IdentifyUsersTab);

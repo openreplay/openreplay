@@ -2,8 +2,12 @@ import UsersView from 'App/components/Client/Users/UsersView';
 import DocCard from 'Shared/DocCard/DocCard';
 import React from 'react';
 import { Button, Icon } from 'UI';
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
+import { OB_TABS } from 'App/routes';
 
-export default function ManageUsersTab() {
+interface Props extends WithOnboardingProps {}
+
+function ManageUsersTab(props: Props) {
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b text-2xl">
@@ -30,11 +34,20 @@ export default function ManageUsersTab() {
         </div>
       </div>
       <div className="border-t px-4 py-3 flex justify-end">
-        <Button variant="primary" className="">
-          Identify Users
+        <Button variant="text-primary" onClick={() => (props.skip ? props.skip() : null)}>
+          Skip
+        </Button>
+        <Button
+          variant="primary"
+          className=""
+          onClick={() => (props.navTo ? props.navTo(OB_TABS.INTEGRATIONS) : null)}
+        >
+          Configure Integrations
           <Icon name="arrow-right-short" color="white" size={20} />
         </Button>
       </div>
     </>
   );
 }
+
+export default withOnboarding(ManageUsersTab);

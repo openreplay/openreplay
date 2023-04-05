@@ -1,17 +1,10 @@
 import React from 'react';
-import { Button, Icon } from 'UI';
-import Integrations from '../../../Client/Integrations';
+import { Button } from 'UI';
+import Integrations from 'App/components/Client/Integrations/Integrations';
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 
-function IntegrationItem({ icon, title, onClick = () => null }) {
-  return (
-    <div className="flex flex-col items-center mr-16">
-      <Icon name={icon} size="40" />
-      <div className="mt-1 text-sm">{title}</div>
-    </div>
-  );
-}
-
-function IntegrationsTab() {
+interface Props extends WithOnboardingProps {}
+function IntegrationsTab(props: Props) {
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b text-2xl">
@@ -38,13 +31,12 @@ function IntegrationsTab() {
         </div>
       </div> */}
       <div className="border-t px-4 py-3 flex justify-end">
-        <Button variant="primary" className="">
-          Identify Users
-          <Icon name="arrow-right-short" color="white" size={20} />
+        <Button variant="primary" className="" onClick={() => (props.skip ? props.skip() : null)}>
+          Complete Setup
         </Button>
       </div>
     </>
   );
 }
 
-export default IntegrationsTab;
+export default withOnboarding(IntegrationsTab);
