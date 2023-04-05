@@ -122,5 +122,32 @@ export default withPermissions(
           userName: state.getIn(['user', 'account', 'name']),
         };
       }
-    )(withLocationHandlers()(LivePlayer))
+    )(withLocationHandlers()(React.memo(LivePlayer, propsAreEqual)))
   )
+
+function propsAreEqual(prevProps: Props, nextProps: Props) {
+  const { session,
+    userEmail,
+    userName,
+    isMultiview,
+    customSession,
+    query,
+    isEnterprise } = prevProps;
+  const { session: nextSession,
+    userEmail: nextUserEmail,
+    userName: nextUserName,
+    isMultiview: nextIsMultiview,
+    customSession: nextCustomSession,
+    query: nextQuery,
+    isEnterprise: nextIsEnterprise } = nextProps;
+
+  return (
+    session.sessionId === nextSession.sessionId &&
+    userEmail === nextUserEmail &&
+    userName === nextUserName &&
+    isMultiview === nextIsMultiview &&
+    customSession === nextCustomSession &&
+    query === nextQuery &&
+    isEnterprise === nextIsEnterprise
+  );
+}
