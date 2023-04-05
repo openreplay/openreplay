@@ -8,14 +8,17 @@ import { Loader } from 'UI';
 import withPermissions from 'HOCs/withPermissions';
 import LivePlayer from './LivePlayer';
 import { clearLogs } from 'App/dev/console';
+import { toast } from 'react-toastify';
 
 function LiveSession({
     sessionId,
-    loading,
     fetchSession,
     fetchSlackList,
     hasSessionsPath,
+    session,
+    fetchFailed,
 }) {
+    const [initialLoading, setInitialLoading] = React.useState(true);
     usePageTitle('OpenReplay Assist');
 
     useEffect(() => {
@@ -31,8 +34,18 @@ function LiveSession({
         }
     }, [sessionId, hasSessionsPath]);
 
+    useEffect(() => {
+        if (fetchFailed) {
+            toast.error('Error getting live session');
+            setInitialLoading(false);
+        }
+        if (session.sessionId) {
+            setInitialLoading(false);
+        }
+    }, [session.sessionId, fetchFailed]);
+
     return (
-        <Loader className="flex-1" loading={loading}>
+        <Loader className="flex-1" loading={initialLoading}>
             <LivePlayer />
         </Loader>
     );
@@ -56,7 +69,7 @@ export default withPermissions(
                 .pathname.includes('/sessions');
             return {
                 sessionId,
-                loading: state.getIn(['sessions', 'loading']),
+                fetchFailed: state.getIn(['sessions', 'fetchFailed']),
                 session: state.getIn(['sessions', 'current']),
                 hasSessionsPath: hasSessiosPath && !isAssist,
             };
@@ -65,5 +78,5 @@ export default withPermissions(
             fetchSession,
             fetchSlackList,
         }
-    )(LiveSession)
+    )(React.memo(LiveSession))
 );
