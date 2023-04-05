@@ -198,6 +198,14 @@ export default class API {
     // TODO: check argument type
     return this.app.start(startOpts)
   }
+
+  isFeatureActive(feature: string): boolean {
+    if (this.app === null) {
+      return false
+    }
+    return this.app.isFeatureActive(feature)
+  }
+
   stop(): string | undefined {
     if (this.app === null) {
       return
