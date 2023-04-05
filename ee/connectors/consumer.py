@@ -1,4 +1,4 @@
-import os
+from decouple import config
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
@@ -10,8 +10,8 @@ from db.models import events_detailed_table_name, events_table_name, sessions_ta
 from db.writer import insert_batch
 from handler import handle_message, handle_normal_message, handle_session
 
-DATABASE = os.environ['DATABASE_NAME']
-LEVEL = os.environ['level']
+DATABASE = config('DATABASE_NAME')
+LEVEL = config('LEVEL')
 
 db = DBConnection(DATABASE)
 
@@ -22,8 +22,8 @@ elif LEVEL == 'normal':
 
 
 def main():
-    batch_size = 4000
-    sessions_batch_size = 400
+    batch_size = config('events_batch_size', default=4000, cast=int)
+    sessions_batch_size = config('sessions_batch_size', default=400, cast=int)
     batch = []
     sessions = defaultdict(lambda: None)
     sessions_batch = []
@@ -31,8 +31,7 @@ def main():
     codec = MessageCodec()
     consumer = Consumer({
         "security.protocol": "SSL",
-        "bootstrap.servers": ",".join([os.environ['KAFKA_SERVER_1'],
-                                        os.environ['KAFKA_SERVER_2']]),
+        "bootstrap.servers": config('KAFKA_SERVER'),
         "group.id": f"connector_{DATABASE}",
         "auto.offset.reset": "earliest",
         "enable.auto.commit": False
@@ -41,7 +40,7 @@ def main():
     consumer.subscribe(["raw", "raw_ios"])
     print("Kafka consumer subscribed")
     while True:
-        msg.consumer.poll(1.0)
+        msg = consumer.poll(1.0)
         if msg is None:
             continue
         messages = codec.decode_detailed(msg.value)

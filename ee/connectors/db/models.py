@@ -2,9 +2,9 @@
 from sqlalchemy import BigInteger, Boolean, Column, Integer, ARRAY, VARCHAR, text, VARCHAR
 from sqlalchemy.ext.declarative import declarative_base
 from pathlib import Path
-import os
+from decouple import config
 
-DATABASE = os.environ['DATABASE_NAME']
+DATABASE = config('DATABASE_NAME')
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -13,16 +13,16 @@ base_path = Path(__file__).parent.parent
 
 # Get a table name from a configuration file
 try:
-    events_table_name = os.environ['events_table_name']
+    events_table_name = config('events_table_name', default='connector_events')
 except KeyError as e:
     events_table_name = None
     print(repr(e))
 try:
-    events_detailed_table_name = os.environ['events_detailed_table_name']
+    events_detailed_table_name = config('events_detailed_table_name', default='connector_events_detailed')
 except KeyError as e:
     print(repr(e))
     events_detailed_table_name = None
-sessions_table_name = os.environ['sessions_table']
+sessions_table_name = config('sessions_table', default='connector_user_sessions')
 
 
 class Session(Base):

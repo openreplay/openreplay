@@ -3,10 +3,10 @@ from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker, session
 from contextlib import contextmanager
 import logging
-import os
+from decouple import config as _config
 from pathlib import Path
 
-DATABASE = os.environ['DATABASE_NAME']
+DATABASE = _config('DATABASE_NAME')
 if DATABASE == 'redshift':
     import pandas_redshift as pr
 
@@ -44,51 +44,51 @@ class DBConnection:
 
         if config == 'redshift':
             self.pdredshift = pr
-            self.pdredshift.connect_to_redshift(dbname=os.environ['schema'],
-                                                host=os.environ['address'],
-                                                port=os.environ['port'],
-                                                user=os.environ['user'],
-                                                password=os.environ['password'])
+            self.pdredshift.connect_to_redshift(dbname=_config('schema'),
+                                                host=_config('address'),
+                                                port=_config('port'),
+                                                user=_config('user'),
+                                                password=_config('password'))
 
-            self.pdredshift.connect_to_s3(aws_access_key_id=os.environ['aws_access_key_id'],
-                                          aws_secret_access_key=os.environ['aws_secret_access_key'],
-                                          bucket=os.environ['bucket'],
-                                          subdirectory=os.environ['subdirectory'])
+            self.pdredshift.connect_to_s3(aws_access_key_id=_config('aws_access_key_id'),
+                                          aws_secret_access_key=_config('aws_secret_access_key'),
+                                          bucket=_config('bucket'),
+                                          subdirectory=_config('subdirectory'))
 
-            self.connect_str = os.environ['connect_str'].format(
-                user=os.environ['user'],
-                password=os.environ['password'],
-                address=os.environ['address'],
-                port=os.environ['port'],
-                schema=os.environ['schema']
+            self.connect_str = _config('connect_str').format(
+                user=_config('user'),
+                password=_config('password'),
+                address=_config('address'),
+                port=_config('port'),
+                schema=_config('schema')
             )
             self.engine = create_engine(self.connect_str)
 
         elif config == 'clickhouse':
-            self.connect_str = os.environ['connect_str'].format(
-                address=os.environ['address'],
-                database=os.environ['database']
+            self.connect_str = _config('connect_str').format(
+                address=_config('address'),
+                database=_config('database')
             )
             self.engine = create_engine(self.connect_str)
         elif config == 'pg':
-            self.connect_str = os.environ['connect_str'].format(
-                user=os.environ['user'],
-                password=os.environ['password'],
-                address=os.environ['address'],
-                port=os.environ['port'],
-                database=os.environ['database']
+            self.connect_str = _config('connect_str').format(
+                user=_config('user'),
+                password=_config('password'),
+                address=_config('address'),
+                port=_config('port'),
+                database=_config('database')
             )
             self.engine = create_engine(self.connect_str)
         elif config == 'bigquery':
             pass
         elif config == 'snowflake':
-            self.connect_str = os.environ['connect_str'].format(
-                user=os.environ['user'],
-                password=os.environ['password'],
-                account=os.environ['account'],
-                database=os.environ['database'],
-                schema = os.environ['schema'],
-                warehouse = os.environ['warehouse']
+            self.connect_str = _config('connect_str').format(
+                user=_config('user'),
+                password=_config('password'),
+                account=_config('account'),
+                database=_config('database'),
+                schema = _config('schema'),
+                warehouse = _config('warehouse')
             )
             self.engine = create_engine(self.connect_str)
         else:

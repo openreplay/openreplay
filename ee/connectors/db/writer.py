@@ -1,6 +1,6 @@
-import os
+from decouple import config
 
-DATABASE = os.environ['DATABASE_NAME']
+DATABASE = config('DATABASE_NAME')
 
 from db.api import DBConnection
 from db.utils import get_df_from_batch
