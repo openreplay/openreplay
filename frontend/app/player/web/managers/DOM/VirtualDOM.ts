@@ -18,6 +18,7 @@ export abstract class VNode<T extends Node = Node> {
 	 * 
 	 * @returns underneath JS DOM Node
 	 * @remarks should not be called unless the real node is required since creation might be expensive
+	 * 	It is better to use `onNode` callback applicator unless in the `applyChanges` implementation
 	 */
 	get node(): T {
 		if (!this._node) {
@@ -28,6 +29,12 @@ export abstract class VNode<T extends Node = Node> {
 		return this._node
 	}
 	private nodeCallbacks: Callback<T>[] = []
+	/**
+	 * Lazy Node callback applicator
+	 *
+	 * @param callback - Callback that fires on existing JS DOM Node instantly if it exists
+	 * or whenever it gets created. Call sequence is concerned.
+	 */
 	onNode(callback: Callback<T>) {
 		if (this._node) {
 			callback(this._node)
@@ -35,6 +42,10 @@ export abstract class VNode<T extends Node = Node> {
 		}
 		this.nodeCallbacks.push(callback)
 	}
+	/**
+	 * Abstract method, should be implemented by the actual classes
+	 * It is supposed to apply virtual changes into the actual DOM
+	 */
 	public abstract applyChanges(): void
 }
 
@@ -79,7 +90,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		}
 		/* Removing tail */
 		while(realChildren.length > this.children.length) {
-			node.removeChild(node.lastChild as Node) /* realChildren.length > this.children.length >= 0 */
+			node.removeChild(node.lastChild as Node) /* realChildren.length > this.children.length >= 0 so it is not null */
 		}
 	}
 }
@@ -180,7 +191,11 @@ export class VText extends VNode<Text> {
 
 class PromiseQueue<T> {
 	constructor(private promise: Promise<T>) {}
-	doNext(cb: Callback<T>) { // Doing this with callbacks list instead might be more efficient. TODO: research
+	/**
+	 * Call sequence is concerned.
+	 */
+	// Doing this with callbacks list instead might be more efficient (but more wordy). TODO: research
+	whenReady(cb: Callback<T>) {
 		this.promise = this.promise.then(vRoot => {
 			cb(vRoot)
 			return vRoot
@@ -194,7 +209,7 @@ class PromiseQueue<T> {
 /**
  * VRoot wrapper that allows to defer all the API calls till the moment
  * when VNode CAN be created (for example, on <iframe> mount&load)
- * */
+ */
 export class OnloadVRoot extends PromiseQueue<VRoot> {
 	static fromDocumentNode(doc: Document): OnloadVRoot {
 		return new OnloadVRoot(Promise.resolve(new VDocument(() => doc)))
@@ -230,13 +245,13 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
 		}))
 	}
 	onNode(cb: Callback<Document | ShadowRoot>) {
-		this.doNext(vRoot => vRoot.onNode(cb))
+		this.whenReady(vRoot => vRoot.onNode(cb))
 	}
 	applyChanges() {
-		this.doNext(vRoot => vRoot.applyChanges())
+		this.whenReady(vRoot => vRoot.applyChanges())
 	}
 	insertChildAt(...args: Parameters<VParent['insertChildAt']>) {
-		this.doNext(vRoot => vRoot.insertChildAt(...args))
+		this.whenReady(vRoot => vRoot.insertChildAt(...args))
 	}
 }
 
@@ -245,7 +260,7 @@ export type StyleElement = HTMLStyleElement | SVGStyleElement
 /**
  * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls 
  * and then applies them when the sheet is ready
- * */
+ */
 export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
 	static fromStyleElement(node: StyleElement) {
 		return new OnloadStyleSheet(new Promise((resolve, reject) => {
@@ -276,10 +291,10 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
 	}
 
 	insertRule(rule: string, index: number) {
-		this.doNext(s => insertRule(s, { rule, index }))
+		this.whenReady(s => insertRule(s, { rule, index }))
 	}
 
 	deleteRule(index: number) {
-		this.doNext(s => deleteRule(s, { index }))
+		this.whenReady(s => deleteRule(s, { index }))
 	}
 }

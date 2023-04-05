@@ -105,11 +105,11 @@ export default class ListWalker<T extends Timed> {
 			: null
 	}
 
-	/*
-		Returns last message with the time <= t.
-		Assumed that the current message is already handled so
-		if pointer doesn't cahnge <null> is returned.
-	*/
+	/**
+	 * @returns last message with the time <= t.
+	 * Assumed that the current message is already handled so
+	 * if pointer doesn't cahnge <null> is returned.
+	 */
 	moveGetLast(t: number, index?: number): T | null {
 		let key: string = "time"; //TODO
 		let val = t;
@@ -130,7 +130,13 @@ export default class ListWalker<T extends Timed> {
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
 
-	async moveWait(t: number, callback: (msg: T) => Promise<any> | undefined): Promise<void> {
+	/**
+	 * Moves over the messages starting from the current+1 to the last one with the time <= t
+	 * applying callback on each of them
+	 * @param t - max message time to move to; will move & apply callback while msg.time <= t
+	 * @param callback - a callback to apply on each message passing by while moving
+	 */
+	moveApply(t: number, callback: (msg: T) => void): void {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();
@@ -138,8 +144,7 @@ export default class ListWalker<T extends Timed> {
 
 		const list = this.list
 		while (list[this.p] && list[this.p].time <= t) {
-			const maybePromise = callback(this.list[ this.p++ ]);
-			if (maybePromise) { await maybePromise }
+			callback(this.list[ this.p++ ])
 		}
 	}
 
