@@ -169,6 +169,38 @@ const getUWSCompressionConfig = function () {
     }
     return compression;
 }
+const getUWSDecompressionConfig = function () {
+    let compression = uWS.DISABLED;
+    if (process.env.UWS_DECOMPRESSION_LEVEL) {
+        switch (process.env.UWS_COMPRESSION_LEVEL) {
+            case 'SHARED_D':
+                compression = uWS.SHARED_DECOMPRESSOR;
+                break;
+            case 'D_D_1':
+                compression = uWS.DEDICATED_DECOMPRESSOR_1KB;
+                break;
+            case 'D_D_2':
+                compression = uWS.DEDICATED_DECOMPRESSOR_2KB;
+                break;
+            case 'D_D_4':
+                compression = uWS.DEDICATED_DECOMPRESSOR_4KB;
+                break;
+            case 'D_D_8':
+                compression = uWS.DEDICATED_DECOMPRESSOR_8KB;
+                break;
+            case 'D_D_16':
+                compression = uWS.DEDICATED_DECOMPRESSOR_16KB;
+                break;
+            case 'D_D_32':
+                compression = uWS.DEDICATED_DECOMPRESSOR_32KB;
+                break;
+        }
+        console.log(`WS UWS compression level: ${process.env.UWS_COMPRESSION_LEVEL} => ${compression}`);
+    } else {
+        console.log(`WS UWS compression level: disabled`);
+    }
+    return compression;
+}
 const getAvailableRooms = async function (io) {
     if (process.env.redis === "true") {
         return io.of('/').adapter.allRooms();
@@ -182,5 +214,6 @@ module.exports = {
     extractPayloadFromRequest,
     getCompressionConfig,
     getUWSCompressionConfig,
+    getUWSDecompressionConfig,
     getAvailableRooms
 };
