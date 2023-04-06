@@ -220,11 +220,17 @@ async function sessions_agents_count(io, socket) {
     debug && console.log(rooms2);
     if (rooms.get(socket.peerId)) {
         const connected_sockets = await io.in(socket.peerId).fetchSockets();
-
+        debug && console.log(`----connected sockets to peerId:${socket.peerId}`)
+        debug && console.log(connected_sockets)
         for (let item of connected_sockets) {
+            debug && console.log(`---checking identity of:`)
+            debug && console.log(item)
+            debug && console.log(`---==> ${item.handshake.query.identity}`)
             if (item.handshake.query.identity === IDENTITIES.session) {
+                debug && console.log(`---session`)
                 c_sessions++;
             } else {
+                debug && console.log(`---agent`)
                 c_agents++;
             }
         }
@@ -290,7 +296,7 @@ module.exports = {
                 }
 
             } else if (c_sessions <= 0) {
-                debug && console.log(`notifying new agent about no SESSIONS`);
+                debug && console.log(`notifying new agent about no SESSIONS: ${c_sessions}`);
                 io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
             await socket.join(socket.peerId);
