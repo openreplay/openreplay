@@ -29,7 +29,7 @@ function DocCard(props: Props) {
         )}
         <span>{props.title}</span>
       </div>
-      <div className="text-sm">{props.children}</div>
+      <div>{props.children}</div>
     </div>
   );
 }
