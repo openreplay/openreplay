@@ -9,7 +9,8 @@ const {
     extractPayloadFromRequest,
     sortPaginate,
     getValidAttributes,
-    uniqueAutocomplete
+    uniqueAutocomplete,
+    getAvailableRooms
 } = require('../utils/helper');
 const {
     IDENTITIES,
@@ -35,11 +36,6 @@ const createSocketIOServer = function (server, prefix) {
     });
 }
 
-
-const getAvailableRooms = async function () {
-    return io.sockets.adapter.rooms.keys();
-}
-
 const respond = function (res, data) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -50,7 +46,7 @@ const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
     let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
+    let rooms = await getAvailableRooms(io);
     for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
@@ -77,7 +73,7 @@ const socketsListByProject = async function (req, res) {
     let _sessionId = extractSessionIdFromRequest(req);
     let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
+    let rooms = await getAvailableRooms(io);
     for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
@@ -105,7 +101,7 @@ const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
     let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
+    let rooms = await getAvailableRooms(io);
     for (let peerId of rooms) {
         let {projectKey} = extractPeerId(peerId);
         if (projectKey !== undefined) {
@@ -133,7 +129,7 @@ const socketsLiveByProject = async function (req, res) {
     let _sessionId = extractSessionIdFromRequest(req);
     let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
+    let rooms = await getAvailableRooms(io);
     for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
@@ -164,7 +160,7 @@ const autocomplete = async function (req, res) {
     let filters = extractPayloadFromRequest(req);
     let results = [];
     if (filters.query && Object.keys(filters.query).length > 0) {
-        let rooms = await getAvailableRooms();
+        let rooms = await getAvailableRooms(io);
         for (let peerId of rooms) {
             let {projectKey} = extractPeerId(peerId);
             if (projectKey === _projectKey) {

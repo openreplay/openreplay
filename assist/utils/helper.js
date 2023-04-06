@@ -218,6 +218,9 @@ const uniqueAutocomplete = function (list) {
     }
     return _list;
 }
+const getAvailableRooms = async function (io) {
+    return io.sockets.adapter.rooms.keys();
+}
 module.exports = {
     transformFilters,
     extractPeerId,
@@ -230,5 +233,6 @@ module.exports = {
     objectToObjectOfArrays,
     extractPayloadFromRequest,
     sortPaginate,
-    uniqueAutocomplete
+    uniqueAutocomplete,
+    getAvailableRooms
 };

@@ -169,10 +169,18 @@ const getUWSCompressionConfig = function () {
     }
     return compression;
 }
+const getAvailableRooms = async function (io) {
+    if (process.env.redis === "true") {
+        return io.of('/').adapter.allRooms();
+    } else {
+        return helper.getAvailableRooms(io);
+    }
+}
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
     getCompressionConfig,
-    getUWSCompressionConfig
+    getUWSCompressionConfig,
+    getAvailableRooms
 };
