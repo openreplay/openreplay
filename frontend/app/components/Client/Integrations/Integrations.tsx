@@ -30,6 +30,8 @@ import withPageTitle from 'HOCs/withPageTitle';
 import PiniaDoc from './PiniaDoc';
 import ZustandDoc from './ZustandDoc';
 import MSTeams from './Teams';
+import DocCard from 'Shared/DocCard/DocCard';
+import cn from 'classnames';
 
 interface Props {
   fetch: (name: string, siteId: string) => void;
@@ -82,45 +84,51 @@ function Integrations(props: Props) {
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 p-5">
       {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
       {integrations.map((cat: any) => (
-        <div className="mb-2 border-b last:border-none py-3" key={cat.key}>
-          <div className="flex items-center">
-            <h2 className="font-medium text-lg">{cat.title}</h2>
-            {cat.isProject && (
-              <div className="flex items-center">
-                <div className="flex flex-wrap mx-4">
-                  <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
+        <div className="grid grid-cols-6 border-b last:border-none">
+          <div
+            className={cn('col-span-4 mb-2 py-3', cat.docs ? 'col-span-4' : 'col-span-6')}
+            key={cat.key}
+          >
+            <div className="flex items-center">
+              <h2 className="font-medium text-lg">{cat.title}</h2>
+              {cat.isProject && (
+                <div className="flex items-center">
+                  <div className="flex flex-wrap mx-4">
+                    <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
+                  </div>
+                  {loading && cat.isProject && <AnimatedSVG name={ICONS.LOADER} size={20} />}
                 </div>
-                {loading && cat.isProject && <AnimatedSVG name={ICONS.LOADER} size={20} />}
-              </div>
-            )}
-          </div>
-          <div className="">{cat.description}</div>
+              )}
+            </div>
+            <div className="">{cat.description}</div>
 
-          <div className="flex flex-wrap mt-4 gap-3">
-            {cat.integrations.map((integration: any) => (
-              <React.Fragment key={integration.slug}>
-                <Tooltip
-                  delay={50}
-                  title="Global configuration, available to all team members."
-                  disabled={!integration.shared}
-                  placement={'bottom'}
-                >
-                  <IntegrationItem
-                    integrated={integratedList.includes(integration.slug)}
-                    integration={integration}
-                    onClick={() => onClick(integration, cat.title === 'Plugins' ? 500 : 350)}
-                    hide={
-                      (integration.slug === 'github' && integratedList.includes('jira')) ||
-                      (integration.slug === 'jira' && integratedList.includes('github'))
-                    }
-                  />
-                </Tooltip>
-              </React.Fragment>
-            ))}
+            <div className="flex flex-wrap mt-4 gap-3">
+              {cat.integrations.map((integration: any) => (
+                <React.Fragment key={integration.slug}>
+                  <Tooltip
+                    delay={50}
+                    title="Global configuration, available to all team members."
+                    disabled={!integration.shared}
+                    placement={'bottom'}
+                  >
+                    <IntegrationItem
+                      integrated={integratedList.includes(integration.slug)}
+                      integration={integration}
+                      onClick={() => onClick(integration, cat.title === 'Plugins' ? 500 : 350)}
+                      hide={
+                        (integration.slug === 'github' && integratedList.includes('jira')) ||
+                        (integration.slug === 'jira' && integratedList.includes('github'))
+                      }
+                    />
+                  </Tooltip>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
+          {cat.docs && <div className="col-span-2 py-6">{cat.docs()}</div>}
         </div>
       ))}
     </div>
@@ -182,6 +190,16 @@ const integrations = [
     isProject: true,
     description:
       'Sync your backend errors with sessions replays and see what happened front-to-back.',
+    docs: () => (
+      <DocCard
+        title="Why use integrations"
+        icon="question-lg"
+        iconBgColor="bg-red-lightest"
+        iconColor="red"
+      >
+        Sync your backend errors with sessions replays and see what happened front-to-back.
+      </DocCard>
+    ),
     integrations: [
       { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
       {
@@ -238,6 +256,17 @@ const integrations = [
     title: 'Plugins',
     key: 3,
     isProject: true,
+    docs: () => (
+      <DocCard
+        title="What are plugins?"
+        icon="question-lg"
+        iconBgColor="bg-red-lightest"
+        iconColor="red"
+      >
+        Plugins capture your application’s store, monitor queries, track performance issues and even
+        assist your end user through live sessions.
+      </DocCard>
+    ),
     description:
       "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
     integrations: [

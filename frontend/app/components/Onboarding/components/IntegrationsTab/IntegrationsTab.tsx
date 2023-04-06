@@ -11,9 +11,7 @@ function IntegrationsTab(props: Props) {
         <span>🔌</span>
         <div className="ml-3">Integrations</div>
       </h1>
-      <div className="p-4">
-        <Integrations hideHeader={true} />
-      </div>
+      <Integrations hideHeader={true} />
       {/* <div className="py-6 w-4/12">
         <div className="p-5 bg-gray-lightest mb-4">
           <div className="font-bold mb-2">Why Use Plugins?</div>
