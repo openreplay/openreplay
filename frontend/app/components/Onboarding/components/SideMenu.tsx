@@ -16,7 +16,7 @@ function SideMenu(props: Props) {
     <div className="w-full">
       <div className={cn(stl.header, 'flex items-center')}>
         <div className={stl.label}>
-          <span>Setup Project</span>
+          <span>PROJECT SETUP</span>
         </div>
       </div>
 
