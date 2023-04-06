@@ -62,7 +62,7 @@ export default class QueueSender {
       body: batch,
       method: 'POST',
       headers: {
-        Authorization: 'Bearer ' + this.token,
+        Authorization: `Bearer ${this.token as string}`,
         //"Content-Type": "",
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,

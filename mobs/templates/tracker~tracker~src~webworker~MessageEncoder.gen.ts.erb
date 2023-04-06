@@ -7,7 +7,16 @@ import PrimitiveEncoder from './PrimitiveEncoder.js'
 
 
 export default class MessageEncoder extends PrimitiveEncoder {
-  encode(msg: Message): boolean {
+  encode(msg: Message, isCompressed: boolean): boolean {
+    if (isCompressed) {
+        switch(msg[0]) {
+        <% $messages.select { |msg| msg.tracker }.each do |msg| %>
+            case Messages.Type.<%= msg.name %>:
+              return <% if msg.attributes.size == 0 %> true <% else %> <%= msg.attributes.map.with_index { |attr, index| "this.encodeCompressed(msg[#{index+1}])" }.join " && " %><% end %>
+            break
+        <% end %>
+        }
+    }
     switch(msg[0]) {
 <% $messages.select { |msg| msg.tracker }.each do |msg| %>
     case Messages.Type.<%= msg.name %>:
