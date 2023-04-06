@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './toggler.module.css';
 
 export default ({ onChange, name, className = '', checked, label = '', plain = false }) => (
-    <div className={className}>
+    <div className={className + ' w-fit'}>
         <label className={styles.label}>
             <div className={plain ? styles.switchPlain : styles.switch}>
                 <input type={styles.checkbox} onClick={onChange} name={name} defaultChecked={checked} />

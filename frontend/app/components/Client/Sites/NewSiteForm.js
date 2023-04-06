@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Form, Input, Button, Icon } from 'UI';
 import { save, edit, update, fetchList, remove } from 'Duck/site';
@@ -12,121 +12,129 @@ import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { withStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 
-@connect(
-    (state) => ({
-        site: state.getIn(['site', 'instance']),
-        sites: state.getIn(['site', 'list']),
-        siteList: state.getIn(['site', 'list']),
-        loading: state.getIn(['site', 'save', 'loading']) || state.getIn(['site', 'remove', 'loading']),
-    }),
-    {
-        save,
-        remove,
-        edit,
-        update,
-        pushNewSite,
-        fetchList,
-        setSiteId,
-        clearSearch,
-        clearSearchLive,
-    }
-)
-@withRouter
-@withStore
-export default class NewSiteForm extends React.PureComponent {
-    state = {
-        existsError: false,
-    };
-    
+const NewSiteForm = ({
+  site,
+  loading,
+  save,
+  remove,
+  edit,
+  update,
+  pushNewSite,
+  fetchList,
+  setSiteId,
+  clearSearch,
+  clearSearchLive,
+  location: { pathname },
+  onClose,
+  mstore,
+}) => {
+  const [existsError, setExistsError] = useState(false);
 
-    componentDidMount() {
-        const {
-            location: { pathname },
-            match: {
-                params: { siteId },
-            },
-        } = this.props;
-        if (pathname.includes('onboarding')) {
-            this.props.setSiteId(siteId);
-        }
+  useEffect(() => {
+    if (pathname.includes('onboarding')) {
+      setSiteId(site.id);
     }
+  }, []);
 
-    onSubmit = (e) => {
-        e.preventDefault();
-        const {
-            site,
-            siteList,
-            location: { pathname },
-        } = this.props;
-        
-        if (site.exists()) {
-            this.props.update(this.props.site, this.props.site.id).then((response) => {
-                if (!response || !response.errors || response.errors.size === 0) {
-                    this.props.onClose(null);
-                    this.props.fetchList();
-                    toast.success('Project updated successfully');
-                } else {
-                    toast.error(response.errors[0]);
-                }
-            });
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    if (site.exists()) {
+      update(site, site.id).then((response) => {
+        if (!response || !response.errors || response.errors.size === 0) {
+          onClose(null);
+          fetchList();
+          toast.success('Project updated successfully');
         } else {
-            this.props.save(this.props.site).then((response) => {
-                if (!response || !response.errors || response.errors.size === 0) {
-                    this.props.onClose(null);
-                    this.props.clearSearch();
-                    this.props.clearSearchLive();
-                    this.props.mstore.initClient();
-                    toast.success('Project added successfully');
-                } else {
-                    toast.error(response.errors[0]);
-                }
-            });
+          toast.error(response.errors[0]);
         }
-    };
-
-    remove = async (site) => {
-        if (
-            await confirm({
-                header: 'Projects',
-                confirmation: `Are you sure you want to delete this Project? We won't be able to record anymore sessions.`,
-            })
-        ) {
-            this.props.remove(site.id).then(() => {
-                this.props.onClose(null);
-            });
+      });
+    } else {
+      save(site).then((response) => {
+        if (!response || !response.errors || response.errors.size === 0) {
+          onClose(null);
+          clearSearch();
+          clearSearchLive();
+          mstore.initClient();
+          toast.success('Project added successfully');
+        } else {
+          toast.error(response.errors[0]);
         }
-    };
-
-    edit = ({ target: { name, value } }) => {
-        this.setState({ existsError: false });
-        this.props.edit({ [name]: value });
-    };
-
-    render() {
-        const { site, loading } = this.props;
-        return (
-            <div className="bg-white h-screen overflow-y-auto" style={{ width: '350px' }}>
-                <h3 className="p-5 text-2xl">{site.exists() ? 'Edit Project' : 'New Project'}</h3>
-                <Form className={styles.formWrapper} onSubmit={site.validate() && this.onSubmit}>
-                    <div className={styles.content}>
-                        <Form.Field>
-                            <label>{'Name'}</label>
-                            <Input placeholder="Ex. openreplay" name="name" maxLength={40} value={site.name} onChange={this.edit} className={styles.input} />
-                        </Form.Field>
-                        <div className="mt-6 flex justify-between">
-                            <Button variant="primary" type="submit" className="float-left mr-2" loading={loading} disabled={!site.validate()}>
-                                {site.exists() ? 'Update' : 'Add'}
-                            </Button>
-                            {site.exists() && (
-                                <Button variant="text" type="button" onClick={() => this.remove(site)}>
-                                    <Icon name="trash" size="16" />
-                                </Button>
-                            )}
-                        </div>
-                        {this.state.existsError && <div className={styles.errorMessage}>{'Project exists already.'}</div>}
-                    </div>
-                </Form>
-            </div>
-        );
+      });
     }
-}
+  };
+
+  const handleRemove = async () => {
+    if (
+      await confirm({
+        header: 'Projects',
+        confirmation: `Are you sure you want to delete this Project? We won't be able to record anymore sessions.`,
+      })
+    ) {
+      remove(site.id).then(() => {
+        onClose(null);
+      });
+    }
+  };
+
+  const handleEdit = ({ target: { name, value } }) => {
+    setExistsError(false);
+    edit({ [name]: value });
+  };
+
+  return (
+    <div className="bg-white h-screen overflow-y-auto" style={{ width: '350px' }}>
+      <h3 className="p-5 text-2xl">{site.exists() ? 'Edit Project' : 'New Project'}</h3>
+      <Form className={styles.formWrapper} onSubmit={site.validate() && onSubmit}>
+        <div className={styles.content}>
+          <Form.Field>
+            <label>{'Name'}</label>
+            <Input
+              placeholder="Ex. openreplay"
+              name="name"
+              maxLength={40}
+              value={site.name}
+              onChange={handleEdit}
+              className={styles.input}
+            />
+          </Form.Field>
+          <div className="mt-6 flex justify-between">
+            <Button
+              variant="primary"
+              type="submit"
+              className="float-left mr-2"
+              loading={loading}
+              disabled={!site.validate()}
+            >
+              {site.exists() ? 'Update' : 'Add'}
+            </Button>
+            {site.exists() && (
+              <Button variant="text" type="button" onClick={handleRemove}>
+                <Icon name="trash" size="16" />
+              </Button>
+            )}
+          </div>
+          {existsError && <div className={styles.errorMessage}>{'Project exists already.'}</div>}
+        </div>
+      </Form>
+    </div>
+  );
+};
+
+const mapStateToProps = (state) => ({
+  site: state.getIn(['site', 'instance']),
+  siteList: state.getIn(['site', 'list']),
+  loading: state.getIn(['site', 'save', 'loading']) || state.getIn(['site', 'remove', 'loading']),
+});
+
+export default connect(mapStateToProps, {
+  save,
+  remove,
+  edit,
+  update,
+  pushNewSite,
+  fetchList,
+  setSiteId,
+  clearSearch,
+  clearSearchLive,
+})(withRouter(withStore(NewSiteForm)));
