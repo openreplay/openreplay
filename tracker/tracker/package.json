@@ -48,7 +48,8 @@
   },
   "dependencies": {
     "@medv/finder": "^3.0.0",
-    "error-stack-parser": "^2.0.6"
+    "error-stack-parser": "^2.0.6",
+    "fflate": "^0.7.4"
   },
   "engines": {
     "node": ">=14.0"
