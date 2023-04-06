@@ -11,12 +11,18 @@ interface Props extends WithOnboardingProps {}
 function InstallOpenReplayTab(props: Props) {
   return (
     <>
-      <h1 className="flex items-center px-4 py-3 border-b text-2xl">
-        <span>👋</span>
-        <div className="ml-3 flex items-end">
-          <span>Hey there! Setup</span>
-          <ProjectFormButton />
+      <h1 className="flex items-center px-4 py-3 border-b justify-between">
+        <div className="flex items-center text-2xl">
+          <span>👋</span>
+          <div className="ml-3 flex items-end">
+            <span>Hey there! Setup</span>
+            <ProjectFormButton />
+          </div>
         </div>
+        <a className="flex items-center link" href="https://docs.openreplay.com/en/installation/javascript-sdk/" target="_blank">
+          <Icon name="book" color="blue" className="mr-2" size={16} />
+          <span>Setup Guide</span>
+        </a>
       </h1>
       <div className="p-4">
         <div className="mb-6 text-lg font-medium">

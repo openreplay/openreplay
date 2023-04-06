@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { connect, ConnectedProps } from 'react-redux';
 import { setOnboarding } from 'Duck/user';
@@ -8,6 +8,7 @@ export interface WithOnboardingProps {
   history: RouteComponentProps['history'];
   skip?: () => void;
   navTo?: (tab: string) => void;
+  site?: any;
   match: {
     params: {
       activeTab: string;
@@ -18,7 +19,8 @@ export interface WithOnboardingProps {
 
 const connector = connect(
   (state: any) => ({
-    someData: state.someData,
+    siteId: state.getIn(['site', 'siteId']),
+    sites: state.getIn(['site', 'list']),
   }),
   { setOnboarding }
 );
@@ -30,25 +32,23 @@ const withOnboarding = <P extends RouteComponentProps>(
 ) => {
   const WithOnboarding: React.FC<P & WithOnboardingProps & PropsFromRedux> = (props) => {
     const {
+      sites,
       match: {
-        params: { activeTab, siteId },
+        params: { siteId },
       },
     } = props;
+    const site = useMemo(() => sites.find((s: any) => s.id === siteId), [sites, siteId]);
+
     const skip = () => {
-      // implementation of your method goes here
       props.setOnboarding(true);
       props.history.push(sessions());
     };
-
-    const route = (path: string) => {
-      return withSiteId(onboardingRoute(path));
-    };
-
+    
     const navTo = (tab: string) => {
       props.history.push(withSiteId(onboardingRoute(tab), siteId));
     };
 
-    return <Component skip={skip} navTo={navTo} {...props} />;
+    return <Component skip={skip} navTo={navTo} {...props} site={site} />;
   };
 
   return withRouter(connector(WithOnboarding as React.ComponentType<any>));

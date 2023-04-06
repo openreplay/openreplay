@@ -8,7 +8,6 @@ import IdentifyUsersTab from './components/IdentifyUsersTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import { withSiteId } from 'App/routes';
-
 interface Props {
   match: {
     params: {
