@@ -256,6 +256,12 @@
   padding: 1px 2px;
 }
 
+.highlight-blue {
+  background-color: $active-blue;
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
 .hljs {
   padding: 10px !important;
   border-radius: 6px !important;

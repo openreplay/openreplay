@@ -12,6 +12,7 @@ const inputModeOptionsMap: any = {}
 inputModeOptions.forEach((o: any, i: any) => inputModeOptionsMap[o.value] = i)
 
 interface Props {
+    isAssistEnabled: boolean;
     host: string;
     projectKey: string;
     ingestPoint: string;
@@ -20,7 +21,7 @@ interface Props {
     obscureTextEmails: boolean;
 }
 function CodeSnippet(props: Props) {
-    const { host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails } = props;
+    const { host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails, isAssistEnabled } = props;
     const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {
@@ -44,7 +45,7 @@ function CodeSnippet(props: Props) {
     r.issue=function(k,p){r.push([6,k,p])};
     r.isActive=function(){return false};
     r.getSessionToken=function(){};
-  })("${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
+  })("${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay${isAssistEnabled ? '-assist.js' : '.js'}",1,0,initOpts,startOpts);
 </script>`;
 
     return (

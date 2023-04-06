@@ -17,7 +17,7 @@ function UserForm(props: Props) {
     const { hideModal } = useModal();
     const { userStore, roleStore } = useStore();
     const isSaving = useObserver(() => userStore.saving);
-    const user: any = useObserver(() => userStore.instance);
+    const user: any = useObserver(() => userStore.instance || userStore.initUser());
     const roles = useObserver(() => roleStore.list.filter(r => r.isProtected ? user.isSuperAdmin : true).map(r => ({ label: r.name, value: r.roleId })));
 
     const onChangeCheckbox = (e: any) => {
