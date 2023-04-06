@@ -40,7 +40,7 @@ function SideMenu(props: Props) {
       />
       <SideMenuitem
         title="Integrations"
-        iconName="tools"
+        iconName="plug"
         active={activeTab === OB_TABS.INTEGRATIONS}
         onClick={() => props.onClick(OB_TABS.INTEGRATIONS)}
       />
