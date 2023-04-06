@@ -39,7 +39,8 @@ const createSocketIOServer = function (server, prefix) {
                 methods: ["GET", "POST", "PUT"]
             },
             path: (prefix ? prefix : '') + '/socket',
-            perMessageDeflate: getCompressionConfig()
+            perMessageDeflate: getCompressionConfig(),
+            clientNoContextTakeover: process.env.CLIENT_CONTEXT_TAKEOVER && process.env.CLIENT_CONTEXT_TAKEOVER === "true"
         });
     } else {
         io = new _io.Server({
