@@ -7,22 +7,32 @@ from decouple import config
 
 from chalicelib.utils import pg_client, ch_client
 
+
+def app_connection_string(name, port, path):
+    namespace = config("POD_NAMESPACE", default="app")
+    conn_string = config("CLUSTER_URL", default="svc.cluster.local")
+    return (
+        "http://" + name + "." + namespace + "." + conn_string + ":" + port + "/" + path
+    )
+
+
 HEALTH_ENDPOINTS = {
-    "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/health",
-    "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
-    "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
-    "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
-    "db": "http://db-openreplay.app.svc.cluster.local:8888/metrics",
-    "ender": "http://ender-openreplay.app.svc.cluster.local:8888/metrics",
-    "heuristics": "http://heuristics-openreplay.app.svc.cluster.local:8888/metrics",
-    "http": "http://http-openreplay.app.svc.cluster.local:8888/metrics",
-    "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
-    "integrations": "http://integrations-openreplay.app.svc.cluster.local:8888/metrics",
-    "peers": "http://peers-openreplay.app.svc.cluster.local:8888/health",
-    "quickwit": "http://quickwit-openreplay.app.svc.cluster.local:8888/metrics",
-    "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
-    "sourcemaps-reader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
-    "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
+    "alerts": app_connection_string("alerts-openreplay", 8888, "metrics"),
+    "assets": app_connection_string("assets-openreplay", 8888, "metrics"),
+    "assist": app_connection_string("assist-openreplay", 8888, "metrics"),
+    "chalice": app_connection_string("chalice-openreplay", 8888, "metrics"),
+    "db": app_connection_string("db-openreplay", 8888, "metrics"),
+    "ender": app_connection_string("ender-openreplay", 8888, "metrics"),
+    "heuristics": app_connection_string("heuristics-openreplay", 8888, "metrics"),
+    "http": app_connection_string("http-openreplay", 8888, "metrics"),
+    "ingress-nginx": app_connection_string("ingress-nginx-openreplay", 80, "healthz"),
+    "integrations": app_connection_string("integrations-openreplay", 8888, "metrics"),
+    "peers": app_connection_string("peers-openreplay", 8888, "health"),
+    "sink": app_connection_string("sink-openreplay", 8888, "metrics"),
+    "sourcemaps-reader": app_connection_string(
+        "sourcemapreader-openreplay", 8888, "health"
+    ),
+    "storage": app_connection_string("storage-openreplay", 8888, "metrics"),
 }
 
 

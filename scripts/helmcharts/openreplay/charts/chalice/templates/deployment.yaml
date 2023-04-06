@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: KAFKA_SERVERS
+              value: "{{ .Values.global.kafka.kafkaHost }}"
+            - name: REDIS_STRING
+              value: "{{ .Values.global.redis.redisHost }}"
             - name: ch_username
               value: "{{ .Values.global.clickhouse.username }}"
             - name: ch_password
@@ -142,6 +146,10 @@ spec:
             - name: {{ $key }}
               value: '{{ $val }}'
             {{- end}}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
