@@ -11,6 +11,7 @@ import styles from '../Session_/session.module.css';
 import Session from 'App/mstore/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   session: Session;
@@ -39,6 +40,7 @@ function LivePlayer({
   const openedFromMultiview = query?.get('multi') === 'true'
   const usedSession = isMultiview ? customSession! : session;
   let playerInst: ILivePlayerContext['player'];
+  const location = useLocation();
 
   useEffect(() => {
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
@@ -50,7 +52,6 @@ function LivePlayer({
       },
     };
     if (isEnterprise) {
-      console.log('building')
       new APIClient().get('/config/assist/credentials').then(r => r.json())
         .then(({ data }) => {
           const [player, store] = createLiveWebPlayer(sessionWithAgentData, data, (state) =>
@@ -68,13 +69,16 @@ function LivePlayer({
     }
   }, [usedSession.sessionId]);
 
+  // not cleaning up in multiview
   useEffect(() => {
     return () => {
-      playerInst?.clean?.();
-      // @ts-ignore default empty
-      setContextValue(defaultContextValue)
+      if (!location.pathname.includes('multiview') || !location.pathname.includes(usedSession.sessionId)) {
+        playerInst?.clean?.();
+        // @ts-ignore default empty
+        setContextValue(defaultContextValue)
+      }
     }
-  }, [])
+  }, [location.pathname])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
