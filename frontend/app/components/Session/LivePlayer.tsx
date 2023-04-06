@@ -44,6 +44,7 @@ function LivePlayer({
 
   useEffect(() => {
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
+    console.debug('creating live player for', usedSession.sessionId)
     const sessionWithAgentData = {
       ...usedSession,
       agentInfo: {
@@ -67,10 +68,7 @@ function LivePlayer({
       setContextValue({ player, store });
       playerInst = player;
     }
-  }, [usedSession.sessionId]);
 
-  // not cleaning up in multiview
-  useEffect(() => {
     return () => {
       if (!location.pathname.includes('multiview') || !location.pathname.includes(usedSession.sessionId)) {
         playerInst?.clean?.();
@@ -78,7 +76,7 @@ function LivePlayer({
         setContextValue(defaultContextValue)
       }
     }
-  }, [location.pathname])
+  }, [location.pathname]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {

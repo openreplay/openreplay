@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
-import { fetch as fetchSession } from 'Duck/sessions';
+import { fetch as fetchSession, clearCurrentSession } from 'Duck/sessions';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Loader } from 'UI';
 import withPermissions from 'HOCs/withPermissions';
@@ -17,6 +17,7 @@ function LiveSession({
     hasSessionsPath,
     session,
     fetchFailed,
+    clearCurrentSession,
 }) {
     const [initialLoading, setInitialLoading] = React.useState(true);
     usePageTitle('OpenReplay Assist');
@@ -24,6 +25,10 @@ function LiveSession({
     useEffect(() => {
         clearLogs();
         fetchSlackList();
+
+        return () => {
+            clearCurrentSession()
+        };
     }, []);
 
     useEffect(() => {
@@ -46,7 +51,7 @@ function LiveSession({
 
     return (
         <Loader className="flex-1" loading={initialLoading}>
-            <LivePlayer />
+            {session.sessionId && <LivePlayer />}
         </Loader>
     );
 }
@@ -77,6 +82,7 @@ export default withPermissions(
         {
             fetchSession,
             fetchSlackList,
+            clearCurrentSession,
         }
     )(LiveSession)
 );
