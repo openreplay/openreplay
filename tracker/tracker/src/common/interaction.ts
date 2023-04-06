@@ -26,6 +26,7 @@ export type ToWorkerData =
   | Auth
   | Array<Message>
   | { type: 'compressed'; batch: Uint8Array }
+  | { type: 'uncompressed'; batch: Uint8Array }
 
 type Failure = {
   type: 'failure'

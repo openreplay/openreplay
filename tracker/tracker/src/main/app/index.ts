@@ -110,6 +110,7 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
+
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
@@ -179,10 +180,17 @@ export default class App {
           this.stop(false)
           this._debug('worker_failed', data.reason)
         } else if (data.type === 'compress') {
-          gzip(data.batch, (err, result) => {
-            if (err) console.error(err)
-            this.worker?.postMessage({ type: 'compressed', batch: result })
-          })
+          const batch = data.batch
+          const batchSize = batch.byteLength
+          console.log(batchSize)
+          if (batchSize > 1000 * 10) {
+            gzip(data.batch, { mtime: 0 }, (err, result) => {
+              if (err) console.error(err)
+              this.worker?.postMessage({ type: 'compressed', batch: result })
+            })
+          } else {
+            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+          }
         }
       }
       const alertWorker = () => {

@@ -134,6 +134,9 @@ self.onmessage = ({ data }: any): any => {
   if (data.type === 'compressed') {
     sender?.sendCompressed(data.batch)
   }
+  if (data.type === 'uncompressed') {
+    sender?.sendUncompressed(data.batch)
+  }
 
   if (data.type === 'auth') {
     if (!sender) {
