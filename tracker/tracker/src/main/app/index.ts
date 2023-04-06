@@ -455,6 +455,10 @@ export default class App {
     return this.featureFlags.includes(feature)
   }
 
+  getFeatureFlags(): string[] {
+    return this.featureFlags
+  }
+
   resetNextPageSession(flag: boolean) {
     if (flag) {
       this.sessionStorage.setItem(this.options.session_reset_key, 't')
