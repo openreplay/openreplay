@@ -1,6 +1,7 @@
 package web
 
 import (
+	"log"
 	"openreplay/backend/pkg/messages"
 )
 
@@ -41,6 +42,8 @@ func (h *AppCrashDetector) build() messages.Message {
 		diff = h.dropTimestamp - h.lastIssueTimestamp
 	}
 
+	log.Printf("app crash, domDrop timestamp: %d, issue timstamp: %d, diff: %d", h.dropTimestamp, h.lastIssueTimestamp, diff)
+
 	// Check possible app crash
 	if diff < CrashWindow {
 		msg := &messages.IssueEvent{
@@ -48,6 +51,7 @@ func (h *AppCrashDetector) build() messages.Message {
 			Timestamp: h.dropTimestamp,
 			Type:      "app_crash",
 		}
+		log.Printf("created app crash event: %+v", msg)
 		h.reset()
 		return msg
 	}
