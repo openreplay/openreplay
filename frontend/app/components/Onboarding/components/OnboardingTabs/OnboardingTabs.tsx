@@ -67,7 +67,11 @@ const TrackingCodeModal = (props: Props) => {
             </div>
 
             <div className="col-span-2">
-              <DocCard title="Need help from team member?">Invite and Collaborate</DocCard>
+              <DocCard title="Need help from team member?">
+                <a className="link" onClick={showUserModal}>
+                  Invite and Collaborate
+                </a>
+              </DocCard>
             </div>
           </div>
         );
