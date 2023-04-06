@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Tabs, Button, Icon, CopyButton } from 'UI';
+import { Tabs, Icon, CopyButton } from 'UI';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import InstallDocs from './InstallDocs';
 import DocCard from 'Shared/DocCard/DocCard';
+import { useModal } from 'App/components/Modal';
+import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
 
 const PROJECT = 'SCRIPT';
 const DOCUMENTATION = 'NPM';
@@ -11,12 +13,17 @@ const TABS = [
   { key: PROJECT, text: PROJECT },
 ];
 
-const TrackingCodeModal = () => {
-  const [copied, setCopied] = useState(false);
-  const [changed, setChanged] = useState(false);
+interface Props {
+  site: any;
+}
+const TrackingCodeModal = (props: Props) => {
+  const { site } = props;
   const [activeTab, setActiveTab] = useState(DOCUMENTATION);
+  const { showModal } = useModal();
 
-  const showUserModal = () => {};
+  const showUserModal = () => {
+    showModal(<UserForm />, { right: true });
+  };
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -35,7 +42,7 @@ const TrackingCodeModal = () => {
               </DocCard>
               <DocCard title="Project Key">
                 <div className="rounded bg-white px-2 py-1 flex items-center justify-between">
-                  <span>PROJECT_KEY</span>
+                  <span>{site.projectKey}</span>
                   <CopyButton content={''} className="capitalize" />
                 </div>
               </DocCard>

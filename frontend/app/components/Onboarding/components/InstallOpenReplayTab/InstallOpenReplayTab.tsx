@@ -9,6 +9,7 @@ import { OB_TABS } from 'App/routes';
 interface Props extends WithOnboardingProps {}
 
 function InstallOpenReplayTab(props: Props) {
+  const { site } = props;
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b justify-between">
@@ -29,7 +30,7 @@ function InstallOpenReplayTab(props: Props) {
           Setup OpenReplay through NPM package <span className="text-sm">(recommended)</span> or
           script.
         </div>
-        <OnboardingTabs />
+        <OnboardingTabs site={site} />
       </div>
       <div className="border-t px-4 py-3 flex justify-end">
         <Button

@@ -131,6 +131,7 @@ const ProjectCodeSnippet = (props) => {
       </div>
       <div className={cn(stl.snippetsWrapper, 'ml-10')}>
         <CodeSnippet
+          isAssistEnabled={isAssistEnabled}
           host={site && site.host}
           projectKey={site && site.projectKey}
           ingestPoint={`"https://${window.location.hostname}/ingest"`}
