@@ -56,7 +56,7 @@ export default class QueueSender {
   }
 
   // would be nice to use Beacon API, but it is not available in WebWorker
-  private sendBatch(batch: Uint8Array): void {
+  private sendBatch(batch: Uint8Array, isCompressed?: boolean): void {
     this.busy = true
 
     // @ts-ignore
@@ -66,7 +66,7 @@ export default class QueueSender {
       headers: {
         Authorization: `Bearer ${this.token as string}`,
         //"Content-Type": "",
-        'Content-Encoding': 'gzip',
+        // 'Content-Encoding': isCompressed ? 'gzip' : undefined,
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
     })
@@ -92,6 +92,10 @@ export default class QueueSender {
   }
 
   sendCompressed(batch: Uint8Array) {
+    this.sendBatch(batch, true)
+  }
+
+  sendUncompressed(batch: Uint8Array) {
     this.sendBatch(batch)
   }
 
