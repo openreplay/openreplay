@@ -117,6 +117,7 @@ self.onmessage = ({ data }: any): any => {
       },
       data.connAttemptCount,
       data.connAttemptGap,
+      (batch) => postMessage({ type: 'compress', batch }),
     )
     writer = new BatchWriter(
       data.pageNo,
@@ -129,6 +130,9 @@ self.onmessage = ({ data }: any): any => {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
     }
     return (workerStatus = WorkerStatus.Active)
+  }
+  if (data.type === 'compressed') {
+    sender?.sendCompressed(data.batch)
   }
 
   if (data.type === 'auth') {

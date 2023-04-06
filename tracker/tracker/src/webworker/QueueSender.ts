@@ -8,12 +8,14 @@ export default class QueueSender {
   private readonly queue: Array<Uint8Array> = []
   private readonly ingestURL
   private token: string | null = null
+
   constructor(
     ingestBaseURL: string,
     private readonly onUnauthorised: () => any,
     private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
     private readonly ATTEMPT_TIMEOUT = 1000,
+    private readonly onCompress: (batch: Uint8Array) => any,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
   }
@@ -30,14 +32,14 @@ export default class QueueSender {
     if (this.busy || !this.token) {
       this.queue.push(batch)
     } else {
-      this.sendBatch(batch)
+      this.onCompress(batch)
     }
   }
 
   private sendNext() {
     const nextBatch = this.queue.shift()
     if (nextBatch) {
-      this.sendBatch(nextBatch)
+      this.onCompress(nextBatch)
     } else {
       this.busy = false
     }
@@ -50,7 +52,7 @@ export default class QueueSender {
       return
     }
     this.attemptsCount++
-    setTimeout(() => this.sendBatch(batch), this.ATTEMPT_TIMEOUT * this.attemptsCount)
+    setTimeout(() => this.onCompress(batch), this.ATTEMPT_TIMEOUT * this.attemptsCount)
   }
 
   // would be nice to use Beacon API, but it is not available in WebWorker
@@ -64,6 +66,7 @@ export default class QueueSender {
       headers: {
         Authorization: `Bearer ${this.token as string}`,
         //"Content-Type": "",
+        'Content-Encoding': 'gzip',
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
     })
@@ -86,6 +89,10 @@ export default class QueueSender {
         console.warn('OpenReplay:', e)
         this.retry(batch)
       })
+  }
+
+  sendCompressed(batch: Uint8Array) {
+    this.sendBatch(batch)
   }
 
   clean() {
