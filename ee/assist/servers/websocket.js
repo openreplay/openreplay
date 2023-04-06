@@ -211,6 +211,7 @@ const findSessionSocketId = async (io, peerId) => {
 };
 
 async function sessions_agents_count(io, socket) {
+    debug && console.log(`----looking for rooms of peerId:${socket.peerId}`);
     let c_sessions = 0, c_agents = 0;
     const rooms = io.sockets.adapter.rooms;
     debug && console.log("----rooms from adapter:");
