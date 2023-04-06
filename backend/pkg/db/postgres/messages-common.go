@@ -167,3 +167,8 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	}
 	return nil
 }
+
+func (conn *Conn) InsertAppCrash(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
+	log.Printf("got possible app crash, sess: %d, ts: %d", sessionID, e.Timestamp)
+	return nil
+}

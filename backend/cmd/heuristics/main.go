@@ -34,6 +34,7 @@ func main() {
 			&web.MemoryIssueDetector{},
 			&web.NetworkIssueDetector{},
 			&web.PerformanceAggregator{},
+			web.NewAppCrashDetector(),
 		}
 	}
 

@@ -27,6 +27,9 @@ func (c *PGCache) InsertIssueEvent(crash *IssueEvent) error {
 	if err != nil {
 		return err
 	}
+	if crash.Type == "app_crash" {
+		return c.Conn.InsertAppCrash(sessionID, session.ProjectID, crash)
+	}
 	return c.Conn.InsertIssueEvent(sessionID, session.ProjectID, crash)
 }
 
