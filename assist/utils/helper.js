@@ -125,7 +125,7 @@ const transformFilters = function (filter) {
     }
     return filter;
 }
-const extractPayloadFromRequest = function (req) {
+const extractPayloadFromRequest = async function (req) {
     let filters = {
         "query": {}, // for autocomplete
         "filter": {}, // for sessions search
@@ -219,7 +219,30 @@ const uniqueAutocomplete = function (list) {
     return _list;
 }
 const getAvailableRooms = async function (io) {
-    return io.sockets.adapter.rooms.keys();
+    return io.sockets.adapter.rooms;
+}
+const getCompressionConfig = function () {
+    // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
+    let perMessageDeflate = false;
+    if (process.env.COMPRESSION === "true") {
+        console.log(`WS compression: enabled`);
+        perMessageDeflate = {
+            zlibDeflateOptions: {
+                windowBits: 10,
+                memLevel: 1
+            },
+            zlibInflateOptions: {
+                windowBits: 10
+            }
+        }
+    } else {
+        console.log(`WS compression: disabled`);
+    }
+    return {
+        perMessageDeflate: perMessageDeflate,
+        clientNoContextTakeover: true
+    };
+
 }
 module.exports = {
     transformFilters,
@@ -234,5 +257,6 @@ module.exports = {
     extractPayloadFromRequest,
     sortPaginate,
     uniqueAutocomplete,
-    getAvailableRooms
+    getAvailableRooms,
+    getCompressionConfig
 };

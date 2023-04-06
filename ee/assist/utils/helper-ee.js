@@ -96,111 +96,6 @@ const extractPayloadFromRequest = async function (req, res) {
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
-const getCompressionConfig = function () {
-    let perMessageDeflate = false;
-    if (process.env.COMPRESSION_LEVEL && process.env.COMPRESSION_LEVEL > 0) {
-        if (process.env.COMPRESSION_LEVEL > 3) {
-            console.log(`WS compression level: ${process.env.COMPRESSION_LEVEL} not found, ignoring`);
-        } else {
-            let windowBits;
-            switch (parseInt(process.env.COMPRESSION_LEVEL)) {
-                case 1:
-                    windowBits = 8;
-                    break;
-                case 2:
-                    windowBits = 10;
-                    break;
-                case 3:
-                    windowBits = 11;
-                    break;
-            }
-            console.log(`WS compression level: ${process.env.COMPRESSION_LEVEL} => windowBits: ${windowBits}`);
-            perMessageDeflate = {
-                zlibDeflateOptions: {
-                    windowBits: windowBits,
-                    memLevel: 1
-                },
-
-                zlibInflateOptions: {
-                    windowBits: windowBits
-                }
-            }
-        }
-    } else {
-        console.log(`WS compression level: disabled`);
-    }
-    return perMessageDeflate;
-}
-const getUWSCompressionConfig = function () {
-    let compression = uWS.DISABLED;
-    if (process.env.UWS_COMPRESSION_LEVEL) {
-        switch (process.env.UWS_COMPRESSION_LEVEL) {
-            case 'SHARED_C':
-                compression = uWS.SHARED_COMPRESSOR;
-                break;
-            case 'D_C_3':
-                compression = uWS.DEDICATED_COMPRESSOR_3KB;
-                break;
-            case 'D_C_4':
-                compression = uWS.DEDICATED_COMPRESSOR_4KB;
-                break;
-            case 'D_C_8':
-                compression = uWS.DEDICATED_COMPRESSOR_8KB;
-                break;
-            case 'D_C_16':
-                compression = uWS.DEDICATED_COMPRESSOR_16KB;
-                break;
-            case 'D_C_32':
-                compression = uWS.DEDICATED_COMPRESSOR_32KB;
-                break;
-            case 'D_C_64':
-                compression = uWS.DEDICATED_COMPRESSOR_64KB;
-                break;
-            case 'D_C_128':
-                compression = uWS.DEDICATED_COMPRESSOR_128KB;
-                break;
-            case 'D_C_256':
-                compression = uWS.DEDICATED_COMPRESSOR_256KB;
-                break;
-        }
-        console.log(`WS UWS compression level: ${process.env.UWS_COMPRESSION_LEVEL} => ${compression}`);
-    } else {
-        console.log(`WS UWS compression level: disabled`);
-    }
-    return compression;
-}
-const getUWSDecompressionConfig = function () {
-    let compression = uWS.DISABLED;
-    if (process.env.UWS_DECOMPRESSION_LEVEL) {
-        switch (process.env.UWS_COMPRESSION_LEVEL) {
-            case 'SHARED_D':
-                compression = uWS.SHARED_DECOMPRESSOR;
-                break;
-            case 'D_D_1':
-                compression = uWS.DEDICATED_DECOMPRESSOR_1KB;
-                break;
-            case 'D_D_2':
-                compression = uWS.DEDICATED_DECOMPRESSOR_2KB;
-                break;
-            case 'D_D_4':
-                compression = uWS.DEDICATED_DECOMPRESSOR_4KB;
-                break;
-            case 'D_D_8':
-                compression = uWS.DEDICATED_DECOMPRESSOR_8KB;
-                break;
-            case 'D_D_16':
-                compression = uWS.DEDICATED_DECOMPRESSOR_16KB;
-                break;
-            case 'D_D_32':
-                compression = uWS.DEDICATED_DECOMPRESSOR_32KB;
-                break;
-        }
-        console.log(`WS UWS compression level: ${process.env.UWS_COMPRESSION_LEVEL} => ${compression}`);
-    } else {
-        console.log(`WS UWS compression level: disabled`);
-    }
-    return compression;
-}
 const getAvailableRooms = async function (io) {
     if (process.env.redis === "true") {
         return io.of('/').adapter.allRooms();
@@ -208,12 +103,29 @@ const getAvailableRooms = async function (io) {
         return helper.getAvailableRooms(io);
     }
 }
+const getCompressionConfig = function () {
+    if (process.env.uws !== "true") {
+        return helper.getCompressionConfig();
+    } else {
+        // uWS: The theoretical overhead per socket is 32KB (8KB for compressor and for 24KB decompressor)
+        if (process.env.COMPRESSION === "true") {
+            console.log(`uWS compression: enabled`);
+            return {
+                compression: uWS.DEDICATED_COMPRESSOR_8KB,
+                decompression: uWS.DEDICATED_DECOMPRESSOR_1KB
+            };
+        } else {
+            console.log(`uWS compression: disabled`);
+            return {};
+        }
+    }
+
+}
+
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
     getCompressionConfig,
-    getUWSCompressionConfig,
-    getUWSDecompressionConfig,
     getAvailableRooms
 };
