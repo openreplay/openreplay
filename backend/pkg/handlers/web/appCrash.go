@@ -33,11 +33,15 @@ func (h *AppCrashDetector) build() messages.Message {
 		return nil
 	}
 
-	// Check possible app crash
-	diff := h.lastIssueTimestamp - h.dropTimestamp
-	if diff < 0 {
-		diff *= -1
+	// Calculate timestamp difference
+	var diff uint64
+	if h.lastIssueTimestamp > h.dropTimestamp {
+		diff = h.lastIssueTimestamp - h.dropTimestamp
+	} else {
+		diff = h.dropTimestamp - h.lastIssueTimestamp
 	}
+
+	// Check possible app crash
 	if diff < CrashWindow {
 		msg := &messages.IssueEvent{
 			MessageID: h.dropMessageID,
