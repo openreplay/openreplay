@@ -56,7 +56,7 @@ function Player(props: IProps) {
       </div>
       {bottomBlock === CONSOLE ? (
         <div style={{ maxWidth, width: '100%' }}>
-          <ConsolePanel />
+          <ConsolePanel isLive />
         </div>
       ) : null}
       {!fullView && !isMultiview ? (

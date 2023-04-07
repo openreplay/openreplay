@@ -29,7 +29,7 @@ const LEVEL_TAB = {
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
 
-function renderWithNL(s = '') {
+function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
   return s.split('\n').map((line, i) => <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>{line}</div>);
 }
@@ -59,7 +59,7 @@ const getIconProps = (level: any) => {
 
 const INDEX_KEY = 'console';
 
-function ConsolePanel() {
+function ConsolePanel({ isLive }: { isLive: boolean }) {
   const {
     sessionStore: { devTools },
   } = useStore()
@@ -75,10 +75,13 @@ function ConsolePanel() {
   const jump = (t: number) => player.jump(t)
 
   const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
-  const list = useMemo(() => 
-    logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
+  const list = isLive ?
+    useMemo(() => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
+      [logListNow.length, exceptionsListNow.length]
+    ) as ILog[]
+    : useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
     [ logList.length, exceptionsList.length ],
-  ) as ILog[]
+    ) as ILog[]
   let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
   filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
 
@@ -101,7 +104,7 @@ function ConsolePanel() {
     timeoutStartAutoscroll()
   }
   
-  const _list = useRef(null); // TODO: fix react-virtualized types & incapsulate scrollToRow logic
+  const _list = useRef(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
@@ -132,7 +135,7 @@ function ConsolePanel() {
     return (
         // @ts-ignore
         <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-          {({ measure }: any) => (
+          {() => (
             <ConsoleRow
               style={style}
               log={item}
