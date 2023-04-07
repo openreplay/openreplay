@@ -15,9 +15,48 @@ interface StepListProps {
   status: 'pending' | 'completed';
 }
 
+const StepItem = React.memo((props: Step) => {
+  const { title, description, status } = props;
+  const isCompleted = status === 'completed';
+
+  const onIgnore = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+  };
+
+  return (
+    <div
+      className={cn('border rounded p-3 mb-4 flex items-start', {
+        'bg-gray-lightest': isCompleted,
+        'hover:bg-active-blue': !isCompleted,
+      })}
+    >
+      <div className="w-10 mt-1 shrink-0">
+        <Icon name={isCompleted ? 'check-circle-fill' : 'check-circle'} size={20} color={isCompleted ? 'teal' : 'gray-dark'}/>
+      </div>
+      <div>
+        <div className={cn('font-medium text-lg', { link: !isCompleted })}>{title}</div>
+        <div>{description}</div>
+        <div className="flex gap-6 mt-3">
+          <a
+            className="link"
+            href="https://docs.openreplay.com/en/installation/setup-or/"
+            target="_blank"
+          >
+            Docs
+          </a>
+          {!isCompleted && (
+            <a className="link" onClick={onIgnore}>
+              Ignore
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const StepList = React.memo((props: StepListProps) => {
   const { title, steps, status } = props;
-  const isCompleted = status === 'completed';
 
   if (steps.length === 0) {
     return null;
@@ -28,50 +67,9 @@ const StepList = React.memo((props: StepListProps) => {
       <div className="text-lg font-medium mb-2">
         {title} {steps.length}
       </div>
-      {steps.map((step) => {
-        switch (step.status) {
-          case 'pending':
-            return (
-              <div
-                key={step.title}
-                className={cn('border rounded p-3 mb-4 flex items-start', {
-                  'hover:bg-active-blue': !isCompleted,
-                })}
-              >
-                <div className="w-10 mt-1 shrink-0">
-                  <Icon name="check-circle" size={20} />
-                </div>
-                <div>
-                  <div className="font-medium text-lg link">{step.title}</div>
-                  <div>{step.description}</div>
-                  <div className="flex gap-6 mt-3">
-                    <a className="link">Docs</a>
-                    {!isCompleted && <a className="link">Ignore</a>}
-                  </div>
-                </div>
-              </div>
-            );
-          case 'completed':
-          case 'ignored':
-            return (
-              <div
-                key={step.title}
-                className="border rounded p-3 mb-4 flex items-start bg-gray-lightest"
-              >
-                <div className="w-10 mt-1 shrink-0">
-                  <Icon name="check-circle-fill" size={20} color="blue" />
-                </div>
-                <div>
-                  <div className="font-medium text-lg">{step.title}</div>
-                  <div>{step.description}</div>
-                  <div className="flex gap-6 mt-3">
-                    <a className="link">Docs</a>
-                  </div>
-                </div>
-              </div>
-            );
-        }
-      })}
+      {steps.map((step) => (
+        <StepItem key={step.title} {...step} status={status} />
+      ))}
     </div>
   );
 });

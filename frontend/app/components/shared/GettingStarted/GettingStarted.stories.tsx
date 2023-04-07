@@ -1,7 +1,8 @@
 import React from 'react';
 import { Story, Meta } from '@storybook/react';
 
-import GettingStarted, { Props, Step } from './GettingStarted';
+import GettingStarted, { Props } from './GettingStarted';
+import { Step } from './StepList';
 
 const list: Step[] = [
   {

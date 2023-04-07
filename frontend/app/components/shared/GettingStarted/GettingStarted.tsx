@@ -1,9 +1,8 @@
 import React from 'react';
-import { Icon } from 'UI';
-import cn from 'classnames';
 import StepList, { Step } from './StepList';
+import Modal from 'App/components/Modal/Modal';
 
-interface Props {
+export interface Props {
   list: Step[];
 }
 
@@ -15,15 +14,19 @@ function GettingStarted(props: Props) {
   );
 
   return (
-    <div className="bg-white p-4">
-      <div>
-        <div>Setup Openreplay</div>
-        <p>Find all the ways in which OpenReplay can benefit you and your product.</p>
-      </div>
+    <>
+      <Modal.Header title="Setup Openreplay">
+        <div className="px-4 pt-4">
+          <div className="text-lg">Setup Openreplay</div>
+          <p>Find all the ways in which OpenReplay can benefit you and your product.</p>
+        </div>
+      </Modal.Header>
 
-      <StepList title="Pending" steps={pendingSteps} status="pending" />
-      <StepList title="Completed" steps={completedSteps} status="completed" />
-    </div>
+      <Modal.Content className="p-4 pb-20">
+        <StepList title="Pending" steps={pendingSteps} status="pending" />
+        <StepList title="Completed" steps={completedSteps} status="completed" />
+      </Modal.Content>
+    </>
   );
 }
 
