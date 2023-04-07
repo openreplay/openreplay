@@ -1,9 +1,9 @@
 package router
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/klauspost/compress/gzip"
 	"openreplay/backend/internal/http/uuid"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/flakeid"
@@ -33,9 +34,12 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 		//
 		reader, err := gzip.NewReader(body)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("can't create gzip reader: %s", err)
 		}
 		bodyBytes, err = io.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("can't read gzip body: %s", err)
+		}
 		reader.Close()
 	} else {
 		bodyBytes, err = io.ReadAll(body)
