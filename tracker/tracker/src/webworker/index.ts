@@ -10,7 +10,7 @@ import { ToWorkerData, FromWorkerData } from '../common/interaction.js'
 import QueueSender from './QueueSender.js'
 import BatchWriter from './BatchWriter.js'
 
-declare function postMessage(message: FromWorkerData): void
+declare function postMessage(message: FromWorkerData, transfer?: any[]): void
 
 enum WorkerStatus {
   NotActive,
@@ -117,7 +117,9 @@ self.onmessage = ({ data }: any): any => {
       },
       data.connAttemptCount,
       data.connAttemptGap,
-      (batch) => postMessage({ type: 'compress', batch }),
+      (batch) => {
+        postMessage({ type: 'compress', batch }, [batch.buffer])
+      },
     )
     writer = new BatchWriter(
       data.pageNo,
