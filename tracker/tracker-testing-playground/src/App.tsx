@@ -1,7 +1,6 @@
 import React from "react";
 import Tracker from "@openreplay/tracker";
 import axios from "axios";
-import create from "zustand";
 
 import { userId, getTracker, store } from "./tracker";
 

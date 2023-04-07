@@ -2,6 +2,7 @@
 
 - fix webworker writer re-init request
 - remove useless logs
+- tune mouse thrashing detection
 
 # 6.0.0
 

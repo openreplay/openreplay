@@ -141,7 +141,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     }
 
     const acceleration = (nextVelocity - velocity) / shakeCheckInterval
-    if (directionChangeCount > 3 && acceleration > shakeThreshold) {
+    if (directionChangeCount > 4 && acceleration > shakeThreshold) {
       app.send(MouseThrashing(now()))
     }
 
