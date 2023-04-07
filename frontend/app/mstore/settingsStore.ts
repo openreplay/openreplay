@@ -6,17 +6,17 @@ import Webhook, { IWebhook } from 'Types/webhook';
 import {
   webhookService
 } from 'App/services';
+import { GettingStarted } from "./types/gettingStarted";
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
   sessionSettings: SessionSettings = new SessionSettings()
   captureRateFetched: boolean = false;
   limits: any = null;
-
   webhooks: Webhook[] = []
   webhookInst = new Webhook()
-
   hooksLoading = false
+  gettingStarted: GettingStarted = new GettingStarted()
 
   constructor() {
     makeAutoObservable(this, {

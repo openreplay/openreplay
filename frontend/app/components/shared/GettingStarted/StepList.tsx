@@ -34,8 +34,8 @@ const StepItem = React.memo((props: Step) => {
         <Icon name={isCompleted ? 'check-circle-fill' : 'check-circle'} size={20} color={isCompleted ? 'teal' : 'gray-dark'}/>
       </div>
       <div>
-        <div className={cn('font-medium text-lg', { link: !isCompleted })}>{title}</div>
-        <div>{description}</div>
+        <div className={cn('font-medium', { link: !isCompleted })}>{title}</div>
+        <div className="text-sm">{description}</div>
         <div className="flex gap-6 mt-3">
           <a
             className="link"

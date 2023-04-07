@@ -1,1 +1,1 @@
-export { default } from './GettingStarted';
+export { default } from './GettingStartedModal';

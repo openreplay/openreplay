@@ -20,6 +20,7 @@ import SettingsMenu from './SettingsMenu';
 import DefaultMenuView from './DefaultMenuView';
 import PreferencesView from './PreferencesView';
 import HealthStatus from './HealthStatus'
+import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -65,6 +66,9 @@ const Header = (props) => {
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
           </React.Fragment>
         )} */}
+        <div className="mr-6 flex items-cetner cursor-pointer hover:bg-active-blue px-4">
+          <GettingStartedProgress />
+        </div>
 
         <Notifications />
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>

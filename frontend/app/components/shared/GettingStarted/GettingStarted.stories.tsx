@@ -1,7 +1,7 @@
 import React from 'react';
 import { Story, Meta } from '@storybook/react';
 
-import GettingStarted, { Props } from './GettingStarted';
+import GettingStartedModal, { Props } from './GettingStartedModal';
 import { Step } from './StepList';
 
 const list: Step[] = [
@@ -33,10 +33,10 @@ const list: Step[] = [
 
 export default {
   title: 'GettingStarted',
-  component: GettingStarted,
+  component: GettingStartedModal,
 } as Meta;
 
-const Template: Story<Props> = (args) => <GettingStarted {...args} />;
+const Template: Story<Props> = (args) => <GettingStartedModal {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {
