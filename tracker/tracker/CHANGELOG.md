@@ -2,6 +2,7 @@
 
 - fix webworker writer re-init request
 - remove useless logs
+- added gzip compression to large messages
 - tune mouse thrashing detection
 
 # 6.0.0
