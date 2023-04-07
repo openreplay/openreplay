@@ -1,4 +1,4 @@
-## Licenses (as of March 24, 2023)
+## Licenses (as of April 7, 2023), 2023)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -117,3 +117,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | html2canvas | MIT | JavaScript |
 | eget | MIT | Infrastructure |
 | @medv/finder | MIT | JavaScript |
+| fflate | MIT | JavaScript |
