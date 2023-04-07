@@ -22,7 +22,7 @@ function ConsoleRow(props: Props) {
 
   const toggleExpand = () => {
     setExpanded(!expanded);
-    setTimeout(() => recalcHeight(), 0);
+    setTimeout(() => recalcHeight?.(), 0);
   };
   return (
     <div
