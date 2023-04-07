@@ -6,7 +6,7 @@ const Content = ({
   children,
   className,
   ...props
-}) => (
+}: { children?: React.ReactNode; className?: string }) => (
   <div className={ cn(className, stl.content) } { ...props } >
     { children }
   </div>

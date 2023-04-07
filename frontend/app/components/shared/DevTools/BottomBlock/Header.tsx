@@ -12,6 +12,12 @@ const Header = ({
   onFilterChange,
   showClose = true,
   ...props
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  closeBottomBlock?: () => void;
+  onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  showClose?: boolean;
 }) => (
   <div className={ cn("relative border-r border-l py-1", stl.header) } >
     <div className={ cn("w-full h-full flex justify-between items-center", className) } >
