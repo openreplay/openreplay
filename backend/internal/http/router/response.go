@@ -18,7 +18,8 @@ func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
 }
 
 func ResponseOK(w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
-	w.WriteHeader(http.StatusOK)
+	httpCodeHelper(w, http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 	recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
@@ -27,6 +28,8 @@ func ResponseWithJSON(w http.ResponseWriter, res interface{}, requestStart time.
 	if err != nil {
 		log.Println(err)
 	}
+	// test
+	httpCodeHelper(w, http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
 	recordMetrics(requestStart, url, http.StatusOK, bodySize)
@@ -41,7 +44,13 @@ func ResponseWithError(w http.ResponseWriter, code int, err error, requestStart 
 	if err != nil {
 		log.Println(err)
 	}
-	w.WriteHeader(code)
+	httpCodeHelper(w, code)
+	//w.WriteHeader(code)
 	w.Write(body)
 	recordMetrics(requestStart, url, code, bodySize)
+}
+
+func httpCodeHelper(w http.ResponseWriter, code int) {
+	w.WriteHeader(code)
+	log.Printf("HTTP response code: %d", code)
 }
