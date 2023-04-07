@@ -60,11 +60,11 @@ const Header = (props) => {
       {!isPreferences && <DefaultMenuView siteId={siteId} />}
       {isPreferences && <PreferencesView />}
       <div className={styles.right}>
-        {boardingCompletion < 75 && !hideDiscover && (
+        {/* {boardingCompletion < 75 && !hideDiscover && (
           <React.Fragment>
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
           </React.Fragment>
-        )}
+        )} */}
 
         <Notifications />
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
