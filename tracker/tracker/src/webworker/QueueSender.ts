@@ -63,10 +63,11 @@ export default class QueueSender {
     fetch(this.ingestURL, {
       body: batch,
       method: 'POST',
+      // @ts-ignore
       headers: {
         Authorization: `Bearer ${this.token as string}`,
         //"Content-Type": "",
-        // 'Content-Encoding': isCompressed ? 'gzip' : undefined,
+        'Content-Encoding': isCompressed ? 'gzip' : undefined,
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
     })
