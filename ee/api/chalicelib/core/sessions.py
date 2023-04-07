@@ -98,10 +98,11 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                                       if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
-                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
-                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
+                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
+                                                            check_existence=False)
+                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
-                                                                    context=context)
+                                                                    context=context, check_existence=False)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"], duration=data["duration"])
 
