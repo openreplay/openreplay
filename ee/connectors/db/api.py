@@ -34,7 +34,7 @@ class DBConnection:
     """
     Initializes connection to a database
     To update models file use:
-    sqlacodegen --outfile models_universal.py mysql+pymysql://{user}:{pwd}@{address}
+    sqlacodegen --outfile models_universal.py mysql+pymysql://{user}:{pwd}@{host}
     """
     _sessions = sessionmaker()
 
@@ -44,11 +44,25 @@ class DBConnection:
 
         if config == 'redshift':
             self.pdredshift = pr
-            self.pdredshift.connect_to_redshift(dbname=_config('schema'),
-                                                host=_config('address'),
-                                                port=_config('port'),
-                                                user=_config('user'),
-                                                password=_config('password'))
+            ci = _config('cluster_info', default='')
+            cluster_info = dict()
+            if ci == '':
+                cluster_info['user'] = _config('user')
+                cluster_info['host'] = _config('host')
+                cluster_info['port'] = _config('port')
+                cluster_info['password'] = _config('password')
+                cluster_info['dbname'] = _config('dbname')
+            else:
+                ci = ci.split(' ')
+                cluster_info = dict()
+                for _d in ci:
+                    k,v = _d.split('=')
+                    cluster_info[k]=v
+            self.pdredshift.connect_to_redshift(dbname=cluster_info['dbname'],
+                                                host=cluster_info['host'],
+                                                port=cluster_info['port'],
+                                                user=cluster_info['user'],
+                                                password=cluster_info['password'])
 
             self.pdredshift.connect_to_s3(aws_access_key_id=_config('aws_access_key_id'),
                                           aws_secret_access_key=_config('aws_secret_access_key'),
@@ -56,17 +70,17 @@ class DBConnection:
                                           subdirectory=_config('subdirectory'))
 
             self.connect_str = _config('connect_str').format(
-                user=_config('user'),
-                password=_config('password'),
-                address=_config('address'),
-                port=_config('port'),
-                schema=_config('schema')
+                user=cluster_info['user'],
+                password=cluster_info['password'],
+                host=cluster_info['host'],
+                port=cluster_info['port'],
+                dbname=cluster_info['dbname']
             )
             self.engine = create_engine(self.connect_str)
 
         elif config == 'clickhouse':
             self.connect_str = _config('connect_str').format(
-                address=_config('address'),
+                host=_config('host'),
                 database=_config('database')
             )
             self.engine = create_engine(self.connect_str)
@@ -74,7 +88,7 @@ class DBConnection:
             self.connect_str = _config('connect_str').format(
                 user=_config('user'),
                 password=_config('password'),
-                address=_config('address'),
+                host=_config('host'),
                 port=_config('port'),
                 database=_config('database')
             )
@@ -87,7 +101,7 @@ class DBConnection:
                 password=_config('password'),
                 account=_config('account'),
                 database=_config('database'),
-                schema = _config('schema'),
+                dbname = _config('dbname'),
                 warehouse = _config('warehouse')
             )
             self.engine = create_engine(self.connect_str)

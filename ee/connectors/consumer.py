@@ -2,18 +2,25 @@ from decouple import config
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
+import json
 
 from msgcodec.msgcodec import MessageCodec
 from msgcodec.messages import SessionEnd
+print('[INFO] Importing DBConnection...')
 from db.api import DBConnection
+print('[INFO] Importing from models..')
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
+print('[INFO] Importing from writer..')
 from db.writer import insert_batch
+print('[INFO] Importing from handler..')
 from handler import handle_message, handle_normal_message, handle_session
 
 DATABASE = config('DATABASE_NAME')
 LEVEL = config('LEVEL')
 
+print(f'[INFO] Connecting to database {DATABASE}')
 db = DBConnection(DATABASE)
+print('Connected successfully')
 
 if LEVEL == 'detailed':
     table_name = events_detailed_table_name
@@ -29,22 +36,26 @@ def main():
     sessions_batch = []
 
     codec = MessageCodec()
-    consumer = Consumer({
-        "security.protocol": "SSL",
+    ssl_protocol = config('SSL_ENABLED', default=True, cast=bool)
+    consumer_settings = {
         "bootstrap.servers": config('KAFKA_SERVER'),
         "group.id": f"connector_{DATABASE}",
         "auto.offset.reset": "earliest",
         "enable.auto.commit": False
-        })
+        }
+    if ssl_protocol:
+        consumer_settings['security.protocol'] = 'SSL'
+    consumer = Consumer(consumer_settings)
 
-    consumer.subscribe(["raw", "raw_ios"])
+    consumer.subscribe([config("topic", default="saas-raw")])
     print("Kafka consumer subscribed")
     while True:
         msg = consumer.poll(1.0)
         if msg is None:
             continue
-        messages = codec.decode_detailed(msg.value)
-        session_id = codec.decode_key(msg.key)
+        #value = json.loads(msg.value().decode('utf-8'))
+        messages = codec.decode_detailed(msg.value())
+        session_id = codec.decode_key(msg.key())
         if messages is None:
             print('-')
             continue
@@ -133,4 +144,6 @@ def decode_key(b) -> int:
     return decoded
 
 if __name__ == '__main__':
+    print('[INFO] Setup complete')
+    print('[INFO] Starting script')
     main()
