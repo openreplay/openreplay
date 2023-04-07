@@ -30,7 +30,7 @@ func New(handler http.Handler, host, port string, timeout time.Duration) (*Serve
 		WriteTimeout: timeout,
 	}
 	if err := http2.ConfigureServer(server, nil); err != nil {
-		log.Printf("can't configure http2 server: %s", err)
+		log.Printf("can't configure http server: %s", err)
 	}
 	return &Server{
 		server: server,
