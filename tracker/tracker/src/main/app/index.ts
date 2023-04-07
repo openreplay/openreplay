@@ -183,7 +183,8 @@ export default class App {
           const batch = data.batch
           const batchSize = batch.byteLength
           console.log(batchSize)
-          if (batchSize > 1000 * 10) {
+          // 1000 * 10
+          if (batchSize > 1) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) console.error(err)
               this.worker?.postMessage({ type: 'compressed', batch: result })
