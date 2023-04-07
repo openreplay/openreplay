@@ -59,16 +59,18 @@ export default class QueueSender {
   private sendBatch(batch: Uint8Array, isCompressed?: boolean): void {
     this.busy = true
 
-    // @ts-ignore
+    const headers = {
+      Authorization: `Bearer ${this.token as string}`,
+    } as Record<string, string>
+
+    if (isCompressed) {
+      headers['Content-Encoding'] = 'gzip'
+    }
+
     fetch(this.ingestURL, {
       body: batch,
       method: 'POST',
-      // @ts-ignore
-      headers: {
-        Authorization: `Bearer ${this.token as string}`,
-        //"Content-Type": "",
-        'Content-Encoding': isCompressed ? 'gzip' : undefined,
-      },
+      headers,
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
     })
       .then((r: Record<string, any>) => {

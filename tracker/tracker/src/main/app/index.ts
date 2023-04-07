@@ -173,7 +173,7 @@ export default class App {
       this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
         if (data === 'restart') {
           this.stop(false)
-          this.start({}, true)
+          void this.start({}, true)
         } else if (data === 'not_init') {
           console.warn('WebWorker: writer not initialised. Restarting tracker')
         } else if (data.type === 'failure') {
@@ -182,9 +182,7 @@ export default class App {
         } else if (data.type === 'compress') {
           const batch = data.batch
           const batchSize = batch.byteLength
-          console.log(batchSize)
-          // 1000 * 10
-          if (batchSize > 1) {
+          if (batchSize > 1000 * 25) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) console.error(err)
               // @ts-ignore
@@ -217,6 +215,7 @@ export default class App {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           context,
+          // @ts-ignore
           error: `${e}`,
         }),
       })
