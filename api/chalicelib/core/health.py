@@ -10,9 +10,7 @@ from chalicelib.utils import pg_client
 def app_connection_string(name, port, path):
     namespace = config("POD_NAMESPACE", default="app")
     conn_string = config("CLUSTER_URL", default="svc.cluster.local")
-    return (
-        "http://" + name + "." + namespace + "." + conn_string + ":" + port + "/" + path
-    )
+    return f"http://{name}.{namespace}.{conn_string}:{port}/{path}"
 
 
 HEALTH_ENDPOINTS = {
