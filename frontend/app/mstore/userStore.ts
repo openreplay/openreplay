@@ -109,7 +109,7 @@ export default class UserStore {
                     const newUser = new User().fromJson(response);
                     if (wasCreating) {
                         this.modifiedCount -= 1;
-                        this.list.push(new User().fromJson(newUser));
+                        this.list.push(newUser);
                         toast.success('User created successfully');
                     } else {
                         this.updateUser(newUser);
