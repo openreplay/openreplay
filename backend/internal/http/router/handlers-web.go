@@ -1,6 +1,7 @@
 package router
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"io"
@@ -20,7 +21,27 @@ import (
 
 func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
 	body := http.MaxBytesReader(w, r.Body, limit)
-	bodyBytes, err := io.ReadAll(body)
+	var (
+		bodyBytes []byte
+		err       error
+	)
+
+	// Check if body is gzipped and decompress it
+	if r.Header.Get("Content-Encoding") == "gzip" {
+		// Debug log
+		log.Printf("request body is gzipped")
+		//
+		reader, err := gzip.NewReader(body)
+		if err != nil {
+			return nil, err
+		}
+		bodyBytes, err = io.ReadAll(reader)
+		reader.Close()
+	} else {
+		bodyBytes, err = io.ReadAll(body)
+	}
+
+	// Close body
 	if closeErr := body.Close(); closeErr != nil {
 		log.Printf("error while closing request body: %s", closeErr)
 	}
