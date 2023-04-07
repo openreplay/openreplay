@@ -6,21 +6,25 @@ const stepsMap: any = {
     title: '🛠️ Install OpenReplay',
     status: 'pending',
     description: 'Install via script or NPM package',
+    docsLink: 'https://docs.openreplay.com/en/sdk/constructor/',
   },
   'Identify Users': {
     title: '🕵️ Identify Users',
     status: 'pending',
     description: 'Filter sessions by user ID.',
+    docsLink: 'https://docs.openreplay.com/en/v1.10.0/installation/identify-user/',
   },
   'Invite Team Members': {
     title: '🧑‍💻 Invite Team Members',
     status: 'pending',
     description: 'Invite team members, collaborate and start improving your app now.',
+    docsLink: 'https://docs.openreplay.com/en/tutorials/adding-users/',
   },
   Integrations: {
     title: '🔌 Integrations',
     status: 'pending',
     description: 'Sync your backend errors with sessions replays.',
+    docsLink: 'https://docs.openreplay.com/en/integrations/',
   },
 };
 
@@ -29,6 +33,7 @@ export interface Step {
   status: 'pending' | 'ignored' | 'completed';
   description: string;
   url: string;
+  docsLink: string;
 }
 
 export class GettingStarted {

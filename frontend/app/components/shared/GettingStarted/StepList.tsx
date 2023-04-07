@@ -1,22 +1,17 @@
 import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
-
-export interface Step {
-  title: string;
-  status: 'pending' | 'ignored' | 'completed';
-  description: string;
-  icon: string;
-}
+import { Step } from 'App/mstore/types/gettingStarted';
 
 interface StepListProps {
   title: string;
   steps: Step[];
   status: 'pending' | 'completed';
+  docsLink?: string;
 }
 
 const StepItem = React.memo((props: Step) => {
-  const { title, description, status } = props;
+  const { title, description, status, docsLink } = props;
   const isCompleted = status === 'completed';
 
   const onIgnore = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -39,7 +34,7 @@ const StepItem = React.memo((props: Step) => {
         <div className="flex gap-6 mt-3">
           <a
             className="link"
-            href="https://docs.openreplay.com/en/installation/setup-or/"
+            href={docsLink}
             target="_blank"
           >
             Docs
