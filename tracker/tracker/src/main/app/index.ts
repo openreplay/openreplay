@@ -7,7 +7,7 @@ import Sanitizer from './sanitizer.js'
 import Ticker from './ticker.js'
 import Logger, { LogLevel } from './logger.js'
 import Session from './session.js'
-import { gzip } from 'fflate'
+import { gzip, gunzip } from 'fflate'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 
 import type { Options as ObserverOptions } from './observer/top_observer.js'
@@ -187,6 +187,7 @@ export default class App {
           if (batchSize > 1) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) console.error(err)
+              // @ts-ignore
               this.worker?.postMessage({ type: 'compressed', batch: result })
             })
           } else {
