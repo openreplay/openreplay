@@ -20,7 +20,10 @@ import {
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 
-type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function isStyleVElement(vElem: VElement): vElem is VElement & { node: StyleElement } {
+  return vElem.tagName.toLowerCase() === "style"
+}
 
 const IGNORED_ATTRS = [ "autocomplete" ]
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/
@@ -36,7 +39,6 @@ export default class DOMManager extends ListWalker<Message> {
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map()
   private stringDict: Record<number,string> = {}
-  private attrsBacktrack: Message[] = []
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -116,9 +118,9 @@ export default class DOMManager extends ListWalker<Message> {
       return;
     }
 
-    if (parent instanceof VElement && parent.tagName.toLowerCase() === "style") {
+    if (parent instanceof VElement && isStyleVElement(parent)) {
       // TODO: if this ever happens? ; Maybe do not send empty TextNodes in tracker
-      const styleNode = parent.node as StyleElement
+      const styleNode = parent.node
       if (styleNode.sheet &&
         styleNode.sheet.cssRules &&
         styleNode.sheet.cssRules.length > 0 &&
@@ -154,7 +156,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
 
-      // TODO: check if node actually exists on the page, not just in memory
+      // TODOTODO: check if node actually exists on the page, not just in memory
       this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
     }
     if (vn.isSVG && value.startsWith("url(")) {
@@ -201,13 +203,13 @@ export default class DOMManager extends ListWalker<Message> {
       }
       case MType.CreateElementNode: {
         const vElem = new VElement(msg.tag, msg.svg)
+        if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
+          vElem.prioritized = true
+        }
         this.vElements.set(msg.id, vElem)
         this.insertNode(msg)
         this.removeBodyScroll(msg.id, vElem)
         this.removeAutocomplete(vElem)
-        if (['STYLE', 'style', 'LINK'].includes(msg.tag)) { // Styles in priority
-          vElem.enforceInsertion() //TODOTODO priority mounting instead
-        }
         return
       }
       case MType.MoveNode:
@@ -223,8 +225,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.SetNodeAttribute:
-        if (msg.name === 'href') this.attrsBacktrack.push(msg)
-        else this.setNodeAttribute(msg)
+        this.setNodeAttribute(msg)
         return
       case MType.StringDict:
         this.stringDict[msg.key] = msg.value
@@ -233,14 +234,11 @@ export default class DOMManager extends ListWalker<Message> {
         this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
         this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
         if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
-        if (this.stringDict[msg.nameKey] === 'href') this.attrsBacktrack.push(msg)
-        else {
-          this.setNodeAttribute({
-            id: msg.id,
-            name: this.stringDict[msg.nameKey],
-            value: this.stringDict[msg.valueKey],
-          })
-        }
+        this.setNodeAttribute({
+          id: msg.id,
+          name: this.stringDict[msg.nameKey],
+          value: this.stringDict[msg.valueKey],
+        })
         return
       case MType.RemoveNodeAttribute: {
         const vElem = this.vElements.get(msg.id)
@@ -280,10 +278,6 @@ export default class DOMManager extends ListWalker<Message> {
         const vText = this.vTexts.get(msg.id)
         if (!vText) { logger.error("SetNodeData/SetCssData: Node not found", msg); return }
         vText.setData(msg.data)
-       
-        if (msg.tp === MType.SetCssData) { //TODOTODO
-          vText.applyChanges() // Styles in priority  (do we need inlines as well?)
-        }
         return
       }
 
@@ -295,8 +289,8 @@ export default class DOMManager extends ListWalker<Message> {
         if (!styleSheet) {
           const vElem = this.vElements.get(msg.id)
           if (!vElem) { logger.error("CssInsertRule: Node not found", msg); return }
-          if (vElem.tagName.toLowerCase() !== "style") { logger.error("CssInsertRule: Non-style elemtn", msg); return }
-          styleSheet = OnloadStyleSheet.fromStyleElement(vElem.node as StyleElement)
+          if (!isStyleVElement(vElem)) { logger.error("CssInsertRule: Non-style element", msg); return }
+          styleSheet = OnloadStyleSheet.fromStyleElement(vElem.node)
           this.olStyleSheetsDeprecated.set(msg.id, styleSheet)
         }
         styleSheet.insertRule(msg.rule, msg.index)
@@ -351,8 +345,8 @@ export default class DOMManager extends ListWalker<Message> {
           /* <style> tag case */
           const vElem = this.vElements.get(msg.id)
           if (!vElem) { logger.error("AdoptedSsAddOwner: Node not found", msg); return }
-          if (vElem.tagName.toLowerCase() !== "style") { logger.error("Non-style owner", msg); return }
-          this.olStyleSheets.set(msg.sheetID, OnloadStyleSheet.fromStyleElement(vElem.node as StyleElement))
+          if (!isStyleVElement(vElem)) { logger.error("Non-style owner", msg); return }
+          this.olStyleSheets.set(msg.sheetID, OnloadStyleSheet.fromStyleElement(vElem.node))
           return
         }
         /* Constructed StyleSheet case */
@@ -406,34 +400,6 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
-  applyBacktrack(msg: Message) {
-    // @ts-ignore
-    const target = this.vElements.get(msg.id)
-    if (!target) {
-      return
-    }
-
-    switch (msg.tp) {
-      case MType.SetNodeAttribute: {
-        this.setNodeAttribute(msg)
-        return
-      }
-      case MType.SetNodeAttributeDict: {
-        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
-        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
-        if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined) {
-          return
-        }
-        this.setNodeAttribute({
-          id: msg.id,
-          name: this.stringDict[msg.nameKey],
-          value: this.stringDict[msg.valueKey],
-        })
-        return;
-      }
-    }
-  }
-
   /**
    * Moves and applies all the messages from the current (or from the beginning, if t < current.time) 
    * to the one with msg.time >= `t`
@@ -444,20 +410,7 @@ export default class DOMManager extends ListWalker<Message> {
    *   (the async part exists mostly due to styles loading)
    */
   async moveReady(t: number): Promise<void> {
-    /**
-     * Basically just skipping all set attribute with attrs being "href" if user is 'jumping'
-     * to the other point of replay to save time on NOT downloading any resources before the dom tree changes
-     * are applied, so it won't try to download and then cancel when node is created in msg N and removed in msg N+2
-     * which produces weird bug when asset is cached (10-25ms delay)
-     * */
-    // http://0.0.0.0:3333/5/session/8452905874437457
-    // 70 iframe, 8 create element - STYLE tag
     this.moveApply(t, this.applyMessage)
-
-    this.attrsBacktrack.forEach(msg => {
-      this.applyBacktrack(msg)
-    })
-    this.attrsBacktrack = []
 
     this.olVRoots.forEach(rt => rt.applyChanges())
     // Thinkabout (read): css preload
