@@ -78,8 +78,10 @@ export default class WebPlayer extends Player {
 
   scale = () => {
     const { width, height } = this.wpState.get()
-    this.screen.scale({ width, height })
-    this.inspectorController.scale({ width, height })
+    if (!this.screen && !this.inspectorController) return;
+    // sometimes happens in live assist sessions for some reason
+    this.screen?.scale?.({ width, height })
+    this.inspectorController?.scale?.({ width, height })
 
     this.targetMarker.updateMarkedTargets()
   }
