@@ -112,6 +112,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             SELECT
                 s.*,
                 s.session_id::text AS session_id,
+                encode(file_key,'hex') AS file_key,
                 (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata.column_names()]) + ") AS project_metadata") if group_metadata else ''}
