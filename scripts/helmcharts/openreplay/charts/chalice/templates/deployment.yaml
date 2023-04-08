@@ -43,10 +43,9 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: KAFKA_SERVERS
               value: "{{ .Values.global.kafka.kafkaHost }}"
-            - name: REDIS_STRING
-              value: "{{ .Values.global.redis.redisHost }}"
             - name: ch_username
               value: "{{ .Values.global.clickhouse.username }}"
             - name: ch_password
