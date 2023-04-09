@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
+	"os"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
@@ -42,6 +43,14 @@ func NewTask() *task {
 	return &task{bulks: make([]Bulk, 0, 14)}
 }
 
+// Check env variables. If not present, return default value.
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 type connectorImpl struct {
 	conn       driver.Conn
 	batches    map[string]Bulk //driver.Batch
@@ -52,12 +61,18 @@ type connectorImpl struct {
 
 func NewConnector(url string) Connector {
 	license.CheckLicense()
+	// Check username, password, database
+	userName := getEnv("CH_USERNAME", "default")
+	password := getEnv("CH_PASSWORD", "")
+	database := getEnv("CH_DATABASE", "default")
 	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/default")
+	url = strings.TrimSuffix(url, "/"+database)
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: "default",
+			Database: database,
+			Username: userName,
+			Password: password,
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
