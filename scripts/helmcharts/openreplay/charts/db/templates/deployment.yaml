@@ -44,7 +44,7 @@ spec:
           {{- end}}
           env:
             - name: CH_USERNAME
-              value: '{{ .Values.global.clickhouse.userame }}'
+              value: '{{ .Values.global.clickhouse.username }}'
             - name: CH_PASSWORD
               value: '{{ .Values.global.clickhouse.password }}'
             - name: CLICKHOUSE_STRING
