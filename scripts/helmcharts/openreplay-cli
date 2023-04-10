@@ -186,6 +186,12 @@ function or_helm_upgrade() {
 
 function upgrade_old() {
   old_vars_path="$1"
+  [[ -f $old_vars_path ]] || log err "No configuration file ${BWHITE}$old_vars_path${RED}.
+          If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
+            ${BWHITE}openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
+          If you're having a custom installation,
+            ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
+          "
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${old_vars_path}")
   sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml.backup."${or_version//\"}"_"$(date +%Y%m%d-%H%M%S)" || log err "Not able to copy old vars.yaml"
   sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml || log err "Not able to copy old vars.yaml"
@@ -266,6 +272,12 @@ function upgrade() {
   # 3. How to update package. Because openreplay -u will be done from old update script
   # 4. Update from Version
   exists git || log err "Git not found. Please install"
+  [[ -f ${OR_DIR}/vars.yaml ]] || log err "No configuration file ${BWHITE}${OR_DIR}/vars.yaml${RED}.
+        If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
+          ${BWHITE}openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
+        If you're having a custom installation,
+          ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
+        "
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml") || {
     log err "${BWHITE}${OR_DIR}/vars.yaml${RED} not found. 
         Please do ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}
