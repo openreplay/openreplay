@@ -77,11 +77,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	if e.Label == "" {
 		return nil
 	}
-	value := &e.Value
-	if e.ValueMasked {
-		value = nil
-	}
-	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, value, e.Label); err != nil {
+	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
@@ -93,11 +89,7 @@ func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *
 	if e.Label == "" {
 		return nil
 	}
-	value := &e.Value
-	if e.ValueMasked {
-		value = nil
-	}
-	if err := conn.bulks.Get("webInputDurations").Append(sessionID, truncSqIdx(e.ID), e.Timestamp, value, e.Label, e.HesitationTime, e.InputDuration); err != nil {
+	if err := conn.bulks.Get("webInputDurations").Append(sessionID, truncSqIdx(e.ID), e.Timestamp, e.Label, e.HesitationTime, e.InputDuration); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
