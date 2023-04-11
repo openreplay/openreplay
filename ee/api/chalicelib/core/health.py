@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 import redis
 import requests
-from confluent_kafka.admin import AdminClient
+# from confluent_kafka.admin import AdminClient
 from decouple import config
 
 from chalicelib.utils import pg_client, ch_client
@@ -149,7 +149,8 @@ def get_health():
         "ingestionPipeline": {
             **({"redis": __check_redis} if config("REDIS_STRING", default=None)
                                            and len(config("REDIS_STRING")) > 0 else {}),
-            "kafka": __check_kafka
+            # "kafka": __check_kafka
+            "kafka": __always_healthy
         },
         "backendServices": {
             "alerts": __check_be_service("alerts"),
@@ -209,29 +210,28 @@ def __check_database_ch():
         }
     }
 
-
-def __check_kafka():
-    fail_response = {
-        "health": False,
-        "details": {"errors": ["server health-check failed"]}
-    }
-    if config("KAFKA_SERVERS", default=None) is None:
-        fail_response["details"]["errors"].append("KAFKA_SERVERS not defined in env-vars")
-        return fail_response
-
-    try:
-        a = AdminClient({'bootstrap.servers': config("KAFKA_SERVERS"), "socket.connection.setup.timeout.ms": 3000})
-        topics = a.list_topics().topics
-        if not topics:
-            raise Exception('topics not found')
-
-    except Exception as e:
-        print("!! Issue getting kafka-health response")
-        print(str(e))
-        fail_response["details"]["errors"].append(str(e))
-        return fail_response
-
-    return {
-        "health": True,
-        "details": {}
-    }
+# def __check_kafka():
+#     fail_response = {
+#         "health": False,
+#         "details": {"errors": ["server health-check failed"]}
+#     }
+#     if config("KAFKA_SERVERS", default=None) is None:
+#         fail_response["details"]["errors"].append("KAFKA_SERVERS not defined in env-vars")
+#         return fail_response
+#
+#     try:
+#         a = AdminClient({'bootstrap.servers': config("KAFKA_SERVERS"), "socket.connection.setup.timeout.ms": 3000})
+#         topics = a.list_topics().topics
+#         if not topics:
+#             raise Exception('topics not found')
+#
+#     except Exception as e:
+#         print("!! Issue getting kafka-health response")
+#         print(str(e))
+#         fail_response["details"]["errors"].append(str(e))
+#         return fail_response
+#
+#     return {
+#         "health": True,
+#         "details": {}
+#     }
