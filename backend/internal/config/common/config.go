@@ -5,6 +5,8 @@ import "strings"
 type Config struct {
 	ConfigFilePath   string `env:"CONFIG_FILE_PATH"`
 	MessageSizeLimit int    `env:"QUEUE_MESSAGE_SIZE_LIMIT,default=1048576"`
+	MaxMemoryUsage   uint64 `env:"MAX_MEMORY_USAGE,default=80"`
+	MemoryLimitMB    uint64 `env:"MEMORY_LIMIT_MB,default=0"` // 0 means take limit from OS (cgroup)
 }
 
 type Configer interface {

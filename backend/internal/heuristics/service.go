@@ -3,6 +3,7 @@ package heuristics
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	metrics "openreplay/backend/pkg/metrics/heuristics"
 	"time"
@@ -18,14 +19,16 @@ type heuristicsImpl struct {
 	producer types.Producer
 	consumer types.Consumer
 	events   sessions.EventBuilder
+	mm       memory.Manager
 }
 
-func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.EventBuilder) service.Interface {
+func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.EventBuilder, mm memory.Manager) service.Interface {
 	s := &heuristicsImpl{
 		cfg:      cfg,
 		producer: p,
 		consumer: c,
 		events:   e,
+		mm:       mm,
 	}
 	go s.run()
 	return s
@@ -47,6 +50,9 @@ func (h *heuristicsImpl) run() {
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
 		default:
+			if !h.mm.HasFreeMemory() {
+				continue
+			}
 			if err := h.consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)
 			}
