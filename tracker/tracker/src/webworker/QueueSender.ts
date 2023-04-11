@@ -1,5 +1,4 @@
 const INGEST_PATH = '/v1/web/i'
-
 const KEEPALIVE_SIZE_LIMIT = 64 << 10 // 64 kB
 
 export default class QueueSender {
@@ -32,6 +31,7 @@ export default class QueueSender {
     if (this.busy || !this.token) {
       this.queue.push(batch)
     } else {
+      this.busy = true
       this.onCompress(batch)
     }
   }
@@ -39,20 +39,21 @@ export default class QueueSender {
   private sendNext() {
     const nextBatch = this.queue.shift()
     if (nextBatch) {
+      this.busy = true
       this.onCompress(nextBatch)
     } else {
       this.busy = false
     }
   }
 
-  private retry(batch: Uint8Array): void {
+  private retry(batch: Uint8Array, isCompressed?: boolean): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
       this.onFailure(`Failed to send batch after ${this.attemptsCount} attempts.`)
       // remains this.busy === true
       return
     }
     this.attemptsCount++
-    setTimeout(() => this.onCompress(batch), this.ATTEMPT_TIMEOUT * this.attemptsCount)
+    setTimeout(() => this.sendBatch(batch, isCompressed), this.ATTEMPT_TIMEOUT * this.attemptsCount)
   }
 
   // would be nice to use Beacon API, but it is not available in WebWorker
@@ -80,7 +81,7 @@ export default class QueueSender {
           this.onUnauthorised()
           return
         } else if (r.status >= 400) {
-          this.retry(batch)
+          this.retry(batch, isCompressed)
           return
         }
 
@@ -90,7 +91,7 @@ export default class QueueSender {
       })
       .catch((e: any) => {
         console.warn('OpenReplay:', e)
-        this.retry(batch)
+        this.retry(batch, isCompressed)
       })
   }
 
@@ -99,7 +100,7 @@ export default class QueueSender {
   }
 
   sendUncompressed(batch: Uint8Array) {
-    this.sendBatch(batch)
+    this.sendBatch(batch, false)
   }
 
   clean() {

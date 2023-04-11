@@ -1,9 +1,7 @@
 // Do strong type WebWorker as soon as it is possible:
 // https://github.com/microsoft/TypeScript/issues/14877
 // At the moment "webworker" lib conflicts with  jest-environment-jsdom that uses "dom" lib
-//
 
-import type Message from '../common/messages.gen.js'
 import { Type as MType } from '../common/messages.gen.js'
 import { ToWorkerData, FromWorkerData } from '../common/interaction.js'
 
@@ -103,6 +101,23 @@ self.onmessage = ({ data }: any): any => {
     return
   }
 
+  if (data.type === 'compressed') {
+    if (!sender) {
+      console.debug('WebWorker: sender not initialised. Received auth.')
+      initiateRestart()
+      return
+    }
+    sender.sendCompressed(data.batch)
+  }
+  if (data.type === 'uncompressed') {
+    if (!sender) {
+      console.debug('WebWorker: sender not initialised. Received auth.')
+      initiateRestart()
+      return
+    }
+    sender.sendUncompressed(data.batch)
+  }
+
   if (data.type === 'start') {
     workerStatus = WorkerStatus.Starting
     sender = new QueueSender(
@@ -132,12 +147,6 @@ self.onmessage = ({ data }: any): any => {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
     }
     return (workerStatus = WorkerStatus.Active)
-  }
-  if (data.type === 'compressed') {
-    sender?.sendCompressed(data.batch)
-  }
-  if (data.type === 'uncompressed') {
-    sender?.sendUncompressed(data.batch)
   }
 
   if (data.type === 'auth') {

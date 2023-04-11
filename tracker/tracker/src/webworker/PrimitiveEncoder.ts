@@ -114,14 +114,4 @@ export default class PrimitiveEncoder {
     this.reset()
     return data
   }
-
-  encodeCompressed(message: Uint8Array) {
-    const length = message.byteLength
-    if (!this.uint(length) || this.offset + length > this.size) {
-      return false
-    }
-    this.data.set(message, this.offset)
-    this.offset += length
-    return true
-  }
 }
