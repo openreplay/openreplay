@@ -5,41 +5,7 @@ import GettingStartedModal from './GettingStartedModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-interface Props {
-  // completed: number;
-  // total: number;
-}
-
-const list: any[] = [
-  {
-    title: '🕵️ Install OpenReplay',
-    status: 'pending',
-    description: 'Install OpenReplay on your website or mobile app.',
-    icon: 'tools',
-  },
-  {
-    title: '🕵️ Identify Users',
-    status: 'pending',
-    description: 'Identify users across devices and sessions.',
-    icon: 'users',
-  },
-  {
-    title: '🕵️ Integrations',
-    status: 'completed',
-    description: 'Identify users across devices and sessions.',
-    icon: 'users',
-  },
-  {
-    title: '🕵️ Invite Team Members',
-    status: 'ignored',
-    description: 'Identify users across devices and sessions.',
-    icon: 'users',
-  },
-];
-const GettingStartedProgress: React.FC<Props> = () => {
-  // const percentage = Math.round((completed / total) * 100);
-  // const label = `${completed}/${total}`;
-  // const pending = total - completed;
+const GettingStartedProgress: React.FC<null> = () => {
   const { showModal } = useModal();
 
   const {
@@ -54,9 +20,12 @@ const GettingStartedProgress: React.FC<Props> = () => {
     showModal(<GettingStartedModal list={gettingStarted.steps} />, { right: true, width: 450 });
   };
 
-  return (
+  return gettingStarted.status === 'completed' ? null : (
     <div className="flex items-center cursor-pointer" onClick={clickHandler}>
-      <CircleProgress label={gettingStarted.label} percentage={gettingStarted.percentageCompleted} />
+      <CircleProgress
+        label={gettingStarted.label}
+        percentage={gettingStarted.percentageCompleted}
+      />
       <div className="ml-2">
         <div className="text-lg color-teal" style={{ lineHeight: '15px' }}>
           Setup

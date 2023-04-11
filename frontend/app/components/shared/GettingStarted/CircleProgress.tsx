@@ -7,7 +7,7 @@ interface Props {
   bgColor?: string;
   label?: string;
 }
-const ProgressCircle = ({
+const CircleProgress = ({
   percentage = 0,
   radius = 18,
   progressColor = '#394eff',
@@ -29,7 +29,7 @@ const ProgressCircle = ({
   const _radius = radius * 0.8;
 
   const circumference = 2 * Math.PI * _radius;
-  const dashOffset = circumference - offset;
+  const dashOffset = circumference * (1 - (percentage / 100));
   const circleStyle = {
     transition: 'stroke-dashoffset 1s ease-in-out',
   };
@@ -52,7 +52,6 @@ const ProgressCircle = ({
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={dashOffset + ''}
-        // strokeLinecap="round"
         fill="none"
         transform={`rotate(-90 ${radius} ${radius})`}
         style={circleStyle}
@@ -70,4 +69,4 @@ const ProgressCircle = ({
   );
 };
 
-export default ProgressCircle;
+export default CircleProgress;

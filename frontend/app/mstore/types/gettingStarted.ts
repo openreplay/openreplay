@@ -1,5 +1,6 @@
 import { action, computed, makeObservable, observable } from 'mobx';
 import { configService } from 'App/services';
+import { GETTING_STARTED } from 'App/constants/storageKeys';
 
 const stepsMap: any = {
   'Install OpenReplay': {
@@ -7,27 +8,30 @@ const stepsMap: any = {
     status: 'pending',
     description: 'Install via script or NPM package',
     docsLink: 'https://docs.openreplay.com/en/sdk/constructor/',
+    url: 'installing',
   },
   'Identify Users': {
     title: '🕵️ Identify Users',
     status: 'pending',
     description: 'Filter sessions by user ID.',
     docsLink: 'https://docs.openreplay.com/en/v1.10.0/installation/identify-user/',
+    url: 'identify-users',
   },
   'Invite Team Members': {
     title: '🧑‍💻 Invite Team Members',
     status: 'pending',
     description: 'Invite team members, collaborate and start improving your app now.',
     docsLink: 'https://docs.openreplay.com/en/tutorials/adding-users/',
+    url: 'team',
   },
   Integrations: {
     title: '🔌 Integrations',
     status: 'pending',
     description: 'Sync your backend errors with sessions replays.',
     docsLink: 'https://docs.openreplay.com/en/integrations/',
+    url: 'integrations',
   },
 };
-
 export interface Step {
   title: string;
   status: 'pending' | 'ignored' | 'completed';
@@ -44,10 +48,6 @@ export class GettingStarted {
     makeObservable(this, {
       steps: observable,
       completeStep: action,
-      ignoreStep: action,
-      reset: action,
-      completeAllSteps: action,
-      setStatus: action,
       status: observable,
       fetchData: action,
       numCompleted: computed,
@@ -56,9 +56,20 @@ export class GettingStarted {
       label: computed,
       numPendingSteps: computed,
     });
+
+    // steps = {'tenatId': {steps: [], status: 'in-progress'}
+    const gettingStartedSteps = localStorage.getItem(GETTING_STARTED);
+    if (gettingStartedSteps) {
+      const steps = JSON.parse(gettingStartedSteps);
+      this.steps = steps.steps;
+      this.status = steps.status;
+    }
   }
 
   fetchData() {
+    if (this.status === 'completed') {
+      return;
+    }
     configService.fetchGettingStarted().then((data) => {
       this.steps = data.map((item: any) => {
         const step = stepsMap[item.task];
@@ -66,11 +77,24 @@ export class GettingStarted {
         return {
           ...step,
           status: item.done ? 'completed' : 'pending',
-          url: item.url,
         };
       });
       this.status = this.calculateStatus();
+      this.updateLocalStorage();
     });
+  }
+
+  updateLocalStorage() {
+    localStorage.setItem(
+      GETTING_STARTED,
+      JSON.stringify({
+        steps: this.steps.map((item: any) => ({
+          title: item.title,
+          status: item.status,
+        })),
+        status: this.status,
+      })
+    );
   }
 
   calculateStatus() {
@@ -88,26 +112,7 @@ export class GettingStarted {
   completeStep(step: Step) {
     step.status = 'completed';
     this.status = this.calculateStatus();
-  }
-
-  ignoreStep(step: Step) {
-    step.status = 'ignored';
-    this.status = this.calculateStatus();
-  }
-
-  reset() {
-    this.steps.forEach((step) => (step.status = 'pending'));
-    this.status = 'in-progress';
-  }
-
-  completeAllSteps() {
-    this.steps.forEach((step) => (step.status = 'completed'));
-    this.status = 'completed';
-  }
-
-  setStatus(status: 'in-progress' | 'completed') {
-    this.steps.forEach((step) => (step.status = status === 'completed' ? 'completed' : 'pending'));
-    this.status = status;
+    this.updateLocalStorage();
   }
 
   get numCompleted() {

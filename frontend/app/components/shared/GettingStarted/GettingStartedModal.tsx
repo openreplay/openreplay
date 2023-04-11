@@ -3,6 +3,7 @@ import StepList, { Step } from './StepList';
 import Modal from 'App/components/Modal/Modal';
 import CircleProgress from './CircleProgress';
 import GettingStartedProgress from './GettingStartedProgress';
+import { observer } from 'mobx-react-lite';
 
 export interface Props {
   list: Step[];
@@ -32,4 +33,4 @@ function GettingStartedModal(props: Props) {
   );
 }
 
-export default GettingStartedModal;
+export default observer(GettingStartedModal);
