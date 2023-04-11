@@ -192,7 +192,7 @@ const integrations = [
       'Sync your backend errors with sessions replays and see what happened front-to-back.',
     docs: () => (
       <DocCard
-        title="Why use integrations"
+        title="Why use integrations?"
         icon="question-lg"
         iconBgColor="bg-red-lightest"
         iconColor="red"

@@ -17,7 +17,7 @@ function CopyButton({ content, variant="text-primary",  className = '', btnText 
   return (
     <Button
       variant={variant}
-      className={ className }
+      className={ className + ' capitalize' }
       onClick={ copyHandler }
     >
       { copied ? 'copied' : btnText }

@@ -5,15 +5,24 @@ import { HighlightCode, Icon, Button } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
+import withPageTitle from 'App/components/hocs/withPageTitle';
 
 interface Props extends WithOnboardingProps {}
 
 function IdentifyUsersTab(props: Props) {
   return (
     <>
-      <h1 className="flex items-center px-4 py-3 border-b text-2xl">
-        <span>🕵️‍♂️</span>
-        <div className="ml-3">Identify Users</div>
+      <h1 className="flex items-center px-4 py-3 border-b justify-between">
+        <div className="flex items-center text-2xl">
+          <span>🕵️‍♂️</span>
+          <div className="ml-3">Identify Users</div>
+        </div>
+
+        <a href="https://docs.openreplay.com/en/v1.10.0/installation/identify-user/" target="_blank">
+          <Button variant="text-primary" icon="question-circle" className="ml-2">
+            See Documentation
+          </Button>
+        </a>
       </h1>
       <div className="grid grid-cols-6 gap-4 w-full p-4">
         <div className="col-span-4">
@@ -31,9 +40,24 @@ function IdentifyUsersTab(props: Props) {
           </div>
 
           <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
-          <div className="border-t my-8" />
+        </div>
+        <div className="col-span-2">
+          <DocCard
+            title="Why to identify users?"
+            icon="question-lg"
+            iconBgColor="bg-red-lightest"
+            iconColor="red"
+          >
+            Make it easy to search and filter replays by user id. OpenReplay allows you to associate
+            your internal-user-id with the recording.
+          </DocCard>
+        </div>
+      </div>
 
-          <div className="my-8" />
+      <div className="border-t my-6" />
+
+      <div className="grid grid-cols-6 gap-4 w-full p-4">
+        <div className="col-span-4">
           <div>
             <div className="font-medium mb-2 text-lg">Identify users by adding metadata</div>
             <p>
@@ -48,7 +72,7 @@ function IdentifyUsersTab(props: Props) {
             <div className="my-6" />
             <div className="flex items-start">
               <CircleNumber text="2" />
-              <div className="pt-1">
+              <div className="pt-1 w-full">
                 <span className="font-bold">Inject metadata when recording sessions</span>
                 <div className="my-2">
                   Use the <span className="highlight-blue">setMetadata</span> method in your code to
@@ -59,18 +83,7 @@ function IdentifyUsersTab(props: Props) {
             </div>
           </div>
         </div>
-
         <div className="col-span-2">
-          <DocCard
-            title="Why to identify users?"
-            icon="question-lg"
-            iconBgColor="bg-red-lightest"
-            iconColor="red"
-          >
-            Make it easy to search and filter replays by user id. OpenReplay allows you to associate
-            your internal-user-id with the recording.
-          </DocCard>
-
           <DocCard title="What is Metadata?" icon="lightbulb">
             Additional information about users can be provided with metadata (also known as traits
             or user variables). They take the form of key/value pairs, and are useful for filtering
@@ -96,4 +109,4 @@ function IdentifyUsersTab(props: Props) {
   );
 }
 
-export default withOnboarding(IdentifyUsersTab);
+export default withOnboarding(withPageTitle("Identify Users - OpenReplay")(IdentifyUsersTab));

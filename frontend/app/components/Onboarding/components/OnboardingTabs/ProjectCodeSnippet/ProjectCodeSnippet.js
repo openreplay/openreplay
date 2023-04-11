@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { editGDPR, saveGDPR, init } from 'Duck/site';
-import { Checkbox, Toggler } from 'UI';
+import { Checkbox, Loader, Toggler } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames';
 import stl from './projectCodeSnippet.module.css';
@@ -23,6 +23,7 @@ const ProjectCodeSnippet = (props) => {
   const { gdpr } = props.site;
   const [changed, setChanged] = useState(false);
   const [isAssistEnabled, setAssistEnabled] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
     const site = props.sites.find((s) => s.id === props.siteId);
@@ -49,6 +50,14 @@ const ProjectCodeSnippet = (props) => {
     props.editGDPR({ [name]: checked });
     saveGDPR(_gdpr);
   };
+
+  useEffect(() => {
+    // show loader for 500 milliseconds
+    setShowLoader(true);
+    setTimeout(() => {
+      setShowLoader(false);
+    }, 200);
+  }, [isAssistEnabled]);
 
   return (
     <div>
@@ -130,15 +139,21 @@ const ProjectCodeSnippet = (props) => {
         <span>{' tag of your page.'}</span>
       </div>
       <div className={cn(stl.snippetsWrapper, 'ml-10')}>
-        <CodeSnippet
-          isAssistEnabled={isAssistEnabled}
-          host={site && site.host}
-          projectKey={site && site.projectKey}
-          ingestPoint={`"https://${window.location.hostname}/ingest"`}
-          defaultInputMode={gdpr.defaultInputMode}
-          obscureTextNumbers={gdpr.maskNumbers}
-          obscureTextEmails={gdpr.maskEmails}
-        />
+        {showLoader ? (
+          <div style={{ height: '474px' }}>
+            <Loader loading={true} />
+          </div>
+        ) : (
+          <CodeSnippet
+            isAssistEnabled={isAssistEnabled}
+            host={site && site.host}
+            projectKey={site && site.projectKey}
+            ingestPoint={`"https://${window.location.hostname}/ingest"`}
+            defaultInputMode={gdpr.defaultInputMode}
+            obscureTextNumbers={gdpr.maskNumbers}
+            obscureTextEmails={gdpr.maskEmails}
+          />
+        )}
       </div>
     </div>
   );

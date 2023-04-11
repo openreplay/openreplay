@@ -77,7 +77,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
                         <span className="mx-1 font-bold text-xl">&#183;</span>
                         <Popover
                             render={() => (
-                                <div className="text-left bg-white">
+                                <div className="text-left bg-white rounded">
                                     <SessionInfoItem
                                         comp={<CountryFlag country={userCountry} height={11} />}
                                         label={countries[userCountry]}

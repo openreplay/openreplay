@@ -48,7 +48,7 @@ function UsersView(props: Props) {
                 <div className="flex items-center">
                     <AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />
                     <div className="mx-2" />
-                    <UserSearch />
+                    {!isOnboarding && <UserSearch /> }
                 </div>
             </div>
             <UserList isEnterprise={isEnterprise} isOnboarding={isOnboarding} />
