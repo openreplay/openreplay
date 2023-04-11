@@ -87,7 +87,7 @@ function Integrations(props: Props) {
     <div className="mb-4 p-5">
       {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
       {integrations.map((cat: any) => (
-        <div className="grid grid-cols-6 border-b last:border-none">
+        <div className="grid grid-cols-6 border-b last:border-none gap-4">
           <div
             className={cn('col-span-4 mb-2 py-3', cat.docs ? 'col-span-4' : 'col-span-6')}
             key={cat.key}
