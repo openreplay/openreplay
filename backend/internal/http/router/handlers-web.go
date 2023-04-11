@@ -176,13 +176,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	e.addBeaconSize(tokenData.ID, p.BeaconSize)
 
 	ResponseWithJSON(w, &StartSessionResponse{
-		Token:           e.services.Tokenizer.Compose(*tokenData),
-		UserUUID:        userUUID,
-		SessionID:       strconv.FormatUint(tokenData.ID, 10),
-		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
-		BeaconSizeLimit: e.getBeaconSize(tokenData.ID),
-		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
-		Delay:           tokenData.Delay,
+		Token:                e.services.Tokenizer.Compose(*tokenData),
+		UserUUID:             userUUID,
+		SessionID:            strconv.FormatUint(tokenData.ID, 10),
+		ProjectID:            strconv.FormatUint(uint64(p.ProjectID), 10),
+		BeaconSizeLimit:      e.getBeaconSize(tokenData.ID),
+		CompressionThreshold: e.getCompressionThreshold(),
+		StartTimestamp:       int64(flakeid.ExtractTimestamp(tokenData.ID)),
+		Delay:                tokenData.Delay,
 	}, startTime, r.URL.Path, bodySize)
 }
 
