@@ -113,6 +113,8 @@ spec:
               value: '{{ .Values.global.s3.region }}'
             - name: sessions_region
               value: '{{ .Values.global.s3.region }}' 
+            - name: ASSIST_RECORDS_BUCKET
+              value: {{ .Values.global.s3.assistRecordsBucket }}
             - name: sessions_bucket
               value: {{ .Values.global.s3.recordingsBucket }}
             - name: sourcemaps_bucket
