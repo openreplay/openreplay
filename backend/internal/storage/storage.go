@@ -37,6 +37,7 @@ type Task struct {
 	doms *bytes.Buffer
 	dome *bytes.Buffer
 	dev  *bytes.Buffer
+	key  string
 }
 
 type Storage struct {
@@ -69,13 +70,14 @@ func (s *Storage) Wait() {
 	<-s.ready
 }
 
-func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
+func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 	// Generate file path
 	sessionID := strconv.FormatUint(msg.SessionID(), 10)
 	filePath := s.cfg.FSDir + "/" + sessionID
 	// Prepare sessions
 	newTask := &Task{
-		id: sessionID,
+		id:  sessionID,
+		key: msg.EncryptionKey,
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -157,12 +159,12 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	// Encode and compress session
 	if tp == DEV {
 		start := time.Now()
-		task.dev = s.compressSession(mob)
+		task.dev = s.packSession(mob, task.key)
 		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 	} else {
 		if len(mob) <= s.cfg.FileSplitSize {
 			start := time.Now()
-			task.doms = s.compressSession(mob)
+			task.doms = s.packSession(mob, task.key)
 			metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 			return nil
 		}
@@ -171,13 +173,13 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 		var firstPart, secondPart int64
 		go func() {
 			start := time.Now()
-			task.doms = s.compressSession(mob[:s.cfg.FileSplitSize])
+			task.doms = s.packSession(mob[:s.cfg.FileSplitSize], task.key)
 			firstPart = time.Now().Sub(start).Milliseconds()
 			wg.Done()
 		}()
 		go func() {
 			start := time.Now()
-			task.dome = s.compressSession(mob[s.cfg.FileSplitSize:])
+			task.dome = s.packSession(mob[s.cfg.FileSplitSize:], task.key)
 			secondPart = time.Now().Sub(start).Milliseconds()
 			wg.Done()
 		}()
@@ -200,6 +202,11 @@ func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
 		encryptedData = data
 	}
 	return encryptedData
+}
+
+func (s *Storage) packSession(raw []byte, key string) *bytes.Buffer {
+	data := s.encryptSession(raw, key)
+	return s.compressSession(data)
 }
 
 func (s *Storage) compressSession(data []byte) *bytes.Buffer {
