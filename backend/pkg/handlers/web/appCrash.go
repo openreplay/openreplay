@@ -61,12 +61,15 @@ func (h *AppCrashDetector) build() messages.Message {
 func (h *AppCrashDetector) Handle(message messages.Message, timestamp uint64) messages.Message {
 	switch msg := message.(type) {
 	case *messages.UnbindNodes:
+		log.Printf("unbind nodes: %+v", msg)
 		h.dropTimestamp = timestamp
 		h.dropMessageID = msg.MsgID()
 	case *messages.JSException:
+		log.Printf("js exception: %+v", msg)
 		h.updateLastIssueTimestamp(msg.Timestamp)
 	case *messages.NetworkRequest:
 		if msg.Status >= 400 {
+			log.Printf("network issue: %+v", msg)
 			h.updateLastIssueTimestamp(msg.Timestamp)
 		}
 	}
