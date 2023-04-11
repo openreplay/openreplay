@@ -66,6 +66,10 @@ func (e *Router) getBeaconSize(sessionID uint64) int64 {
 	return e.cfg.BeaconSizeLimit
 }
 
+func (e *Router) getCompressionThreshold() int64 {
+	return 20000
+}
+
 func (e *Router) clearBeaconSizes() {
 	for {
 		time.Sleep(time.Minute * 2)
