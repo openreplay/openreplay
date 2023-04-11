@@ -38,7 +38,9 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 		if err != nil {
 			return nil, fmt.Errorf("can't read gzip body: %s", err)
 		}
-		reader.Close()
+		if err := reader.Close(); err != nil {
+			log.Printf("can't close gzip reader: %s", err)
+		}
 		// Debug log
 		log.Printf("request body was gzipped, decompressed in %s", time.Since(s))
 	} else {
@@ -213,7 +215,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize = len(bodyBytes)
 
 	// DEBUG: print body
-	log.Printf("first bytes: %+v", bodyBytes[:10])
+	log.Printf("[decompressed] first bytes: %+v", bodyBytes[:10])
 
 	// Send processed messages to queue as array of bytes
 	// TODO: check bytes for nonsense crap
