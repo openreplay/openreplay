@@ -117,6 +117,7 @@ global:
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
+    assistRecordsBucket: "records"
     vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
