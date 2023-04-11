@@ -66,9 +66,7 @@ const Header = (props) => {
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
           </React.Fragment>
         )} */}
-        <div className="mr-6 flex items-cetner cursor-pointer hover:bg-active-blue px-4">
-          <GettingStartedProgress />
-        </div>
+        <GettingStartedProgress />
 
         <Notifications />
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
