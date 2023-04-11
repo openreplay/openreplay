@@ -8,7 +8,7 @@ import IFrameOffsets, { Offset } from './iframe_offsets.js'
 
 import { CreateDocument } from '../messages.gen.js'
 import App from '../index.js'
-import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js'
+import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
 export interface Options {
   captureIFrames: boolean
@@ -75,6 +75,7 @@ export default class TopObserver extends Observer {
           //log
           return
         }
+        if (!canAccessIframe(iframe)) return
         const currentWin = iframe.contentWindow
         const currentDoc = iframe.contentDocument
         if (currentDoc && currentDoc !== doc) {
