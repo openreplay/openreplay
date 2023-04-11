@@ -110,6 +110,7 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
+  private compressionThreshold = 24 * 1000
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -182,7 +183,7 @@ export default class App {
         } else if (data.type === 'compress') {
           const batch = data.batch
           const batchSize = batch.byteLength
-          if (batchSize > 1000 * 25) {
+          if (batchSize > this.compressionThreshold) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) console.error(err)
               // @ts-ignore
@@ -495,6 +496,7 @@ export default class App {
           userUUID,
           projectID,
           beaconSizeLimit,
+          compressionThreshold, // how big the batch should be before we decide to compress it
           delay, //  derived from token
           sessionID, //  derived from token
           startTimestamp, // real startTS (server time), derived from sessionID
@@ -527,6 +529,8 @@ export default class App {
           token,
           beaconSizeLimit,
         })
+
+        this.compressionThreshold = compressionThreshold
 
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
