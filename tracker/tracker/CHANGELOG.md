@@ -4,6 +4,7 @@
 - remove useless logs
 - added gzip compression to large messages
 - tune mouse thrashing detection
+- fix iframe handling
 
 # 6.0.0
 

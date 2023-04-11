@@ -81,3 +81,19 @@ export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
 
   return false
 }
+
+export function isIframeCrossdomain(e: HTMLIFrameElement): boolean {
+  try {
+    return e.contentWindow?.location.href !== window.location.href
+  } catch (e) {
+    return true
+  }
+}
+
+export function canAccessIframe(iframe: HTMLIFrameElement) {
+  try {
+    return Boolean(iframe.contentDocument)
+  } catch (e) {
+    return false
+  }
+}
