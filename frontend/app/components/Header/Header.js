@@ -20,6 +20,7 @@ import SettingsMenu from './SettingsMenu';
 import DefaultMenuView from './DefaultMenuView';
 import PreferencesView from './PreferencesView';
 import HealthStatus from './HealthStatus'
+import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -60,11 +61,12 @@ const Header = (props) => {
       {!isPreferences && <DefaultMenuView siteId={siteId} />}
       {isPreferences && <PreferencesView />}
       <div className={styles.right}>
-        {boardingCompletion < 75 && !hideDiscover && (
+        {/* {boardingCompletion < 75 && !hideDiscover && (
           <React.Fragment>
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
           </React.Fragment>
-        )}
+        )} */}
+        <GettingStartedProgress />
 
         <Notifications />
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
