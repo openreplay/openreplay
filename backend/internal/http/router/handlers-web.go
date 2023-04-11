@@ -29,7 +29,6 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 
 	// Check if body is gzipped and decompress it
 	if r.Header.Get("Content-Encoding") == "gzip" {
-		s := time.Now()
 		reader, err := gzip.NewReader(body)
 		if err != nil {
 			return nil, fmt.Errorf("can't create gzip reader: %s", err)
@@ -41,8 +40,6 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 		if err := reader.Close(); err != nil {
 			log.Printf("can't close gzip reader: %s", err)
 		}
-		// Debug log
-		log.Printf("request body was gzipped, decompressed in %s", time.Since(s))
 	} else {
 		bodyBytes, err = io.ReadAll(body)
 	}
