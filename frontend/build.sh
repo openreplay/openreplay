@@ -20,7 +20,9 @@ check_prereq() {
 chart=frontend
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
-  image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
+  __app_version="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/${chart} | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}' | cut -d 'v' -f2)"
+  sed -i "s/^VERSION = .*/VERSION = $__app_version/g" .env.sample
+  image_tag="v${__app_version}"
   [[ $ee == "true" ]] && { 
     image_tag="${image_tag}-ee"
   }
@@ -30,8 +32,9 @@ update_helm_release() {
   # Update the chart version
   sed -i "s#^version.*#version: $HELM_TAG# g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
   # Update image tags
-  sed -i "s#ppVersion.*#ppVersion: \"$image_tag\"#g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
+  sed -i "s#ppVersion.*#ppVersion: \"v${__app_version}\"#g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
   # Commit the changes
+  git add .env.sample
   git add ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
   git commit -m "chore(helm): Updating $chart image release"
 }
