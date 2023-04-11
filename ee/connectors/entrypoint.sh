@@ -1,2 +1,2 @@
 echo "Starting service"
-python consumer.py
+python -u consumer.py

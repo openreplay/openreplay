@@ -4,6 +4,7 @@ from datetime import datetime
 from collections import defaultdict
 import json
 
+#from msgcodec.codec import MessageCodec
 from msgcodec.msgcodec import MessageCodec
 from msgcodec.messages import SessionEnd
 print('[INFO] Importing DBConnection...')

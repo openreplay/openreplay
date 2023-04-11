@@ -57,7 +57,11 @@ class Codec:
     @staticmethod
     def read_string(reader: io.BytesIO) -> str:
         length = Codec.read_uint(reader)
-        s = reader.read(length)
+        try:
+            s = reader.read(length)
+        except Exception as e:
+            print(f'Error while reading string of length {length}')
+            raise Exception(e)
         try:
             return s.decode("utf-8", errors="replace").replace("\x00", "\uFFFD")
         except UnicodeDecodeError:
