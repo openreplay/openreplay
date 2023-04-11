@@ -212,6 +212,9 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	}
 	bodySize = len(bodyBytes)
 
+	// DEBUG: print body
+	log.Printf("first bytes: %+v", bodyBytes[:10])
+
 	// Send processed messages to queue as array of bytes
 	// TODO: check bytes for nonsense crap
 	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
