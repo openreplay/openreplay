@@ -228,7 +228,7 @@ export default class MessageManager {
         }
         const sorted = msgs.sort((m1, m2) => {
           // @ts-ignore
-          if (m1.time === m2.time) return m1._index - m2._index
+          if (!m1.time || !m2.time || m1.time === m2.time) return m1._index - m2._index
           return m1.time - m2.time
         })
 
@@ -256,9 +256,8 @@ export default class MessageManager {
 
     loadFiles(loadMethod.url, loadMethod.parser())
       // EFS fallback
-      .catch((e) =>
-        requestEFSDom(this.session.sessionId)
-          .then(createNewParser(false, 'domEFS'))
+      .catch((e) => requestEFSDom(this.session.sessionId)
+            .then(createNewParser(false, 'domEFS'))
       )
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
