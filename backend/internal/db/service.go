@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"openreplay/backend/pkg/memory"
 	"time"
 
 	"openreplay/backend/internal/config/db"
@@ -14,13 +15,15 @@ type dbImpl struct {
 	cfg      *db.Config
 	consumer types.Consumer
 	saver    datasaver.Saver
+	mm       memory.Manager
 }
 
-func New(cfg *db.Config, consumer types.Consumer, saver datasaver.Saver) service.Interface {
+func New(cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, mm memory.Manager) service.Interface {
 	s := &dbImpl{
 		cfg:      cfg,
 		consumer: consumer,
 		saver:    saver,
+		mm:       mm,
 	}
 	go s.run()
 	return s
@@ -35,6 +38,9 @@ func (d *dbImpl) run() {
 		case msg := <-d.consumer.Rebalanced():
 			log.Println(msg)
 		default:
+			if !d.mm.HasFreeMemory() {
+				continue
+			}
 			if err := d.consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consumption: %v", err)
 			}
