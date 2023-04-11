@@ -14,4 +14,9 @@ export default class ConfigService extends BaseService {
     return this.client.post('/config/weekly_report', config)
       .then(r => r.json()).then(j => j.data)
   }
+
+  async fetchGettingStarted(): Promise<any> {
+    return this.client.get('/boarding')
+      .then(r => r.json()).then(j => j.data)
+  }
 }
