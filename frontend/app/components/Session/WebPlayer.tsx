@@ -13,6 +13,7 @@ import PlayerContent from './Player/ReplayPlayer/PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
 import { Note } from "App/services/NotesService";
+import { useParams } from 'react-router-dom'
 
 const TABS = {
   EVENTS: 'User Steps',
@@ -35,6 +36,7 @@ function WebPlayer(props: any) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   let playerInst: IPlayerContext['player'];
+  const params: { sessionId: string } = useParams()
 
   useEffect(() => {
     if (!session.sessionId || contextValue.player !== undefined) return;
@@ -91,13 +93,14 @@ function WebPlayer(props: any) {
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
     () => () => {
+      console.debug('cleaning up player after', params.sessionId)
       toggleFullscreen(false);
       closeBottomBlock();
       playerInst?.clean();
       // @ts-ignore
       setContextValue(defaultContextValue);
     },
-    []
+    [params.sessionId]
   );
 
   const onNoteClose = () => {
