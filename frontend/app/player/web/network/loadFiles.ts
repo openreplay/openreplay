@@ -15,7 +15,7 @@ export async function loadFiles(
   try {
     for (let url of urls) {
       const response = await window.fetch(url)
-      const data = await processAPIStreamResponse(response, url !== url[0])
+      const data = await processAPIStreamResponse(response, url !== urls[0])
       onData(data)
     }
   } catch(e) {
