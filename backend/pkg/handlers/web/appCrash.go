@@ -6,6 +6,7 @@ import (
 )
 
 const CrashWindow = 2 * 1000
+const CrashThreshold = 70
 
 type AppCrashDetector struct {
 	dropTimestamp      uint64
@@ -42,8 +43,6 @@ func (h *AppCrashDetector) build() messages.Message {
 		diff = h.dropTimestamp - h.lastIssueTimestamp
 	}
 
-	log.Printf("app crash, domDrop timestamp: %d, issue timstamp: %d, diff: %d", h.dropTimestamp, h.lastIssueTimestamp, diff)
-
 	// Check possible app crash
 	if diff < CrashWindow {
 		msg := &messages.IssueEvent{
@@ -61,15 +60,16 @@ func (h *AppCrashDetector) build() messages.Message {
 func (h *AppCrashDetector) Handle(message messages.Message, timestamp uint64) messages.Message {
 	switch msg := message.(type) {
 	case *messages.UnbindNodes:
-		log.Printf("unbind nodes: %+v", msg)
+		if msg.TotalRemovedPercent < CrashThreshold {
+			// Not enough nodes removed
+			return nil
+		}
 		h.dropTimestamp = timestamp
 		h.dropMessageID = msg.MsgID()
 	case *messages.JSException:
-		log.Printf("js exception: %+v", msg)
 		h.updateLastIssueTimestamp(msg.Timestamp)
 	case *messages.NetworkRequest:
 		if msg.Status >= 400 {
-			log.Printf("network issue: %+v", msg)
 			h.updateLastIssueTimestamp(msg.Timestamp)
 		}
 	}
