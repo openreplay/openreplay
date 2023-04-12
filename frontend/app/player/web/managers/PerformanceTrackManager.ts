@@ -15,9 +15,9 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 	private chart: Array<PerformanceChartPoint> = [];
 	private isHidden: boolean = false;
 	private timeCorrection: number = 0;
-	private heapAvaliable: boolean = false;
-	private fpsAvaliable: boolean = false;
-	private cpuAvaliable: boolean = false;
+	private heapAvailable: boolean = false;
+	private fpsAvailable: boolean = false;
+	private cpuAvailable: boolean = false;
 	private prevTime: number | null = null;
 	private prevNodesCount: number = 0;
 
@@ -29,7 +29,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 			let timePassed = msg.time - this.prevTime + this.timeCorrection;
 
 			if (timePassed > 0 && msg.frames >= 0) {
-				if (msg.frames > 0) { this.fpsAvaliable = true; }
+				if (msg.frames > 0) { this.fpsAvailable = true; }
 				fps = msg.frames*1e3/timePassed; // Multiply by 1e3 as time in ms;
 				fps = Math.min(fps,60); // What if 120?  TODO: alert if more than 60
 				if (this.chart.length === 1) {
@@ -38,7 +38,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 			}
 
 			if (timePassed > 0 && msg.ticks >= 0) {
-				this.cpuAvaliable = true;
+				this.cpuAvailable = true;
 				let tickRate = msg.ticks * 30 / timePassed;
 				if (tickRate > 1) {
 					tickRate = 1;
@@ -53,7 +53,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 		this.prevTime = msg.time;
 		this.timeCorrection = 0
 
-		this.heapAvaliable = this.heapAvaliable || msg.usedJSHeapSize > 0;
+		this.heapAvailable = this.heapAvailable || msg.usedJSHeapSize > 0;
 		this.chart.push({
 			usedHeap: msg.usedJSHeapSize,
 			totalHeap: msg.totalJSHeapSize,
@@ -109,11 +109,11 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 		return this.chart;
 	}
 
-	get avaliability(): { cpu: boolean, fps: boolean, heap: boolean, nodes: boolean } {
+	get availability(): { cpu: boolean, fps: boolean, heap: boolean, nodes: boolean } {
 		return {
-			cpu: this.cpuAvaliable,
-			fps: this.fpsAvaliable,
-			heap: this.heapAvaliable,
+			cpu: this.cpuAvailable,
+			fps: this.fpsAvailable,
+			heap: this.heapAvailable,
 			nodes: true,
 		}
 	}
