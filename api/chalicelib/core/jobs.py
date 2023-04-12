@@ -106,17 +106,13 @@ def format_datetime(r):
 def get_scheduled_jobs():
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """SELECT * FROM public.jobs
-               WHERE status = %(status)s AND start_at <= (now() at time zone 'utc');""",
+            """SELECT * 
+               FROM public.jobs
+               WHERE status = %(status)s 
+                    AND start_at <= (now() at time zone 'utc');""",
             {"status": JobStatus.SCHEDULED})
-        print("------------------")
-        print(query)
-        print("------------------")
         cur.execute(query=query)
         data = cur.fetchall()
-        for record in data:
-            format_datetime(record)
-
     return helper.list_to_camel_case(data)
 
 

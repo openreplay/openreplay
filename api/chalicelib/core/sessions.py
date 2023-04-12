@@ -1073,6 +1073,9 @@ def get_session_ids_by_user_ids(project_id, user_ids):
                WHERE project_id = %(project_id)s 
                     AND user_id IN %(userId)s;""",
             {"project_id": project_id, "userId": tuple(user_ids)})
+        print("----------")
+        print(query)
+        print("----------")
         cur.execute(query=query)
         ids = cur.fetchall()
     return [s["session_id"] for s in ids]
