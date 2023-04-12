@@ -57,5 +57,6 @@ def get_ios(session_id):
 
 def delete_mobs(project_id, session_ids):
     for session_id in session_ids:
-        for k in __get_mob_keys(project_id=project_id, session_id=session_id):
+        for k in __get_mob_keys(project_id=project_id, session_id=session_id) \
+                 + __get_mob_keys_deprecated(session_id=session_id):
             s3.schedule_for_deletion(config("sessions_bucket"), k)
