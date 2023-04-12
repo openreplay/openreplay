@@ -28,13 +28,14 @@ cron_jobs = [
     {"func": unlock_cron, "trigger": CronTrigger(day="*")},
 ]
 
-SINGLE_CRONS = [{"func": telemetry_cron, "trigger": CronTrigger(day_of_week="*"),
-                 "misfire_grace_time": 60 * 60, "max_instances": 1},
-                {"func": run_scheduled_jobs, "trigger": CronTrigger(day_of_week="*", hour=0, minute=15),
-                 "misfire_grace_time": 20, "max_instances": 1},
-                {"func": weekly_report, "trigger": CronTrigger(day_of_week="mon", hour=5),
-                 "misfire_grace_time": 60 * 60, "max_instances": 1}
-                ]
+SINGLE_CRONS = [
+    {"func": telemetry_cron, "trigger": CronTrigger(day_of_week="*"),
+     "misfire_grace_time": 60 * 60, "max_instances": 1},
+    {"func": run_scheduled_jobs, "trigger": CronTrigger(day_of_week="*", hour=0, minute=15),
+     "misfire_grace_time": 20, "max_instances": 1},
+    {"func": weekly_report, "trigger": CronTrigger(day_of_week="mon", hour=5),
+     "misfire_grace_time": 60 * 60, "max_instances": 1}
+]
 
 if config("LOCAL_CRONS", default=False, cast=bool):
     cron_jobs += SINGLE_CRONS
