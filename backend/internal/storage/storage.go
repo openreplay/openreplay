@@ -33,11 +33,28 @@ func (t FileType) String() string {
 }
 
 type Task struct {
-	id   string
-	doms *bytes.Buffer
-	dome *bytes.Buffer
-	dev  *bytes.Buffer
-	key  string
+	id     string
+	key    string
+	domRaw []byte
+	devRaw []byte
+	doms   *bytes.Buffer
+	dome   *bytes.Buffer
+	dev    *bytes.Buffer
+}
+
+func (t *Task) SetMob(mob []byte, tp FileType) {
+	if tp == DOM {
+		t.domRaw = mob
+	} else {
+		t.devRaw = mob
+	}
+}
+
+func (t *Task) Mob(tp FileType) []byte {
+	if tp == DOM {
+		return t.domRaw
+	}
+	return t.devRaw
 }
 
 type Storage struct {
@@ -110,6 +127,9 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 }
 
 func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
+	if tp == DEV {
+		filePath += "devtools"
+	}
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
@@ -144,49 +164,85 @@ func (s *Storage) sortSessionMessages(raw []byte) ([]byte, error) {
 }
 
 func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
-	// Open mob file
-	if tp == DEV {
-		path += "devtools"
-	}
+	// Open session file
 	startRead := time.Now()
 	mob, err := s.openSession(path, tp)
 	if err != nil {
 		return err
 	}
-	metrics.RecordSessionSize(float64(len(mob)), tp.String())
 	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+	metrics.RecordSessionSize(float64(len(mob)), tp.String())
 
-	// Encode and compress session
-	if tp == DEV {
-		start := time.Now()
-		task.dev = s.packSession(mob, task.key)
-		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
-	} else {
-		if len(mob) <= s.cfg.FileSplitSize {
-			start := time.Now()
-			task.doms = s.packSession(mob, task.key)
-			metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
-			return nil
-		}
-		wg := &sync.WaitGroup{}
-		wg.Add(2)
-		var firstPart, secondPart int64
-		go func() {
-			start := time.Now()
-			task.doms = s.packSession(mob[:s.cfg.FileSplitSize], task.key)
-			firstPart = time.Now().Sub(start).Milliseconds()
-			wg.Done()
-		}()
-		go func() {
-			start := time.Now()
-			task.dome = s.packSession(mob[s.cfg.FileSplitSize:], task.key)
-			secondPart = time.Now().Sub(start).Milliseconds()
-			wg.Done()
-		}()
-		wg.Wait()
-		metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
-	}
+	// Put opened session file into task struct
+	task.SetMob(mob, tp)
+
+	// Encrypt and compress session
+	s.packSession(task, tp)
 	return nil
+}
+
+func (s *Storage) packSession(task *Task, tp FileType) {
+	// Prepare mob file
+	mob := task.Mob(tp)
+
+	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
+		// Encryption
+		start := time.Now()
+		data := s.encryptSession(mob, task.key)
+		metrics.RecordSessionEncryptionDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+		// Compression
+		start = time.Now()
+		result := s.compressSession(data)
+		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+
+		if tp == DOM {
+			task.doms = result
+		} else {
+			task.dev = result
+		}
+		return
+	}
+
+	// Prepare two workers
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	var firstPart, secondPart, firstEncrypt, secondEncrypt int64
+
+	// DomStart part
+	go func() {
+		// Encryption
+		start := time.Now()
+		data := s.encryptSession(mob[:s.cfg.FileSplitSize], task.key)
+		firstPart = time.Now().Sub(start).Milliseconds()
+
+		// Compression
+		start = time.Now()
+		task.doms = s.compressSession(data)
+		firstEncrypt = time.Now().Sub(start).Milliseconds()
+
+		// Finish task
+		wg.Done()
+	}()
+	// DomEnd part
+	go func() {
+		// Encryption
+		start := time.Now()
+		data := s.encryptSession(mob[s.cfg.FileSplitSize:], task.key)
+		secondPart = time.Now().Sub(start).Milliseconds()
+
+		// Compression
+		start = time.Now()
+		task.dome = s.compressSession(data)
+		secondEncrypt = time.Now().Sub(start).Milliseconds()
+
+		// Finish task
+		wg.Done()
+	}()
+	wg.Wait()
+
+	// Record metrics
+	metrics.RecordSessionEncryptionDuration(float64(firstEncrypt+secondEncrypt), tp.String())
+	metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
 }
 
 func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
@@ -202,11 +258,6 @@ func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
 		encryptedData = data
 	}
 	return encryptedData
-}
-
-func (s *Storage) packSession(raw []byte, key string) *bytes.Buffer {
-	data := s.encryptSession(raw, key)
-	return s.compressSession(data)
 }
 
 func (s *Storage) compressSession(data []byte) *bytes.Buffer {
