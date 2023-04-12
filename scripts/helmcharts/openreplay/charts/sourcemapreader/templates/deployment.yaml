@@ -51,8 +51,7 @@ spec:
               value: '{{ .Values.global.s3.region }}'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
-            - name: REDIS_STRING
-              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
