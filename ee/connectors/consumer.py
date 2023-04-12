@@ -3,6 +3,7 @@ from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
 import json
+from time import time
 
 #from msgcodec.codec import MessageCodec
 from msgcodec.msgcodec import MessageCodec
@@ -50,6 +51,7 @@ def main():
 
     consumer.subscribe([config("topic", default="saas-raw")])
     print("Kafka consumer subscribed")
+    t_ = time()
     while True:
         msg = consumer.poll(1.0)
         if msg is None:
@@ -79,7 +81,11 @@ def main():
 
             # try to insert sessions
             if len(sessions_batch) >= sessions_batch_size:
+                t2 = time()
                 attempt_session_insert(sessions_batch)
+                t2_ = time()
+                print(f'[INFO] Inserted sessions into Redshift - time spent: {t2_-t2}')
+                t_ += t2_-t2
                 for s in sessions_batch:
                     try:
                         del sessions[s.sessionid]
@@ -97,10 +103,15 @@ def main():
 
             # insert a batch of events
             if len(batch) >= batch_size:
+                t1 = time()
+                print(f'[INFO] Spent time filling ({batch_size})-batch: {t1-t_}')
                 attempt_batch_insert(batch)
+                t1_ = time()
+                t_ = t1_
+                print(f'[INFO] Inserted events into Redshift - time spent: {t1_-t1}')
                 batch = []
                 consumer.commit()
-                print("sessions in cache:", len(sessions))
+                print("[INFO] sessions in cache:", len(sessions))
 
 
 def attempt_session_insert(sess_batch):
