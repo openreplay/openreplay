@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify';
+
 const FILE_TYPE = 'video/webm';
 const FRAME_RATE = 30;
 
@@ -104,7 +106,8 @@ export async function screenRecorder(recName: string, sessionId: string, saveCb:
       }
     }
   } catch (e) {
-    console.log(e);
+    console.error('OpenReplay:', e);
+    toast.error('Screen recording is not permitted on your browser');
   }
 }
 
