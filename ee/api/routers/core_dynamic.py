@@ -442,7 +442,7 @@ async def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNote
 
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
             dependencies=[OR_scope(Permissions.session_replay)])
-async def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                  note_id=noteId)
     return data

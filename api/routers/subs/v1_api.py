@@ -51,7 +51,7 @@ async def get_user_details(projectKey: str, userId: str):
 
 
 @app_apikey.delete('/v1/{projectKey}/users/{userId}', tags=["api"])
-async def schedule_to_delete_user_data(projectKey: str, userId: str):
+async def schedule_to_delete_user_data(projectKey: str, userId: str, _=Body(None)):
     projectId = projects.get_internal_project_id(projectKey)
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
@@ -83,7 +83,7 @@ async def get_job(projectKey: str, jobId: int):
 
 
 @app_apikey.delete('/v1/{projectKey}/jobs/{jobId}', tags=["api"])
-async def cancel_job(projectKey: str, jobId: int):
+async def cancel_job(projectKey: str, jobId: int, _=Body(None)):
     job = jobs.get(job_id=jobId)
     job_not_found = len(job.keys()) == 0
 

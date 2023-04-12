@@ -71,6 +71,7 @@ rm -rf ./chalicelib/core/assist.py
 rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh
+rm -rf ./build_crons.sh
 rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py

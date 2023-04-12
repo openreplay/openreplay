@@ -108,10 +108,10 @@ async def process_trace(action: str, path_format: str, request: Request, respons
         return
     current_context: CurrentContext = request.state.currentContext
     body: json = None
-    if request.method in ["POST", "PUT"]:
+    if request.method in ["POST", "PUT", "DELETE"]:
         try:
             body = await request.json()
-        except json.decoder.JSONDecodeError:
+        except Exception:
             pass
         intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
         for attribute in intersect:
