@@ -39,7 +39,7 @@
   }
 
   white-space: nowrap;
-  z-index: 20;
+  z-index: 9999;
   position: absolute;
   right: 0px;
   top: 37px;

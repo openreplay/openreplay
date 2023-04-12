@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'UI';
+import { Button, Icon } from 'UI';
 import styles from './menu.module.css';
 import cn from 'classnames';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -42,8 +42,11 @@ export default class ItemMenu extends React.PureComponent<Props> {
     return (
       <div className={styles.wrapper}>
         <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
-          <Button variant="text" icon="ellipsis-v" onClick={this.toggleMenu}>
-            More
+          <Button variant="text" onClick={this.toggleMenu}>
+            <div className="flex items-center">
+              <Icon name="ellipsis-v" size={18} className="mr-1" />
+              <span>More</span>
+            </div>
           </Button>
           <div className={cn(styles.menu, styles.menuDim)} data-displayed={displayed}>
             {items.map((item) =>
