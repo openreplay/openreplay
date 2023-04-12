@@ -1065,31 +1065,6 @@ def get_session_user(project_id, user_id):
     return helper.dict_to_camel_case(data)
 
 
-def get_session_ids_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """SELECT session_id 
-               FROM public.sessions
-               WHERE project_id = %(project_id)s 
-                    AND user_id IN %(userId)s;""",
-            {"project_id": project_id, "userId": tuple(user_ids)})
-        cur.execute(query=query)
-        ids = cur.fetchall()
-    return [s["session_id"] for s in ids]
-
-
-def delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
-        query = cur.mogrify(
-            """DELETE FROM public.sessions
-               WHERE session_id IN %(session_ids)s;""",
-            {"session_ids": tuple(session_ids)}
-        )
-        cur.execute(query=query)
-
-    return True
-
-
 def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
