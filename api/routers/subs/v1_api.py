@@ -2,7 +2,6 @@ from fastapi import Depends, Body
 
 import schemas
 from chalicelib.core import sessions, events, jobs, projects
-from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -15,7 +14,7 @@ async def get_user_sessions(projectKey: str, userId: str, start_date: int = None
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
-        'data': sessions.get_user_sessions(
+        "data": sessions.get_user_sessions(
             project_id=projectId,
             user_id=userId,
             start_date=start_date,
@@ -30,7 +29,7 @@ async def get_session_events(projectKey: str, sessionId: int):
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
-        'data': events.get_by_session_id(
+        "data": events.get_by_session_id(
             project_id=projectId,
             session_id=sessionId
         )
@@ -43,7 +42,7 @@ async def get_user_details(projectKey: str, userId: str):
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
-        'data': sessions.get_session_user(
+        "data": sessions.get_session_user(
             project_id=projectId,
             user_id=userId
         )
@@ -55,14 +54,8 @@ async def schedule_to_delete_user_data(projectKey: str, userId: str):
     projectId = projects.get_internal_project_id(projectKey)
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
-    data = {"action": "delete_user_data",
-            "reference_id": userId,
-            "description": f"Delete user sessions of userId = {userId}",
-            "start_at": TimeUTC.to_human_readable(TimeUTC.midnight(1))}
-    record = jobs.create(project_id=projectId, data=data)
-    return {
-        'data': record
-    }
+    record = jobs.create(project_id=projectId, user_id=userId)
+    return {"data": record}
 
 
 @app_apikey.get('/v1/{projectKey}/jobs', tags=["api"])
@@ -70,16 +63,12 @@ async def get_jobs(projectKey: str):
     projectId = projects.get_internal_project_id(projectKey)
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
-    return {
-        'data': jobs.get_all(project_id=projectId)
-    }
+    return {"data": jobs.get_all(project_id=projectId)}
 
 
 @app_apikey.get('/v1/{projectKey}/jobs/{jobId}', tags=["api"])
 async def get_job(projectKey: str, jobId: int):
-    return {
-        'data': jobs.get(job_id=jobId)
-    }
+    return {"data": jobs.get(job_id=jobId)}
 
 
 @app_apikey.delete('/v1/{projectKey}/jobs/{jobId}', tags=["api"])
@@ -93,9 +82,7 @@ async def cancel_job(projectKey: str, jobId: int):
         return {"errors": ["The request job has already been canceled/completed."]}
 
     job["status"] = "cancelled"
-    return {
-        'data': jobs.update(job_id=jobId, job=job)
-    }
+    return {"data": jobs.update(job_id=jobId, job=job)}
 
 
 @app_apikey.get('/v1/projects', tags=["api"])
@@ -104,15 +91,13 @@ async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     for record in records:
         del record['projectId']
 
-    return {
-        'data': records
-    }
+    return {"data": records}
 
 
 @app_apikey.get('/v1/projects/{projectKey}', tags=["api"])
 async def get_project(projectKey: str, context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        'data': projects.get_project_by_key(tenant_id=context.tenant_id, project_key=projectKey)
+        "data": projects.get_project_by_key(tenant_id=context.tenant_id, project_key=projectKey)
     }
 
 
@@ -125,5 +110,5 @@ async def create_project(data: schemas.CreateProjectSchema = Body(...),
         data=data,
         skip_authorization=True
     )
-    del record['data']['projectId']
+    del record["data"]['projectId']
     return record
