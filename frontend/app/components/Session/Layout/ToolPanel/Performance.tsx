@@ -220,12 +220,12 @@ export default class Performance extends React.PureComponent {
   render() {
     const { 
       performanceChartTime,
-      avaliability = {},
+      availability = {},
       hiddenScreenMarker = true,
     } = this.props;
-    const { fps, cpu, heap, nodes, memory, battery } = avaliability;
-    const avaliableCount = [ fps, cpu, heap, nodes, memory, battery ].reduce((c, av) => av ? c + 1 : c, 0);
-    const height = avaliableCount === 0 ? "0" : `${100 / avaliableCount}%`;
+    const { fps, cpu, heap, nodes, memory, battery } = availability;
+    const availableCount = [ fps, cpu, heap, nodes, memory, battery ].reduce((c, av) => av ? c + 1 : c, 0);
+    const height = availableCount === 0 ? "0" : `${100 / availableCount}%`;
 
     return (
       <>

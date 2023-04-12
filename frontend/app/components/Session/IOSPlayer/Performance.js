@@ -44,7 +44,7 @@ export default observer(({ player }) => {
 	      <Performance 
 					performanceChartTime={ current ? current.tmie : 0 }
 				  performanceChartData={ player.lists[PERFORMANCE].list }
-				  avaliability={ player.lists[PERFORMANCE].availability }
+				  availability={ player.lists[PERFORMANCE].availability }
 				  hiddenScreenMarker={ false }
 				  player={ player }
 				/>
