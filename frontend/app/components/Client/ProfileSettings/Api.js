@@ -2,7 +2,7 @@ import React from 'react';
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
 import styles from './profileSettings.module.css';
-import { Form, Input, Button } from 'UI';
+import { Form, Input, Button, CopyButton } from 'UI';
 
 @connect(state => ({
   apiKey: state.getIn([ 'user', 'account', 'apiKey' ]),
@@ -36,14 +36,7 @@ export default class Api extends React.PureComponent {
             readOnly={ true }
             value={ apiKey }
             leadingButton={
-              <Button
-                type="button"
-                variant="text-primary"
-                role="button"
-                onClick={ this.copyHandler }
-              >
-                { copied ? 'copied' : 'copy' }
-              </Button>
+              <CopyButton content={ apiKey } />
             }
           />
         </Form.Field>
