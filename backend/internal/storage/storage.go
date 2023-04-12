@@ -213,12 +213,12 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		// Encryption
 		start := time.Now()
 		data := s.encryptSession(mob[:s.cfg.FileSplitSize], task.key)
-		firstPart = time.Now().Sub(start).Milliseconds()
+		firstEncrypt = time.Since(start).Milliseconds()
 
 		// Compression
 		start = time.Now()
 		task.doms = s.compressSession(data)
-		firstEncrypt = time.Now().Sub(start).Milliseconds()
+		firstPart = time.Since(start).Milliseconds()
 
 		// Finish task
 		wg.Done()
@@ -228,12 +228,12 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		// Encryption
 		start := time.Now()
 		data := s.encryptSession(mob[s.cfg.FileSplitSize:], task.key)
-		secondPart = time.Now().Sub(start).Milliseconds()
+		secondEncrypt = time.Since(start).Milliseconds()
 
 		// Compression
 		start = time.Now()
 		task.dome = s.compressSession(data)
-		secondEncrypt = time.Now().Sub(start).Milliseconds()
+		secondPart = time.Since(start).Milliseconds()
 
 		// Finish task
 		wg.Done()
