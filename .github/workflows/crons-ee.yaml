@@ -10,6 +10,7 @@ on:
     branches:
       - dev
       - api-*
+      - v1.11.0-patch
     paths:
       - "ee/api/**"
       - "api/**"
