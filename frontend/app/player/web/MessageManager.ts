@@ -52,7 +52,7 @@ export interface State extends ScreenState, ListsState {
   connBandwidth?: number,
   location?: string,
   performanceChartTime?: number,
-  performanceAvaliability?: PerformanceTrackManager['avaliability']
+  performanceAvailability?: PerformanceTrackManager['availability']
 
   domContentLoadedTime?:  { time: number, value: number },
   domBuildingTime?: number,
@@ -191,7 +191,7 @@ export default class MessageManager {
   private onFileReadSuccess = () => {
     const stateToUpdate : Partial<State>= {
       performanceChartData: this.performanceTrackManager.chartData,
-      performanceAvaliability: this.performanceTrackManager.avaliability,
+      performanceAvailability: this.performanceTrackManager.availability,
       ...this.lists.getFullListsState(),
     }
     if (this.activityManager) {
@@ -228,7 +228,7 @@ export default class MessageManager {
         }
         const sorted = msgs.sort((m1, m2) => {
           // @ts-ignore
-          if (m1.time === m2.time) return m1._index - m2._index
+          if (!m1.time || !m2.time || m1.time === m2.time) return m1._index - m2._index
           return m1.time - m2.time
         })
 
@@ -250,34 +250,58 @@ export default class MessageManager {
 
     this.waitingForFiles = true
 
+    // TODO: refactor this stuff; split everything to async/await
+
     const loadMethod = this.session.domURL && this.session.domURL.length > 0
       ? { url: this.session.domURL, parser: () => createNewParser(true, 'dom') }
       : { url: this.session.mobsUrl, parser: () => createNewParser(false, 'dom')}
 
-    loadFiles(loadMethod.url, loadMethod.parser())
-      // EFS fallback
-      .catch((e) =>
-        requestEFSDom(this.session.sessionId)
-          .then(createNewParser(false, 'domEFS'))
+    const parser = loadMethod.parser()
+
+    /**
+     * We load first dom mobfile before the rest
+     * to speed up time to replay
+     * but as a tradeoff we have to have some copy-paste
+     * for the devtools file
+     * */
+    loadFiles([loadMethod.url[0]], parser)
+      .then(() => {
+        if (loadMethod.url.length > 1) {
+          loadFiles([loadMethod.url[1]], parser, true)
+        }
+        if (!isClickmap) {
+          this.loadDevtools(createNewParser)
+        }
+      })
+      /**
+       * EFS fallback for unprocessed sessions (which are live)
+       * */
+      .catch(() => {
+          requestEFSDom(this.session.sessionId)
+            .then(createNewParser(false, 'domEFS'))
+            .catch(this.onFileReadFailed)
+          if (!isClickmap) {
+            this.loadDevtools(createNewParser)
+          }
+        }
       )
       .then(this.onFileReadSuccess)
-      .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally);
+  }
 
-    // load devtools (TODO: start after the first DOM file download)
-    if (isClickmap) return;
+  loadDevtools(createNewParser: (shouldDecrypt: boolean, file: string) => (b: Uint8Array) => Promise<void>) {
     this.state.update({ devtoolsLoading: true })
     loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
-    // EFS fallback
-    .catch(() =>
-      requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false, 'devtoolsEFS'))
-    )
-    .then(() => {
-      this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
-    })
-    .catch(e => logger.error("Can not download the devtools file", e))
-    .finally(() => this.state.update({ devtoolsLoading: false }))
+      // EFS fallback
+      .catch(() =>
+        requestEFSDevtools(this.session.sessionId)
+          .then(createNewParser(false, 'devtoolsEFS'))
+      )
+      .then(() => {
+        this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
+      })
+      .catch(e => logger.error("Can not download the devtools file", e))
+      .finally(() => this.state.update({ devtoolsLoading: false }))
   }
 
   resetMessageManagers() {

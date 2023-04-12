@@ -187,7 +187,7 @@ function Performance({
     performanceChartData,
     connType,
     connBandwidth,
-    performanceAvaliability: avaliability,
+    performanceAvailability: availability,
   } = store.get();
 
   React.useState(() => {
@@ -212,9 +212,9 @@ function Performance({
     }
   };
 
-  const { fps, cpu, heap, nodes } = avaliability;
-  const avaliableCount = [fps, cpu, heap, nodes].reduce((c, av) => (av ? c + 1 : c), 0);
-  const height = avaliableCount === 0 ? '0' : `${100 / avaliableCount}%`;
+  const { fps, cpu, heap, nodes } = availability;
+  const availableCount = [fps, cpu, heap, nodes].reduce((c, av) => (av ? c + 1 : c), 0);
+  const height = availableCount === 0 ? '0' : `${100 / availableCount}%`;
 
   return (
     <BottomBlock>
