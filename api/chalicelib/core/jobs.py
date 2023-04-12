@@ -47,13 +47,14 @@ def get_all(project_id):
     return helper.list_to_camel_case(data)
 
 
-def create(project_id, data):
+def create(project_id, user_id):
     with pg_client.PostgresClient() as cur:
-        job = {
-            "status": "scheduled",
-            "project_id": project_id,
-            **data
-        }
+        job = {"status": "scheduled",
+               "project_id": project_id,
+               "action": Actions.DELETE_USER_DATA,
+               "reference_id": user_id,
+               "description": f"Delete user sessions of userId = {user_id}",
+               "start_at": TimeUTC.to_human_readable(TimeUTC.midnight(1))}
 
         query = cur.mogrify(
             """INSERT INTO public.jobs(project_id, description, status, action,reference_id, start_at)
@@ -109,7 +110,8 @@ def __get_session_ids_by_user_ids(project_id, user_ids):
             """SELECT session_id 
                FROM public.sessions
                WHERE project_id = %(project_id)s 
-                    AND user_id IN %(userId)s;""",
+                    AND user_id IN %(userId)s
+               LIMIT 1000;""",
             {"project_id": project_id, "userId": tuple(user_ids)})
         cur.execute(query=query)
         ids = cur.fetchall()
@@ -120,13 +122,10 @@ def __delete_sessions_by_session_ids(session_ids):
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """DELETE FROM public.sessions
-               WHERE session_id IN %(session_ids)s
-               LIMIT 1000;""",
+               WHERE session_id IN %(session_ids)s""",
             {"session_ids": tuple(session_ids)}
         )
         cur.execute(query=query)
-
-    return True
 
 
 def get_scheduled_jobs():
