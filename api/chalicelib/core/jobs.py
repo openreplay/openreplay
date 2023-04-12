@@ -111,13 +111,18 @@ def get_scheduled_jobs():
                WHERE status = %(status)s 
                     AND start_at <= (now() at time zone 'utc');""",
             {"status": JobStatus.SCHEDULED})
+        print(query)
         cur.execute(query=query)
         data = cur.fetchall()
+        print(">>>")
+        print(data)
     return helper.list_to_camel_case(data)
 
 
 def execute_jobs():
+    print(">>> looking for jobs to execute")
     jobs = get_scheduled_jobs()
+    print(jobs)
 
     for job in jobs:
         print(f"Executing jobId:{job['jobId']}")
