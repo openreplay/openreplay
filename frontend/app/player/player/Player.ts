@@ -3,6 +3,7 @@ import * as typedLocalStorage from './localStorage';
 import type { Moveable, Cleanable, Store } from '../common/types';
 import Animator from './Animator';
 import type { GetState as AnimatorGetState } from './Animator';
+export const SPEED_OPTIONS = [0.5, 1, 2, 4, 8, 16]
 
 
 /* == separate this == */
@@ -13,7 +14,7 @@ const SKIP_TO_ISSUE_STORAGE_KEY = "__$session-skipToIssue$__"
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__"
 const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__"
 const storedSpeed: number = typedLocalStorage.number(SPEED_STORAGE_KEY)
-const initialSpeed = [0.5, 1, 2, 4, 8, 16].includes(storedSpeed) ? storedSpeed : 1
+const initialSpeed = SPEED_OPTIONS.includes(storedSpeed) ? storedSpeed : 1
 const initialSkip = typedLocalStorage.boolean(SKIP_STORAGE_KEY)
 const initialSkipToIssue = typedLocalStorage.boolean(SKIP_TO_ISSUE_STORAGE_KEY)
 const initialAutoplay = typedLocalStorage.boolean(AUTOPLAY_STORAGE_KEY)
@@ -89,9 +90,10 @@ export default class Player extends Animator {
     this.pState.update({ speed })
   }
 
-  toggleSpeed() {
-    const { speed } = this.pState.get()
-    this.updateSpeed(speed < HIGHEST_SPEED ? speed * 2 : 0.5)
+  toggleSpeed(index: number | null) {
+    const { speed } = this.pState.get();
+    const newSpeedIndex = index === null ? null : Math.max(0, Math.min(SPEED_OPTIONS.length - 1, index));
+    this.updateSpeed(newSpeedIndex === null ? speed * 2 : SPEED_OPTIONS[newSpeedIndex]);
   }
 
   speedUp() {

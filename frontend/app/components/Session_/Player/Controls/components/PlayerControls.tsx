@@ -4,7 +4,8 @@ import cn from 'classnames';
 import { ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
-import { SkipButton } from 'App/player-ui'
+import { SkipButton } from 'App/player-ui';
+import { SPEED_OPTIONS } from 'App/player/player/Player';
 
 interface Props {
   skip: boolean;
@@ -16,7 +17,7 @@ interface Props {
   setSkipInterval: (interval: number) => void;
   backTenSeconds: () => void;
   forthTenSeconds: () => void;
-  toggleSpeed: () => void;
+  toggleSpeed: (speedIndex: number) => void;
   toggleSkip: () => void;
 }
 
@@ -79,7 +80,6 @@ function PlayerControls(props: Props) {
         <ReduxTime isCustom name="endTime" format="mm:ss" />
       </div>
 
-
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
         <Tooltip
@@ -87,10 +87,7 @@ function PlayerControls(props: Props) {
           title={`Rewind ${currentInterval}s`}
           placement="top"
         >
-          <button
-            ref={arrowBackRef}
-            className="h-full  bg-transparent"
-          >
+          <button ref={arrowBackRef} className="h-full  bg-transparent">
             <SkipButton
               size={18}
               onClick={backTenSeconds}
@@ -146,10 +143,7 @@ function PlayerControls(props: Props) {
           title={`Rewind ${currentInterval}s`}
           placement="top"
         >
-          <button
-            ref={arrowForwardRef}
-            className="h-full bg-transparent"
-          >
+          <button ref={arrowForwardRef} className="h-full bg-transparent">
             <SkipButton
               size={18}
               onClick={forthTenSeconds}
@@ -159,34 +153,65 @@ function PlayerControls(props: Props) {
         </Tooltip>
       </div>
 
-
-        <div className="flex items-center">
-          <div className="mx-2" />
-          {/* @ts-ignore */}
-          <Tooltip title="Control play back speed (↑↓)" placement="top">
-            <button
-              ref={speedRef}
-              className={cn(styles.speedButton, 'focus:border focus:border-blue')}
-              onClick={toggleSpeed}
-              data-disabled={disabled}
-            >
-              <div>{speed + 'x'}</div>
-            </button>
-          </Tooltip>
-          <div className="mx-2" />
-          <button
-            className={cn(styles.skipIntervalButton, {
-              [styles.withCheckIcon]: skip,
-              [styles.active]: skip,
-            })}
-            onClick={toggleSkip}
-            data-disabled={disabled}
-          >
-            {skip && <Icon name="check" size="24" className="mr-1" />}
-            {'Skip Inactivity'}
-          </button>
-        </div>
-
+      <div className="flex items-center">
+        <div className="mx-2" />
+        {/* @ts-ignore */}
+        <Popover
+          // @ts-ignore
+          theme="nopadding"
+          animation="none"
+          duration={0}
+          className="cursor-pointer select-none"
+          distance={20}
+          render={({ close }: any) => (
+            <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+              <div className="font-semibold py-2 px-4 w-full text-left">
+                Playback speed
+              </div>
+              {Object.keys(SPEED_OPTIONS).map((index: any) => (
+                <div
+                  key={SPEED_OPTIONS[index]}
+                  onClick={() => {
+                    close();
+                    toggleSpeed(index);
+                  }}
+                  className={cn(
+                    'py-2 px-4 cursor-pointer w-full text-left font-semibold',
+                    'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                  )}
+                >
+                  {SPEED_OPTIONS[index]}
+                  <span className="text-disabled-text">x</span>
+                </div>
+              ))}
+            </div>
+          )}
+        >
+          <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
+            <Tooltip disabled={showTooltip} title="Set default skip duration">
+              <button
+                ref={speedRef}
+                className={cn(styles.speedButton, 'focus:border focus:border-blue')}
+                data-disabled={disabled}
+              >
+                <div>{speed + 'x'}</div>
+              </button>
+            </Tooltip>
+          </div>
+        </Popover>
+        <div className="mx-2" />
+        <button
+          className={cn(styles.skipIntervalButton, {
+            [styles.withCheckIcon]: skip,
+            [styles.active]: skip,
+          })}
+          onClick={toggleSkip}
+          data-disabled={disabled}
+        >
+          {skip && <Icon name="check" size="24" className="mr-1" />}
+          {'Skip Inactivity'}
+        </button>
+      </div>
     </div>
   );
 }
