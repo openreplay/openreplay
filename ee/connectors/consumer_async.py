@@ -150,30 +150,36 @@ async def main():
     print("[INFO] Kafka consumer subscribed")
 
     c_time = time()
+    read_msgs = 0
     while True:
         msg = consumer.poll(1.0)
         process_message(msg, codec, sessions, batch, sessions_batch)
+        read_msgs += 1
         if time() - c_time > upload_rate:
+            print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
             await insertBatch(deepcopy(sessions_batch), deepcopy(batch), db, sessions_table_name, table_name, LEVEL)
             consumer.commit()
             sessions_batch = []
             batch = []
+            read_msgs = 0
             c_time = time()
 
 
 
 async def insertBatch(sessions_batch, batch, db, sessions_table_name, table_name, LEVEL):
-    print(f'[INFO] Number of events to add {len(batch)}, number of sessions to add {len(sessions_batch)}')
+    t1 = time()
+    print(f'[BG-INFO] Number of events to add {len(batch)}, number of sessions to add {len(sessions_batch)}')
     if sessions_batch != []:
         attempt_session_insert(sessions_batch, db, sessions_table_name)
-        print('[INFO] Events uploaded to redshift')
+        print('[BG-INFO] Events uploaded to redshift')
         #sessions_batch = []
 
     # insert a batch of events
     if batch != []:
         attempt_batch_insert(batch, db, table_name, LEVEL)
         #batch = []
-        print('[INFO] Sessions uploaded to redshift')
+        print('[GB-INFO] Sessions uploaded to redshift')
+    print(f'[BG-INFO] Uploaded into S3 in {time()-t1} secons')
 
 
 if __name__ == '__main__':

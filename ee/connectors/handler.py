@@ -169,9 +169,9 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         except TypeError:
             n.urls_count = 1
         try:
-            n.urls.append(message.url)
+            n.urls += ';'+message.url
         except AttributeError:
-            n.urls = [message.url]
+            n.urls = message.url
         return n
 
     if isinstance(message, PerformanceTrackAggr):
@@ -237,9 +237,9 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
             n.issues_count = 1
 
         try:
-            n.issues.append(message.type)
+            n.issues += ';'+message.type
         except AttributeError:
-            n.issues = [message.type]
+            n.issues = message.type
         return n
 
 
