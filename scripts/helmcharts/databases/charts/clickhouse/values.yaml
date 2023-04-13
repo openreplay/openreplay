@@ -84,4 +84,4 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-storageSize: 100G
+storageSize: 100Gi
