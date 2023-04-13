@@ -21,20 +21,17 @@ function UserList(props: Props) {
     const searchQuery = useObserver(() => userStore.searchQuery);
     const { showModal } = useModal();
 
-    // const filterList = (list) => {
-    //     const filterRE = getRE(searchQuery, 'i');
-    //     let _list = list.filter((w) => {
-    //         return filterRE.test(w.email) || filterRE.test(w.roleName);
-    //     });
-    //     return _list;
-    // };
-    const getList = (list) => filterList(list, searchQuery, ['email', 'roleName', 'name'])
+    const getList = (list: any) => filterList(list, searchQuery, ['email', 'roleName', 'name'])
 
     const list: any = searchQuery !== '' ? getList(users) : users;
     const length = list.length;
 
     useEffect(() => {
         userStore.fetchUsers();
+
+        return () => {
+            userStore.updateKey('page', 1)
+        }
     }, []);
 
     const editHandler = (user: any) => {

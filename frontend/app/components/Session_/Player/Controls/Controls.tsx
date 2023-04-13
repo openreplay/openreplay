@@ -163,7 +163,7 @@ function Controls(props: any) {
               disabled={disabled}
               backTenSeconds={backTenSeconds}
               forthTenSeconds={forthTenSeconds}
-              toggleSpeed={() => player.toggleSpeed()}
+              toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
               toggleSkip={() => player.toggleSkip()}
               playButton={<PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />}
               skipIntervals={SKIP_INTERVALS}

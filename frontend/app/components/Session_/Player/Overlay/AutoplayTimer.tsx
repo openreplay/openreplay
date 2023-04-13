@@ -6,6 +6,7 @@ import { Button, Link, Icon } from 'UI';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
+import AutoplayToggle from 'Shared/AutoplayToggle';
 
 interface IProps extends RouteComponentProps {
   nextId: number;
@@ -40,20 +41,28 @@ function AutoplayTimer({ nextId, siteId, history }: IProps) {
 
   return (
     <div className={cn(clsOv.overlay, stl.overlayBg)}>
-      <div className="border p-6 shadow-lg bg-white rounded">
-        <div className="py-4">Next recording will be played in {counter}s</div>
-        <div className="flex items-center">
-          <Button primary="outline" onClick={cancel}>
-            Cancel
-          </Button>
-          <div className="px-3" />
-          <Link to={sessionRoute(nextId)} disabled={!nextId}>
-            <Button variant="primary">Play Now</Button>
-          </Link>
+      <div className="border p-5 shadow-lg bg-white rounded">
+        <div className="mb-5">
+          Autoplaying next session in <span className="font-medium">{counter}</span> seconds
         </div>
-        <div className="mt-2 flex items-center color-gray-dark">
+
+        <div className="flex items-center justify-between">
+          <div className="mr-10">
+            <AutoplayToggle />
+          </div>
+          <div className="flex items-center">
+            <Button variant="text-primary" onClick={cancel}>
+              Cancel
+            </Button>
+            <div className="px-2" />
+            <Link to={sessionRoute(nextId)} disabled={!nextId}>
+              <Button variant="outline">Play Now</Button>
+            </Link>
+          </div>
+        </div>
+        {/* <div className="mt-2 flex items-center color-gray-dark">
           Turn on/off auto-replay in <Icon name="ellipsis-v" className="mx-1" /> More options
-        </div>
+        </div> */}
       </div>
     </div>
   );

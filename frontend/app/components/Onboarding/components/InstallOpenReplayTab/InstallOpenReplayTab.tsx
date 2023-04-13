@@ -5,6 +5,7 @@ import { Button, Icon } from 'UI';
 import withOnboarding from '../withOnboarding';
 import { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
+import withPageTitle from 'App/components/hocs/withPageTitle';
 
 interface Props extends WithOnboardingProps {}
 
@@ -20,9 +21,10 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a className="flex items-center link" href="https://docs.openreplay.com/en/installation/javascript-sdk/" target="_blank">
-          <Icon name="book" color="blue" className="mr-2" size={16} />
-          <span>Setup Guide</span>
+        <a href="https://docs.openreplay.com/en/installation/javascript-sdk/" target="_blank">
+          <Button variant="text-primary" icon="question-circle" className="ml-2">
+            See Documentation
+          </Button>
         </a>
       </h1>
       <div className="p-4">
@@ -46,4 +48,4 @@ function InstallOpenReplayTab(props: Props) {
   );
 }
 
-export default withOnboarding(InstallOpenReplayTab);
+export default withOnboarding(withPageTitle("Project Setup - OpenReplay")(InstallOpenReplayTab));
