@@ -31,7 +31,7 @@ if LEVEL == 'detailed':
 elif LEVEL == 'normal':
     table_name = events_table_name
 
-def process_message(msg, codec, sessions, batch, sessions_batch):
+def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events):
     if msg is None:
         return
     #value = json.loads(msg.value().decode('utf-8'))
@@ -42,29 +42,30 @@ def process_message(msg, codec, sessions, batch, sessions_batch):
         return
 
     for message in messages:
-        if LEVEL == 'detailed':
-            n = handle_message(message)
-        elif LEVEL == 'normal':
-            n = handle_normal_message(message)
-
-                #session_id = codec.decode_key(msg.key)
-        sessions[session_id] = handle_session(sessions[session_id], message)
-        if sessions[session_id]:
-            sessions[session_id].sessionid = session_id
+        if message.__id__ in interesting_events:
+            if LEVEL == 'detailed':
+                n = handle_message(message)
+            elif LEVEL == 'normal':
+                n = handle_normal_message(message)
+        if message.__id__ in interesting_sessions:
+            sessions[session_id] = handle_session(sessions[session_id], message)
+            if sessions[session_id]:
+                sessions[session_id].sessionid = session_id
 
                 # put in a batch for insertion if received a SessionEnd
-        if isinstance(message, SessionEnd):
-            if sessions[session_id]:
-                sessions_batch.append(deepcopy(sessions[session_id]))
-                del sessions[session_id]
+            if isinstance(message, SessionEnd):
+                if sessions[session_id]:
+                    sessions_batch.append(deepcopy(sessions[session_id]))
+                    del sessions[session_id]
 
-        if n:
-            n.sessionid = session_id
-            n.received_at = int(datetime.now().timestamp() * 1000)
-            n.batch_order_number = len(batch)
-            batch.append(n)
-        else:
-            continue
+        if message.__id__ in interesting_events:
+            if n:
+                n.sessionid = session_id
+                n.received_at = int(datetime.now().timestamp() * 1000)
+                n.batch_order_number = len(batch)
+                batch.append(n)
+            else:
+                continue
 
 
 def attempt_session_insert(sess_batch, db, sessions_table_name):
@@ -132,9 +133,11 @@ async def main():
     sessions = defaultdict(lambda: None)
     sessions_batch = []
 
-    selected_events = [1,3,4,21,22,23,25,27,28,29,30,31,32,39,40,49,53,54,56,59,62,63,64,66,69,78,80,81,116,125,126,127]
+    sessions_events_selection = [1,3,25,28,29,30,31,32,56,54,62,69,78,125,126]
+    selected_events = [3,21,27,64,78,125]
+    filter_events = list(set(sessions_events_selection+selected_events))
 
-    codec = MessageCodec(selected_events)
+    codec = MessageCodec(filter_events)
     ssl_protocol = config('SSL_ENABLED', default=True, cast=bool)
     consumer_settings = {
         "bootstrap.servers": config('KAFKA_SERVER'),
@@ -146,14 +149,14 @@ async def main():
         consumer_settings['security.protocol'] = 'SSL'
     consumer = Consumer(consumer_settings)
 
-    consumer.subscribe([config("topic", default="saas-raw")])
+    consumer.subscribe(config("topics", default="saas-raw").split(','))
     print("[INFO] Kafka consumer subscribed")
 
     c_time = time()
     read_msgs = 0
     while True:
         msg = consumer.poll(1.0)
-        process_message(msg, codec, sessions, batch, sessions_batch)
+        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events)
         read_msgs += 1
         if time() - c_time > upload_rate:
             print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')

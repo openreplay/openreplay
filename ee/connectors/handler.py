@@ -168,10 +168,10 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
             n.urls_count += 1
         except TypeError:
             n.urls_count = 1
-        try:
-            n.urls += ';'+message.url
-        except AttributeError:
-            n.urls = message.url
+        #itry:
+        #    n.urls.append(message.url)
+        #except AttributeError:
+        #    n.urls = [message.url]
         return n
 
     if isinstance(message, PerformanceTrackAggr):
@@ -191,30 +191,30 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         n.user_anonymous_id = message.id
         return n
 
-    if isinstance(message, JSException):
+    if isinstance(message, JSException) or isinstance(message, JSExceptionDeprecated):
         try:
             n.js_exceptions_count += 1
         except TypeError:
             n.js_exceptions_count = 1
         return n
 
-    if isinstance(message, LongTask):
-        try:
-            n.long_tasks_total_duration += message.duration
-        except TypeError:
-            n.long_tasks_total_duration = message.duration
+    #if isinstance(message, LongTask):
+    #    try:
+    #        n.long_tasks_total_duration += message.duration
+    #    except TypeError:
+    #        n.long_tasks_total_duration = message.duration
 
-        try:
-            if n.long_tasks_max_duration > message.duration:
-                n.long_tasks_max_duration = message.duration
-        except TypeError:
-            n.long_tasks_max_duration = message.duration
+    #    try:
+    #        if n.long_tasks_max_duration > message.duration:
+    #            n.long_tasks_max_duration = message.duration
+    #    except TypeError:
+    #        n.long_tasks_max_duration = message.duration
 
-        try:
-            n.long_tasks_count += 1
-        except TypeError:
-            n.long_tasks_count = 1
-        return n
+    #    try:
+    #        n.long_tasks_count += 1
+    #    except TypeError:
+    #        n.long_tasks_count = 1
+    #    return n
 
     if isinstance(message, InputEvent):
         try:
@@ -230,16 +230,16 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
             n.inputs_count = 1
         return n
 
-    if isinstance(message, IssueEvent):
+    if isinstance(message, IssueEvent) or isinstance(message, IssueEventDeprecated):
         try:
             n.issues_count += 1
         except TypeError:
             n.issues_count = 1
 
-        try:
-            n.issues += ';'+message.type
-        except AttributeError:
-            n.issues = message.type
+        #try:
+        #    n.issues.append(message.type)
+        #except AttributeError:
+        #    n.issues = [message.type]
         return n
 
 
