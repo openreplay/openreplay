@@ -121,7 +121,7 @@ async def main():
     #db = None
     db = DBConnection(DATABASE)
     print('Connected successfully')
-    upload_rate = config('upload_rate', default=180, cast=int)
+    upload_rate = config('upload_rate', default=30, cast=int)
 
     if LEVEL == 'detailed':
         table_name = events_detailed_table_name
@@ -132,7 +132,9 @@ async def main():
     sessions = defaultdict(lambda: None)
     sessions_batch = []
 
-    codec = MessageCodec()
+    selected_events = [1,3,4,21,22,23,25,27,28,29,30,31,32,39,40,49,53,54,56,59,62,63,64,66,69,78,80,81,116,125,126,127]
+
+    codec = MessageCodec(selected_events)
     ssl_protocol = config('SSL_ENABLED', default=True, cast=bool)
     consumer_settings = {
         "bootstrap.servers": config('KAFKA_SERVER'),

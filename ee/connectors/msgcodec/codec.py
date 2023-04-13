@@ -35,6 +35,16 @@ class Codec:
             i += 1
 
     @staticmethod
+    def read_size(reader: io.BytesIO):
+        size = 0
+        for i in range(3):
+            b = reader.read(1)
+            num = int.from_bytes(b, "big", signed=False)
+            size += num << (8*i)
+        return size
+
+
+    @staticmethod
     def read_int(reader: io.BytesIO) -> int:
         """
         ux, err := ReadUint(reader)
