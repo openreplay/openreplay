@@ -41,5 +41,5 @@ CREATE TABLE IF NOT EXISTS connector_user_sessions
     inputs_count                   bigint,
     clicks_count                   bigint,
     issues_count                   bigint,
-    urls_count                     bigint,
+    urls_count                     bigint
 );
