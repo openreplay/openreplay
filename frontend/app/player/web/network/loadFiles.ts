@@ -8,15 +8,16 @@ export const NO_URLS = 'No-urls-provided'
 export async function loadFiles(
   urls: string[],
   onData: (data: Uint8Array) => void,
-): Promise<any> {
+  canSkip: boolean = false,
+): Promise<void> {
   if (!urls.length) {
     throw NO_URLS
   }
   try {
     for (let url of urls) {
       const response = await window.fetch(url)
-      const data = await processAPIStreamResponse(response, url !== url[0])
-      onData(data)
+      const data = await processAPIStreamResponse(response, urls.length > 1 ? url !== urls[0] : canSkip)
+      await onData(data)
     }
   } catch(e) {
     if (e === ALLOWED_404) {
