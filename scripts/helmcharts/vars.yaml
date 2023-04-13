@@ -50,7 +50,7 @@ kafka: &kafka
     #   value: "3000000"
 
 redis: &redis
-  # enabled: false
+  enabled: true
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
 
