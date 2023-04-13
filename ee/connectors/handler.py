@@ -78,14 +78,15 @@ def handle_normal_message(message: Message) -> Optional[Event]:
         n.user_id = message.id
         return n
 
-    # if isinstance(message, IssueEvent):
-    #     n.issueevent_messageid = message.message_id
-    #     n.issueevent_timestamp = message.timestamp
-    #     n.issueevent_type = message.type
-    #     n.issueevent_context_string = message.context_string
-    #     n.issueevent_context = message.context
-    #     n.issueevent_payload = message.payload
-    #     return n
+    if isinstance(message, IssueEvent):
+        n.issueevent_messageid = message.message_id
+        n.issueevent_timestamp = message.timestamp
+        n.issueevent_type = message.type
+        n.issueevent_context_string = message.context_string
+        n.issueevent_context = message.context
+        n.issueevent_payload = message.payload
+        n.issueevent_url = message.url
+        return n
 
     if isinstance(message, CustomIssue):
         n.customissue_name = message.name
@@ -639,14 +640,15 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.longtasks_containername = message.container_name
         return n
 
-    if isinstance(message, IssueEvent):
-        n.issueevent_message_id = message.message_id
-        n.issueevent_timestamp = message.timestamp
-        n.issueevent_type = message.type
-        n.issueevent_context_string = message.context_string
-        n.issueevent_context = message.context
-        n.issueevent_payload = message.payload
-        return n
+    #if isinstance(message, IssueEvent):
+    #    n.issueevent_message_id = message.message_id
+    #    n.issueevent_timestamp = message.timestamp
+    #    n.issueevent_type = message.type
+    #    n.issueevent_context_string = message.context_string
+    #    n.issueevent_context = message.context
+    #    n.issueevent_payload = message.payload
+    #    n.issueevent_url = message.url
+    #    return n
 
     if isinstance(message, TechnicalInfo):
         n.technicalinfo_type = message.type

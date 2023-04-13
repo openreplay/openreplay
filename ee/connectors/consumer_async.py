@@ -133,8 +133,8 @@ async def main():
     sessions = defaultdict(lambda: None)
     sessions_batch = []
 
-    sessions_events_selection = [1,3,25,28,29,30,31,32,56,54,62,69,78,125,126]
-    selected_events = [3,21,27,64,78,125]
+    sessions_events_selection = [1,25,28,29,30,31,32,54,56,62,69,78,125,126]
+    selected_events = [21,22,25,27,64,78,125]
     filter_events = list(set(sessions_events_selection+selected_events))
 
     codec = MessageCodec(filter_events)
