@@ -85,18 +85,18 @@ func RecordSessionSortDuration(durMillis float64, fileType string) {
 	storageSessionSortDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
-var storageSessionEncodeDuration = prometheus.NewHistogramVec(
+var storageSessionEncryptionDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "storage",
-		Name:      "encode_duration_seconds",
+		Name:      "encryption_duration_seconds",
 		Help:      "A histogram displaying the duration of encoding for each session in seconds.",
 		Buckets:   common.DefaultDurationBuckets,
 	},
 	[]string{"file_type"},
 )
 
-func RecordSessionEncodeDuration(durMillis float64, fileType string) {
-	storageSessionEncodeDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
+func RecordSessionEncryptionDuration(durMillis float64, fileType string) {
+	storageSessionEncryptionDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
 var storageSessionCompressDuration = prometheus.NewHistogramVec(
@@ -133,7 +133,7 @@ func List() []prometheus.Collector {
 		storageTotalSessions,
 		storageSessionReadDuration,
 		storageSessionSortDuration,
-		storageSessionEncodeDuration,
+		storageSessionEncryptionDuration,
 		storageSessionCompressDuration,
 		storageSessionUploadDuration,
 	}
