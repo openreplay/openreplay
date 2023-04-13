@@ -17,7 +17,7 @@ export async function loadFiles(
     for (let url of urls) {
       const response = await window.fetch(url)
       const data = await processAPIStreamResponse(response, urls.length > 1 ? url !== urls[0] : canSkip)
-      onData(data)
+      await onData(data)
     }
   } catch(e) {
     if (e === ALLOWED_404) {

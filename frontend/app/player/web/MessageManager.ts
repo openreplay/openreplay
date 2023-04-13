@@ -214,7 +214,7 @@ export default class MessageManager {
   async loadMessages(isClickmap: boolean = false) {
     this.setMessagesLoading(true)
     // TODO: reusable decryptor instance
-    const createNewParser = (shouldDecrypt = true, file) => {
+    const createNewParser = (shouldDecrypt = true, file?: string) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
@@ -266,12 +266,13 @@ export default class MessageManager {
      * */
     loadFiles([loadMethod.url[0]], parser)
       .then(() => {
-        if (loadMethod.url.length > 1) {
-          loadFiles([loadMethod.url[1]], parser, true)
-        }
-        if (!isClickmap) {
-          this.loadDevtools(createNewParser)
-        }
+        const domPromise = loadMethod.url.length > 1
+          ? loadFiles([loadMethod.url[1]], parser, true)
+          : Promise.resolve()
+          const devtoolsPromise = !isClickmap
+            ? this.loadDevtools(createNewParser)
+            : Promise.resolve()
+        return Promise.all([domPromise, devtoolsPromise])
       })
       /**
        * EFS fallback for unprocessed sessions (which are live)
@@ -291,14 +292,15 @@ export default class MessageManager {
 
   loadDevtools(createNewParser: (shouldDecrypt: boolean, file: string) => (b: Uint8Array) => Promise<void>) {
     this.state.update({ devtoolsLoading: true })
-    loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
+    return loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
       // EFS fallback
       .catch(() =>
         requestEFSDevtools(this.session.sessionId)
           .then(createNewParser(false, 'devtoolsEFS'))
       )
+      // TODO: also in case of dynamic update through assist
       .then(() => {
-        this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
+        this.state.update({ ...this.lists.getFullListsState() })
       })
       .catch(e => logger.error("Can not download the devtools file", e))
       .finally(() => this.state.update({ devtoolsLoading: false }))
