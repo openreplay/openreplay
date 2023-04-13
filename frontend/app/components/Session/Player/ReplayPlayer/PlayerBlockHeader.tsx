@@ -83,7 +83,7 @@ function PlayerBlockHeader(props: any) {
             onClick={backHandler}
           >
                 {/* @ts-ignore TODO */}
-                <BackLink label="Back" className="h-full" />
+                <BackLink label="Back" className="h-full ml-2" />
                 <div className={stl.divider} />
           </div>
         )}

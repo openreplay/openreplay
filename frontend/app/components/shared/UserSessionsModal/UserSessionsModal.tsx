@@ -46,7 +46,7 @@ function UserSessionsModal(props: Props) {
     useEffect(fetchData, [filter.page, filter.startDate, filter.endDate]);
 
     return (
-        <div className="h-screen overflow-y-auto bg-white">
+        <div className="bg-white pb-6 h-screen">
             <div className="flex items-center justify-between w-full px-5 py-3">
                 <div className="text-lg flex items-center">
                     <Avatar isActive={false} seed={hash} isAssist={false} className={''} />
@@ -66,7 +66,7 @@ function UserSessionsModal(props: Props) {
                     <div className="text-center text-gray-600">No recordings found.</div>
                 </div>
             }>
-                <div className="border rounded m-5">
+                <div className="border rounded m-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 85px)'}}>
                     <Loader loading={loading}>
                         {data.sessions.map((session: any) => (
                             <div className="border-b last:border-none" key={session.sessionId}>

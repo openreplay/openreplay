@@ -77,8 +77,8 @@ export default class ErrorInfo extends React.PureComponent {
         subtext="Please try to find existing one."
         show={!loading && errorIdInStore == null}
       >
-        <div className="flex">
-          <Loader loading={loading} className="w-9/12">
+        <div className="flex w-full">
+          <Loader loading={loading} className="w-full">
             <MainSection className="w-9/12" />
             <SideSection className="w-3/12" />
           </Loader>

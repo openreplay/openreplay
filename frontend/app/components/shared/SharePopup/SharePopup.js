@@ -78,10 +78,7 @@ export default class SharePopup extends React.PureComponent {
   };
 
   handleSuccess = (endpoint) => {
-    const obj =
-      endpoint === 'Slack'
-        ? { loadingSlack: false }
-        : { loadingTeams: false };
+    const obj = endpoint === 'Slack' ? { loadingSlack: false } : { loadingTeams: false };
     this.setState(obj);
     toast.success(`Sent to ${endpoint}.`);
   };
@@ -114,7 +111,7 @@ export default class SharePopup extends React.PureComponent {
           <div className={styles.wrapper}>
             {this.state.loadingTeams || this.state.loadingSlack ? (
               <Loader loading />
-            ) :(
+            ) : (
               <>
                 <div className={styles.header}>
                   <div className={cn(styles.title, 'text-lg')}>
@@ -139,24 +136,21 @@ export default class SharePopup extends React.PureComponent {
                       {slackOptions.length > 0 && (
                         <>
                           <span>Share to slack</span>
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="grid grid-cols-6 gap-4">
                             <Select
                               options={slackOptions}
                               defaultValue={channelId}
                               onChange={this.changeSlackChannel}
-                              className="mr-4"
+                              className="col-span-4"
                             />
                             {this.state.channelId && (
-                              <Button onClick={this.shareToSlack} variant="primary">
-                                <div className="flex items-center">
-                                  <Icon
-                                    name="integrations/slack-bw"
-                                    color="white"
-                                    size="18"
-                                    marginRight="10"
-                                  />
-                                  {loadingSlack ? 'Sending...' : 'Send'}
-                                </div>
+                              <Button
+                                onClick={this.shareToSlack}
+                                icon="integrations/slack-bw"
+                                variant="outline"
+                                className="col-span-2"
+                              >
+                                {loadingSlack ? 'Sending...' : 'Send'}
                               </Button>
                             )}
                           </div>
@@ -164,25 +158,22 @@ export default class SharePopup extends React.PureComponent {
                       )}
                       {msTeamsOptions.length > 0 && (
                         <>
-                          <span>Share to MS Teams</span>
-                          <div className="flex items-center justify-between">
+                          <div className="mt-4">Share to MS Teams</div>
+                          <div className="grid grid-cols-6 gap-4">
                             <Select
                               options={msTeamsOptions}
                               defaultValue={teamsChannel}
                               onChange={this.changeTeamsChannel}
-                              className="mr-4"
+                              className="col-span-4"
                             />
                             {this.state.teamsChannel && (
-                              <Button onClick={this.shareToMSTeams} variant="primary">
-                                <div className="flex items-center">
-                                  <Icon
-                                    name="integrations/teams-white"
-                                    color="white"
-                                    size="18"
-                                    marginRight="10"
-                                  />
-                                  {loadingTeams ? 'Sending...' : 'Send'}
-                                </div>
+                              <Button
+                                onClick={this.shareToMSTeams}
+                                icon="integrations/teams-white"
+                                variant="outline"
+                                className="col-span-2"
+                              >
+                                {loadingTeams ? 'Sending...' : 'Send'}
                               </Button>
                             )}
                           </div>

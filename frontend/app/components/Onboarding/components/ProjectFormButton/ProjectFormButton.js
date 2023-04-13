@@ -17,7 +17,7 @@ const ProjectFormButton = ({ sites, siteId, init }) => {
   return (
     <>
       <span
-        className="text-2xl font-bold ml-2 color-teal underline-dashed cursor-pointer"
+        className="text-2xl font-bold ml-2 color-teal underline decoration-dotted cursor-pointer"
         onClick={(e) => openModal(e)}
       >
         {site && site.name}

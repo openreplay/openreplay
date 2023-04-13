@@ -107,7 +107,7 @@ function SubHeader(props) {
       {location && (
         <>
           <div
-            className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-gray-light-shade rounded-md"
+            className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-active-blue rounded-md"
             onClick={() => {
               copy(currentLocation);
               setCopied(true);
