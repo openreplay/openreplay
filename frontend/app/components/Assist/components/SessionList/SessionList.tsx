@@ -46,7 +46,7 @@ function SessionList(props: Props) {
                 >
                     <div className="p-4">
                         {props.list.map((session: any) => (
-                            <div className="mb-6">
+                            <div className="mb-6" key={session.sessionId}>
                                 {session.pageTitle && session.pageTitle !== '' && (
                                     <div className="flex items-center mb-2">
                                         <Label size="small" className="p-1">
@@ -55,7 +55,7 @@ function SessionList(props: Props) {
                                         <span className="ml-2 font-medium">{session.pageTitle}</span>
                                     </div>
                                 )}
-                                <SessionItem compact={true} onClick={() => hideModal()} key={session.sessionId} session={session} />
+                                <SessionItem compact={true} onClick={hideModal} session={session} />
                             </div>
                         ))}
                     </div>

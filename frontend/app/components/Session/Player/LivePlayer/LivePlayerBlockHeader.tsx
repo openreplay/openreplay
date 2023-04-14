@@ -46,7 +46,7 @@ function LivePlayerBlockHeader(props: any) {
     history.push(withSiteId(ASSIST_ROUTE, siteId));
   };
 
-  const { userId, userNumericHash, metadata, isCallActive, agentIds } = session;
+  const { userId, metadata, isCallActive, agentIds } = session;
   let _metaList = Object.keys(metadata)
     .filter((i) => metaList.includes(i))
     .map((key) => {
@@ -87,7 +87,7 @@ function LivePlayerBlockHeader(props: any) {
           </div>
         )}
         <UserCard className="" width={width} height={height} />
-        <AssistTabs userId={userId} userNumericHash={userNumericHash} />
+        <AssistTabs userId={userId} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
           {_metaList.length > 0 && (
