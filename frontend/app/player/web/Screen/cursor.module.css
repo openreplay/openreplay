@@ -1,9 +1,9 @@
 .cursor {
   display: block;
   position: absolute;
-  width: 18px;
-  height: 30px;
-  background-image: url('data:image/svg+xml;utf8, <svg viewBox="0 0 486 647" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M400.189 402.126H294.105L349.936 538.119C353.825 547.547 349.381 558.118 340.492 562.118L291.327 583.545C282.162 587.545 271.884 582.974 267.995 573.831L214.942 444.695L128.278 533.833C116.729 545.71 98 536.554 98 520.977V91.299C98 74.899 117.921 66.904 128.277 78.443L412.689 370.985C424.161 382.164 415.696 402.126 400.189 402.126Z" fill="black"/></svg>');
+  width: 27px;
+  height: 45px;
+  background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg enable-background='new 0 0 28 28' version='1.1' viewBox='0 0 28 28' xml:space='preserve' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='8.2 20.9 8.2 4.9 19.8 16.5 13 16.5 12.6 16.6' fill='%23fff'/%3E%3Cpolygon points='17.3 21.6 13.7 23.1 9 12 12.7 10.5' fill='%23fff'/%3E%3Crect transform='matrix(.9221 -.3871 .3871 .9221 -5.7605 6.5909)' x='12.5' y='13.6' width='2' height='8'/%3E%3Cpolygon points='9.2 7.3 9.2 18.5 12.2 15.6 12.6 15.5 17.4 15.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   transition: top .125s linear, left .125s linear;
 
