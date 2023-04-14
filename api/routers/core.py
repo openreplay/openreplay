@@ -14,7 +14,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import helper, captcha
+from chalicelib.utils import helper, captcha, s3
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -51,6 +51,9 @@ async def login(data: schemas.UserLoginSchema = Body(...)):
     response = JSONResponse(content=content)
     response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
                         expires=config("JWT_EXPIRATION", cast=int))
+    print("S3>>>")
+    s3.schedule_for_deletion(bucket="mobs", key="8458559472534676/dom.mobs")
+    s3.schedule_for_deletion(bucket="mobs", key="8458559472534676/devtools.mob")
     return response
 
 
