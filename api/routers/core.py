@@ -51,9 +51,6 @@ async def login(data: schemas.UserLoginSchema = Body(...)):
     response = JSONResponse(content=content)
     response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
                         expires=config("JWT_EXPIRATION", cast=int))
-    print("S3>>>")
-    s3.schedule_for_deletion(bucket="mobs", key="8458559472534676/dom.mobs")
-    s3.schedule_for_deletion(bucket="mobs", key="8458559472534676/devtools.mob")
     return response
 
 
