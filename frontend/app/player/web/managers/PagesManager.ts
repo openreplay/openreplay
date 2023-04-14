@@ -30,6 +30,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		if (m.tp === MType.StringDict) {
 			if (this.currentStringDict[m.key] !== undefined) {
 				this.currentStringDict = {} /* refresh stringDict */
+				this.last?.setStringDict(this.currentStringDict)
 			}
 			this.currentStringDict[m.key] = m.value
 			return
