@@ -55,6 +55,7 @@ interface Props {
   compact?: boolean;
   isDisabled?: boolean;
   isAdd?: boolean;
+  ignoreAssist?: boolean;
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -70,6 +71,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     lastPlayedSessionId,
     onClick = null,
     compact = false,
+    ignoreAssist = false,
   } = props;
 
   const {
@@ -99,9 +101,10 @@ function SessionItem(props: RouteComponentProps & Props) {
   const hasUserId = userId || userAnonymousId;
   const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
   const isAssist =
-    isRoute(ASSIST_ROUTE, location.pathname) ||
-    isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-    location.pathname.includes('multiview');
+    !ignoreAssist &&
+    (isRoute(ASSIST_ROUTE, location.pathname) ||
+      isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+      location.pathname.includes('multiview'));
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
