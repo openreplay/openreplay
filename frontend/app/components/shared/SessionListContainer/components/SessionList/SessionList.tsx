@@ -14,6 +14,7 @@ import {
 } from 'Duck/search';
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
+import { toggleFavorite } from 'Duck/sessions';
 
 enum NoContentType {
   Bookmarked,
@@ -41,6 +42,7 @@ interface Props extends RouteComponentProps {
   activeTab: any;
   isEnterprise?: boolean;
   checkForLatestSessions: () => void;
+  toggleFavorite: (sessionId: string) => Promise<void>;
 }
 function SessionList(props: Props) {
   const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
@@ -133,6 +135,12 @@ function SessionList(props: Props) {
     }
   };
 
+  const toggleFavorite = (sessionId: string) => {
+    props.toggleFavorite(sessionId).then(() => {
+      props.fetchSessions(null, true);
+    });
+  };
+
   return (
     <Loader loading={loading}>
       <NoContent
@@ -180,6 +188,8 @@ function SessionList(props: Props) {
               onUserClick={onUserClick}
               metaList={metaList}
               lastPlayedSessionId={lastPlayedSessionId}
+              bookmarked={isBookmark}
+              toggleFavorite={toggleFavorite}
             />
           </div>
         ))}
@@ -226,5 +236,6 @@ export default connect(
     fetchSessions,
     fetchMetadata,
     checkForLatestSessions,
+    toggleFavorite,
   }
 )(withRouter(SessionList));

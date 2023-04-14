@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import cn from 'classnames';
-import { CountryFlag, Avatar, TextEllipsis, Label, Icon, Tooltip } from 'UI';
+import { CountryFlag, Avatar, TextEllipsis, Label, Icon, Tooltip, ItemMenu } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
@@ -10,9 +10,17 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
-import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from 'App/routes';
+import {
+  assist as assistRoute,
+  liveSession,
+  sessions as sessionsRoute,
+  session as sessionRoute,
+  isRoute,
+} from 'App/routes';
 import { capitalize } from 'App/utils';
 import { Duration } from 'luxon';
+import copy from 'copy-to-clipboard';
+import { toast } from 'react-toastify';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -56,6 +64,8 @@ interface Props {
   isDisabled?: boolean;
   isAdd?: boolean;
   ignoreAssist?: boolean;
+  bookmarked?: boolean;
+  toggleFavorite?: (sessionId: string) => void;
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -72,6 +82,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     onClick = null,
     compact = false,
     ignoreAssist = false,
+    bookmarked = false,
   } = props;
 
   const {
@@ -113,6 +124,27 @@ function SessionItem(props: RouteComponentProps & Props) {
       const value = metadata[key];
       return { label: key, value };
     });
+
+  const menuItems = useMemo(() => {
+    return [
+      {
+        icon: 'link-45deg',
+        text: 'Copy Session URL',
+        onClick: () => {
+          const sessionPath = `${window.location.origin}/${
+            window.location.pathname.split('/')[1]
+          }${sessionRoute(sessionId)}`;
+          copy(sessionPath);
+          toast.success('Session URL copied to clipboard');
+        },
+      },
+      {
+        icon: 'trash',
+        text: 'Remove',
+        onClick: () => (props.toggleFavorite ? props.toggleFavorite(sessionId) : null),
+      },
+    ];
+  }, []);
 
   return (
     <Tooltip
@@ -189,26 +221,26 @@ function SessionItem(props: RouteComponentProps & Props) {
                 <CountryFlag country={userCountry} style={{ paddingTop: '4px' }} label />
               </div>
               <div className="color-gray-medium flex items-center py-1">
-              <span className="capitalize" style={{ maxWidth: '70px' }}>
-                <TextEllipsis
-                  text={capitalize(userBrowser)}
-                  popupProps={{ inverted: true, size: 'tiny' }}
-                />
-              </span>
+                <span className="capitalize" style={{ maxWidth: '70px' }}>
+                  <TextEllipsis
+                    text={capitalize(userBrowser)}
+                    popupProps={{ inverted: true, size: 'tiny' }}
+                  />
+                </span>
                 <Icon name="circle-fill" size={3} className="mx-4" />
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
-                <TextEllipsis
-                  text={capitalize(userOs)}
-                  popupProps={{ inverted: true, size: 'tiny' }}
-                />
-              </span>
+                  <TextEllipsis
+                    text={capitalize(userOs)}
+                    popupProps={{ inverted: true, size: 'tiny' }}
+                  />
+                </span>
                 <Icon name="circle-fill" size={3} className="mx-4" />
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
-                <TextEllipsis
-                  text={capitalize(userDeviceType)}
-                  popupProps={{ inverted: true, size: 'tiny' }}
-                />
-              </span>
+                  <TextEllipsis
+                    text={capitalize(userDeviceType)}
+                    popupProps={{ inverted: true, size: 'tiny' }}
+                  />
+                </span>
               </div>
             </div>
             {isSessions && (
@@ -220,16 +252,19 @@ function SessionItem(props: RouteComponentProps & Props) {
 
           <div className="flex items-center">
             <div
-              className={cn(stl.playLink, props.isDisabled ? 'cursor-not-allowed' : 'cursor-pointer')}
+              className={cn(
+                stl.playLink,
+                props.isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+              )}
               id="play-button"
               data-viewed={viewed}
             >
               {live && session.isCallActive && session.agentIds!.length > 0 ? (
                 <div className="mr-4">
                   <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
-                  <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
-                    CALL IN PROGRESS
-                  </span>
+                    <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
+                      CALL IN PROGRESS
+                    </span>
                   </Label>
                 </div>
               ) : null}
@@ -237,9 +272,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                 <div className="mr-4 flex-shrink-0 w-24">
                   {isLastPlayed && (
                     <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
-                    <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
-                      LAST PLAYED
-                    </span>
+                      <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
+                        LAST PLAYED
+                      </span>
                     </Label>
                   )}
                 </div>
@@ -254,13 +289,20 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
               ) : (
-                <PlayLink
-                  isAssist={isAssist}
-                  sessionId={sessionId}
-                  viewed={viewed}
-                  onClick={onClick}
-                  queryParams={queryParams}
-                />
+                <>
+                  <PlayLink
+                    isAssist={isAssist}
+                    sessionId={sessionId}
+                    viewed={viewed}
+                    onClick={onClick}
+                    queryParams={queryParams}
+                  />
+                  {bookmarked && (
+                    <div className="ml-2 cursor-pointer">
+                      <ItemMenu bold items={menuItems} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
