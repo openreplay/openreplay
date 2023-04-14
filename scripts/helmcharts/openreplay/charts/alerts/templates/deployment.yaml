@@ -48,7 +48,7 @@ spec:
             - name: pg_host
               value: '{{ .Values.global.postgresql.postgresqlHost }}'
             - name: pg_port
-              value: "5432"
+              value: '{{ .Values.global.postgresql.postgresqlPort }}' 
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
             - name: ch_host
