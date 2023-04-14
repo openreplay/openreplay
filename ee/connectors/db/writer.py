@@ -21,23 +21,25 @@ else:
     raise Exception(f"{DATABASE}-database not supported")
 
 # create tables if don't exist
-try:
-    db = DBConnection(DATABASE)
-    if DATABASE == 'pg':
-        create_tables_postgres(db)
-    if DATABASE == 'clickhouse':
-        create_tables_clickhouse(db)
-    if DATABASE == 'snowflake':
-        create_tables_snowflake(db)
-    if DATABASE == 'bigquery':
-        create_tables_bigquery()
-    if DATABASE == 'redshift':
-        create_tables_redshift(db)
-    db.engine.dispose()
-    db = None
-except Exception as e:
-    print(repr(e))
-    print("Please create the tables with scripts provided in " +
+_build_tables = config('build_tables', default=False, cast=bool)
+if _build_tables:
+    try:
+        db = DBConnection(DATABASE)
+        if DATABASE == 'pg':
+            create_tables_postgres(db)
+        if DATABASE == 'clickhouse':
+            create_tables_clickhouse(db)
+        if DATABASE == 'snowflake':
+            create_tables_snowflake(db)
+        if DATABASE == 'bigquery':
+            create_tables_bigquery()
+        if DATABASE == 'redshift':
+            create_tables_redshift(db)
+        db.engine.dispose()
+        db = None
+    except Exception as e:
+        print(repr(e))
+        print("Please create the tables with scripts provided in " +
           f"'/sql/{DATABASE}_sessions.sql' and '/sql/{DATABASE}_events.sql'")
 
 

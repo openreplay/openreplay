@@ -1,2 +1,2 @@
-echo "Starting service"
-python -u consumer.py
+echo "[INFO] Starting service"
+python -u consumer_async.py

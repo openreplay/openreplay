@@ -7,31 +7,14 @@ import asyncio
 from time import time
 from copy import deepcopy
 
-#from msgcodec.codec import MessageCodec
 from msgcodec.msgcodec import MessageCodec
 from msgcodec.messages import SessionEnd
-print('[INFO] Importing DBConnection...')
 from db.api import DBConnection
-print('[INFO] Importing from models..')
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
-print('[INFO] Importing from writer..')
 from db.writer import insert_batch
-print('[INFO] Importing from handler..')
 from handler import handle_message, handle_normal_message, handle_session
 
-DATABASE = config('DATABASE_NAME')
-LEVEL = config('LEVEL')
-
-print(f'[INFO] Connecting to database {DATABASE}')
-#db = DBConnection(DATABASE)
-print('Connected successfully')
-
-if LEVEL == 'detailed':
-    table_name = events_detailed_table_name
-elif LEVEL == 'normal':
-    table_name = events_table_name
-
-def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events):
+def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, LEVEL):
     if msg is None:
         return
     #value = json.loads(msg.value().decode('utf-8'))
@@ -111,17 +94,10 @@ def decode_key(b) -> int:
 
         
 async def main():
-    #bg_tasks = list()
-    #batch_size = config('events_batch_size', default=4000, cast=int)
-    #sessions_batch_size = config('sessions_batch_size', default=400, cast=int)
-
     DATABASE = config('DATABASE_NAME')
     LEVEL = config('LEVEL')
 
-    print(f'[INFO] Connecting to database {DATABASE}')
-    #db = None
     db = DBConnection(DATABASE)
-    print('Connected successfully')
     upload_rate = config('upload_rate', default=30, cast=int)
 
     if LEVEL == 'detailed':
@@ -134,7 +110,10 @@ async def main():
     sessions_batch = []
 
     sessions_events_selection = [1,25,28,29,30,31,32,54,56,62,69,78,125,126]
-    selected_events = [21,22,25,27,64,78,125]
+    if LEVEL == 'normal':
+        selected_events = [21,22,25,27,64,78,125]
+    elif LEVEL == 'detailed':
+        selected_events = [1,4,21,22,25,27,31,32,39,48,59,64,69,78,125,126]
     filter_events = list(set(sessions_events_selection+selected_events))
 
     codec = MessageCodec(filter_events)
@@ -156,7 +135,7 @@ async def main():
     read_msgs = 0
     while True:
         msg = consumer.poll(1.0)
-        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events)
+        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, LEVEL)
         read_msgs += 1
         if time() - c_time > upload_rate:
             print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
@@ -174,14 +153,10 @@ async def insertBatch(sessions_batch, batch, db, sessions_table_name, table_name
     print(f'[BG-INFO] Number of events to add {len(batch)}, number of sessions to add {len(sessions_batch)}')
     if sessions_batch != []:
         attempt_session_insert(sessions_batch, db, sessions_table_name)
-        print('[BG-INFO] Events uploaded to redshift')
-        #sessions_batch = []
 
     # insert a batch of events
     if batch != []:
         attempt_batch_insert(batch, db, table_name, LEVEL)
-        #batch = []
-        print('[GB-INFO] Sessions uploaded to redshift')
     print(f'[BG-INFO] Uploaded into S3 in {time()-t1} secons')
 
 

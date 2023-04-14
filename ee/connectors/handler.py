@@ -226,9 +226,9 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
 
     if isinstance(message, MouseClick):
         try:
-            n.inputs_count += 1
+            n.clicks_count += 1
         except TypeError:
-            n.inputs_count = 1
+            n.clicks_count = 1
         return n
 
     if isinstance(message, IssueEvent) or isinstance(message, IssueEventDeprecated):
