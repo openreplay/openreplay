@@ -1,69 +1,119 @@
-type VChild = VElement | VText
-
-export type VNode = VDocument | VShadowRoot | VElement | VText
-
 import { insertRule, deleteRule } from './safeCSSRules';
 
-abstract class VParent {
-	abstract node: Node | null
+
+type Callback<T> = (o: T) => void
+
+/**
+ * Virtual Node base class.
+ * Implements common abstract methods and lazy node creation logic.
+ * 
+ * @privateRemarks
+ * Would be better to export type-only, but didn't find a nice way to do that.
+ */
+export abstract class VNode<T extends Node = Node> {
+	protected abstract createNode(): T
+	private _node: T | null
+	/**
+	 * JS DOM Node getter with lazy node creation
+	 * 
+	 * @returns underneath JS DOM Node
+	 * @remarks should not be called unless the real node is required since creation might be expensive
+	 * 	It is better to use `onNode` callback applicator unless in the `applyChanges` implementation
+	 */
+	get node(): T {
+		if (!this._node) {
+			const node = this._node = this.createNode()
+			this.nodeCallbacks.forEach(cb => cb(node))
+			this.nodeCallbacks = []
+		}
+		return this._node
+	}
+	private nodeCallbacks: Callback<T>[] = []
+	/**
+	 * Lazy Node callback applicator
+	 *
+	 * @param callback - Callback that fires on existing JS DOM Node instantly if it exists
+	 * or whenever it gets created. Call sequence is concerned.
+	 */
+	onNode(callback: Callback<T>) {
+		if (this._node) {
+			callback(this._node)
+			return
+		}
+		this.nodeCallbacks.push(callback)
+	}
+	/**
+	 * Abstract method, should be implemented by the actual classes
+	 * It is supposed to apply virtual changes into the actual DOM
+	 */
+	public abstract applyChanges(): void
+}
+
+
+type VChild = VElement | VText
+abstract class VParent<T extends Node = Node> extends VNode<T>{
 	protected children: VChild[] = []
-	private insertedChildren: Set<VChild> = new Set()
+	private childrenToMount: Set<VChild> = new Set()
 
 	insertChildAt(child: VChild, index: number) {
 		if (child.parentNode) {
 			child.parentNode.removeChild(child)
 		}
 		this.children.splice(index, 0, child)
-		this.insertedChildren.add(child)
+		this.childrenToMount.add(child)
 		child.parentNode = this
 	}
 
 	removeChild(child: VChild) {
 		this.children = this.children.filter(ch => ch !== child)
-		this.insertedChildren.delete(child)
+		this.childrenToMount.delete(child)
 		child.parentNode = null
 	}
 
-	applyChanges() {
-		const node = this.node
-		if (!node) {
-			// log err
-			console.error("No node found", this)
-			return
-		}
-		// inserting
+	protected mountChildren(shouldInsert?: (child: VChild) => boolean) {
+		let nextMounted: VChild | null = null
 		for (let i = this.children.length-1; i >= 0; i--) {
 			const child = this.children[i]
-			child.applyChanges()
-			if (this.insertedChildren.has(child)) {
-				const nextVSibling = this.children[i+1]
-				node.insertBefore(child.node, nextVSibling ? nextVSibling.node : null)
+			if (this.childrenToMount.has(child) &&
+				(!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
+			) {
+				this.node.insertBefore(child.node, nextMounted ? nextMounted.node : null)
+				this.childrenToMount.delete(child)
+			}
+			if (!this.childrenToMount.has(child)) {
+				nextMounted = child
 			}
 		}
-		this.insertedChildren.clear()
-		// removing
+	}
+
+	applyChanges() {
+		/* Building a sub-trees first (in-memory for non-mounted children) */
+		this.children.forEach(child => child.applyChanges())
+		/* Inserting */
+		this.mountChildren()
+		if (this.childrenToMount.size !== 0) {
+			console.error("VParent: Something went wrong with children insertion")
+		}
+		/* Removing in-between */
+		const node = this.node
 		const realChildren = node.childNodes
 		for(let j = 0; j < this.children.length; j++) {
 			while (realChildren[j] !== this.children[j].node) {
 				node.removeChild(realChildren[j])
 			}
 		}
-		// removing rest
+		/* Removing tail */
 		while(realChildren.length > this.children.length) {
-			node.removeChild(node.lastChild)
+			node.removeChild(node.lastChild as Node) /* realChildren.length > this.children.length >= 0 so it is not null */
 		}
 	}
 }
 
-export class VDocument extends VParent {
-	constructor(public readonly node: Document) { super() }
+export class VDocument extends VParent<Document> {
+	constructor(protected readonly createNode: () => Document) { super() }
 	applyChanges() {
 		if (this.children.length > 1) {
-			// log err
-		}
-		if (!this.node) {
-			// iframe not mounted yet
-			return
+			console.error("VDocument expected to have a single child.", this)
 		}
 		const child = this.children[0]
 		if (!child) { return }
@@ -75,14 +125,22 @@ export class VDocument extends VParent {
 	}
 }
 
-export class VShadowRoot extends VParent {
-	constructor(public readonly node: ShadowRoot) { super() }
+export class VShadowRoot extends VParent<ShadowRoot> {
+	constructor(protected readonly createNode: () => ShadowRoot) { super() }
 }
 
-export class VElement extends VParent {
-	parentNode: VParent | null = null
+export type VRoot = VDocument | VShadowRoot
+
+export class VElement extends VParent<Element> {
+	parentNode: VParent | null = null /** Should be modified only by he parent itself */
 	private newAttributes: Map<string, string | false> = new Map()
-	constructor(public readonly node: Element) { super() }
+
+	constructor(readonly tagName: string, readonly isSVG = false) { super() }
+	protected createNode() {
+		return this.isSVG
+			? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
+			: document.createElement(this.tagName)
+	}
 	setAttribute(name: string, value: string) {
 		this.newAttributes.set(name, value)
 	}
@@ -90,18 +148,7 @@ export class VElement extends VParent {
 		this.newAttributes.set(name, false)
 	}
 
-	// mbtodo: priority insertion instead.
-	// rn this is for styles that should be inserted as prior, 
-	// otherwise it will show visual styling lag if there is a transition CSS property)
-	enforceInsertion() {
-		let vNode: VElement = this
-		while (vNode.parentNode instanceof VElement) {
-			vNode = vNode.parentNode
-		}
-		(vNode.parentNode || vNode).applyChanges()
-	}
-
-	applyChanges() {
+	private applyAttributeChanges() { // "changes" -> "updates" ?
 		this.newAttributes.forEach((value, key) => {
 			if (value === false) {
 				this.node.removeAttribute(key)
@@ -114,88 +161,57 @@ export class VElement extends VParent {
 			}
 		})
 		this.newAttributes.clear()
+	}
+
+	applyChanges() {
+		this.prioritized && this.applyPrioritizedChanges()
+		this.applyAttributeChanges()
 		super.applyChanges()
 	}
-}
 
-
-type StyleSheetCallback = (s: CSSStyleSheet) => void
-export type StyleElement = HTMLStyleElement | SVGStyleElement
-
-// @deprecated TODO: remove in favor of PostponedStyleSheet
-export class VStyleElement extends VElement {
-	private loaded = false
-	private stylesheetCallbacks: StyleSheetCallback[] = []
-	constructor(public readonly node: StyleElement) { 
-		super(node)  // Is it compiled correctly or with 2 node assignments?
-		node.onload = () => {
-		  const sheet = node.sheet
-		  if (sheet) {
-		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
-		    this.stylesheetCallbacks = []
-		  } else {
-		    // console.warn("Style onload: sheet is null") ?
-				// sometimes logs sheet ton of errors for some reason
-		  }
-		  this.loaded = true
-		}
-	}
-
-	onStyleSheet(cb: StyleSheetCallback) {
-		if (this.loaded) {
-			if (!this.node.sheet) {
-				console.warn("Style tag is loaded, but sheet is null")
-				return
+	/** Insertion Prioritization
+	 * Made for styles that should be inserted as prior, 
+	 * otherwise it will show visual styling lag if there is a transition CSS property)
+	 */
+	prioritized = false
+	insertChildAt(child: VChild, index: number) {
+		super.insertChildAt(child, index)
+		/* Bubble prioritization */
+		if (child instanceof VElement && child.prioritized) {
+			let parent: VParent | null = this
+			while (parent instanceof VElement && !parent.prioritized) {
+				parent.prioritized = true
+				parent = parent.parentNode
 			}
-			cb(this.node.sheet)
-		} else {
-		  this.stylesheetCallbacks.push(cb)
 		}
 	}
-}
-
-
-export class PostponedStyleSheet {
-	private loaded = false
-	private stylesheetCallbacks: StyleSheetCallback[] = []
-
-	constructor(private readonly node: StyleElement) {
-		node.onload = () => {
-		  const sheet = node.sheet
-		  if (sheet) {
-		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
-		    this.stylesheetCallbacks = []
-		  } else {
-		    console.warn("Style node onload: sheet is null")
-		  }
-		  this.loaded = true
-		}
-	}
-
-	private applyCallback(cb: StyleSheetCallback) {
-		if (this.loaded) {
-			if (!this.node.sheet) {
-				console.warn("Style tag is loaded, but sheet is null")
-				return
+	private applyPrioritizedChanges() {
+		this.children.forEach(child => {
+			if (child instanceof VText) {
+				child.applyChanges()
+			} else if (child.prioritized) {
+				/* Update prioritized VElement-s */
+				child.applyPrioritizedChanges()
+				child.applyAttributeChanges()
 			}
-			cb(this.node.sheet)
-		} else {
-		  this.stylesheetCallbacks.push(cb)
-		}
-	}
-
-	insertRule(rule: string, index: number) {
-		this.applyCallback(s => insertRule(s, { rule, index }))
-	}
-
-	deleteRule(index: number) {
-		this.applyCallback(s => deleteRule(s, { index }))
+		})
+		this.mountChildren(child => child instanceof VText || child.prioritized)
 	}
 }
 
-export class VText {
+export class VHTMLElement extends VElement {
+	constructor(node: HTMLElement) {
+		super("HTML", false)
+		this.createNode = () => node
+	}
+}
+
+export class VText extends VNode<Text> {
 	parentNode: VParent | null = null
-	constructor(public readonly node: Text = new Text()) {}
+	protected createNode() {
+		return new Text()
+	}
+
 	private data: string = ""
 	private changed: boolean = false
 	setData(data: string) {
@@ -210,3 +226,112 @@ export class VText {
 	}
 }
 
+class PromiseQueue<T> {
+	constructor(private promise: Promise<T>) {}
+	/**
+	 * Call sequence is concerned.
+	 */
+	// Doing this with callbacks list instead might be more efficient (but more wordy). TODO: research
+	whenReady(cb: Callback<T>) {
+		this.promise = this.promise.then(vRoot => {
+			cb(vRoot)
+			return vRoot
+		})
+	}
+	catch(cb: Parameters<Promise<T>['catch']>[0]) {
+		this.promise.catch(cb)
+	}
+}
+
+/**
+ * VRoot wrapper that allows to defer all the API calls till the moment
+ * when VNode CAN be created (for example, on <iframe> mount&load)
+ */
+export class OnloadVRoot extends PromiseQueue<VRoot> {
+	static fromDocumentNode(doc: Document): OnloadVRoot {
+		return new OnloadVRoot(Promise.resolve(new VDocument(() => doc)))
+	}
+	static fromVElement(vElem: VElement): OnloadVRoot {
+		return new OnloadVRoot(new Promise((resolve, reject) => {
+			vElem.onNode(host => {
+				if (host instanceof HTMLIFrameElement) {
+					/* IFrame case: creating Document */
+					const doc = host.contentDocument
+					if (doc) {
+						resolve(new VDocument(() => doc))
+					} else {
+						host.addEventListener('load', () => {
+							const doc = host.contentDocument
+							if (doc) {
+								resolve(new VDocument(() => doc))
+							} else {
+								reject("No default Document found on iframe load") // Send `host` for logging as well
+							}
+						})
+					}
+				} else {
+				/* ShadowDom case */
+					try {
+						const shadowRoot = host.attachShadow({ mode: 'open' })
+						resolve(new VShadowRoot(() => shadowRoot))
+					} catch(e) {
+						reject(e) // "Can not attach shadow dom"
+					}
+				}
+			})
+		}))
+	}
+	onNode(cb: Callback<Document | ShadowRoot>) {
+		this.whenReady(vRoot => vRoot.onNode(cb))
+	}
+	applyChanges() {
+		this.whenReady(vRoot => vRoot.applyChanges())
+	}
+	insertChildAt(...args: Parameters<VParent['insertChildAt']>) {
+		this.whenReady(vRoot => vRoot.insertChildAt(...args))
+	}
+}
+
+export type StyleElement = HTMLStyleElement | SVGStyleElement
+
+/**
+ * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls 
+ * and then applies them when the sheet is ready
+ */
+export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
+	static fromStyleElement(node: StyleElement) {
+		return new OnloadStyleSheet(new Promise((resolve, reject) => {
+			node.addEventListener("load", () => {
+				const sheet = node.sheet
+				if (sheet) {
+					resolve(sheet)
+				} else {
+					reject("Style node onload: sheet is null")
+				}
+			})
+		}))
+	}
+	static fromVRootContext(vRoot: OnloadVRoot) {
+		return new OnloadStyleSheet(new Promise((resolve, reject) => 
+			vRoot.onNode(node => {
+				let context: typeof globalThis | null
+				if (node instanceof Document) {
+					context = node.defaultView
+				} else {
+					context = node.ownerDocument.defaultView
+				}
+				if (!context) { reject("Root node default view not found"); return }
+				/* a StyleSheet from another Window context won't work */
+				resolve(new context.CSSStyleSheet())
+			})
+		))
+	}
+
+	insertRule(rule: string, index: number) {
+		this.whenReady(s => insertRule(s, { rule, index }))
+	}
+
+	deleteRule(index: number) {
+		this.whenReady(s => deleteRule(s, { index }))
+	}
+}
