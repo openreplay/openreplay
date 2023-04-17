@@ -1,13 +1,21 @@
-import type Screen from '../Screen/Screen';
-import type { Message } from '../messages';
+import logger from 'App/logger';
 
-import { MType } from '../messages';
+import type Screen from '../Screen/Screen';
+import type { Message, StringDict } from '../messages';
+
+import { MType} from '../messages';
 import ListWalker from '../../common/ListWalker';
 import DOMManager from './DOM/DOMManager'; 
 
 
 export default class PagesManager extends ListWalker<DOMManager> {
 	private currentPage: DOMManager | null = null
+	/**
+	 * String Dictionary in tracker may be desync with CreateDocument (why???) 
+	 * e.g. some StringDictionary and other messages before any 'CreateDocument' one
+	 * TODO: understand why and fix
+	 */
+	private currentStringDict: Record<number, string> = {}
 
 	constructor(
 		private screen: Screen,
@@ -19,11 +27,19 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		Assumed that messages added in a correct time sequence.
 	*/
 	appendMessage(m: Message): void {
+		if (m.tp === MType.StringDict) {
+			if (this.currentStringDict[m.key] !== undefined) {
+				this.currentStringDict = {} /* refresh stringDict */
+				this.last?.setStringDict(this.currentStringDict)
+			}
+			this.currentStringDict[m.key] = m.value
+			return
+		}
 		if (m.tp === MType.CreateDocument) {
-			super.append(new DOMManager(this.screen, this.isMobile, m.time, this.setCssLoading))
+			super.append(new DOMManager(this.screen, this.isMobile, this.currentStringDict, m.time, this.setCssLoading))
 		}
 		if (this.last === null) {
-			// Log wrong
+			logger.warn("DOMMessage before any document created, skipping:", m)
 			return;
 		}
 		this.last.append(m)

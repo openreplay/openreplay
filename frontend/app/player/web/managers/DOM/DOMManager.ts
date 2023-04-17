@@ -38,7 +38,6 @@ export default class DOMManager extends ListWalker<Message> {
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map()
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map()
-  private stringDict: Record<number,string> = {}
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -49,12 +48,17 @@ export default class DOMManager extends ListWalker<Message> {
   constructor(
     private readonly screen: Screen,
     private readonly isMobile: boolean,
+    private stringDict: Record<number,string>,
     public readonly time: number,
     setCssLoading: ConstructorParameters<typeof StylesManager>[1],
   ) {
     super()
     this.selectionManager = new SelectionManager(this.vElements, screen)
     this.stylesManager = new StylesManager(screen, setCssLoading)
+  }
+
+  setStringDict(stringDict: Record<number,string>) {
+    this.stringDict = stringDict
   }
 
   append(m: Message): void {
@@ -192,7 +196,6 @@ export default class DOMManager extends ListWalker<Message> {
         // Maybetodo: start Document as 0-node in tracker
         this.vTexts.clear()
         this.stylesManager.reset()
-        this.stringDict = {}
         return
       }
       case MType.CreateTextNode: {
@@ -227,12 +230,9 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.SetNodeAttribute:
         this.setNodeAttribute(msg)
         return
-      case MType.StringDict:
-        this.stringDict[msg.key] = msg.value
-        return
       case MType.SetNodeAttributeDict:
-        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
-        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
+        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg, this.stringDict)
+        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg, this.stringDict)
         if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
         this.setNodeAttribute({
           id: msg.id,
