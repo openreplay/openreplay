@@ -5,29 +5,34 @@ import { createUrlQuery, getFiltersFromQuery } from 'App/utils/search';
 interface Props {
   appliedFilter: any;
   applyFilter: any;
+  loading: boolean;
 }
 
 const useSessionSearchQueryHandler = (props: Props) => {
-  const { appliedFilter, applyFilter } = props;
+  const { appliedFilter, applyFilter, loading } = props;
   const history = useHistory();
 
   useEffect(() => {
     const applyFilterFromQuery = () => {
-      const filter = getFiltersFromQuery(history.location.search, appliedFilter);
-      applyFilter(filter, true, false);
+      if (!loading) {
+        const filter = getFiltersFromQuery(history.location.search, appliedFilter);
+        applyFilter(filter, true, false);
+      }
     };
 
     applyFilterFromQuery();
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     const generateUrlQuery = () => {
-      const search: any = createUrlQuery(appliedFilter);
-      history.replace({ search });
+      if (!loading) {
+        const search: any = createUrlQuery(appliedFilter);
+        history.replace({ search });
+      }
     };
 
     generateUrlQuery();
-  }, [appliedFilter]);
+  }, [appliedFilter, loading]);
 
   return null;
 };
