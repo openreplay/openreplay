@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.11.0'
+SELECT 'v1.12.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -317,7 +317,8 @@ $$
                 'ml_slow_resources',
                 'custom',
                 'js_exception',
-                'mouse_thrashing'
+                'mouse_thrashing',
+                'app_crash'
                 );
 
             CREATE TABLE issues
