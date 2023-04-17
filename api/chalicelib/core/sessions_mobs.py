@@ -59,4 +59,4 @@ def delete_mobs(project_id, session_ids):
     for session_id in session_ids:
         for k in __get_mob_keys(project_id=project_id, session_id=session_id) \
                  + __get_mob_keys_deprecated(session_id=session_id):
-            s3.schedule_for_deletion(bucket=config("sessions_bucket"), key=k)
+            s3.tag_for_deletion(bucket=config("sessions_bucket"), key=k)
