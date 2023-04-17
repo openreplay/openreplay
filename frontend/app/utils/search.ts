@@ -1,7 +1,7 @@
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
-import Period, { LAST_24_HOURS, LAST_7_DAYS, LAST_30_DAYS, CUSTOM_RANGE } from 'Types/app/period';
+import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import Filter from 'Types/filter/filter';
-import { filtersMap } from 'App/types/filter/newFilter';
+import { filtersMap } from 'Types/filter/newFilter';
 
 export const createUrlQuery = (filter: any) => {
   const query = [];
@@ -83,13 +83,13 @@ const getFiltersFromEntries = (entires: any) => {
       filter.operator = operator;
       if (filter.icon === "filters/metadata") {
         filter.source = filter.type;
-        filter.type = 'METADATA';
+        filter.type = 'MULTIPLE';
       } else {
         filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
         filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
       }
       
-      if (!filter.filters || filter.filters.size === 0) {
+      if (!filter.filters || filter.filters.size === 0) { // TODO support subfilters in url
         filters.push(filter);
       }
     });
