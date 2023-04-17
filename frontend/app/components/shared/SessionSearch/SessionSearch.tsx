@@ -21,11 +21,11 @@ interface Props {
   updateFilter: typeof updateFilter;
 }
 function SessionSearch(props: Props) {
-  const { appliedFilter, saveRequestPayloads = false, metaLoading } = props;
+  const { appliedFilter, saveRequestPayloads = false, metaLoading = false } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
-  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.updateFilter });
+  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.fetchSessions, loading: metaLoading });
 
   useEffect(() => {
     debounceFetch = debounce(() => props.fetchSessions(), 500);
@@ -89,11 +89,9 @@ function SessionSearch(props: Props) {
           <div className="border-t px-5 py-1 flex items-center -mx-2">
             <div>
               <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
-                {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
                 <Button
                   variant="text-primary"
                   className="mr-2"
-                  // onClick={() => setshowModal(true)}
                   icon="plus"
                 >
                   ADD STEP
