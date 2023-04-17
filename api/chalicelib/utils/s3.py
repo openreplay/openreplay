@@ -111,7 +111,16 @@ def rename(source_bucket, source_key, target_bucket, target_key):
 def tag_for_deletion(bucket, key):
     if not exists(bucket, key):
         return False
-    tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days', tag_value='7')
+    # Copy the file to change the creation date, so it can be deleted X days after the tag's creation
+    s3 = __get_s3_resource()
+    s3_target = s3.Object(bucket, key)
+    s3_target.copy_from(
+        CopySource={'Bucket': bucket, 'Key': key},
+        MetadataDirective='COPY',
+        TaggingDirective='COPY'
+    )
+
+    tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days', tag_value=config("SCH_DELETE_DAYS", default='7'))
 
 
 def generate_file_key(project_id, key):
