@@ -43,6 +43,14 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             - name: AWS_ACCESS_KEY_ID
               value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
@@ -78,14 +86,6 @@ spec:
               # S3 compatible storage
               value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
             {{- end }}
-            {{- range $key, $val := .Values.global.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end }}
-            {{- range $key, $val := .Values.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
