@@ -284,7 +284,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.doms != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDoms = time.Now().Sub(start).Milliseconds()
@@ -294,7 +294,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dome != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDome = time.Now().Sub(start).Milliseconds()
@@ -304,7 +304,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dev != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()
