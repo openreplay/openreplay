@@ -25,7 +25,7 @@ function SessionSearch(props: Props) {
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
-  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.fetchSessions, loading: metaLoading });
+  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.updateFilter, loading: metaLoading });
 
   useEffect(() => {
     debounceFetch = debounce(() => props.fetchSessions(), 500);
