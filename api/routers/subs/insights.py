@@ -9,78 +9,78 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/{projectId}/insights/journey', tags=["insights"])
 async def get_insights_journey(projectId: int):
-    return {"data": insights.journey(project_id=projectId, data=schemas.PathAnalysisSchema())}
+    return {"data": product_analytics.journey(project_id=projectId, data=schemas.PathAnalysisSchema())}
 
 #
 # @app.post('/{projectId}/insights/journey', tags=["insights"])
 # async def get_insights_journey(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.journey(project_id=projectId, data=data)}
+#     return {"data": product_analytics.journey(project_id=projectId, data=data)}
 #
 #
 # @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])
 # @app.get('/{projectId}/insights/users_acquisition', tags=["insights"])
 # async def get_users_acquisition(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.users_acquisition(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.users_acquisition(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/users_retention', tags=["insights"])
 # @app.get('/{projectId}/insights/users_retention', tags=["insights"])
 # async def get_users_retention(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.users_retention(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.users_retention(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_retention', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_retention', tags=["insights"])
 # async def get_feature_rentention(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_retention(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_retention(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_acquisition', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_acquisition', tags=["insights"])
 # async def get_feature_acquisition(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_acquisition(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_acquisition(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_popularity_frequency', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_popularity_frequency', tags=["insights"])
 # async def get_feature_popularity_frequency(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_popularity_frequency(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_popularity_frequency(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_intensity', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_intensity', tags=["insights"])
 # async def get_feature_intensity(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_intensity(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_intensity(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_adoption', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_adoption', tags=["insights"])
 # async def get_feature_adoption(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_adoption(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_adoption(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/feature_adoption_top_users', tags=["insights"])
 # @app.get('/{projectId}/insights/feature_adoption_top_users', tags=["insights"])
 # async def get_feature_adoption(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.feature_adoption_top_users(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.feature_adoption_top_users(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/users_active', tags=["insights"])
 # @app.get('/{projectId}/insights/users_active', tags=["insights"])
 # async def get_users_active(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.users_active(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.users_active(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/users_power', tags=["insights"])
 # @app.get('/{projectId}/insights/users_power', tags=["insights"])
 # async def get_users_power(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.users_power(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.users_power(project_id=projectId, **data.dict())}
 #
 #
 # @app.post('/{projectId}/insights/users_slipping', tags=["insights"])
 # @app.get('/{projectId}/insights/users_slipping', tags=["insights"])
 # async def get_users_slipping(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": insights.users_slipping(project_id=projectId, **data.dict())}
+#     return {"data": product_analytics.users_slipping(project_id=projectId, **data.dict())}
 
 
 
