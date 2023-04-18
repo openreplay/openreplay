@@ -34,7 +34,7 @@ export default () => (next) => (action) => {
       }
     })
     .catch(async (e) => {
-      if (e.response.status === 403) {
+      if (e.response?.status === 403) {
         next({ type: FETCH_ACCOUNT.FAILURE });
       }
 
