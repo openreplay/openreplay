@@ -12,7 +12,7 @@ public_app, app, app_apikey = get_routers([OR_scope(Permissions.metrics)])
 @app.post('/{projectId}/insights/journey', tags=["insights"])
 @app.get('/{projectId}/insights/journey', tags=["insights"])
 async def get_insights_journey(projectId: int, data: schemas.PathAnalysisSchema = Body(...)):
-    return {"data": product_analytics.journey(project_id=projectId, **data.dict())}
+    return {"data": product_analytics.path_analysis(project_id=projectId, **data.dict())}
 
 
 # @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])

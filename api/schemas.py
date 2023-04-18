@@ -342,7 +342,6 @@ class MathOperator(str, Enum):
 class _AlertQuerySchema(BaseModel):
     left: Union[AlertColumn, int] = Field(...)
     right: float = Field(...)
-    # operator: Literal["<", ">", "<=", ">="] = Field(...)
     operator: MathOperator = Field(...)
 
 
@@ -842,37 +841,40 @@ class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
-class MetricFilterType(str, Enum):
+class ProductAnalyticsFilterType(str, Enum):
     event_type = 'eventType'
     start_point = 'startPoint'
     user_id = FilterType.user_id.value
 
 
-class MetricEventType(str, Enum):
+class ProductAnalyticsEventType(str, Enum):
     click = EventType.click.value
+    input = EventType.input.value
     location = EventType.location.value
     custom_event = EventType.custom.value
 
 
-class MetricFilter(BaseModel):
-    type: MetricFilterType = Field(...)
-    value: Union[MetricEventType | str] = Field(...)
+class ProductAnalyticsFilter(BaseModel):
+    type: ProductAnalyticsFilterType = Field(...)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
+    value: List[Union[ProductAnalyticsEventType | str]] = Field(...)
 
     @root_validator
     def validator(cls, values):
-        if values.get("type") == MetricFilterType.event_type:
-            assert isinstance(values.get("value"), MetricEventType), \
-                f"value must be of type {MetricEventType} for type:{MetricFilterType.event_type}"
+        if values.get("type") == ProductAnalyticsFilterType.event_type:
+            assert values.get("value") is not None and len(values["value"]) > 0, \
+                f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
+            assert isinstance(values["value"][0], ProductAnalyticsEventType), \
+                f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
 
         return values
 
 
 class PathAnalysisSchema(_TimedSchema):
-    # TODO: remove alias when path analysis is done
     startTimestamp: int = Field(TimeUTC.now(delta_days=-1))
     endTimestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
-    filters: List[MetricFilter] = Field(default=[])
+    filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
 
     class Config:

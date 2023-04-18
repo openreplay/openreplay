@@ -122,7 +122,8 @@ def __get_path_analysis_chart(project_id, data: schemas.CardSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
-    return insights.journey(project_id=project_id, data=schemas.PathAnalysisSchema(**data.series[0].filter.dict()))
+    return product_analytics.path_analysis(project_id=project_id,
+                                           data=schemas.PathAnalysisSchema(**data.series[0].filter.dict()))
 
 
 def __is_path_analysis(data: schemas.CardSchema):

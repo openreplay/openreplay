@@ -21,30 +21,32 @@ def __transform_journey(rows):
 
 JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
-    schemas.MetricEventType.location: {"table": "events.pages", "column": "path", "table_id": "message_id"},
-    schemas.MetricEventType.click: {"table": "events.clicks", "column": "label", "table_id": "message_id"},
-    schemas.MetricEventType.custom_event: {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}
+    schemas.ProductAnalyticsEventType.location: {"table": "events.pages", "column": "path", "table_id": "message_id"},
+    schemas.ProductAnalyticsEventType.click: {"table": "events.clicks", "column": "label", "table_id": "message_id"},
+    schemas.ProductAnalyticsEventType.input: {"table": "events.inputs", "column": "label", "table_id": "message_id"},
+    schemas.ProductAnalyticsEventType.custom_event: {"table": "events_common.customs", "column": "name",
+                                                     "table_id": "seq_index"}
 }
 
 
-def journey(project_id, data: schemas.PathAnalysisSchema):
+def path_analysis(project_id, data: schemas.PathAnalysisSchema):
     # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
     #                                         time_constraint=True)
     # TODO: check if data=args is required
     pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="sessions",
                                             time_constraint=True)
     event_start = None
-    event_table = JOURNEY_TYPES[schemas.MetricEventType.location]["table"]
-    event_column = JOURNEY_TYPES[schemas.MetricEventType.location]["column"]
-    event_table_id = JOURNEY_TYPES[schemas.MetricEventType.location]["table_id"]
+    event_table = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table"]
+    event_column = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["column"]
+    event_table_id = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table_id"]
     extra_values = {}
     for f in data.filters:
-        if f.type == schemas.MetricFilterType.start_point:
-            event_start = f.value
-        elif f.type == schemas.MetricFilterType.event_type and JOURNEY_TYPES.get(f.value):
-            event_table = JOURNEY_TYPES[f.value]["table"]
-            event_column = JOURNEY_TYPES[f.value]["column"]
-        elif f.type == schemas.MetricFilterType.user_id:
+        if f.type == schemas.ProductAnalyticsFilterType.start_point:
+            event_start = f.value[0]
+        elif f.type == schemas.ProductAnalyticsFilterType.event_type and JOURNEY_TYPES.get(f.value[0]):
+            event_table = JOURNEY_TYPES[f.value[0]]["table"]
+            event_column = JOURNEY_TYPES[f.value[0]]["column"]
+        elif f.type == schemas.ProductAnalyticsFilterType.user_id:
             pg_sub_query_subset.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f.value
 
@@ -52,7 +54,6 @@ def journey(project_id, data: schemas.PathAnalysisSchema):
         pg_query = f"""SELECT source_event,
                                target_event,
                                count(*) AS      value
-
                         FROM (SELECT event_number || '_' || value as target_event,
                                      LAG(event_number || '_' || value, 1) OVER ( PARTITION BY session_rank ) AS source_event
                               FROM (SELECT value,
