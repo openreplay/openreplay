@@ -842,12 +842,37 @@ class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
+class MetricFilterType(str, Enum):
+    event_type = 'eventType'
+    start_point = 'startPoint'
+    user_id = FilterType.user_id.value
+
+
+class MetricEventType(str, Enum):
+    click = EventType.click.value
+    location = EventType.location.value
+    custom_event = EventType.custom.value
+
+
+class MetricFilter(BaseModel):
+    type: MetricFilterType = Field(...)
+    value: Union[MetricEventType | str] = Field(...)
+
+    @root_validator
+    def validator(cls, values):
+        if values.get("type") == MetricFilterType.event_type:
+            assert isinstance(values.get("value"), MetricEventType), \
+                f"value must be of type {MetricEventType} for type:{MetricFilterType.event_type}"
+
+        return values
+
+
 class MetricPayloadSchema(_TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(delta_days=-1))
     endTimestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
-    filters: List[dict] = Field([])
-    type: Optional[str] = Field(None)
+    filters: List[MetricFilter] = Field(default=[])
+    type: Optional[str] = Field(default=None)
 
     class Config:
         alias_generator = attribute_to_camel_case

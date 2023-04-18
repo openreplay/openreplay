@@ -7,10 +7,14 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.post('/{projectId}/insights/journey', tags=["insights"])
 @app.get('/{projectId}/insights/journey', tags=["insights"])
+async def get_insights_journey(projectId: int):
+    return {"data": insights.journey(project_id=projectId, data=schemas.MetricPayloadSchema())}
+
+
+@app.post('/{projectId}/insights/journey', tags=["insights"])
 async def get_insights_journey(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.journey(project_id=projectId, **data.dict())}
+    return {"data": insights.journey(project_id=projectId, data=data)}
 
 
 @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])

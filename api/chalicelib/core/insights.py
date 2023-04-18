@@ -21,30 +21,32 @@ def __transform_journey(rows):
 
 JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
-    "PAGES": {"table": "events.pages", "column": "path", "table_id": "message_id"},
-    "CLICK": {"table": "events.clicks", "column": "label", "table_id": "message_id"},
-    # "VIEW": {"table": "events_ios.views", "column": "name", "table_id": "seq_index"}, TODO: enable this for SAAS only
-    "EVENT": {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}
+    schemas.MetricEventType.location: {"table": "events.pages", "column": "path", "table_id": "message_id"},
+    schemas.MetricEventType.click: {"table": "events.clicks", "column": "label", "table_id": "message_id"},
+    schemas.MetricEventType.custom_event: {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}
 }
 
 
-def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+def journey(project_id, data: schemas.MetricPayloadSchema):
+    # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+    #                                         time_constraint=True)
+    # TODO: check if data=args is required
+    pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="sessions",
                                             time_constraint=True)
     event_start = None
-    event_table = JOURNEY_TYPES["PAGES"]["table"]
-    event_column = JOURNEY_TYPES["PAGES"]["column"]
-    event_table_id = JOURNEY_TYPES["PAGES"]["table_id"]
+    event_table = JOURNEY_TYPES[schemas.MetricEventType.location]["table"]
+    event_column = JOURNEY_TYPES[schemas.MetricEventType.location]["column"]
+    event_table_id = JOURNEY_TYPES[schemas.MetricEventType.location]["table_id"]
     extra_values = {}
-    for f in filters:
-        if f["type"] == "START_POINT":
-            event_start = f["value"]
-        elif f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
-            event_table = JOURNEY_TYPES[f["value"]]["table"]
-            event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+    for f in data.filters:
+        if f.type == schemas.MetricFilterType.start_point:
+            event_start = f.value
+        elif f.type == schemas.MetricFilterType.event_type and JOURNEY_TYPES.get(f.value):
+            event_table = JOURNEY_TYPES[f.value]["table"]
+            event_column = JOURNEY_TYPES[f.value]["column"]
+        elif f.type == schemas.MetricFilterType.user_id:
             pg_sub_query_subset.append(f"sessions.user_id = %(user_id)s")
-            extra_values["user_id"] = f["value"]
+            extra_values["user_id"] = f.value
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT source_event,
@@ -87,11 +89,16 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
                         GROUP BY source_event, target_event
                         ORDER BY value DESC
                         LIMIT 20;"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
-                  **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
-        cur.execute(cur.mogrify(pg_query, params))
+        params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
+                  "endTimestamp": data.endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
+                  # TODO: add if data=args is required
+                  # **__get_constraint_values(args),
+                  **extra_values}
+        query = cur.mogrify(pg_query, params)
+        print("----------------------")
+        print(query)
+        print("----------------------")
+        cur.execute(query)
         rows = cur.fetchall()
 
     return __transform_journey(rows)
@@ -363,7 +370,6 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     }
 
 
-
 def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                         filters=[],
                         **args):
@@ -456,7 +462,6 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     }
 
 
-
 def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[],
                                  **args):
@@ -519,7 +524,6 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
             p["frequency"] = frequencies[p["value"]] / total_usage
 
     return popularity
-
 
 
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -591,7 +595,6 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-
 def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -649,7 +652,6 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
         rows = cur.fetchall()
     return {"users": helper.list_to_camel_case(rows),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
-
 
 
 def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -716,7 +718,6 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-
 def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[],
                       **args):
@@ -751,7 +752,6 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         rows = cur.fetchall()
 
     return rows
-
 
 
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -795,7 +795,6 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     return row_users
 
 
-
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                 filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
@@ -818,7 +817,6 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
         row_users = cur.fetchone()
 
     return helper.dict_to_camel_case(row_users)
-
 
 
 def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -883,7 +881,6 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
         "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
         "list": helper.list_to_camel_case(rows)
     }
-
 
 
 def search(text, feature_type, project_id, platform=None):
