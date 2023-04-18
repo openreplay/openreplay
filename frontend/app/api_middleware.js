@@ -13,9 +13,9 @@ export default () => (next) => (action) => {
 
   return call(client)
     .then(async (response) => {
-      if (response.status === 403) {
-        next({ type: FETCH_ACCOUNT.FAILURE });
-      }
+      // if (response.status === 403) {
+      //   next({ type: FETCH_ACCOUNT.FAILURE });
+      // }
       if (!response.ok) {
         const text = await response.text();
         return Promise.reject(text);
@@ -34,6 +34,10 @@ export default () => (next) => (action) => {
       }
     })
     .catch(async (e) => {
+      if (e.response.status === 403) {
+        next({ type: FETCH_ACCOUNT.FAILURE });
+      }
+
       const data = await e.response?.json();
       logger.error('Error during API request. ', e);
       return next({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
