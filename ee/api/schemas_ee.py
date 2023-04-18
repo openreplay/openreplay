@@ -52,7 +52,7 @@ class GetInsightsSchema(schemas._TimedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     metricValue: List[InsightCategories] = Field(default=[])
-    series: List[schemas.CreateSeriesSchema] = Field(default=[])
+    series: List[schemas.CardSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
