@@ -152,7 +152,7 @@ class MetricOfInsights(str, Enum):
     issue_categories = "issueCategories"
 
 
-class CreateCardSchema(schemas.CreateCardSchema):
+class CardSchema(schemas.CardSchema):
     metric_of: Union[schemas.MetricOfTimeseries, schemas.MetricOfTable, \
         schemas.MetricOfErrors, schemas.MetricOfPerformance, \
         schemas.MetricOfResources, schemas.MetricOfWebVitals, \
@@ -179,5 +179,5 @@ class CreateCardSchema(schemas.CreateCardSchema):
         return values
 
 
-class UpdateCardSchema(CreateCardSchema):
+class UpdateCardSchema(CardSchema):
     series: List[schemas.CardUpdateSeriesSchema] = Field(...)
