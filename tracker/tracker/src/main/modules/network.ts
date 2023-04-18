@@ -21,7 +21,7 @@ type FetchRequestBody = RequestInit['body']
 // }
 // XHRResponse body: ArrayBuffer, a Blob, a Document, a JavaScript Object, or a string
 
-// TODO: extract maximum of useful information from any type of Request/Responce bodies
+// TODO: extract maximum of useful information from any type of Request/Response bodies
 // function objectifyBody(body: any): RequestBody {
 //   if (body instanceof Blob) {
 //     return {
@@ -35,21 +35,11 @@ type FetchRequestBody = RequestInit['body']
 //   }
 // }
 
-function checkCacheByPerformanceTimings(requestUrl: string) {
-  if (performance) {
-    const timings = performance.getEntriesByName(requestUrl)[0]
-    if (timings) {
-      // @ts-ignore - weird ts typings, please refer to https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
-      return timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10
-    }
-  }
-  return false
-}
-
 interface RequestData {
   body: XHRRequestBody | FetchRequestBody
   headers: Record<string, string>
 }
+
 interface ResponseData {
   body: any
   headers: Record<string, string>
@@ -92,7 +82,7 @@ export interface Options {
   sanitizer?: Sanitizer
 }
 
-export default function (app: App, opts: Partial<Options> = {}, customEnv?: Record<string, any>) {
+export default function (app: App, opts: Partial<Options> = {}) {
   const options: Options = Object.assign(
     {
       failuresOnly: false,
@@ -110,6 +100,7 @@ export default function (app: App, opts: Partial<Options> = {}, customEnv?: Reco
 
   const stHeader =
     options.sessionTokenHeader === true ? 'X-OpenReplay-SessionToken' : options.sessionTokenHeader
+
   function setSessionTokenHeader(setRequestHeader: (name: string, value: string) => void) {
     if (stHeader) {
       const sessionToken = app.getSessionToken()
@@ -149,73 +140,142 @@ export default function (app: App, opts: Partial<Options> = {}, customEnv?: Reco
     return JSON.stringify(r)
   }
 
-  /* ====== Fetch ====== */
-  const origFetch = customEnv
-    ? (customEnv.fetch.bind(customEnv) as WindowFetch)
-    : (window.fetch.bind(window) as WindowFetch)
+  const patchWindow = (context: typeof globalThis) => {
+    /* ====== Fetch ====== */
+    const origFetch = context.fetch.bind(context) as WindowFetch
 
-  const trackFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
-    if (!(typeof input === 'string' || input instanceof URL) || app.isServiceURL(String(input))) {
-      return origFetch(input, init)
-    }
-
-    setSessionTokenHeader(function (name, value) {
-      if (init.headers === undefined) {
-        init.headers = {}
-      }
-      if (init.headers instanceof Headers) {
-        init.headers.append(name, value)
-      } else if (Array.isArray(init.headers)) {
-        init.headers.push([name, value])
-      } else {
-        init.headers[name] = value
-      }
-    })
-
-    const startTime = performance.now()
-    return origFetch(input, init).then((response) => {
-      const duration = performance.now() - startTime
-      if (options.failuresOnly && response.status < 400) {
-        return response
+    const trackFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
+      if (!(typeof input === 'string' || input instanceof URL) || app.isServiceURL(String(input))) {
+        return origFetch(input, init)
       }
 
-      const r = response.clone()
-      r.text()
-        .then((text) => {
-          const reqHs: Record<string, string> = {}
-          const resHs: Record<string, string> = {}
-          if (ignoreHeaders !== true) {
-            // request headers
-            const writeReqHeader = ([n, v]: [string, string]) => {
-              if (!isHIgnored(n)) {
-                reqHs[n] = v
+      setSessionTokenHeader(function (name, value) {
+        if (init.headers === undefined) {
+          init.headers = {}
+        }
+        if (init.headers instanceof Headers) {
+          init.headers.append(name, value)
+        } else if (Array.isArray(init.headers)) {
+          init.headers.push([name, value])
+        } else {
+          init.headers[name] = value
+        }
+      })
+
+      const startTime = performance.now()
+      return origFetch(input, init).then((response) => {
+        const duration = performance.now() - startTime
+        if (options.failuresOnly && response.status < 400) {
+          return response
+        }
+
+        const r = response.clone()
+        r.text()
+          .then((text) => {
+            const reqHs: Record<string, string> = {}
+            const resHs: Record<string, string> = {}
+            if (ignoreHeaders !== true) {
+              // request headers
+              const writeReqHeader = ([n, v]: [string, string]) => {
+                if (!isHIgnored(n)) {
+                  reqHs[n] = v
+                }
               }
+              if (init.headers instanceof Headers) {
+                init.headers.forEach((v, n) => writeReqHeader([n, v]))
+              } else if (Array.isArray(init.headers)) {
+                init.headers.forEach(writeReqHeader)
+              } else if (typeof init.headers === 'object') {
+                Object.entries(init.headers).forEach(writeReqHeader)
+              }
+              // response headers
+              r.headers.forEach((v, n) => {
+                if (!isHIgnored(n)) resHs[n] = v
+              })
             }
-            if (init.headers instanceof Headers) {
-              init.headers.forEach((v, n) => writeReqHeader([n, v]))
-            } else if (Array.isArray(init.headers)) {
-              init.headers.forEach(writeReqHeader)
-            } else if (typeof init.headers === 'object') {
-              Object.entries(init.headers).forEach(writeReqHeader)
-            }
-            // response headers
-            r.headers.forEach((v, n) => {
-              if (!isHIgnored(n)) resHs[n] = v
-            })
-          }
-          const method = strMethod(init.method)
+            const method = strMethod(init.method)
 
+            const reqResInfo = sanitize({
+              url: String(input),
+              method,
+              status: r.status,
+              request: {
+                headers: reqHs,
+                body: init.body,
+              },
+              response: {
+                headers: resHs,
+                body: text,
+              },
+            })
+            if (!reqResInfo) {
+              return
+            }
+
+            app.send(
+              NetworkRequest(
+                'fetch',
+                method,
+                String(reqResInfo.url),
+                stringify(reqResInfo.request),
+                stringify(reqResInfo.response),
+                r.status,
+                startTime + getTimeOrigin(),
+                duration,
+              ),
+            )
+          })
+          .catch((e) => app.debug.error('Could not process Fetch response:', e))
+
+        return response
+      })
+    }
+    context.fetch = trackFetch
+
+    /* ====== <> ====== */
+
+    /* ====== XHR ====== */
+
+    const nativeOpen = context.XMLHttpRequest.prototype.open
+
+    function trackXMLHttpReqOpen(this: XMLHttpRequest, initMethod: string, url: string | URL) {
+      const xhr = this
+      setSessionTokenHeader((name, value) => xhr.setRequestHeader(name, value))
+
+      let startTime = 0
+      xhr.addEventListener('loadstart', (e) => {
+        startTime = e.timeStamp
+      })
+      xhr.addEventListener(
+        'load',
+        app.safe((e) => {
+          const { headers: reqHs, body: reqBody } = getXHRRequestDataObject(xhr)
+          const duration = startTime > 0 ? e.timeStamp - startTime : 0
+
+          const hString: string | null = ignoreHeaders ? '' : xhr.getAllResponseHeaders() // might be null (though only if no response received though)
+          const resHs = hString
+            ? hString
+                .split('\r\n')
+                .map((h) => h.split(':'))
+                .filter((entry) => !isHIgnored(entry[0]))
+                .reduce(
+                  (hds, [name, value]) => ({ ...hds, [name]: value }),
+                  {} as Record<string, string>,
+                )
+            : {}
+
+          const method = strMethod(initMethod)
           const reqResInfo = sanitize({
-            url: String(input),
+            url: String(url),
             method,
-            status: r.status,
+            status: xhr.status,
             request: {
               headers: reqHs,
-              body: init.body,
+              body: reqBody,
             },
             response: {
               headers: resHs,
-              body: text,
+              body: xhr.response,
             },
           })
           if (!reqResInfo) {
@@ -224,139 +284,57 @@ export default function (app: App, opts: Partial<Options> = {}, customEnv?: Reco
 
           app.send(
             NetworkRequest(
-              'fetch',
+              'xhr',
               method,
               String(reqResInfo.url),
               stringify(reqResInfo.request),
               stringify(reqResInfo.response),
-              r.status,
+              xhr.status,
               startTime + getTimeOrigin(),
               duration,
             ),
           )
-        })
-        .catch((e) => app.debug.error('Could not process Fetch response:', e))
+        }),
+      )
 
-      return response
-    })
-  }
-
-  if (customEnv) {
-    customEnv.fetch = trackFetch
-  } else {
-    window.fetch = trackFetch
-  }
-  /* ====== <> ====== */
-
-  /* ====== XHR ====== */
-
-  const nativeOpen = customEnv
-    ? customEnv.XMLHttpRequest.prototype.open
-    : XMLHttpRequest.prototype.open
-
-  function trackXMLHttpReqOpen(initMethod: string, url: string | URL) {
-    // @ts-ignore ??? this -> XMLHttpRequest
-    const xhr = this as XMLHttpRequest
-    setSessionTokenHeader((name, value) => xhr.setRequestHeader(name, value))
-
-    let startTime = 0
-    xhr.addEventListener('loadstart', (e) => {
-      startTime = e.timeStamp
-    })
-    xhr.addEventListener(
-      'load',
-      app.safe((e) => {
-        const { headers: reqHs, body: reqBody } = getXHRRequestDataObject(xhr)
-        const duration = startTime > 0 ? e.timeStamp - startTime : 0
-
-        const hString: string | null = ignoreHeaders ? '' : xhr.getAllResponseHeaders() // might be null (though only if no response received though)
-        const resHs = hString
-          ? hString
-              .split('\r\n')
-              .map((h) => h.split(':'))
-              .filter((entry) => !isHIgnored(entry[0]))
-              .reduce(
-                (hds, [name, value]) => ({ ...hds, [name]: value }),
-                {} as Record<string, string>,
-              )
-          : {}
-
-        const method = strMethod(initMethod)
-        const reqResInfo = sanitize({
-          url: String(url),
-          method,
-          status: xhr.status,
-          request: {
-            headers: reqHs,
-            body: reqBody,
-          },
-          response: {
-            headers: resHs,
-            body: xhr.response,
-          },
-        })
-        if (!reqResInfo) {
-          return
-        }
-
-        app.send(
-          NetworkRequest(
-            'xhr',
-            method,
-            String(reqResInfo.url),
-            stringify(reqResInfo.request),
-            stringify(reqResInfo.response),
-            xhr.status,
-            startTime + getTimeOrigin(),
-            duration,
-          ),
-        )
-      }),
-    )
-
-    //TODO: handle error (though it has no Error API nor any useful information)
-    //xhr.addEventListener('error', (e) => {})
-    // @ts-ignore ??? this -> XMLHttpRequest
-    return nativeOpen.apply(this as XMLHttpRequest, arguments)
-  }
-  if (customEnv) {
-    customEnv.XMLHttpRequest.prototype.open = trackXMLHttpReqOpen.bind(customEnv)
-  } else {
-    XMLHttpRequest.prototype.open = trackXMLHttpReqOpen
-  }
-
-  const nativeSend = XMLHttpRequest.prototype.send
-  function trackXHRSend(body: Document | XMLHttpRequestBodyInit | null | undefined) {
-    // @ts-ignore ??? this -> XMLHttpRequest
-    const rdo = getXHRRequestDataObject(this as XMLHttpRequest)
-    rdo.body = body
-
-    // @ts-ignore ??? this -> XMLHttpRequest
-    return nativeSend.apply(this as XMLHttpRequest, arguments)
-  }
-
-  if (customEnv) {
-    customEnv.XMLHttpRequest.prototype.send = trackXHRSend.bind(customEnv)
-  } else {
-    XMLHttpRequest.prototype.send = trackXHRSend
-  }
-
-  const nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
-
-  function trackSetReqHeader(name: string, value: string) {
-    if (!isHIgnored(name)) {
-      // @ts-ignore ??? this -> XMLHttpRequest
-      const rdo = getXHRRequestDataObject(this as XMLHttpRequest)
-      rdo.headers[name] = value
+      //TODO: handle error (though it has no Error API nor any useful information)
+      //xhr.addEventListener('error', (e) => {})
+      return nativeOpen.apply(this, arguments)
     }
-    // @ts-ignore ??? this -> XMLHttpRequest
-    return nativeSetRequestHeader.apply(this as XMLHttpRequest, arguments)
+
+    context.XMLHttpRequest.prototype.open = trackXMLHttpReqOpen
+
+    const nativeSend = context.XMLHttpRequest.prototype.send
+
+    function trackXHRSend(
+      this: XMLHttpRequest,
+      body: Document | XMLHttpRequestBodyInit | null | undefined,
+    ) {
+      const rdo = getXHRRequestDataObject(this)
+      rdo.body = body
+
+      // @ts-ignore ??? this -> XMLHttpRequest
+      return nativeSend.apply(this, arguments)
+    }
+
+    context.XMLHttpRequest.prototype.send = trackXHRSend
+
+    const nativeSetRequestHeader = context.XMLHttpRequest.prototype.setRequestHeader
+
+    function trackSetReqHeader(this: XMLHttpRequest, name: string, value: string) {
+      if (!isHIgnored(name)) {
+        const rdo = getXHRRequestDataObject(this)
+        rdo.headers[name] = value
+      }
+      return nativeSetRequestHeader.apply(this, arguments)
+    }
+
+    context.XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader
+
+    /* ====== <> ====== */
   }
 
-  if (customEnv) {
-    customEnv.XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader.bind(customEnv)
-  } else {
-    XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader
-  }
-  /* ====== <> ====== */
+  patchWindow(window)
+
+  app.observer.attachContextCallback(app.safe(patchWindow))
 }

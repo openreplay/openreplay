@@ -90,6 +90,9 @@ export function isIframeCrossdomain(e: HTMLIFrameElement): boolean {
   }
 }
 
+/**
+ * checks if iframe is accessible
+ **/
 export function canAccessIframe(iframe: HTMLIFrameElement) {
   try {
     return Boolean(iframe.contentDocument)

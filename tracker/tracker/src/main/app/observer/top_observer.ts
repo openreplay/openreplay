@@ -94,7 +94,6 @@ export default class TopObserver extends Observer {
           //TODO: more explicit logic
         ) {
           this.contextsSet.add(currentWin)
-          Network(this.app, this.app.networkOptions, currentWin)
           //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
           this.contextCallbacks.forEach((cb) => cb(currentWin))
         }

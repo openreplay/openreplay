@@ -2,6 +2,10 @@
 
 - **[breaking]** added gzip compression to large messages
 
+# 6.0.2
+
+- fix network tracking for samedomain iframes created by js code
+
 # 6.0.1
 
 - fix webworker writer re-init request
