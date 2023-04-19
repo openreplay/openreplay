@@ -54,7 +54,7 @@ def __create(tenant_id, name):
 
 def get_projects(tenant_id, gdpr=None):
     with pg_client.PostgresClient() as cur:
-        extra_projection = ",'green' AS status"
+        extra_projection = ",'green' AS status,TRUE as recorded"
         if gdpr:
             extra_projection += ',s.gdpr'
 
