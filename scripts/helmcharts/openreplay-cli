@@ -5,10 +5,6 @@ OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
 OR_REPO="https://github.com/openreplay/openreplay"
-# To run kubeconfig run
-# `KUBECONFIG=/path/to/file openreplay -s`
-export KUBECONFIG=${KUBECONFIG:-"/etc/rancher/k3s/k3s.yaml"}
-tmp_dir=$(mktemp -d)
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
 #HELM_OPTIONS=""
 # If you want to install the dev version. It can be any branch or tag.
@@ -79,6 +75,14 @@ function log () {
   exit 100
 }
 
+# To run kubeconfig run
+# `KUBECONFIG=/path/to/file openreplay -s`
+[[ -f /etc/rancher/k3s/k3s.yaml ]] && k3s_path="/etc/rancher/k3s/k3s.yaml"
+[[ -f "${HOME}/.kube/config" ]] && local_kube_config_path="${HOME}/.kube/config"
+export KUBECONFIG=${KUBECONFIG:-$k3s_path:$local_kube_config_path}
+[[ -z $KUBECONFIG ]] && log err "No kubeconfig file found. Exiting"
+tmp_dir=$(mktemp -d)
+
 function install_packages() {
 
   [[ -e "$OR_DIR/eget" ]] || {
@@ -117,11 +121,11 @@ cat <<"EOF"
 EOF
 echo -e ${NC}
 
-log info '
+log info "
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
                     [ -i | --install DOMAIN_NAME ]
-                    [ -u | --upgrade ]
+                    [ -u | --upgrade (fetch lastest patches for installed release. ${BWHITE}RELEASE_UPGRADE=1 openreplay -u${GREEN} to upgrade release.)]
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
@@ -133,7 +137,7 @@ log info '
                    db ender frontend heuristics 
                    http integrations nginx-controller 
                    peers sink sourcemapreader storage 
-    '
+    "
   return
 }
 
@@ -271,6 +275,9 @@ function upgrade() {
         Please do ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}
       "
   }
+
+  # Unless its upgrade release, always checkout same tag.
+  [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=$or_version
 
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
