@@ -160,8 +160,7 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
 
 @app.get('/projects', tags=['projects'])
 async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True,
-                                          recorded=True, user_id=context.user_id)}
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, user_id=context.user_id)}
 
 
 # for backward compatibility
