@@ -186,19 +186,20 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	mob := task.Mob(tp)
 
 	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
-		// Encryption
-		start := time.Now()
-		data := s.encryptSession(mob, task.key)
-		metrics.RecordSessionEncryptionDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 		// Compression
-		start = time.Now()
-		result := s.compressSession(data)
+		start := time.Now()
+		data := s.compressSession(mob)
 		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
+		// Encryption
+		start = time.Now()
+		result := s.encryptSession(data.Bytes(), task.key)
+		metrics.RecordSessionEncryptionDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+
 		if tp == DOM {
-			task.doms = result
+			task.doms = bytes.NewBuffer(result)
 		} else {
-			task.dev = result
+			task.dev = bytes.NewBuffer(result)
 		}
 		return
 	}
@@ -210,30 +211,30 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 
 	// DomStart part
 	go func() {
-		// Encryption
-		start := time.Now()
-		data := s.encryptSession(mob[:s.cfg.FileSplitSize], task.key)
-		firstEncrypt = time.Since(start).Milliseconds()
-
 		// Compression
-		start = time.Now()
-		task.doms = s.compressSession(data)
+		start := time.Now()
+		data := s.compressSession(mob[:s.cfg.FileSplitSize])
 		firstPart = time.Since(start).Milliseconds()
+
+		// Encryption
+		start = time.Now()
+		task.doms = bytes.NewBuffer(s.encryptSession(data.Bytes(), task.key))
+		firstEncrypt = time.Since(start).Milliseconds()
 
 		// Finish task
 		wg.Done()
 	}()
 	// DomEnd part
 	go func() {
-		// Encryption
-		start := time.Now()
-		data := s.encryptSession(mob[s.cfg.FileSplitSize:], task.key)
-		secondEncrypt = time.Since(start).Milliseconds()
-
 		// Compression
-		start = time.Now()
-		task.dome = s.compressSession(data)
+		start := time.Now()
+		data := s.compressSession(mob[s.cfg.FileSplitSize:])
 		secondPart = time.Since(start).Milliseconds()
+
+		// Encryption
+		start = time.Now()
+		task.dome = bytes.NewBuffer(s.encryptSession(data.Bytes(), task.key))
+		secondEncrypt = time.Since(start).Milliseconds()
 
 		// Finish task
 		wg.Done()
@@ -262,7 +263,7 @@ func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
 
 func (s *Storage) compressSession(data []byte) *bytes.Buffer {
 	zippedMob := new(bytes.Buffer)
-	z, _ := gzip.NewWriterLevel(zippedMob, gzip.BestSpeed)
+	z, _ := gzip.NewWriterLevel(zippedMob, gzip.DefaultCompression)
 	if _, err := z.Write(data); err != nil {
 		log.Printf("can't write session data to compressor: %s", err)
 	}
@@ -283,7 +284,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.doms != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDoms = time.Now().Sub(start).Milliseconds()
@@ -293,7 +294,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dome != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDome = time.Now().Sub(start).Milliseconds()
@@ -303,7 +304,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dev != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", true); err != nil {
+			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", task.key == ""); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()
