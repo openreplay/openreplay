@@ -30,7 +30,9 @@ const Avatar = ({
               'bg-orange': !isActive,
             })}
             style={{ marginRight: '3px', marginBottom: '3px' }}
-          />
+          >
+              {isActive ? null : <Icon name={'sleep'} size={9} style={{ position: 'absolute', right: -6, top: -3 }} />}
+          </div>
         )}
       </div>
     </Tooltip>
