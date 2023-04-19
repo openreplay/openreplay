@@ -5,10 +5,6 @@ OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
 OR_REPO="https://github.com/openreplay/openreplay"
-# To run kubeconfig run
-# `KUBECONFIG=/path/to/file openreplay -s`
-export KUBECONFIG=${KUBECONFIG:-"/etc/rancher/k3s/k3s.yaml"}
-tmp_dir=$(mktemp -d)
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
 #HELM_OPTIONS=""
 # If you want to install the dev version. It can be any branch or tag.
@@ -78,6 +74,14 @@ function log () {
   echo "[Error]" "$@"
   exit 100
 }
+
+# To run kubeconfig run
+# `KUBECONFIG=/path/to/file openreplay -s`
+[[ -f /etc/rancher/k3s/k3s.yaml ]] && k3s_path="/etc/rancher/k3s/k3s.yaml"
+[[ -f "${HOME}/.kube/config" ]] && local_kube_config_path="${HOME}/.kube/config"
+export KUBECONFIG=${KUBECONFIG:-$k3s_path:$local_kube_config_path}
+[[ -z $KUBECONFIG ]] && log err "No kubeconfig file found. Exiting"
+tmp_dir=$(mktemp -d)
 
 function install_packages() {
 
