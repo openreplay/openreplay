@@ -121,11 +121,11 @@ cat <<"EOF"
 EOF
 echo -e ${NC}
 
-log info '
+log info "
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
                     [ -i | --install DOMAIN_NAME ]
-                    [ -u | --upgrade ]
+                    [ -u | --upgrade (fetch lastest patches for installed release. ${BWHITE}RELEASE_UPGRADE=1 openreplay -u${GREEN} to upgrade release.)]
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
@@ -137,7 +137,7 @@ log info '
                    db ender frontend heuristics 
                    http integrations nginx-controller 
                    peers sink sourcemapreader storage 
-    '
+    "
   return
 }
 
@@ -287,6 +287,9 @@ function upgrade() {
         Please do ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}
       "
   }
+
+  # Unless its upgrade release, always checkout same tag.
+  [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=$or_version
 
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
