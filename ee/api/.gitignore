@@ -267,6 +267,5 @@ Pipfile.lock
 /build_crons.sh
 /run-dev.sh
 /run-alerts-dev.sh
-/routers/subs/health.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

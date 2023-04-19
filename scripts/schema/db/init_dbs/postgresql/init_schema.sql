@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.12.0'
+SELECT 'v1.11.5'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -960,6 +960,16 @@ $$
                 project_id integer                     NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 timestamp  integer                     NOT NULL DEFAULT -1,
                 is_public  boolean                     NOT NULL DEFAULT FALSE
+            );
+
+            CREATE TABLE public.sessions_count
+            (
+                project_id     integer NOT NULL,
+                created_at     bigint    default (EXTRACT(epoch FROM date_trunc('day'::text, now())) * 1000)::bigint,
+                sessions_count integer,
+                events_count   bigint,
+                _timestamp     timestamp default (now() AT TIME ZONE 'utc'::text),
+                primary key (project_id, created_at)
             );
 
             raise notice 'DB created';

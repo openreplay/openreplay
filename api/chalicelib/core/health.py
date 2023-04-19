@@ -1,3 +1,4 @@
+from ssl import SSLCertVerificationError
 from urllib.parse import urlparse
 
 import redis
@@ -33,7 +34,7 @@ HEALTH_ENDPOINTS = {
 }
 
 
-def __check_database_pg():
+def __check_database_pg(*_):
     fail_response = {
         "health": False,
         "details": {
@@ -64,11 +65,11 @@ def __check_database_pg():
     }
 
 
-def __not_supported():
+def __not_supported(*_):
     return {"errors": ["not supported"]}
 
 
-def __always_healthy():
+def __always_healthy(*_):
     return {
         "health": True,
         "details": {}
@@ -76,7 +77,7 @@ def __always_healthy():
 
 
 def __check_be_service(service_name):
-    def fn():
+    def fn(*_):
         fail_response = {
             "health": False,
             "details": {
@@ -112,7 +113,7 @@ def __check_be_service(service_name):
     return fn
 
 
-def __check_redis():
+def __check_redis(*_):
     fail_response = {
         "health": False,
         "details": {"errors": ["server health-check failed"]}
@@ -136,6 +137,38 @@ def __check_redis():
         "details": {
             # "version": r.execute_command('INFO')['redis_version']
         }
+    }
+
+
+def __check_SSL(*_):
+    fail_response = {
+        "health": False,
+        "details": {
+            "errors": ["SSL Certificate health-check failed"]
+        }
+    }
+    try:
+        requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
+    except Exception as e:
+        print("!! health failed: SSL Certificate")
+        print(str(e))
+        return fail_response
+    return {
+        "health": True,
+        "details": {}
+    }
+
+
+def __get_sessions_stats(*_):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
+                                      COALESCE(SUM(events_count),0) AS e_c
+                               FROM public.sessions_count;""")
+        cur.execute(query)
+        row = cur.fetchone()
+    return {
+        "numberOfSessionsCaptured": row["s_c"],
+        "numberOfEventCaptured": row["e_c"]
     }
 
 
@@ -163,9 +196,14 @@ def get_health():
             "sink": __check_be_service("sink"),
             "sourcemaps-reader": __check_be_service("sourcemaps-reader"),
             "storage": __check_be_service("storage")
-        }
+        },
+        "details": __get_sessions_stats,
+        "ssl": __check_SSL
     }
     for parent_key in health_map.keys():
-        for element_key in health_map[parent_key]:
-            health_map[parent_key][element_key] = health_map[parent_key][element_key]()
+        if isinstance(health_map[parent_key], dict):
+            for element_key in health_map[parent_key]:
+                health_map[parent_key][element_key] = health_map[parent_key][element_key]()
+        else:
+            health_map[parent_key] = health_map[parent_key]()
     return health_map
