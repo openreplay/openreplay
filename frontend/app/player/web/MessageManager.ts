@@ -66,6 +66,7 @@ export interface State extends ScreenState, ListsState {
   ready: boolean,
   lastMessageTime: number,
   firstVisualEvent: number,
+  messagesProcessed: boolean,
 }
 
 
@@ -93,6 +94,7 @@ export default class MessageManager {
     ready: false,
     lastMessageTime: 0,
     firstVisualEvent: 0,
+    messagesProcessed: false,
   }
 
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
@@ -207,11 +209,13 @@ export default class MessageManager {
   }
   private onFileReadFinally = () => {
     this.waitingForFiles = false
+    this.state.update({ messagesProcessed: true })
     // this.setMessagesLoading(false)
     // this.state.update({ filesLoaded: true })
   }
 
   async loadMessages(isClickmap: boolean = false) {
+    this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
     // TODO: reusable decryptor instance
     const createNewParser = (shouldDecrypt = true, file?: string) => {

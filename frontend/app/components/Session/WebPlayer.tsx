@@ -57,11 +57,7 @@ function WebPlayer(props: any) {
       }
     })
 
-    const jumpToTime = props.query.get('jumpto');
     const freeze = props.query.get('freeze')
-    if (jumpToTime) {
-      WebPlayerInst.jump(parseInt(jumpToTime));
-    }
     if (freeze) {
       WebPlayerInst.freeze()
     }
@@ -73,22 +69,29 @@ function WebPlayer(props: any) {
     }
   }, [session.events, session.errors, contextValue.player])
 
-  const { ready: isPlayerReady, firstVisualEvent: visualOffset } = contextValue.store?.get() || {}
+  const { ready: isPlayerReady, firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {}
 
   React.useEffect(() => {
-    if (showNoteModal) {
+    if (showNoteModal || activeTab !== '') {
       contextValue.player.pause()
     }
 
-    if (activeTab === '' && !showNoteModal && isPlayerReady && contextValue.player) {
-      contextValue.player.play()
+    if (activeTab === '' && !showNoteModal && messagesProcessed && contextValue.player) {
+      const jumpToTime = props.query.get('jumpto');
+      const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted
 
-      if (visualOffset !== 0 && !visuallyAdjusted) {
-        contextValue.player.jump(visualOffset)
-        setAdjusted(true)
+      if (jumpToTime || shouldAdjustOffset) {
+        if (jumpToTime > visualOffset) {
+          contextValue.player.jump(parseInt(jumpToTime));
+        } else {
+          contextValue.player.jump(visualOffset)
+          setAdjusted(true)
+        }
       }
+
+      contextValue.player.play()
     }
-  }, [activeTab, isPlayerReady, showNoteModal, visualOffset])
+  }, [activeTab, showNoteModal, visualOffset, messagesProcessed])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
