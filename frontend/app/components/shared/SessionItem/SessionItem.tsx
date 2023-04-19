@@ -150,7 +150,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     <Tooltip
       delay={0}
       title={`Session already added into the multiview`}
-      disabled={!props.isDisabled}
+      disabled={!props.isDisabled || !location.pathname.includes('multiview')}
     >
       <div
         className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')}
