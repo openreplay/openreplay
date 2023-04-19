@@ -279,8 +279,9 @@ function upgrade() {
   # Unless its upgrade release, always checkout same tag.
   [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=$or_version
 
+  time_now=$(date +%m-%d-%Y-%I%M%S)
   # Creating backup dir of current installation
-  [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
+  [[ -d "$OR_DIR/openreplay" ]] && sudo mv "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}_${time_now}"
 
   clone_repo
   err_cd openreplay/scripts/helmcharts
