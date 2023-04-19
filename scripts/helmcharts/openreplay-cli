@@ -415,7 +415,7 @@ do
         clean_tmp_dir
         exit 100
       }
-      if /var/lib/openreplay/busybox md5sum -c "${tmp_dir}/var.yaml.md5"; then
+      if /var/lib/openreplay/busybox md5sum -c "${tmp_dir}/var.yaml.md5" &> /dev/null; then
         log info "No change detected in ${BWHITE}${OR_DIR}/vars.yaml${GREEN}. Not reloading"
       else
         reload
