@@ -14,7 +14,7 @@ function SessionCopyLink({ startedAt }: any) {
   const copyHandler = () => {
     setCopied(true);
     const timeStr = DateTime.fromMillis(startedAt + time);
-    copy(window.location.origin + window.location.pathname + '?jumpto=' + timeStr.toMillis());
+    copy(window.location.origin + window.location.pathname + '?jumpto=' + parseInt(String(timeStr.toMillis())));
     setTimeout(() => {
       setCopied(false);
     }, 1000);

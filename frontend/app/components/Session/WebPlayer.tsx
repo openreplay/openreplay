@@ -79,7 +79,7 @@ function WebPlayer(props: any) {
 
       if (jumpToTime || shouldAdjustOffset) {
         if (jumpToTime > visualOffset) {
-          contextValue.player.jump(parseInt(jumpToTime - props.startedAt));
+          contextValue.player.jump(parseInt(String(jumpToTime - startedAt)));
         } else {
           contextValue.player.jump(visualOffset);
           setAdjusted(true);
