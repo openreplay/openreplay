@@ -180,7 +180,7 @@ export default class App {
         } else if (data.type === 'compress') {
           const batch = data.batch
           const batchSize = batch.byteLength
-          if (batchSize > this.compressionThreshold) {
+          if (batchSize > 10) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) console.error(err)
               // @ts-ignore
