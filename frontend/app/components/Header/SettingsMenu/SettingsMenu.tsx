@@ -38,11 +38,9 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
       style={{ width: '160px', marginTop: '34px' }}
       className={cn(className, 'rounded absolute -right-4 top-0 bg-white border p-2 text-left')}
     >
+      <MenuItem onClick={() => navigateTo('projects')} label="Projects" icon="folder2" />
       {isAdmin && (
-        <>
-          <MenuItem onClick={() => navigateTo('projects')} label="Projects" icon="folder2" />
-          <MenuItem onClick={() => navigateTo('team')} label="Team" icon="users" />
-        </>
+        <MenuItem onClick={() => navigateTo('team')} label="Team" icon="users" />
       )}
       <MenuItem onClick={() => navigateTo('metadata')} label="Metadata" icon="tags" />
       <MenuItem onClick={() => navigateTo('webhooks')} label="Webhooks" icon="link-45deg" />
