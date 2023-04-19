@@ -20,7 +20,7 @@ const MainSearchBar = (props: Props) => {
       <div className="flex items-center" style={{ width: '40%' }}>
         <SavedSearch />
         <Button
-          variant="text-primary"
+          variant={hasFilters ? 'text-primary' : 'text'}
           className="ml-auto font-medium"
           disabled={!hasFilters}
           onClick={() => props.clearSearch()}
