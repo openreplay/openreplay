@@ -3,7 +3,6 @@ import { Icon, Tooltip, Button } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
-import copy from 'copy-to-clipboard';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
 import ItemMenu from './components/HeaderMenu';
@@ -47,7 +46,6 @@ function SubHeader(props) {
     .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
     .concat(graphqlList.filter((i) => parseInt(i.status) >= 400));
 
-  const [isCopied, setCopied] = React.useState(false);
   const { showModal, hideModal } = useModal();
 
   const location =
@@ -107,16 +105,11 @@ function SubHeader(props) {
       {location && (
         <>
           <div
-            className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-active-blue rounded-md"
-            onClick={() => {
-              copy(currentLocation);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 5000);
-            }}
+            className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-active-blue hover:!underline rounded-md"
           >
             <Icon size="20" name="event/link" className="mr-1" />
-            <Tooltip title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}>
-              {location}
+            <Tooltip title="Open in new tab" delay={0}>
+              <a href={location} target='_blank'>{location}</a>
             </Tooltip>
           </div>
         </>
