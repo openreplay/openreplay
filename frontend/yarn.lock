@@ -11047,6 +11047,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fflate@npm:^0.7.4":
+  version: 0.7.4
+  resolution: "fflate@npm:0.7.4"
+  checksum: 5e749eb3a6ed61a0f6c55756abf9f4258f06f60505db689e22d18503dd252ca5af656d32668e4b7b20714adf8b313febf695d23863a8352f23e325baee0f672d
+  languageName: node
+  linkType: hard
+
 "figgy-pudding@npm:^3.4.1, figgy-pudding@npm:^3.5.1, figgy-pudding@npm:^3.5.2":
   version: 3.5.2
   resolution: "figgy-pudding@npm:3.5.2"
@@ -17215,6 +17222,7 @@ __metadata:
     eslint-plugin-react: ^7.29.4
     eslint-plugin-react-hooks: ^4.5.0
     faker: ^5.5.3
+    fflate: ^0.7.4
     file-loader: ^6.2.0
     flow-bin: ^0.115.0
     html-to-image: ^1.9.0

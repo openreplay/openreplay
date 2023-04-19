@@ -31,6 +31,7 @@
     "classnames": "^2.3.1",
     "copy-to-clipboard": "^3.3.1",
     "deep-diff": "^1.0.2",
+    "fflate": "^0.7.4",
     "html-to-image": "^1.9.0",
     "html2canvas": "^1.4.1",
     "immutable": "^4.0.0-rc.12",

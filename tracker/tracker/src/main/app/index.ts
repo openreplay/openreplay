@@ -22,9 +22,6 @@ import type {
   FromWorkerData,
 } from '../../common/interaction.js'
 
-// @ts-ignore
-window.gzip = gzip
-
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
 }
