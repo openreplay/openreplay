@@ -354,9 +354,9 @@ do
       ;;
     -u | --upgrade)
       if [[ $RELEASE_UPGRADE -eq 1 ]]; then
-        log title "Upgrading OpenReplay to latest release"
+        log title "Upgrading OpenReplay to Latest Release"
       else
-        log title "Fetching OpenReplay Patches"
+        log title "Applying Latest OpenReplay Patches"
       fi
       upgrade
       clean_tmp_dir
