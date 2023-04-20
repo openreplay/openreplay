@@ -62,6 +62,11 @@ export const diffFromNowShortString = (ts: number): string =>
 export const getDateFromMill = date =>
   (typeof date === "number" ? DateTime.fromMillis(date) : undefined);
 
+export const getTimeFromMill = (dateTime: number, tz: string) => {
+  const date = DateTime.fromMillis(dateTime);
+  return date.setZone(tz).toFormat('HH:mm:ss ZZZZ');
+}
+
 
 /**
  * Check if the given date is today.

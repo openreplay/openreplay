@@ -85,6 +85,7 @@ function Controls(props: any) {
     skipInterval,
     disabledRedux,
     showStorageRedux,
+    session
   } = props;
 
   const storageType = selectStorageType(store.get());
@@ -169,6 +170,7 @@ function Controls(props: any) {
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
+              startedAt={session.startedAt}
             />
             <div className={cn('mx-2')} />
             <XRayButton
