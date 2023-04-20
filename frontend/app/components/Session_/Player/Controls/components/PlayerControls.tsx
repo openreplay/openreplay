@@ -1,16 +1,18 @@
 import React from 'react';
 import { Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
-import { ReduxTime } from '../Time';
+import { RealReplayTimeConnected, ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
 import { SkipButton } from 'App/player-ui';
 import { SPEED_OPTIONS } from 'App/player/player/Player';
+import PlayingTime from './PlayingTime'
 
 interface Props {
   skip: boolean;
   speed: number;
   disabled: boolean;
+  startedAt: number;
   playButton: JSX.Element;
   skipIntervals: Record<number, number>;
   currentInterval: number;
@@ -34,12 +36,19 @@ function PlayerControls(props: Props) {
     skipIntervals,
     setSkipInterval,
     currentInterval,
+    startedAt,
   } = props;
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const [isUniTime, setUniTime] = React.useState(localStorage.getItem('__or_player_time_mode') === 'real');
   const speedRef = React.useRef<HTMLButtonElement>(null);
   const arrowBackRef = React.useRef<HTMLButtonElement>(null);
   const arrowForwardRef = React.useRef<HTMLButtonElement>(null);
   const skipRef = React.useRef<HTMLDivElement>(null);
+
+  const setIsUniTime = (isUniTime: boolean) => {
+    localStorage.setItem('__or_player_time_mode', isUniTime ? 'real' : 'current');
+    setUniTime(isUniTime);
+  }
 
   React.useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -72,12 +81,9 @@ function PlayerControls(props: Props) {
       {playButton}
       <div className="mx-1" />
 
-      <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
-        {/* @ts-ignore */}
-        <ReduxTime isCustom name="time" format="mm:ss" />
-        <span className="px-1">/</span>
-        {/* @ts-ignore */}
-        <ReduxTime isCustom name="endTime" format="mm:ss" />
+
+      <div className={'hover:bg-gray-light-shade p-2 rounded cursor-pointer'}>
+        <PlayingTime isUniTime={isUniTime} setIsUniTime={setIsUniTime} startedAt={startedAt} />
       </div>
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
