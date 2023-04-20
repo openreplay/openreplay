@@ -315,7 +315,7 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
 		return new OnloadStyleSheet(new Promise((resolve, reject) => 
 			vRoot.onNode(node => {
 				let context: typeof globalThis | null
-				if (node instanceof Document) {
+				if (node instanceof Document || node.nodeName === '#document') {
 					context = node.defaultView
 				} else {
 					context = node.ownerDocument.defaultView
