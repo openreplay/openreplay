@@ -90,7 +90,7 @@ function PlayerControls(props: Props) {
         {/* @ts-ignore */}
         <Tooltip
           anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
-          title={`Rewind ${currentInterval}s`}
+          title={`← Rewind ${currentInterval}s`}
           placement="top"
         >
           <button ref={arrowBackRef} className="h-full  bg-transparent">
@@ -146,7 +146,7 @@ function PlayerControls(props: Props) {
 
         <Tooltip
           anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
-          title={`Rewind ${currentInterval}s`}
+          title={`Forward ${currentInterval}s →`}
           placement="top"
         >
           <button ref={arrowForwardRef} className="h-full bg-transparent">
@@ -194,7 +194,7 @@ function PlayerControls(props: Props) {
           )}
         >
           <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-            <Tooltip disabled={showTooltip} title="Set default skip duration">
+            <Tooltip disabled={showTooltip} title="Playback speed (↑↓)">
               <button
                 ref={speedRef}
                 className={cn(styles.speedButton, 'focus:border focus:border-blue')}

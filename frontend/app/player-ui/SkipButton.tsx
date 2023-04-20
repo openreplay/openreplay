@@ -15,10 +15,9 @@ export function SkipButton({ size = 18, onClick, isBackwards, customClasses }: I
     <div
       onClick={onClick}
       className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', customClasses)}
-      style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
     >
       <Icon
-        name="skip-forward-fill"
+        name={ isBackwards ? "arrow-counterclockwise" : "arrow-clockwise" }
         size={size}
         color="inherit"
       />
