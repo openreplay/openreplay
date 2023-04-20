@@ -1,10 +1,11 @@
+from numpy._typing import _16Bit
 from decouple import config
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
 import json
 import asyncio
-from time import time
+from time import time, sleep
 from copy import deepcopy
 
 from msgcodec.msgcodec import MessageCodec
@@ -13,6 +14,8 @@ from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
 from db.writer import insert_batch
 from handler import handle_message, handle_normal_message, handle_session
+
+from psycopg2 import InterfaceError
 
 def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, LEVEL):
     if msg is None:
@@ -51,7 +54,7 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
                 continue
 
 
-def attempt_session_insert(sess_batch, db, sessions_table_name):
+def attempt_session_insert(sess_batch, db, sessions_table_name, try_=0):
     if sess_batch:
         try:
             print("inserting sessions...")
@@ -63,11 +66,16 @@ def attempt_session_insert(sess_batch, db, sessions_table_name):
         except ValueError as e:
             print("Message value could not be processed or inserted correctly")
             print(repr(e))
+        except InterfaceError as e:
+            if try_ < 3:
+                try_ += 1
+                sleep(try_*2)
+                attempt_session_insert(sess_batch, db, sessions_table_name, try_)
         except Exception as e:
             print(repr(e))
 
 
-def attempt_batch_insert(batch, db, table_name, LEVEL):
+def attempt_batch_insert(batch, db, table_name, LEVEL, try_=0):
     # insert a batch
     try:
         print("inserting...")
@@ -79,6 +87,13 @@ def attempt_batch_insert(batch, db, table_name, LEVEL):
     except ValueError as e:
         print("Message value could not be processed or inserted correctly")
         print(repr(e))
+    except InterfaceError as e:
+        if try_ < 3:
+            try_ += 1
+            sleep(try_*2)
+            attempt_batch_insert(batch, db, table_name, LEVEL, try_)
+        else:
+            print(repr(e))
     except Exception as e:
         print(repr(e))
 
