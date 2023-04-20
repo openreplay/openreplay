@@ -8,10 +8,13 @@ import { clearSearch } from 'Duck/search';
 interface Props {
   clearSearch: () => void;
   appliedFilter: any;
+  savedSearch: any;
 }
 const MainSearchBar = (props: Props) => {
   const { appliedFilter } = props;
   const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+  const hasSavedSearch = props.savedSearch && props.savedSearch.exists();
+  const hasSearch = hasFilters || hasSavedSearch;
   return (
     <div className="flex items-center">
       <div style={{ width: '60%', marginRight: '10px' }}>
@@ -20,9 +23,9 @@ const MainSearchBar = (props: Props) => {
       <div className="flex items-center" style={{ width: '40%' }}>
         <SavedSearch />
         <Button
-          variant={hasFilters ? 'text-primary' : 'text'}
+          variant={hasSearch ? 'text-primary' : 'text'}
           className="ml-auto font-medium"
-          disabled={!hasFilters}
+          disabled={!hasSearch}
           onClick={() => props.clearSearch()}
         >
           Clear Search
@@ -34,6 +37,7 @@ const MainSearchBar = (props: Props) => {
 export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['search', 'instance']),
+    savedSearch: state.getIn([ 'search', 'savedSearch' ])
   }),
   {
     clearSearch,
