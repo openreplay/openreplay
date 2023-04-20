@@ -41,6 +41,7 @@ def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, cont
 def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema, context: schemas_ee.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
+                  "projects.project_id=%(project_id)s",
                   "assist_records.deleted_at ISNULL"]
     if data.startDate:
         conditions.append("assist_records.created_at>=%(startDate)s")
