@@ -4,10 +4,11 @@ import { Button, Message, Form, Input } from 'UI';
 import styles from './profileSettings.module.css';
 import { updatePassword } from 'Duck/user';
 import { toast } from 'react-toastify';
+import { validatePassword } from 'App/validate';
+import { PASSWORD_POLICY } from 'App/constants';
 
 const ERROR_DOESNT_MATCH = "Passwords don't match";
 const MIN_LENGTH = 8;
-const PASSWORD_POLICY = `Password should contain at least ${MIN_LENGTH} symbols`;
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
@@ -38,12 +39,6 @@ const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, upd
     }
     return false;
   }, [newPassword, newPasswordRepeat, oldPassword]);
-
-  const validatePassword = (password: string) => {
-    const regex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]{8,}$/;
-    return regex.test(password);
-  };
 
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -126,12 +121,8 @@ const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, upd
         {ERROR_DOESNT_MATCH}
       </Message>
       <Message error hidden={!newPassword.error}>
-        Password should contain at least one capital letter, special character, and digit, and
-        length min 8
+        {PASSWORD_POLICY}
       </Message>
-      {/* <Message error hidden={!newPasswordRepeat.error}>
-        Passwords don't match
-      </Message> */}
       <div className="flex items-center pt-3">
         <Button type="submit" variant="outline" disabled={isSubmitDisabled()} loading={loading}>
           Change Password
