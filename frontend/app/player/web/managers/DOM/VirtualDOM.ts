@@ -49,24 +49,25 @@ export abstract class VNode<T extends Node = Node> {
 	public abstract applyChanges(): void
 }
 
-
 type VChild = VElement | VText
 abstract class VParent<T extends Node = Node> extends VNode<T>{
+	/**
+	 */
 	protected children: VChild[] = []
-	private childrenToMount: Set<VChild> = new Set()
+	private notMontedChildren: Set<VChild> = new Set()
 
 	insertChildAt(child: VChild, index: number) {
 		if (child.parentNode) {
 			child.parentNode.removeChild(child)
 		}
 		this.children.splice(index, 0, child)
-		this.childrenToMount.add(child)
+		this.notMontedChildren.add(child)
 		child.parentNode = this
 	}
 
 	removeChild(child: VChild) {
 		this.children = this.children.filter(ch => ch !== child)
-		this.childrenToMount.delete(child)
+		this.notMontedChildren.delete(child)
 		child.parentNode = null
 	}
 
@@ -74,13 +75,13 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		let nextMounted: VChild | null = null
 		for (let i = this.children.length-1; i >= 0; i--) {
 			const child = this.children[i]
-			if (this.childrenToMount.has(child) &&
+			if (this.notMontedChildren.has(child) &&
 				(!shouldInsert || shouldInsert(child)) // is there a better way of not-knowing about subclass logic on prioritized insertion?
 			) {
 				this.node.insertBefore(child.node, nextMounted ? nextMounted.node : null)
-				this.childrenToMount.delete(child)
+				this.notMontedChildren.delete(child)
 			}
-			if (!this.childrenToMount.has(child)) {
+			if (!this.notMontedChildren.has(child)) {
 				nextMounted = child
 			}
 		}
@@ -91,7 +92,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		this.children.forEach(child => child.applyChanges())
 		/* Inserting */
 		this.mountChildren()
-		if (this.childrenToMount.size !== 0) {
+		if (this.notMontedChildren.size !== 0) {
 			console.error("VParent: Something went wrong with children insertion")
 		}
 		/* Removing in-between */
