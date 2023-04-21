@@ -151,7 +151,7 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// TODO: implement in streams
 	start = time.Now()
-	err = c.s3.Upload(strings.NewReader(strData), t.cachePath, contentType, false)
+	err = c.s3.Upload(strings.NewReader(strData), t.cachePath, contentType, storage.NoCompression)
 	if err != nil {
 		metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 		c.Errors <- errors.Wrap(err, t.urlContext)
