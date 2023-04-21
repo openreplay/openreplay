@@ -16,6 +16,10 @@ export default class MFileReader extends RawMessageReader {
     super(data)
   }
 
+  getPosition() {
+    return this.p
+  }
+
   private needSkipMessage(): boolean {
     if (this.p === 0) return false
     for (let i = 7; i >= 0; i--) {
