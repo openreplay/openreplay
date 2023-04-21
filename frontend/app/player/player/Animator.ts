@@ -80,7 +80,7 @@ export default class Animator {
         endTime,
         live,
         livePlay,
-        ready,  // = messagesLoading || cssLoading || disconnected
+        ready,
 
         lastMessageTime,
       } = this.store.get()

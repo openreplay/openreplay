@@ -6,8 +6,6 @@ import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import { Log } from './types/log';
 import { Resource, ResourceType, getResourceFromResourceTiming, getResourceFromNetworkRequest } from './types/resource'
 
-import { toast } from 'react-toastify';
-
 import type  { Store, Timed } from '../common/types';
 import ListWalker from '../common/ListWalker';
 
@@ -36,7 +34,6 @@ import { decryptSessionBytes } from './network/crypto';
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
 
 import Screen, {
-  INITIAL_STATE as SCREEN_INITIAL_STATE,
   State as ScreenState,
 } from './Screen/Screen';
 
@@ -57,13 +54,9 @@ export interface State extends ScreenState, ListsState {
   domContentLoadedTime?:  { time: number, value: number },
   domBuildingTime?: number,
   loadTime?: { time: number, value: number },
-  error: boolean,
-  devtoolsLoading: boolean,
 
-  messagesLoading: boolean,
   cssLoading: boolean,
 
-  ready: boolean,
   lastMessageTime: number,
 }
 
@@ -80,16 +73,12 @@ const visualChanges = [
 
 export default class MessageManager {
   static INITIAL_STATE: State = {
-    ...SCREEN_INITIAL_STATE,
+    ...Screen.INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
     performanceChartData: [],
     skipIntervals: [],
-    error: false,
-    devtoolsLoading: false,
 
-    messagesLoading: false,
     cssLoading: false,
-    ready: false,
     lastMessageTime: 0,
   }
 
@@ -135,117 +124,6 @@ export default class MessageManager {
     })
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
-  }
-
-  private setCSSLoading = (cssLoading: boolean) => {
-    this.screen.displayFrame(!cssLoading)
-    this.state.update({ cssLoading, ready: !this.state.get().messagesLoading && !cssLoading })
-  }
-
-  private _sortMessagesHack(msgs: Message[]) {
-    // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-    const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
-    this.pagesManager.sortPages((m1, m2) => {
-      if (m1.time === m2.time) {
-        if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
-          if (headChildrenIds.includes(m1.id)) {
-            return -1;
-          }
-        } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
-          if (headChildrenIds.includes(m2.id)) {
-            return 1;
-          }
-        }  else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
-          const m1FromHead = headChildrenIds.includes(m1.id);
-          const m2FromHead = headChildrenIds.includes(m2.id);
-          if (m1FromHead && !m2FromHead) {
-            return -1;
-          } else if (m2FromHead && !m1FromHead) {
-            return 1;
-          }
-        }
-      }
-      return 0;
-    })
-  }
-
-  private waitingForFiles: boolean = false
-  private onFileReadSuccess = () => {
-    const stateToUpdate : Partial<State>= {
-      performanceChartData: this.performanceTrackManager.chartData,
-      performanceAvaliability: this.performanceTrackManager.avaliability,
-      ...this.lists.getFullListsState(),
-    }
-    if (this.activityManager) {
-      this.activityManager.end()
-      stateToUpdate.skipIntervals = this.activityManager.list
-    }
-    this.state.update(stateToUpdate)
-  }
-  private onFileReadFailed = (e: any) => {
-    logger.error(e)
-    this.state.update({ error: true })
-    toast.error('Error requesting a session file')
-  }
-  private onFileReadFinally = () => {
-    this.waitingForFiles = false
-    // this.setMessagesLoading(false)
-    // this.state.update({ filesLoaded: true })
-  }
-
-  async loadMessages(isClickmap: boolean = false) {
-    this.setMessagesLoading(true)
-    // TODO: reusable decryptor instance
-    const createNewParser = (shouldDecrypt = true) => {
-      const decrypt = shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
-        : (b: Uint8Array) => Promise.resolve(b)
-      // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-      return (b: Uint8Array) => decrypt(b).then(b => {
-        fileReader.append(b)
-        const msgs: Array<Message> = []
-        for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          this.distributeMessage(msg, msg._index)
-          msgs.push(msg)
-        }
-
-        logger.info("Messages count: ", msgs.length, msgs)
-        this._sortMessagesHack(msgs)
-        this.setMessagesLoading(false)
-      })
-    }
-
-    this.waitingForFiles = true
-
-    const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: createNewParser }
-      : { url: this.session.mobsUrl, parser: () => createNewParser(false)}
-
-    loadFiles(loadMethod.url, loadMethod.parser())
-      // EFS fallback
-      .catch((e) =>
-        requestEFSDom(this.session.sessionId)
-          .then(createNewParser(false))
-      )
-      .then(this.onFileReadSuccess)
-      .catch(this.onFileReadFailed)
-      .finally(this.onFileReadFinally);
-
-    // load devtools (TODO: start after the first DOM file download)
-    if (isClickmap) return;
-    this.state.update({ devtoolsLoading: true })
-    loadFiles(this.session.devtoolsURL, createNewParser())
-    // EFS fallback
-    .catch(() =>
-      requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false))
-    )
-    .then(() => {
-      this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
-    })
-    .catch(e => logger.error("Can not download the devtools file", e))
-    .finally(() => this.state.update({ devtoolsLoading: false }))
   }
 
   resetMessageManagers() {
@@ -327,10 +205,6 @@ export default class MessageManager {
         this.screen.cursor.click();
       }
     })
-
-    if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {
-      this.setMessagesLoading(true)
-    }
   }
 
   private decodeStateMessage(msg: any, keys: Array<string>) {
@@ -347,7 +221,8 @@ export default class MessageManager {
     return { ...msg, ...decoded };
   }
 
-  distributeMessage(msg: Message, index: number): void {
+  distributeMessage = (msg: Message, index: number): void  => {
+    this._handeleForSortHack(msg)
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })
@@ -471,9 +346,54 @@ export default class MessageManager {
     }
   }
 
-  setMessagesLoading(messagesLoading: boolean) {
-    this.screen.display(!messagesLoading);
-    this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
+  private _heeadChildrenID: number[] = []
+  private _handeleForSortHack(m: Message) {
+    // @ts-ignore
+    m.parentID === 1 && this._heeadChildrenID.push(m.id)
+  }
+  // Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
+  private _sortMessagesHack() {
+    const headChildrenIds = this._heeadChildrenID
+    this.pagesManager.sortPages((m1, m2) => {
+      if (m1.time === m2.time) {
+        if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
+          if (headChildrenIds.includes(m1.id)) {
+            return -1;
+          }
+        } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
+          if (headChildrenIds.includes(m2.id)) {
+            return 1;
+          }
+        }  else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
+          const m1FromHead = headChildrenIds.includes(m1.id);
+          const m2FromHead = headChildrenIds.includes(m2.id);
+          if (m1FromHead && !m2FromHead) {
+            return -1;
+          } else if (m2FromHead && !m1FromHead) {
+            return 1;
+          }
+        }
+      }
+      return 0;
+    })
+  }
+
+  onMessagesLoaded = () => {
+    const stateToUpdate : Partial<State>= {
+      performanceChartData: this.performanceTrackManager.chartData,
+      performanceAvaliability: this.performanceTrackManager.avaliability,
+      ...this.lists.getFullListsState(),
+    }
+    if (this.activityManager) {
+      this.activityManager.end()
+      stateToUpdate.skipIntervals = this.activityManager.list
+    }
+    this.state.update(stateToUpdate)
+    this._sortMessagesHack()
+  }
+
+  private setCSSLoading = (cssLoading: boolean) => {
+    this.state.update({ cssLoading })
   }
 
   private setSize({ height, width }: { height: number, width: number }) {

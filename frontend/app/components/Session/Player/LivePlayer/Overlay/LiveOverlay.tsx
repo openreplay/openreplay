@@ -24,19 +24,17 @@ function Overlay({
   const { store } = React.useContext<ILivePlayerContext>(PlayerContext)
 
   const {
-    messagesLoading,
-    cssLoading,
+    ready,
     peerConnectionStatus,
     livePlay,
     calling,
     remoteControl,
     recordingState,
   } = store.get()
-  const loading = messagesLoading || cssLoading
   const liveStatusText = getStatusText(peerConnectionStatus)
   const connectionStatus = peerConnectionStatus
 
-  const showLiveStatusText = livePlay && liveStatusText && !loading;
+  const showLiveStatusText = livePlay && liveStatusText && ready;
 
   const showRequestWindow =
     (calling === CallingState.Connecting ||
@@ -66,7 +64,7 @@ function Overlay({
           connectionStatus={closedLive ? ConnectionStatus.Closed : connectionStatus}
         />
       )}
-      {loading ? <Loader /> : null}
+      {!ready ? <Loader /> : null}
     </>
   );
 }

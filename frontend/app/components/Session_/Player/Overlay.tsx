@@ -21,23 +21,21 @@ function Overlay({
   const togglePlay = () => player.togglePlay()
   const {
     playing,
-    messagesLoading,
-    cssLoading,
+    ready,
     completed,
     autoplay,
     inspectorMode,
     markedTargets,
     activeTargetIndex,
   } = store.get()
-  const loading = messagesLoading || cssLoading
 
   const showAutoplayTimer = completed && autoplay && nextId
-  const showPlayIconLayer = !isClickmap && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
+  const showPlayIconLayer = !isClickmap && !markedTargets && !inspectorMode && ready && !showAutoplayTimer;
 
   return (
     <>
       {showAutoplayTimer && <AutoplayTimer />}
-      {loading ? <Loader /> : null}
+      {!ready ? <Loader /> : null}
       {showPlayIconLayer && <PlayIconLayer playing={playing} togglePlay={togglePlay} />}
       {markedTargets && <ElementsMarker targets={markedTargets} activeIndex={activeTargetIndex} />}
     </>

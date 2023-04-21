@@ -6,18 +6,11 @@ import type { Point, Dimensions } from './types';
 
 export type State  = Dimensions
 
-export const INITIAL_STATE: State = {
-  width: 0,
-  height: 0,
-}
-
-
 export enum ScaleMode {
   Embed,
   //AdjustParentWidth
   AdjustParentHeight,
 }
-
 
 function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
   // @ts-ignore (IE, Edge)
@@ -57,6 +50,11 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 }
 
 export default class Screen {
+  static INITIAL_STATE: State = {
+    width: 0,
+    height: 0,
+  }
+
   readonly overlay: HTMLDivElement
   readonly cursor: Cursor
 

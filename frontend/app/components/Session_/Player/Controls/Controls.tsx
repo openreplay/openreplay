@@ -66,8 +66,7 @@ function Controls(props: any) {
     completed,
     skip,
     speed,
-    cssLoading,
-    messagesLoading,
+    ready,
     inspectorMode,
     markedTargets,
     exceptionsList,
@@ -88,7 +87,7 @@ function Controls(props: any) {
   } = props;
 
   const storageType = selectStorageType(store.get());
-  const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
+  const disabled = !ready || disabledRedux || inspectorMode || markedTargets;
   const profilesCount = profilesList.length;
   const graphqlCount = graphqlList.length;
   const showGraphql = graphqlCount > 0;
@@ -326,7 +325,6 @@ export default connect(
 //     nextProps.showFetch !== props.showFetch ||
 //     nextProps.fetchCount !== props.fetchCount ||
 //     nextProps.graphqlCount !== props.graphqlCount ||
-//     nextProps.liveTimeTravel !== props.liveTimeTravel ||
 //     nextProps.skipInterval !== props.skipInterval
 //   )
 //     return true;

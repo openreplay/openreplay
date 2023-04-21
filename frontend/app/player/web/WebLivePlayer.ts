@@ -15,6 +15,10 @@ export default class WebLivePlayer extends WebPlayer {
     ...WebPlayer.INITIAL_STATE,
     ...AssistManager.INITIAL_STATE,
     liveTimeTravel: false,
+    assistLoading: false,
+    // get ready() { // TODO TODO TODO how to extend state here?
+    //   return this.assistLoading && super.ready
+    // }
   }
 
   assistManager: AssistManager // public so far
@@ -23,12 +27,12 @@ export default class WebLivePlayer extends WebPlayer {
   private lastMessageInFileTime = 0
   private lastMessageInFileIndex = 0
 
-  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[]) {
-    super(wpState, session, true)
+  constructor(wpStore: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[]) {
+    super(wpStore, session, true)
 
     this.assistManager = new AssistManager(
       session,
-      f => this.messageManager.setMessagesLoading(f),
+      assistLoading => wpStore.update({ assistLoading }),
       (msg, idx) => {
         this.incomingMessages.push(msg)
         if (!this.historyFileIsLoading) {
@@ -38,31 +42,27 @@ export default class WebLivePlayer extends WebPlayer {
       },
       this.screen,
       config,
-      wpState,
+      wpStore,
     )
     this.assistManager.connect(session.agentToken)
   }
 
   toggleTimetravel = async () => {
-    if (this.wpState.get().liveTimeTravel) {
+    // TODO: implement via jump() API rewritten instead
+    if (this.wpStore.get().liveTimeTravel) {
       return
     }
     let result = false;
     this.historyFileIsLoading = true
-    this.messageManager.setMessagesLoading(true) // do it in one place. update unique  loading states each time instead
     this.messageManager.resetMessageManagers()
 
     try {
-      const bytes = await requestEFSDom(this.session.sessionId)
-      const fileReader = new MFileReader(bytes, this.session.startedAt)
-      for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-        this.messageManager.distributeMessage(msg, msg._index)
-      }
-      this.wpState.update({
+      await this.messageLoader.requestFallbackDOM()
+      this.wpStore.update({
         liveTimeTravel: true,
       })
+      this.messageManager.onMessagesLoaded()
       result = true
-      // here we need to update also lists state, if we gonna use them this.messageManager.onFileReadSuccess
     } catch(e) {
       toast.error('Error requesting a session file')
       console.error("EFS file download error:", e)
@@ -75,16 +75,14 @@ export default class WebLivePlayer extends WebPlayer {
     this.incomingMessages.length = 0
 
     this.historyFileIsLoading = false
-    this.messageManager.setMessagesLoading(false)
     return result;
   }
 
   jumpToLive = () => {
-    this.wpState.update({
-      live: true,
+    this.wpStore.update({
       livePlay: true,
     })
-    this.jump(this.wpState.get().lastMessageTime)
+    this.jump(this.wpStore.get().lastMessageTime)
   }
 
   clean = () => {

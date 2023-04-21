@@ -25,10 +25,10 @@ export type State = typeof Player.INITIAL_STATE
 export default class Player extends Animator {
   static INITIAL_STATE = {
     ...Animator.INITIAL_STATE,
-    skipToIssue: initialSkipToIssue,
-    showEvents: initialShowEvents,
 
+    showEvents: initialShowEvents,
     autoplay: initialAutoplay,
+
     skip: initialSkip,
     speed: initialSpeed,
   } as const
@@ -36,29 +36,27 @@ export default class Player extends Animator {
   constructor(private pState: Store<State & AnimatorGetState>, private manager: Moveable) {
     super(pState, manager)
 
-    // Autoplay
-    if (pState.get().autoplay) {
-      let autoPlay = true;
-      document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-          const { playing } = pState.get();
-          autoPlay = playing
-          if (playing) {
-            this.pause();
-          }
-        } else if (autoPlay) {
-          this.play();
+    // Autostart
+    let autostart = true // TODO: configurable
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        const { playing } = pState.get();
+        autostart = playing
+        if (playing) {
+          this.pause();
         }
-      })
-
-      if (!document.hidden) {
+      } else if (autostart) {
         this.play();
       }
+    })
+    if (!document.hidden) {
+      this.play();
     }
   }
 
   /* === TODO: incapsulate in LSCache === */
 
+   //TODO: move to react part ("autoplay" responsible for auto-playing-next)
   toggleAutoplay() {
     const autoplay = !this.pState.get().autoplay
     localStorage.setItem(AUTOPLAY_STORAGE_KEY, `${autoplay}`);
@@ -70,13 +68,6 @@ export default class Player extends Animator {
     const showEvents = !this.pState.get().showEvents
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     this.pState.update({ showEvents })
-  }
-
-  // TODO: move to React part
-  toggleSkipToIssue() {
-    const skipToIssue = !this.pState.get().skipToIssue
-    localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
-    this.pState.update({ skipToIssue })
   }
 
   toggleSkip() {
