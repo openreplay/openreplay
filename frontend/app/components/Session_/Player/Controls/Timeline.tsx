@@ -41,6 +41,7 @@ function Timeline(props: IProps) {
     ready,
     endTime,
     devtoolsLoading,
+    domLoading,
   } = store.get()
   const { issues } = props;
   const notes = notesStore.sessionNotes
@@ -170,7 +171,7 @@ function Timeline(props: IProps) {
               />
             )) : null}
           <div className={stl.timeline} ref={timelineRef}>
-            {devtoolsLoading || !ready ? <div className={stl.stripes} /> : null}
+            {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
           </div>
 
           {events.map((e) => (

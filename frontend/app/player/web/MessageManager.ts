@@ -58,6 +58,7 @@ export interface State extends ScreenState, ListsState {
   domBuildingTime?: number,
   loadTime?: { time: number, value: number },
   error: boolean,
+  domLoading: boolean,
   devtoolsLoading: boolean,
 
   messagesLoading: boolean,
@@ -87,6 +88,7 @@ export default class MessageManager {
     performanceChartData: [],
     skipIntervals: [],
     error: false,
+    domLoading: false,
     devtoolsLoading: false,
 
     messagesLoading: false,
@@ -218,92 +220,101 @@ export default class MessageManager {
     this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
     // TODO: reusable decryptor instance
-    const createNewParser = (shouldDecrypt = true, file?: string) => {
-      const decrypt = shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
-        : (b: Uint8Array) => Promise.resolve(b)
-      // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-      return (b: Uint8Array) => decrypt(b).then(b => {
-        fileReader.append(b)
-        fileReader.checkForIndexes()
-        const msgs: Array<Message> = []
-        for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          msgs.push(msg)
-        }
-        const sorted = msgs.sort((m1, m2) => {
-          return m1.time - m2.time
-        })
-
-        let outOfOrderCounter = 0
-        sorted.forEach(msg => {
-          this.distributeMessage(msg)
-        })
-
-        if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
-        logger.info("Messages count: ", msgs.length, sorted, file)
-
-        this._sortMessagesHack(msgs)
-        this.setMessagesLoading(false)
-      })
-    }
 
     this.waitingForFiles = true
 
     // TODO: refactor this stuff; split everything to async/await
-    
+
     const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: () => createNewParser(true, 'dom') }
-      : { url: this.session.mobsUrl, parser: () => createNewParser(false, 'dom')}
+      ? { url: this.session.domURL, parser: () => this.createNewParser(true, 'dom') }
+      : { url: this.session.mobsUrl, parser: () => this.createNewParser(false, 'dom')}
 
     const parser = loadMethod.parser()
 
     /**
-     * We load first dom mobfile before the rest
+     * We load first dom mob file before the rest
      * to speed up time to replay
      * but as a tradeoff we have to have some copy-paste
      * for the devtools file
      * */
-    loadFiles([loadMethod.url[0]], parser)
-      .then(() => {
-        const domPromise = loadMethod.url.length > 1
-          ? loadFiles([loadMethod.url[1]], parser, true)
-          : Promise.resolve()
-          const devtoolsPromise = !isClickmap
-            ? this.loadDevtools(createNewParser)
-            : Promise.resolve()
-        return Promise.all([domPromise, devtoolsPromise])
-      })
-      /**
-       * EFS fallback for unprocessed sessions (which are live)
-       * */
-      .catch(() => {
-          requestEFSDom(this.session.sessionId)
-            .then(createNewParser(false, 'domEFS'))
-            .catch(this.onFileReadFailed)
-          if (!isClickmap) {
-            this.loadDevtools(createNewParser)
-          }
-        }
-      )
-      .then(this.onFileReadSuccess)
-      .finally(this.onFileReadFinally);
+    try {
+      await loadFiles([loadMethod.url[0]], parser)
+
+      const restDomFilesPromise = this.loadDomFiles([...loadMethod.url.slice(1)], parser)
+      const restDevtoolsFilesPromise = isClickmap ? Promise.resolve() : this.loadDevtools()
+
+      await Promise.all([restDomFilesPromise, restDevtoolsFilesPromise])
+      this.onFileReadSuccess()
+    } catch (e) {
+      console.error(e)
+      try {
+        const efsDomFilePromise = requestEFSDom(this.session.sessionId)
+        const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId)
+
+        const [domData, devtoolsData] = await Promise.all([efsDomFilePromise, efsDevtoolsFilePromise])
+        const domParser = this.createNewParser(false, 'domEFS')
+        const devtoolsParser = this.createNewParser(false, 'devtoolsEFS')
+        const parseDomPromise = domParser(domData)
+        const parseDevtoolsPromise = devtoolsParser(devtoolsData)
+
+        await Promise.all([parseDomPromise, parseDevtoolsPromise])
+        this.onFileReadSuccess()
+      } catch (e2) {
+        console.error(e2)
+      }
+    } finally {
+      this.onFileReadFinally()
+    }
   }
 
-  loadDevtools(createNewParser: (shouldDecrypt: boolean, file: string) => (b: Uint8Array) => Promise<void>) {
+  loadDevtools() {
     this.state.update({ devtoolsLoading: true })
-    return loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
-      // EFS fallback
-      .catch(() =>
-        requestEFSDevtools(this.session.sessionId)
-          .then(createNewParser(false, 'devtoolsEFS'))
-      )
+    return loadFiles(this.session.devtoolsURL, this.createNewParser(true, 'devtools'))
       // TODO: also in case of dynamic update through assist
       .then(() => {
         this.state.update({ ...this.lists.getFullListsState() })
       })
-      .catch(e => logger.error("Can not download the devtools file", e))
       .finally(() => this.state.update({ devtoolsLoading: false }))
+  }
+
+  loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
+    if (urls.length > 0) {
+      this.state.update({ domLoading: true })
+      return loadFiles(urls, parser, true)
+        .finally(() => this.state.update({ domLoading: false }))
+    } else {
+      return Promise.resolve()
+    }
+  }
+
+  createNewParser(shouldDecrypt = true, file?: string) {
+    const decrypt = shouldDecrypt && this.session.fileKey
+      ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
+      : (b: Uint8Array) => Promise.resolve(b)
+    // Each time called - new fileReader created
+    const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
+    return (b: Uint8Array) => decrypt(b).then(b => {
+      fileReader.append(b)
+      fileReader.checkForIndexes()
+      const msgs: Array<Message> = []
+      for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
+        msgs.push(msg)
+      }
+      const sorted = msgs.sort((m1, m2) => {
+        // @ts-ignore
+        if (!m1.time || !m2.time || m1.time === m2.time) return m1._index - m2._index
+        return m1.time - m2.time
+      })
+
+      sorted.forEach(msg => {
+        this.distributeMessage(msg)
+      })
+
+      logger.info("Messages count: ", msgs.length, sorted, file)
+
+      this._sortMessagesHack(msgs)
+      this.setMessagesLoading(false)
+    })
   }
 
   resetMessageManagers() {
