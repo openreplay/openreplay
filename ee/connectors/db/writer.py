@@ -1,6 +1,6 @@
 from decouple import config
 
-DATABASE = config('DATABASE_NAME')
+DATABASE = config('CLOUD_SERVICE')
 
 from db.api import DBConnection
 from db.utils import get_df_from_batch

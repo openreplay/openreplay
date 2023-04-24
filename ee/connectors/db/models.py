@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from pathlib import Path
 from decouple import config
 
-DATABASE = config('DATABASE_NAME')
+DATABASE = config('CLOUD_SERVICE')
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -13,16 +13,16 @@ base_path = Path(__file__).parent.parent
 
 # Get a table name from a configuration file
 try:
-    events_table_name = config('events_table_name', default='connector_events')
+    events_table_name = config('EVENTS_TABLE_NAME', default='connector_events')
 except KeyError as e:
     events_table_name = None
     print(repr(e))
 try:
-    events_detailed_table_name = config('events_detailed_table_name', default='connector_events_detailed')
+    events_detailed_table_name = config('EVENTS_DETAILED_TABLE_NAME', default='connector_events_detailed')
 except KeyError as e:
     print(repr(e))
     events_detailed_table_name = None
-sessions_table_name = config('sessions_table', default='connector_user_sessions')
+sessions_table_name = config('SESSIONS_TABLE', default='connector_user_sessions')
 
 
 class Session(Base):

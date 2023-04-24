@@ -6,7 +6,7 @@ import logging
 from decouple import config as _config
 from pathlib import Path
 
-DATABASE = _config('DATABASE_NAME')
+DATABASE = _config('CLOUD_SERVICE')
 if DATABASE == 'redshift':
     import pandas_redshift as pr
 
@@ -34,7 +34,7 @@ class DBConnection:
     """
     Initializes connection to a database
     To update models file use:
-    sqlacodegen --outfile models_universal.py mysql+pymysql://{user}:{pwd}@{host}
+    sqlacodegen --outfile models_universal.py mysql+pymysql://{USER}:{pwd}@{HOST}
     """
     _sessions = sessionmaker()
 
@@ -47,64 +47,64 @@ class DBConnection:
             ci = _config('cluster_info', default='')
             cluster_info = dict()
             if ci == '':
-                cluster_info['user'] = _config('user')
-                cluster_info['host'] = _config('host')
-                cluster_info['port'] = _config('port')
-                cluster_info['password'] = _config('password')
-                cluster_info['dbname'] = _config('dbname')
+                cluster_info['USER'] = _config('USER')
+                cluster_info['HOST'] = _config('HOST')
+                cluster_info['PORT'] = _config('PORT')
+                cluster_info['PASSWORD'] = _config('PASSWORD')
+                cluster_info['DBNAME'] = _config('DBNAME')
             else:
                 ci = ci.split(' ')
                 cluster_info = dict()
                 for _d in ci:
                     k,v = _d.split('=')
                     cluster_info[k]=v
-            self.pdredshift.connect_to_redshift(dbname=cluster_info['dbname'],
-                                                host=cluster_info['host'],
-                                                port=cluster_info['port'],
-                                                user=cluster_info['user'],
-                                                password=cluster_info['password'])
+            self.pdredshift.connect_to_redshift(dbname=cluster_info['DBNAME'],
+                                                host=cluster_info['HOST'],
+                                                port=cluster_info['PORT'],
+                                                user=cluster_info['USER'],
+                                                password=cluster_info['PASSWORD'])
 
-            self.pdredshift.connect_to_s3(aws_access_key_id=_config('aws_access_key_id'),
-                                          aws_secret_access_key=_config('aws_secret_access_key'),
-                                          bucket=_config('bucket'),
-                                          subdirectory=_config('subdirectory'))
+            self.pdredshift.connect_to_s3(aws_access_key_id=_config('AWS_ACCESS_KEY_ID'),
+                                          aws_secret_access_key=_config('AWS_SECRET_ACCESS_KEY'),
+                                          bucket=_config('BUCKET'),
+                                          subdirectory=_config('SUBDIRECTORY', default=None))
 
-            self.connect_str = _config('connect_str').format(
-                user=cluster_info['user'],
-                password=cluster_info['password'],
-                host=cluster_info['host'],
-                port=cluster_info['port'],
-                dbname=cluster_info['dbname']
+            self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
+                USER=cluster_info['USER'],
+                PASSWORD=cluster_info['PASSWORD'],
+                HOST=cluster_info['HOST'],
+                PORT=cluster_info['PORT'],
+                DBNAME=cluster_info['DBNAME']
             )
-            self.engine = create_engine(self.connect_str)
+            self.engine = create_engine(self.CONNECTION_STRING)
 
         elif config == 'clickhouse':
-            self.connect_str = _config('connect_str').format(
-                host=_config('host'),
-                database=_config('database')
+            self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
+                HOST=_config('HOST'),
+                DATABASE=_config('DATABASE')
             )
-            self.engine = create_engine(self.connect_str)
+            self.engine = create_engine(self.CONNECTION_STRING)
         elif config == 'pg':
-            self.connect_str = _config('connect_str').format(
-                user=_config('user'),
-                password=_config('password'),
-                host=_config('host'),
-                port=_config('port'),
-                database=_config('database')
+            self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
+                USER=_config('USER'),
+                PASSWORD=_config('PASSWORD'),
+                HOST=_config('HOST'),
+                PORT=_config('PORT'),
+                DATABASE=_config('DATABASE')
             )
-            self.engine = create_engine(self.connect_str)
+            self.engine = create_engine(self.CONNECTION_STRING)
         elif config == 'bigquery':
             pass
         elif config == 'snowflake':
-            self.connect_str = _config('connect_str').format(
-                user=_config('user'),
-                password=_config('password'),
-                account=_config('account'),
-                database=_config('database'),
-                dbname = _config('dbname'),
-                warehouse = _config('warehouse')
+            self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
+                USER=_config('USER'),
+                PASSWORD=_config('PASSWORD'),
+                ACCOUNT=_config('ACCOUNT'),
+                DATABASE=_config('DATABASE'),
+                DBNAME = _config('DBNAME'),
+                WAREHOUSE = _config('WAREHOUSE')
             )
-            self.engine = create_engine(self.connect_str)
+            self.engine = create_engine(self.CONNECTION_STRING)
         else:
             raise ValueError("This db configuration doesn't exist. Add into keys file.")
 

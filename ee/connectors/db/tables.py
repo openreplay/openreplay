@@ -2,10 +2,10 @@ from pathlib import Path
 from decouple import config
 
 base_path = Path(__file__).parent.parent
-LEVEL = config('LEVEL', default='normal')
+EVENT_TYPE = config('EVENT_TYPE', default='normal')
 
 def create_tables_clickhouse(db):
-    if LEVEL == 'normal':
+    if EVENT_TYPE == 'normal':
         with open(base_path / 'sql' / 'clickhouse_events.sql', 'r') as f:
             q = f.read()
         with db.get_live_session() as conn:
@@ -30,7 +30,7 @@ def create_tables_clickhouse(db):
         conn.execute(q)
     print(f"`connector_sessions_buffer` table created succesfully.")
 
-    if LEVEL == 'detailed':
+    if EVENT_TYPE == 'detailed':
         with open(base_path / 'sql' / 'clickhouse_events_detailed.sql') as f:
             q = f.read()
         with db.get_live_session() as conn: conn.execute(q)
@@ -43,7 +43,7 @@ def create_tables_clickhouse(db):
 
 
 def create_tables_postgres(db):
-    if LEVEL == 'normal':
+    if EVENT_TYPE == 'normal':
         with open(base_path / 'sql' / 'postgres_events.sql', 'r') as f:
             q = f.read()
         with db.get_live_session() as conn:
@@ -56,7 +56,7 @@ def create_tables_postgres(db):
         conn.execute(q)
     print(f"`connector_sessions` table created succesfully.")
 
-    if LEVEL == 'detailed':
+    if EVENT_TYPE == 'detailed':
         with open(base_path / 'sql' / 'postgres_events_detailed.sql') as f:
             q = f.read()
         with db.get_live_session() as conn: conn.execute(q)
@@ -65,7 +65,7 @@ def create_tables_postgres(db):
 
 def create_tables_snowflake(db):
 
-    if LEVEL == 'normal':
+    if EVENT_TYPE == 'normal':
         with open(base_path / 'sql' / 'snowflake_events.sql', 'r') as f:
             q = f.read()
         with db.get_live_session() as conn:
@@ -78,7 +78,7 @@ def create_tables_snowflake(db):
         conn.execute(q)
     print(f"`connector_sessions` table created succesfully.")
 
-    if LEVEL == 'detailed':
+    if EVENT_TYPE == 'detailed':
         with open(base_path / 'sql' / 'snowflake_events_detailed.sql') as f:
             q = f.read()
         with db.get_live_session() as conn: conn.execute(q)
@@ -86,7 +86,7 @@ def create_tables_snowflake(db):
 
 
 def create_tables_redshift(db):
-    if LEVEL == 'normal':
+    if EVENT_TYPE == 'normal':
         with open(base_path / 'sql' / 'redshift_events.sql', 'r') as f:
             q = f.read()
         with db.get_live_session() as conn:
@@ -99,7 +99,7 @@ def create_tables_redshift(db):
         conn.execute(q)
     print(f"`connector_sessions` table created succesfully.")
    
-    if LEVEL == 'detailed':
+    if EVENT_TYPE == 'detailed':
         with open(base_path / 'sql' / 'redshift_events_detailed.sql') as f:
             q = f.read()
         with db.get_live_session() as conn: conn.execute(q)
