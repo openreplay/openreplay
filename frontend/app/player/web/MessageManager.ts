@@ -217,13 +217,14 @@ export default class MessageManager {
   async loadMessages(isClickmap: boolean = false) {
     this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
+    const noIndexes = this.session.trackerVersion !== '7.0.0'
     // TODO: reusable decryptor instance
     const createNewParser = (shouldDecrypt = true, file?: string) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
       // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
+      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart, noIndexes)
       return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
         const msgs: Array<Message> = []
@@ -231,16 +232,11 @@ export default class MessageManager {
           msgs.push(msg)
         }
         const sorted = msgs.sort((m1, m2) => {
-          // @ts-ignore
-          if (!m1.time || !m2.time || m1.time === m2.time) return m1._index - m2._index
           return m1.time - m2.time
         })
 
-        let indx = sorted[0]._index
         let outOfOrderCounter = 0
         sorted.forEach(msg => {
-          if (indx > msg._index) outOfOrderCounter++
-          else indx = msg._index
           this.distributeMessage(msg)
         })
 
