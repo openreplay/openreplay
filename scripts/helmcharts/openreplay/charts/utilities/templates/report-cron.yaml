@@ -27,6 +27,7 @@ spec:
           containers:
           - name: report-cron
             image: "{{ tpl .Values.report.image.repository . }}:{{ .Values.report.image.tag | default .Chart.AppVersion }}-ee"
+            imagePullPolicy: "{{ .Values.report.image.pullPolicy}}"
             env:
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'

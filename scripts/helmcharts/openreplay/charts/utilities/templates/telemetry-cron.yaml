@@ -27,6 +27,7 @@ spec:
           containers:
           - name: telemetry-cron
             image: "{{ tpl .Values.telemetry.image.repository . }}:{{ .Values.telemetry.image.tag | default .Chart.AppVersion }}-ee"
+            imgePullPolicy: {{ .Values.telemetry.image.pullPolicy }}
             env:
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
