@@ -14,7 +14,7 @@ import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
-  const { store } = React.useContext(PlayerContext)
+  const { store } = React.useContext(PlayerContext);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -22,24 +22,24 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
     'NETWORK',
   ]);
 
-    const {
-      endTime,
-      performanceChartData,
-      stackList: stackEventList,
-      eventList: eventsList,
-      frustrationsList,
-      exceptionsList,
-      resourceList: resourceListUnmap,
-      fetchList,
-      graphqlList,
-    } = store.get()
+  const {
+    endTime,
+    performanceChartData,
+    stackList: stackEventList,
+    eventList: eventsList,
+    frustrationsList,
+    exceptionsList,
+    resourceList: resourceListUnmap,
+    fetchList,
+    graphqlList,
+  } = store.get();
 
-    const fetchPresented = fetchList.length > 0;
+  const fetchPresented = fetchList.length > 0;
 
-    const resourceList = resourceListUnmap
-      .filter((r: any) => r.isRed || r.isYellow)
-      .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
-      .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
+  const resourceList = resourceListUnmap
+    .filter((r: any) => r.isRed || r.isYellow)
+    .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
+    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400));
 
   const resources: any = React.useMemo(() => {
     return {
@@ -66,16 +66,10 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
     ) {
       setDataLoaded(true);
     }
-  }, [
-    resourceList,
-    issuesList,
-    exceptionsList,
-    eventsList,
-    stackEventList,
-    performanceChartData,
-  ]);
+  }, [resourceList, issuesList, exceptionsList, eventsList, stackEventList, performanceChartData]);
 
   return (
+    <React.Fragment>
       <BottomBlock style={{ height: '100%' }}>
         <BottomBlock.Header>
           <span className="font-semibold color-gray-medium mr-4">X-RAY</span>
@@ -88,7 +82,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
             <TimelineScale endTime={endTime} />
             <div
               // style={{ width: '100%', height: '187px', overflow: 'hidden' }}
-              style={{ width: 'calc(100vw - 1rem)', margin: '0 auto' }}
+              style={{ width: 'calc(100% - 1rem)', margin: '0 auto' }}
               className="transition relative"
             >
               <NoContent
@@ -128,6 +122,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
           </OverviewPanelContainer>
         </BottomBlock.Content>
       </BottomBlock>
+    </React.Fragment>
   );
 }
 
@@ -138,6 +133,4 @@ export default connect(
   {
     toggleBottomBlock,
   }
-)(
-  observer(OverviewPanel)
-)
+)(observer(OverviewPanel));
