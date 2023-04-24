@@ -187,6 +187,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	// If encryption key is empty, pack session using better algorithm
 	if task.key == "" {
 		s.packSessionBetter(task, tp)
+		return
 	}
 
 	// Prepare mob file
