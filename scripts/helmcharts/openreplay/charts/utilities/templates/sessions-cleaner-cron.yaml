@@ -27,6 +27,7 @@ spec:
           containers:
           - name: sessions-cleaner-cron
             image: "{{ tpl .Values.sessionsCleaner.image.repository . }}:{{ .Values.sessionsCleaner.image.tag | default .Chart.AppVersion }}-ee"
+            imagePullPolicy: {{ .Values.sessionsCleaner.image.pullPolicy }}
             env:
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
