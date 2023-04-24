@@ -1,9 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, Button, Tooltip, TextLink, NoContent } from 'UI';
+import { Loader, Button, TextLink, NoContent } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
-import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
+import { RED, YELLOW, GREEN } from 'Types/site';
 import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
 import { confirm, PageTitle } from 'UI';
@@ -15,12 +15,6 @@ import { useModal } from 'App/components/Modal';
 import { getInitials } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import cn from 'classnames'
-
-const STATUS_MESSAGE_MAP = {
-    [RED]: ' There seems to be an issue (please verify your installation)',
-    [YELLOW]: "We're collecting data from time to time (perhaps low traffic)",
-    [GREEN]: 'All good!',
-};
 
 const NEW_SITE_FORM = 'NEW_SITE_FORM';
 
@@ -101,17 +95,14 @@ class Sites extends React.PureComponent {
                             >
                                 <div className="col-span-4">
                                     <div className="flex items-center">
-                                        <Tooltip title={STATUS_MESSAGE_MAP[_site.status]}>
-                                            <div className="relative flex items-center justify-center w-10 h-10">
-                                                <div
-                                                    className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-10"
-                                                    style={{ backgroundColor: STATUS_COLOR_MAP[_site.status] }}
-                                                />
-                                                <div className="text-lg uppercase" style={{ color: STATUS_COLOR_MAP[_site.status] }}>
-                                                    {getInitials(_site.name)}
-                                                </div>
+                                        <div className="relative flex items-center justify-center w-10 h-10">
+                                            <div
+                                                className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx"
+                                            />
+                                            <div className="text-lg uppercase color-tealx">
+                                                {getInitials(_site.name)}
                                             </div>
-                                        </Tooltip>
+                                        </div>
                                         <span className="ml-2">{_site.host}</span>
                                     </div>
                                 </div>
