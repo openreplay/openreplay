@@ -12,7 +12,7 @@ export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
   private currentTime: number
   public error: boolean = false
-  constructor(data: Uint8Array, private startTime?: number, private logger=console) {
+  constructor(data: Uint8Array, private startTime?: number, private noIndexes?: boolean, private logger= console) {
     super(data)
   }
 
@@ -49,19 +49,19 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
-  readNext(): Message & { _index: number } | null {
+  readNext(): Message & { _index?: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
     }
 
-    while (this.needSkipMessage()) {
+    while (!this.noIndexes && this.needSkipMessage()) {
       const skippedMessage = this.readRawMessage()
       if (!skippedMessage) {
         return null
       }
       Logger.group("Openreplay: Skipping messages ", skippedMessage)
     }
-    this.pLastMessageID = this.p
+    this.pLastMessageID = this.noIndexes ? 0 : this.p
 
     const rMsg = this.readRawMessage()
     if (!rMsg) {
@@ -76,10 +76,10 @@ export default class MFileReader extends RawMessageReader {
       return this.readNext()
     }
 
-    const index = this.getLastMessageID()
+    const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
-      _index: index,
+      _index: this.noIndexes ? undefined : index,
     })
 
     return msg
