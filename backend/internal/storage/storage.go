@@ -262,7 +262,7 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
 		// Compression
 		start := time.Now()
-		result := s.compressSession(mob)
+		result := s.compressSessionBetter(mob)
 		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
 		if tp == DOM {
@@ -282,7 +282,7 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		task.doms = s.compressSession(mob[:s.cfg.FileSplitSize])
+		task.doms = s.compressSessionBetter(mob[:s.cfg.FileSplitSize])
 		firstPart = time.Since(start).Milliseconds()
 
 		// Finish task
@@ -292,7 +292,7 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		task.dome = s.compressSession(mob[s.cfg.FileSplitSize:])
+		task.dome = s.compressSessionBetter(mob[s.cfg.FileSplitSize:])
 		secondPart = time.Since(start).Milliseconds()
 
 		// Finish task
