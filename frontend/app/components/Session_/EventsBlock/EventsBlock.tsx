@@ -145,7 +145,7 @@ function EventsBlock(props: IProps) {
         </div>
       </div>
       <div
-        className={ cn("flex-1 px-4 pb-4", styles.eventsList) }
+        className={ cn("flex-1 pb-4", styles.eventsList) }
         id="eventList"
         data-openreplay-masked
         onMouseOver={ onMouseOver }
@@ -163,7 +163,7 @@ function EventsBlock(props: IProps) {
               ref={scroller}
               className={ styles.eventsList }
               height={height + 10}
-              width={248}
+              width={270}
               overscanRowCount={6}
               itemSize={230}
               rowCount={usedEvents.length}

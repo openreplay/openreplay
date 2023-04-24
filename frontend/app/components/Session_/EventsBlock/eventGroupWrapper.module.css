@@ -1,12 +1,13 @@
 .container {
-  padding: 0px 7px; /*0.35rem 0.5rem */
-  background-color: #f6f6f6;
+  /* padding: 0px 7px;  */
+  /* background-color: #f6f6f6; */
 }
 
 .first {
   padding-top: 7px;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
+  border-radius: 0;
+  /* border-top-left-radius: 3px;
+  border-top-right-radius: 3px; */
 }
 
 .last {

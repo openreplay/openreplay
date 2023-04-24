@@ -162,6 +162,7 @@ export default class Event extends React.PureComponent {
           [ cls.frustration ]: isFrustration,
           [ cls.highlight ] : presentInSearch,
           [ cls.lastInGroup ]: whiteBg,
+          ['mx-4 rounded']: event.type !== TYPES.LOCATION,
         }) }
         onClick={ onClick }
       >

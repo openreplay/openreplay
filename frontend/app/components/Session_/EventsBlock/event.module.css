@@ -2,9 +2,8 @@
   position: absolute;
   top: 27px;
   right: 15px;
-  padding: 2px 3px;
+  /* padding: 2px 3px; */
   background: $white;
-  border: 1px solid $gray-light;
   border-radius: 3px;
   cursor: pointer;
   color: $gray-medium;
@@ -15,15 +14,12 @@
 .event {
   position: relative;
   background: #f6f6f6;
-  border-radius: 3px;
+  /* border-radius: 3px; */
   user-select: none;
-  /* box-shadow: 0px 1px 3px 0 $gray-light; */
   transition: all 0.2s;
   cursor: pointer;
-  border: 1px solid transparent;
   &:hover {
     background-color: $active-blue;
-    border: 1px solid $active-blue-border;
   }
 
   & .title {
@@ -69,9 +65,6 @@
 
    &.highlighted {
     transition: all 0.2s;
-    box-shadow: 0px 2px 10px 0 $gray-light;
-    border: 1px solid $active-blue-border;
-    /* background-color: red; */
   }
 
   &.red {
@@ -136,37 +129,23 @@
 
 
 .clickType, .inputType {
-  /* border: 1px solid $gray-light; */
   background-color: $gray-lightest;
   cursor: pointer;
 }
 
 .frustration {
   background-color: rgba(204, 0, 0, 0.1)!important;
-  box-shadow:
-          2px 2px 1px 1px white,
-          2px 2px 0px 1px rgba(0,0,0,0.4);
 }
 
 .clickrageType {
   background-color: #FFF3F3;
-  border: 1px solid #CC0000;
-  box-shadow:
-    /* The top layer shadow */
-    /* 0 1px 1px rgba(0,0,0,0.15), */
-    /* The second layer */
-    2px 2px 1px 1px white,
-    /* The second layer shadow */
-    2px 2px 0px 1px rgba(0,0,0,0.4);
-    /* Padding for demo purposes */
-    /* padding: 12px; */
 }
 
 .highlight {
-  border: solid thin red;
+  /* border: solid thin red; */
+  background-color: red;
 }
 
 .lastInGroup {
   background: white;
-  box-shadow: 0px 1px 1px 0px rgb(0 0 0 / 18%);
 }
