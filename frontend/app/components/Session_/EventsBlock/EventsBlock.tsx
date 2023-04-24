@@ -138,11 +138,12 @@ function EventsBlock(props: IProps) {
             onChange={write}
             setActiveTab={setActiveTab}
             value={query}
-            header={
-              <div className="text-xl">User Steps <span className="color-gray-medium">{ events.length }</span></div>
-            }
+            // header={
+            //   <div className="text-xl">User Steps <span className="color-gray-medium">{ events.length }</span></div>
+            // }
           />
         </div>
+        <div className="mt-1 color-gray-medium">Displaying { usedEvents.length } events</div>
       </div>
       <div
         className={ cn("flex-1 pb-4", styles.eventsList) }
@@ -152,7 +153,7 @@ function EventsBlock(props: IProps) {
         onMouseLeave={ onMouseLeave }
       >
         {isEmptySearch && (
-          <div className='flex items-center'>
+          <div className='flex items-center p-4'>
             <Icon name="binoculars" size={18} />
             <span className='ml-2'>No Matching Results</span>
           </div>

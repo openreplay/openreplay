@@ -51,7 +51,7 @@
 
   &.menuClosed.showSelection {
     &:hover, &.selected {
-      background-color: #EFFCFB;
+      background-color: $active-blue;
 
       & .checkbox {
         display: flex;
@@ -143,7 +143,6 @@
 
 .highlight {
   /* border: solid thin red; */
-  background-color: red;
 }
 
 .lastInGroup {
