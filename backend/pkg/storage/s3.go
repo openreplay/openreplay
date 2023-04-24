@@ -49,6 +49,7 @@ func (s3 *S3) Upload(reader io.Reader, key string, contentType string, compressi
 	case Brotli:
 		gzipStr := "br"
 		contentEncoding = &gzipStr
+		contentType = "application/brotli"
 	}
 
 	_, err := s3.uploader.Upload(&s3manager.UploadInput{
