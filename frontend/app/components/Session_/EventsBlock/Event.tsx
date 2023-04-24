@@ -127,7 +127,7 @@ const Event: React.FC<Props> = ({
             <div className="ml-3 w-full">
               <div className="flex w-full items-first justify-between">
                 <div className="flex items-center w-full" style={{ minWidth: '0' }}>
-                  <span className={cls.title}>{title}</span>
+                  <span className={cn(cls.title, {'font-medium' : isLocation })}>{title}</span>
                   {body && !isLocation && (
                     <TextEllipsis
                       maxWidth="60%"
