@@ -1,13 +1,13 @@
 import React from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 import { TextEllipsis } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
-import Event from './Event'
+import Event from './Event';
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
-import { setEditNoteTooltip } from 'Duck/sessions';;
+import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle('showLoadInfo', 'toggleLoadInfo')
@@ -66,65 +66,68 @@ class EventGroupWrapper extends React.Component {
     const safeRef = String(event.referrer || '');
 
     return (
-      <div
-        className={cn(
-          stl.container,
-          '!py-1',
-          {
-            [stl.last]: isLastInGroup,
-            [stl.first]: event.type === TYPES.LOCATION,
-            [stl.dashAfter]: isLastInGroup && !isLastEvent,
-          },
-          isLastInGroup && '!pb-2',
-          event.type === TYPES.LOCATION && '!pt-2 !pb-2'
-        )}
-      >
-        {isFirst && isLocation && event.referrer && (
-          <div className={stl.referrer}>
-            <TextEllipsis>
-              Referrer: <span className={stl.url}>{safeRef}</span>
-            </TextEllipsis>
-          </div>
-        )}
-        {isNote ? (
-          <NoteEvent
-            note={event}
-            filterOutNote={filterOutNote}
-            onEdit={this.props.setEditNoteTooltip}
-            noEdit={this.props.currentUserId !== event.userId}
-          />
-        ) : isLocation ? (
-          <Event
-            extended={isFirst}
-            key={event.key}
-            event={event}
-            onClick={this.onEventClick}
-            selected={isSelected}
-            showLoadInfo={showLoadInfo}
-            toggleLoadInfo={this.toggleLoadInfo}
-            isCurrent={isCurrent}
-            presentInSearch={presentInSearch}
-            isLastInGroup={isLastInGroup}
-            whiteBg={whiteBg}
-          />
-        ) : (
-          <Event
-            key={event.key}
-            event={event}
-            onClick={this.onEventClick}
-            onCheckboxClick={this.onCheckboxClick}
-            selected={isSelected}
-            isCurrent={isCurrent}
-            showSelection={showSelection}
-            overlayed={isEditing}
-            presentInSearch={presentInSearch}
-            isLastInGroup={isLastInGroup}
-            whiteBg={whiteBg}
-          />
-        )}
-      </div>
+      <>
+        <div
+          className={cn(
+            '!py-1',
+            {
+              [stl.last]: isLastInGroup,
+              [stl.first]: event.type === TYPES.LOCATION,
+              [stl.dashAfter]: isLastInGroup && !isLastEvent,
+            },
+            isLastInGroup && '!pb-2',
+            event.type === TYPES.LOCATION && '!pt-2 !pb-2'
+          )}
+        >
+          {isFirst && isLocation && event.referrer && (
+
+              <TextEllipsis>
+                <div className={stl.referrer}>
+                Referrer: <span className={stl.url}>{safeRef}</span>
+                </div>
+              </TextEllipsis>
+          )}
+          {isNote ? (
+            <NoteEvent
+              note={event}
+              filterOutNote={filterOutNote}
+              onEdit={this.props.setEditNoteTooltip}
+              noEdit={this.props.currentUserId !== event.userId}
+            />
+          ) : isLocation ? (
+            <Event
+              extended={isFirst}
+              key={event.key}
+              event={event}
+              onClick={this.onEventClick}
+              selected={isSelected}
+              showLoadInfo={showLoadInfo}
+              toggleLoadInfo={this.toggleLoadInfo}
+              isCurrent={isCurrent}
+              presentInSearch={presentInSearch}
+              isLastInGroup={isLastInGroup}
+              whiteBg={true}
+            />
+          ) : (
+            <Event
+              key={event.key}
+              event={event}
+              onClick={this.onEventClick}
+              onCheckboxClick={this.onCheckboxClick}
+              selected={isSelected}
+              isCurrent={isCurrent}
+              showSelection={showSelection}
+              overlayed={isEditing}
+              presentInSearch={presentInSearch}
+              isLastInGroup={isLastInGroup}
+              whiteBg={whiteBg}
+            />
+          )}
+        </div>
+        {isLastInGroup && <div className="border-t mx-5 border-color-gray-light-shade" />}
+      </>
     );
   }
 }
 
-export default EventGroupWrapper
+export default EventGroupWrapper;
