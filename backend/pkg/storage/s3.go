@@ -31,13 +31,26 @@ func NewS3(region string, bucket string) *S3 {
 	}
 }
 
-func (s3 *S3) Upload(reader io.Reader, key string, contentType string, gzipped bool) error {
+type CompressionType int
+
+const (
+	NoCompression CompressionType = iota
+	Gzip
+	Brotli
+)
+
+func (s3 *S3) Upload(reader io.Reader, key string, contentType string, compression CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
 	var contentEncoding *string
-	if gzipped {
+	switch compression {
+	case Gzip:
 		gzipStr := "gzip"
 		contentEncoding = &gzipStr
+	case Brotli:
+		gzipStr := "br"
+		contentEncoding = &gzipStr
 	}
+
 	_, err := s3.uploader.Upload(&s3manager.UploadInput{
 		Body:            reader,
 		Bucket:          s3.bucket,
