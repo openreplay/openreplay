@@ -200,6 +200,7 @@ function clone_repo() {
   err_cd "$tmp_dir"
   log info "Working directory $tmp_dir"
   git_options="-b ${OR_VERSION:-main}"
+  log info "git clone ${OR_REPO} --depth 1 $git_options"
   eval git clone "${OR_REPO}" --depth 1 $git_options
   return
 }
@@ -277,7 +278,7 @@ function upgrade() {
   }
 
   # Unless its upgrade release, always checkout same tag.
-  [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=$or_version
+  [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=${OR_VERSION:-$or_version}
 
   time_now=$(date +%m-%d-%Y-%I%M%S)
   # Creating backup dir of current installation
