@@ -68,6 +68,7 @@ export default class AssistManager {
     private screen: Screen,
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
+    public readonly uiErrorHandler?: { error: (msg: string) => void }
   ) {}
 
   private get borderStyle() {
@@ -228,6 +229,7 @@ export default class AssistManager {
         socket,
         this.session.agentInfo,
         () => this.screen.setBorderStyle(this.borderStyle),
+        this.uiErrorHandler
       )
 
       document.addEventListener('visibilitychange', this.onVisChange)

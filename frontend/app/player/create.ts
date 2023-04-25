@@ -1,5 +1,5 @@
 import SimpleStore from './common/SimpleStore'
-import type { Store } from './common/types'
+import type { Store, SessionFilesInfo } from './common/types'
 
 import WebPlayer from './web/WebPlayer'
 import WebLivePlayer from './web/WebLivePlayer'
@@ -14,7 +14,11 @@ type WebLivePlayerStore = Store<WebLiveState>
 export type IWebLivePlayer = WebLivePlayer
 export type IWebLivePlayerStore = WebLivePlayerStore
 
-export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
+export function createWebPlayer(
+	session: SessionFilesInfo,
+	wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore,
+	uiErrorHandler?: { error: (msg: string) => void }
+): [IWebPlayer, IWebPlayerStore] {
 	let store: WebPlayerStore = new SimpleStore<WebState>({
 		...WebPlayer.INITIAL_STATE,
 	})
@@ -22,12 +26,16 @@ export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWe
 		store = wrapStore(store)
 	}
 
-	const player = new WebPlayer(store, session, false)
+	const player = new WebPlayer(store, session, false, false, uiErrorHandler)
 	return [player, store]
 }
 
 
-export function createClickMapPlayer(session: Record<string, any>, wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
+export function createClickMapPlayer(
+	session: SessionFilesInfo,
+	wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore,
+	uiErrorHandler?: { error: (msg: string) => void }
+): [IWebPlayer, IWebPlayerStore] {
 	let store: WebPlayerStore = new SimpleStore<WebState>({
 		...WebPlayer.INITIAL_STATE,
 	})
@@ -35,11 +43,16 @@ export function createClickMapPlayer(session: Record<string, any>, wrapStore?: (
 		store = wrapStore(store)
 	}
 
-	const player = new WebPlayer(store, session, false, true)
+	const player = new WebPlayer(store, session, false, true, uiErrorHandler)
 	return [player, store]
 }
 
-export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[] | null, wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore): [IWebLivePlayer, IWebLivePlayerStore] {
+export function createLiveWebPlayer(
+	session: SessionFilesInfo,
+	config: RTCIceServer[] | null,
+	wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore,
+	uiErrorHandler?: { error: (msg: string) => void }
+): [IWebLivePlayer, IWebLivePlayerStore] {
 	let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
 		...WebLivePlayer.INITIAL_STATE,
 	})
@@ -47,6 +60,6 @@ export function createLiveWebPlayer(session: Record<string, any>, config: RTCIce
 		store = wrapStore(store)
 	}
 
-	const player = new WebLivePlayer(store, session, config)
+	const player = new WebLivePlayer(store, session, config, uiErrorHandler)
 	return [player, store]
 }

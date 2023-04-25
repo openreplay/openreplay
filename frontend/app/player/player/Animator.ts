@@ -1,5 +1,6 @@
-import type { Store, Moveable, Interval } from '../common/types';
+import type { Store, Interval } from '../common/types';
 import MessageManager from 'App/player/web/MessageManager'
+
 
 const fps = 60
 const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) }

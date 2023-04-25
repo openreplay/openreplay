@@ -1,8 +1,9 @@
 import * as typedLocalStorage from './localStorage';
 
-import type { Moveable, Cleanable, Store } from '../common/types';
+import type { Store } from '../common/types';
 import Animator from './Animator';
 import type { GetState as AnimatorGetState } from './Animator';
+import MessageManager from "Player/web/MessageManager";
 export const SPEED_OPTIONS = [0.5, 1, 2, 4, 8, 16]
 
 
@@ -34,7 +35,7 @@ export default class Player extends Animator {
     speed: initialSpeed,
   } as const
 
-  constructor(private pState: Store<State & AnimatorGetState>, private manager: Moveable & Cleanable) {
+  constructor(private pState: Store<State & AnimatorGetState>, private manager: MessageManager) {
     super(pState, manager)
 
     // Autoplay

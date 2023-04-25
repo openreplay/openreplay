@@ -13,17 +13,18 @@ export async function loadFiles(
   if (!urls.length) {
     throw NO_URLS
   }
-  try {
-    for (let url of urls) {
-      const response = await window.fetch(url)
-      const data = await processAPIStreamResponse(response, urls.length > 1 ? url !== urls[0] : canSkip)
-      await onData(data)
-    }
-  } catch(e) {
-    if (e === ALLOWED_404) {
-      return
-    }
-    throw e
+  for (let url of urls) {
+    window.fetch(url)
+      .then(response => processAPIStreamResponse(response, urls.length > 1 ? url !== urls[0] : canSkip))
+      .then(data => onData(data))
+      .catch(e => {
+        console.log(e)
+        if (e === ALLOWED_404) {
+          return;
+        } else {
+          throw e
+        }
+      })
   }
 }
 
