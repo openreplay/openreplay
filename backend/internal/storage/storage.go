@@ -3,6 +3,8 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"github.com/andybalholm/brotli"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -182,6 +184,12 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 }
 
 func (s *Storage) packSession(task *Task, tp FileType) {
+	// If encryption key is empty, pack session using better algorithm
+	if task.key == "" {
+		s.packSessionBetter(task, tp)
+		return
+	}
+
 	// Prepare mob file
 	mob := task.Mob(tp)
 
@@ -246,6 +254,57 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
 }
 
+// packSessionBetter is a new version of packSession that uses brotli compression (only if we are not using encryption)
+func (s *Storage) packSessionBetter(task *Task, tp FileType) {
+	// Prepare mob file
+	mob := task.Mob(tp)
+
+	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
+		// Compression
+		start := time.Now()
+		result := s.compressSessionBetter(mob)
+		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+
+		if tp == DOM {
+			task.doms = result
+		} else {
+			task.dev = result
+		}
+		return
+	}
+
+	// Prepare two workers
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	var firstPart, secondPart, firstEncrypt, secondEncrypt int64
+
+	// DomStart part
+	go func() {
+		// Compression
+		start := time.Now()
+		task.doms = s.compressSessionBetter(mob[:s.cfg.FileSplitSize])
+		firstPart = time.Since(start).Milliseconds()
+
+		// Finish task
+		wg.Done()
+	}()
+	// DomEnd part
+	go func() {
+		// Compression
+		start := time.Now()
+		task.dome = s.compressSessionBetter(mob[s.cfg.FileSplitSize:])
+		secondPart = time.Since(start).Milliseconds()
+
+		// Finish task
+		wg.Done()
+	}()
+	wg.Wait()
+
+	// Record metrics
+	metrics.RecordSessionEncryptionDuration(float64(firstEncrypt+secondEncrypt), tp.String())
+	metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
+}
+
 func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
 	var encryptedData []byte
 	var err error
@@ -273,6 +332,25 @@ func (s *Storage) compressSession(data []byte) *bytes.Buffer {
 	return zippedMob
 }
 
+func (s *Storage) compressSessionBetter(data []byte) *bytes.Buffer {
+	out := bytes.Buffer{}
+	writer := brotli.NewWriterOptions(&out, brotli.WriterOptions{Quality: brotli.DefaultCompression})
+	in := bytes.NewReader(data)
+	n, err := io.Copy(writer, in)
+	if err != nil {
+		log.Printf("can't write session data to compressor: %s", err)
+	}
+
+	if int(n) != len(data) {
+		log.Printf("wrote less data than expected: %d vs %d", n, len(data))
+	}
+
+	if err := writer.Close(); err != nil {
+		log.Printf("can't close compressor: %s", err)
+	}
+	return &out
+}
+
 func (s *Storage) uploadSession(task *Task) {
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
@@ -281,10 +359,14 @@ func (s *Storage) uploadSession(task *Task) {
 		uploadDome int64 = 0
 		uploadDev  int64 = 0
 	)
+	compression := storage.NoCompression
+	if task.key == "" {
+		compression = storage.Brotli
+	}
 	go func() {
 		if task.doms != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", task.key == ""); err != nil {
+			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDoms = time.Now().Sub(start).Milliseconds()
@@ -294,7 +376,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dome != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", task.key == ""); err != nil {
+			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDome = time.Now().Sub(start).Milliseconds()
@@ -304,7 +386,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dev != nil {
 			start := time.Now()
-			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", task.key == ""); err != nil {
+			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()
