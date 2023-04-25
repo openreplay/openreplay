@@ -62,6 +62,7 @@ export default class Screen {
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
   private parentElement: HTMLElement | null = null
+  private onUpdateHook: (w: number, h: number) => void
 
   constructor(isMobile: boolean, private scaleMode: ScaleMode = ScaleMode.Embed) {
     const iframe = document.createElement('iframe');
@@ -132,7 +133,7 @@ export default class Screen {
     return this.iframe.style
   }
 
-  private boundingRect: DOMRect | null  = null;
+  public boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
      if (this.boundingRect === null) {
        // TODO: use this.screen instead in order to separate overlay functionality
@@ -246,6 +247,10 @@ export default class Screen {
     })
 
     this.boundingRect = this.overlay.getBoundingClientRect();
+    this.onUpdateHook(width, height)
   }
 
+  setOnUpdate(cb: any) {
+    this.onUpdateHook = cb
+  }
 }
