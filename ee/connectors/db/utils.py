@@ -200,6 +200,11 @@ def get_df_from_batch(batch, level):
         df['customevent_payload'] = None
     if level == 'sessions':
         current_types = dtypes_sessions
+        df['js_exceptions_count'] = df['js_exceptions_count'].fillna(0)
+        df['inputs_count'] = df['inputs_count'].fillna(0)
+        df['clicks_count'] = df['clicks_count'].fillna(0)
+        df['issues_count'] = df['issues_count'].fillna(0)
+        df['urls_count'] = df['urls_count'].fillna(0)
     df = df.astype(current_types)
 
     if DATABASE == 'clickhouse' and level == 'sessions':

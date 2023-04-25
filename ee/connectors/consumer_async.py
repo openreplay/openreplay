@@ -172,7 +172,7 @@ async def insertBatch(sessions_batch, batch, db, sessions_table_name, table_name
     # insert a batch of events
     if batch != []:
         attempt_batch_insert(batch, db, table_name, EVENT_TYPE)
-    print(f'[BG-INFO] Uploaded into S3 in {time()-t1} secons')
+    print(f'[BG-INFO] Uploaded into S3 in {time()-t1} seconds')
 
 
 if __name__ == '__main__':
