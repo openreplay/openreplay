@@ -79,6 +79,7 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 
 func MergeMessages(data []byte, messages []*msgInfo) []byte {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
+	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 	for _, info := range messages {
 		sortedSession.Write(data[info.start+8 : info.end])
 	}
