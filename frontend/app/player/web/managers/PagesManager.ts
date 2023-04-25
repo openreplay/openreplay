@@ -15,7 +15,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	 * e.g. some StringDictionary and other messages before any 'CreateDocument' one
 	 * TODO: understand why and fix
 	 */
-	private currentStringDict: Record<number, string> = {}
+	private stringDicts: Record<number, string>[] = [{}]
 
 	constructor(
 		private screen: Screen,
@@ -26,17 +26,24 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	/*
 		Assumed that messages added in a correct time sequence.
 	*/
+	falseOrder = false
 	appendMessage(m: Message): void {
 		if (m.tp === MType.StringDict) {
-			if (this.currentStringDict[m.key] !== undefined) {
-				this.currentStringDict = {} /* refresh stringDict */
-				this.last?.setStringDict(this.currentStringDict)
+			let currentDict = this.stringDicts[0]
+			if (currentDict[m.key] !== undefined && currentDict[m.key] !== m.value) {
+				this.falseOrder = true
+				this.stringDicts.unshift({})
+				currentDict = this.stringDicts[0]
 			}
-			this.currentStringDict[m.key] = m.value
+			currentDict[m.key] = m.value
 			return
 		}
 		if (m.tp === MType.CreateDocument) {
-			super.append(new DOMManager(this.screen, this.isMobile, this.currentStringDict, m.time, this.setCssLoading))
+			if (!this.falseOrder) {
+				this.stringDicts.unshift({})
+			}
+			super.append(new DOMManager(this.screen, this.isMobile, this.stringDicts[0], m.time, this.setCssLoading))
+			this.falseOrder = false
 		}
 		if (this.last === null) {
 			logger.warn("DOMMessage before any document created, skipping:", m)
