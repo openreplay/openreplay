@@ -22,6 +22,7 @@ func (m *msgInfo) Print() string {
 
 func SplitMessages(data []byte) ([]*msgInfo, error) {
 	messages := make([]*msgInfo, 0)
+	indexes := make(map[uint64]bool)
 	reader := NewBytesReader(data)
 	for {
 		// Get message start
@@ -51,6 +52,12 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 		if err != nil {
 			return messages, fmt.Errorf("read message body err: %s", err)
 		}
+
+		if _, ok := indexes[msgIndex]; ok {
+			log.Printf("duplicate message index: %d", msgIndex)
+			continue
+		}
+		indexes[msgIndex] = true
 
 		// Add new message info to messages slice
 		messages = append(messages, &msgInfo{
