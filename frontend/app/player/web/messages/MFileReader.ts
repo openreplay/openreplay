@@ -12,8 +12,20 @@ export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
   private currentTime: number
   public error: boolean = false
-  constructor(data: Uint8Array, private startTime?: number, private noIndexes?: boolean, private logger= console) {
+  private noIndexes: boolean = false
+  constructor(data: Uint8Array, private startTime?: number, private logger= console) {
     super(data)
+  }
+
+  public checkForIndexes() {
+    const firstBytes = this.readCustomIndex(this.buf.slice(0, 9))
+    console.log(firstBytes, this.buf)
+    const skipIndexes = firstBytes === 72057594037927940
+    if (skipIndexes) {
+      this.noIndexes = true
+      this.skip(8)
+      console.log('triggered')
+    }
   }
 
   private needSkipMessage(): boolean {
@@ -35,7 +47,7 @@ export default class MFileReader extends RawMessageReader {
   }
 
   private readRawMessage(): RawMessage | null {
-    // this.skip(8)
+    if (!this.noIndexes) this.skip(8)
     try {
       return super.readMessage()
     } catch (e) {
@@ -72,6 +84,7 @@ export default class MFileReader extends RawMessageReader {
       return this.readNext()
     }
 
+    console.log(this.noIndexes)
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
