@@ -2,15 +2,33 @@ import type Screen from '../Screen/Screen'
 import type { MouseMove } from "../messages";
 import { HOVER_CLASSNAME } from '../messages/rewriter/constants'
 import ListWalker from '../../common/ListWalker'
-
+import MouseTrail from '../addons/MouseTrail'
+import styles from './trail.module.css'
 
 export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = []
+  private mouseTrail: MouseTrail
 
-	constructor(private screen: Screen) {super()}
+	constructor(private screen: Screen) {
+    super()
+    const canvas = document.createElement('canvas')
+    canvas.id = 'openreplay-mouse-trail'
+    canvas.className = styles.canvas
+
+    this.mouseTrail = new MouseTrail(canvas)
+
+    this.screen.overlay.appendChild(canvas)
+    this.mouseTrail.createContext()
+
+    const updateSize = (w: number, h: number) => {
+      return this.mouseTrail.resizeCanvas(w, h)
+    }
+
+    this.screen.setOnUpdate(updateSize)
+  }
 
   private getCursorTargets() {
-    return this.screen.getElementsFromInternalPoint(this.current)
+    return this.screen.getElementsFromInternalPoint(this.current!)
   } 
 
 	private updateHover(): void {
@@ -34,8 +52,9 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
 		const lastMouseMove = this.moveGetLast(t)
 		if (!!lastMouseMove) {
       this.screen.cursor.move(lastMouseMove)
-      //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might nfluence performance though
+      //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might influence performance though
       this.updateHover()
+      this.mouseTrail.leaveTrail(lastMouseMove.x, lastMouseMove.y)
     }
 	}
 }
