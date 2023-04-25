@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  maintenance-page
+  namespace: app
+  labels:
+    app:  maintenance-page
+spec:
+  selector:
+    matchLabels:
+      app: maintenance-page
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  maintenance-page
+    spec:
+      containers:
+      - name:  maintenance-page
+        image:  rjshrjndrn/maintenance
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  80
+          name: http
+---
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: maintenance-page
+  namespace: app
+spec:
+  selector:
+    app: maintenance-page
+  type: ClusterIP
+  ports:
+  - name: maintenance-page
+    protocol: TCP
+    port: 80
+    targetPort: 80
+---
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: maintenance-page
+  namespace: app
+spec:
+  ingressClassName: openreplay
+  rules:
+  - host: example.domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: maintenance-page
+            port:
+              number: 80
+---
+
