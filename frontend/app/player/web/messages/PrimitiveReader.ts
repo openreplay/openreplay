@@ -28,6 +28,19 @@ export default class PrimitiveReader {
     return r;
   }
 
+  readCustomIndex(input: Uint8Array) {
+    let p = 0, r = 0, s = 1, b
+    do {
+      if (p > 8) {
+        return null
+      }
+      b = input[ p++ ]
+      r += (b & 0x7F) * s
+      s *= 128;
+    } while (b >= 0x80)
+    return r;
+  }
+
   readInt(): number | null {
     let u = this.readUint();
     if (u === null) { return u }

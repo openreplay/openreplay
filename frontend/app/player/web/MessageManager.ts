@@ -217,16 +217,16 @@ export default class MessageManager {
   async loadMessages(isClickmap: boolean = false) {
     this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
-    const noIndexes = this.session.trackerVersion !== '7.0.0'
     // TODO: reusable decryptor instance
     const createNewParser = (shouldDecrypt = true, file?: string) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
       // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart, noIndexes)
+      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
       return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
+        fileReader.checkForIndexes()
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
           msgs.push(msg)
