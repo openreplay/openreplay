@@ -9,13 +9,20 @@ import (
 )
 
 type msgInfo struct {
-	index uint64
-	start int64
-	end   int64
+	index   uint64
+	start   int64
+	end     int64
+	body    Message
+	msgType uint64
+}
+
+func (m *msgInfo) Print() string {
+	return fmt.Sprintf("index: %d, start: %d, end: %d, type: %d, body: %s", m.index, m.start, m.end, m.msgType, m.body)
 }
 
 func SplitMessages(data []byte) ([]*msgInfo, error) {
 	messages := make([]*msgInfo, 0)
+	indexes := make(map[uint64]bool)
 	reader := NewBytesReader(data)
 	for {
 		// Get message start
@@ -29,7 +36,7 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 		if err != nil {
 			if err != io.EOF {
 				log.Println(reader.Pointer(), msgStart)
-				return nil, fmt.Errorf("read message index err: %s", err)
+				return messages, fmt.Errorf("read message index err: %s", err)
 			}
 			return messages, nil
 		}
@@ -37,20 +44,28 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 		// Read message type
 		msgType, err := reader.ReadUint()
 		if err != nil {
-			return nil, fmt.Errorf("read message type err: %s", err)
+			return messages, fmt.Errorf("read message type err: %s", err)
 		}
 
 		// Read message body
-		_, err = ReadMessage(msgType, reader)
+		body, err := ReadMessage(msgType, reader)
 		if err != nil {
-			return nil, fmt.Errorf("read message body err: %s", err)
+			return messages, fmt.Errorf("read message body err: %s", err)
 		}
+
+		if _, ok := indexes[msgIndex]; ok {
+			log.Printf("duplicate message index: %d", msgIndex)
+			continue
+		}
+		indexes[msgIndex] = true
 
 		// Add new message info to messages slice
 		messages = append(messages, &msgInfo{
-			index: msgIndex,
-			start: msgStart,
-			end:   reader.Pointer(),
+			index:   msgIndex,
+			start:   msgStart,
+			end:     reader.Pointer(),
+			body:    body,
+			msgType: msgType,
 		})
 	}
 }
@@ -64,8 +79,11 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 
 func MergeMessages(data []byte, messages []*msgInfo) []byte {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
+	// Add maximum possible index value to the start of the session to inform player about new version of mob file
+	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 	for _, info := range messages {
-		sortedSession.Write(data[info.start:info.end])
+		// Write message without index (that's why we use +8)
+		sortedSession.Write(data[info.start+8 : info.end])
 	}
 	return sortedSession.Bytes()
 }
