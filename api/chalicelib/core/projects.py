@@ -58,21 +58,22 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
         if gdpr:
             extra_projection += ',s.gdpr'
         if recorded:
-            extra_projection += """,COALESCE(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000::BIGINT,
+            extra_projection += """,\nCOALESCE(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000::BIGINT,
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
-                                         AND sessions.start_ts >= (EXTRACT(EPOCH FROM 
-                                                            COALESCE(s.sessions_last_check_at, s.created_at)) * 1000-24*60*60*1000)
+                                         AND sessions.start_ts >= (EXTRACT(EPOCH 
+                                                        FROM COALESCE(s.sessions_last_check_at, s.created_at)) * 1000-%(check_delta)s)
                                          AND sessions.start_ts <= %(now)s
                                        )) AS first_recorded"""
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       created_at {extra_projection}
+                                       created_at, sessions_last_check_at {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
-                                ORDER BY s.name {") AS raw" if recorded else ""};""", {"now": TimeUTC.now()})
+                                ORDER BY s.name {") AS raw" if recorded else ""};""",
+                            {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
         cur.execute(query)
         rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed
@@ -80,13 +81,17 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
             u_values = []
             params = {}
             for i, r in enumerate(rows):
+                r["sessions_last_check_at"] = TimeUTC.datetime_to_timestamp(r["sessions_last_check_at"])
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
-                if r["first_recorded_session_at"] is None:
+                if r["first_recorded_session_at"] is None \
+                        and r["sessions_last_check_at"] is not None \
+                        and (TimeUTC.now() - r["sessions_last_check_at"]) > TimeUTC.MS_HOUR:
                     u_values.append(f"(%(project_id_{i})s,to_timestamp(%(first_recorded_{i})s/1000))")
                     params[f"project_id_{i}"] = r["project_id"]
                     params[f"first_recorded_{i}"] = r["first_recorded"] if r["recorded"] else None
                 r.pop("first_recorded_session_at")
                 r.pop("first_recorded")
+                r.pop("sessions_last_check_at")
             if len(u_values) > 0:
                 query = cur.mogrify(f"""UPDATE public.projects 
                                         SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
@@ -96,6 +101,7 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
         else:
             for r in rows:
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                r.pop("sessions_last_check_at")
 
         return helper.list_to_camel_case(rows)
 
