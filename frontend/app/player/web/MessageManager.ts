@@ -214,7 +214,6 @@ export default class MessageManager {
     // this.state.update({ filesLoaded: true })
   }
 
-  noIndexMode = false
   async loadMessages(isClickmap: boolean = false) {
     this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
@@ -224,10 +223,10 @@ export default class MessageManager {
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
       // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart, this.noIndexMode)
+      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
       return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
-        this.noIndexMode = fileReader.checkForIndexes()
+        fileReader.checkForIndexes()
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
           msgs.push(msg)
