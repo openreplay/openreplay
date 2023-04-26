@@ -35,7 +35,7 @@ function PlayingTime({ isUniTime, setIsUniTime, startedAt }: Props) {
             setIsUniTime(true);
             close();
           }}>
-            <div className={'text-sm text-disabled-text'}>Real session time</div>
+            <div className={'text-sm text-disabled-text'}>Based on your settings</div>
             <div className={'font-semibold'}><RealReplayTimeConnected startedAt={startedAt} /></div>
           </div>
         </div>
