@@ -79,8 +79,10 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 
 func MergeMessages(data []byte, messages []*msgInfo) []byte {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
+	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 	for _, info := range messages {
+		// Write message without index (that's why we use +8)
 		sortedSession.Write(data[info.start+8 : info.end])
 	}
 	return sortedSession.Bytes()
