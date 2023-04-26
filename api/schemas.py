@@ -1239,6 +1239,8 @@ class LiveSessionSearchFilterSchema(BaseModel):
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
+    transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
+
     @root_validator
     def validator(cls, values):
         if values.get("type") is not None and values["type"] == LiveFilterType.metadata:
