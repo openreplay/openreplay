@@ -28,6 +28,7 @@ chart=frontend
   }
 }
 update_helm_release() {
+  [[ $ee == true ]] && return
   HELM_TAG="$(grep -iER ^version ../scripts/helmcharts/openreplay/charts/$chart | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
   # Update the chart version
   sed -i "s#^version.*#version: $HELM_TAG# g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
