@@ -496,8 +496,7 @@ def set_password_invitation(user_id, new_password):
 
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True)
+    c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True)
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     return {
