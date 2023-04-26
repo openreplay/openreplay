@@ -82,9 +82,9 @@ function PlayerControls(props: Props) {
       <div className="mx-1" />
 
 
-      <div className={'hover:bg-gray-light-shade p-2 rounded cursor-pointer'}>
+      <button className={cn(styles.speedButton, 'focus:border focus:border-blue')}>
         <PlayingTime isUniTime={isUniTime} setIsUniTime={setIsUniTime} startedAt={startedAt} />
-      </div>
+      </button>
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
