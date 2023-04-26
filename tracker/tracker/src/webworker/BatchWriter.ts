@@ -7,6 +7,7 @@ const SIZE_BYTES = 3
 const MAX_M_SIZE = (1 << (SIZE_BYTES * 8)) - 1
 
 export default class BatchWriter {
+  private nextIndex = 0
   private beaconSize = 2 * 1e5 // Default 200kB
   private encoder = new MessageEncoder(this.beaconSize)
   private strDict = new StringDictionary()
@@ -46,6 +47,7 @@ export default class BatchWriter {
       Messages.Type.BatchMetadata,
       1,
       this.pageNo,
+      this.nextIndex,
       this.timestamp,
       this.url,
     ]
@@ -73,6 +75,7 @@ export default class BatchWriter {
 
       e.checkpoint()
       this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
+      this.nextIndex++
     }
     // app.debug.log
     return wasWritten
