@@ -648,6 +648,36 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
     value: Union[List[Union[_SessionSearchEventRaw, str]], str] = Field(...)
 
 
+def transform_old_FilterType(cls, values):
+    if values.get("type") is None:
+        return values
+    values["type"] = {
+        "USEROS": FilterType.user_os.value,
+        "USERBROWSER": FilterType.user_browser.value,
+        "USERDEVICE": FilterType.user_device.value,
+        "USERCOUNTRY": FilterType.user_country.value,
+        "USERID": FilterType.user_id.value,
+        "USERANONYMOUSID": FilterType.user_anonymous_id.value,
+        "REFERRER": FilterType.referrer.value,
+        "REVID": FilterType.rev_id.value,
+        "USEROS_IOS": FilterType.user_os_ios.value,
+        "USERDEVICE_IOS": FilterType.user_device_ios.value,
+        "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
+        "USERID_IOS": FilterType.user_id_ios.value,
+        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
+        "REVID_IOS": FilterType.rev_id_ios.value,
+        "DURATION": FilterType.duration.value,
+        "PLATFORM": FilterType.platform.value,
+        "METADATA": FilterType.metadata.value,
+        "ISSUE": FilterType.issue.value,
+        "EVENTS_COUNT": FilterType.events_count.value,
+        "UTM_SOURCE": FilterType.utm_source.value,
+        "UTM_MEDIUM": FilterType.utm_medium.value,
+        "UTM_CAMPAIGN": FilterType.utm_campaign.value
+    }.get(values["type"], values["type"])
+    return values
+
+
 class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
     # TODO: remove this if there nothing broken from the UI
@@ -659,35 +689,7 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
     filters: List[IssueFilterSchema] = Field(default=[])
 
-    @root_validator(pre=True)
-    def transform(cls, values):
-        if values.get("type") is None:
-            return values
-        values["type"] = {
-            "USEROS": FilterType.user_os.value,
-            "USERBROWSER": FilterType.user_browser.value,
-            "USERDEVICE": FilterType.user_device.value,
-            "USERCOUNTRY": FilterType.user_country.value,
-            "USERID": FilterType.user_id.value,
-            "USERANONYMOUSID": FilterType.user_anonymous_id.value,
-            "REFERRER": FilterType.referrer.value,
-            "REVID": FilterType.rev_id.value,
-            "USEROS_IOS": FilterType.user_os_ios.value,
-            "USERDEVICE_IOS": FilterType.user_device_ios.value,
-            "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
-            "USERID_IOS": FilterType.user_id_ios.value,
-            "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
-            "REVID_IOS": FilterType.rev_id_ios.value,
-            "DURATION": FilterType.duration.value,
-            "PLATFORM": FilterType.platform.value,
-            "METADATA": FilterType.metadata.value,
-            "ISSUE": FilterType.issue.value,
-            "EVENTS_COUNT": FilterType.events_count.value,
-            "UTM_SOURCE": FilterType.utm_source.value,
-            "UTM_MEDIUM": FilterType.utm_medium.value,
-            "UTM_CAMPAIGN": FilterType.utm_campaign.value
-        }.get(values["type"], values["type"])
-        return values
+    transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
     @root_validator
     def filter_validator(cls, values):
@@ -1230,6 +1232,8 @@ class LiveSessionSearchFilterSchema(BaseModel):
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
         SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+
+    transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
     @root_validator
     def validator(cls, values):
