@@ -7,6 +7,7 @@ export default class QueueSender {
   private readonly queue: Array<Uint8Array> = []
   private readonly ingestURL
   private token: string | null = null
+  private isCompressing = false
 
   constructor(
     ingestBaseURL: string,
@@ -14,9 +15,10 @@ export default class QueueSender {
     private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
     private readonly ATTEMPT_TIMEOUT = 1000,
-    private readonly onCompress: (batch: Uint8Array) => any,
+    private readonly onCompress?: (batch: Uint8Array) => any,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
+    if (onCompress !== undefined) this.isCompressing = true
   }
 
   authorise(token: string): void {
@@ -32,7 +34,11 @@ export default class QueueSender {
       this.queue.push(batch)
     } else {
       this.busy = true
-      this.onCompress(batch)
+      if (this.isCompressing && this.onCompress) {
+        this.onCompress(batch)
+      } else {
+        this.sendBatch(batch)
+      }
     }
   }
 
@@ -40,7 +46,11 @@ export default class QueueSender {
     const nextBatch = this.queue.shift()
     if (nextBatch) {
       this.busy = true
-      this.onCompress(nextBatch)
+      if (this.isCompressing && this.onCompress) {
+        this.onCompress(nextBatch)
+      } else {
+        this.sendBatch(nextBatch)
+      }
     } else {
       this.busy = false
     }
