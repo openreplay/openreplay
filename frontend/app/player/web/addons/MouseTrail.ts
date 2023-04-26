@@ -101,7 +101,7 @@ export default class MouseTrail {
       const spreadRate = LINE_WIDTH_START * (1 - inc);
       this.context.lineJoin = 'round';
       this.context.lineWidth = spreadRate;
-      this.context.strokeStyle = `rgb(255, ${Math.floor(200 - 255 * dec)}, ${Math.floor(200 - 255 * inc)})`
+      this.context.strokeStyle = `rgba(60, 170, 170, ${dec})`
 
       this.context.beginPath();
       this.context.moveTo(lastPoint.x, lastPoint.y);
