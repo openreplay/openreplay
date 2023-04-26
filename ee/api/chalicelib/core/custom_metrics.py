@@ -16,7 +16,7 @@ if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
 else:
     from . import errors as errors
 
-if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
+if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
     from chalicelib.core import sessions_legacy as sessions
 else:
     from chalicelib.core import sessions
