@@ -1272,7 +1272,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
 def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     if project_id is None:
-        all_projects = projects.get_projects(tenant_id=tenant_id, recording_state=False)
+        all_projects = projects.get_projects(tenant_id=tenant_id)
     else:
         all_projects = [
             projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
