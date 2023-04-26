@@ -52,36 +52,25 @@ def __create(tenant_id, name):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False):
-    stack_integrations = False
+def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
     with pg_client.PostgresClient() as cur:
         extra_projection = ""
-        extra_join = ""
         if gdpr:
             extra_projection += ',s.gdpr'
         if recorded:
-            extra_projection += """,COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
+            extra_projection += """,COALESCE(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000::BIGINT,
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
                                          AND sessions.start_ts >= (EXTRACT(EPOCH FROM 
                                                             COALESCE(s.sessions_last_check_at, s.created_at)) * 1000-24*60*60*1000)
                                          AND sessions.start_ts <= %(now)s
-                                       LIMIT 1), NULL) AS first_recorded"""
-        if stack_integrations:
-            extra_projection += ',stack_integrations.count>0 AS stack_integrations'
-
-        if stack_integrations:
-            extra_join = """LEFT JOIN LATERAL (SELECT COUNT(*) AS count 
-                                            FROM public.integrations 
-                                            WHERE s.project_id = integrations.project_id 
-                                            LIMIT 1) AS stack_integrations ON TRUE"""
+                                       )) AS first_recorded"""
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
                                        created_at {extra_projection}
                                 FROM public.projects AS s
-                                        {extra_join}
                                 WHERE s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""", {"now": TimeUTC.now()})
         cur.execute(query)
@@ -107,26 +96,6 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         else:
             for r in rows:
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
-        if recording_state and len(rows) > 0:
-            project_ids = [f'({r["project_id"]})' for r in rows]
-            query = cur.mogrify(f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
-                                    FROM (VALUES {",".join(project_ids)}) AS projects(project_id)
-                                             LEFT JOIN sessions USING (project_id)
-                                    WHERE sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(endDate)s
-                                    GROUP BY project_id;""",
-                                {"startDate": TimeUTC.now(delta_days=-3), "endDate": TimeUTC.now(delta_days=1)})
-
-            cur.execute(query=query)
-            status = cur.fetchall()
-            for r in rows:
-                r["status"] = "red"
-                for s in status:
-                    if s["project_id"] == r["project_id"]:
-                        if TimeUTC.now(-2) <= s["last"] < TimeUTC.now(-1):
-                            r["status"] = "yellow"
-                        elif s["last"] >= TimeUTC.now(-1):
-                            r["status"] = "green"
-                        break
 
         return helper.list_to_camel_case(rows)
 

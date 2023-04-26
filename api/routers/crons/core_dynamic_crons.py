@@ -8,7 +8,7 @@ async def run_scheduled_jobs() -> None:
     jobs.execute_jobs()
 
 
-async def weekly_report2() -> None:
+async def weekly_report_cron() -> None:
     weekly_report.cron()
 
 
@@ -21,6 +21,6 @@ cron_jobs = [
      "misfire_grace_time": 60 * 60, "max_instances": 1},
     {"func": run_scheduled_jobs, "trigger": CronTrigger(day_of_week="*", hour=0, minute=15),
      "misfire_grace_time": 20, "max_instances": 1},
-    {"func": weekly_report2, "trigger": CronTrigger(day_of_week="mon", hour=5),
+    {"func": weekly_report_cron, "trigger": CronTrigger(day_of_week="mon", hour=5),
      "misfire_grace_time": 60 * 60, "max_instances": 1}
 ]
