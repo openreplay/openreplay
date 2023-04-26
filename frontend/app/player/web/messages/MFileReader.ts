@@ -13,13 +13,14 @@ export default class MFileReader extends RawMessageReader {
   private currentTime: number
   public error: boolean = false
   private noIndexes: boolean = false
-  constructor(data: Uint8Array, private startTime?: number, noIndexes?: boolean, private logger= console) {
+  constructor(data: Uint8Array, private startTime?: number, private logger= console) {
     super(data)
-    if (noIndexes) this.noIndexes = true
+    // if (noIndexes) this.noIndexes = true
   }
 
   public checkForIndexes() {
     const firstBytes = this.readCustomIndex(this.buf.slice(0, 9))
+    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes
     const skipIndexes = firstBytes === 72057594037927940
     if (skipIndexes) {
       this.noIndexes = true
