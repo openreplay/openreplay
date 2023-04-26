@@ -18,11 +18,11 @@ function PlayingTime({ isUniTime, setIsUniTime, startedAt }: Props) {
       className="cursor-pointer select-none"
       distance={20}
       render={({close}) => (
-        <div className={'flex flex-col gap-2 bg-white py-2 rounded'}>
-          <div className={'font-semibold px-4'}>Playback Time Mode</div>
+        <div className={'flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest'}>
+          <div className={'font-semibold px-4 cursor-default'}>Playback Time Mode</div>
           <div className={'flex flex-col cursor-pointer hover:bg-active-blue w-full px-4'}>
-            <div className={'text-sm text-disabled-text'}>Current / Session Duration</div>
-            <div className={'flex items-center font-semibold text-center'} onClick={() => {
+            <div className={'text-sm text-disabled-text text-left'}>Current / Session Duration</div>
+            <div className={'flex items-center text-left'} onClick={() => {
               setIsUniTime(false);
               close();
             }}>
@@ -35,8 +35,8 @@ function PlayingTime({ isUniTime, setIsUniTime, startedAt }: Props) {
             setIsUniTime(true);
             close();
           }}>
-            <div className={'text-sm text-disabled-text'}>Based on your settings</div>
-            <div className={'font-semibold'}><RealReplayTimeConnected startedAt={startedAt} /></div>
+            <div className={'text-sm text-disabled-text text-left'}>Based on your settings</div>
+            <div className={'text-left'}><RealReplayTimeConnected startedAt={startedAt} /></div>
           </div>
         </div>
       )}
