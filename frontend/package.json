@@ -54,7 +54,7 @@
     "react-dnd-html5-backend": "^15.1.2",
     "react-dom": "^18.2.0",
     "react-draggable": "^4.4.5",
-    "react-google-recaptcha": "^1.1.0",
+    "react-google-recaptcha": "^2.1.0",
     "react-highlight": "^0.14.0",
     "react-json-view": "^1.21.3",
     "react-lazyload": "^3.2.0",
