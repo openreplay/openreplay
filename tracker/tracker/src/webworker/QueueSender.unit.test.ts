@@ -16,7 +16,7 @@ function defaultQueueSender({
   onUnauthorised = () => {},
   onFailed = () => {},
 } = {}) {
-  return new QueueSender(baseURL, onUnauthorised, onFailed)
+  return new QueueSender(baseURL, onUnauthorised, onFailed, 10, 1000)
 }
 
 describe('QueueSender', () => {
