@@ -33,6 +33,9 @@ if config("EXP_METRICS", cast=bool, default=False):
 else:
     from . import metrics as metrics
 
+if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
+    logging.info(">>> Using experimental sessions search for metrics")
+
 if config("EXP_ALERTS", cast=bool, default=False):
     logging.info(">>> Using experimental alerts")
     from . import alerts_processor_exp as alerts_processor
