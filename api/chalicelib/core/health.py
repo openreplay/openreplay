@@ -161,7 +161,7 @@ def __check_SSL(*_):
 
 def __get_sessions_stats(*_):
     with pg_client.PostgresClient() as cur:
-        constraints = ["projects.deteled_at IS NULL"]
+        constraints = ["projects.deleted_at IS NULL"]
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
                                        COALESCE(SUM(events_count),0) AS e_c
                                 FROM public.projects_stats

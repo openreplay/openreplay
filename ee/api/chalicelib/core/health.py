@@ -162,7 +162,7 @@ def __check_SSL(*_):
 
 def __get_sessions_stats(tenant_id, *_):
     with pg_client.PostgresClient() as cur:
-        constraints = ["projects.deteled_at IS NULL"]
+        constraints = ["projects.deleted_at IS NULL"]
         if tenant_id:
             constraints.append("tenant_id=%(tenant_id)s")
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
