@@ -170,8 +170,11 @@ def __get_sessions_stats(*_):
         cur.execute(query)
         row = cur.fetchone()
     return {
-        "numberOfSessionsCaptured": row["s_c"],
-        "numberOfEventCaptured": row["e_c"]
+        "health": True,
+        "details": {
+            "numberOfSessionsCaptured": row["s_c"],
+            "numberOfEventCaptured": row["e_c"]
+        }
     }
 
 
