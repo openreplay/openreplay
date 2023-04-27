@@ -64,7 +64,7 @@ rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
 rm -rf ./routers/app/__init__.py
-rm -rf ./routers/crons/__init__.py
+rm -rf ./crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
@@ -74,7 +74,7 @@ rm -rf ./build.sh
 rm -rf ./build_crons.sh
 rm -rf ./routers/base.py
 rm -rf ./routers/core.py
-rm -rf ./routers/crons/core_crons.py
+rm -rf ./crons/core_crons.py
 rm -rf ./db_changes.sql
 rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
