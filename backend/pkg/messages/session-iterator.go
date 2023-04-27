@@ -9,11 +9,12 @@ import (
 )
 
 type msgInfo struct {
-	index   uint64
-	start   int64
-	end     int64
-	body    Message
-	msgType uint64
+	index     uint64
+	start     int64
+	end       int64
+	body      Message
+	msgType   uint64
+	timestamp uint64
 }
 
 func (m *msgInfo) Print() string {
@@ -23,6 +24,7 @@ func (m *msgInfo) Print() string {
 func SplitMessages(data []byte) ([]*msgInfo, error) {
 	messages := make([]*msgInfo, 0)
 	indexes := make(map[uint64]bool)
+	var lastTimestamp uint64
 	reader := NewBytesReader(data)
 	for {
 		// Get message start
@@ -59,20 +61,34 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 		}
 		indexes[msgIndex] = true
 
+		// Update current timestamp
+		if msgType == MsgTimestamp {
+			msgBody := body.(*Timestamp)
+			lastTimestamp = msgBody.Timestamp
+		}
+
 		// Add new message info to messages slice
 		messages = append(messages, &msgInfo{
-			index:   msgIndex,
-			start:   msgStart,
-			end:     reader.Pointer(),
-			body:    body,
-			msgType: msgType,
+			index:     msgIndex,
+			start:     msgStart,
+			end:       reader.Pointer(),
+			body:      body,
+			msgType:   msgType,
+			timestamp: lastTimestamp,
 		})
 	}
 }
 
 func SortMessages(messages []*msgInfo) []*msgInfo {
+	// Sort messages by index
 	sort.SliceStable(messages, func(i, j int) bool {
-		return messages[i].index < messages[j].index
+		if messages[i].timestamp < messages[j].timestamp {
+			return true
+		}
+		if messages[i].timestamp == messages[j].timestamp {
+			return messages[i].index < messages[j].index
+		}
+		return false
 	})
 	return messages
 }
