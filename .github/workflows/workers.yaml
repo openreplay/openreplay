@@ -156,16 +156,16 @@ jobs:
         # Deploy command
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
 
-#    - name: Alert slack
-#      if: ${{ failure() }}
-#      uses: rtCamp/action-slack-notify@v2
-#      env:
-#        SLACK_CHANNEL: foss
-#        SLACK_TITLE: "Failed ${{ github.workflow }}"
-#        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
-#        SLACK_USERNAME: "OR Bot"
-#        SLACK_MESSAGE: 'Build failed :bomb:'
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: foss
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
     # - name: Debug Job
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
