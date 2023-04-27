@@ -2,7 +2,7 @@ print("============= CRONS =============")
 import asyncio
 import sys
 
-from routers.crons import core_dynamic_crons
+from crons import core_dynamic_crons
 
 ACTIONS = {
     "TELEMETRY": core_dynamic_crons.telemetry_cron,

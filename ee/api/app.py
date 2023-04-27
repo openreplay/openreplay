@@ -15,9 +15,7 @@ from chalicelib.utils import events_queue
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic, ee, saml
-from routers.crons import core_crons
-from routers.crons import core_dynamic_crons
-from routers.crons import ee_crons
+from crons import core_crons, ee_crons, core_dynamic_crons
 from routers.subs import insights, metrics, v1_api_ee
 from routers.subs import v1_api, health
 
