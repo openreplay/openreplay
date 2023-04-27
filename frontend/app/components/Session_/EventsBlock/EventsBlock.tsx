@@ -29,7 +29,7 @@ interface IProps {
 function EventsBlock(props: IProps) {
   const [mouseOver, setMouseOver] = React.useState(true);
   const scroller = React.useRef<List>(null);
-  const cache = useCellMeasurerCache(undefined, {
+  const cache = useCellMeasurerCache( {
     fixedWidth: true,
     defaultHeight: 300,
   });

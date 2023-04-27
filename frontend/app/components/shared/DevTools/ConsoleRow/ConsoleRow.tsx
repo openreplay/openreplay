@@ -19,9 +19,12 @@ function ConsoleRow(props: Props) {
   const canExpand = lines.length > 1;
   const clickable = canExpand || !!log.errorId;
 
+  React.useEffect(() => {
+    recalcHeight?.();
+  }, [expanded])
+
   const toggleExpand = () => {
     setExpanded(!expanded);
-    setTimeout(() => recalcHeight?.(), 0);
   };
   return (
     <div

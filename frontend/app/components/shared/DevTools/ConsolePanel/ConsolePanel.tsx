@@ -112,7 +112,7 @@ function ConsolePanel({ isLive }: { isLive: boolean }) {
     }
   }, [activeIndex]);
 
-  const cache = useCellMeasurerCache(filteredList)
+  const cache = useCellMeasurerCache()
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
@@ -135,19 +135,17 @@ function ConsolePanel({ isLive }: { isLive: boolean }) {
     return (
         // @ts-ignore
         <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-          {() => (
-            <ConsoleRow
-              style={style}
-              log={item}
-              jump={jump}
-              iconProps={getIconProps(item.level)}
-              renderWithNL={renderWithNL}
-              onClick={() => showDetails(item)}
-              recalcHeight={() => {
-                (_list as any).current.recomputeRowHeights(index);
-                cache.clear(index, 0)
-              }}
-            />
+          {({ measure, registerChild }) => (
+            <div ref={registerChild} style={style}>
+              <ConsoleRow
+                log={item}
+                jump={jump}
+                iconProps={getIconProps(item.level)}
+                renderWithNL={renderWithNL}
+                onClick={() => showDetails(item)}
+                recalcHeight={measure}
+              />
+            </div>
           )}
         </CellMeasurer>
     )
