@@ -24,16 +24,16 @@ $$ LANGUAGE sql IMMUTABLE;
 
 ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'app_crash';
 
-CREATE TABLE IF NOT EXISTS public.sessions_count
+CREATE TABLE IF NOT EXISTS public.projects_stats
 (
     project_id     integer NOT NULL,
-    created_at     bigint    default (EXTRACT(epoch FROM date_trunc('day'::text, now())) * 1000)::bigint,
-    sessions_count integer,
-    events_count   bigint,
-    _timestamp     timestamp default (now() AT TIME ZONE 'utc'::text),
+    created_at     timestamp        default (now() AT TIME ZONE 'utc'::text),
+    sessions_count integer NOT NULL DEFAULT 0,
+    events_count   bigint  NOT NULL DEFAULT 0,
+    last_update_at timestamp        default (now() AT TIME ZONE 'utc'::text),
     primary key (project_id, created_at)
 );
 
-CREATE INDEX IF NOT EXISTS sessions_count_project_id_idx ON public.sessions_count (project_id);
+CREATE INDEX IF NOT EXISTS projects_stats_project_id_idx ON public.projects_stats (project_id);
 
 COMMIT;

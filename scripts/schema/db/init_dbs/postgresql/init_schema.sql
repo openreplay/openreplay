@@ -962,15 +962,17 @@ $$
                 is_public  boolean                     NOT NULL DEFAULT FALSE
             );
 
-            CREATE TABLE public.sessions_count
+            CREATE TABLE public.projects_stats
             (
                 project_id     integer NOT NULL,
-                created_at     bigint    default (EXTRACT(epoch FROM date_trunc('day'::text, now())) * 1000)::bigint,
-                sessions_count integer,
-                events_count   bigint,
-                _timestamp     timestamp default (now() AT TIME ZONE 'utc'::text),
+                created_at     timestamp        default (now() AT TIME ZONE 'utc'::text),
+                sessions_count integer NOT NULL DEFAULT 0,
+                events_count   bigint  NOT NULL DEFAULT 0,
+                last_update_at timestamp        default (now() AT TIME ZONE 'utc'::text),
                 primary key (project_id, created_at)
             );
+
+            CREATE INDEX IF NOT EXISTS projects_stats_project_id_idx ON public.projects_stats (project_id);
 
             raise notice 'DB created';
         END IF;
