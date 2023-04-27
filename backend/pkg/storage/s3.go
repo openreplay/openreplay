@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"log"
 	"net/url"
 	"os"
 	"sort"
@@ -38,6 +39,7 @@ func (s3 *S3) Upload(reader io.Reader, key string, contentType string, gzipped b
 		gzipStr := "gzip"
 		contentEncoding = &gzipStr
 	}
+	log.Printf("Uploading to %s/%s in %s", *s3.bucket, key, *s3.svc.Config.Region)
 	_, err := s3.uploader.Upload(&s3manager.UploadInput{
 		Body:            reader,
 		Bucket:          s3.bucket,

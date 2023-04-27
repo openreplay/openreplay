@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from decouple import config
 from requests.models import PreparedRequest
 
-if not config("S3_HOST", default=False):
+if not config("S3_HOST", default=False) or not config("S3_KEY", default=False) or not config("S3_SECRET", default=False):
     client = boto3.client('s3')
 else:
     client = boto3.client('s3', endpoint_url=config("S3_HOST"),
@@ -21,7 +21,7 @@ else:
 
 
 def __get_s3_resource():
-    if not config("S3_HOST", default=False):
+    if not config("S3_HOST", default=False) or not config("S3_KEY", default=False) or not config("S3_SECRET", default=False):
         return boto3.resource('s3')
     return boto3.resource('s3', endpoint_url=config("S3_HOST"),
                           aws_access_key_id=config("S3_KEY"),
