@@ -43,7 +43,9 @@ const NewSiteForm = ({
       update(site, site.id).then((response) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
-          fetchList();
+          if (!pathname.includes('onboarding')) {
+            fetchList();
+          }
           toast.success('Project updated successfully');
         } else {
           toast.error(response.errors[0]);
