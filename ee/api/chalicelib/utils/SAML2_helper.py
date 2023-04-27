@@ -41,8 +41,7 @@ if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL
     print("SAML2_MD_URL provided, getting IdP metadata config")
     from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
-    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(
-        config("SAML2_MD_URL", default=None))
+    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(config("SAML2_MD_URL", default=None))
     idp = idp_data.get("idp")
 
 if SAML2["idp"] is None:
@@ -77,8 +76,7 @@ def init_saml_auth(req):
 
 
 async def prepare_request(request: Request):
-    request.args = dict(request.query_params).copy(
-    ) if request.query_params else {}
+    request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
