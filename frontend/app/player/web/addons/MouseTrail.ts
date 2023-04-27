@@ -2,7 +2,7 @@
  * Inspired by Bryan C (@bryjch at codepen)
  * */
 
-const LINE_DURATION = 3;
+const LINE_DURATION = 3.5;
 const LINE_WIDTH_START = 5;
 
 export default class MouseTrail {
