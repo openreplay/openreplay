@@ -22,6 +22,9 @@ function ConsoleRow(props: Props) {
   React.useEffect(() => {
     recalcHeight?.();
   }, [expanded])
+  React.useEffect(() => {
+    recalcHeight?.();
+  }, [])
 
   const toggleExpand = () => {
     setExpanded(!expanded);
