@@ -94,6 +94,13 @@ export interface MouseHandlerOptions {
    * default 10_000
    * */
   maxOptimiseTries?: number
+  /**
+   * how many ticks to wait before capturing mouse position
+   * (can affect performance)
+   * 1 tick = 30ms
+   * default 7
+   * */
+  trackingOffset?: number
 }
 
 export default function (app: App, options?: MouseHandlerOptions): void {
@@ -236,5 +243,5 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   })
   patchDocument(document, true)
 
-  app.ticker.attach(sendMouseMove, 10)
+  app.ticker.attach(sendMouseMove, options?.trackingOffset || 7)
 }
