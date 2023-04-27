@@ -1,5 +1,5 @@
 from numpy._typing import _16Bit
-from decouple import config
+from decouple import config, Csv
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
@@ -14,10 +14,12 @@ from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
 from db.writer import insert_batch
 from handler import handle_message, handle_normal_message, handle_session
+from utils.project_utils import ProjectSelection
+from utils import pg_client
 
 from psycopg2 import InterfaceError
 
-def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE):
+def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE, projectFilter):
     if msg is None:
         return
     #value = json.loads(msg.value().decode('utf-8'))
@@ -25,6 +27,8 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
     session_id = codec.decode_key(msg.key())
     if messages is None:
         print('-')
+        return
+    elif not projectFilter.is_valid(session_id):
         return
 
     for message in messages:
@@ -42,6 +46,7 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
             if isinstance(message, SessionEnd):
                 if sessions[session_id]:
                     sessions_batch.append(deepcopy(sessions[session_id]))
+                    projectFilter.handle_clean(session_id)
                     del sessions[session_id]
 
         if message.__id__ in interesting_events:
@@ -109,6 +114,7 @@ def decode_key(b) -> int:
 
         
 async def main():
+    await pg_client.init()
     DATABASE = config('CLOUD_SERVICE')
     EVENT_TYPE = config('EVENT_TYPE')
 
@@ -131,6 +137,8 @@ async def main():
         selected_events = [1,4,21,22,25,27,31,32,39,48,59,64,69,78,125,126]
     filter_events = list(set(sessions_events_selection+selected_events))
 
+    allowed_projects = config('PROJECT_IDS', default=None, cast=Csv(int))
+    project_filter = ProjectSelection(allowed_projects)
     codec = MessageCodec(filter_events)
     ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
     consumer_settings = {
@@ -150,7 +158,7 @@ async def main():
     read_msgs = 0
     while True:
         msg = consumer.poll(1.0)
-        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, EVENT_TYPE)
+        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, EVENT_TYPE, project_filter)
         read_msgs += 1
         if time() - c_time > upload_rate:
             print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
