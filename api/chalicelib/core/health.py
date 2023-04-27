@@ -161,9 +161,12 @@ def __check_SSL(*_):
 
 def __get_sessions_stats(*_):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
-                                      COALESCE(SUM(events_count),0) AS e_c
-                               FROM public.projects_stats;""")
+        constraints = ["projects.deteled_at IS NULL"]
+        query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
+                                       COALESCE(SUM(events_count),0) AS e_c
+                                FROM public.projects_stats
+                                     INNER JOIN public.projects USING(project_id)
+                                WHERE {" AND ".join(constraints)};""")
         cur.execute(query)
         row = cur.fetchone()
     return {
