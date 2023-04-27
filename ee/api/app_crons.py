@@ -7,7 +7,9 @@ from routers.crons import core_dynamic_crons
 ACTIONS = {
     "TELEMETRY": core_dynamic_crons.telemetry_cron,
     "JOB": core_dynamic_crons.run_scheduled_jobs,
-    "REPORT": core_dynamic_crons.weekly_report
+    "REPORT": core_dynamic_crons.weekly_report,
+    "PROJECTS_STATS": core_dynamic_crons.health_cron,
+    "FIX_PROJECTS_STATS": core_dynamic_crons.weekly_health_cron
 }
 
 
