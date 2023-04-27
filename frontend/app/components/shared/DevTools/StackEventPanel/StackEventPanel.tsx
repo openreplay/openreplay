@@ -58,7 +58,7 @@ function StackEventPanel() {
     timeoutStartAutoscroll()
   }
 
-  const cache = useCellMeasurerCache(filteredList)
+  const cache = useCellMeasurerCache()
 
   const showDetails = (item: any) => {
     setIsDetailsModalActive(true)
