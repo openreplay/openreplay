@@ -85,6 +85,12 @@ function ConsolePanel({ isLive }: { isLive: boolean }) {
   let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
   filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
 
+  React.useEffect(() => {
+    setTimeout(() => {
+      cache.clearAll();
+      _list.current?.recomputeRowHeights();
+    }, 0)
+  }, [activeTab, filter])
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
@@ -104,7 +110,7 @@ function ConsolePanel({ isLive }: { isLive: boolean }) {
     timeoutStartAutoscroll()
   }
   
-  const _list = useRef(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
+  const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
