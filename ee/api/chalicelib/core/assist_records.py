@@ -73,9 +73,9 @@ def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSc
         cur.execute(query)
         rows = helper.list_to_camel_case(cur.fetchall())
         if len(rows) == 0:
-            return {"count": 0, "records": []}
+            return {"total": 0, "records": []}
 
-        results = {"count": rows[0]["count"]}
+        results = {"total": rows[0]["count"]}
         for r in rows:
             r.pop("count")
         results["records"] = results
