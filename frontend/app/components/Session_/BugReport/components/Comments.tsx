@@ -36,7 +36,7 @@ function Comments() {
           placeholder="Comment..."
           rows={3}
           autoFocus
-          className="rounded fluid border -mx-2 px-2 py-1 w-full -mt-2"
+          className="text-area fluid border -mx-2 px-2 py-1 w-full -mt-2"
           value={bugReportStore.comment}
           onChange={(e) => bugReportStore.setComment(e.target.value)}
           onBlur={() => bugReportStore.toggleCommentEditing(false)}

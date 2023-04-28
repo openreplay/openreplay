@@ -145,6 +145,7 @@ class IssueForm extends React.PureComponent {
               value={instance.description}
               placeholder="E.g. Found this issue at 3:29secs"
               onChange={this.write}
+              className="text-area"
             />
           </Form.Field>
 
