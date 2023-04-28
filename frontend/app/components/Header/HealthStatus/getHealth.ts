@@ -7,6 +7,17 @@ function mapResponse(resp: Record<string, any>) {
   const services = Object.keys(resp);
   const healthMap: Record<string, IServiceStats> = {};
   services.forEach((service) => {
+    if (service === 'details') return;
+    if (service === 'ssl') {
+      healthMap[service] = {
+        name: categoryKeyNames[service],
+        healthOk: resp[service].health,
+        serviceName: service,
+        // @ts-ignore
+        subservices: { ssl: resp[service] }
+      };
+      return;
+    }
     healthMap[service] = {
       // @ts-ignore
       name: categoryKeyNames[service],
@@ -23,7 +34,7 @@ function mapResponse(resp: Record<string, any>) {
     (service: Record<string, any>) => service.healthOk
   );
 
-  return { overallHealth, healthMap };
+  return { overallHealth, healthMap, details: resp.details };
 }
 
 export async function getHealthRequest(isPublic?: boolean) {
