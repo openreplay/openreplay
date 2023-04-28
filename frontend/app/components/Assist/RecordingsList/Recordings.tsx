@@ -5,31 +5,45 @@ import RecordingsSearch from './RecordingsSearch';
 import RecordingsList from './RecordingsList';
 import { useStore } from 'App/mstore';
 import { connect } from 'react-redux';
+import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+import Period from 'Types/app/period';
+import { observer } from 'mobx-react-lite';
 
-function Recordings({ userId }: { userId: string }) {
+interface Props {
+  userId: string;
+  filter: any;
+}
+
+function Recordings(props: Props) {
+  const { userId } = props;
   const { recordingsStore } = useStore();
 
   const recordingsOwner = [
     { value: '0', label: 'All Recordings' },
-    { value: userId, label: 'My Recordings' },
+    { value: userId, label: 'My Recordings' }
   ];
 
+  const onDateChange = (e: any) => {
+    recordingsStore.updateTimestamps(e);
+  };
+
   return (
-    <div style={{ maxWidth: '1300px', margin: 'auto' }} className="bg-white rounded py-4 border">
-      <div className="flex items-center mb-4 justify-between px-6">
-        <div className="flex items-baseline mr-3">
-          <PageTitle title="Recordings" />
+    <div style={{ maxWidth: '1300px', margin: 'auto' }} className='bg-white rounded py-4 border'>
+      <div className='flex items-center mb-4 justify-between px-6'>
+        <div className='flex items-baseline mr-3'>
+          <PageTitle title='Recordings' />
         </div>
-        <div className="ml-auto flex items-center">
+        <div className='ml-auto flex items-center'>
+          <SelectDateRange period={recordingsStore.period} onChange={onDateChange} right={true} />
           <Select
-            name="recsOwner"
+            name='recsOwner'
             plain
             right
             options={recordingsOwner}
             onChange={({ value }) => recordingsStore.setUserId(value.value)}
             defaultValue={recordingsOwner[0].value}
           />
-          <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
+          <div className='ml-4 w-1/4' style={{ minWidth: 300 }}>
             <RecordingsSearch />
           </div>
         </div>
@@ -39,6 +53,6 @@ function Recordings({ userId }: { userId: string }) {
   );
 }
 
-export default connect((state: any) => ({ userId: state.getIn(['user', 'account', 'id']) }))(
-  Recordings
-);
+export default connect((state: any) => ({
+  userId: state.getIn(['user', 'account', 'id'])
+}))(observer(Recordings));
