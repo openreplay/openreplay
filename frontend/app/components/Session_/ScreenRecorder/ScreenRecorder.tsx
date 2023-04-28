@@ -90,6 +90,7 @@ function ScreenRecorder({
       );
       setRecording(true);
     } catch (e) {
+      stopRecordingHandler()
       console.error(e);
     }
   };

@@ -54,9 +54,6 @@ export default class ScreenRecording {
   }
 
   stopRecording = () => {
-    const recordingState = this.store.get().recordingState
-    if (recordingState === SessionRecordingStatus.Off) return;
-
     this.socket.emit("stop_recording")
     this.toggleRecording(false)
   }
