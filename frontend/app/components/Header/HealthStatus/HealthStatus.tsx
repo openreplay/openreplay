@@ -6,7 +6,7 @@ import HealthWidget from "Components/Header/HealthStatus/HealthWidget";
 import { getHealthRequest } from './getHealth'
 
 export interface IServiceStats {
-  name: 'backendServices' | 'databases' | 'ingestionPipeline' | 'ssl';
+  name: 'backendServices' | 'databases' | 'ingestionPipeline' | 'SSL';
   serviceName: string;
   healthOk: boolean;
   subservices: {

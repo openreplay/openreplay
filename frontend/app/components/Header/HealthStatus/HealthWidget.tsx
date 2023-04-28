@@ -12,7 +12,7 @@ function HealthWidget({
   setShowModal,
   isError,
 }: {
-  healthResponse: { overallHealth: boolean; healthMap: Record<string, IServiceStats> };
+  healthResponse: { overallHealth: boolean; healthMap: Record<string, IServiceStats>, details: Record<string, any> };
   getHealth: Function;
   isLoading: boolean;
   lastAsked: string | null;
@@ -69,6 +69,10 @@ function HealthWidget({
         </div>
         {isError && <div className={'text-secondary text-sm'}>Error getting service health status</div>}
 
+        <div className={'w-full'}>
+          <div>Sessions: {healthResponse.details?.numberOfEventCaptured.toLocaleString()}</div>
+          <div>Events: {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}</div>
+        </div>
         <div className={'w-full'}>
           {!isError && !healthOk ? (
             <>
