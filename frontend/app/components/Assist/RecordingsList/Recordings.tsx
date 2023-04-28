@@ -33,7 +33,7 @@ function Recordings(props: Props) {
         <div className='flex items-baseline mr-3'>
           <PageTitle title='Recordings' />
         </div>
-        <div className='ml-auto flex items-center'>
+        <div className='ml-auto flex items-center gap-4'>
           <SelectDateRange period={recordingsStore.period} onChange={onDateChange} right={true} />
           <Select
             name='recsOwner'
@@ -43,7 +43,7 @@ function Recordings(props: Props) {
             onChange={({ value }) => recordingsStore.setUserId(value.value)}
             defaultValue={recordingsOwner[0].value}
           />
-          <div className='ml-4 w-1/4' style={{ minWidth: 300 }}>
+          <div className='w-1/4' style={{ minWidth: 300 }}>
             <RecordingsSearch />
           </div>
         </div>
