@@ -25,8 +25,8 @@
   "_spec": "@medv/finder",
   "_where": "/Users/mvetkin/coding/openreplay/tracker/tracker",
   "author": {
-    "name": "Michael Vetkin",
-    "email": "onevetka@gmail.com"
+    "name": "Anton Medvedev",
+    "email": "anton@medv.io"
   },
   "ava": {
     "require": [
