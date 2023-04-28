@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   max-width: 280px;
-  margin: 0 20px;
+  margin: 0 14px;
   margin-bottom: 5px;
   & .url {
     margin-left: 5px;

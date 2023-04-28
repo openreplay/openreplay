@@ -14,7 +14,7 @@ import { setEditNoteTooltip } from 'Duck/sessions';
 @connect(
   (state) => ({
     members: state.getIn(['members', 'list']),
-    currentUserId: state.getIn(['user', 'account', 'id']),
+    currentUserId: state.getIn(['user', 'account', 'id'])
   }),
   { setEditNoteTooltip }
 )
@@ -34,6 +34,7 @@ class EventGroupWrapper extends React.Component {
       this.props.mesureHeight();
     }
   }
+
   componentDidMount() {
     this.props.toggleLoadInfo(this.props.isFirst);
     this.props.mesureHeight();
@@ -56,7 +57,7 @@ class EventGroupWrapper extends React.Component {
       isFirst,
       presentInSearch,
       isNote,
-      filterOutNote,
+      filterOutNote
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
 
@@ -73,19 +74,18 @@ class EventGroupWrapper extends React.Component {
             {
               [stl.last]: isLastInGroup,
               [stl.first]: event.type === TYPES.LOCATION,
-              [stl.dashAfter]: isLastInGroup && !isLastEvent,
+              [stl.dashAfter]: isLastInGroup && !isLastEvent
             },
             isLastInGroup && '!pb-2',
             event.type === TYPES.LOCATION && '!pt-2 !pb-2'
           )}
         >
           {isFirst && isLocation && event.referrer && (
-
-              <TextEllipsis>
-                <div className={stl.referrer}>
+            <TextEllipsis>
+              <div className={stl.referrer}>
                 Referrer: <span className={stl.url}>{safeRef}</span>
-                </div>
-              </TextEllipsis>
+              </div>
+            </TextEllipsis>
           )}
           {isNote ? (
             <NoteEvent
@@ -124,7 +124,7 @@ class EventGroupWrapper extends React.Component {
             />
           )}
         </div>
-        {isLastInGroup && <div className="border-t mx-5 border-color-gray-light-shade" />}
+        {isLastInGroup && <div className='border-t border-color-gray-light-shade' />}
       </>
     );
   }
