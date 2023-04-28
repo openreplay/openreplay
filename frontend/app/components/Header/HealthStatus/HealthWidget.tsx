@@ -70,6 +70,7 @@ function HealthWidget({
         {isError && <div className={'text-secondary text-sm'}>Error getting service health status</div>}
 
         <div className={'w-full'}>
+          <div className={'font-semibold'}>Captured in total</div>
           <div>Sessions: {healthResponse.details?.numberOfEventCaptured.toLocaleString()}</div>
           <div>Events: {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}</div>
         </div>
