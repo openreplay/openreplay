@@ -14,7 +14,7 @@ from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
 from db.writer import insert_batch, update_batch
 from handler import handle_message, handle_normal_message, handle_session
-from utils.project_utils import ProjectSelection
+from utils.cache import ProjectFilter as PF
 from utils import pg_client
 
 from psycopg2 import InterfaceError
@@ -43,15 +43,15 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
                 sessions[session_id] = handle_session(sessions[session_id], message)
                 if sessions[session_id]:
                     sessions[session_id].sessionid = session_id
-                projectFilter.history.add(session_id)
+                projectFilter.cached_sessions.add(session_id)
 
             if isinstance(message, SessionEnd):
                 if sessions[session_id]:
                     #sessions_batch.append(deepcopy(sessions[session_id]))
-                    projectFilter.handle_clean(session_id)
-                    old_status = projectFilter.history.close(session_id)
+                    projectFilter.handle_clean()
+                    old_status = projectFilter.cached_sessions.close(session_id)
                     sessions_batch.append((old_status, deepcopy(sessions[session_id])))
-                    sessions_to_delete = projectFilter.history.clear_sessions()
+                    sessions_to_delete = projectFilter.cached_sessions.clear_sessions()
                     for sess_id in sessions_to_delete:
                         del sessions[sess_id]
 
@@ -163,7 +163,7 @@ async def main():
     filter_events = list(set(sessions_events_selection+selected_events))
 
     allowed_projects = config('PROJECT_IDS', default=None, cast=Csv(int))
-    project_filter = ProjectSelection(allowed_projects)
+    project_filter = PF(allowed_projects)
     codec = MessageCodec(filter_events)
     ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
     consumer_settings = {
