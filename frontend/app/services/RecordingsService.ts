@@ -10,7 +10,10 @@ interface FetchFilter {
   page: number;
   limit: number;
   order: 'asc' | 'desc';
-  search: string;
+  query: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  userId?: string;
 }
 
 export interface IRecord {
@@ -57,7 +60,7 @@ export default class RecordingsService {
     });
   }
 
-  fetchRecordings(filters: FetchFilter): Promise<IRecord[]> {
+  fetchRecordings(filters: FetchFilter): Promise<any> {
     return this.client.post(`/assist/records`, filters).then((r) => {
         return r.json().then((j) => j.data);
     });
