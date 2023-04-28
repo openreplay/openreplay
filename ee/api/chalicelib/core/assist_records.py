@@ -78,7 +78,7 @@ def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSc
         results = {"total": rows[0]["count"]}
         for r in rows:
             r.pop("count")
-        results["records"] = results
+        results["records"] = rows
 
     return results
 
