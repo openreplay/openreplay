@@ -376,3 +376,10 @@ p {
     fill: $teal !important;
   }
 }
+
+.text-area {
+  border: solid thin #ddd;
+  border-radius: 3px;
+  resize: none;
+  background-color: #ffff;
+}

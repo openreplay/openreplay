@@ -211,12 +211,7 @@ function CreateNote({
           value={text}
           autoFocus
           onChange={(e) => setText(e.target.value)}
-          style={{
-            border: 'solid thin #ddd',
-            borderRadius: 3,
-            resize: 'none',
-            background: '#ffff',
-          }}
+          className="text-area"
         />
       </div>
 
