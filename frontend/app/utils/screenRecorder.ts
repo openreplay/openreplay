@@ -106,8 +106,8 @@ export async function screenRecorder(recName: string, sessionId: string, saveCb:
       }
     }
   } catch (e) {
-    console.error('OpenReplay:', e);
     toast.error('Screen recording is not permitted by your system and/or browser. Make sure to enable it in your browser as well as in your system settings.');
+    throw new Error('OpenReplay recording: ' + e);
   }
 }
 
