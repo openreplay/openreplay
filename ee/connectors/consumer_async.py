@@ -9,10 +9,10 @@ from time import time, sleep
 from copy import deepcopy
 
 from msgcodec.msgcodec import MessageCodec
-from msgcodec.messages import SessionEnd
+from msgcodec.messages import SessionStart, SessionEnd
 from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
-from db.writer import insert_batch
+from db.writer import insert_batch, update_batch
 from handler import handle_message, handle_normal_message, handle_session
 from utils.project_utils import ProjectSelection
 from utils import pg_client
@@ -38,16 +38,22 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
             elif EVENT_TYPE == 'normal':
                 n = handle_normal_message(message)
         if message.__id__ in interesting_sessions:
-            sessions[session_id] = handle_session(sessions[session_id], message)
-            if sessions[session_id]:
-                sessions[session_id].sessionid = session_id
 
-                # put in a batch for insertion if received a SessionEnd
+            if isinstance(message, SessionStart) or session_id in sessions.keys():
+                sessions[session_id] = handle_session(sessions[session_id], message)
+                if sessions[session_id]:
+                    sessions[session_id].sessionid = session_id
+                projectFilter.history.add(session_id)
+
             if isinstance(message, SessionEnd):
                 if sessions[session_id]:
-                    sessions_batch.append(deepcopy(sessions[session_id]))
+                    #sessions_batch.append(deepcopy(sessions[session_id]))
                     projectFilter.handle_clean(session_id)
-                    del sessions[session_id]
+                    old_status = projectFilter.history.close(session_id)
+                    sessions_batch.append((old_status, deepcopy(sessions[session_id])))
+                    sessions_to_delete = projectFilter.history.clear_sessions()
+                    for sess_id in sessions_to_delete:
+                        del sessions[sess_id]
 
         if message.__id__ in interesting_events:
             if n:
@@ -80,6 +86,24 @@ def attempt_session_insert(sess_batch, db, sessions_table_name, try_=0):
             print(repr(e))
 
 
+def attempt_session_update(sess_batch, db, sessions_table_name):
+    if sess_batch:
+        try:
+            print('updating sessions')
+            update_batch(db, sess_batch, table=sessions_table_name)
+        except TypeError as e:
+            print('Type conversion error')
+            print(repr(e))
+        except ValueError as e:
+            print('Message value could not be processed or inserted correctly')
+            print(repr(e))
+        except InterfaceError as e:
+            print('Error while trying to update session into datawarehouse')
+            print(repr(e))
+        except Exception as e:
+            print(repr(e))
+
+
 def attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_=0):
     # insert a batch
     try:
@@ -98,6 +122,7 @@ def attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_=0):
             sleep(try_*2)
             attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_)
         else:
+            # TODO: Restart redshift
             print(repr(e))
     except Exception as e:
         print(repr(e))
@@ -174,8 +199,19 @@ async def main():
 async def insertBatch(sessions_batch, batch, db, sessions_table_name, table_name, EVENT_TYPE):
     t1 = time()
     print(f'[BG-INFO] Number of events to add {len(batch)}, number of sessions to add {len(sessions_batch)}')
-    if sessions_batch != []:
-        attempt_session_insert(sessions_batch, db, sessions_table_name)
+    new_sessions = list()
+    updated_sessions = list()
+    for old_status, session_in_batch in sessions_batch:
+        if old_status == 'UPDATE':
+            updated_sessions.append(session_in_batch)
+        else:
+            new_sessions.append(session_in_batch)
+    print(f'[DEBUG] Number of new sessions {len(new_sessions)}, number of sessions to update {len(updated_sessions)}')
+    if new_sessions != []:
+        attempt_session_insert(new_sessions, db, sessions_table_name)
+
+    if updated_sessions != []:
+        attempt_session_update(updated_sessions, db, sessions_table_name)
 
     # insert a batch of events
     if batch != []:

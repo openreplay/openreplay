@@ -3,11 +3,12 @@ from decouple import config
 DATABASE = config('CLOUD_SERVICE')
 
 from db.api import DBConnection
-from db.utils import get_df_from_batch
+from db.utils import get_df_from_batch, dtypes_sessions
 from db.tables import *
 
 if DATABASE == 'redshift':
     from db.loaders.redshift_loader import transit_insert_to_redshift
+    import pandas as pd
 elif DATABASE == 'clickhouse':
     from db.loaders.clickhouse_loader import insert_to_clickhouse
 elif DATABASE == 'pg':
@@ -63,3 +64,29 @@ def insert_batch(db: DBConnection, batch, table, level='normal'):
 
     if db.config == 'snowflake':
         insert_to_snowflake(db=db, df=df, table=table)
+
+
+def update_batch(db: DBConnection, batch, table):
+    if len(batch) == 0:
+        return
+    df = get_df_from_batch(batch, level='sessions')
+    base_query = f"UPDATE {table} SET"
+    for column_name, column_type in dtypes_sessions.items():
+        if column_name == 'sessionid':
+            continue
+        elif column_type == 'string':
+            df[column_name] = df[column_name].fillna('NULL')
+            base_query += f" {column_name} = " + "'{" + f"{column_name}" + "}',"
+        else:
+            df[column_name] = df[column_name].fillna(0)
+            base_query += f" {column_name} = " + "{" + f"{column_name}" + "},"
+    base_query = base_query[:-1] + " WHERE sessionid = {sessionid};"
+    for i in range(len(df)):
+        if db.config == 'redshift':
+            params = dict(df.iloc[i])
+            query = base_query.format(**params)
+            try:
+                db.pdredshift.exec_commit(query)
+            except Exception as e:
+                print('[ERROR] Error while executing query')
+                print(repr(e))

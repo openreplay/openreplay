@@ -142,3 +142,10 @@ class DBConnection:
         my_session.close()
         connection.close()
 
+    def restart(self):
+        self.close()
+        self.__init__(config=self.config)
+
+    def close(self):
+        if self.config == 'redshift':
+            self.pdredshift.close_up_shop()
