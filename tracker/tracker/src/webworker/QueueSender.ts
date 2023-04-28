@@ -78,6 +78,16 @@ export default class QueueSender {
       headers['Content-Encoding'] = 'gzip'
     }
 
+    /**
+     * sometimes happen during assist connects for some reason
+     * */
+    if (this.token === null) {
+      setTimeout(() => {
+        this.sendBatch(batch, isCompressed)
+      }, 500)
+      return
+    }
+
     fetch(this.ingestURL, {
       body: batch,
       method: 'POST',
