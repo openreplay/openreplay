@@ -70,7 +70,7 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 		// Add new message info to messages slice
 		messages = append(messages, &msgInfo{
 			index:     msgIndex,
-			start:     msgStart,
+			start:     msgStart + 8, // start pointer without index (that's why we use +8)
 			end:       reader.Pointer(),
 			body:      body,
 			msgType:   msgType,
@@ -97,9 +97,24 @@ func MergeMessages(data []byte, messages []*msgInfo) []byte {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
 	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
-	for _, info := range messages {
-		// Write message without index (that's why we use +8)
-		sortedSession.Write(data[info.start+8 : info.end])
+
+	var lastTsIndex int = -1 // not set
+	for i, info := range messages {
+		if info.msgType == MsgTimestamp {
+			// Save index of last timestamp message and continue to read next message
+			lastTsIndex = i
+			continue
+		}
+
+		// Write last timestamp message if it exists
+		if lastTsIndex != -1 {
+			tsInfo := messages[lastTsIndex]
+			sortedSession.Write(data[tsInfo.start:tsInfo.end])
+			lastTsIndex = -1
+		}
+
+		// Write current message
+		sortedSession.Write(data[info.start:info.end])
 	}
 	return sortedSession.Bytes()
 }
