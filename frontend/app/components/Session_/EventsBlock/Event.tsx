@@ -46,6 +46,7 @@ const Event: React.FC<Props> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isLocation = event.type === TYPES.LOCATION;
 
   const onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -111,7 +112,6 @@ const Event: React.FC<Props> = ({
         icon = 'mouse_thrashing';
         break;
     }
-    const isLocation = event.type === TYPES.LOCATION;
 
     return (
       <Tooltip
@@ -190,7 +190,7 @@ const Event: React.FC<Props> = ({
       <div className={cn(cls.topBlock, 'w-full')}>
         <div className={cn(cls.firstLine, 'w-full')}>{renderBody()}</div>
       </div>
-      {event.type === TYPES.LOCATION &&
+      {isLocation &&
         (event.fcpTime || event.visuallyComplete || event.timeToInteractive) && (
           <LoadInfo
             showInfo={showLoadInfo}
