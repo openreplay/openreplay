@@ -444,11 +444,27 @@ export function NgRx(
   ]
 }
 
+export function GraphQLDeprecated(
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+): Messages.GraphQLDeprecated {
+  return [
+    Messages.Type.GraphQLDeprecated,
+    operationKind,
+    operationName,
+    variables,
+    response,
+  ]
+}
+
 export function GraphQL(
   operationKind: string,
   operationName: string,
   variables: string,
   response: string,
+  duration: number,
 ): Messages.GraphQL {
   return [
     Messages.Type.GraphQL,
@@ -456,6 +472,7 @@ export function GraphQL(
     operationName,
     variables,
     response,
+    duration,
   ]
 }
 

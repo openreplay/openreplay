@@ -1,0 +1,47 @@
+@import "icons.css";
+@import "colors.css";
+
+[data-os="windows"] {
+  @mixin icon-before os/windows, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Windows";
+  }
+}
+[data-os="mac_os_x"] {
+  @mixin icon-before os/mac_os_x, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Mac OS X";
+  }
+}
+[data-os="android"] {
+  @mixin icon-before os/android, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Android";
+  }
+}
+[data-os="linux"] {
+  @mixin icon-before os/linux, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Linux";
+  }
+}

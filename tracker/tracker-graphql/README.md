@@ -42,7 +42,7 @@ function fetchQuery(operation, variables, cacheConfig, uploadables) {
   })
     .then(response => response.json())
     .then(result =>
-      recordGraphQL(operation.operationKind, operation.name, variables, result),
+      recordGraphQL(operation.operationKind, operation.name, variables, result, duration),
     );
 }
 
@@ -67,6 +67,7 @@ const trackerApolloLink = new ApolloLink((operation, forward) => {
       operation.operationName,
       operation.variables,
       result,
+      duration
     ),
   );
 });

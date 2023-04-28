@@ -32,6 +32,7 @@ import type {
   RawVuex,
   RawMobX,
   RawNgRx,
+  RawGraphQlDeprecated,
   RawGraphQl,
   RawPerformanceTrack,
   RawStringDict,
@@ -125,6 +126,8 @@ export type Vuex = RawVuex & Timed
 export type MobX = RawMobX & Timed
 
 export type NgRx = RawNgRx & Timed
+
+export type GraphQlDeprecated = RawGraphQlDeprecated & Timed
 
 export type GraphQl = RawGraphQl & Timed
 

@@ -1,0 +1,69 @@
+@import "icons.css";
+@import "colors.css";
+
+[data-browser="chrome"] {
+  @mixin icon-before browser/chrome, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Chrome";
+  }
+}
+[data-browser="firefox"] {
+  @mixin icon-before browser/firefox, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Firefox";
+  }
+}
+[data-browser="opera"] {
+  @mixin icon-before browser/opera, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Opera";
+  }
+}
+[data-browser="edge"] {
+  @mixin icon-before browser/edge, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Edge";
+  }
+}
+[data-browser="ie"] {
+  @mixin icon-before browser/ie, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "IE";
+  }
+}
+[data-browser="safari"] {
+  @mixin icon-before browser/safari, $gray-medium, 12px {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  &::after{
+    color: $gray-medium;
+    content: "Safari";
+  }
+}

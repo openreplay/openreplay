@@ -23,10 +23,10 @@
   "_resolved": "https://registry.npmjs.org/@medv/finder/-/finder-2.0.0.tgz",
   "_shasum": "699b7141393aa815f120b38f54f92ad212225902",
   "_spec": "@medv/finder",
-  "_where": "/Users/shikhu/work/openreplay/tracker/tracker",
+  "_where": "/Users/mvetkin/coding/openreplay/tracker/tracker",
   "author": {
-    "name": "Anton Medvedev",
-    "email": "anton@medv.io"
+    "name": "Michael Vetkin",
+    "email": "onevetka@gmail.com"
   },
   "ava": {
     "require": [

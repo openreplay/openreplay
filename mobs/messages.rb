@@ -242,11 +242,18 @@ message 47, 'NgRx', :replayer => :devtools do
   string 'State'
   uint 'Duration'
 end
-message 48, 'GraphQL', :replayer => :devtools do
+message 48, 'GraphQLDeprecated', :replayer => :devtools do
   string 'OperationKind'
   string 'OperationName'
   string 'Variables'
   string 'Response'
+end
+message 43, 'GraphQL', :replayer => :devtools do
+  string 'OperationKind'
+  string 'OperationName'
+  string 'Variables'
+  string 'Response'
+  uint 'Duration'
 end
 message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player performance refactoring (now is tied with nodes counter)
   int 'Frames'

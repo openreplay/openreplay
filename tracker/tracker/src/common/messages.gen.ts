@@ -37,7 +37,8 @@ export declare const enum Type {
   Vuex = 45,
   MobX = 46,
   NgRx = 47,
-  GraphQL = 48,
+  GraphQLDeprecated = 48,
+  GraphQL = 43,
   PerformanceTrack = 49,
   StringDict = 50,
   SetNodeAttributeDict = 51,
@@ -308,12 +309,21 @@ export type NgRx = [
   /*duration:*/ number,
 ]
 
+export type GraphQLDeprecated = [
+  /*type:*/ Type.GraphQLDeprecated,
+  /*operationKind:*/ string,
+  /*operationName:*/ string,
+  /*variables:*/ string,
+  /*response:*/ string,
+]
+
 export type GraphQL = [
   /*type:*/ Type.GraphQL,
   /*operationKind:*/ string,
   /*operationName:*/ string,
   /*variables:*/ string,
   /*response:*/ string,
+  /*duration:*/ number,
 ]
 
 export type PerformanceTrack = [
@@ -537,5 +547,5 @@ export type ResourceTiming = [
 ]
 
 
-type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming
+type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQLDeprecated | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming
 export default Message
