@@ -60,11 +60,13 @@ func (t *Task) Mob(tp FileType) []byte {
 }
 
 type Storage struct {
-	cfg        *config.Config
-	s3         *storage.S3
-	startBytes []byte
-	tasks      chan *Task
-	ready      chan struct{}
+	cfg                 *config.Config
+	s3                  *storage.S3
+	startBytes          []byte
+	compressionTasks    chan *Task // brotli compression or gzip compression with encryption
+	uploadingTasks      chan *Task // upload to s3
+	readyForCompression chan struct{}
+	readyForUploading   chan struct{}
 }
 
 func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
@@ -75,24 +77,29 @@ func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
 	newStorage := &Storage{
-		cfg:        cfg,
-		s3:         s3,
-		startBytes: make([]byte, cfg.FileSplitSize),
-		tasks:      make(chan *Task, 1),
-		ready:      make(chan struct{}),
+		cfg:                 cfg,
+		s3:                  s3,
+		startBytes:          make([]byte, cfg.FileSplitSize),
+		compressionTasks:    make(chan *Task, 1),
+		uploadingTasks:      make(chan *Task, 1),
+		readyForCompression: make(chan struct{}),
+		readyForUploading:   make(chan struct{}),
 	}
-	go newStorage.worker()
+	go newStorage.compressionWorker()
+	go newStorage.uploadingWorker()
 	return newStorage, nil
 }
 
 func (s *Storage) Wait() {
-	<-s.ready
+	<-s.readyForCompression
+	<-s.readyForUploading
 }
 
 func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 	// Generate file path
 	sessionID := strconv.FormatUint(msg.SessionID(), 10)
 	filePath := s.cfg.FSDir + "/" + sessionID
+
 	// Prepare sessions
 	newTask := &Task{
 		id:  sessionID,
@@ -121,10 +128,11 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 		}
 		return err
 	}
-	// Send new task to worker
-	s.tasks <- newTask
+
+	// Send new task to compression worker
+	s.compressionTasks <- newTask
 	// Unload worker
-	<-s.ready
+	<-s.readyForCompression
 	return nil
 }
 
@@ -177,9 +185,6 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 
 	// Put opened session file into task struct
 	task.SetMob(mob, tp)
-
-	// Encrypt and compress session
-	s.packSession(task, tp)
 	return nil
 }
 
@@ -399,14 +404,41 @@ func (s *Storage) uploadSession(task *Task) {
 	metrics.IncreaseStorageTotalSessions()
 }
 
-func (s *Storage) worker() {
+func (s *Storage) doCompression(task *Task) {
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		s.packSession(task, DOM)
+		wg.Done()
+	}()
+	go func() {
+		s.packSession(task, DEV)
+		wg.Done()
+	}()
+	wg.Wait()
+	s.uploadingTasks <- task
+}
+
+func (s *Storage) compressionWorker() {
 	for {
 		select {
-		case task := <-s.tasks:
+		case task := <-s.compressionTasks:
+			s.doCompression(task)
+		default:
+			// Signal that worker finished all tasks
+			s.readyForCompression <- struct{}{}
+		}
+	}
+}
+
+func (s *Storage) uploadingWorker() {
+	for {
+		select {
+		case task := <-s.uploadingTasks:
 			s.uploadSession(task)
 		default:
 			// Signal that worker finished all tasks
-			s.ready <- struct{}{}
+			s.readyForUploading <- struct{}{}
 		}
 	}
 }
