@@ -33,17 +33,17 @@ const isFrustrationEvent = (evt: any): boolean => {
 };
 
 const Event: React.FC<Props> = ({
-  event,
-  selected = false,
-  isCurrent = false,
-  onClick,
-  showSelection = false,
-  showLoadInfo,
-  toggleLoadInfo,
-  isRed = false,
-  presentInSearch = false,
-  whiteBg,
-}) => {
+                                  event,
+                                  selected = false,
+                                  isCurrent = false,
+                                  onClick,
+                                  showSelection = false,
+                                  showLoadInfo,
+                                  toggleLoadInfo,
+                                  isRed = false,
+                                  presentInSearch = false,
+                                  whiteBg
+                                }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const isLocation = event.type === TYPES.LOCATION;
@@ -81,9 +81,9 @@ const Event: React.FC<Props> = ({
         icon = isFrustration ? 'click_hesitation' : 'click';
         isFrustration
           ? Object.assign(tooltip, {
-              disabled: false,
-              text: `User hesitated to click for ${Math.round(event.hesitation / 1000)}s`,
-            })
+            disabled: false,
+            text: `User hesitated to click for ${Math.round(event.hesitation / 1000)}s`
+          })
           : null;
         break;
       case TYPES.INPUT:
@@ -92,9 +92,9 @@ const Event: React.FC<Props> = ({
         icon = isFrustration ? 'input_hesitation' : 'input';
         isFrustration
           ? Object.assign(tooltip, {
-              disabled: false,
-              text: `User hesitated to enter a value for ${Math.round(event.hesitation / 1000)}s`,
-            })
+            disabled: false,
+            text: `User hesitated to enter a value for ${Math.round(event.hesitation / 1000)}s`
+          })
           : null;
         break;
       case TYPES.CLICKRAGE:
@@ -122,23 +122,23 @@ const Event: React.FC<Props> = ({
         containerClassName={'w-full'}
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
-          <div className={cn("flex items-center w-full", {'px-4' : isLocation })}>
-            {event.type && <Icon name={`event/${icon}`} size="16" color={'gray-dark'} />}
-            <div className="ml-3 w-full">
-              <div className="flex w-full items-first justify-between">
-                <div className="flex items-center w-full" style={{ minWidth: '0' }}>
-                  <span className={cn(cls.title, {'font-medium' : isLocation })}>{title}</span>
+          <div className={cn('flex items-center w-full', { 'px-4': isLocation })}>
+            {event.type && <Icon name={`event/${icon}`} size='16' color={'gray-dark'} />}
+            <div className='ml-3 w-full'>
+              <div className='flex w-full items-first justify-between'>
+                <div className='flex items-center w-full' style={{ minWidth: '0' }}>
+                  <span className={cn(cls.title, { 'font-medium': isLocation })}>{title}</span>
                   {body && !isLocation && (
                     <TextEllipsis
-                      maxWidth="60%"
-                      className="w-full ml-2 text-sm color-gray-medium"
+                      maxWidth='60%'
+                      className='w-full ml-2 text-sm color-gray-medium'
                       text={body}
                     />
                   )}
                 </div>
                 {isLocation && event.speedIndex != null && (
-                  <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">{'Speed Index'}</div>
+                  <div className='color-gray-medium flex font-medium items-center leading-none justify-end'>
+                    <div className='font-size-10 pr-2'>{'Speed Index'}</div>
                     <div>{numberWithCommas(event.speedIndex || 0)}</div>
                   </div>
                 )}
@@ -149,8 +149,8 @@ const Event: React.FC<Props> = ({
             </div>
           </div>
           {isLocation && (
-            <div className="mt-1 px-4">
-              <span className="text-sm font-normal color-gray-medium">{body}</span>
+            <div className='mt-1 px-4'>
+              <span className='text-sm font-normal color-gray-medium'>{body}</span>
             </div>
           )}
         </div>
@@ -164,7 +164,7 @@ const Event: React.FC<Props> = ({
     <div
       ref={wrapperRef}
       onMouseLeave={onMouseLeave}
-      data-openreplay-label="Event"
+      data-openreplay-label='Event'
       data-type={event.type}
       className={cn(cls.event, {
         [cls.menuClosed]: !menuOpen,
@@ -177,7 +177,7 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['mx-4 rounded']: event.type !== TYPES.LOCATION,
+        ['mx-4 rounded']: event.type !== TYPES.LOCATION
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -201,10 +201,10 @@ const Event: React.FC<Props> = ({
               elements: {
                 a: event.fcpTime,
                 b: event.visuallyComplete,
-                c: event.timeToInteractive,
+                c: event.timeToInteractive
               },
               startDivisorFn: (elements) => elements / 1.2,
-              divisorFn: (elements, parts) => elements / (2 * parts + 1),
+              divisorFn: (elements, parts) => elements / (2 * parts + 1)
             })}
           />
         )}
