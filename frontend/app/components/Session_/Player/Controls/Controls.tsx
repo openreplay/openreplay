@@ -30,6 +30,7 @@ import PlayerControls from './components/PlayerControls';
 
 import styles from './controls.module.css';
 import XRayButton from 'Shared/XRayButton';
+import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -155,6 +156,7 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       <Timeline />
+      <CreateNote />
       {!fullscreen && (
         <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
