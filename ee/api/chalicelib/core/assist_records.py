@@ -38,18 +38,19 @@ def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, cont
     return result
 
 
-def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema, context: schemas_ee.CurrentContext):
+def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSchema,
+                   context: schemas_ee.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
                   "projects.project_id=%(project_id)s",
                   "assist_records.deleted_at ISNULL"]
-    if data.startDate:
+    if data.startTimestamp:
         conditions.append("assist_records.created_at>=%(startDate)s")
-    if data.endDate:
+    if data.endTimestamp:
         conditions.append("assist_records.created_at<=%(endDate)s")
 
     params = {"tenant_id": context.tenant_id, "project_id": project_id,
-              "startDate": data.startDate, "endDate": data.endDate,
+              "startDate": data.startTimestamp, "endDate": data.endTimestamp,
               "p_start": (data.page - 1) * data.limit, "p_limit": data.limit,
               **data.dict()}
     if data.user_id is not None:
@@ -59,17 +60,26 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator._contains)
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT record_id, user_id, session_id, assist_records.created_at, 
-                                        assist_records.name, duration, users.name AS created_by
+        query = cur.mogrify(f"""SELECT COUNT(assist_records.record_id) OVER () AS count,
+                                       record_id, user_id, session_id, assist_records.created_at, 
+                                       assist_records.name, duration, users.name AS created_by
                                 FROM assist_records
-                                         INNER JOIN projects USING (project_id)
-                                         LEFT JOIN users USING (user_id)
+                                      INNER JOIN projects USING (project_id)
+                                      LEFT JOIN users USING (user_id)
                                 WHERE {" AND ".join(conditions)}
                                 ORDER BY assist_records.created_at {data.order}
                                 LIMIT %(p_limit)s OFFSET %(p_start)s;""",
                             params)
         cur.execute(query)
-        results = helper.list_to_camel_case(cur.fetchall())
+        rows = helper.list_to_camel_case(cur.fetchall())
+        if len(rows) == 0:
+            return {"count": 0, "records": []}
+
+        results = {"count": rows[0]["count"]}
+        for r in rows:
+            r.pop("count")
+        results["records"] = results
+
     return results
 
 

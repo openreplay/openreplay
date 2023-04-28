@@ -19,7 +19,7 @@ def random_string(length=36):
     return "".join(random.choices(string.hexdigits, k=length))
 
 
-def list_to_camel_case(items, flatten=False):
+def list_to_camel_case(items: list[dict], flatten: bool = False) -> list[dict]:
     for i in range(len(items)):
         if flatten:
             items[i] = flatten_nested_dicts(items[i])
