@@ -289,7 +289,7 @@ def cron():
 # this cron is used to correct the sessions&events count every week
 def weekly_cron():
     with pg_client.PostgresClient(long_query=True) as cur:
-        query = cur.mogrify("""SELECT project_id
+        query = cur.mogrify("""SELECT project_id,
                                       projects_stats.last_update_at
                                FROM public.projects
                                     LEFT JOIN public.projects_stats USING (project_id)
@@ -307,7 +307,7 @@ def weekly_cron():
                       "events_count": 0}
 
             query = cur.mogrify("""SELECT COUNT(1) AS sessions_count,
-                                          SUM(events_count) AS events_count
+                                          COALESCE(SUM(events_count),0) AS events_count
                                    FROM public.sessions
                                    WHERE project_id=%(project_id)s
                                       AND start_ts<=%(end_ts)s

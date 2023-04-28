@@ -17,7 +17,7 @@ def default_action(action):
     async def _func():
         print(f"{action} not found in crons-definitions")
         print("possible actions:")
-        print(ACTIONS.keys())
+        print(list(ACTIONS.keys()))
 
     return _func
 
@@ -29,7 +29,7 @@ async def process(action):
 if __name__ == '__main__':
     if len(sys.argv) < 2 or len(sys.argv[1]) < 1:
         print("please provide actions as argument\npossible actions:")
-        print(ACTIONS.keys())
+        print(list(ACTIONS.keys()))
     else:
         print(f"action: {sys.argv[1]}")
         asyncio.run(process(sys.argv[1]))
