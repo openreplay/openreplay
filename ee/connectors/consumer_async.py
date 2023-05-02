@@ -127,8 +127,12 @@ def attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_=0):
             try_ += 1
             sleep(try_*2)
             attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_)
-        else:
+        elif try_ == 3:
             # TODO: Restart redshift
+            db.restart()
+            sleep(2)
+            attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_ + 1)
+        else:
             print(repr(e))
     except Exception as e:
         print(repr(e))
