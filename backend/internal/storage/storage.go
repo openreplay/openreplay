@@ -357,6 +357,7 @@ func (s *Storage) compressSessionBetter(data []byte) *bytes.Buffer {
 }
 
 func (s *Storage) uploadSession(task *Task) {
+	log.Printf("new upload task: %s", task.id)
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
 	var (
@@ -405,6 +406,7 @@ func (s *Storage) uploadSession(task *Task) {
 }
 
 func (s *Storage) doCompression(task *Task) {
+	log.Printf("new compression task: %s", task.id)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
