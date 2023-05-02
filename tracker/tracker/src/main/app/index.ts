@@ -108,6 +108,7 @@ export default class App {
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
   private compressionThreshold = 24 * 1000
+  private restartAttempts = 0
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -180,9 +181,16 @@ export default class App {
         } else if (data.type === 'compress') {
           const batch = data.batch
           const batchSize = batch.byteLength
-          if (batchSize > 10) {
+          if (batchSize > this.compressionThreshold) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
-              if (err) console.error(err)
+              if (err) {
+                console.error('Openreplay compression error:', err)
+                this.stop(false)
+                if (this.restartAttempts < 3) {
+                  this.restartAttempts += 1
+                  void this.start({}, true)
+                }
+              }
               // @ts-ignore
               this.worker?.postMessage({ type: 'compressed', batch: result })
             })
@@ -542,6 +550,7 @@ export default class App {
         if (typeof this.options.onStart === 'function') {
           this.options.onStart(onStartInfo)
         }
+        this.restartAttempts = 0
         return SuccessfulStart(onStartInfo)
       })
       .catch((reason) => {
