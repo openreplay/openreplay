@@ -22,13 +22,13 @@ from psycopg2 import InterfaceError
 def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE, projectFilter):
     if msg is None:
         return
-    #value = json.loads(msg.value().decode('utf-8'))
     messages = codec.decode_detailed(msg.value())
     session_id = codec.decode_key(msg.key())
     if messages is None:
         print('-')
         return
     elif not projectFilter.is_valid(session_id):
+        # We check using projectFilter if session_id is from the selected projects
         return
 
     for message in messages:
@@ -39,21 +39,27 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
                 n = handle_normal_message(message)
         if message.__id__ in interesting_sessions:
 
-            if isinstance(message, SessionStart) or session_id in sessions.keys():
-                sessions[session_id] = handle_session(sessions[session_id], message)
-                if sessions[session_id]:
-                    sessions[session_id].sessionid = session_id
-                projectFilter.cached_sessions.add(session_id)
+                # Here we create the session if not exists or append message event if session exists
+            sessions[session_id] = handle_session(sessions[session_id], message)
+            if sessions[session_id]:
+                sessions[session_id].sessionid = session_id
+            projectFilter.cached_sessions.add(session_id)
 
             if isinstance(message, SessionEnd):
-                if sessions[session_id]:
-                    #sessions_batch.append(deepcopy(sessions[session_id]))
+                # Here only if session exists and we get sessionend we start cleanup
+                if sessions[session_id].session_start_timestamp:
                     projectFilter.handle_clean()
                     old_status = projectFilter.cached_sessions.close(session_id)
                     sessions_batch.append((old_status, deepcopy(sessions[session_id])))
                     sessions_to_delete = projectFilter.cached_sessions.clear_sessions()
                     for sess_id in sessions_to_delete:
-                        del sessions[sess_id]
+                        try:
+                            del sessions[sess_id]
+                        except KeyError:
+                            print('[INFO] Session already deleted')
+                else:
+                    print('[WARN] Session not started received SessionEnd message')
+                    del sessions[session_id]
 
         if message.__id__ in interesting_events:
             if n:
