@@ -61,11 +61,6 @@ const Header = (props) => {
       {!isPreferences && <DefaultMenuView siteId={siteId} />}
       {isPreferences && <PreferencesView />}
       <div className={styles.right}>
-        {/* {boardingCompletion < 75 && !hideDiscover && (
-          <React.Fragment>
-            <OnboardingExplore onComplete={() => setHideDiscover(true)} />
-          </React.Fragment>
-        )} */}
         <GettingStartedProgress />
 
         <Notifications />
