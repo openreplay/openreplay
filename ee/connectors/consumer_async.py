@@ -131,7 +131,7 @@ def attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_=0):
             # TODO: Restart redshift
             db.restart()
             sleep(2)
-            insert_batch(db=db, batch=batch, table=table_name, level=EVENT_TYPE)
+            attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_ + 1)
         else:
             print(repr(e))
     except Exception as e:
