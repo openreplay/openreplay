@@ -358,11 +358,11 @@ export default class Session {
     const mixedEventsWithIssues = mergeEventLists(
       rawEvents,
       frustrationIssues
-    ).sort(sortEvents)
+    )
 
     this.events = events;
     // @ts-ignore
-    this.notesWithEvents = mixedEventsWithIssues;
+    this.notesWithEvents = [...this.notesWithEvents, ...mixedEventsWithIssues].sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
     // @ts-ignore legacy code? no idea
@@ -377,16 +377,9 @@ export default class Session {
   addNotes(sessionNotes: Note[]) {
     // @ts-ignore
     this.notesWithEvents =
-      [...this.notesWithEvents, ...sessionNotes].sort((a, b) => {
-        // @ts-ignore just in case
-        const aTs = a.timestamp || a.time;
-        // @ts-ignore supporting old code...
-        const bTs = b.timestamp || b.time;
-
-        return aTs - bTs;
-      }) || [];
+      [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
     this.notes = sessionNotes;
-
+    console.log(this.notesWithEvents, sessionNotes)
     return this;
   }
 
