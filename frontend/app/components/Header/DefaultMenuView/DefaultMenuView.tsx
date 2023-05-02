@@ -6,7 +6,7 @@ import {
   assist,
   dashboard,
   withSiteId,
-
+  recordings,
 } from 'App/routes';
 import SiteDropdown from '../SiteDropdown';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -16,6 +16,7 @@ const DASHBOARD_PATH = dashboard();
 const METRICS_PATH = metrics();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
+const RECORDINGS_PATH = recordings();
 
 interface Props {
   siteId: any;
@@ -47,6 +48,11 @@ function DefaultMenuView(props: Props) {
         to={withSiteId(ASSIST_PATH, siteId)}
         className={styles.nav}
         activeClassName={styles.active}
+        isActive={(_, location) => {
+          return (
+            location.pathname.includes(ASSIST_PATH) || location.pathname.includes(RECORDINGS_PATH)
+          );
+        }}
       >
         {'Assist'}
       </NavLink>
