@@ -1,19 +1,28 @@
-import os
+from decouple import config
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
+import json
+from time import time
 
+#from msgcodec.codec import MessageCodec
 from msgcodec.msgcodec import MessageCodec
 from msgcodec.messages import SessionEnd
+print('[INFO] Importing DBConnection...')
 from db.api import DBConnection
+print('[INFO] Importing from models..')
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
+print('[INFO] Importing from writer..')
 from db.writer import insert_batch
+print('[INFO] Importing from handler..')
 from handler import handle_message, handle_normal_message, handle_session
 
-DATABASE = os.environ['DATABASE_NAME']
-LEVEL = os.environ['level']
+DATABASE = config('DATABASE_NAME')
+LEVEL = config('LEVEL')
 
+print(f'[INFO] Connecting to database {DATABASE}')
 db = DBConnection(DATABASE)
+print('Connected successfully')
 
 if LEVEL == 'detailed':
     table_name = events_detailed_table_name
@@ -22,30 +31,34 @@ elif LEVEL == 'normal':
 
 
 def main():
-    batch_size = 4000
-    sessions_batch_size = 400
+    batch_size = config('events_batch_size', default=4000, cast=int)
+    sessions_batch_size = config('sessions_batch_size', default=400, cast=int)
     batch = []
     sessions = defaultdict(lambda: None)
     sessions_batch = []
 
     codec = MessageCodec()
-    consumer = Consumer({
-        "security.protocol": "SSL",
-        "bootstrap.servers": ",".join([os.environ['KAFKA_SERVER_1'],
-                                        os.environ['KAFKA_SERVER_2']]),
+    ssl_protocol = config('SSL_ENABLED', default=True, cast=bool)
+    consumer_settings = {
+        "bootstrap.servers": config('KAFKA_SERVER'),
         "group.id": f"connector_{DATABASE}",
         "auto.offset.reset": "earliest",
         "enable.auto.commit": False
-        })
+        }
+    if ssl_protocol:
+        consumer_settings['security.protocol'] = 'SSL'
+    consumer = Consumer(consumer_settings)
 
-    consumer.subscribe(["raw", "raw_ios"])
+    consumer.subscribe([config("topic", default="saas-raw")])
     print("Kafka consumer subscribed")
+    t_ = time()
     while True:
-        msg.consumer.poll(1.0)
+        msg = consumer.poll(1.0)
         if msg is None:
             continue
-        messages = codec.decode_detailed(msg.value)
-        session_id = codec.decode_key(msg.key)
+        #value = json.loads(msg.value().decode('utf-8'))
+        messages = codec.decode_detailed(msg.value())
+        session_id = codec.decode_key(msg.key())
         if messages is None:
             print('-')
             continue
@@ -68,7 +81,11 @@ def main():
 
             # try to insert sessions
             if len(sessions_batch) >= sessions_batch_size:
+                t2 = time()
                 attempt_session_insert(sessions_batch)
+                t2_ = time()
+                print(f'[INFO] Inserted sessions into Redshift - time spent: {t2_-t2}')
+                t_ += t2_-t2
                 for s in sessions_batch:
                     try:
                         del sessions[s.sessionid]
@@ -86,10 +103,15 @@ def main():
 
             # insert a batch of events
             if len(batch) >= batch_size:
+                t1 = time()
+                print(f'[INFO] Spent time filling ({batch_size})-batch: {t1-t_}')
                 attempt_batch_insert(batch)
+                t1_ = time()
+                t_ = t1_
+                print(f'[INFO] Inserted events into Redshift - time spent: {t1_-t1}')
                 batch = []
                 consumer.commit()
-                print("sessions in cache:", len(sessions))
+                print("[INFO] sessions in cache:", len(sessions))
 
 
 def attempt_session_insert(sess_batch):
@@ -134,4 +156,6 @@ def decode_key(b) -> int:
     return decoded
 
 if __name__ == '__main__':
+    print('[INFO] Setup complete')
+    print('[INFO] Starting script')
     main()

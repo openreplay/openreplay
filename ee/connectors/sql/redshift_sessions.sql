@@ -38,13 +38,8 @@ CREATE TABLE IF NOT EXISTS connector_user_sessions
     max_used_js_heap_size          bigint,
 -- ISSUES AND EVENTS
     js_exceptions_count            bigint,
-    long_tasks_total_duration      bigint,
-    long_tasks_max_duration        bigint,
-    long_tasks_count               bigint,
     inputs_count                   bigint,
     clicks_count                   bigint,
     issues_count                   bigint,
-    issues                         VARCHAR,
-    urls_count                     bigint,
-    urls                           VARCHAR
+    urls_count                     bigint
 );
