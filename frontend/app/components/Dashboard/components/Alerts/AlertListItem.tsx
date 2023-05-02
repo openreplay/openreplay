@@ -98,7 +98,7 @@ function AlertListItem(props: Props) {
 
   const formTriggerName = () =>
     Number.isInteger(alert.query.left) && triggerOptions
-      ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left)!.label
+      ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left)?.label
       : alert.query.left;
 
   return (
