@@ -47,7 +47,7 @@ async def edit_role(roleId: int, data: schemas_ee.RolePayloadSchema = Body(...),
 
 
 @app.delete('/client/roles/{roleId}', tags=["client", "roles"])
-async def delete_role(roleId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+async def delete_role(roleId: int, _=Body(None), context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = roles.delete(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId)
     if "errors" in data:
         return data
@@ -112,7 +112,8 @@ async def update_record(projectId: int, recordId: int, data: schemas_ee.AssistRe
 
 
 @app.delete('/{projectId}/assist/records/{recordId}', tags=["assist"])
-async def delete_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+async def delete_record(projectId: int, recordId: int, _=Body(None),
+                        context: schemas_ee.CurrentContext = Depends(OR_context)):
     result = assist_records.delete_record(project_id=projectId, record_id=recordId, context=context)
     if "errors" in result:
         return result

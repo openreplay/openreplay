@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.11.0'
+SELECT 'v1.12.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -317,7 +317,8 @@ $$
                 'ml_slow_resources',
                 'custom',
                 'js_exception',
-                'mouse_thrashing'
+                'mouse_thrashing',
+                'app_crash'
                 );
 
             CREATE TABLE issues
@@ -960,6 +961,18 @@ $$
                 timestamp  integer                     NOT NULL DEFAULT -1,
                 is_public  boolean                     NOT NULL DEFAULT FALSE
             );
+
+            CREATE TABLE public.projects_stats
+            (
+                project_id     integer NOT NULL,
+                created_at     timestamp        default (now() AT TIME ZONE 'utc'::text),
+                sessions_count integer NOT NULL DEFAULT 0,
+                events_count   bigint  NOT NULL DEFAULT 0,
+                last_update_at timestamp        default (now() AT TIME ZONE 'utc'::text),
+                primary key (project_id, created_at)
+            );
+
+            CREATE INDEX IF NOT EXISTS projects_stats_project_id_idx ON public.projects_stats (project_id);
 
             raise notice 'DB created';
         END IF;

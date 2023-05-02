@@ -1,5 +1,4 @@
 import hashlib
-from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 import boto3
@@ -109,15 +108,19 @@ def rename(source_bucket, source_key, target_bucket, target_key):
     s3.Object(source_bucket, source_key).delete()
 
 
-def schedule_for_deletion(bucket, key):
+def tag_for_deletion(bucket, key):
     if not exists(bucket, key):
         return False
+    # Copy the file to change the creation date, so it can be deleted X days after the tag's creation
     s3 = __get_s3_resource()
-    s3_object = s3.Object(bucket, key)
-    s3_object.copy_from(CopySource={'Bucket': bucket, 'Key': key},
-                        Expires=datetime.utcnow() + timedelta(days=config("SCH_DELETE_DAYS", cast=int, default=30)),
-                        MetadataDirective='REPLACE')
-    return True
+    s3_target = s3.Object(bucket, key)
+    s3_target.copy_from(
+        CopySource={'Bucket': bucket, 'Key': key},
+        MetadataDirective='COPY',
+        TaggingDirective='COPY'
+    )
+
+    tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days', tag_value=config("SCH_DELETE_DAYS", default='7'))
 
 
 def generate_file_key(project_id, key):
@@ -128,3 +131,18 @@ def generate_file_key_from_url(project_id, url):
     u = urlparse(url)
     new_url = u.scheme + "://" + u.netloc + u.path
     return generate_file_key(project_id=project_id, key=new_url)
+
+
+def tag_file(file_key, bucket, tag_key, tag_value):
+    return client.put_object_tagging(
+        Bucket=bucket,
+        Key=file_key,
+        Tagging={
+            'TagSet': [
+                {
+                    'Key': tag_key,
+                    'Value': tag_value
+                },
+            ]
+        }
+    )

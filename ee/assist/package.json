@@ -1,6 +1,6 @@
 {
   "name": "assist-server",
-  "version": "v1.11.0-ee",
+  "version": "v1.12.0-ee",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
   "scripts": {
@@ -22,9 +22,9 @@
     "@socket.io/redis-adapter": "^8.1.0",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
-    "redis": "^4.6.4",
-    "socket.io": "^4.6.0",
-    "ua-parser-js": "^1.0.33",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.19.0"
+    "redis": "^4.6.6",
+    "socket.io": "^4.6.1",
+    "ua-parser-js": "^1.0.35",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.23.0"
   }
 }

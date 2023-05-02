@@ -128,6 +128,11 @@ def __delete_sessions_by_session_ids(session_ids):
         cur.execute(query=query)
 
 
+def __delete_session_mobs_by_session_ids(session_ids, project_id):
+    sessions_mobs.delete_mobs(session_ids=session_ids, project_id=project_id)
+    sessions_devtool.delete_mobs(session_ids=session_ids, project_id=project_id)
+
+
 def get_scheduled_jobs():
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
@@ -151,9 +156,8 @@ def execute_jobs():
                                                             user_ids=[job["referenceId"]])
                 if len(session_ids) > 0:
                     print(f"Deleting {len(session_ids)} sessions")
-                    __delete_sessions_by_session_ids(session_ids)
-                    sessions_mobs.delete_mobs(session_ids=session_ids, project_id=job["projectId"])
-                    sessions_devtool.delete_mobs(session_ids=session_ids, project_id=job["projectId"])
+                    __delete_sessions_by_session_ids(session_ids=session_ids)
+                    __delete_session_mobs_by_session_ids(session_ids=session_ids, project_id=job["projectId"])
             else:
                 raise Exception(f"The action '{job['action']}' not supported.")
 

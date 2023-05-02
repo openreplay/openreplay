@@ -148,8 +148,7 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
 
 @app.get('/projects', tags=['projects'])
 async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True)}
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
 # for backward compatibility
@@ -417,7 +416,7 @@ async def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNote
 
 
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
-async def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                  note_id=noteId)
     return data

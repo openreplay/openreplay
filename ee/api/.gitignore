@@ -244,7 +244,7 @@ Pipfile.lock
 /chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
 /routers/app/__init__.py
-/routers/crons/__init__.py
+/crons/__init__.py
 /routers/subs/__init__.py
 /routers/__init__.py
 /chalicelib/core/assist.py
@@ -253,7 +253,7 @@ Pipfile.lock
 /build.sh
 /routers/base.py
 /routers/core.py
-/routers/crons/core_crons.py
+/crons/core_crons.py
 /db_changes.sql
 /Dockerfile_bundle
 /entrypoint.bundle.sh
@@ -267,6 +267,5 @@ Pipfile.lock
 /build_crons.sh
 /run-dev.sh
 /run-alerts-dev.sh
-/routers/subs/health.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

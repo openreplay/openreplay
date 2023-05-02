@@ -135,10 +135,7 @@ class AssistRecordSavePayloadSchema(AssistRecordPayloadSchema):
     key: str = Field(...)
 
 
-class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema):
-    limit: int = Field(default=200, gt=0)
-    startDate: Optional[int] = Field(default=None)
-    endDate: Optional[int] = Field(default=None)
+class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema, schemas._TimedSchema):
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     order: Literal["asc", "desc"] = Field(default="desc")

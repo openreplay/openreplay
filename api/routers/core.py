@@ -14,7 +14,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import helper, captcha
+from chalicelib.utils import helper, captcha, s3
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -155,7 +155,7 @@ async def add_edit_sentry(projectId: int, data: schemas.SentrySchema = Body(...)
 
 
 @app.delete('/{projectId}/integrations/sentry', tags=["integrations"])
-async def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_sentry(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -181,7 +181,7 @@ async def add_edit_datadog(projectId: int, data: schemas.DatadogSchema = Body(..
 
 
 @app.delete('/{projectId}/integrations/datadog', tags=["integrations"])
-async def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -202,7 +202,7 @@ async def add_edit_stackdriver(projectId: int, data: schemas.StackdriverSchema =
 
 
 @app.delete('/{projectId}/integrations/stackdriver', tags=["integrations"])
-async def delete_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_stackdriver(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -223,7 +223,7 @@ async def add_edit_newrelic(projectId: int, data: schemas.NewrelicSchema = Body(
 
 
 @app.delete('/{projectId}/integrations/newrelic', tags=["integrations"])
-async def delete_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_newrelic(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -244,7 +244,7 @@ async def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(..
 
 
 @app.delete('/{projectId}/integrations/rollbar', tags=["integrations"])
-async def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -271,7 +271,7 @@ async def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(..
 
 
 @app.delete('/{projectId}/integrations/bugsnag', tags=["integrations"])
-async def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_bugsnag(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -300,7 +300,7 @@ async def add_edit_cloudwatch(projectId: int, data: schemas.CloudwatchSchema = B
 
 
 @app.delete('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-async def delete_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_cloudwatch(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -328,7 +328,7 @@ async def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSche
 
 
 @app.delete('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-async def delete_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_elasticsearch(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -349,7 +349,7 @@ async def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Bod
 
 
 @app.delete('/{projectId}/integrations/sumologic', tags=["integrations"])
-async def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_sumologic(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
@@ -407,7 +407,7 @@ async def add_edit_github(data: schemas.GithubSchema = Body(...),
 
 
 @app.delete('/integrations/issues', tags=["integrations"])
-async def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_default_issue_tracking_tool(_=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
@@ -416,7 +416,7 @@ async def delete_default_issue_tracking_tool(context: schemas.CurrentContext = D
 
 
 @app.delete('/integrations/jira', tags=["integrations"])
-async def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_jira_cloud(_=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
@@ -427,7 +427,7 @@ async def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context
 
 
 @app.delete('/integrations/github', tags=["integrations"])
-async def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_github(_=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
@@ -532,7 +532,8 @@ async def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicS
 
 
 @app.delete('/{projectId}/metadata/{index}', tags=["metadata"])
-async def delete_metadata(projectId: int, index: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_metadata(projectId: int, index: int, _=Body(None),
+                          context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
 
 
@@ -607,7 +608,8 @@ async def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema =
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
-async def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_alert(projectId: int, alertId: int, _=Body(None),
+                       context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.delete(project_id=projectId, alert_id=alertId)
 
 
@@ -684,7 +686,7 @@ async def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(
 
 
 @app.delete('/projects/{projectId}', tags=['projects'])
-async def delete_project(projectId, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_project(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
 
@@ -763,7 +765,7 @@ async def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = De
 
 
 @app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
-async def delete_slack_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_slack_integration(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
@@ -779,7 +781,7 @@ async def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
-async def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
 
 
@@ -794,7 +796,7 @@ async def reset_reinvite_member(memberId: int, context: schemas.CurrentContext =
 
 
 @app.delete('/client/members/{memberId}', tags=["client"])
-async def delete_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_member(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
 
 
@@ -834,7 +836,8 @@ async def update_saved_search(projectId: int, search_id: int, data: schemas.Save
 
 
 @app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-async def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_saved_search(projectId: int, search_id: int, _=Body(None),
+                              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}
 
 
@@ -883,7 +886,8 @@ async def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborati
 
 
 @app.delete('/integrations/msteams/{webhookId}', tags=["integrations"])
-async def delete_msteams_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_msteams_integration(webhookId: int, _=Body(None),
+                                     context: schemas.CurrentContext = Depends(OR_context)):
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 

@@ -4,7 +4,7 @@ import re
 from typing import Optional, List
 
 from decouple import config
-from fastapi import Request, Response
+from fastapi import Request, Response, BackgroundTasks
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
@@ -108,10 +108,10 @@ async def process_trace(action: str, path_format: str, request: Request, respons
         return
     current_context: CurrentContext = request.state.currentContext
     body: json = None
-    if request.method in ["POST", "PUT"]:
+    if request.method in ["POST", "PUT", "DELETE"]:
         try:
             body = await request.json()
-        except json.decoder.JSONDecodeError:
+        except Exception:
             pass
         intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
         for attribute in intersect:
@@ -142,9 +142,9 @@ def trace(action: str, path_format: str, request: Request, response: Response):
     background_task: BackgroundTask = BackgroundTask(process_trace, action=action, path_format=path_format,
                                                      request=request, response=response)
     if response.background is None:
-        response.background = background_task
-    else:
-        response.background.add_task(background_task)
+        response.background = BackgroundTasks()
+
+    response.background.add_task(background_task)
 
 
 async def process_traces_queue():

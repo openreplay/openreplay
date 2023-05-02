@@ -11,8 +11,7 @@ from starlette.responses import StreamingResponse
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic
-from routers.crons import core_crons
-from routers.crons import core_dynamic_crons
+from crons import core_crons, core_dynamic_crons
 from routers.subs import insights, metrics, v1_api, health
 
 loglevel = config("LOGLEVEL", default=logging.INFO)

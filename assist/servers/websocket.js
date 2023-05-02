@@ -9,7 +9,9 @@ const {
     extractPayloadFromRequest,
     sortPaginate,
     getValidAttributes,
-    uniqueAutocomplete
+    uniqueAutocomplete,
+    getAvailableRooms,
+    getCompressionConfig
 } = require('../utils/helper');
 const {
     IDENTITIES,
@@ -31,13 +33,9 @@ const createSocketIOServer = function (server, prefix) {
             origin: "*",
             methods: ["GET", "POST", "PUT"]
         },
-        path: (prefix ? prefix : '') + '/socket'
+        path: (prefix ? prefix : '') + '/socket',
+        ...getCompressionConfig()
     });
-}
-
-
-const getAvailableRooms = async function () {
-    return io.sockets.adapter.rooms.keys();
 }
 
 const respond = function (res, data) {
@@ -48,10 +46,10 @@ const respond = function (res, data) {
 
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
-    let filters = extractPayloadFromRequest(req);
+    let filters = await extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
-    for (let peerId of rooms) {
+    let rooms = await getAvailableRooms(io);
+    for (let peerId of rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
@@ -75,10 +73,10 @@ const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = extractPayloadFromRequest(req);
+    let filters = await extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
-    for (let peerId of rooms) {
+    let rooms = await getAvailableRooms(io);
+    for (let peerId of rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
@@ -96,17 +94,17 @@ const socketsListByProject = async function (req, res) {
         }
     }
     liveSessions[_projectKey] = liveSessions[_projectKey] || [];
-    respond(res, _sessionId === undefined ? liveSessions[_projectKey]
+    respond(res, _sessionId === undefined ? sortPaginate(liveSessions[_projectKey], filters)
         : liveSessions[_projectKey].length > 0 ? liveSessions[_projectKey][0]
             : null);
 }
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
-    let filters = extractPayloadFromRequest(req);
+    let filters = await extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
-    for (let peerId of rooms) {
+    let rooms = await getAvailableRooms(io);
+    for (let peerId of rooms.keys()) {
         let {projectKey} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             let connected_sockets = await io.in(peerId).fetchSockets();
@@ -131,10 +129,10 @@ const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = extractPayloadFromRequest(req);
+    let filters = await extractPayloadFromRequest(req);
     let liveSessions = {};
-    let rooms = await getAvailableRooms();
-    for (let peerId of rooms) {
+    let rooms = await getAvailableRooms(io);
+    for (let peerId of rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
             let connected_sockets = await io.in(peerId).fetchSockets();
@@ -161,11 +159,11 @@ const socketsLiveByProject = async function (req, res) {
 const autocomplete = async function (req, res) {
     debug && console.log("[WS]autocomplete");
     let _projectKey = extractProjectKeyFromRequest(req);
-    let filters = extractPayloadFromRequest(req);
+    let filters = await extractPayloadFromRequest(req);
     let results = [];
     if (filters.query && Object.keys(filters.query).length > 0) {
-        let rooms = await getAvailableRooms();
-        for (let peerId of rooms) {
+        let rooms = await getAvailableRooms(io);
+        for (let peerId of rooms.keys()) {
             let {projectKey} = extractPeerId(peerId);
             if (projectKey === _projectKey) {
                 let connected_sockets = await io.in(peerId).fetchSockets();
@@ -180,7 +178,6 @@ const autocomplete = async function (req, res) {
     respond(res, uniqueAutocomplete(results));
 }
 
-
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
     for (let item of connected_sockets) {
@@ -193,7 +190,8 @@ const findSessionSocketId = async (io, peerId) => {
 
 async function sessions_agents_count(io, socket) {
     let c_sessions = 0, c_agents = 0;
-    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+    const rooms = await getAvailableRooms(io);
+    if (rooms.get(socket.peerId)) {
         const connected_sockets = await io.in(socket.peerId).fetchSockets();
 
         for (let item of connected_sockets) {
@@ -212,7 +210,8 @@ async function sessions_agents_count(io, socket) {
 
 async function get_all_agents_ids(io, socket) {
     let agents = [];
-    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+    const rooms = await getAvailableRooms(io);
+    if (rooms.get(socket.peerId)) {
         const connected_sockets = await io.in(socket.peerId).fetchSockets();
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.agent) {
@@ -223,13 +222,12 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
-
 wsRouter.get(`/sockets-list`, socketsList);
 wsRouter.post(`/sockets-list`, socketsList);
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete);
 wsRouter.get(`/sockets-list/:projectKey`, socketsListByProject);
-wsRouter.get(`/sockets-list/:projectKey/:sessionId`, socketsListByProject);
 wsRouter.post(`/sockets-list/:projectKey`, socketsListByProject);
+wsRouter.get(`/sockets-list/:projectKey/:sessionId`, socketsListByProject);
 
 wsRouter.get(`/sockets-live`, socketsLive);
 wsRouter.post(`/sockets-live`, socketsLive);
@@ -265,12 +263,13 @@ module.exports = {
                 }
 
             } else if (c_sessions <= 0) {
-                debug && console.log(`notifying new agent about no SESSIONS`);
+                debug && console.log(`notifying new agent about no SESSIONS with peerId:${socket.peerId}`);
                 io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
             await socket.join(socket.peerId);
-            if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+            const rooms = await getAvailableRooms(io);
+            if (rooms.get(socket.peerId)) {
+                debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${rooms.get(socket.peerId).size}`);
             }
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
@@ -338,8 +337,9 @@ module.exports = {
         setInterval(async (io) => {
             try {
                 let count = 0;
-                console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
-                const arr = Array.from(io.sockets.adapter.rooms);
+                const rooms = await getAvailableRooms(io);
+                console.log(` ====== Rooms: ${rooms.size} ====== `);
+                const arr = Array.from(rooms);
                 const filtered = arr.filter(room => !room[1].has(room[0]));
                 for (let i of filtered) {
                     let {projectKey, sessionId} = extractPeerId(i[0]);

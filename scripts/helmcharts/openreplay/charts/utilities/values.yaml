@@ -26,7 +26,7 @@ telemetry:
   env:
     ACTION: "TELEMETRY"
 report:
-  # Ref: https://crontab.guru/#0_5_*_*_1
+  # https://crontab.guru/#0_5_*_*_1
   # Monday morning 5am
   cron: "0 5 * * 1"
   image:
@@ -47,6 +47,28 @@ sessionsCleaner:
     tag: ""
   env:
     ACTION: "JOB"
+projectsStats:
+  # https://crontab.guru/#*/18_*_*_*_*
+  # Every 18 min
+  cron: "*/18 * * * *"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "PROJECTS_STATS"
+fixProjectsStats:
+  # https://crontab.guru/#0_5_*_*_0
+  # Sunday at 5am
+  cron: "0 5 * * 0"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "FIX_PROJECTS_STATS"
 
 # Common env values are from chalice for the crons
 chalice:

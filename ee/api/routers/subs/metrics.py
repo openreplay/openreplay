@@ -41,7 +41,8 @@ async def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditD
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-async def delete_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_dashboard(projectId: int, dashboardId: int, _=Body(None),
+                           context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.delete_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)
 
 
@@ -79,7 +80,7 @@ async def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId:
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
-async def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int,
+async def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int, _=Body(None),
                                        context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.remove_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                     widget_id=widgetId)
@@ -266,5 +267,6 @@ async def update_custom_metric_state(projectId: int, metric_id: int,
 @app.delete('/{projectId}/cards/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-async def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
+                               context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}

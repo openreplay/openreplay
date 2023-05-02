@@ -22,7 +22,10 @@ SAML2 = {
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
         "x509cert": config("sp_crt", default=""),
-        "privateKey": config("sp_key", default="")
+        "privateKey": config("sp_key", default=""),
+    },
+    "security": {
+        "requestedAuthnContext": False
     },
     "idp": None
 }

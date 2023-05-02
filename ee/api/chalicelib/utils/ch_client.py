@@ -24,7 +24,8 @@ class ClickHouseClient:
                                                  user=config("ch_user", default="default"),
                                                  password=config("ch_password", default=""),
                                                  port=config("ch_port", cast=int),
-                                                 settings=settings) \
+                                                 settings=settings,
+                                                 compression='lz4') \
             if self.__client is None else self.__client
 
     def __enter__(self):

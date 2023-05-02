@@ -1,3 +1,4 @@
+const uWS = require("uWebSockets.js");
 const helper = require('./helper');
 let debug = process.env.debug === "1";
 const getBodyFromUWSResponse = async function (res) {
@@ -95,8 +96,36 @@ const extractPayloadFromRequest = async function (req, res) {
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
+const getAvailableRooms = async function (io) {
+    if (process.env.redis === "true") {
+        return io.of('/').adapter.allRooms();
+    } else {
+        return helper.getAvailableRooms(io);
+    }
+}
+const getCompressionConfig = function () {
+    if (process.env.uws !== "true") {
+        return helper.getCompressionConfig();
+    } else {
+        // uWS: The theoretical overhead per socket is 32KB (8KB for compressor and for 24KB decompressor)
+        if (process.env.COMPRESSION === "true") {
+            console.log(`uWS compression: enabled`);
+            return {
+                compression: uWS.DEDICATED_COMPRESSOR_8KB,
+                decompression: uWS.DEDICATED_DECOMPRESSOR_1KB
+            };
+        } else {
+            console.log(`uWS compression: disabled`);
+            return {};
+        }
+    }
+
+}
+
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractPayloadFromRequest
+    extractPayloadFromRequest,
+    getCompressionConfig,
+    getAvailableRooms
 };

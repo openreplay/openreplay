@@ -56,7 +56,7 @@ def __get_live_sessions_ws(project_id, data):
         results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
             print(results.text)
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
@@ -106,7 +106,7 @@ def get_live_session_by_id(project_id, session_id):
         results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
             print(results.text)
             return None
         results = results.json().get("data")
@@ -136,7 +136,7 @@ def is_live(project_id, session_id, project_key=None):
         results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(f"!! issue with the peer-server code:{results.status_code} for is_live")
             print(results.text)
             return False
         results = results.json().get("data")
@@ -165,7 +165,7 @@ def autocomplete(project_id, q: str, key: str = None):
             ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(f"!! issue with the peer-server code:{results.status_code} for autocomplete")
             print(results.text)
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
@@ -248,7 +248,7 @@ def session_exists(project_id, session_id):
         results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(f"!! issue with the peer-server code:{results.status_code} for session_exists")
             print(results.text)
             return None
         results = results.json().get("data")

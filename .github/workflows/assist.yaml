@@ -1,6 +1,11 @@
 # This action will push the assist changes to aws
 on:
   workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
   push:
     branches:
       - dev
