@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core import sessions, sessions_mobs
+from chalicelib.core import sessions_mobs, sessions_devtool
 
 
 class Actions:
@@ -17,11 +17,9 @@ class JobStatus:
 def get(job_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """\
-            SELECT
-                *
-            FROM public.jobs
-            WHERE job_id = %(job_id)s;""",
+            """SELECT *
+               FROM public.jobs
+               WHERE job_id = %(job_id)s;""",
             {"job_id": job_id}
         )
         cur.execute(query=query)
@@ -37,11 +35,9 @@ def get(job_id):
 def get_all(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """\
-            SELECT
-                *
-            FROM public.jobs
-            WHERE project_id = %(project_id)s;""",
+            """SELECT *
+               FROM public.jobs
+               WHERE project_id = %(project_id)s;""",
             {"project_id": project_id}
         )
         cur.execute(query=query)
@@ -51,23 +47,19 @@ def get_all(project_id):
     return helper.list_to_camel_case(data)
 
 
-def create(project_id, data):
+def create(project_id, user_id):
     with pg_client.PostgresClient() as cur:
-        job = {
-            "status": "scheduled",
-            "project_id": project_id,
-            **data
-        }
+        job = {"status": "scheduled",
+               "project_id": project_id,
+               "action": Actions.DELETE_USER_DATA,
+               "reference_id": user_id,
+               "description": f"Delete user sessions of userId = {user_id}",
+               "start_at": TimeUTC.to_human_readable(TimeUTC.midnight(1))}
 
-        query = cur.mogrify("""\
-            INSERT INTO public.jobs(
-                project_id, description, status, action,
-                reference_id, start_at
-            )
-            VALUES (
-                %(project_id)s, %(description)s, %(status)s, %(action)s,
-                %(reference_id)s, %(start_at)s
-            ) RETURNING *;""", job)
+        query = cur.mogrify(
+            """INSERT INTO public.jobs(project_id, description, status, action,reference_id, start_at)
+               VALUES (%(project_id)s, %(description)s, %(status)s, %(action)s,%(reference_id)s, %(start_at)s)
+               RETURNING *;""", job)
 
         cur.execute(query=query)
 
@@ -90,14 +82,13 @@ def update(job_id, job):
             **job
         }
 
-        query = cur.mogrify("""\
-            UPDATE public.jobs
-            SET
-                updated_at = timezone('utc'::text, now()),
-                status = %(status)s,
-                errors = %(errors)s
-            WHERE
-                job_id = %(job_id)s RETURNING *;""", job_data)
+        query = cur.mogrify(
+            """UPDATE public.jobs
+               SET updated_at = timezone('utc'::text, now()),
+                   status = %(status)s,
+                   errors = %(errors)s
+               WHERE job_id = %(job_id)s
+               RETURNING *;""", job_data)
 
         cur.execute(query=query)
 
@@ -113,61 +104,64 @@ def format_datetime(r):
     r["start_at"] = TimeUTC.datetime_to_timestamp(r["start_at"])
 
 
+def __get_session_ids_by_user_ids(project_id, user_ids):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """SELECT session_id 
+               FROM public.sessions
+               WHERE project_id = %(project_id)s 
+                    AND user_id IN %(userId)s
+               LIMIT 1000;""",
+            {"project_id": project_id, "userId": tuple(user_ids)})
+        cur.execute(query=query)
+        ids = cur.fetchall()
+    return [s["session_id"] for s in ids]
+
+
+def __delete_sessions_by_session_ids(session_ids):
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
+        query = cur.mogrify(
+            """DELETE FROM public.sessions
+               WHERE session_id IN %(session_ids)s""",
+            {"session_ids": tuple(session_ids)}
+        )
+        cur.execute(query=query)
+
+
 def get_scheduled_jobs():
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """\
-            SELECT * FROM public.jobs
-            WHERE status = %(status)s AND start_at <= (now() at time zone 'utc');""",
-            {"status": JobStatus.SCHEDULED}
-        )
+            """SELECT * 
+               FROM public.jobs
+               WHERE status = %(status)s 
+                    AND start_at <= (now() at time zone 'utc');""",
+            {"status": JobStatus.SCHEDULED})
         cur.execute(query=query)
         data = cur.fetchall()
-        for record in data:
-            format_datetime(record)
-
     return helper.list_to_camel_case(data)
 
 
 def execute_jobs():
     jobs = get_scheduled_jobs()
-    if len(jobs) == 0:
-        # No jobs to execute
-        return
-
     for job in jobs:
-        print(f"job can be executed {job['id']}")
+        print(f"Executing jobId:{job['jobId']}")
         try:
             if job["action"] == Actions.DELETE_USER_DATA:
-                session_ids = sessions.get_session_ids_by_user_ids(
-                    project_id=job["projectId"], user_ids=job["referenceId"]
-                )
-
-                sessions.delete_sessions_by_session_ids(session_ids)
-                sessions_mobs.delete_mobs(session_ids=session_ids, project_id=job["projectId"])
+                session_ids = __get_session_ids_by_user_ids(project_id=job["projectId"],
+                                                            user_ids=[job["referenceId"]])
+                if len(session_ids) > 0:
+                    print(f"Deleting {len(session_ids)} sessions")
+                    __delete_sessions_by_session_ids(session_ids)
+                    sessions_mobs.delete_mobs(session_ids=session_ids, project_id=job["projectId"])
+                    sessions_devtool.delete_mobs(session_ids=session_ids, project_id=job["projectId"])
             else:
-                raise Exception(f"The action {job['action']} not supported.")
+                raise Exception(f"The action '{job['action']}' not supported.")
 
             job["status"] = JobStatus.COMPLETED
-            print(f"job completed {job['id']}")
+            print(f"Job completed {job['jobId']}")
         except Exception as e:
             job["status"] = JobStatus.FAILED
-            job["error"] = str(e)
-            print(f"job failed {job['id']}")
+            job["errors"] = str(e)
+            print(f"Job failed {job['jobId']}")
 
-        update(job["job_id"], job)
-
-
-def group_user_ids_by_project_id(jobs, now):
-    project_id_user_ids = {}
-    for job in jobs:
-        if job["startAt"] > now:
-            continue
-
-        project_id = job["projectId"]
-        if project_id not in project_id_user_ids:
-            project_id_user_ids[project_id] = []
-
-        project_id_user_ids[project_id].append(job)
-
-    return project_id_user_ids
+        update(job["jobId"], job)

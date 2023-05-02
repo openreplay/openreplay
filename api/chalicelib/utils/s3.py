@@ -110,11 +110,14 @@ def rename(source_bucket, source_key, target_bucket, target_key):
 
 
 def schedule_for_deletion(bucket, key):
+    if not exists(bucket, key):
+        return False
     s3 = __get_s3_resource()
     s3_object = s3.Object(bucket, key)
     s3_object.copy_from(CopySource={'Bucket': bucket, 'Key': key},
-                        Expires=datetime.now() + timedelta(days=7),
+                        Expires=datetime.utcnow() + timedelta(days=config("SCH_DELETE_DAYS", cast=int, default=30)),
                         MetadataDirective='REPLACE')
+    return True
 
 
 def generate_file_key(project_id, key):
