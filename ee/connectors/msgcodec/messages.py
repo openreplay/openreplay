@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        
+        pass
 
 
 class CreateElementNode(Message):

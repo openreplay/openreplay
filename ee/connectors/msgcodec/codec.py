@@ -35,6 +35,16 @@ class Codec:
             i += 1
 
     @staticmethod
+    def read_size(reader: io.BytesIO):
+        size = 0
+        for i in range(3):
+            b = reader.read(1)
+            num = int.from_bytes(b, "big", signed=False)
+            size += num << (8*i)
+        return size
+
+
+    @staticmethod
     def read_int(reader: io.BytesIO) -> int:
         """
         ux, err := ReadUint(reader)
@@ -57,7 +67,11 @@ class Codec:
     @staticmethod
     def read_string(reader: io.BytesIO) -> str:
         length = Codec.read_uint(reader)
-        s = reader.read(length)
+        try:
+            s = reader.read(length)
+        except Exception as e:
+            print(f'Error while reading string of length {length}')
+            raise Exception(e)
         try:
             return s.decode("utf-8", errors="replace").replace("\x00", "\uFFFD")
         except UnicodeDecodeError:

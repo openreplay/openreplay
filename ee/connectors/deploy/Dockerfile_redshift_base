@@ -1,0 +1,13 @@
+FROM amancevice/pandas:2.0.0-alpine
+
+WORKDIR /usr/src/app
+ENV LIBRD_VER=2.0.2
+WORKDIR /work
+RUN apk add --no-cache --virtual .make-deps postgresql-dev gcc python3-dev \
+  musl-dev linux-headers g++ libc-dev libffi-dev make cmake py-pip build-base \
+  bash make wget git gcc g++ musl-dev zlib-dev openssl zstd-dev pkgconfig libc-dev && \
+  wget https://github.com/edenhill/librdkafka/archive/v${LIBRD_VER}.tar.gz && \
+  tar -xvf v${LIBRD_VER}.tar.gz && cd librdkafka-${LIBRD_VER} && \
+  ./configure --prefix /usr && make && make install && make clean && \
+  cd /work && rm -rf librdkafka-${LIBRD_VER} && rm -rf v${LIBRD_VER}.tar.gz \
+  && apk del .make-deps

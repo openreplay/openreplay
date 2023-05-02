@@ -1,15 +1,15 @@
-FROM python:3.11
+FROM public.ecr.aws/p1t3u8a3/connectors/redshift:base
 
-WORKDIR /usr/src/app
-
+ENV CLOUD_SERVICE=redshift \
+    CONNECTION_STRING=postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME} \
+    # Keep postgres connection
+    PG_MINCONN=3 \
+    PG_MAXCONN=10
+RUN apk add --no-cache postgresql-libs lz4-libs zstd-libs
+COPY deploy/requirements_redshift.txt .
+RUN apk add --no-cache --virtual .build-deps gcc g++ musl-dev postgresql-dev && \
+ python3 -m pip install -r requirements_redshift.txt --no-cache-dir && \
+ apk --purge del .build-deps
 COPY . .
-RUN apt update
-RUN apt-get install -y libc-dev libffi-dev gcc
-RUN apt update && apt -y install software-properties-common gcc
-RUN git clone https://github.com/edenhill/librdkafka
-RUN cd librdkafka && ./configure && make && make install && ldconfig
 
-RUN pip install -r ./deploy/requirements_redshift.txt
-
-CMD ["python", "consumer.py"]
-
+ENTRYPOINT ./entrypoint.sh
