@@ -35,13 +35,16 @@ func (t FileType) String() string {
 }
 
 type Task struct {
-	id     string
-	key    string
-	domRaw []byte
-	devRaw []byte
-	doms   *bytes.Buffer
-	dome   *bytes.Buffer
-	dev    *bytes.Buffer
+	id          string
+	key         string
+	domRaw      []byte
+	devRaw      []byte
+	domsRawSize float64
+	domeRawSize float64
+	devRawSize  float64
+	doms        *bytes.Buffer
+	dome        *bytes.Buffer
+	dev         *bytes.Buffer
 }
 
 func (t *Task) SetMob(mob []byte, tp FileType) {
@@ -272,8 +275,12 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 
 		if tp == DOM {
 			task.doms = result
+			// Record full dom (start) raw size
+			task.domsRawSize = float64(len(mob))
 		} else {
 			task.dev = result
+			// Record dev raw size
+			task.devRawSize = float64(len(mob))
 		}
 		return
 	}
@@ -289,7 +296,8 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 		start := time.Now()
 		task.doms = s.compressSessionBetter(mob[:s.cfg.FileSplitSize])
 		firstPart = time.Since(start).Milliseconds()
-
+		// Record dom start raw size
+		task.domsRawSize = float64(s.cfg.FileSplitSize)
 		// Finish task
 		wg.Done()
 	}()
@@ -299,7 +307,8 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 		start := time.Now()
 		task.dome = s.compressSessionBetter(mob[s.cfg.FileSplitSize:])
 		secondPart = time.Since(start).Milliseconds()
-
+		// Record dom end raw size
+		task.domeRawSize = float64(len(mob) - s.cfg.FileSplitSize)
 		// Finish task
 		wg.Done()
 	}()
@@ -357,7 +366,6 @@ func (s *Storage) compressSessionBetter(data []byte) *bytes.Buffer {
 }
 
 func (s *Storage) uploadSession(task *Task) {
-	log.Printf("new upload task: %s", task.id)
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
 	var (
@@ -371,6 +379,9 @@ func (s *Storage) uploadSession(task *Task) {
 	}
 	go func() {
 		if task.doms != nil {
+			// Record compression ratio
+			metrics.RecordSessionCompressionRatio(float64(task.doms.Len())/task.domsRawSize, DOM.String())
+			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
@@ -381,6 +392,9 @@ func (s *Storage) uploadSession(task *Task) {
 	}()
 	go func() {
 		if task.dome != nil {
+			// Record compression ratio
+			metrics.RecordSessionCompressionRatio(float64(task.dome.Len())/task.domeRawSize, DOM.String())
+			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
@@ -391,6 +405,9 @@ func (s *Storage) uploadSession(task *Task) {
 	}()
 	go func() {
 		if task.dev != nil {
+			// Record compression ratio
+			metrics.RecordSessionCompressionRatio(float64(task.dev.Len())/task.devRawSize, DEV.String())
+			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
@@ -406,7 +423,6 @@ func (s *Storage) uploadSession(task *Task) {
 }
 
 func (s *Storage) doCompression(task *Task) {
-	log.Printf("new compression task: %s", task.id)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {

@@ -127,6 +127,20 @@ func RecordSessionUploadDuration(durMillis float64, fileType string) {
 	storageSessionUploadDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
+var storageSessionCompressionRatio = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Namespace: "storage",
+		Name:      "compression_ratio",
+		Help:      "A histogram displaying the compression ratio of mob files for each session.",
+		Buckets:   common.DefaultDurationBuckets,
+	},
+	[]string{"file_type"},
+)
+
+func RecordSessionCompressionRatio(ratio float64, fileType string) {
+	storageSessionCompressionRatio.WithLabelValues(fileType).Observe(ratio)
+}
+
 func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		storageSessionSize,
@@ -136,5 +150,6 @@ func List() []prometheus.Collector {
 		storageSessionEncryptionDuration,
 		storageSessionCompressDuration,
 		storageSessionUploadDuration,
+		storageSessionCompressionRatio,
 	}
 }
