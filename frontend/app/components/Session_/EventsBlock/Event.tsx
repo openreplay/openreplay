@@ -93,7 +93,7 @@ const Event: React.FC<Props> = ({
         isFrustration
           ? Object.assign(tooltip, {
             disabled: false,
-            text: `User hesitated to enter a value for ${Math.round(event.hesitation / 1000)}s`
+            text: `User hesitated ${Math.round(event.hesitation / 1000)}s to enter a value in this input field.`
           })
           : null;
         break;
