@@ -69,10 +69,10 @@ function WebPlayer(props: any) {
     }
   }, [session.events, session.errors, contextValue.player])
 
-  const { ready: isPlayerReady, firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {}
+  const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {}
 
   React.useEffect(() => {
-    if (showNoteModal || activeTab !== '') {
+    if (showNoteModal) {
       contextValue.player.pause()
     }
 
@@ -92,6 +92,12 @@ function WebPlayer(props: any) {
       contextValue.player.play()
     }
   }, [activeTab, showNoteModal, visualOffset, messagesProcessed])
+
+  React.useEffect(() => {
+    if (activeTab === 'Click Map') {
+      contextValue.player?.pause()
+    }
+  }, [activeTab])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
