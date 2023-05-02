@@ -139,7 +139,7 @@ function EventsBlock(props: IProps) {
             setActiveTab={setActiveTab}
             value={query}
             header={
-              <div className="text-xl">User Steps <span className="color-gray-medium">{ events.length }</span></div>
+              <div className="text-xl">User Events <span className="color-gray-medium">{ events.length }</span></div>
             }
           />
         </div>
