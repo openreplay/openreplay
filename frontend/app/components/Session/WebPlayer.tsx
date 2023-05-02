@@ -16,7 +16,7 @@ import { Note } from "App/services/NotesService";
 import { useParams } from 'react-router-dom'
 
 const TABS = {
-  EVENTS: 'User Steps',
+  EVENTS: 'User Events',
   CLICKMAP: 'Click Map',
 };
 

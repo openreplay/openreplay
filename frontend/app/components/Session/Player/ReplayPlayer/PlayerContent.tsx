@@ -9,7 +9,7 @@ import Session from 'Types/session'
 import PlayerBlock from './PlayerBlock';
 
 const TABS = {
-  EVENTS: 'User Steps',
+  EVENTS: 'User Events',
   HEATMAPS: 'Click Map',
 };
 

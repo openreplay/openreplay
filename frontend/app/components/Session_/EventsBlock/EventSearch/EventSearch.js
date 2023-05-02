@@ -16,7 +16,7 @@ function EventSearch(props) {
           <Input
             autoFocus
             type="text"
-            placeholder="Filter user steps"
+            placeholder="Filter user events"
             className="inset-0 w-full"
             name="query"
             value={value}
