@@ -144,7 +144,7 @@ with dag:
 
     dag_split2 = ShortCircuitOperator(
         task_id='Retrain_Condition',
-        python_callable=false_func,
+        python_callable=continue_old,
     )
 
     new_models = BashOperator(

@@ -1,6 +1,7 @@
 import mlflow
 import hashlib
 import argparse
+import numpy as np
 from decouple import config
 from datetime import datetime
 from core.user_features import get_training_database
@@ -9,15 +10,46 @@ from core.recommendation_model import SVM_recommendation
 mlflow.set_tracking_uri(config('MLFLOW_TRACKING_URI'))
 
 
+def handle_database(x_train, y_train):
+    total = len(y_train)
+    if total < 13:
+        return None, None
+    train_balance = y_train.sum() / total
+    if train_balance < 0.4:
+        positives = y_train[y_train == 1]
+        n_positives = len(positives)
+        x_positive = x_train[y_train == 1]
+        if n_positives < 7:
+            return None, None
+        else:
+            n_negatives_expected = min(int(n_positives/0.4), total-y_train.sum())
+            negatives = y_train[y_train == 0][:n_negatives_expected]
+            x_negative = x_train[y_train == 0][:n_negatives_expected]
+            return np.concatenate((x_positive, x_negative), axis=0), np.concatenate((negatives, positives), axis=0)
+    elif train_balance > 0.6:
+        negatives = y_train[y_train == 0]
+        n_negatives = len(negatives)
+        x_negative = x_train[y_train == 0]
+        if n_negatives < 7:
+            return None, None
+        else:
+            n_positives_expected = min(int(n_negatives / 0.4), y_train.sum())
+            positives = y_train[y_train == 1][:n_positives_expected]
+            x_positive = x_train[y_train == 1][:n_positives_expected]
+            return np.concatenate((x_positive, x_negative), axis=0), np.concatenate((negatives, positives), axis=0)
+    else:
+        return x_train, y_train
+
+
 def main(experiment_name, projectId, tenantId):
     hashed = hashlib.sha256(bytes(f'{projectId}-{tenantId}'.encode('utf-8'))).hexdigest()
-    x, y, d = get_training_database(projectId, max_timestamp=1679672171284, favorites=True)
-    train_balance = y.sum() / len(y)
-    print(f'Train data shape: {x.shape}, Data balance (1/all): {train_balance}')
-    if x.shape[0] <= 7:
+    x_, y_, d = get_training_database(projectId, max_timestamp=1680248412284, favorites=True)
+
+    x, y = handle_database(x_, y_)
+    if x is None:
+        print(f'[INFO] Project {projectId}: Not enough data to train model - {y_.sum()}/{len(y_)-y_.sum()}')
         return
-    if train_balance < 0.4 or train_balance > 0.6:
-        return
+
     _experiment = mlflow.get_experiment_by_name(experiment_name)
     if _experiment is None:
         artifact_uri = config('MODELS_S3_BUCKET', default='./mlruns')
@@ -37,6 +69,7 @@ def main(experiment_name, projectId, tenantId):
                 mlflow.log_param("kernel", kernel)
                 mlflow.log_metric("score", model.score)
                 for _name, displ in model.plots().items():
+                    #TODO: Close displays not to overload memory
                     mlflow.log_figure(displ, f'{_name}.png')
                 if model.score > best_meta['score']:
                     best_meta['score'] = model.score
