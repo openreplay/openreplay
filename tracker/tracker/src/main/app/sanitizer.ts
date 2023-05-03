@@ -67,10 +67,11 @@ export default class Sanitizer {
       data = data.replace(/\d/g, '0')
     }
     if (this.options.obscureTextEmails) {
-      data = data.replace(
-        /^\w+([.-]\w+)*@\w+([.-]\w+)*\.\w{2,3}$/g,
-        (...f: Array<string>) => stars(f[1]) + '@' + stars(f[2]) + '.' + stars(f[3]),
-      )
+      data = data.replace(/^\w+([.-]\w+)*@\w+([.-]\w+)*\.\w{2,3}$/g, (email) => {
+        const [name, domain] = email.split('@')
+        const [domainName, host] = domain.split('.')
+        return `${stars(name)}@${stars(domainName)}.${stars(host)}`
+      })
     }
     return data
   }
