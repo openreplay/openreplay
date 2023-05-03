@@ -11,7 +11,7 @@ const IssuesModal = ({
 }) => {
   return (
     <div className={ stl.wrapper }>
-      <h3 className="mb-6 text-lg flex items-center">
+      <h3 className="text-xl font-semibold">
         {/* <Icon name={headerIcon} size="18" color="color-gray-darkest" />  */}
         <span>{`Report an Issue on ${provider === 'jira' ? 'Jira' : 'Github'}`}</span>
       </h3>
