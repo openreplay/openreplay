@@ -352,6 +352,7 @@ export default class Session {
         return ev.type === TYPES.CLICKRAGE
       }
     )
+
     const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
