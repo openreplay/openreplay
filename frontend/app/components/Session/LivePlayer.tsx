@@ -107,7 +107,7 @@ function LivePlayer({
           width: isMultiview ? '100%' : undefined,
         }}
       >
-        <PlayerBlock isMultiview={isMultiview} />
+        <PlayerBlock isMultiview={isMultiview} fullView={fullView} />
       </div>
     </PlayerContext.Provider>
   );
