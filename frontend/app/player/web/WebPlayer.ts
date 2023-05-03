@@ -71,6 +71,7 @@ export default class WebPlayer extends Player {
   updateLists = (session: any) => {
     let lists = {
       event: session.events || [],
+      frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
       exceptions: session.errors?.map(({ name, ...rest }: any) =>
         Log({
