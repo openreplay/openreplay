@@ -139,13 +139,14 @@ function EventsBlock(props: IProps) {
   };
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
+  const eventsText = `${query ? 'Filtered' : ''} ${usedEvents.length} Events`;
   return (
     <>
       <div className={cn(styles.header, 'p-4')}>
         <div className={cn(styles.hAndProgress, 'mt-3')}>
           <EventSearch onChange={write} setActiveTab={setActiveTab} value={query} />
         </div>
-        <div className="mt-1 color-gray-medium">Displaying {usedEvents.length} events</div>
+        <div className="mt-1 color-gray-medium">{eventsText}</div>
       </div>
       <div
         className={cn('flex-1 pb-4', styles.eventsList)}
