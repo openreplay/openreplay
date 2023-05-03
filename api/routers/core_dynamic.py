@@ -24,6 +24,7 @@ async def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": None,
                      "ssoProvider": None,
+                     "enforceSSO": None,
                      "edition": license.EDITION}}
 
 

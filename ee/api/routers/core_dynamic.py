@@ -28,6 +28,7 @@ async def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": SAML2_helper.is_saml2_available(),
                      "ssoProvider": SAML2_helper.get_saml2_provider(),
+                     "enforceSSO": config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available(),
                      "edition": license.EDITION}}
 
 
