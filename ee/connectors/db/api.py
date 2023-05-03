@@ -156,6 +156,7 @@ class DBConnection:
         self.close()
         self.__init__(config=self.config)
 
+
     def save_binary(self, binary_data, name, **kwargs):
         if self.config == 'redshift':
             try:

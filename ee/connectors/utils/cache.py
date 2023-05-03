@@ -121,4 +121,3 @@ class ProjectFilter:
     def terminate(self, db):
         # self.save_checkpoint(db)
         db.close()
-
