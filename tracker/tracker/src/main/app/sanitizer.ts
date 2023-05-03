@@ -68,7 +68,7 @@ export default class Sanitizer {
     }
     if (this.options.obscureTextEmails) {
       data = data.replace(
-        /([^\s]+)@([^\s]+)\.([^\s]+)/g,
+        /^\w+([.-]\w+)*@\w+([.-]\w+)*\.\w{2,3}$/g,
         (...f: Array<string>) => stars(f[1]) + '@' + stars(f[2]) + '.' + stars(f[3]),
       )
     }

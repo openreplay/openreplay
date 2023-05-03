@@ -1,10 +1,11 @@
 # 7.0.0
 
 - **[breaking]** added gzip compression to large messages
+- fix email regexp to significantly improve performance
 
 # 6.0.2
 
-- fix network tracking for samedomain iframes created by js code
+- fix network tracking for same domain iframes created by js code
 
 # 6.0.1
 
