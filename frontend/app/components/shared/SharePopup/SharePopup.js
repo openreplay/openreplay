@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Icon, Button, Popover, Loader } from 'UI';
+import { Form, Button, Popover, Loader } from 'UI';
 import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
@@ -132,8 +132,8 @@ export default class SharePopup extends React.PureComponent {
                       />
 
                       {slackOptions.length > 0 && (
-                        <>
-                          <span>Share to slack</span>
+                        <Form.Field className="mb-15-imp">
+                          <label>Share to slack</label>
                           <div className="grid grid-cols-6 gap-4">
                             <Select
                               options={slackOptions}
@@ -152,11 +152,11 @@ export default class SharePopup extends React.PureComponent {
                               </Button>
                             )}
                           </div>
-                        </>
+                        </Form.Field>
                       )}
                       {msTeamsOptions.length > 0 && (
-                        <>
-                          <div className="mt-4">Share to MS Teams</div>
+                        <Form.Field className="mb-15-imp">
+                          <label>Share to MS Teams</label>
                           <div className="grid grid-cols-6 gap-4">
                             <Select
                               options={msTeamsOptions}
@@ -175,7 +175,7 @@ export default class SharePopup extends React.PureComponent {
                               </Button>
                             )}
                           </div>
-                        </>
+                        </Form.Field>
                       )}
                     </div>
                     <div className={styles.footer}>
