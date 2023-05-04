@@ -17,4 +17,4 @@ if not tenants.tenants_exists(use_pool=False):
         if tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
 
-        return await get_global_health_status()
+        return {"data": health.get_health()}
