@@ -54,7 +54,8 @@ class CachedSessions:
         for sessionid, values in self.session_project.items():
             if current_time - values[0] > self.max_alive_time:
                 to_clean_list.append(sessionid)
-                del self.session_project[sessionid]
+        for sessionid in to_clean_list:
+            del self.session_project[sessionid]
         return to_clean_list
 
 
