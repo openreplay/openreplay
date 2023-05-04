@@ -129,10 +129,28 @@ minio:
 
 kafka:
   image:
-    tag: 2.8.1
+    tag: 3.3.1-debian-11-r34
   fullnameOverride: kafka
   enabled: false
   replicaCount: 2
+  Persistence:
+    enabled: true
+    size: 200Gi
+  # resources:
+  #   limit:
+  #     memory: 4Gi
+  #   requests:
+  #     memory: 4Gi
+  #     cpu: 2
+  # metrics:
+  #   kafka:
+  #     enabled: true
+  #   serviceMonitor:
+  #     enabled: false
+  #     labels:
+  #       release: observability
+  # prometheusRule:
+  #   enabled: false
 
 
 # Enterprise dbs

@@ -539,12 +539,10 @@ service:
   extraPorts: []
   ## @param service.headless.annotations Annotations for the Headless Service
   ## @param service.headless.publishNotReadyAddresses If the ZooKeeper headless service should publish DNS records for not ready pods
-  ## @param service.headless.servicenameOverride String to partially override headless service name
   ##
   headless:
     publishNotReadyAddresses: true
     annotations: {}
-    servicenameOverride: ""
 ## Network policies
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
 ##
