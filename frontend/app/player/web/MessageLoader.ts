@@ -1,4 +1,4 @@
-import type { Store } from 'Player';
+import type { Store, SessionFilesInfo } from 'Player';
 import { decryptSessionBytes } from './network/crypto';
 import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
@@ -39,25 +39,18 @@ export default class MessageLoader {
     const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt)
     return (b: Uint8Array) => decrypt(b).then(b => {
       fileReader.append(b)
-      const msgs: Array<Message & { _index: number }> = []
+      fileReader.checkForIndexes()
+      const msgs: Array<Message & { _index?: number }> = []
       for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
         msgs.push(msg)
       }
       const sorted = msgs.sort((m1, m2) => {
-        // @ts-ignore
-        if (!m1.time || !m2.time || m1.time === m2.time) return m1._index - m2._index
         return m1.time - m2.time
       })
 
-      let indx = sorted[0]._index
-      let outOfOrderCounter = 0
       sorted.forEach(msg => {
-        if (indx > msg._index) outOfOrderCounter++
-        else indx = msg._index
         this.messageManager.distributeMessage(msg)
       })
-
-      if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
       logger.info("Messages count: ", msgs.length, sorted, file)
 
       this.messageManager._sortMessagesHack(sorted)
@@ -70,7 +63,6 @@ export default class MessageLoader {
     if (urls.length > 0) {
       this.store.update({ domLoading: true })
       return loadFiles(urls, parser, true)
-        .catch(e => this.messageManager.onFileReadFailed(e))
     } else {
       return Promise.resolve()
     }
@@ -112,21 +104,22 @@ export default class MessageLoader {
       await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise])
       this.messageManager.onFileReadSuccess()
     } catch (e) {
-      console.error(e)
       try {
         const efsDomFilePromise = requestEFSDom(this.session.sessionId)
         const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId)
 
-        const [domData, devtoolsData] = await Promise.all([efsDomFilePromise, efsDevtoolsFilePromise])
+        const [domData, devtoolsData] = await Promise.allSettled([efsDomFilePromise, efsDevtoolsFilePromise])
         const domParser = this.createNewParser(false, 'domEFS')
         const devtoolsParser = this.createNewParser(false, 'devtoolsEFS')
-        const parseDomPromise = domParser(domData)
-        const parseDevtoolsPromise = devtoolsParser(devtoolsData)
+        const parseDomPromise: Promise<any> = domData.status === 'fulfilled'
+          ? domParser(domData.value) : Promise.reject('No dom file in EFS')
+        const parseDevtoolsPromise: Promise<any> = devtoolsData.status === 'fulfilled'
+          ? devtoolsParser(devtoolsData.value) : Promise.reject('No devtools file in EFS')
 
         await Promise.all([parseDomPromise, parseDevtoolsPromise])
         this.messageManager.onFileReadSuccess()
       } catch (e2) {
-        console.error(e2)
+        this.messageManager.onFileReadFailed(e)
       }
     } finally {
       this.messageManager.onFileReadFinally()
