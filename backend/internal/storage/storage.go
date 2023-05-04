@@ -45,6 +45,7 @@ type Task struct {
 	doms        *bytes.Buffer
 	dome        *bytes.Buffer
 	dev         *bytes.Buffer
+	isBreakTask bool
 }
 
 func (t *Task) SetMob(mob []byte, tp FileType) {
@@ -62,14 +63,19 @@ func (t *Task) Mob(tp FileType) []byte {
 	return t.devRaw
 }
 
+func NewBreakTask() *Task {
+	return &Task{
+		isBreakTask: true,
+	}
+}
+
 type Storage struct {
-	cfg                 *config.Config
-	s3                  *storage.S3
-	startBytes          []byte
-	compressionTasks    chan *Task // brotli compression or gzip compression with encryption
-	uploadingTasks      chan *Task // upload to s3
-	readyForCompression chan struct{}
-	readyForUploading   chan struct{}
+	cfg              *config.Config
+	s3               *storage.S3
+	startBytes       []byte
+	compressionTasks chan *Task // brotli compression or gzip compression with encryption
+	uploadingTasks   chan *Task // upload to s3
+	workersStopped   chan struct{}
 }
 
 func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
@@ -80,13 +86,12 @@ func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
 	newStorage := &Storage{
-		cfg:                 cfg,
-		s3:                  s3,
-		startBytes:          make([]byte, cfg.FileSplitSize),
-		compressionTasks:    make(chan *Task, 1),
-		uploadingTasks:      make(chan *Task, 1),
-		readyForCompression: make(chan struct{}),
-		readyForUploading:   make(chan struct{}),
+		cfg:              cfg,
+		s3:               s3,
+		startBytes:       make([]byte, cfg.FileSplitSize),
+		compressionTasks: make(chan *Task, 1),
+		uploadingTasks:   make(chan *Task, 1),
+		workersStopped:   make(chan struct{}),
 	}
 	go newStorage.compressionWorker()
 	go newStorage.uploadingWorker()
@@ -94,8 +99,10 @@ func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 }
 
 func (s *Storage) Wait() {
-	<-s.readyForCompression
-	<-s.readyForUploading
+	// Send stop signal to the first worker
+	s.compressionTasks <- NewBreakTask()
+	// Wait stopped signal from the last workers
+	<-s.workersStopped
 }
 
 func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
@@ -134,8 +141,6 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 
 	// Send new task to compression worker
 	s.compressionTasks <- newTask
-	// Unload worker
-	<-s.readyForCompression
 	return nil
 }
 
@@ -441,10 +446,11 @@ func (s *Storage) compressionWorker() {
 	for {
 		select {
 		case task := <-s.compressionTasks:
+			if task.isBreakTask {
+				s.uploadingTasks <- task
+				continue
+			}
 			s.doCompression(task)
-		default:
-			// Signal that worker finished all tasks
-			s.readyForCompression <- struct{}{}
 		}
 	}
 }
@@ -453,10 +459,11 @@ func (s *Storage) uploadingWorker() {
 	for {
 		select {
 		case task := <-s.uploadingTasks:
+			if task.isBreakTask {
+				s.workersStopped <- struct{}{}
+				continue
+			}
 			s.uploadSession(task)
-		default:
-			// Signal that worker finished all tasks
-			s.readyForUploading <- struct{}{}
 		}
 	}
 }
