@@ -173,7 +173,11 @@ async def main():
 
     allowed_projects = config('PROJECT_IDS', default=None, cast=Csv(int))
     project_filter = PF(allowed_projects)
-    project_filter.load_checkpoint()
+    try:
+        project_filter.load_checkpoint(db)
+    except Exception as e:
+        print('[WARN] Checkpoint not found')
+        print(repr(e))
     codec = MessageCodec(filter_events)
     ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
     consumer_settings = {
@@ -199,6 +203,11 @@ async def main():
             print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
             await insertBatch(deepcopy(sessions_batch), deepcopy(batch), db, sessions_table_name, table_name, EVENT_TYPE)
             consumer.commit()
+            try:
+                project_filter.save_checkpoint(db)
+            except Exception as e:
+                print("[Error] Error while saving checkpoint")
+                print(repr(e))
             sessions_batch = []
             batch = []
             read_msgs = 0

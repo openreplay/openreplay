@@ -150,40 +150,31 @@ class DBConnection:
 
     def save_binary(self, binary_data, name, **kwargs):
         if self.config == 'redshift':
-            s3_bucket_var = _config('BUCKET'),
-            s3_subdirectory_var = _config('SUBDIRECTORY', default='')
-            if s3_subdirectory_var != '':
-                s3_subdirectory_var = s3_subdirectory_var + '/'
             try:
-                self.pdredshift.core.s3.Bucket(s3_bucket_var).put_object(
-                    Key=s3_subdirectory_var + name, Body=binary_data,
-                    **kwargs)
+                self.pdredshift.core.s3.Object(bucket_name=self.pdredshift.core.s3_bucket_var,
+                                               key=self.pdredshift.core.s3_subdirectory_var + name).put(
+                    Body=binary_data, **kwargs)
                 print(f'[INFO] Content saved: {name}')
             except botocore.exceptions.ClientError as err:
                 print(repr(err))
 
     def load_binary(self, name):
         if self.config == 'redshift':
-            s3_bucket_var = _config('BUCKET'),
-            s3_subdirectory_var = _config('SUBDIRECTORY', default='')
-            if s3_subdirectory_var != '':
-                s3_subdirectory_var = s3_subdirectory_var + '/'
             try:
-                s3_object = self.pdredshift.core.s3.Object(s3_bucket_var, s3_subdirectory_var + name)
-                with io.BytesIO() as f:
-                    s3_object.download_fileobj(f)
+                s3_object = self.pdredshift.core.s3.Object(bucket_name=self.pdredshift.core.s3_bucket_var,
+                                                           key=self.pdredshift.core.s3_subdirectory_var + name)
+                f = io.BytesIO()
+                s3_object.download_fileobj(f)
                 print(f'[INFO] Content downloaded: {name}')
+                return f
             except botocore.exceptions.ClientError as err:
                 print(repr(err))
 
     def delete_binary(self, name):
         if self.config == 'redshift':
-            s3_bucket_var = _config('BUCKET'),
-            s3_subdirectory_var = _config('SUBDIRECTORY', default='')
-            if s3_subdirectory_var != '':
-                s3_subdirectory_var = s3_subdirectory_var + '/'
             try:
-                s3_object = self.pdredshift.core.s3.Object(s3_bucket_var, s3_subdirectory_var + name)
+                s3_object = self.pdredshift.core.s3.Object(bucket_name=self.pdredshift.core.s3_bucket_var,
+                                                           key=self.pdredshift.core.s3_subdirectory_var + name)
                 s3_object.delete()
                 print(f'[INFO] s3 object {name} deleted')
             except botocore.exceptions.ClientError as err:
