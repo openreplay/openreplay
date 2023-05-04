@@ -25,7 +25,7 @@ func main() {
 
 	cfg := config.New()
 
-	s3 := cloud.NewS3(cfg.S3Region, cfg.S3Bucket)
+	s3 := cloud.NewS3(cfg.S3Region, cfg.S3Bucket, cfg.UseFileTags())
 	srv, err := storage.New(cfg, s3)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
