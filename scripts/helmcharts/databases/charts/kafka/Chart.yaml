@@ -1,8 +1,9 @@
 annotations:
   category: Infrastructure
-  licenses: Apache-2.0
+  licenses: |
+    - Apache-2.0
 apiVersion: v2
-appVersion: 3.3.2
+appVersion: 3.3.1
 dependencies:
 - condition: zookeeper.enabled
   name: zookeeper
@@ -31,4 +32,4 @@ name: kafka
 sources:
 - https://github.com/bitnami/containers/tree/main/bitnami/kafka
 - https://kafka.apache.org/
-version: 20.0.6
+version: 20.0.4
