@@ -19,15 +19,17 @@ type S3 struct {
 	svc      *_s3.S3
 	bucket   *string
 	fileTag  string
+	useTags  bool
 }
 
-func NewS3(region string, bucket string) *S3 {
+func NewS3(region string, bucket string, useTags bool) *S3 {
 	sess := env.AWSSessionOnRegion(region)
 	return &S3{
 		uploader: s3manager.NewUploader(sess),
 		svc:      _s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
 		bucket:   &bucket,
 		fileTag:  loadFileTag(),
+		useTags:  useTags,
 	}
 }
 
@@ -38,6 +40,13 @@ const (
 	Gzip
 	Brotli
 )
+
+func (s3 *S3) tagging() *string {
+	if s3.useTags {
+		return &s3.fileTag
+	}
+	return nil
+}
 
 func (s3 *S3) Upload(reader io.Reader, key string, contentType string, compression CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
@@ -58,7 +67,7 @@ func (s3 *S3) Upload(reader io.Reader, key string, contentType string, compressi
 		ContentType:     &contentType,
 		CacheControl:    &cacheControl,
 		ContentEncoding: contentEncoding,
-		Tagging:         &s3.fileTag,
+		Tagging:         s3.tagging(),
 	})
 	return err
 }

@@ -85,7 +85,9 @@ ENV TZ=UTC \
     CH_DATABASE="default" \
     # Max file size to process, default to 100MB
     MAX_FILE_SIZE=100000000 \
-    USE_ENCRYPTION=false
+    USE_ENCRYPTION=false \
+    # Use to enable cloud specific feature
+    CLOUD="aws"
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
