@@ -3,9 +3,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: {{ template "kyverno.fullname" . }}:admin-policies
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
+  labels:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    app: kyverno
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - kyverno.io
@@ -24,10 +24,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    app: kyverno
   name: {{ template "kyverno.fullname" . }}:admin-policyreport
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - wgpolicyk8s.io
@@ -46,10 +46,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    app: kyverno
   name: {{ template "kyverno.fullname" . }}:admin-reports
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
 - apiGroups:
     - kyverno.io
@@ -70,10 +70,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    app: kyverno
   name: {{ template "kyverno.fullname" . }}:admin-generaterequest
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - kyverno.io
@@ -91,10 +91,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    app: kyverno
   name: {{ template "kyverno.fullname" . }}:admin-updaterequest
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - kyverno.io

@@ -28,15 +28,51 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/* Helm labels */}}
+{{- define "kyverno.helmLabels" -}}
+{{- if not .Values.templating.enabled -}}
+helm.sh/chart: {{ template "kyverno.chart" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+{{- end -}}
+
+{{/* Version labels */}}
+{{- define "kyverno.versionLabels" -}}
+{{- if .Values.templating.enabled -}}
+app.kubernetes.io/version: {{ required "templating.version is required when templating.enabled is true" .Values.templating.version | replace "+" "_" }}
+{{- else -}}
+app.kubernetes.io/version: {{ .Chart.Version | replace "+" "_" }}
+{{- end -}}
+{{- end -}}
+
+{{/* CRD labels */}}
+{{- define "kyverno.crdLabels" -}}
+app.kubernetes.io/component: kyverno
+{{- with (include "kyverno.helmLabels" .) }}
+{{ . }}
+{{- end }}
+{{- with (include "kyverno.matchLabels" .) }}
+{{ . }}
+{{- end }}
+app.kubernetes.io/part-of: {{ template "kyverno.name" . }}
+{{- with (include "kyverno.versionLabels" .) }}
+{{ . }}
+{{- end }}
+{{- end -}}
+
 {{/* Helm required labels */}}
 {{- define "kyverno.labels" -}}
 app.kubernetes.io/component: kyverno
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/name: {{ template "kyverno.name" . }}
+{{- with (include "kyverno.helmLabels" .) }}
+{{ . }}
+{{- end }}
+{{- with (include "kyverno.matchLabels" .) }}
+{{ . }}
+{{- end }}
 app.kubernetes.io/part-of: {{ template "kyverno.name" . }}
-app.kubernetes.io/version: "{{ .Chart.Version }}"
-helm.sh/chart: {{ template "kyverno.chart" . }}
+{{- with (include "kyverno.versionLabels" .) }}
+{{ . }}
+{{- end }}
 {{- if .Values.customLabels }}
 {{ toYaml .Values.customLabels }}
 {{- end }}
@@ -44,19 +80,26 @@ helm.sh/chart: {{ template "kyverno.chart" . }}
 
 {{/* Helm required labels */}}
 {{- define "kyverno.test-labels" -}}
+{{- with (include "kyverno.helmLabels" .) }}
+{{ . }}
+{{- end }}
+app: kyverno
 app.kubernetes.io/component: kyverno
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/name: {{ template "kyverno.name" . }}-test
 app.kubernetes.io/part-of: {{ template "kyverno.name" . }}
-app.kubernetes.io/version: "{{ .Chart.Version }}"
-helm.sh/chart: {{ template "kyverno.chart" . }}
+app.kubernetes.io/version: "{{ .Chart.Version | replace "+" "_" }}"
 {{- end -}}
 
 {{/* matchLabels */}}
 {{- define "kyverno.matchLabels" -}}
+{{- if .Values.templating.enabled -}}
+app: kyverno
+{{- end }}
 app.kubernetes.io/name: {{ template "kyverno.name" . }}
+{{- if not .Values.templating.enabled }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 {{- end -}}
 
 {{/* Get the config map name. */}}
@@ -93,7 +136,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/* Create the default PodDisruptionBudget to use */}}
-{{- define "podDisruptionBudget.spec" -}}
+{{- define "kyverno.podDisruptionBudget.spec" -}}
 {{- if and .Values.podDisruptionBudget.minAvailable .Values.podDisruptionBudget.maxUnavailable }}
 {{- fail "Cannot set both .Values.podDisruptionBudget.minAvailable and .Values.podDisruptionBudget.maxUnavailable" -}}
 {{- end }}
@@ -158,10 +201,4 @@ maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
   {{- $newWebhook = append $newWebhook (merge (omit $webhook "namespaceSelector") (dict "namespaceSelector" $newNamespaceSelector)) }}
 {{- end }}
 {{- $newWebhook | toJson }}
-{{- end }}
-
-{{- define "kyverno.crdAnnotations" -}}
-{{- range $key, $value := .Values.crds.annotations }}
-{{ $key }}: {{ $value | quote }}
-{{- end }}
 {{- end }}

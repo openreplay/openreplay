@@ -4,19 +4,19 @@ kind: Role
 metadata:
   name: {{ template "kyverno.fullname" . }}:leaderelection
   namespace: {{ template "kyverno.namespace" . }}
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - coordination.k8s.io
+    - coordination.k8s.io
   resources:
-  - leases
+    - leases
   verbs:
-  - create
-  - delete
-  - get
-  - patch
-  - update
+    - create
+    - delete
+    - get
+    - patch
+    - update
 # Allow update of Kyverno deployment annotations
 - apiGroups:
     - apps
@@ -28,5 +28,4 @@ rules:
     - patch
     - update
     - watch
-
 {{- end }}

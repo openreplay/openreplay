@@ -129,7 +129,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_results_total{rule_result=\"fail\"}[24h]))*100/sum(delta(kyverno_policy_results_total{}[24h]))",
+                    "expr": "sum(increase(kyverno_policy_results_total{rule_result=\"fail\"}[24h]))*100/sum(increase(kyverno_policy_results_total{}[24h]))",
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"
@@ -313,7 +313,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_results_total{rule_result=\"fail\", policy_background_mode=\"true\"}[24h]))*100/sum(delta(kyverno_policy_results_total{policy_background_mode=\"true\"}[24h]))",
+                    "expr": "sum(increase(kyverno_policy_results_total{rule_result=\"fail\", policy_background_mode=\"true\"}[24h]))*100/sum(increase(kyverno_policy_results_total{policy_background_mode=\"true\"}[24h]))",
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"
@@ -572,7 +572,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_results_total{rule_execution_cause=\"admission_request\"}[5m])) by (rule_result)",
+                    "expr": "sum(increase(kyverno_policy_results_total{rule_execution_cause=\"admission_request\"}[5m])) by (rule_result)",
                     "interval": "",
                     "legendFormat": "{{rule_result}}",
                     "refId": "A"
@@ -678,7 +678,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_results_total{rule_execution_cause=\"background_scan\"}[5m])) by (rule_result)",
+                    "expr": "sum(increase(kyverno_policy_results_total{rule_execution_cause=\"background_scan\"}[5m])) by (rule_result)",
                     "interval": "",
                     "legendFormat": "{{rule_result}}",
                     "refId": "A"
@@ -785,7 +785,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(sum(delta(kyverno_policy_results_total{rule_result=\"fail\"}[5m])) by (policy_name, policy_type)) by (policy_type)",
+                    "expr": "sum(sum(increase(kyverno_policy_results_total{rule_result=\"fail\"}[5m])) by (policy_name, policy_type)) by (policy_type)",
                     "interval": "",
                     "legendFormat": "{{policy_type}}",
                     "refId": "A"
@@ -891,7 +891,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(sum(delta(kyverno_policy_results_total{rule_execution_cause=\"admission_request\"}[5m])) by (policy_name, rule_result)) by (rule_result)",
+                    "expr": "sum(sum(increase(kyverno_policy_results_total{rule_execution_cause=\"admission_request\"}[5m])) by (policy_name, rule_result)) by (rule_result)",
                     "interval": "",
                     "legendFormat": "{{rule_result}}",
                     "refId": "A"
@@ -997,7 +997,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(sum(delta(kyverno_policy_results_total{rule_execution_cause=\"background_scan\"}[5m])) by (policy_name, rule_result)) by (rule_result)",
+                    "expr": "sum(sum(increase(kyverno_policy_results_total{rule_execution_cause=\"background_scan\"}[5m])) by (policy_name, rule_result)) by (rule_result)",
                     "interval": "",
                     "legendFormat": "{{rule_result}}",
                     "refId": "A"
@@ -2151,7 +2151,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_admission_requests_total{}[5m]))",
+                    "expr": "sum(increase(kyverno_admission_requests_total{}[5m]))",
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"
@@ -2285,7 +2285,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_changes_total{}[5m])) by (policy_change_type)",
+                    "expr": "sum(increase(kyverno_policy_changes_total{}[5m])) by (policy_change_type)",
                     "interval": "",
                     "legendFormat": "Change type: {{policy_change_type}}",
                     "refId": "A"
@@ -2389,7 +2389,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_changes_total{}[5m])) by (policy_type)",
+                    "expr": "sum(increase(kyverno_policy_changes_total{}[5m])) by (policy_type)",
                     "interval": "",
                     "legendFormat": "{{policy_type}}",
                     "refId": "A"
@@ -2485,7 +2485,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_policy_changes_total{}[24h]))",
+                    "expr": "sum(increase(kyverno_policy_changes_total{}[24h]))",
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"
@@ -2615,7 +2615,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_admission_requests_total{}[5m])) by (resource_request_operation)",
+                    "expr": "sum(increase(kyverno_admission_requests_total{}[5m])) by (resource_request_operation)",
                     "interval": "",
                     "legendFormat": "Resource Operation: {{resource_request_operation}}",
                     "refId": "A"
@@ -2716,7 +2716,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_admission_requests_total{}[5m])) by (resource_kind)",
+                    "expr": "sum(increase(kyverno_admission_requests_total{}[5m])) by (resource_kind)",
                     "interval": "",
                     "legendFormat": "Resource Kind: {{resource_kind}}",
                     "refId": "A"
@@ -2813,7 +2813,7 @@
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(delta(kyverno_admission_requests_total{}[24h]))",
+                    "expr": "sum(increase(kyverno_admission_requests_total{}[24h]))",
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"

@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "kyverno.serviceName" . }}
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
   namespace: {{ template "kyverno.namespace" . }}
   {{- with .Values.service.annotations }}
   annotations: {{ tpl (toYaml .) $ | nindent 4 }}
@@ -17,8 +17,8 @@ spec:
     {{- if and (eq .Values.service.type "NodePort") (not (empty .Values.service.nodePort)) }}
     nodePort: {{ .Values.service.nodePort }}
     {{- end }}
-  selector: {{ include "kyverno.matchLabels" . | nindent 4 }}
-    app: kyverno
+  selector:
+    {{- include "kyverno.matchLabels" . | nindent 4 }}
   type: {{ .Values.service.type }}
 ---
 {{- if .Values.metricsService.create }}
@@ -26,8 +26,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "kyverno.serviceName" . }}-metrics
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
   namespace: {{ template "kyverno.namespace" . }}
   {{- with .Values.metricsService.annotations }}
   annotations: {{ tpl (toYaml .) $ | nindent 4 }}
@@ -41,7 +41,7 @@ spec:
     {{- if and (eq .Values.metricsService.type "NodePort") (not (empty .Values.metricsService.nodePort)) }}
     nodePort: {{ .Values.metricsService.nodePort }}
     {{- end }}
-  selector: {{ include "kyverno.matchLabels" . | nindent 4 }}
-    app: kyverno
+  selector:
+    {{- include "kyverno.matchLabels" . | nindent 4 }}
   type: {{ .Values.metricsService.type }}
-  {{- end -}}
+{{- end -}}

@@ -2,8 +2,8 @@
 apiVersion: "monitoring.coreos.com/v1"
 kind: ServiceMonitor
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
 {{- if .Values.serviceMonitor.additionalLabels }}
 {{ toYaml .Values.serviceMonitor.additionalLabels | indent 4 }}
 {{- end }}
@@ -15,8 +15,8 @@ metadata:
 {{- end }}
 spec:
   selector:
-    matchLabels: {{ include "kyverno.matchLabels" . | nindent 6 }}
-      app: kyverno
+    matchLabels:
+      {{- include "kyverno.matchLabels" . | nindent 6 }}
   namespaceSelector:
     matchNames:
     - {{ template "kyverno.namespace" . }}

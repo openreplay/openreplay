@@ -1,0 +1,51 @@
+{{- if .Values.cleanupController.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kyverno.cleanup-controller.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.cleanup-controller.labels" . | nindent 4 }}
+  {{- with .Values.cleanupController.service.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+  - port: {{ .Values.cleanupController.service.port }}
+    targetPort: https
+    protocol: TCP
+    name: https
+    {{- if and (eq .Values.cleanupController.service.type "NodePort") (not (empty .Values.cleanupController.service.nodePort)) }}
+    nodePort: {{ .Values.cleanupController.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "kyverno.cleanup-controller.matchLabels" . | nindent 4 }}
+  type: {{ .Values.cleanupController.service.type }}
+{{- if .Values.cleanupController.metricsService.create }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kyverno.cleanup-controller.name" . }}-metrics
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.cleanup-controller.labels" . | nindent 4 }}
+  {{- with .Values.cleanupController.metricsService.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+  - port: {{ .Values.cleanupController.metricsService.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: metrics-port
+    {{- if and (eq .Values.cleanupController.metricsService.type "NodePort") (not (empty .Values.cleanupController.metricsService.nodePort)) }}
+    nodePort: {{ .Values.cleanupController.metricsService.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "kyverno.cleanup-controller.matchLabels" . | nindent 4 }}
+  type: {{ .Values.cleanupController.metricsService.type }}
+{{- end -}}
+{{- end -}}
