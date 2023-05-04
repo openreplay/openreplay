@@ -114,7 +114,7 @@ export default class SharePopup extends React.PureComponent {
             ) : (
               <>
                 <div className="text-xl mr-4 font-semibold mb-4">
-                  Share this session link to Slack/MS Teams
+                  Share
                 </div>
                 {slackOptions.length > 0 || msTeamsOptions.length > 0 ? (
                   <div>
