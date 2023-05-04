@@ -4,7 +4,7 @@
 OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
-OR_REPO="https://github.com/openreplay/openreplay"
+OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
 #HELM_OPTIONS=""
 # If you want to install the dev version. It can be any branch or tag.
