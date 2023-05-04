@@ -15,15 +15,28 @@ echo "Initializing minio"
 
 cat <<EOF > /tmp/lifecycle.json
 {
-    "Rules": [
-        {
-            "Expiration": {
-                "Days": 180
-            },
-            "ID": "${bucket}",
-            "Status": "Enabled"
+  "Rules": [
+    {
+      "Expiration": {
+        "Days": 180
+      },
+      "ID": "Delete old mob files",
+      "Status": "Enabled"
+    },
+    {
+      "Expiration": {
+        "Days": 30
+      },
+      "ID": "Delete flagged mob files after 30 days",
+      "Filter": {
+        "Tag": {
+          "Key": "to_delete_in_days",
+          "Value": "30"
         }
-    ]
+      },
+      "Status": "Enabled"
+    }
+  ]
 }
 EOF
 
