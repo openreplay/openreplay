@@ -1,0 +1,8 @@
+{{- if .Values.templating.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
+  name: {{ template "kyverno.fullname" . }}
+{{- end -}}

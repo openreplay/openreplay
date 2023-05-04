@@ -1,22 +1,26 @@
+{{- if not .Values.templating.debug -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "kyverno.fullname" . }}
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
   namespace: {{ template "kyverno.namespace" . }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  {{- with .Values.replicaCount }}
+  replicas: {{ . }}
+  {{- end }}
   selector:
-    matchLabels: {{ include "kyverno.matchLabels" . | nindent 6 }}
+    matchLabels:
+      {{- include "kyverno.matchLabels" . | nindent 6 }}
   {{- if .Values.updateStrategy }}
   strategy:
     {{ toYaml .Values.updateStrategy | nindent 4 | trim }}
   {{- end }}
   template:
     metadata:
-      labels: {{ include "kyverno.labels" . | nindent 8 }}
-        app: kyverno
+      labels:
+        {{- include "kyverno.labels" . | nindent 8 }}
         {{- range $key, $value := .Values.podLabels }}
         {{ $key }}: {{ $value }}
         {{- end }}
@@ -32,17 +36,19 @@ spec:
       {{- end }}
       {{- if or .Values.antiAffinity.enable .Values.podAffinity .Values.nodeAffinity }}
       affinity:
-        {{- if and .Values.antiAffinity.enable .Values.podAntiAffinity }}
+        {{- if .Values.antiAffinity.enable }}
+        {{- with .Values.podAntiAffinity }}
         podAntiAffinity:
-          {{- toYaml .Values.podAntiAffinity | nindent 10 }}
+          {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- if .Values.podAffinity }}
+        {{- end }}
+        {{- with .Values.podAffinity }}
         podAffinity:
-          {{- toYaml .Values.podAffinity | nindent 10 }}
+          {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
-        {{- if .Values.nodeAffinity }}
+        {{- with .Values.nodeAffinity }}
         nodeAffinity:
-          {{- toYaml .Values.nodeAffinity | nindent 10 }}
+          {{- tpl (toYaml .) $ | nindent 10 }}
         {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
@@ -73,7 +79,7 @@ spec:
           imagePullPolicy: {{ default .Values.image.pullPolicy .Values.initImage.pullPolicy }}
           {{- if .Values.initContainer.extraArgs }}
           args:
-              {{ tpl (toYaml .Values.initContainer.extraArgs) . }}
+              {{- tpl (toYaml .Values.initContainer.extraArgs) . | nindent 12 }}
           {{- end }}
           {{- with .Values.initResources }}
           resources: {{ tpl (toYaml .) $ | nindent 12 }}
@@ -109,8 +115,8 @@ spec:
             {{- if .Values.extraArgs -}}
               {{ tpl (toYaml .Values.extraArgs) . | nindent 12 }}
             {{- end }}
-            {{- if .Values.imagePullSecrets }}
-            - --imagePullSecrets={{ keys .Values.imagePullSecrets | join "," }}
+            {{- if or .Values.imagePullSecrets .Values.existingImagePullSecrets }}
+            - --imagePullSecrets={{- join "," (concat (keys .Values.imagePullSecrets) .Values.existingImagePullSecrets) }}
             {{- end }}
           {{- end }}
           {{- with .Values.resources }}
@@ -165,3 +171,4 @@ spec:
       volumes:
       - name: sigstore
         emptyDir: {}
+{{- end -}}

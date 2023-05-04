@@ -7,12 +7,12 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: {{ template "kyverno.fullname" . }}
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
   namespace: {{ template "kyverno.namespace" . }}
 spec:
-{{- include "podDisruptionBudget.spec" . | indent 2 }}
+  {{- include "kyverno.podDisruptionBudget.spec" . | indent 2 }}
   selector:
-    matchLabels:  {{ include "kyverno.matchLabels" . | nindent 6 }}
-      app: kyverno
+    matchLabels:
+      {{- include "kyverno.matchLabels" . | nindent 6 }}
 {{- end }}
