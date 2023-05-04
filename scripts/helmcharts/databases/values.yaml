@@ -143,6 +143,8 @@ kafka:
   #     memory: 4Gi
   #     cpu: 2
   # metrics:
+  #   jmx:
+  #     enabled: true
   #   kafka:
   #     enabled: true
   #   serviceMonitor:
