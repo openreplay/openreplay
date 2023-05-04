@@ -70,14 +70,13 @@ class EventGroupWrapper extends React.Component {
       <>
         <div
           className={cn(
-            '!py-1',
             {
               [stl.last]: isLastInGroup,
               [stl.first]: event.type === TYPES.LOCATION,
               [stl.dashAfter]: isLastInGroup && !isLastEvent
             },
             isLastInGroup && '!pb-2',
-            event.type === TYPES.LOCATION && '!pt-2 !pb-2'
+            event.type === TYPES.LOCATION && '!pb-2'
           )}
         >
           {isFirst && isLocation && event.referrer && (
