@@ -1,0 +1,34 @@
+{{- if .Values.cleanupController.enabled -}}
+{{- if .Values.cleanupController.serviceMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "kyverno.cleanup-controller.name" . }}
+  {{- if .Values.cleanupController.serviceMonitor.namespace }}
+  namespace: {{ .Values.cleanupController.serviceMonitor.namespace }}
+  {{- else }}
+  namespace: {{ template "kyverno.namespace" . }}
+  {{- end }}
+  labels:
+    {{- include "kyverno.cleanup-controller.labels" . | nindent 4 }}
+    {{- with .Values.cleanupController.serviceMonitor.additionalLabels }}
+    {{- toYaml .Values.cleanupController.serviceMonitor.additionalLabels | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kyverno.cleanup-controller.matchLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+    - {{ template "kyverno.namespace" . }}
+  endpoints:
+  - port: metrics-port
+    interval: {{ .Values.cleanupController.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.cleanupController.serviceMonitor.scrapeTimeout }}
+    {{- if .Values.cleanupController.serviceMonitor.secure }}
+    scheme: https
+    tlsConfig:
+      {{- toYaml .Values.cleanupController.serviceMonitor.tlsConfig | nindent 8 }}
+    {{- end }}
+{{- end -}}
+{{- end -}}

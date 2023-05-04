@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  labels: {{ include "kyverno.labels" . | nindent 4 }}
-    app: kyverno
+  labels:
+    {{- include "kyverno.labels" . | nindent 4 }}
   {{- with .Values.config.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
