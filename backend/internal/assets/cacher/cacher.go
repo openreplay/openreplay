@@ -71,7 +71,7 @@ func NewCacher(cfg *config.Config) *cacher {
 
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
-		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
+		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets, cfg.UseFileTags()),
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
