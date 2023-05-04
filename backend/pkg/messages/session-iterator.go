@@ -21,9 +21,10 @@ func (m *msgInfo) Print() string {
 	return fmt.Sprintf("index: %d, start: %d, end: %d, type: %d, body: %s", m.index, m.start, m.end, m.msgType, m.body)
 }
 
-func SplitMessages(data []byte) ([]*msgInfo, error) {
+func SplitMessages(sessID string, data []byte) ([]*msgInfo, error) {
 	messages := make([]*msgInfo, 0)
 	indexes := make(map[uint64]bool)
+	hadDuplicates := false
 	var lastTimestamp uint64
 	reader := NewBytesReader(data)
 	for {
@@ -55,8 +56,9 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 			return messages, fmt.Errorf("read message body err: %s", err)
 		}
 
-		if _, ok := indexes[msgIndex]; ok {
-			log.Printf("duplicate message index: %d", msgIndex)
+		if _, ok := indexes[msgIndex]; ok && !hadDuplicates {
+			hadDuplicates = true
+			log.Printf("Session %s has duplicate messages", sessID)
 			continue
 		}
 		indexes[msgIndex] = true
