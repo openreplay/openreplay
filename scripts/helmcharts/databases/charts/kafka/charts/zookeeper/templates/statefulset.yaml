@@ -18,7 +18,7 @@ spec:
   selector:
     matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
       app.kubernetes.io/component: zookeeper
-  serviceName: {{ printf "%s-%s" (include "common.names.fullname" .) (default "headless" .Values.service.headless.servicenameOverride) | trunc 63 | trimSuffix "-" }}
+  serviceName: {{ printf "%s-headless" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
   {{- if .Values.updateStrategy }}
   updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
   {{- end }}

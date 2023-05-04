@@ -216,7 +216,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | `service.extraPorts`                        | Extra ports to expose in the ZooKeeper service (normally used with the `sidecar` value) | `[]`        |
 | `service.headless.annotations`              | Annotations for the Headless Service                                                    | `{}`        |
 | `service.headless.publishNotReadyAddresses` | If the ZooKeeper headless service should publish DNS records for not ready pods         | `true`      |
-| `service.headless.servicenameOverride`      | String to partially override headless service name                                      | `""`        |
 | `networkPolicy.enabled`                     | Specifies whether a NetworkPolicy should be created                                     | `false`     |
 | `networkPolicy.allowExternal`               | Don't require client label for connections                                              | `true`      |
 
