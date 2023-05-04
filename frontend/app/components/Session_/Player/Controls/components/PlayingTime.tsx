@@ -18,7 +18,7 @@ function PlayingTime({ isUniTime, setIsUniTime, startedAt }: Props) {
       className="cursor-pointer select-none"
       distance={20}
       render={({close}) => (
-        <div className={'flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest'}>
+        <div className={'flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left'}>
           <div className={'font-semibold px-4 cursor-default'}>Playback Time Mode</div>
           <div className={'flex flex-col cursor-pointer hover:bg-active-blue w-full px-4'}>
             <div className={'text-sm text-disabled-text text-left'}>Current / Session Duration</div>
