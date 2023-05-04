@@ -139,7 +139,7 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 	return nil
 }
 
-func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
+func (s *Storage) openSession(sessID, filePath string, tp FileType) ([]byte, error) {
 	if tp == DEV {
 		filePath += "devtools"
 	}
@@ -158,7 +158,7 @@ func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 		return raw, nil
 	}
 	start := time.Now()
-	res, err := s.sortSessionMessages(raw)
+	res, err := s.sortSessionMessages(sessID, raw)
 	if err != nil {
 		return nil, fmt.Errorf("can't sort session, err: %s", err)
 	}
@@ -166,9 +166,9 @@ func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 	return res, nil
 }
 
-func (s *Storage) sortSessionMessages(raw []byte) ([]byte, error) {
+func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
-	unsortedMessages, err := messages.SplitMessages(raw)
+	unsortedMessages, err := messages.SplitMessages(sessID, raw)
 	if err != nil {
 		log.Printf("can't sort session, err: %s", err)
 		return raw, nil
@@ -179,7 +179,7 @@ func (s *Storage) sortSessionMessages(raw []byte) ([]byte, error) {
 func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	// Open session file
 	startRead := time.Now()
-	mob, err := s.openSession(path, tp)
+	mob, err := s.openSession(task.id, path, tp)
 	if err != nil {
 		return err
 	}
