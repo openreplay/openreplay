@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/url"
 	"strings"
 
 	"openreplay/backend/pkg/db/types"
@@ -165,5 +166,17 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			log.Printf("insert web custom event err: %s", err)
 		}
 	}
+	return nil
+}
+
+func (conn *Conn) InsertReferrer(sessionID uint64, referrer string) error {
+	baseReferrer := url.DiscardURLQuery(referrer)
+	sqlRequest := `
+		UPDATE sessions SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
+		WHERE session_id = $3`
+	conn.batchQueue(sessionID, sqlRequest, referrer, baseReferrer, sessionID)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(referrer)+len(baseReferrer)+8)
 	return nil
 }
