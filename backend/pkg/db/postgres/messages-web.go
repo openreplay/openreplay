@@ -49,6 +49,9 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
+	if err = conn.InsertReferrer(sessionID, e.Referrer); err != nil {
+		log.Printf("insert session referrer err: %s", err)
+	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 1)
 	// Add new value set to autocomplete bulk
