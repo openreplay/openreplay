@@ -4,13 +4,19 @@ from sqlalchemy.orm import sessionmaker, session
 from contextlib import contextmanager
 import logging
 from decouple import config as _config
+from decouple import Choices
 from pathlib import Path
 import io
 
 DATABASE = _config('CLOUD_SERVICE')
+sslmode = _config('DB_SSLMODE',
+        cast=Choices(['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        default='allow'
+)
 if DATABASE == 'redshift':
     import pandas_redshift as pr
     import botocore
+    use_ssl = _config('S3_USE_SSL', default=True, cast=bool)
 
 base_path = Path(__file__).parent.parent
 
@@ -64,12 +70,14 @@ class DBConnection:
                                                 host=cluster_info['HOST'],
                                                 port=cluster_info['PORT'],
                                                 user=cluster_info['USER'],
-                                                password=cluster_info['PASSWORD'])
+                                                password=cluster_info['PASSWORD'],
+                                                sslmode=sslmode)
 
             self.pdredshift.connect_to_s3(aws_access_key_id=_config('AWS_ACCESS_KEY_ID'),
                                           aws_secret_access_key=_config('AWS_SECRET_ACCESS_KEY'),
                                           bucket=_config('BUCKET'),
-                                          subdirectory=_config('SUBDIRECTORY', default=None))
+                                          subdirectory=_config('SUBDIRECTORY', default=None),
+                                          use_ssl=use_ssl)
 
             self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
                 USER=cluster_info['USER'],
@@ -78,14 +86,14 @@ class DBConnection:
                 PORT=cluster_info['PORT'],
                 DBNAME=cluster_info['DBNAME']
             )
-            self.engine = create_engine(self.CONNECTION_STRING)
+            self.engine = create_engine(self.CONNECTION_STRING, connect_args={'sslmode': sslmode})
 
         elif config == 'clickhouse':
             self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
                 HOST=_config('HOST'),
                 DATABASE=_config('DATABASE')
             )
-            self.engine = create_engine(self.CONNECTION_STRING)
+            self.engine = create_engine(self.CONNECTION_STRING, connect_args={'sslmode': sslmode})
         elif config == 'pg':
             self.CONNECTION_STRING = _config('CONNECTION_STRING').format(
                 USER=_config('USER'),
@@ -94,7 +102,7 @@ class DBConnection:
                 PORT=_config('PORT'),
                 DATABASE=_config('DATABASE')
             )
-            self.engine = create_engine(self.CONNECTION_STRING)
+            self.engine = create_engine(self.CONNECTION_STRING, connect_args={'sslmode': sslmode})
         elif config == 'bigquery':
             pass
         elif config == 'snowflake':
@@ -106,7 +114,7 @@ class DBConnection:
                 DBNAME = _config('DBNAME'),
                 WAREHOUSE = _config('WAREHOUSE')
             )
-            self.engine = create_engine(self.CONNECTION_STRING)
+            self.engine = create_engine(self.CONNECTION_STRING, connect_args={'sslmode': sslmode})
         else:
             raise ValueError("This db configuration doesn't exist. Add into keys file.")
 
