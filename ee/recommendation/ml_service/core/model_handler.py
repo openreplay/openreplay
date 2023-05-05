@@ -55,7 +55,7 @@ class ServedModel:
 
     def sort_by_recommendation(self, sessions, sessions_features):
         pred = self.predict(sessions_features)
-        sorted_idx = np.argsort(pred, reversed=True)
+        sorted_idx = np.argsort(pred)[::-1]
         return sessions[sorted_idx]
 
     def get_recommendations(self, userId, projectId):
@@ -75,7 +75,7 @@ class ServedModel:
         X_sessions_ids = dict()
         _process_pg_response(res, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=0)
 
-        return self.sort_by_recommendation(list(X_sessions_ids.keys()), _X)
+        return self.sort_by_recommendation(np.array(list(X_sessions_ids.keys())), _X)
         #return self.model.predict(_X)
 
 
