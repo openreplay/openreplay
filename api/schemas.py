@@ -1363,3 +1363,16 @@ class GetHeatmapPayloadSchema(BaseModel):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class FeatureFlagschema(BaseModel):
+    title: str = Field(...)
+    key: str = Field(...)
+    description: Optional[str] = Field(None)
+    flag_type: str = Field(...)
+    is_persist: bool = Field(...)
+    is_active: bool = Field(...)
+    created_by: int = Field(...)
+    created_at: int = Field(TimeUTC.now())
+    updated_by: Optional[int] = Field(None)
+    updated_at: int = Field(TimeUTC.now())
