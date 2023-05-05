@@ -764,15 +764,15 @@ export function Zustand(
   ]
 }
 
-export function BatchMetadata(
+export function BatchMetadataDeprecated(
   version: number,
   pageNo: number,
   firstIndex: number,
   timestamp: number,
   location: string,
-): Messages.BatchMetadata {
+): Messages.BatchMetadataDeprecated {
   return [
-    Messages.Type.BatchMetadata,
+    Messages.Type.BatchMetadataDeprecated,
     version,
     pageNo,
     firstIndex,
@@ -866,6 +866,34 @@ export function ResourceTiming(
     initiator,
     transferredSize,
     cached,
+  ]
+}
+
+export function BatchMetadata(
+  version: number,
+  pageNo: number,
+  firstIndex: number,
+  timestamp: number,
+  location: string,
+  tabId: string,
+): Messages.BatchMetadata {
+  return [
+    Messages.Type.BatchMetadata,
+    version,
+    pageNo,
+    firstIndex,
+    timestamp,
+    location,
+    tabId,
+  ]
+}
+
+export function TabChange(
+  tabId: string,
+): Messages.TabChange {
+  return [
+    Messages.Type.TabChange,
+    tabId,
   ]
 }
 

@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        pass
+        
 
 
 class CreateElementNode(Message):
@@ -689,7 +689,7 @@ class BatchMeta(Message):
         self.timestamp = timestamp
 
 
-class BatchMetadata(Message):
+class BatchMetadataDeprecated(Message):
     __id__ = 81
 
     def __init__(self, version, page_no, first_index, timestamp, location):
@@ -757,6 +757,25 @@ class ResourceTiming(Message):
         self.initiator = initiator
         self.transferred_size = transferred_size
         self.cached = cached
+
+
+class BatchMetadata(Message):
+    __id__ = 117
+
+    def __init__(self, version, page_no, first_index, timestamp, location, tab_id):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+        self.location = location
+        self.tab_id = tab_id
+
+
+class TabChange(Message):
+    __id__ = 118
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
 
 
 class IssueEvent(Message):

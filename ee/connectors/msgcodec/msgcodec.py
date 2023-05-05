@@ -634,7 +634,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 81:
-            return BatchMetadata(
+            return BatchMetadataDeprecated(
                 version=self.read_uint(reader),
                 page_no=self.read_uint(reader),
                 first_index=self.read_uint(reader),
@@ -687,6 +687,21 @@ class MessageCodec(Codec):
                 initiator=self.read_string(reader),
                 transferred_size=self.read_uint(reader),
                 cached=self.read_boolean(reader)
+            )
+
+        if message_id == 117:
+            return BatchMetadata(
+                version=self.read_uint(reader),
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader),
+                location=self.read_string(reader),
+                tab_id=self.read_string(reader)
+            )
+
+        if message_id == 118:
+            return TabChange(
+                tab_id=self.read_string(reader)
             )
 
         if message_id == 125:

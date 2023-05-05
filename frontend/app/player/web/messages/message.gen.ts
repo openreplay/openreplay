@@ -58,6 +58,7 @@ import type {
   RawSelectionChange,
   RawMouseThrashing,
   RawResourceTiming,
+  RawTabChange,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -177,6 +178,8 @@ export type SelectionChange = RawSelectionChange & Timed
 export type MouseThrashing = RawMouseThrashing & Timed
 
 export type ResourceTiming = RawResourceTiming & Timed
+
+export type TabChange = RawTabChange & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 

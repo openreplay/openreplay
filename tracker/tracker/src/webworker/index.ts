@@ -21,8 +21,9 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
-// let afterSleepRestarts = 0
+
 function finalize(): void {
   if (!writer) {
     return
@@ -73,7 +74,7 @@ let sendIntervalID: ReturnType<typeof setInterval> | null = null
 let restartTimeoutID: ReturnType<typeof setTimeout>
 
 // @ts-ignore
-self.onmessage = ({ data }: any): any => {
+self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   if (data == null) {
     finalize()
     return
@@ -146,6 +147,7 @@ self.onmessage = ({ data }: any): any => {
       data.timestamp,
       data.url,
       (batch) => sender && sender.push(batch),
+      data.tabId,
     )
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)

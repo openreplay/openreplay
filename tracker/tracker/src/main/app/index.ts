@@ -64,6 +64,7 @@ type AppOptions = {
   session_reset_key: string
   session_token_key: string
   session_pageno_key: string
+  session_tabid_key: string
   local_uuid_key: string
   ingestPoint: string
   resourceBaseHref: string | null // resourceHref?
@@ -124,6 +125,7 @@ export default class App {
         session_token_key: '__openreplay_token',
         session_pageno_key: '__openreplay_pageno',
         session_reset_key: '__openreplay_reset',
+        session_tabid_key: '__openreplay_tabid',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         resourceBaseHref: null,
@@ -455,6 +457,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      tabId: this.session.getTabId(),
     })
 
     const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null

@@ -1,4 +1,5 @@
 import type App from './index.js'
+import { generateRandomId } from '../utils.js'
 
 interface SessionInfo {
   sessionID: string | undefined
@@ -12,6 +13,7 @@ type OnUpdateCallback = (i: Partial<SessionInfo>) => void
 export type Options = {
   session_token_key: string
   session_pageno_key: string
+  session_tabid_key: string
 }
 
 export default class Session {
@@ -21,8 +23,11 @@ export default class Session {
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
   private projectID: string | undefined
+  private readonly tabId: string
 
-  constructor(private readonly app: App, private readonly options: Options) {}
+  constructor(private readonly app: App, private readonly options: Options) {
+    this.createTabId()
+  }
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
@@ -61,6 +66,7 @@ export default class Session {
     this.metadata[key] = value
     this.handleUpdate({ metadata: { [key]: value } })
   }
+
   setUserID(userID: string) {
     this.userID = userID
     this.handleUpdate({ userID })
@@ -86,10 +92,11 @@ export default class Session {
   }
 
   getSessionToken(): string | undefined {
-    return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
+    return this.app.localStorage.getItem(this.options.session_token_key) || undefined
   }
+
   setSessionToken(token: string): void {
-    this.app.sessionStorage.setItem(this.options.session_token_key, token)
+    this.app.localStorage.setItem(this.options.session_token_key, token)
   }
 
   applySessionHash(hash: string) {
@@ -102,7 +109,7 @@ export default class Session {
     if (!pageNoStr || !token) {
       return
     }
-    this.app.sessionStorage.setItem(this.options.session_token_key, token)
+    this.app.localStorage.setItem(this.options.session_token_key, token)
     this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNoStr)
   }
 
@@ -113,6 +120,14 @@ export default class Session {
       return
     }
     return encodeURI(String(pageNo) + '&' + token)
+  }
+
+  public getTabId(): string {
+    return this.tabId
+  }
+
+  private createTabId() {
+    this.app.sessionStorage.setItem(this.options.session_tabid_key, generateRandomId(16))
   }
 
   getInfo(): SessionInfo {
@@ -126,7 +141,7 @@ export default class Session {
   }
 
   reset(): void {
-    this.app.sessionStorage.removeItem(this.options.session_token_key)
+    this.app.localStorage.removeItem(this.options.session_token_key)
     this.metadata = {}
     this.userID = null
     this.sessionID = undefined

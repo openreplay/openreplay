@@ -246,7 +246,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2])
     break
 
-    case Messages.Type.BatchMetadata:
+    case Messages.Type.BatchMetadataDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5])
     break
 
@@ -272,6 +272,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.ResourceTiming:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8]) && this.uint(msg[9]) && this.boolean(msg[10])
+    break
+
+    case Messages.Type.BatchMetadata:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5]) && this.string(msg[6])
+    break
+
+    case Messages.Type.TabChange:
+      return  this.string(msg[1])
     break
 
     }

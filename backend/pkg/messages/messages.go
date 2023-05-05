@@ -74,13 +74,15 @@ const (
 	MsgJSException                 = 78
 	MsgZustand                     = 79
 	MsgBatchMeta                   = 80
-	MsgBatchMetadata               = 81
+	MsgBatchMetadataDeprecated     = 81
 	MsgPartitionedMessage          = 82
 	MsgInputChange                 = 112
 	MsgSelectionChange             = 113
 	MsgMouseThrashing              = 114
 	MsgUnbindNodes                 = 115
 	MsgResourceTiming              = 116
+	MsgBatchMetadata               = 117
+	MsgTabChange                   = 118
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -1974,7 +1976,7 @@ func (msg *BatchMeta) TypeID() int {
 	return 80
 }
 
-type BatchMetadata struct {
+type BatchMetadataDeprecated struct {
 	message
 	Version    uint64
 	PageNo     uint64
@@ -1983,7 +1985,7 @@ type BatchMetadata struct {
 	Location   string
 }
 
-func (msg *BatchMetadata) Encode() []byte {
+func (msg *BatchMetadataDeprecated) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Location))
 	buf[0] = 81
 	p := 1
@@ -1995,11 +1997,11 @@ func (msg *BatchMetadata) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *BatchMetadata) Decode() Message {
+func (msg *BatchMetadataDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *BatchMetadata) TypeID() int {
+func (msg *BatchMetadataDeprecated) TypeID() int {
 	return 81
 }
 
@@ -2161,6 +2163,58 @@ func (msg *ResourceTiming) Decode() Message {
 
 func (msg *ResourceTiming) TypeID() int {
 	return 116
+}
+
+type BatchMetadata struct {
+	message
+	Version    uint64
+	PageNo     uint64
+	FirstIndex uint64
+	Timestamp  int64
+	Location   string
+	TabId      string
+}
+
+func (msg *BatchMetadata) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Location)+len(msg.TabId))
+	buf[0] = 117
+	p := 1
+	p = WriteUint(msg.Version, buf, p)
+	p = WriteUint(msg.PageNo, buf, p)
+	p = WriteUint(msg.FirstIndex, buf, p)
+	p = WriteInt(msg.Timestamp, buf, p)
+	p = WriteString(msg.Location, buf, p)
+	p = WriteString(msg.TabId, buf, p)
+	return buf[:p]
+}
+
+func (msg *BatchMetadata) Decode() Message {
+	return msg
+}
+
+func (msg *BatchMetadata) TypeID() int {
+	return 117
+}
+
+type TabChange struct {
+	message
+	TabId string
+}
+
+func (msg *TabChange) Encode() []byte {
+	buf := make([]byte, 11+len(msg.TabId))
+	buf[0] = 118
+	p := 1
+	p = WriteString(msg.TabId, buf, p)
+	return buf[:p]
+}
+
+func (msg *TabChange) Decode() Message {
+	return msg
+}
+
+func (msg *TabChange) TypeID() int {
+	return 118
 }
 
 type IssueEvent struct {
