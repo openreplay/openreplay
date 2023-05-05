@@ -1,6 +1,5 @@
 fastapi
 apscheduler
 uvicorn
-mlflow
 SQLAlchemy
 alembic
