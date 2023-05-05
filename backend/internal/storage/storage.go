@@ -385,7 +385,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.doms != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(float64(task.doms.Len())/task.domsRawSize, DOM.String())
+			metrics.RecordSessionCompressionRatio(task.domsRawSize/float64(task.doms.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", compression); err != nil {
@@ -398,7 +398,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dome != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(float64(task.dome.Len())/task.domeRawSize, DOM.String())
+			metrics.RecordSessionCompressionRatio(task.domeRawSize/float64(task.dome.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", compression); err != nil {
@@ -411,7 +411,7 @@ func (s *Storage) uploadSession(task *Task) {
 	go func() {
 		if task.dev != nil {
 			// Record compression ratio
-			metrics.RecordSessionCompressionRatio(float64(task.dev.Len())/task.devRawSize, DEV.String())
+			metrics.RecordSessionCompressionRatio(task.devRawSize/float64(task.dev.Len()), DEV.String())
 			// Upload session to s3
 			start := time.Now()
 			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", compression); err != nil {
