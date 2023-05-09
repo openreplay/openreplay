@@ -540,6 +540,8 @@ export default class MessageManager {
   // TODO: clean managers?
   clean() {
     this.state.update(MessageManager.INITIAL_STATE);
+    // @ts-ignore
+    this.pagesManager.reset();
   }
 
 }
