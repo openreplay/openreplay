@@ -1,10 +1,10 @@
-from pydantic import Field
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
-class ModelDescription(BaseModel):
-    model_name: str = Field(...)
-    model_version: int = Field(default=1)
+class FeedbackRecommendation(BaseModel):
+    viewer_id: str = Field(...)
+    session_id: int = Field(...)
+    payload: dict = Field(default=dict())
 
 
 class DeviceValue:
