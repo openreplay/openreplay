@@ -95,7 +95,7 @@ export default class MFileReader extends RawMessageReader {
       this.currentTime = rMsg.timestamp - this.startTime
       return this.readNext()
     }
-
+    console.log(rMsg)
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
