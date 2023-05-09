@@ -1,15 +1,13 @@
-from numpy._typing import _16Bit
 from decouple import config, Csv
 from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
-import json
 import asyncio
 from time import time, sleep
 from copy import deepcopy
 
 from msgcodec.msgcodec import MessageCodec
-from msgcodec.messages import SessionStart, SessionEnd
+from msgcodec.messages import SessionEnd
 from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
 from db.writer import insert_batch, update_batch
@@ -18,6 +16,7 @@ from utils.cache import ProjectFilter as PF
 from utils import pg_client
 
 from psycopg2 import InterfaceError
+from utils.signal_handler import signal_handler
 
 def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE, projectFilter):
     if msg is None:
@@ -174,6 +173,11 @@ async def main():
 
     allowed_projects = config('PROJECT_IDS', default=None, cast=Csv(int))
     project_filter = PF(allowed_projects)
+    try:
+        project_filter.load_checkpoint(db)
+    except Exception as e:
+        print('[WARN] Checkpoint not found')
+        print(repr(e))
     codec = MessageCodec(filter_events)
     ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
     consumer_settings = {
@@ -191,7 +195,7 @@ async def main():
 
     c_time = time()
     read_msgs = 0
-    while True:
+    while signal_handler.KEEP_PROCESSING:
         msg = consumer.poll(1.0)
         process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, EVENT_TYPE, project_filter)
         read_msgs += 1
@@ -199,10 +203,16 @@ async def main():
             print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
             await insertBatch(deepcopy(sessions_batch), deepcopy(batch), db, sessions_table_name, table_name, EVENT_TYPE)
             consumer.commit()
+            try:
+                project_filter.save_checkpoint(db)
+            except Exception as e:
+                print("[Error] Error while saving checkpoint")
+                print(repr(e))
             sessions_batch = []
             batch = []
             read_msgs = 0
             c_time = time()
+    project_filter.terminate(db)
 
 
 
