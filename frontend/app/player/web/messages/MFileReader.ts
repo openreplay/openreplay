@@ -19,9 +19,9 @@ export default class MFileReader extends RawMessageReader {
   }
 
   public checkForIndexes() {
-    const firstBytes = this.readCustomIndex(this.buf.slice(0, 9))
-    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes
-    const skipIndexes = firstBytes === 72057594037927940
+    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes + weird failover (don't ask)
+    const skipIndexes = this.readCustomIndex(this.buf.slice(0, 8)) === 72057594037927940
+      || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
     if (skipIndexes) {
       this.noIndexes = true
       this.skip(8)
@@ -89,7 +89,7 @@ export default class MFileReader extends RawMessageReader {
       this.currentTime = rMsg.timestamp - this.startTime
       return this.readNext()
     }
-
+    console.log(rMsg)
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
