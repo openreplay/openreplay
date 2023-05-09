@@ -175,7 +175,7 @@ function or_helm_upgrade() {
     )
   [[ $state == "reload" ]] && chart_names=( openreplay )
   for chart in "${chart_names[@]}"; do
-    [[ -z $OR_VERSION ]] || HELM_OPTIONS="--set dbMigrationUpstreamBranch=${OR_VERSION}"
+    [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
     if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"; then
       log err "
         Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
@@ -194,9 +194,9 @@ function upgrade_old() {
   old_vars_path="$1"
   [[ -f $old_vars_path ]] || log err "No configuration file ${BWHITE}$old_vars_path${RED}.
           If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
-            ${BWHITE}openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
+            ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
           If you're having a custom installation,
-            ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
+            ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
           "
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${old_vars_path}")
   sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml.backup."${or_version//\"}"_"$(date +%Y%m%d-%H%M%S)" || log err "Not able to copy old vars.yaml"
@@ -283,9 +283,9 @@ function upgrade() {
   exists git || log err "Git not found. Please install"
   [[ -f ${OR_DIR}/vars.yaml ]] || log err "No configuration file ${BWHITE}${OR_DIR}/vars.yaml${RED}.
         If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
-          ${BWHITE}openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
+          ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
         If you're having a custom installation,
-          ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
+          ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
         "
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml") || {
     log err "${BWHITE}${OR_DIR}/vars.yaml${RED} not found. 
