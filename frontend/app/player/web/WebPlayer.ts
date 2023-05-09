@@ -154,6 +154,8 @@ export default class WebPlayer extends Player {
     this.screen.clean()
     // @ts-ignore
     this.screen = undefined;
+    // @ts-ignore
+    this.messageManager = undefined;
     window.removeEventListener('resize', this.scale)
   }
 }

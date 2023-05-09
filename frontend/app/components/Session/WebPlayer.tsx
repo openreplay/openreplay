@@ -20,6 +20,8 @@ const TABS = {
   CLICKMAP: 'Click Map',
 };
 
+let playerInst: IPlayerContext['player'] | undefined;
+
 function WebPlayer(props: any) {
   const {
     session,
@@ -35,10 +37,10 @@ function WebPlayer(props: any) {
   const [visuallyAdjusted, setAdjusted] = useState(false);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
-  let playerInst: IPlayerContext['player'];
   const params: { sessionId: string } = useParams()
 
   useEffect(() => {
+    playerInst = undefined
     if (!session.sessionId || contextValue.player !== undefined) return;
     fetchList('issues');
 
@@ -59,7 +61,7 @@ function WebPlayer(props: any) {
 
     const freeze = props.query.get('freeze')
     if (freeze) {
-      WebPlayerInst.freeze()
+      void WebPlayerInst.freeze()
     }
   }, [session.sessionId]);
 

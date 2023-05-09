@@ -25,6 +25,8 @@ interface Props {
   request: () => void;
 }
 
+let playerInst: ILivePlayerContext['player'] | undefined;
+
 function LivePlayer({
   session,
   userEmail,
@@ -39,10 +41,11 @@ function LivePlayer({
   const [fullView, setFullView] = useState(false);
   const openedFromMultiview = query?.get('multi') === 'true'
   const usedSession = isMultiview ? customSession! : session;
-  let playerInst: ILivePlayerContext['player'];
+
   const location = useLocation();
 
   useEffect(() => {
+    playerInst = undefined;
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
     console.debug('creating live player for', usedSession.sessionId)
     const sessionWithAgentData = {
@@ -71,7 +74,7 @@ function LivePlayer({
 
     return () => {
       if (!location.pathname.includes('multiview') || !location.pathname.includes(usedSession.sessionId)) {
-        console.debug('unmount', usedSession.sessionId)
+        console.debug('cleaning live player for', usedSession.sessionId)
         playerInst?.clean?.();
         // @ts-ignore default empty
         setContextValue(defaultContextValue)
