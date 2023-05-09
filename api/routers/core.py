@@ -11,7 +11,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, feature_flags
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import helper, captcha, s3
@@ -77,8 +77,8 @@ async def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPay
 @app.get('/{projectId}/events/search', tags=["events"])
 async def events_search(projectId: int, q: str,
                         type: Union[schemas.FilterType, schemas.EventType,
-                        schemas.PerformanceEventType, schemas.FetchFilterType,
-                        schemas.GraphqlFilterType, str] = None,
+                                    schemas.PerformanceEventType, schemas.FetchFilterType,
+                                    schemas.GraphqlFilterType, str] = None,
                         key: str = None, source: str = None, live: bool = False,
                         context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
@@ -894,3 +894,27 @@ async def delete_msteams_integration(webhookId: int, _=Body(None),
 @public_app.get('/', tags=["health"])
 async def health_check():
     return {}
+
+
+@app.get('/{projectId}/feature-flags', tags=["feature flags"])
+async def get_feature_flags(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    default_search = schemas.SearchFlagsSchema()
+    return feature_flags.get_all(project_id=projectId, user_id=context.user_id, data=default_search)
+
+
+@app.get('/{projectId}/feature-flags/{featureFlagId}', tags=["feature flags"])
+async def get_feature_flag(projectId: int, featureFlagId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return feature_flags.get_feature_flag(feature_flag_id=featureFlagId)
+
+
+@app.post('/{projectId}/feature-flags', tags=["feature flags"])
+async def add_feature_flag(projectId: int, data: schemas.FeatureFlagSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
+    return feature_flags.create(project_id=projectId, user_id=context.user_id, feature_flag=data)
+
+
+@app.put('/{projectId}/feature-flags/{featureFlagId}', tags=["feature flags"])
+async def update_feature_flag(projectId: int, featureFlagId: int, data: schemas.FeatureFlagSchema = Body(...),
+                              context: schemas.CurrentContext = Depends(OR_context)):
+    return feature_flags.update_feature_flag(feature_flag_id=featureFlagId, user_id=context.user_id,
+                                             feature_flag=data.dict())
