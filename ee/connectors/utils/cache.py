@@ -1,7 +1,7 @@
 from utils.pg_client import PostgresClient
-from queue import Queue
 from decouple import config
 from time import time
+import json
 
 
 def _project_from_session(sessionId):
@@ -97,8 +97,28 @@ class ProjectFilter:
 
     def handle_clean(self):
         """Verifies and execute cleanup if needed"""
-        if len(self.filter)==0:
+        if len(self.filter) == 0:
             return
         elif len(self.cache) > self.max_cache_size:
             self.cleanup()
+
+    def load_checkpoint(self, db):
+        file = db.load_binary(name='checkpoint')
+        checkpoint = json.loads(file.getvalue().decode('utf-8'))
+        file.close()
+        self.cache = checkpoint['cache']
+        self.to_clean = checkpoint['to_clean']
+        self.cached_sessions.session_project = checkpoint['cached_sessions']
+
+    def save_checkpoint(self, db):
+        checkpoint = {
+            'cache': self.cache,
+            'to_clean': self.to_clean,
+            'cached_sessions': self.cached_sessions.session_project,
+        }
+        db.save_binary(binary_data=json.dumps(checkpoint).encode('utf-8'), name='checkpoint')
+
+    def terminate(self, db):
+        # self.save_checkpoint(db)
+        db.close()
 
