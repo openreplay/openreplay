@@ -34,7 +34,7 @@
   </a>
 </p>
 
-OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web app, helping you troubleshoot issues faster. It's the only open-source alternative to products such as FullStory and LogRocket.
+OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web app, helping you troubleshoot issues faster. It's the most advanced open-source alternative to products such as FullStory and LogRocket.
 
 - **Session replay.** OpenReplay replays what users do, but not only. It also shows you what went under the hood, how your website or app behaves by capturing network activity, console logs, JS errors, store actions/state, page speed metrics, cpu/memory usage and much more.
 - **Low footprint**. With a ~19KB (.gz) tracker that asynchronously sends minimal data for a very limited impact on performance.
