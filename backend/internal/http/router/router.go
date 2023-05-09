@@ -19,11 +19,12 @@ type BeaconSize struct {
 }
 
 type Router struct {
-	router          *mux.Router
-	cfg             *http3.Config
-	services        *http2.ServicesBuilder
-	mutex           *sync.RWMutex
-	beaconSizeCache map[uint64]*BeaconSize // Cache for session's beaconSize
+	router               *mux.Router
+	cfg                  *http3.Config
+	services             *http2.ServicesBuilder
+	mutex                *sync.RWMutex
+	beaconSizeCache      map[uint64]*BeaconSize // Cache for session's beaconSize
+	compressionThreshold int64
 }
 
 func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder) (*Router, error) {
@@ -34,10 +35,11 @@ func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder) (*Router, err
 		return nil, fmt.Errorf("services is empty")
 	}
 	e := &Router{
-		cfg:             cfg,
-		services:        services,
-		mutex:           &sync.RWMutex{},
-		beaconSizeCache: make(map[uint64]*BeaconSize),
+		cfg:                  cfg,
+		services:             services,
+		mutex:                &sync.RWMutex{},
+		beaconSizeCache:      make(map[uint64]*BeaconSize),
+		compressionThreshold: cfg.CompressionThreshold,
 	}
 	e.init()
 	go e.clearBeaconSizes()
@@ -67,7 +69,7 @@ func (e *Router) getBeaconSize(sessionID uint64) int64 {
 }
 
 func (e *Router) getCompressionThreshold() int64 {
-	return 20000
+	return e.compressionThreshold
 }
 
 func (e *Router) clearBeaconSizes() {
