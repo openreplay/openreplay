@@ -100,7 +100,7 @@ function SessionList(props: Props) {
     if (total === 0) {
       setTimeout(() => {
         props.fetchSessions(null, true);
-      }, 100);
+      }, 300);
     }
     props.fetchMetadata();
 
