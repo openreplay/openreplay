@@ -704,6 +704,11 @@ class MessageCodec(Codec):
                 tab_id=self.read_string(reader)
             )
 
+        if message_id == 119:
+            return TabData(
+                tab_id=self.read_string(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),

@@ -778,6 +778,13 @@ class TabChange(Message):
         self.tab_id = tab_id
 
 
+class TabData(Message):
+    __id__ = 119
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
 class IssueEvent(Message):
     __id__ = 125
 

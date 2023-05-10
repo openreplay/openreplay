@@ -58,6 +58,7 @@ export const TP_MAP = {
   114: MType.MouseThrashing,
   116: MType.ResourceTiming,
   118: MType.TabChange,
+  119: MType.TabData,
   90: MType.IosSessionStart,
   93: MType.IosCustomEvent,
   96: MType.IosScreenChanges,

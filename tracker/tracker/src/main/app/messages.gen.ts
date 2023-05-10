@@ -897,3 +897,12 @@ export function TabChange(
   ]
 }
 
+export function TabData(
+  tabId: string,
+): Messages.TabData {
+  return [
+    Messages.Type.TabData,
+    tabId,
+  ]
+}
+

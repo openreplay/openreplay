@@ -497,6 +497,10 @@ message 118, 'TabChange' do
     string 'TabId'
 end
 
+message 119, 'TabData' do
+    string 'TabId'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

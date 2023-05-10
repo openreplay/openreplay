@@ -97,6 +97,15 @@ func main() {
 			msg = assetMessageHandler.ParseAssets(m)
 		}
 
+		// Create TabData message from BatchMetadata if TabId is present
+		switch m := msg.(type) {
+		case *messages.BatchMetadata:
+			if m.TabId != "" {
+				newMsg := &messages.TabData{TabId: m.TabId}
+				msg = newMsg
+			}
+		}
+
 		// Filter message
 		if !messages.IsReplayerType(msg.TypeID()) {
 			return
