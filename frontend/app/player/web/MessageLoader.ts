@@ -31,13 +31,14 @@ export default class MessageLoader {
     private isClickmap: boolean,
   ) {}
 
-  createNewParser(shouldDecrypt = true, file?: string, onReady?: () => void) {
+  createNewParser(shouldDecrypt = true, file?: string, toggleStatus?: (isLoading: boolean) => void) {
     const decrypt = shouldDecrypt && this.session.fileKey
       ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
       : (b: Uint8Array) => Promise.resolve(b)
     // Each time called - new fileReader created
     const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt)
     return (b: Uint8Array) => decrypt(b).then(b => {
+      toggleStatus?.(true);
       fileReader.append(b)
       fileReader.checkForIndexes()
       const msgs: Array<Message & { _index?: number }> = []
@@ -54,7 +55,7 @@ export default class MessageLoader {
       logger.info("Messages count: ", msgs.length, sorted, file)
 
       this.messageManager._sortMessagesHack(sorted)
-      onReady?.();
+      toggleStatus?.(false);
       this.messageManager.setMessagesLoading(false)
     })
   }
@@ -62,7 +63,7 @@ export default class MessageLoader {
   loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
     if (urls.length > 0) {
       this.store.update({ domLoading: true })
-      return loadFiles(urls, parser, true)
+      return loadFiles(urls, parser, true).then(() => this.store.update({ domLoading: false }))
     } else {
       return Promise.resolve()
     }
@@ -71,11 +72,11 @@ export default class MessageLoader {
   loadDevtools() {
     if (!this.isClickmap) {
       this.store.update({ devtoolsLoading: true })
-      return loadFiles(this.session.devtoolsURL, this.createNewParser(true, 'devtools', () => this.store.update({ devtoolsLoading: false })))
+      return loadFiles(this.session.devtoolsURL, this.createNewParser(true, 'devtools'))
         // TODO: also in case of dynamic update through assist
         .then(() => {
           // @ts-ignore ?
-          this.store.update({ ...this.messageManager.getListsFullState() });
+          this.store.update({ ...this.messageManager.getListsFullState(), devtoolsLoading: false });
         })
     } else {
       return Promise.resolve()
@@ -86,8 +87,8 @@ export default class MessageLoader {
     this.messageManager.startLoading()
 
     const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: () => this.createNewParser(true, 'dom', () => this.store.update({ domLoading: false })) }
-      : { url: this.session.mobsUrl, parser: () => this.createNewParser(false, 'dom', () => this.store.update({ domLoading: false }))}
+      ? { url: this.session.domURL, parser: () => this.createNewParser(true, 'dom') }
+      : { url: this.session.mobsUrl, parser: () => this.createNewParser(false, 'dom') }
 
     const parser = loadMethod.parser()
     /**
@@ -105,6 +106,7 @@ export default class MessageLoader {
       this.messageManager.onFileReadSuccess()
     } catch (e) {
       try {
+        this.store.update({ domLoading: true, devtoolsLoading: true })
         const efsDomFilePromise = requestEFSDom(this.session.sessionId)
         const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId)
 
@@ -123,6 +125,7 @@ export default class MessageLoader {
       }
     } finally {
       this.messageManager.onFileReadFinally()
+      this.store.update({ domLoading: false, devtoolsLoading: false })
     }
   }
 
