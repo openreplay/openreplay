@@ -89,12 +89,14 @@ func (m *messageReaderImpl) Parse() (err error) {
 			if err != nil {
 				return fmt.Errorf("read message err: %s", err)
 			}
-			if m.msgType == MsgBatchMeta || m.msgType == MsgBatchMetadata {
+			if m.msgType == MsgBatchMeta || m.msgType == MsgBatchMetadata || m.msgType == MsgBatchMetadataDeprecated {
 				if len(m.list) > 0 {
 					return fmt.Errorf("batch meta not at the start of batch")
 				}
 				switch message := msg.(type) {
 				case *BatchMetadata:
+					m.version = int(message.Version)
+				case *BatchMetadataDeprecated:
 					m.version = int(message.Version)
 				case *BatchMeta:
 					m.version = 0
