@@ -113,9 +113,10 @@ async def process_trace(action: str, path_format: str, request: Request, respons
             body = await request.json()
         except Exception:
             pass
-        intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
-        for attribute in intersect:
-            body[attribute] = "HIDDEN"
+        if body:
+            intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
+            for attribute in intersect:
+                body[attribute] = "HIDDEN"
     current_trace = TraceSchema(tenant_id=current_context.tenant_id,
                                 user_id=current_context.user_id if isinstance(current_context, CurrentContext) \
                                     else None,
