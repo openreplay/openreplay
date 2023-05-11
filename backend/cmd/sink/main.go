@@ -102,6 +102,7 @@ func main() {
 		case *messages.BatchMetadata:
 			if m.TabId != "" {
 				newMsg := &messages.TabData{TabId: m.TabId}
+				newMsg.SetMeta(m.Meta())
 				msg = newMsg
 			}
 		}
