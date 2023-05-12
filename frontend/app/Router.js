@@ -30,7 +30,7 @@ const ClientPure = lazy(() => import('Components/Client/Client'));
 const AssistPure = lazy(() => import('Components/Assist'));
 const SessionsOverviewPure = lazy(() => import('Components/Overview'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
-const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
+// const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
 const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
 const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
@@ -43,7 +43,7 @@ const LiveSession = withSiteIdUpdater(LiveSessionPure);
 const Assist = withSiteIdUpdater(AssistPure);
 const Client = withSiteIdUpdater(ClientPure);
 const Onboarding = withSiteIdUpdater(OnboardingPure);
-const Errors = withSiteIdUpdater(ErrorsPure);
+// const Errors = withSiteIdUpdater(ErrorsPure);
 const FunnelPage = withSiteIdUpdater(FunnelPagePure);
 const FunnelsDetails = withSiteIdUpdater(FunnelDetailsPure);
 const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
@@ -67,8 +67,8 @@ const DASHBOARD_METRIC_DETAILS_PATH = routes.dashboardMetricDetails();
 const SESSIONS_PATH = routes.sessions();
 const ASSIST_PATH = routes.assist();
 const RECORDINGS_PATH = routes.recordings();
-const ERRORS_PATH = routes.errors();
-const ERROR_PATH = routes.error();
+// const ERRORS_PATH = routes.errors();
+// const ERROR_PATH = routes.error();
 const FUNNEL_PATH = routes.funnels();
 const FUNNEL_CREATE_PATH = routes.funnelsCreate();
 const FUNNEL_ISSUE_PATH = routes.funnelIssue();
@@ -226,8 +226,8 @@ class Router extends React.Component {
                             <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
                             <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
-                            <Route exact strict path={withSiteId(ERRORS_PATH, siteIdList)} component={Errors} />
-                            <Route exact strict path={withSiteId(ERROR_PATH, siteIdList)} component={Errors} />
+                            {/*<Route exact strict path={withSiteId(ERRORS_PATH, siteIdList)} component={Errors} />*/}
+                            {/*<Route exact strict path={withSiteId(ERROR_PATH, siteIdList)} component={Errors} />*/}
                             <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
                             <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
                             <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
