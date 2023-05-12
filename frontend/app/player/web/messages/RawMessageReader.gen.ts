@@ -674,6 +674,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 118: {
+      console.log('TabChange')
       const tabId = this.readString(); if (tabId === null) { return resetPointer() }
       return {
         tp: MType.TabChange,
@@ -682,6 +683,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 119: {
+      console.log('TabData')
       const tabId = this.readString(); if (tabId === null) { return resetPointer() }
       return {
         tp: MType.TabData,

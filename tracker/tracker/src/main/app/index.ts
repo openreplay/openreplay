@@ -1,5 +1,5 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID, Type as MType } from './messages.gen.js'
+import { Timestamp, Metadata, UserID, Type as MType, TabChange } from './messages.gen.js'
 import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
@@ -463,6 +463,8 @@ export default class App {
     const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     this.sessionStorage.removeItem(this.options.session_reset_key)
     const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
+    const sessionToken = this.session.getSessionToken()
+    const isNewSession = needNewSessionID || !sessionToken
 
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
@@ -474,7 +476,7 @@ export default class App {
           ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: needNewSessionID ? undefined : this.session.getSessionToken(),
+          token: isNewSession ? undefined : sessionToken,
           deviceMemory,
           jsHeapSizeLimit,
         }),
@@ -526,6 +528,10 @@ export default class App {
           timestamp: startTimestamp || timestamp,
           projectID,
         })
+        if (!isNewSession) {
+          console.log('continuing session on new tab', this.session.getTabId())
+          this.send(TabChange(this.session.getTabId()))
+        }
         // (Re)send Metadata for the case of a new session
         Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
           this.send(Metadata(key, value)),

@@ -23,7 +23,7 @@ export default class Session {
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
   private projectID: string | undefined
-  private readonly tabId: string
+  private tabId: string
 
   constructor(private readonly app: App, private readonly options: Options) {
     this.createTabId()
@@ -123,11 +123,19 @@ export default class Session {
   }
 
   public getTabId(): string {
+    if (!this.tabId) this.createTabId()
     return this.tabId
   }
 
   private createTabId() {
-    this.app.sessionStorage.setItem(this.options.session_tabid_key, generateRandomId(16))
+    const localId = this.app.sessionStorage.getItem(this.options.session_tabid_key)
+    if (localId) {
+      this.tabId = localId
+    } else {
+      const randomId = generateRandomId(12)
+      this.app.sessionStorage.setItem(this.options.session_tabid_key, randomId)
+      this.tabId = randomId
+    }
   }
 
   getInfo(): SessionInfo {
