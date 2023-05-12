@@ -3,12 +3,6 @@ import { Decoder } from "syncod";
 import logger from 'App/logger';
 
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import { Log } from 'Player';
-import {
-  ResourceType,
-  getResourceFromResourceTiming,
-  getResourceFromNetworkRequest
-} from 'Player'
 
 import type { Store } from 'Player';
 import ListWalker from '../common/ListWalker';
@@ -21,7 +15,6 @@ import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 
 import { MouseThrashing, MType } from "./messages";
-import { isDOMType } from './messages/filters.gen';
 import type {
   Message,
   SetPageLocation,
@@ -41,6 +34,8 @@ import Screen, {
 import type { InitialLists } from './Lists'
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
+import TabManager from "Player/web/TabManager";
+import ActiveTabManager from "Player/web/managers/ActiveTabManager";
 
 export interface State extends ScreenState, ListsState {
   performanceChartData: PerformanceChartPoint[],
@@ -62,10 +57,12 @@ export interface State extends ScreenState, ListsState {
   lastMessageTime: number,
   firstVisualEvent: number,
   messagesProcessed: boolean,
+  currentTab: string,
+  tabs: string[],
 }
 
 
-const visualChanges = [
+export const visualChanges = [
   MType.MouseMove,
   MType.MouseClick,
   MType.CreateElementNode,
@@ -88,6 +85,8 @@ export default class MessageManager {
     firstVisualEvent: 0,
     messagesProcessed: false,
     messagesLoading: false,
+    currentTab: '',
+    tabs: [],
   }
 
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
@@ -114,12 +113,14 @@ export default class MessageManager {
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
+  private tabs: Record<string,TabManager> = {};
+  private activeTabManager = new ActiveTabManager()
 
   constructor(
     private readonly session: any /*Session*/,
     private readonly state: Store<State>,
     private readonly screen: Screen,
-    initialLists?: Partial<InitialLists>,
+    private readonly initialLists?: Partial<InitialLists>,
     private readonly uiErrorHandler?: { error: (error: string) => void, },
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
@@ -234,62 +235,8 @@ export default class MessageManager {
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
 
-  move(t: number, index?: number): void {
-    const stateToUpdate: Partial<State> = {};
-    /* == REFACTOR_ME ==  */
-    const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
-    if (!!lastLoadedLocationMsg) {
-      // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
-      this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
-    }
-    const llEvent = this.locationEventManager.moveGetLast(t, index);
-    if (!!llEvent) {
-      if (llEvent.domContentLoadedTime != null) {
-        stateToUpdate.domContentLoadedTime = {
-          time: llEvent.domContentLoadedTime + this.navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
-          value: llEvent.domContentLoadedTime,
-        }
-      }
-      if (llEvent.loadTime != null) {
-        stateToUpdate.loadTime = {
-          time: llEvent.loadTime + this.navigationStartOffset,
-          value: llEvent.loadTime,
-        }
-      }
-      if (llEvent.domBuildingTime != null) {
-        stateToUpdate.domBuildingTime = llEvent.domBuildingTime;
-      }
-    }
-    /* === */
-    const lastLocationMsg = this.locationManager.moveGetLast(t, index);
-    if (!!lastLocationMsg) {
-      stateToUpdate.location = lastLocationMsg.url;
-    }
-    const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
-    if (!!lastConnectionInfoMsg) {
-      stateToUpdate.connType = lastConnectionInfoMsg.type;
-      stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
-    }
-    const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
-    if (!!lastPerformanceTrackMessage) {
-      stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
-    }
-
-    Object.assign(stateToUpdate, this.lists.moveGetState(t))
-    Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
-
-    /* Sequence of the managers is important here */
-    // Preparing the size of "screen"
-    const lastResize = this.resizeManager.moveGetLast(t, index);
-    if (!!lastResize) {
-      this.setSize(lastResize)
-    }
-    this.pagesManager.moveReady(t).then(() => {
-
-      const lastScroll = this.scrollManager.moveGetLast(t, index);
-      if (!!lastScroll && this.screen.window) {
-        this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
-      }
+  move(t: number): any {
+    this.activeTabManager.moveReady(t).then(tabId => {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
@@ -300,6 +247,11 @@ export default class MessageManager {
       if (!!lastThrashing && t - lastThrashing.time < 300) {
         this.screen.cursor.shake();
       }
+
+      if (tabId && this.state.get().currentTab !== tabId) {
+        this.state.update({ currentTab: tabId })
+      }
+      this.tabs[this.state.get().currentTab].move(t)
     })
 
     if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {
@@ -308,7 +260,21 @@ export default class MessageManager {
   }
 
 
-  distributeMessage = (msg: Message): void => {
+  distributeMessage = (msg: Message & { tabId: string }): void => {
+    if (!this.tabs[msg.tabId]) {
+      console.log(msg.tabId)
+      this.tabs[msg.tabId] = new TabManager(
+        this.session,
+        this.state,
+        this.screen,
+        msg.tabId,
+        this.setSize,
+        this.initialLists,
+      )
+    }
+
+    // return this.tabs[msg.tabId].distributeMessage(msg)
+
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })
@@ -316,14 +282,9 @@ export default class MessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
-      case MType.SetPageLocation:
-        this.locationManager.append(msg);
-        if (msg.navigationStart > 0) {
-          this.loadedLocationManager.append(msg);
-        }
-        break;
-      case MType.SetViewportSize:
-        this.resizeManager.append(msg);
+      case MType.TabChange:
+        this.state.update({ tabs: this.state.get().tabs.concat(msg.tabId) })
+        this.activeTabManager.append(msg)
         break;
       case MType.MouseThrashing:
         this.mouseThrashingManager.append(msg);
@@ -334,89 +295,73 @@ export default class MessageManager {
       case MType.MouseClick:
         this.clickManager.append(msg);
         break;
-      case MType.SetViewportScroll:
-        this.scrollManager.append(msg);
-        break;
-      case MType.PerformanceTrack:
-        this.performanceTrackManager.append(msg);
-        break;
-      case MType.SetPageVisibility:
-        this.performanceTrackManager.handleVisibility(msg)
-        break;
-      case MType.ConnectionInformation:
-        this.connectionInfoManger.append(msg);
-        break;
-      case MType.OTable:
-        this.decoder.set(msg.key, msg.value);
-        break;
-      /* Lists: */
-      case MType.ConsoleLog:
-        if (msg.level === 'debug') break;
-        this.lists.lists.log.append(
-          // @ts-ignore : TODO: enums in the message schema
-          Log(msg)
-        )
-        break;
-      case MType.ResourceTimingDeprecated:
-      case MType.ResourceTiming:
-        // TODO: merge `resource` and `fetch` lists into one here instead of UI
-        if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
-          // @ts-ignore TODO: typing for lists
-          this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
-        }
-        break;
-      case MType.Fetch:
-      case MType.NetworkRequest:
-        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
-        break;
-      case MType.Redux:
-        this.lists.lists.redux.append(msg);
-        break;
-      case MType.NgRx:
-        this.lists.lists.ngrx.append(msg);
-        break;
-      case MType.Vuex:
-        this.lists.lists.vuex.append(msg);
-        break;
-      case MType.Zustand:
-        this.lists.lists.zustand.append(msg)
-        break
-      case MType.MobX:
-        this.lists.lists.mobx.append(msg);
-        break;
-      case MType.GraphQl:
-        this.lists.lists.graphql.append(msg);
-        break;
-      case MType.Profiler:
-        this.lists.lists.profiles.append(msg);
-        break;
+      // /* Lists: */
+      // case MType.ConsoleLog:
+      //   if (msg.level === 'debug') break;
+      //   this.lists.lists.log.append(
+      //     // @ts-ignore : TODO: enums in the message schema
+      //     Log(msg)
+      //   )
+      //   break;
+      // case MType.ResourceTimingDeprecated:
+      // case MType.ResourceTiming:
+      //   // TODO: merge `resource` and `fetch` lists into one here instead of UI
+      //   if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
+      //     // @ts-ignore TODO: typing for lists
+      //     this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
+      //   }
+      //   break;
+      // case MType.Fetch:
+      // case MType.NetworkRequest:
+      //   this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
+      //   break;
+      // case MType.Redux:
+      //   this.lists.lists.redux.append(msg);
+      //   break;
+      // case MType.NgRx:
+      //   this.lists.lists.ngrx.append(msg);
+      //   break;
+      // case MType.Vuex:
+      //   this.lists.lists.vuex.append(msg);
+      //   break;
+      // case MType.Zustand:
+      //   this.lists.lists.zustand.append(msg)
+      //   break
+      // case MType.MobX:
+      //   this.lists.lists.mobx.append(msg);
+      //   break;
+      // case MType.GraphQl:
+      //   this.lists.lists.graphql.append(msg);
+      //   break;
+      // case MType.Profiler:
+      //   this.lists.lists.profiles.append(msg);
+      //   break;
       /* ===|=== */
       default:
         switch (msg.tp) {
           case MType.CreateDocument:
             if (!this.firstVisualEventSet) {
-              this.state.update({ firstVisualEvent: msg.time });
+              this.state.update({ firstVisualEvent: msg.time, currentTab: msg.tabId, tabs: [msg.tabId] });
               this.firstVisualEventSet = true;
             }
-            this.windowNodeCounter.reset();
-            this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
-            break;
-          case MType.CreateTextNode:
-          case MType.CreateElementNode:
-            this.windowNodeCounter.addNode(msg.id, msg.parentID);
-            this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
-            break;
-          case MType.MoveNode:
-            this.windowNodeCounter.moveNode(msg.id, msg.parentID);
-            this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
-            break;
-          case MType.RemoveNode:
-            this.windowNodeCounter.removeNode(msg.id);
-            this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
-            break;
+          //   break;
+          // case MType.CreateTextNode:
+          // case MType.CreateElementNode:
+          //   this.windowNodeCounter.addNode(msg.id, msg.parentID);
+          //   this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
+          //   break;
+          // case MType.MoveNode:
+          //   this.windowNodeCounter.moveNode(msg.id, msg.parentID);
+          //   this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
+          //   break;
+          // case MType.RemoveNode:
+          //   this.windowNodeCounter.removeNode(msg.id);
+          //   this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
+          //   break;
         }
-        this.performanceTrackManager.addNodeCountPointIfNeed(msg.time)
-        isDOMType(msg.tp) && this.pagesManager.appendMessage(msg)
+        this.tabs[msg.tabId].distributeMessage(msg)
+        // this.performanceTrackManager.addNodeCountPointIfNeed(msg.time)
+        // isDOMType(msg.tp) && this.pagesManager.appendMessage(msg)
         break;
     }
   }

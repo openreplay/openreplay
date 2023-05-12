@@ -30,6 +30,8 @@ function SubHeader(props) {
     exceptionsList,
     eventList: eventsList,
     endTime,
+      currentTab,
+      tabs,
   } = store.get();
 
   const enabledIntegration = useMemo(() => {
@@ -114,6 +116,11 @@ function SubHeader(props) {
           </div>
         </>
       )}
+      {tabs.map((tab, i) => (
+          <div className={currentTab === tab ? 'outline-active-blue-border outline m-2' : 'm-2'}>
+            Tab {i+1}
+          </div>
+      ))}
       <div
         className="ml-auto text-sm flex items-center color-gray-medium gap-2"
         style={{ width: 'max-content' }}

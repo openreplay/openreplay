@@ -63,6 +63,7 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
+  currentTab = ''
   readNext(): Message & { _index?: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
@@ -82,6 +83,10 @@ export default class MFileReader extends RawMessageReader {
       return null
     }
 
+    if (rMsg.tp === MType.TabData) {
+      this.currentTab = rMsg.tabId
+      return this.readNext()
+    }
     if (rMsg.tp === MType.Timestamp) {
       if (!this.startTime) {
         this.startTime = rMsg.timestamp
@@ -93,6 +98,7 @@ export default class MFileReader extends RawMessageReader {
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
+      tabId: this.currentTab,
     }, !this.noIndexes ? { _index: index } : {})
 
     return msg

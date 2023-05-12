@@ -53,7 +53,8 @@ export default class WebPlayer extends Player {
       session,
       wpState,
       messageManager,
-      isClickMap
+      isClickMap,
+      uiErrorHandler
     )
     super(wpState, messageManager)
     this.screen = screen

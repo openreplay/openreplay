@@ -108,7 +108,7 @@ export default class ListWalker<T extends Timed> {
 	/**
 	 * @returns last message with the time <= t.
 	 * Assumed that the current message is already handled so
-	 * if pointer doesn't cahnge <null> is returned.
+	 * if pointer doesn't change <null> is returned.
 	 */
 	moveGetLast(t: number, index?: number): T | null {
 		let key: string = "time"; //TODO
@@ -129,6 +129,30 @@ export default class ListWalker<T extends Timed> {
 		}
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
+
+	moveGetLastDebug(t: number, index?: number): T | null {
+		let key: string = "time"; //TODO
+		let val = t;
+		if (index) {
+			key = "_index";
+			val = index;
+		}
+
+		let changed = false;
+		while (this.p < this.length && this.list[this.p][key] <= val) {
+			this.moveNext()
+			changed = true;
+		}
+		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
+			this.movePrev()
+			changed = true;
+		}
+
+		console.log(this.list[this.p - 1])
+		return changed ? this.list[ this.p - 1 ] : null;
+	}
+
+
 
 	/**
 	 * Moves over the messages starting from the current+1 to the last one with the time <= t

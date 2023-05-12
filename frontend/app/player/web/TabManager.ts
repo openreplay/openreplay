@@ -18,6 +18,7 @@ import MouseMoveManager from "Player/web/managers/MouseMoveManager";
 import ActivityManager from "Player/web/managers/ActivityManager";
 import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
 import { isDOMType } from "Player/web/messages/filters.gen";
+import { State, visualChanges } from './MessageManager'
 
 export default class TabManager {
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
@@ -39,7 +40,9 @@ export default class TabManager {
     private readonly session: any,
     private readonly state: Store<{}>,
     private readonly screen: Screen,
-    initialLists?: Partial<InitialLists>
+    private readonly id: string,
+    private readonly setSize: ({ height, width }: { height: number, width: number }) => void,
+    initialLists?: Partial<InitialLists>,
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
     this.lists = new Lists(initialLists)
@@ -84,15 +87,6 @@ export default class TabManager {
 
 
   distributeMessage(msg: Message): void {
-    const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
-    this.lastMessageTime = lastMessageTime
-    this.state.update({ lastMessageTime })
-    if (visualChanges.includes(msg.tp)) {
-      this.activityManager?.updateAcctivity(msg.time);
-    }
-    let decoded;
-    const time = msg.time;
-    // console.log(msg)
     switch (msg.tp) {
       case MType.SetPageLocation:
         this.locationManager.append(msg);
@@ -102,15 +96,6 @@ export default class TabManager {
         break;
       case MType.SetViewportSize:
         this.resizeManager.append(msg);
-        break;
-      case MType.MouseThrashing:
-        this.mouseThrashingManager.append(msg);
-        break;
-      case MType.MouseMove:
-        this.mouseMoveManager.append(msg);
-        break;
-      case MType.MouseClick:
-        this.clickManager.append(msg);
         break;
       case MType.SetViewportScroll:
         this.scrollManager.append(msg);
@@ -171,10 +156,6 @@ export default class TabManager {
       default:
         switch (msg.tp) {
           case MType.CreateDocument:
-            if (!this.firstVisualEventSet) {
-              this.state.update({ firstVisualEvent: msg.time });
-              this.firstVisualEventSet = true;
-            }
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
@@ -196,5 +177,68 @@ export default class TabManager {
         isDOMType(msg.tp) && this.pagesManager.appendMessage(msg)
         break;
     }
+  }
+
+  move(t: number, index?: number): void {
+
+    const stateToUpdate: Partial<State> = {};
+    /* == REFACTOR_ME ==  */
+    const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
+    if (!!lastLoadedLocationMsg) {
+      // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
+      this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
+    }
+    const llEvent = this.locationEventManager.moveGetLast(t, index);
+    if (!!llEvent) {
+      if (llEvent.domContentLoadedTime != null) {
+        stateToUpdate.domContentLoadedTime = {
+          time: llEvent.domContentLoadedTime + this.navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
+          value: llEvent.domContentLoadedTime,
+        }
+      }
+      if (llEvent.loadTime != null) {
+        stateToUpdate.loadTime = {
+          time: llEvent.loadTime + this.navigationStartOffset,
+          value: llEvent.loadTime,
+        }
+      }
+      if (llEvent.domBuildingTime != null) {
+        stateToUpdate.domBuildingTime = llEvent.domBuildingTime;
+      }
+    }
+    /* === */
+    const lastLocationMsg = this.locationManager.moveGetLast(t, index);
+    if (!!lastLocationMsg) {
+      stateToUpdate.location = lastLocationMsg.url;
+    }
+    const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
+    if (!!lastConnectionInfoMsg) {
+      stateToUpdate.connType = lastConnectionInfoMsg.type;
+      stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
+    }
+    const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
+    if (!!lastPerformanceTrackMessage) {
+      stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
+    }
+
+    Object.assign(stateToUpdate, this.lists.moveGetState(t))
+    Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
+
+    /* Sequence of the managers is important here */
+    // Preparing the size of "screen"
+    const lastResize = this.resizeManager.moveGetLast(t, index);
+    if (!!lastResize) {
+      this.setSize(lastResize)
+    }
+    this.pagesManager.moveReady(t).then(() => {
+      const lastScroll = this.scrollManager.moveGetLast(t, index);
+      if (!!lastScroll && this.screen.window) {
+        this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
+      }
+    })
+
+    // if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {
+    //   this.setMessagesLoading(true)
+    // }
   }
 }
