@@ -896,25 +896,31 @@ async def health_check():
     return {}
 
 
-@app.get('/{projectId}/feature-flags', tags=["feature flags"])
-async def get_feature_flags(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    default_search = schemas.SearchFlagsSchema()
-    return feature_flags.get_all(project_id=projectId, user_id=context.user_id, data=default_search)
+@app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
+async def search_feature_flags(project_id: int,
+                               data: schemas.SearchFlagsSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return feature_flags.get_all(project_id=project_id, user_id=context.user_id, data=data)
 
 
-@app.get('/{projectId}/feature-flags/{featureFlagId}', tags=["feature flags"])
-async def get_feature_flag(projectId: int, featureFlagId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.get_feature_flag(feature_flag_id=featureFlagId)
+@app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
+async def get_feature_flag(project_id: int, feature_flag_id: int):
+    return feature_flags.get_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
 
 
-@app.post('/{projectId}/feature-flags', tags=["feature flags"])
-async def add_feature_flag(projectId: int, data: schemas.FeatureFlagSchema = Body(...),
+@app.post('/{project_id}/feature-flags', tags=["feature flags"])
+async def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.create(project_id=projectId, user_id=context.user_id, feature_flag=data)
+    return feature_flags.create(project_id=project_id, user_id=context.user_id, feature_flag=data)
 
 
-@app.put('/{projectId}/feature-flags/{featureFlagId}', tags=["feature flags"])
-async def update_feature_flag(projectId: int, featureFlagId: int, data: schemas.FeatureFlagSchema = Body(...),
+@app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
+async def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.update_feature_flag(feature_flag_id=featureFlagId, user_id=context.user_id,
-                                             feature_flag=data.dict())
+    return feature_flags.update(project_id=project_id, feature_flag_id=feature_flag_id, user_id=context.user_id,
+                                feature_flag=data)
+
+
+@app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
+async def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
+    return feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)

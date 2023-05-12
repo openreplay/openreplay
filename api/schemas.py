@@ -1366,15 +1366,21 @@ class GetHeatmapPayloadSchema(BaseModel):
 
 
 class FeatureFlagCondition(BaseModel):
-    # feature_flag_id: Optional[int] = Field(default=None)
+    condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
-    conditions: Optional[str] = Field(default=None)
+    filters: List[dict] = Field(default=[])
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class SearchFlagsSchema(_PaginatedSchema):
+    limit: int = Field(default=15, gt=0, le=200)
+    user_id: Optional[int] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
     query: Optional[str] = Field(default=None)
+    is_active: bool = Field(default=True)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -1392,8 +1398,7 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    # created_by: Optional[int] = Field(default=None)
-    # created_at: Optional[int] = Field(TimeUTC.now())
-    updated_by: Optional[int] = Field(None)
-    # updated_at: Optional[int] = Field(TimeUTC.now())
     conditions: List[FeatureFlagCondition] = Field(default=[])
+
+    class Config:
+        alias_generator = attribute_to_camel_case
