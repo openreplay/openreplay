@@ -7,8 +7,9 @@ RUN apt-get update \
   && pip install -r requirements.txt \
   && apt-get clean
 
-COPY core core
+COPY auth auth
 COPY crons crons
+COPY core core
 COPY main.py .
 COPY entrypoint.sh .
 COPY api.py .
