@@ -6,18 +6,17 @@ import (
 	"github.com/andybalholm/brotli"
 	"io"
 	"log"
+	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	gzip "github.com/klauspost/pgzip"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/messages"
 	metrics "openreplay/backend/pkg/metrics/storage"
-	"openreplay/backend/pkg/storage"
-
-	gzip "github.com/klauspost/pgzip"
 )
 
 type FileType string
@@ -71,23 +70,23 @@ func NewBreakTask() *Task {
 
 type Storage struct {
 	cfg              *config.Config
-	s3               *storage.S3
+	objStorage       objectstorage.ObjectStorage
 	startBytes       []byte
 	compressionTasks chan *Task // brotli compression or gzip compression with encryption
 	uploadingTasks   chan *Task // upload to s3
 	workersStopped   chan struct{}
 }
 
-func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
+func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
-	case s3 == nil:
-		return nil, fmt.Errorf("s3 storage is empty")
+	case objStorage == nil:
+		return nil, fmt.Errorf("object storage is empty")
 	}
 	newStorage := &Storage{
 		cfg:              cfg,
-		s3:               s3,
+		objStorage:       objStorage,
 		startBytes:       make([]byte, cfg.FileSplitSize),
 		compressionTasks: make(chan *Task, 1),
 		uploadingTasks:   make(chan *Task, 1),
@@ -378,9 +377,9 @@ func (s *Storage) uploadSession(task *Task) {
 		uploadDome int64 = 0
 		uploadDev  int64 = 0
 	)
-	compression := storage.NoCompression
+	compression := objectstorage.NoCompression
 	if task.key == "" {
-		compression = storage.Brotli
+		compression = objectstorage.Brotli
 	}
 	go func() {
 		if task.doms != nil {
@@ -388,7 +387,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.domsRawSize/float64(task.doms.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", compression); err != nil {
+			if err := s.objStorage.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDoms = time.Now().Sub(start).Milliseconds()
@@ -401,7 +400,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.domeRawSize/float64(task.dome.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", compression); err != nil {
+			if err := s.objStorage.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDome = time.Now().Sub(start).Milliseconds()
@@ -414,7 +413,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.devRawSize/float64(task.dev.Len()), DEV.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", compression); err != nil {
+			if err := s.objStorage.Upload(task.dev, task.id+string(DEV), "application/octet-stream", compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()

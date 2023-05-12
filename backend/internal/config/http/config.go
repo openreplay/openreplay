@@ -3,6 +3,7 @@ package http
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/env"
 	"time"
 )
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
+	objectstorage.ObjectsConfig
 	HTTPHost                string        `env:"HTTP_HOST,default="`
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
@@ -19,8 +21,6 @@ type Config struct {
 	CompressionThreshold    int64         `env:"COMPRESSION_THRESHOLD,default=20000"`
 	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=1000"`
 	FileSizeLimit           int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
-	AWSRegion               string        `env:"AWS_REGION,required"`
-	S3BucketIOSImages       string        `env:"S3_BUCKET_IOS_IMAGES,required"`
 	TokenSecret             string        `env:"TOKEN_SECRET,required"`
 	UAParserFile            string        `env:"UAPARSER_FILE,required"`
 	MaxMinDBFile            string        `env:"MAXMINDDB_FILE,required"`
