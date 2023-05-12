@@ -19,7 +19,6 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
     ]
     params = {
         "project_id": project_id,
-        "user_id": user_id,
         "limit": data.limit,
         "is_active": data.is_active,
         "offset": (data.page - 1) * data.limit,
