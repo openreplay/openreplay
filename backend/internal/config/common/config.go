@@ -9,7 +9,6 @@ type Config struct {
 	MessageSizeLimit int    `env:"QUEUE_MESSAGE_SIZE_LIMIT,default=1048576"`
 	MaxMemoryUsage   uint64 `env:"MAX_MEMORY_USAGE,default=80"`
 	MemoryLimitMB    uint64 `env:"MEMORY_LIMIT_MB,default=0"` // 0 means take limit from OS (cgroup)
-	CloudName        string `env:"CLOUD,default=aws"`
 }
 
 type Configer interface {
@@ -18,10 +17,6 @@ type Configer interface {
 
 func (c *Config) GetConfigPath() string {
 	return c.ConfigFilePath
-}
-
-func (c *Config) UseFileTags() bool {
-	return c.CloudName != "azure"
 }
 
 // Postgres config

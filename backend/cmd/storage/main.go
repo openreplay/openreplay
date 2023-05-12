@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	cloud "openreplay/backend/pkg/objectstorage/s3"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,7 +15,6 @@ import (
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/storage"
 	"openreplay/backend/pkg/queue"
-	cloud "openreplay/backend/pkg/storage"
 )
 
 func main() {

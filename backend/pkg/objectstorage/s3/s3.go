@@ -1,80 +1,73 @@
-package storage
+package s3
 
 import (
 	"io"
 	"net/url"
+	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"sort"
 	"strconv"
 	"time"
 
-	_s3 "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 	"openreplay/backend/pkg/env"
 )
 
-type S3 struct {
+type storageImpl struct {
 	uploader *s3manager.Uploader
-	svc      *_s3.S3
+	svc      *s3.S3
 	bucket   *string
 	fileTag  string
 	useTags  bool
 }
 
-func NewS3(region string, bucket string, useTags bool) *S3 {
+func NewS3(region string, bucket string, useTags bool) objectstorage.ObjectStorage {
 	sess := env.AWSSessionOnRegion(region)
-	return &S3{
+	return &storageImpl{
 		uploader: s3manager.NewUploader(sess),
-		svc:      _s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
+		svc:      s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
 		bucket:   &bucket,
 		fileTag:  loadFileTag(),
 		useTags:  useTags,
 	}
 }
 
-type CompressionType int
-
-const (
-	NoCompression CompressionType = iota
-	Gzip
-	Brotli
-)
-
-func (s3 *S3) tagging() *string {
-	if s3.useTags {
-		return &s3.fileTag
+func (s *storageImpl) tagging() *string {
+	if s.useTags {
+		return &s.fileTag
 	}
 	return nil
 }
 
-func (s3 *S3) Upload(reader io.Reader, key string, contentType string, compression CompressionType) error {
+func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
 	var contentEncoding *string
 	switch compression {
-	case Gzip:
+	case objectstorage.Gzip:
 		gzipStr := "gzip"
 		contentEncoding = &gzipStr
-	case Brotli:
+	case objectstorage.Brotli:
 		gzipStr := "br"
 		contentEncoding = &gzipStr
 	}
 
-	_, err := s3.uploader.Upload(&s3manager.UploadInput{
+	_, err := s.uploader.Upload(&s3manager.UploadInput{
 		Body:            reader,
-		Bucket:          s3.bucket,
+		Bucket:          s.bucket,
 		Key:             &key,
 		ContentType:     &contentType,
 		CacheControl:    &cacheControl,
 		ContentEncoding: contentEncoding,
-		Tagging:         s3.tagging(),
+		Tagging:         s.tagging(),
 	})
 	return err
 }
 
-func (s3 *S3) Get(key string) (io.ReadCloser, error) {
-	out, err := s3.svc.GetObject(&_s3.GetObjectInput{
-		Bucket: s3.bucket,
+func (s *storageImpl) Get(key string) (io.ReadCloser, error) {
+	out, err := s.svc.GetObject(&s3.GetObjectInput{
+		Bucket: s.bucket,
 		Key:    &key,
 	})
 	if err != nil {
@@ -83,9 +76,9 @@ func (s3 *S3) Get(key string) (io.ReadCloser, error) {
 	return out.Body, nil
 }
 
-func (s3 *S3) Exists(key string) bool {
-	_, err := s3.svc.HeadObject(&_s3.HeadObjectInput{
-		Bucket: s3.bucket,
+func (s *storageImpl) Exists(key string) bool {
+	_, err := s.svc.HeadObject(&s3.HeadObjectInput{
+		Bucket: s.bucket,
 		Key:    &key,
 	})
 	if err == nil {
@@ -94,9 +87,9 @@ func (s3 *S3) Exists(key string) bool {
 	return false
 }
 
-func (s3 *S3) GetCreationTime(key string) *time.Time {
-	ans, err := s3.svc.HeadObject(&_s3.HeadObjectInput{
-		Bucket: s3.bucket,
+func (s *storageImpl) GetCreationTime(key string) *time.Time {
+	ans, err := s.svc.HeadObject(&s3.HeadObjectInput{
+		Bucket: s.bucket,
 		Key:    &key,
 	})
 	if err != nil {
@@ -107,10 +100,10 @@ func (s3 *S3) GetCreationTime(key string) *time.Time {
 
 const MAX_RETURNING_COUNT = 40
 
-func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
+func (s *storageImpl) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 	prefix := strconv.FormatUint(projectID, 10) + "/"
-	output, err := s3.svc.ListObjectsV2(&_s3.ListObjectsV2Input{
-		Bucket: s3.bucket,
+	output, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: s.bucket,
 		Prefix: &prefix,
 	})
 	if err != nil {
@@ -128,9 +121,9 @@ func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 	}
 
 	var keyList []string
-	s := len(prefix)
+	st := len(prefix)
 	for _, obj := range list[:max] {
-		keyList = append(keyList, (*obj.Key)[s:])
+		keyList = append(keyList, (*obj.Key)[st:])
 	}
 	return keyList, nil
 }
