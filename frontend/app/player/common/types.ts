@@ -25,3 +25,21 @@ export interface Store<G extends Object, S extends Object = G> {
   update(state: Partial<S>): void
 }
 
+
+export interface SessionFilesInfo {
+  startedAt: number
+  sessionId: string
+  isMobile: boolean
+  agentToken?: string
+  duration: number
+  domURL: string[]
+  devtoolsURL: string[]
+  /** deprecated */
+  mobsUrl: string[]
+  fileKey: string  | null
+  events: Record<string, any>[]
+  stackEvents: Record<string, any>[]
+  frustrations: Record<string, any>[]
+  errors: Record<string, any>[]
+  agentInfo?: { email: string, name: string }
+}

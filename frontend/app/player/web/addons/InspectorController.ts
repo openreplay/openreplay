@@ -8,7 +8,20 @@ export default class InspectorController {
   private substitutor: Screen | null = null
   private inspector: Inspector | null = null
   marker: Marker | null = null
-  constructor(private screen: Screen) {}
+  constructor(private screen: Screen) {
+      screen.overlay.addEventListener('contextmenu', () => {
+        screen.overlay.style.display = 'none'
+        const doc = screen.document
+        if (!doc) { return }
+        const returnOverlay = () => {
+          screen.overlay.style.display = 'block'
+          doc.removeEventListener('mousemove', returnOverlay)
+          doc.removeEventListener('mouseclick', returnOverlay) // TODO: prevent default in case of input selection
+        }
+        doc.addEventListener('mousemove', returnOverlay)
+        doc.addEventListener('mouseclick', returnOverlay)
+      })
+  }
 
   scale(dims: Dimensions) {
     if (this.substitutor) {

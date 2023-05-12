@@ -15,16 +15,29 @@ export async function loadFiles(
   }
   try {
     for (let url of urls) {
-      const response = await window.fetch(url)
-      const data = await processAPIStreamResponse(response, urls.length > 1 ? url !== urls[0] : canSkip)
-      await onData(data)
+      await loadFile(url, onData, urls.length > 1 ? url !== urls[0] : canSkip)
     }
-  } catch(e) {
-    if (e === ALLOWED_404) {
-      return
-    }
-    throw e
+    return Promise.resolve()
+  } catch (e) {
+    return Promise.reject(e)
   }
+}
+
+export async function loadFile(
+  url: string,
+  onData: (data: Uint8Array) => void,
+  canSkip: boolean = false,
+): Promise<void> {
+  return window.fetch(url)
+    .then(response => processAPIStreamResponse(response, canSkip))
+    .then(data => onData(data))
+    .catch(e => {
+      if (e === ALLOWED_404) {
+        return;
+      } else {
+        throw e
+      }
+    })
 }
 
 export async function requestEFSDom(sessionId: string) {

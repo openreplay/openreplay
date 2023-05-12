@@ -6,7 +6,7 @@ import withLocationHandlers from 'HOCs/withLocationHandlers';
 import PlayerContent from './ThinPlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from '../../playerContext';
 import { observer } from 'mobx-react-lite';
-
+import { toast } from 'react-toastify'
 
 function WebPlayer(props: any) {
   const {
@@ -20,8 +20,10 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    const [WebPlayerInst, PlayerStore] = createClickMapPlayer(customSession, (state) =>
-      makeAutoObservable(state)
+    const [WebPlayerInst, PlayerStore] = createClickMapPlayer(
+      customSession,
+      (state) => makeAutoObservable(state),
+      toast,
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 

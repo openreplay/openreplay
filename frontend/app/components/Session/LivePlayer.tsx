@@ -8,10 +8,11 @@ import { createLiveWebPlayer } from 'Player';
 import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
 import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
 import styles from '../Session_/session.module.css';
-import Session from 'App/mstore/types/session';
+import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify'
 
 interface Props {
   session: Session;
@@ -58,15 +59,21 @@ function LivePlayer({
     if (isEnterprise) {
       new APIClient().get('/config/assist/credentials').then(r => r.json())
         .then(({ data }) => {
-          const [player, store] = createLiveWebPlayer(sessionWithAgentData, data, (state) =>
-            makeAutoObservable(state)
+          const [player, store] = createLiveWebPlayer(
+            sessionWithAgentData,
+            data,
+            (state) => makeAutoObservable(state),
+            toast
           );
           setContextValue({ player, store });
           playerInst = player;
         })
     } else {
-      const [player, store] = createLiveWebPlayer(sessionWithAgentData, null, (state) =>
-        makeAutoObservable(state)
+      const [player, store] = createLiveWebPlayer(
+        sessionWithAgentData,
+        null,
+        (state) => makeAutoObservable(state),
+        toast
       );
       setContextValue({ player, store });
       playerInst = player;
@@ -117,19 +124,19 @@ function LivePlayer({
 }
 
 export default withPermissions(
-    ['ASSIST_LIVE'],
-    '',
-    true
-  )(
-    connect(
-      (state: any) => {
-        return {
-          session: state.getIn(['sessions', 'current']),
-          showAssist: state.getIn(['sessions', 'showChatWindow']),
-          isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-          userEmail: state.getIn(['user', 'account', 'email']),
-          userName: state.getIn(['user', 'account', 'name']),
-        };
-      }
-    )(withLocationHandlers()(React.memo(LivePlayer)))
-  )
+  ['ASSIST_LIVE'],
+  '',
+  true
+)(
+  connect(
+    (state: any) => {
+      return {
+        session: state.getIn(['sessions', 'current']),
+        showAssist: state.getIn(['sessions', 'showChatWindow']),
+        isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+        userEmail: state.getIn(['user', 'account', 'email']),
+        userName: state.getIn(['user', 'account', 'name']),
+      };
+    }
+  )(withLocationHandlers()(React.memo(LivePlayer)))
+)

@@ -97,20 +97,6 @@ export default class Screen {
 
     parentElement.appendChild(this.screen);
     this.parentElement = parentElement;
-
-    /* == For the Inspecting Document content  == */
-    this.overlay.addEventListener('contextmenu', () => {
-      this.overlay.style.display = 'none'
-      const doc = this.document
-      if (!doc) { return }
-      const returnOverlay = () => {
-        this.overlay.style.display = 'block'
-        doc.removeEventListener('mousemove', returnOverlay)
-        doc.removeEventListener('mouseclick', returnOverlay) // TODO: prevent default in case of input selection
-      }
-      doc.addEventListener('mousemove', returnOverlay)
-      doc.addEventListener('mouseclick', returnOverlay)
-    })
   }
 
   getParentElement():  HTMLElement | null {
@@ -137,7 +123,7 @@ export default class Screen {
   private getBoundingClientRect(): DOMRect {
      if (this.boundingRect === null) {
        // TODO: use this.screen instead in order to separate overlay functionality
-      return this.boundingRect = this.overlay.getBoundingClientRect() // expensive operation?
+      return this.boundingRect = this.screen.getBoundingClientRect() // expensive operation?
     }
     return this.boundingRect
   }
@@ -145,7 +131,7 @@ export default class Screen {
   getInternalViewportCoordinates({ x, y }: Point): Point {
     const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
 
-    const screenWidth = this.overlay.offsetWidth;
+    const screenWidth = this.screen.offsetWidth;
 
     const scale = screenWidth / width;
     const screenX = (x - overlayX) * scale;
@@ -246,7 +232,7 @@ export default class Screen {
       width: width + 'px',
     })
 
-    this.boundingRect = this.overlay.getBoundingClientRect();
+    this.boundingRect = this.screen.getBoundingClientRect();
     this.onUpdateHook(width, height)
   }
 
