@@ -84,7 +84,7 @@ export default class Call {
 					iceServers: this.config,
 					//@ts-ignore
 					sdpSemantics: 'unified-plan',
-					iceTransportPolicy: 'relay',
+					iceTransportPolicy: 'all',
 				};
 			}
 			const peer = this._peer = new Peer(peerOpts)
