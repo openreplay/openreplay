@@ -900,7 +900,7 @@ async def health_check():
 async def search_feature_flags(project_id: int,
                                data: schemas.SearchFlagsSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.get_all(project_id=project_id, user_id=context.user_id, data=data)
+    return feature_flags.search_feature_flags(project_id=project_id, user_id=context.user_id, data=data)
 
 
 @app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
@@ -911,14 +911,15 @@ async def get_feature_flag(project_id: int, feature_flag_id: int):
 @app.post('/{project_id}/feature-flags', tags=["feature flags"])
 async def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.create(project_id=project_id, user_id=context.user_id, feature_flag=data)
+    return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag=data)
 
 
 @app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 async def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.update(project_id=project_id, feature_flag_id=feature_flag_id, user_id=context.user_id,
-                                feature_flag=data)
+    return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
+                                             user_id=context.user_id,
+                                             feature_flag=data)
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])

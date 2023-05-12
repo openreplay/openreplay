@@ -1,16 +1,13 @@
 import schemas
-from chalicelib.core import metadata
-from chalicelib.utils import args_transformer
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
-from typing import Any, List, Union, Dict, Optional
+from typing import Any, List, Dict, Optional
 from fastapi import HTTPException
 import json
 
 
-def get_all(project_id: int, user_id: int, data: Any) -> Dict[str, Any]:
+def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, Any]:
     """
     Get all feature flags and their total count.
     """
@@ -155,6 +152,7 @@ def create_feature_flag(feature_flag: schemas.FeatureFlagSchema, project_id: int
 
     row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
+    row["conditions"] = create_conditions(row["featureFlagId"], feature_flag.conditions)
 
     return helper.dict_to_camel_case(row)
 
@@ -188,33 +186,6 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
             rows = cur.fetchall()
 
     return rows
-
-
-def create(feature_flag: schemas.FeatureFlagSchema, project_id: int, user_id: int) -> dict:
-    """
-    Create a new feature flag.
-    """
-    # Convert the FeatureFlagSchema instance to a dictionary.
-    # feature_flag_dict = feature_flag.dict()
-
-    # Create the feature flag.
-    new_feature_flag = create_feature_flag(feature_flag, project_id, user_id)
-
-    # Create the conditions.
-    conditions = create_conditions(new_feature_flag["featureFlagId"], feature_flag.conditions)
-    new_feature_flag["conditions"] = conditions
-
-    return new_feature_flag
-
-
-def update(project_id: int, feature_flag_id: int, feature_flag: Any, user_id: int):
-    conditions = feature_flag.conditions
-    feature_flag = update_feature_flag(project_id, feature_flag_id, feature_flag, user_id)
-
-    conditions = check_conditions(feature_flag_id, conditions)
-    feature_flag['conditions'] = conditions
-
-    return feature_flag
 
 
 def update_feature_flag(project_id: int, feature_flag_id: int,
@@ -257,6 +228,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
 
     row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
+    row['conditions'] = check_conditions(feature_flag_id, feature_flag.conditions)
 
     return helper.dict_to_camel_case(row)
 
@@ -285,18 +257,18 @@ def get_conditions(feature_flag_id: int):
 
 
 def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
-    """
-    Update existing feature flag conditions and return their updated data.
-    """
-    to_be_deleted = [ec.get("condition_id") for ec in get_conditions(feature_flag_id)]
+    existing_ids = [ec.get("condition_id") for ec in get_conditions(feature_flag_id)]
+    to_be_deleted = []
     to_be_updated = []
     to_be_created = []
+
+    for cid in existing_ids:
+        if cid not in [c.condition_id for c in conditions]:
+            to_be_deleted.append(cid)
 
     for condition in conditions:
         if condition.condition_id is None:
             to_be_created.append(condition)
-        elif condition.condition_id in to_be_deleted:
-            to_be_deleted.remove(condition.condition_id)
         else:
             to_be_updated.append(condition)
 
@@ -307,16 +279,15 @@ def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagC
         update_conditions(feature_flag_id, list(filter(lambda x: x.condition_id is not None, to_be_updated)))
 
     if len(to_be_deleted) > 0:
-        print("to_be_deleted")
-        print(to_be_deleted)
         delete_conditions(to_be_deleted)
+
+    return get_conditions(feature_flag_id)
 
 
 def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
     """
     Update existing feature flag conditions and return their updated data.
     """
-
     values = []
     params = {
         "feature_flag_id": feature_flag_id,
@@ -337,7 +308,6 @@ def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
 
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
-        print(query)
         cur.execute(query)
 
 
