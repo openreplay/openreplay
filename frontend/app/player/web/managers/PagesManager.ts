@@ -20,7 +20,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	constructor(
 		private screen: Screen,
 		private isMobile: boolean,
-		private setCssLoading: ConstructorParameters<typeof DOMManager>[3],
+		private setCssLoading: ConstructorParameters<typeof DOMManager>[4],
 ) { super() }
 
 	/*

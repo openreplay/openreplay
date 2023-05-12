@@ -1,5 +1,3 @@
-import { toast } from 'react-toastify'
-
 import type { Socket } from './types'
 import type { Store } from '../../common/types'
 
@@ -24,6 +22,7 @@ export default class ScreenRecording {
 		private socket: Socket,
 		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
+    public readonly uiErrorHandler: { error: (msg: string) => void } | undefined
 	) {
 		socket.on('recording_accepted', () => {
       this.toggleRecording(true)
@@ -38,7 +37,7 @@ export default class ScreenRecording {
 	}
 
 	private onRecordingBusy = () => {
-    toast.error("This session is already being recorded by another agent")
+    this.uiErrorHandler?.error("This session is already being recorded by another agent")
   }
 
   requestRecording = ({ onDeny }: { onDeny: () => void }) => {

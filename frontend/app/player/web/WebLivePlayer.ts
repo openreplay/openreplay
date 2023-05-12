@@ -1,4 +1,4 @@
-import type { Store } from '../common/types'
+import type { Store, SessionFilesInfo } from 'Player'
 import type { Message } from './messages'
 
 import WebPlayer from './WebPlayer'
@@ -6,9 +6,6 @@ import AssistManager from './assist/AssistManager'
 
 import MFileReader from './messages/MFileReader'
 import { requestEFSDom } from './network/loadFiles'
-
-import { toast } from 'react-toastify'; // **
-
 
 export default class WebLivePlayer extends WebPlayer {
   static readonly INITIAL_STATE = {
@@ -21,26 +18,31 @@ export default class WebLivePlayer extends WebPlayer {
   private readonly incomingMessages: Message[] = []
   private historyFileIsLoading = false
   private lastMessageInFileTime = 0
-  private lastMessageInFileIndex = 0
 
-  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[] | null) {
-    super(wpState, session, true)
+  constructor(
+    wpState: Store<typeof WebLivePlayer.INITIAL_STATE>,
+    private session: SessionFilesInfo,
+    config: RTCIceServer[] | null,
+    uiErrorHandler?: { error: (msg: string) => void }
+  ) {
+    super(wpState, session, true, false, uiErrorHandler)
 
     this.assistManager = new AssistManager(
       session,
       f => this.messageManager.setMessagesLoading(f),
-      (msg, idx) => {
+      (msg) => {
         this.incomingMessages.push(msg)
         if (!this.historyFileIsLoading) {
           // TODO: fix index-ing after historyFile-load
-          this.messageManager.distributeMessage(msg, idx)
+          this.messageManager.distributeMessage(msg)
         }
       },
       this.screen,
       config,
       wpState,
+      uiErrorHandler,
     )
-    this.assistManager.connect(session.agentToken)
+    this.assistManager.connect(session.agentToken!)
   }
 
   toggleTimetravel = async () => {
@@ -64,14 +66,14 @@ export default class WebLivePlayer extends WebPlayer {
       result = true
       // here we need to update also lists state, if we gonna use them this.messageManager.onFileReadSuccess
     } catch(e) {
-      toast.error('Error requesting a session file')
+      this.uiErrorHandler?.error('Error requesting a session file')
       console.error("EFS file download error:", e)
     }
 
     // Append previously received messages
     this.incomingMessages
       .filter(msg => msg.time >= this.lastMessageInFileTime)
-      .forEach((msg, i) => this.messageManager.distributeMessage(msg, this.lastMessageInFileIndex + i))
+      .forEach((msg) => this.messageManager.distributeMessage(msg))
     this.incomingMessages.length = 0
 
     this.historyFileIsLoading = false

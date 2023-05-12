@@ -1,5 +1,5 @@
 import { insertRule, deleteRule } from './safeCSSRules';
-
+import { isRootNode } from 'App/player/guards'
 
 type Callback<T> = (o: T) => void
 
@@ -316,7 +316,7 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
 		return new OnloadStyleSheet(new Promise((resolve, reject) => 
 			vRoot.onNode(node => {
 				let context: typeof globalThis | null
-				if (node instanceof Document || node.nodeName === '#document') {
+				if (isRootNode(node)) {
 					context = node.defaultView
 				} else {
 					context = node.ownerDocument.defaultView

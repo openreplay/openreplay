@@ -27,7 +27,7 @@ export function decryptSessionBytes(cypher: Uint8Array, keyString: string): Prom
 				const data = gunzipSync(u8Array)
 				console.debug(
 					"Decompression time",
-					performance.now() - now,
+					Math.floor(performance.now() - now) + 'ms',
 					'size',
 					Math.floor(u8Array.byteLength/1024),
 					'->',

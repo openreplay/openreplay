@@ -3,12 +3,14 @@ import { Decoder } from "syncod";
 import logger from 'App/logger';
 
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import { Log } from './types/log';
-import { Resource, ResourceType, getResourceFromResourceTiming, getResourceFromNetworkRequest } from './types/resource'
+import { Log } from 'Player';
+import {
+  ResourceType,
+  getResourceFromResourceTiming,
+  getResourceFromNetworkRequest
+} from 'Player'
 
-import { toast } from 'react-toastify';
-
-import type  { Store, Timed } from '../common/types';
+import type { Store } from 'Player';
 import ListWalker from '../common/ListWalker';
 
 import PagesManager from './managers/PagesManager';
@@ -18,7 +20,6 @@ import PerformanceTrackManager from './managers/PerformanceTrackManager';
 import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 
-import MFileReader from './messages/MFileReader';
 import { MouseThrashing, MType } from "./messages";
 import { isDOMType } from './messages/filters.gen';
 import type {
@@ -30,9 +31,6 @@ import type {
   MouseClick,
 } from './messages';
 
-import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
-import { decryptSessionBytes } from './network/crypto';
-
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
 
 import Screen, {
@@ -43,7 +41,6 @@ import Screen, {
 import type { InitialLists } from './Lists'
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
-
 
 export interface State extends ScreenState, ListsState {
   performanceChartData: PerformanceChartPoint[],
@@ -58,8 +55,6 @@ export interface State extends ScreenState, ListsState {
   domBuildingTime?: number,
   loadTime?: { time: number, value: number },
   error: boolean,
-  devtoolsLoading: boolean,
-
   messagesLoading: boolean,
   cssLoading: boolean,
 
@@ -87,14 +82,12 @@ export default class MessageManager {
     performanceChartData: [],
     skipIntervals: [],
     error: false,
-    devtoolsLoading: false,
-
-    messagesLoading: false,
     cssLoading: false,
     ready: false,
     lastMessageTime: 0,
     firstVisualEvent: 0,
     messagesProcessed: false,
+    messagesLoading: false,
   }
 
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
@@ -117,7 +110,7 @@ export default class MessageManager {
 
   private activityManager: ActivityManager | null = null;
 
-  private sessionStart: number;
+  private readonly sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
@@ -126,7 +119,8 @@ export default class MessageManager {
     private readonly session: any /*Session*/,
     private readonly state: Store<State>,
     private readonly screen: Screen,
-    initialLists?: Partial<InitialLists>
+    initialLists?: Partial<InitialLists>,
+    private readonly uiErrorHandler?: { error: (error: string) => void, },
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
     this.mouseMoveManager = new MouseMoveManager(screen)
@@ -134,13 +128,17 @@ export default class MessageManager {
     this.sessionStart = this.session.startedAt
 
     this.lists = new Lists(initialLists)
-    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Moveable" module
+    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Movable" module
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);
       }
     })
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
+  }
+
+  public getListsFullState = () => {
+    return this.lists.getFullListsState()
   }
 
   public updateLists(lists: Partial<InitialLists>) {
@@ -162,7 +160,7 @@ export default class MessageManager {
     this.state.update({ cssLoading, ready: !this.state.get().messagesLoading && !cssLoading })
   }
 
-  private _sortMessagesHack(msgs: Message[]) {
+  public _sortMessagesHack = (msgs: Message[]) => {
     // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
     const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
     this.pagesManager.sortPages((m1, m2) => {
@@ -190,7 +188,7 @@ export default class MessageManager {
   }
 
   private waitingForFiles: boolean = false
-  private onFileReadSuccess = () => {
+  public onFileReadSuccess = () => {
     const stateToUpdate : Partial<State>= {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,
@@ -202,108 +200,22 @@ export default class MessageManager {
     }
     this.state.update(stateToUpdate)
   }
-  private onFileReadFailed = (e: any) => {
+
+  public onFileReadFailed = (e: any) => {
     logger.error(e)
     this.state.update({ error: true })
-    toast.error('Error requesting a session file')
+    this.uiErrorHandler?.error('Error requesting a session file')
   }
-  private onFileReadFinally = () => {
+
+  public onFileReadFinally = () => {
     this.waitingForFiles = false
     this.state.update({ messagesProcessed: true })
-    // this.setMessagesLoading(false)
-    // this.state.update({ filesLoaded: true })
   }
 
-  async loadMessages(isClickmap: boolean = false) {
+  public startLoading = () => {
+    this.waitingForFiles = true
     this.state.update({ messagesProcessed: false })
     this.setMessagesLoading(true)
-    // TODO: reusable decryptor instance
-    const createNewParser = (shouldDecrypt = true, file?: string) => {
-      const decrypt = shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
-        : (b: Uint8Array) => Promise.resolve(b)
-      // Each time called - new fileReader created
-      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-      return (b: Uint8Array) => decrypt(b).then(b => {
-        fileReader.append(b)
-        fileReader.checkForIndexes()
-        const msgs: Array<Message> = []
-        for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          msgs.push(msg)
-        }
-        const sorted = msgs.sort((m1, m2) => {
-          return m1.time - m2.time
-        })
-
-        let outOfOrderCounter = 0
-        sorted.forEach(msg => {
-          this.distributeMessage(msg)
-        })
-
-        if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
-        logger.info("Messages count: ", msgs.length, sorted, file)
-
-        this._sortMessagesHack(msgs)
-        this.setMessagesLoading(false)
-      })
-    }
-
-    this.waitingForFiles = true
-
-    // TODO: refactor this stuff; split everything to async/await
-    
-    const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: () => createNewParser(true, 'dom') }
-      : { url: this.session.mobsUrl, parser: () => createNewParser(false, 'dom')}
-
-    const parser = loadMethod.parser()
-
-    /**
-     * We load first dom mobfile before the rest
-     * to speed up time to replay
-     * but as a tradeoff we have to have some copy-paste
-     * for the devtools file
-     * */
-    loadFiles([loadMethod.url[0]], parser)
-      .then(() => {
-        const domPromise = loadMethod.url.length > 1
-          ? loadFiles([loadMethod.url[1]], parser, true)
-          : Promise.resolve()
-          const devtoolsPromise = !isClickmap
-            ? this.loadDevtools(createNewParser)
-            : Promise.resolve()
-        return Promise.all([domPromise, devtoolsPromise])
-      })
-      /**
-       * EFS fallback for unprocessed sessions (which are live)
-       * */
-      .catch(() => {
-          requestEFSDom(this.session.sessionId)
-            .then(createNewParser(false, 'domEFS'))
-            .catch(this.onFileReadFailed)
-          if (!isClickmap) {
-            this.loadDevtools(createNewParser)
-          }
-        }
-      )
-      .then(this.onFileReadSuccess)
-      .finally(this.onFileReadFinally);
-  }
-
-  loadDevtools(createNewParser: (shouldDecrypt: boolean, file: string) => (b: Uint8Array) => Promise<void>) {
-    this.state.update({ devtoolsLoading: true })
-    return loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
-      // EFS fallback
-      .catch(() =>
-        requestEFSDevtools(this.session.sessionId)
-          .then(createNewParser(false, 'devtoolsEFS'))
-      )
-      // TODO: also in case of dynamic update through assist
-      .then(() => {
-        this.state.update({ ...this.lists.getFullListsState() })
-      })
-      .catch(e => logger.error("Can not download the devtools file", e))
-      .finally(() => this.state.update({ devtoolsLoading: false }))
   }
 
   resetMessageManagers() {
@@ -395,29 +307,14 @@ export default class MessageManager {
     }
   }
 
-  private decodeStateMessage(msg: any, keys: Array<string>) {
-    const decoded = {};
-    try {
-      keys.forEach(key => {
-        // @ts-ignore TODO: types for decoder
-        decoded[key] = this.decoder.decode(msg[key]);
-      });
-    } catch (e) {
-      logger.error("Error on message decoding: ", e, msg);
-      return null;
-    }
-    return { ...msg, ...decoded };
-  }
 
-  distributeMessage(msg: Message): void {
+  distributeMessage = (msg: Message): void => {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })
     if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
-    let decoded;
-    const time = msg.time;
     switch (msg.tp) {
       case MType.SetPageLocation:
         this.locationManager.append(msg);
@@ -464,6 +361,7 @@ export default class MessageManager {
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
         if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
+          // @ts-ignore TODO: typing for lists
           this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
         }
         break;
@@ -523,7 +421,7 @@ export default class MessageManager {
     }
   }
 
-  setMessagesLoading(messagesLoading: boolean) {
+  setMessagesLoading = (messagesLoading: boolean) => {
     this.screen.display(!messagesLoading);
     this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
   }
