@@ -6,6 +6,20 @@ from typing import Any, List, Dict, Optional
 from fastapi import HTTPException
 import json
 
+feature_flag_columns = (
+    "feature_flag_id",
+    "name",
+    "flag_key",
+    "description",
+    "flag_type",
+    "is_persist",
+    "is_active",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+)
+
 
 def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, Any]:
     """
@@ -14,11 +28,12 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
     constraints = [
         "feature_flags.project_id = %(project_id)s",
         "feature_flags.deleted_at IS NULL",
-        "feature_flags.created_by = %(user_id)s",
         "feature_flags.is_active = %(is_active)s"
     ]
+
     params = {
         "project_id": project_id,
+        "user_id": user_id,
         "limit": data.limit,
         "is_active": data.is_active,
         "offset": (data.page - 1) * data.limit,
@@ -27,27 +42,13 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
     if data.user_id is not None:
         constraints.append("feature_flags.created_by=%(user_id)s")
 
-    columns = (
-        "feature_flag_id",
-        "name",
-        "flag_key",
-        "description",
-        "flag_type",
-        "is_persist",
-        "is_active",
-        "created_at",
-        "updated_at",
-        "created_by",
-        "updated_by",
-    )
-
     if data.query is not None and len(data.query) > 0:
         constraints.append("(name ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator._contains)
 
     sql = f"""
-        SELECT COUNT(feature_flags.feature_flag_id) OVER () AS count, {", ".join(columns)}
+        SELECT COUNT(1) OVER () AS count, {", ".join(feature_flag_columns)}
         FROM feature_flags
         WHERE {" AND ".join(constraints)}
         ORDER BY created_at {data.order}
@@ -74,84 +75,86 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
     return results
 
 
-def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Get a single feature flag by its ID.
-    """
-    feature_flag_columns = (
-        "feature_flag_id",
-        "name",
-        "flag_key",
-        "description",
-        "flag_type",
-        "is_persist",
-        "is_active",
-        "created_at",
-        "updated_at",
-        "created_by",
-        "updated_by",
+def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
+    insert_columns = (
+        'project_id',
+        'name',
+        'flag_key',
+        'description',
+        'flag_type',
+        'is_persist',
+        'is_active',
+        'created_by'
     )
 
-    feature_flag_sql = f"""
-        SELECT {", ".join(feature_flag_columns)}
-        FROM feature_flags
-        WHERE feature_flag_id = %(feature_flag_id)s AND project_id = %(project_id)s
-        AND deleted_at IS NULL
+    _data = {}
+    for i, s in enumerate(feature_flag_data.conditions):
+        for k in s.dict().keys():
+            _data[f"{k}_{i}"] = s.__getattribute__(k)
+        _data[f"name_{i}"] = s.name
+        _data[f"rollout_percentage_{i}"] = s.rollout_percentage
+        _data[f"filters_{i}"] = json.dumps(s.filters)
+
+    params = {
+        "project_id": project_id,
+        "created_by": user_id,
+        **feature_flag_data.dict(),
+        **_data
+    }
+
+    conditions_len = len(feature_flag_data.conditions)
+
+    flag_sql = f"""
+                INSERT INTO feature_flags ({", ".join(insert_columns)})
+                VALUES ({", ".join(["%(" + col + ")s" for col in insert_columns])})
+                RETURNING feature_flag_id
+        """
+
+    query = f"""
+        WITH inserted_flag AS ({flag_sql})
+        INSERT INTO feature_flags_conditions(feature_flag_id, name, rollout_percentage, filters)
+        VALUES {",".join([f"((SELECT feature_flag_id FROM inserted_flag), %(name_{i})s, %(rollout_percentage_{i})s, %(filters_{i})s::jsonb)"
+                          for i in range(conditions_len)])}
+        RETURNING feature_flag_id
     """
 
     with pg_client.PostgresClient() as cur:
-        feature_flag_query = cur.mogrify(
-            feature_flag_sql,
-            {"feature_flag_id": feature_flag_id, "project_id": project_id}
-        )
-        cur.execute(feature_flag_query)
-        feature_flag_row = cur.fetchone()
-
-        if feature_flag_row is None:
-            return {"errors": ["Feature flag not found"]}
-
-        feature_flag_row["created_at"] = TimeUTC.datetime_to_timestamp(feature_flag_row["created_at"])
-        feature_flag_row["updated_at"] = TimeUTC.datetime_to_timestamp(feature_flag_row["updated_at"])
-
-    feature_flag_row["conditions"] = get_conditions(feature_flag_id)
-
-    return helper.dict_to_camel_case(feature_flag_row)
-
-
-def create_feature_flag(feature_flag: schemas.FeatureFlagSchema, project_id: int, user_id: int) -> dict:
-    """
-    Create a new feature flag and return its data.
-    """
-    columns = (
-        "feature_flag_id",
-        "name",
-        "flag_key",
-        "description",
-        "flag_type",
-        "is_persist",
-        "is_active",
-        "created_by",
-        "updated_by",
-        "created_at",
-        "updated_at"
-    )
-
-    sql = f"""
-        INSERT INTO feature_flags
-        (project_id, name, flag_key, description, flag_type, is_persist, is_active, created_by)
-        VALUES (%(project_id)s, %(name)s, %(flag_key)s, %(description)s, %(flag_type)s, %(is_persist)s,
-        %(is_active)s, %(created_by)s)
-        RETURNING {", ".join(columns)}
-    """
-
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(sql, {"project_id": project_id, "created_by": user_id, **feature_flag.dict()})
+        query = cur.mogrify(query, params)
         cur.execute(query)
         row = cur.fetchone()
 
-    row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
-    row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
-    row["conditions"] = create_conditions(row["featureFlagId"], feature_flag.conditions)
+        if row is None:
+            return None
+
+    return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+
+
+def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
+    conditions_query = """
+            SELECT COALESCE(jsonb_agg(ffc ORDER BY condition_id), '[]'::jsonb) AS conditions
+            FROM feature_flags_conditions ffc
+            WHERE ffc.feature_flag_id = ff.feature_flag_id
+        """
+
+    sql = f"""
+            SELECT {", ".join(["ff." + col for col in feature_flag_columns])}, ({conditions_query}) AS conditions
+            FROM feature_flags ff
+            LEFT JOIN LATERAL ({conditions_query}) ffc ON true
+            WHERE ff.feature_flag_id = %(feature_flag_id)s
+                AND ff.project_id = %(project_id)s
+                AND ff.deleted_at IS NULL
+        """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "project_id": project_id})
+        cur.execute(query)
+        row = cur.fetchone()
+
+        if row is None:
+            return {"errors": ["Feature flag not found"]}
+
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
 
     return helper.dict_to_camel_case(row)
 

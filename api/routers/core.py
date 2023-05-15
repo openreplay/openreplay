@@ -911,7 +911,7 @@ async def get_feature_flag(project_id: int, feature_flag_id: int):
 @app.post('/{project_id}/feature-flags', tags=["feature flags"])
 async def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag=data)
+    return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
 
 
 @app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
