@@ -3,18 +3,27 @@ import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../utils.js'
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
-import { finder } from '@medv/finder'
 
-function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
-  const selector = finder(target, {
+// loading it only once per browser tab context
+// plus workaround for SSR apps
+let finderLib: (target: Element, options: any) => string
+
+async function _getSelector(
+  target: Element,
+  document: Document,
+  options?: MouseHandlerOptions,
+): Promise<string> {
+  if (!finderLib) {
+    const { finder } = await import('@medv/finder')
+    finderLib = finder
+  }
+  return finderLib(target, {
     root: document.body,
     seedMinLength: 3,
     optimizedMinLength: options?.minSelectorDepth || 2,
     threshold: options?.nthThreshold || 1000,
     maxNumberOfTries: options?.maxOptimiseTries || 10_000,
   })
-
-  return selector
 }
 
 function isClickable(element: Element): boolean {
@@ -180,8 +189,17 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   }
 
   const patchDocument = (document: Document, topframe = false) => {
-    function getSelector(id: number, target: Element, options?: MouseHandlerOptions): string {
-      return (selectorMap[id] = selectorMap[id] || _getSelector(target, document, options))
+    async function getSelector(
+      id: number,
+      target: Element,
+      options?: MouseHandlerOptions,
+    ): Promise<string> {
+      if (selectorMap[id]) {
+        return selectorMap[id]
+      }
+      const selector = await _getSelector(target, document, options)
+
+      return selector
     }
 
     const attachListener = topframe
@@ -214,7 +232,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       },
       false,
     )
-    attachListener(document, 'click', (e: MouseEvent): void => {
+    attachListener(document, 'click', async (e: MouseEvent) => {
       const target = getTarget(e.target, document)
       if ((!e.clientX && !e.clientY) || target === null) {
         return
@@ -227,7 +245,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
-            isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
+            isClickable(target) && !disableClickmaps ? await getSelector(id, target, options) : '',
           ),
           true,
         )
