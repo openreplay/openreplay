@@ -136,6 +136,7 @@ global:
     emailSslKey: ''
     emailSslCert: ''
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
+
   enterpriseEditionLicense: ""
   domainName: ""
 
