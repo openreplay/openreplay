@@ -40,7 +40,7 @@
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "replace-in-files": "^2.0.3",
-    "rollup": "^2.17.0",
+    "rollup": "^2.59.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
     "ts-jest": "^29.0.3",

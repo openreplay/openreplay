@@ -79,6 +79,7 @@ export interface Options {
   failuresOnly: boolean
   ignoreHeaders: Array<string> | boolean
   capturePayload: boolean
+  captureInIframes: boolean
   sanitizer?: Sanitizer
 }
 
@@ -89,6 +90,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
       ignoreHeaders: ['Cookie', 'Set-Cookie', 'Authorization'],
       capturePayload: false,
       sessionTokenHeader: false,
+      captureInIframes: true,
     },
     opts,
   )
@@ -312,7 +314,6 @@ export default function (app: App, opts: Partial<Options> = {}) {
     ) {
       const rdo = getXHRRequestDataObject(this)
       rdo.body = body
-
       // @ts-ignore ??? this -> XMLHttpRequest
       return nativeSend.apply(this, arguments)
     }
@@ -336,5 +337,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
 
   patchWindow(window)
 
-  app.observer.attachContextCallback(app.safe(patchWindow))
+  if (options.captureInIframes) {
+    app.observer.attachContextCallback(app.safe(patchWindow))
+  }
 }
