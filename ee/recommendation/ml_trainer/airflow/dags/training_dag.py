@@ -9,8 +9,11 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.sensors.python import PythonSensor
 from decouple import config
 import os
-_work_dir = os.getcwd()
+import mlflow
 
+_work_dir = os.getcwd()
+client = mlflow.MlflowClient()
+models = [model.name for model in client.search_registered_models()]
 
 def false_func():
     return False
@@ -24,11 +27,8 @@ def example_airflow_db():
 
 
 def example_mlflow(ti):
-    import mlflow
+    global models
     import hashlib
-    client = mlflow.MlflowClient()
-    models = [model.name for model in client.search_registered_models()]
-    print(models)
     projects = ti.xcom_pull(key='project_data').split(' ')
     tenants = ti.xcom_pull(key='tenant_data').split(' ')
     new_projects = list()
