@@ -1,6 +1,7 @@
 # 7.0.1
 
 - fix time inputs capturing
+- add option to disable network tracking inside iframes
 
 # 7.0.0
 
