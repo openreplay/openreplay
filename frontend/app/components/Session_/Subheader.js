@@ -23,13 +23,13 @@ function SubHeader(props) {
   const {
     width,
     height,
-    location: currentLocation,
     endTime,
     tabStates,
     currentTab,
     tabs,
   } = store.get();
 
+  const currentLocation = tabStates[currentTab]?.location || ''
   const resourceList = tabStates[currentTab]?.resourceList || []
   const exceptionsList = tabStates[currentTab]?.exceptionsList || []
   const eventsList = tabStates[currentTab]?.eventsList || []

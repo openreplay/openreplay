@@ -166,6 +166,11 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
 
+      const activeTabs = this.state.get().tabs
+      if (tabId && !activeTabs.includes(tabId)) {
+        this.state.update({ tabs: activeTabs.concat(tabId) })
+      }
+
       if (tabId && this.activeTab !== tabId) {
         this.state.update({ currentTab: tabId })
         this.activeTab = tabId
@@ -210,7 +215,6 @@ export default class MessageManager {
     }
     switch (msg.tp) {
       case MType.TabChange:
-        this.state.update({ tabs: this.state.get().tabs.concat(msg.tabId) })
         this.activeTabManager.append(msg)
         break;
       case MType.MouseThrashing:
