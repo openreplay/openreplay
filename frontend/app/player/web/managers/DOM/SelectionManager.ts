@@ -6,12 +6,13 @@ import Screen from 'Player/web/Screen/Screen';
 export default class SelectionManager extends ListWalker<SelectionChange> {
   constructor(private readonly vElements: Map<number, VElement>, private readonly screen: Screen) {
     super();
+    this.screen.cursor.setOnClickHook(this.clearSelection)
   }
 
   private selected: [{ id: number, node: Element } | null, { id: number, node: Element } | null] = [null, null];
   private markers: Element[] = []
 
-  clearSelection() {
+  public clearSelection = () => {
     this.selected[0] && this.screen.overlay.removeChild(this.selected[0].node) && this.selected[0].node.remove();
     this.selected[1] && this.screen.overlay.removeChild(this.selected[1].node) && this.selected[1].node.remove();
     this.markers.forEach(marker => marker.remove())
