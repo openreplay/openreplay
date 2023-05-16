@@ -1,5 +1,5 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID, Type as MType, TabChange } from './messages.gen.js'
+import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
 import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
@@ -259,6 +259,7 @@ export default class App {
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
+      this.messages.unshift(TabData(this.session.getTabId()))
       this.messages.unshift(Timestamp(this.timestamp()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
@@ -530,6 +531,7 @@ export default class App {
         })
         if (!isNewSession) {
           console.log('continuing session on new tab', this.session.getTabId())
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           this.send(TabChange(this.session.getTabId()))
         }
         // (Re)send Metadata for the case of a new session

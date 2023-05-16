@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { selectStorageType, STORAGE_TYPES } from 'Player';
+import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
 import { Icon, Tooltip } from 'UI';
@@ -67,17 +67,21 @@ function Controls(props: any) {
     completed,
     skip,
     speed,
-    cssLoading,
     messagesLoading,
     inspectorMode,
     markedTargets,
-    exceptionsList,
-    profilesList,
-    graphqlList,
-    logMarkedCountNow: logRedCount,
-    resourceMarkedCountNow: resourceRedCount,
-    stackMarkedCountNow: stackRedCount,
+    currentTab,
+    tabStates
   } = store.get();
+
+  const cssLoading = tabStates[currentTab]?.cssLoading ?? false;
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
+  const profilesList = tabStates[currentTab]?.profilesList || [];
+  const graphqlList = tabStates[currentTab]?.graphqlList || [];
+  const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
+  const resourceRedCount = tabStates[currentTab]?.resourceMarkedCountNow || 0;
+  const stackRedCount = tabStates[currentTab]?.stackMarkedCountNow || 0;
+
   const {
     bottomBlock,
     toggleBottomBlock,
@@ -86,10 +90,10 @@ function Controls(props: any) {
     skipInterval,
     disabledRedux,
     showStorageRedux,
-    session
+    session,
   } = props;
-
-  const storageType = selectStorageType(store.get());
+  
+  const storageType = store.get().tabStates[currentTab] ? selectStorageType(store.get().tabStates[currentTab]) : StorageType.NONE
   const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
   const profilesCount = profilesList.length;
   const graphqlCount = graphqlList.length;

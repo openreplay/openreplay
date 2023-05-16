@@ -148,7 +148,7 @@ export default class ListWalker<T extends Timed> {
 			changed = true;
 		}
 
-		console.log(this.list[this.p - 1])
+		// console.log(this.list[this.p - 1])
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
 

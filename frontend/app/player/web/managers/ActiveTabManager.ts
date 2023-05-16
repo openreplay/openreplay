@@ -11,7 +11,7 @@ export default class ActiveTabManager extends ListWalker<TabChange> {
     }
     this.currentTime = t
     const msg = this.moveGetLastDebug(t)
-    console.log('move', t, msg, this.list)
+    // console.log('move', t, msg, this.list)
 
     return Promise.resolve(msg?.tabId || null)
   }

@@ -22,6 +22,7 @@ export default class MFileReader extends RawMessageReader {
     // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes + weird failover (don't ask)
     const skipIndexes = this.readCustomIndex(this.buf.slice(0, 8)) === 72057594037927940
       || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
+
     if (skipIndexes) {
       this.noIndexes = true
       this.skip(8)

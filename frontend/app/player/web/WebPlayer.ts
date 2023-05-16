@@ -163,6 +163,10 @@ export default class WebPlayer extends Player {
     this.screen.cursor.showTag(name)
   }
 
+  changeTab = (tab: string) => {
+    this.messageManager.changeTab(tab)
+  }
+
   clean = () => {
     super.clean()
     this.screen.clean()

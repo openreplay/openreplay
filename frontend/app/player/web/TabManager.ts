@@ -9,18 +9,29 @@ import {
 import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
 import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
 import PagesManager from "Player/web/managers/PagesManager";
+// @ts-ignore
 import { Decoder } from "syncod";
-import Lists, { InitialLists } from "Player/web/Lists";
-import type  { Store } from '../common/types';
+import Lists, { InitialLists, INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from "Player/web/Lists";
+import type  { Store } from 'Player';
 import Screen from "Player/web/Screen/Screen";
 import { TYPES as EVENT_TYPES } from "Types/session/event";
-import MouseMoveManager from "Player/web/managers/MouseMoveManager";
-import ActivityManager from "Player/web/managers/ActivityManager";
+import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
 import { isDOMType } from "Player/web/messages/filters.gen";
-import { State, visualChanges } from './MessageManager'
 
-export default class TabManager {
+export interface TabState extends ListsState {
+  performanceAvailability?: PerformanceTrackManager['availability']
+  performanceChartData: PerformanceChartPoint[],
+  cssLoading: boolean,
+}
+
+export default class TabSessionManager {
+  static INITIAL_STATE: TabState = {
+    ...LISTS_INITIAL_STATE,
+    performanceChartData: [],
+    cssLoading: false,
+  }
+
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
   private locationManager: ListWalker<SetPageLocation> = new ListWalker();
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
@@ -34,19 +45,20 @@ export default class TabManager {
 
   public readonly decoder = new Decoder();
   private lists: Lists;
-
+  private navigationStartOffset = 0
 
   constructor(
     private readonly session: any,
-    private readonly state: Store<{}>,
+    private readonly state: Store<{ tabStates: { [tabId: string]: TabState } }>,
     private readonly screen: Screen,
     private readonly id: string,
     private readonly setSize: ({ height, width }: { height: number, width: number }) => void,
+    private readonly sessionStart: number,
     initialLists?: Partial<InitialLists>,
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
     this.lists = new Lists(initialLists)
-    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Moveable" module
+    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Movable" module
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);
       }
@@ -64,15 +76,33 @@ export default class TabManager {
       }
     })
 
-    this.state.update({ ...this.lists.getFullListsState() });
+    this.updateLocalState({ ...this.lists.getFullListsState() });
+  }
+
+  updateLocalState(state: Partial<TabState>) {
+    this.state.update({
+      tabStates: {
+        ...this.state.get().tabStates,
+        [this.id]: {
+          ...this.state.get().tabStates[this.id],
+          ...state
+        }
+      }
+    })
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
     this.screen.displayFrame(!cssLoading)
-    this.state.update({ cssLoading, ready: !this.state.get().messagesLoading && !cssLoading })
+    this.updateLocalState({
+      cssLoading
+    })
+    this.state.update({
+    // @ts-ignore
+      ready: !this.state.get().messagesLoading && !cssLoading
+    })
   }
 
-  resetMessageManagers() {
+  public resetMessageManagers() {
     this.locationEventManager = new ListWalker();
     this.locationManager = new ListWalker();
     this.loadedLocationManager = new ListWalker();
@@ -115,6 +145,7 @@ export default class TabManager {
       /* Lists: */
       case MType.ConsoleLog:
         if (msg.level === 'debug') break;
+        console.log(msg)
         this.lists.lists.log.append(
           // @ts-ignore : TODO: enums in the message schema
           Log(msg)
@@ -180,7 +211,6 @@ export default class TabManager {
   }
 
   move(t: number, index?: number): void {
-
     const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
@@ -222,7 +252,7 @@ export default class TabManager {
     }
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t))
-    Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
+    Object.keys(stateToUpdate).length > 0 && this.updateLocalState(stateToUpdate);
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
@@ -236,9 +266,54 @@ export default class TabManager {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
     })
+  }
 
-    // if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {
-    //   this.setMessagesLoading(true)
-    // }
+  public decodeMessage(msg: Message) {
+    return this.decoder.decode(msg)
+  }
+
+  public _sortMessagesHack = (msgs: Message[]) => {
+    // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
+    const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
+    this.pagesManager.sortPages((m1, m2) => {
+      if (m1.time === m2.time) {
+        if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
+          if (headChildrenIds.includes(m1.id)) {
+            return -1;
+          }
+        } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
+          if (headChildrenIds.includes(m2.id)) {
+            return 1;
+          }
+        }  else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
+          const m1FromHead = headChildrenIds.includes(m1.id);
+          const m2FromHead = headChildrenIds.includes(m2.id);
+          if (m1FromHead && !m2FromHead) {
+            return -1;
+          } else if (m2FromHead && !m1FromHead) {
+            return 1;
+          }
+        }
+      }
+      return 0;
+    })
+  }
+
+  public onFileReadSuccess = () => {
+    const stateToUpdate : Partial<State>= {
+      performanceChartData: this.performanceTrackManager.chartData,
+      performanceAvailability: this.performanceTrackManager.availability,
+      ...this.lists.getFullListsState(),
+    }
+
+    this.updateLocalState(stateToUpdate)
+  }
+
+  public getListsFullState = () => {
+    return this.lists.getFullListsState()
+  }
+
+  clean() {
+    this.pagesManager.reset()
   }
 }

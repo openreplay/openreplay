@@ -24,15 +24,17 @@ function SubHeader(props) {
     width,
     height,
     location: currentLocation,
-    fetchList,
-    graphqlList,
-    resourceList,
-    exceptionsList,
-    eventList: eventsList,
     endTime,
-      currentTab,
-      tabs,
+    tabStates,
+    currentTab,
+    tabs,
   } = store.get();
+
+  const resourceList = tabStates[currentTab]?.resourceList || []
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || []
+  const eventsList = tabStates[currentTab]?.eventsList || []
+  const graphqlList = tabStates[currentTab]?.graphqlList || []
+  const fetchList = tabStates[currentTab]?.fetchList || []
 
   const enabledIntegration = useMemo(() => {
     const { integrations } = props;
@@ -117,7 +119,15 @@ function SubHeader(props) {
         </>
       )}
       {tabs.map((tab, i) => (
-          <div className={currentTab === tab ? 'outline-active-blue-border outline m-2' : 'm-2'}>
+          <div
+              key={tab}
+              onClick={() => player.changeTab(tab)}
+              className={
+                currentTab === tab
+                  ? 'outline-active-blue-border outline m-2 cursor-pointer'
+                  : 'm-2 cursor-pointer'
+              }
+          >
             Tab {i+1}
           </div>
       ))}
