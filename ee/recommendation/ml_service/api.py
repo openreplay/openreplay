@@ -16,6 +16,7 @@ app.schedule = AsyncIOScheduler()
 async def startup():
     await pg_client.init()
     await feedback.init()
+    await recommendation_model.update()
     app.schedule.start()
     for job in cron_jobs:
         app.schedule.add_job(id=job['func'].__name__, **job)
@@ -42,3 +43,8 @@ async def get_feedback(data: FeedbackRecommendation):
     except Exception as e:
         return {'error': e}
     return {'success': 1}
+
+
+@app.get('/')
+async def health():
+    return 200

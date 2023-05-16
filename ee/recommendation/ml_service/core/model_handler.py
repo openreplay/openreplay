@@ -83,9 +83,8 @@ class Recommendations:
     def __init__(self):
         self.names = dict()
         self.models = dict()
-        self.update()
 
-    def update(self):
+    async def update(self):
         r_models = mlflow.search_registered_models()
         new_names = {m.name: max(m.latest_versions).version for m in r_models}
         for name, version in new_names.items():
