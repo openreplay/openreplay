@@ -8,6 +8,7 @@ export default class Cursor {
   private tagElement: HTMLDivElement;
   private coords = { x: 0, y: 0 };
   private isMoving = false;
+  private onClick: () => void;
 
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
@@ -75,13 +76,14 @@ export default class Cursor {
   click() {
     const styleList = this.isMobile ? styles.clickedMobile : styles.clicked
     this.cursor.classList.add(styleList)
+    this.onClick?.()
     setTimeout(() => {
       this.cursor.classList.remove(styleList)
     }, 600)
   }
 
-  // TODO (to keep on a different playing speed):
-  // transition
-  // setTransitionSpeed()
+  setOnClickHook(callback: () => void) {
+    this.onClick = callback
+  }
 
 }

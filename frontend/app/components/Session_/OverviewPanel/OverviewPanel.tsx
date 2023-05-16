@@ -18,6 +18,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
+    'FRUSTRATIONS',
     'ERRORS',
     'NETWORK',
   ]);
