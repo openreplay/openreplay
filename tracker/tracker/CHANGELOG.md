@@ -1,3 +1,7 @@
+# 7.0.1
+
+- fix time inputs capturing
+
 # 7.0.0
 
 - **[breaking]** added gzip compression to large messages
