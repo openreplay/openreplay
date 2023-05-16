@@ -41,7 +41,8 @@ function Storage(props: Props) {
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const state = store.get();
+  const { tabStates, currentTab } = store.get()
+  const state = tabStates[currentTab]
 
   const listNow = selectStorageListNow(state);
   const list = selectStorageList(state);
