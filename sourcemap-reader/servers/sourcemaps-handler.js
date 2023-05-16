@@ -2,6 +2,7 @@
 const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
+const { BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
 const URL = require('url');
 const http = require('http');
 const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
@@ -134,46 +135,89 @@ module.exports.sourcemapReader = async event => {
             });
         });
     } else {
-        let s3;
-        if (process.env.S3_HOST) {
-            s3 = new AWS.S3({
-                endpoint: process.env.S3_HOST,
-                accessKeyId: process.env.S3_KEY,
-                secretAccessKey: process.env.S3_SECRET,
-                s3ForcePathStyle: true, // needed with minio?
-                signatureVersion: 'v4'
-            });
-        } else {
-            s3 = new AWS.S3({
-                'AccessKeyID': process.env.aws_access_key_id,
-                'SecretAccessKey': process.env.aws_secret_access_key,
-                'Region': process.env.aws_region
-            });
-        }
+        if (process.env.CLOUD === 'azure') {
+            // Download the file from Azure Blob Storage
+            let name = process.env.AZURE_ACCOUNT_NAME
+            let key = process.env.AZURE_ACCOUNT_KEY
+            let url = `https://${name}.blob.core.windows.net/`
 
-        let options = {
-            Bucket: event.bucket,
-            Key: event.key
-        };
-        return new Promise(function (resolve, reject) {
-            const getObjectStart = Date.now();
-            s3.getObject(options, (err, data) => {
-                if (err) {
-                    console.error("[SR] Get S3 object failed");
-                    console.error(err);
+            return new Promise(async function (resolve, reject) {
+                try {
+                    // Init ABS client and get account info to check connection
+                    let client = new BlobServiceClient(url, new StorageSharedKeyCredential(name, key))
+                    await client.getAccountInfo()
+                    let containerClient = client.getContainerClient(event.bucket)
+                    const getObjectStart = Date.now()
+                    const response = await containerClient.getBlobClient(event.key).downloadToBuffer()
+                    const getObjectEnd = Date.now()
+
+                    let options = {
+                        Bucket: event.bucket,
+                        Key: event.key,
+                        fileSize: (data.ContentLength / 1024) / 1024,
+                        fileSizeUnit: 'Mb',
+                        downloadTime: (getObjectEnd - getObjectStart) / 1000,
+                        downloadTimeUnit: 's',
+                    };
+
+                    if (options.fileSize >= 3) {
+                        console.log("[SR] large file:" + JSON.stringify(options));
+                    }
+                    let sourcemap = response.toString()
+                    return parseSourcemap(sourcemap, event, options, resolve, reject);
+                } catch (err) {
+                    if (err.statusCode && err.statusCode === 404) {
+                        console.log("blob not found")
+                    } else {
+                        console.log("unknown error:", err);
+                    }
                     return reject(err);
                 }
-                const getObjectEnd = Date.now();
-                options.fileSize = (data.ContentLength / 1024) / 1024;
-                options.fileSizeUnit = 'Mb';
-                options.downloadTime = (getObjectEnd - getObjectStart) / 1000;
-                options.downloadTimeUnit = 's';
-                if (options.fileSize >= 3) {
-                    console.log("[SR] large file:" + JSON.stringify(options));
-                }
-                let sourcemap = data.Body.toString();
-                return parseSourcemap(sourcemap, event, options, resolve, reject);
+
             });
-        });
+        } else {
+            // Download the file from S3
+            let s3;
+            if (process.env.S3_HOST) {
+                s3 = new AWS.S3({
+                    endpoint: process.env.S3_HOST,
+                    accessKeyId: process.env.S3_KEY,
+                    secretAccessKey: process.env.S3_SECRET,
+                    s3ForcePathStyle: true, // needed with minio?
+                    signatureVersion: 'v4'
+                });
+            } else {
+                s3 = new AWS.S3({
+                    'AccessKeyID': process.env.aws_access_key_id,
+                    'SecretAccessKey': process.env.aws_secret_access_key,
+                    'Region': process.env.aws_region
+                });
+            }
+
+            let options = {
+                Bucket: event.bucket,
+                Key: event.key
+            };
+            return new Promise(function (resolve, reject) {
+                const getObjectStart = Date.now();
+                s3.getObject(options, (err, data) => {
+                    if (err) {
+                        console.error("[SR] Get S3 object failed");
+                        console.error(err);
+                        return reject(err);
+                    }
+                    const getObjectEnd = Date.now();
+                    options.fileSize = (data.ContentLength / 1024) / 1024;
+                    options.fileSizeUnit = 'Mb';
+                    options.downloadTime = (getObjectEnd - getObjectStart) / 1000;
+                    options.downloadTimeUnit = 's';
+                    if (options.fileSize >= 3) {
+                        console.log("[SR] large file:" + JSON.stringify(options));
+                    }
+                    let sourcemap = data.Body.toString();
+                    return parseSourcemap(sourcemap, event, options, resolve, reject);
+                });
+            });
+        }
     }
 };
