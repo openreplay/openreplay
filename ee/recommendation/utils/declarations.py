@@ -2,8 +2,9 @@ from pydantic import BaseModel, Field
 
 
 class FeedbackRecommendation(BaseModel):
-    viewer_id: str = Field(...)
+    viewer_id: int = Field(...)
     session_id: int = Field(...)
+    project_id: int = Field(...)
     payload: dict = Field(default=dict())
 
 

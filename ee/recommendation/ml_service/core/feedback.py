@@ -55,9 +55,10 @@ class EventQueue:
         i = 0
         insertion_time = time()
         while not self.events.empty():
-            user_id, session_id, payload = self.events.get()
+            user_id, session_id, project_id, payload = self.events.get()
             params[f'user_id_{i}'] = user_id
             params[f'session_id_{i}'] = session_id
+            params[f'project_id_{i}'] = project_id
             params[f'payload_{i}'] = json.dumps(payload)
             events.append(
                 f"(%(user_id_{i})s, %(session_id_{i})s, %(payload_{i})s::jsonb, {insertion_time})")
@@ -66,7 +67,7 @@ class EventQueue:
         if i == 0:
             return 0
         cur = conn.connection().connection.cursor()
-        query = cur.mogrify(f"""INSERT INTO recommendation_feedback (user_id, session_id, payload, insertion_time) VALUES {' , '.join(events)};""", params)
+        query = cur.mogrify(f"""INSERT INTO recommendation_feedback (user_id, session_id, project_id, payload, insertion_time) VALUES {' , '.join(events)};""", params)
         conn.execute(text(query.decode("utf-8")))
         conn.commit()
         return 1
