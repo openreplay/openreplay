@@ -61,7 +61,7 @@ class EventQueue:
             params[f'project_id_{i}'] = project_id
             params[f'payload_{i}'] = json.dumps(payload)
             events.append(
-                f"(%(user_id_{i})s, %(session_id_{i})s, %(payload_{i})s::jsonb, {insertion_time})")
+                f"(%(user_id_{i})s, %(session_id_{i})s, %(project_id_{i})s, %(payload_{i})s::jsonb, {insertion_time})")
             i += 1
         self.last_flush = time()
         if i == 0:
