@@ -9,6 +9,8 @@ OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
 #HELM_OPTIONS=""
 # If you want to install the dev version. It can be any branch or tag.
 #OR_VERSION="dev"
+# Only upgrade Openreplay
+# UPGRADE_OR_ONLY=1 openreplay -u
 
 [[ -d $OR_DIR ]] || {
   sudo mkdir $OR_DIR
@@ -173,9 +175,11 @@ function or_helm_upgrade() {
     toolings
     openreplay
     )
+  [[ $UPGRADE_OR_ONLY -eq 1 ]] && chart_names=( openreplay )
   [[ $state == "reload" ]] && chart_names=( openreplay )
   for chart in "${chart_names[@]}"; do
     [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
+    log info helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"
     if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"; then
       log err "
         Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
