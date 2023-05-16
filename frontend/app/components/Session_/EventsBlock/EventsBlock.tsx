@@ -29,14 +29,14 @@ interface IProps {
 function EventsBlock(props: IProps) {
   const [mouseOver, setMouseOver] = React.useState(true);
   const scroller = React.useRef<List>(null);
-  const cache = useCellMeasurerCache( {
+  const cache = useCellMeasurerCache({
     fixedWidth: true,
     defaultHeight: 300,
   });
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { eventListNow, playing } = store.get();
+  const { playing, tabStates } = store.get();
 
   const {
     filteredEvents,
@@ -44,9 +44,13 @@ function EventsBlock(props: IProps) {
     filterOutNote,
     query,
     setActiveTab,
-    events,
     notesWithEvents,
   } = props;
+
+  // TODO! multitab tab id
+  const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
+    return acc.concat(tab.eventListNow)
+  }, [])
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = filteredEvents || notesWithEvents;

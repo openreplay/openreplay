@@ -64,9 +64,7 @@ export const visualChanges = [
 export default class MessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
-    tabStates: {
-      '': { ...TabSessionManager.INITIAL_STATE },
-    },
+    tabStates: {},
     skipIntervals: [],
     error: false,
     ready: false,
@@ -125,6 +123,7 @@ export default class MessageManager {
       this.activityManager.end()
       this.state.update({ skipIntervals: this.activityManager.list })
     }
+    Object.values(this.tabs).forEach(tab => tab.onFileReadSuccess?.())
   }
 
   public onFileReadFailed = (e: any) => {
@@ -176,7 +175,7 @@ export default class MessageManager {
         this.activeTab = tabId
       }
       if (!this.tabs[this.activeTab]) {
-        console.log(this.tabs, this.activeTab, tabId, this.activeTabManager.list)
+        console.error('missing tab state', this.tabs, this.activeTab, tabId, this.activeTabManager.list)
       }
       // console.log(this.tabs, this.activeTab)
       this.tabs[this.activeTab].move(t)
@@ -187,7 +186,7 @@ export default class MessageManager {
     }
   }
 
-  public changeTab(tabId) {
+  public changeTab(tabId: string) {
     this.activeTab = tabId
     this.state.update({ currentTab: tabId })
     this.tabs[tabId].move(this.state.get().time)

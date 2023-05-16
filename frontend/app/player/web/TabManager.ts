@@ -1,7 +1,7 @@
 import ListWalker from "Player/common/ListWalker";
 import {
   ConnectionInformation,
-  Message, MType,
+  Message, MType, ResourceTiming,
   SetPageLocation,
   SetViewportScroll,
   SetViewportSize
@@ -22,13 +22,20 @@ import { isDOMType } from "Player/web/messages/filters.gen";
 export interface TabState extends ListsState {
   performanceAvailability?: PerformanceTrackManager['availability']
   performanceChartData: PerformanceChartPoint[],
+  performanceChartTime: PerformanceChartPoint[]
   cssLoading: boolean,
 }
+
+/**
+ * DO NOT DELETE UNUSED METHODS
+ * THEY'RE ALL USED IN MESSAGE MANAGER VIA this.tabs[id]
+ * */
 
 export default class TabSessionManager {
   static INITIAL_STATE: TabState = {
     ...LISTS_INITIAL_STATE,
     performanceChartData: [],
+    performanceChartTime: [],
     cssLoading: false,
   }
 
@@ -155,7 +162,7 @@ export default class TabSessionManager {
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
         if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
-          this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
+          this.lists.lists.resource.insert(getResourceFromResourceTiming(msg as ResourceTiming, this.sessionStart))
         }
         break;
       case MType.Fetch:
@@ -211,7 +218,7 @@ export default class TabSessionManager {
   }
 
   move(t: number, index?: number): void {
-    const stateToUpdate: Partial<State> = {};
+    const stateToUpdate: Record<string, any> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
@@ -300,7 +307,8 @@ export default class TabSessionManager {
   }
 
   public onFileReadSuccess = () => {
-    const stateToUpdate : Partial<State>= {
+    console.log('triggered', this.performanceTrackManager)
+    const stateToUpdate : Partial<Record<string,any>> = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,
       ...this.lists.getFullListsState(),
