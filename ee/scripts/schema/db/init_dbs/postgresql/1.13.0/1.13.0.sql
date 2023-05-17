@@ -50,4 +50,8 @@ CREATE TABLE IF NOT EXISTS public.feature_flags_conditions
     filters            jsonb   NOT NULL DEFAULT '[]'::jsonb
 );
 
+UPDATE public.roles
+SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{FEATURE_FLAGS}') AS e)
+where not permissions @> '{FEATURE_FLAGS}';
+
 COMMIT;
