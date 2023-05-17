@@ -15,6 +15,7 @@ class Permissions(str, Enum):
     metrics = "METRICS"
     assist_live = "ASSIST_LIVE"
     assist_call = "ASSIST_CALL"
+    feature_flags = "FEATURE_FLAGS"
 
 
 class CurrentContext(schemas.CurrentContext):
