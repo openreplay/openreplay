@@ -137,19 +137,19 @@ module.exports.sourcemapReader = async event => {
     } else {
         if (process.env.CLOUD === 'azure') {
             // Download the file from Azure Blob Storage
-            let name = process.env.AZURE_ACCOUNT_NAME
-            let key = process.env.AZURE_ACCOUNT_KEY
-            let url = `https://${name}.blob.core.windows.net/`
+            const name = process.env.AZURE_ACCOUNT_NAME;
+            const key = process.env.AZURE_ACCOUNT_KEY;
+            const url = `https://${name}.blob.core.windows.net/`;
 
             return new Promise(async function (resolve, reject) {
                 try {
                     // Init ABS client and get account info to check connection
-                    let client = new BlobServiceClient(url, new StorageSharedKeyCredential(name, key))
-                    await client.getAccountInfo()
-                    let containerClient = client.getContainerClient(event.bucket)
-                    const getObjectStart = Date.now()
-                    const response = await containerClient.getBlobClient(event.key).downloadToBuffer()
-                    const getObjectEnd = Date.now()
+                    let client = new BlobServiceClient(url, new StorageSharedKeyCredential(name, key));
+                    await client.getAccountInfo();
+                    let containerClient = client.getContainerClient(event.bucket);
+                    const getObjectStart = Date.now();
+                    const response = await containerClient.getBlobClient(event.key).downloadToBuffer();
+                    const getObjectEnd = Date.now();
 
                     let options = {
                         Bucket: event.bucket,
@@ -163,7 +163,7 @@ module.exports.sourcemapReader = async event => {
                     if (options.fileSize >= 3) {
                         console.log("[SR] large file:" + JSON.stringify(options));
                     }
-                    let sourcemap = response.toString()
+                    let sourcemap = response.toString();
                     return parseSourcemap(sourcemap, event, options, resolve, reject);
                 } catch (err) {
                     if (err.statusCode && err.statusCode === 404) {
