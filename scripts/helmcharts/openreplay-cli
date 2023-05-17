@@ -83,7 +83,8 @@ function log () {
 # `KUBECONFIG=/path/to/file openreplay -s`
 [[ -f /etc/rancher/k3s/k3s.yaml ]] && k3s_path="/etc/rancher/k3s/k3s.yaml"
 [[ -f "${HOME}/.kube/config" ]] && local_kube_config_path="${HOME}/.kube/config"
-export KUBECONFIG=${KUBECONFIG:-$k3s_path:$local_kube_config_path}
+k3s_path=${k3s_path:-$local_kube_config_path}
+export KUBECONFIG=${KUBECONFIG:-$k3s_path}
 [[ -z $KUBECONFIG ]] && log err "No kubeconfig file found. Exiting"
 tmp_dir=$(mktemp -d)
 
