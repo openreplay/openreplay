@@ -1,8 +1,8 @@
 DO
 $$
     DECLARE
-        previous_version CONSTANT text := 'v1.12.0';
-        next_version     CONSTANT text := 'v1.13.0';
+        previous_version CONSTANT text := 'v1.12.0-ee';
+        next_version     CONSTANT text := 'v1.13.0-ee';
     BEGIN
         IF (SELECT openreplay_version()) = previous_version THEN
             raise notice 'valid previous DB version';
@@ -19,7 +19,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.13.0'
+SELECT 'v1.13.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS public.feature_flags
