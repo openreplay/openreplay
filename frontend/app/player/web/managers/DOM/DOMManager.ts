@@ -61,10 +61,6 @@ export default class DOMManager extends ListWalker<Message> {
     this.stringDict = stringDict
   }
 
-  public clearSelectionManager() {
-    this.selectionManager.clearSelection()
-  }
-
   append(m: Message): void {
     if (m.tp === MType.SetNodeScroll) {
       let scrollManager = this.nodeScrollManagers.get(m.id)

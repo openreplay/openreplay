@@ -1,21 +1,22 @@
-import { Log, LogLevel, SessionFilesInfo } from 'App/player'
+import { Log, LogLevel } from './types/log'
 
 import type { Store } from 'App/player'
 import Player from '../player/Player'
 
 import MessageManager from './MessageManager'
-import MessageLoader from './MessageLoader'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
 import Screen, { ScaleMode } from './Screen/Screen'
 import { Message } from "Player/web/messages";
+
+
+// export type State = typeof WebPlayer.INITIAL_STATE
 
 export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
     ...Player.INITIAL_STATE,
     ...TargetMarker.INITIAL_STATE,
     ...MessageManager.INITIAL_STATE,
-    ...MessageLoader.INITIAL_STATE,
 
     inspectorMode: false,
   }
@@ -23,17 +24,10 @@ export default class WebPlayer extends Player {
   private readonly inspectorController: InspectorController
   protected screen: Screen
   protected readonly messageManager: MessageManager
-  protected readonly messageLoader: MessageLoader
 
   private targetMarker: TargetMarker
 
-  constructor(
-    protected wpState: Store<typeof WebPlayer.INITIAL_STATE>,
-    session: SessionFilesInfo,
-    live: boolean,
-    isClickMap = false,
-    public readonly uiErrorHandler?: { error: (msg: string) => void }
-  ) {
+  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean, isClickMap = false) {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
@@ -48,19 +42,12 @@ export default class WebPlayer extends Player {
     }
 
     const screen = new Screen(session.isMobile, isClickMap ? ScaleMode.AdjustParentHeight : ScaleMode.Embed)
-    const messageManager = new MessageManager(session, wpState, screen, initialLists, uiErrorHandler)
-    const messageLoader = new MessageLoader(
-      session,
-      wpState,
-      messageManager,
-      isClickMap
-    )
+    const messageManager = new MessageManager(session, wpState, screen, initialLists)
     super(wpState, messageManager)
     this.screen = screen
     this.messageManager = messageManager
-    this.messageLoader = messageLoader
     if (!live) { // hack. TODO: split OfflinePlayer class
-      void messageLoader.loadFiles()
+      void messageManager.loadMessages(isClickMap)
     }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
@@ -167,7 +154,6 @@ export default class WebPlayer extends Player {
     this.screen.clean()
     // @ts-ignore
     this.screen = undefined;
-    this.messageLoader.clean()
     window.removeEventListener('resize', this.scale)
   }
 }
