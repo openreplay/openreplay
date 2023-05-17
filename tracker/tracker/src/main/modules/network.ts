@@ -1,6 +1,8 @@
 import type App from '../app/index.js'
 import { NetworkRequest } from '../app/messages.gen.js'
 import { getTimeOrigin } from '../utils.js'
+import type { AxiosInstance } from './axiosSpy.js'
+import axiosSpy from './axiosSpy.js'
 
 type WindowFetch = typeof window.fetch
 type XHRRequestBody = Parameters<XMLHttpRequest['send']>[0]
@@ -45,7 +47,7 @@ interface ResponseData {
   headers: Record<string, string>
 }
 
-interface RequestResponseData {
+export interface RequestResponseData {
   readonly status: number
   readonly method: string
   url: string
@@ -81,6 +83,7 @@ export interface Options {
   capturePayload: boolean
   captureInIframes: boolean
   sanitizer?: Sanitizer
+  axiosInstances?: Array<AxiosInstance>
 }
 
 export default function (app: App, opts: Partial<Options> = {}) {
@@ -91,6 +94,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
       capturePayload: false,
       sessionTokenHeader: false,
       captureInIframes: true,
+      axiosInstances: undefined,
     },
     opts,
   )
@@ -237,8 +241,9 @@ export default function (app: App, opts: Partial<Options> = {}) {
     /* ====== <> ====== */
 
     /* ====== XHR ====== */
-
     const nativeOpen = context.XMLHttpRequest.prototype.open
+    const nativeSetRequestHeader = context.XMLHttpRequest.prototype.setRequestHeader
+    const nativeSend = context.XMLHttpRequest.prototype.send
 
     function trackXMLHttpReqOpen(this: XMLHttpRequest, initMethod: string, url: string | URL) {
       const xhr = this
@@ -304,10 +309,6 @@ export default function (app: App, opts: Partial<Options> = {}) {
       return nativeOpen.apply(this, arguments)
     }
 
-    context.XMLHttpRequest.prototype.open = trackXMLHttpReqOpen
-
-    const nativeSend = context.XMLHttpRequest.prototype.send
-
     function trackXHRSend(
       this: XMLHttpRequest,
       body: Document | XMLHttpRequestBodyInit | null | undefined,
@@ -318,10 +319,6 @@ export default function (app: App, opts: Partial<Options> = {}) {
       return nativeSend.apply(this, arguments)
     }
 
-    context.XMLHttpRequest.prototype.send = trackXHRSend
-
-    const nativeSetRequestHeader = context.XMLHttpRequest.prototype.setRequestHeader
-
     function trackSetReqHeader(this: XMLHttpRequest, name: string, value: string) {
       if (!isHIgnored(name)) {
         const rdo = getXHRRequestDataObject(this)
@@ -330,12 +327,21 @@ export default function (app: App, opts: Partial<Options> = {}) {
       return nativeSetRequestHeader.apply(this, arguments)
     }
 
-    context.XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader
+    if (!options.axiosInstances) {
+      context.XMLHttpRequest.prototype.open = trackXMLHttpReqOpen
+      context.XMLHttpRequest.prototype.send = trackXHRSend
+      context.XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader
+    }
 
     /* ====== <> ====== */
   }
 
   patchWindow(window)
+  if (options.axiosInstances) {
+    options.axiosInstances.forEach((axiosInstance) => {
+      axiosSpy(app, axiosInstance, options, sanitize, stringify)
+    })
+  }
 
   if (options.captureInIframes) {
     app.observer.attachContextCallback(app.safe(patchWindow))

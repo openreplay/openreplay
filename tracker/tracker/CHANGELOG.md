@@ -1,7 +1,8 @@
 # 7.0.1
 
 - fix time inputs capturing
-- add option to disable network tracking inside iframes
+- add option `{ network: { captureInIframes: boolean } }` to disable network tracking inside iframes (default true)
+- added option `{ network: { axiosInstances: AxiosInstance[] } }` to include custom axios instances for better tracking
 
 # 7.0.0
 
