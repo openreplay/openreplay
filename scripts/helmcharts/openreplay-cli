@@ -86,6 +86,7 @@ function log () {
 k3s_path=${k3s_path:-$local_kube_config_path}
 export KUBECONFIG=${KUBECONFIG:-$k3s_path}
 [[ -z $KUBECONFIG ]] && log err "No kubeconfig file found. Exiting"
+log info "Using KUBECONFIG $KUBECONFIG"
 tmp_dir=$(mktemp -d)
 
 function install_packages() {
