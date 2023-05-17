@@ -11,7 +11,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, feature_flags
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import helper, captcha, s3

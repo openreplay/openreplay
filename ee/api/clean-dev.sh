@@ -9,6 +9,7 @@ rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
+rm -rf ./chalicelib/core/feature_flags.py
 #exp rm -rf ./chalicelib/core/errors.py
 rm -rf ./chalicelib/core/errors_favorite.py
 #exp rm -rf ./chalicelib/core/events.py
