@@ -69,10 +69,10 @@ export default class MessageLoader {
     }
   }
 
-  loadDevtools() {
+  loadDevtools(parser: (b: Uint8Array) => Promise<void>) {
     if (!this.isClickmap) {
       this.store.update({ devtoolsLoading: true })
-      return loadFiles(this.session.devtoolsURL, this.createNewParser(true, 'devtools'))
+      return loadFiles(this.session.devtoolsURL, parser)
         // TODO: also in case of dynamic update through assist
         .then(() => {
           // @ts-ignore ?
@@ -91,6 +91,7 @@ export default class MessageLoader {
       : { url: this.session.mobsUrl, parser: () => this.createNewParser(false, 'dom') }
 
     const parser = loadMethod.parser()
+    const devtoolsParser = this.createNewParser(true, 'devtools')
     /**
      * We load first dom mob file before the rest
      * to speed up time to replay
@@ -100,7 +101,7 @@ export default class MessageLoader {
     try {
       await loadFiles([loadMethod.url[0]], parser)
       const restDomFilesPromise = this.loadDomFiles([...loadMethod.url.slice(1)], parser)
-      const restDevtoolsFilesPromise = this.loadDevtools()
+      const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser)
 
       await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise])
       this.messageManager.onFileReadSuccess()
