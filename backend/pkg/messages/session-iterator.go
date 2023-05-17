@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"sort"
+	"time"
 )
 
 type msgInfo struct {
@@ -119,4 +120,17 @@ func MergeMessages(data []byte, messages []*msgInfo) []byte {
 		sortedSession.Write(data[info.start:info.end])
 	}
 	return sortedSession.Bytes()
+}
+
+func SplitByDuration(messages []*msgInfo, duration uint64) int {
+	firstTs := messages[0].timestamp
+	for i, msg := range messages {
+		if msg.timestamp-firstTs > duration {
+			// TODO: remove debug logs
+			log.Println("split: ", time.UnixMilli(int64(firstTs)), time.UnixMilli(int64(msg.timestamp)))
+			log.Println("first: ", i, " second: ", len(messages)-i)
+			return i
+		}
+	}
+	return 0
 }
