@@ -58,6 +58,7 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 export default class Screen {
   readonly overlay: HTMLDivElement
   readonly cursor: Cursor
+  private selectionTargets: { start?: HTMLDivElement, end?: HTMLDivElement } = { start: undefined, end: undefined }
 
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
@@ -238,5 +239,28 @@ export default class Screen {
 
   setOnUpdate(cb: any) {
     this.onUpdateHook = cb
+  }
+
+  public createSelection(start: HTMLDivElement, end: HTMLDivElement) {
+    this.selectionTargets = { start, end }
+
+    this.overlay.appendChild(start);
+    this.overlay.appendChild(end);
+
+    setTimeout(() => {
+      start.className = styles.highlightoff
+      end.className = styles.highlightoff
+    }, 750)
+  }
+
+  public clearSelection() {
+    if (this.selectionTargets.start && this.selectionTargets.end) {
+      this.overlay.removeChild(this.selectionTargets.start);
+      this.overlay.removeChild(this.selectionTargets.end);
+      this.selectionTargets.start.remove()
+      this.selectionTargets.end.remove()
+      this.selectionTargets = { start: undefined, end: undefined }
+    }
+
   }
 }
