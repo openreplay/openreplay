@@ -59,6 +59,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	moveReady(t: number): Promise<void> {
 		const requiredPage = this.moveGetLast(t)
 		if (requiredPage != null) {
+			this.currentPage?.clearSelectionManager()
 			this.currentPage = requiredPage
 			this.currentPage.reset() // Otherwise it won't apply create_document
 		}
