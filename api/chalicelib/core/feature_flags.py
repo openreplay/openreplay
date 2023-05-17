@@ -3,7 +3,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from typing import Any, List, Dict, Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 import json
 
 feature_flag_columns = (
@@ -21,7 +21,7 @@ feature_flag_columns = (
 )
 
 
-def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, Any]:
+def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
     """
     Get all feature flags and their total count.
     """
@@ -43,7 +43,7 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
         constraints.append("feature_flags.created_by=%(user_id)s")
 
     if data.query is not None and len(data.query) > 0:
-        constraints.append("(name ILIKE %(query)s)")
+        constraints.append("name ILIKE %(query)s")
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator._contains)
 
@@ -61,7 +61,7 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
         rows = cur.fetchall()
 
     if len(rows) == 0:
-        return {"total": 0, "list": []}
+        return {"data": {"total": 0, "list": []}}
 
     results = {"total": rows[0]["count"]}
 
@@ -72,7 +72,7 @@ def search_feature_flags(project_id: int, user_id: int, data: Any) -> Dict[str, 
         row["updatedAt"] = TimeUTC.datetime_to_timestamp(row["updatedAt"])
 
     results["list"] = rows
-    return results
+    return {"data": results}
 
 
 def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
@@ -115,7 +115,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         INSERT INTO feature_flags_conditions(feature_flag_id, name, rollout_percentage, filters)
         VALUES {",".join([f"((SELECT feature_flag_id FROM inserted_flag), %(name_{i})s, %(rollout_percentage_{i})s, %(filters_{i})s::jsonb)"
                           for i in range(conditions_len)])}
-        RETURNING feature_flag_id
+        RETURNING feature_flag_id;
     """
 
     with pg_client.PostgresClient() as cur:
@@ -132,17 +132,17 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
 def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
     conditions_query = """
             SELECT COALESCE(jsonb_agg(ffc ORDER BY condition_id), '[]'::jsonb) AS conditions
-            FROM feature_flags_conditions ffc
-            WHERE ffc.feature_flag_id = ff.feature_flag_id
+            FROM feature_flags_conditions AS ffc
+            WHERE ffc.feature_flag_id = %(feature_flag_id)s
         """
 
     sql = f"""
-            SELECT {", ".join(["ff." + col for col in feature_flag_columns])}, ({conditions_query}) AS conditions
-            FROM feature_flags ff
-            LEFT JOIN LATERAL ({conditions_query}) ffc ON true
+            SELECT {", ".join(["ff." + col for col in feature_flag_columns])},
+                    ({conditions_query}) AS conditions
+            FROM feature_flags AS ff
             WHERE ff.feature_flag_id = %(feature_flag_id)s
                 AND ff.project_id = %(project_id)s
-                AND ff.deleted_at IS NULL
+                AND ff.deleted_at IS NULL;
         """
 
     with pg_client.PostgresClient() as cur:
@@ -156,7 +156,7 @@ def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
         row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
 
-    return helper.dict_to_camel_case(row)
+    return {"data": helper.dict_to_camel_case(row)}
 
 
 def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> List[Dict[str, Any]]:
@@ -226,13 +226,13 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
         row = cur.fetchone()
 
         if row is None:
-            raise HTTPException(status_code=400, detail="Something went wrong.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Something went wrong.")
 
     row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
     row['conditions'] = check_conditions(feature_flag_id, feature_flag.conditions)
 
-    return helper.dict_to_camel_case(row)
+    return {"data": helper.dict_to_camel_case(row)}
 
 
 def get_conditions(feature_flag_id: int):
@@ -248,6 +248,7 @@ def get_conditions(feature_flag_id: int):
             filters
         FROM feature_flags_conditions
         WHERE feature_flag_id = %(feature_flag_id)s
+        ORDER BY condition_id;
     """
 
     with pg_client.PostgresClient() as cur:
@@ -275,13 +276,13 @@ def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagC
             to_be_updated.append(condition)
 
     if len(to_be_created) > 0:
-        create_conditions(feature_flag_id, list(filter(lambda x: x.condition_id is None, to_be_created)))
+        create_conditions(feature_flag_id=feature_flag_id, conditions=to_be_created)
 
     if len(to_be_updated) > 0:
-        update_conditions(feature_flag_id, list(filter(lambda x: x.condition_id is not None, to_be_updated)))
+        update_conditions(feature_flag_id=feature_flag_id, conditions=to_be_updated)
 
     if len(to_be_deleted) > 0:
-        delete_conditions(to_be_deleted)
+        delete_conditions(feature_flag_id=feature_flag_id, ids=to_be_deleted)
 
     return get_conditions(feature_flag_id)
 
@@ -313,17 +314,18 @@ def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
         cur.execute(query)
 
 
-def delete_conditions(ids: List[int]) -> None:
+def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
     """
     Delete feature flag conditions.
     """
     sql = """
         DELETE FROM feature_flags_conditions
-        WHERE condition_id = ANY(%(ids)s)
+        WHERE condition_id IN %(ids)s
+            AND feature_flag_id= %(feature_flag_id)s;
     """
 
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(sql, {"ids": ids})
+        query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "ids": tuple(ids)})
         cur.execute(query)
 
 
@@ -338,8 +340,8 @@ def delete_feature_flag(project_id: int, feature_flag_id: int):
     params = {"project_id": project_id, "feature_flag_id": feature_flag_id}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE feature_flags
-                                    SET deleted_at= (now() at time zone 'utc')
-                                    WHERE {" AND ".join(conditions)};""", params)
+                                SET deleted_at= (now() at time zone 'utc')
+                                WHERE {" AND ".join(conditions)};""", params)
         cur.execute(query)
 
     return {"state": "success"}
