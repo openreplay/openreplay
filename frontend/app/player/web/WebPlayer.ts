@@ -168,8 +168,6 @@ export default class WebPlayer extends Player {
     // @ts-ignore
     this.screen = undefined;
     this.messageLoader.clean()
-    // @ts-ignore
-    this.messageManager = undefined;
     window.removeEventListener('resize', this.scale)
   }
 }
