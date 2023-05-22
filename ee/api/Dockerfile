@@ -14,8 +14,8 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt \
-    && pip install --no-cache-dir --force-reinstall --no-binary lxml lxml
+RUN /usr/local/bin/python -m pip install --upgrade pip\
+    && pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 RUN mv env.default .env
