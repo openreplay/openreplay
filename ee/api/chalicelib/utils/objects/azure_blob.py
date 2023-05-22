@@ -8,7 +8,7 @@ class AzureBlobStorage(ObjectStorageInterface):
     # Prepare blob storage client
     client = BlobServiceClient(
         account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
-        credential=config("AZURE_ACCESS_KEY"),
+        credential=config("AZURE_ACCOUNT_KEY"),
     )
 
     def exists(self, bucket, key):
@@ -22,7 +22,7 @@ class AzureBlobStorage(ObjectStorageInterface):
         blob_sas = generate_blob_sas(account_name=config("AZURE_ACCOUNT_NAME"),
                                      container_name=bucket,
                                      blob_name=key,
-                                     account_key=config("AZURE_ACCESS_KEY"),
+                                     account_key=config("AZURE_ACCOUNT_KEY"),
                                      permission=BlobSasPermissions(read=True),
                                      expiry=datetime.utcnow() + timedelta(seconds=expires_in),
                                      )
@@ -32,7 +32,7 @@ class AzureBlobStorage(ObjectStorageInterface):
         blob_sas = generate_blob_sas(account_name=config("AZURE_ACCOUNT_NAME"),
                                      container_name=bucket,
                                      blob_name=key,
-                                     account_key=config("AZURE_ACCESS_KEY"),
+                                     account_key=config("AZURE_ACCOUNT_KEY"),
                                      permission=BlobSasPermissions(write=True),
                                      expiry=datetime.utcnow() + timedelta(seconds=expires_in),
                                      )
