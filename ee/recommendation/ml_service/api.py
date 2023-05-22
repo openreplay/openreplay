@@ -6,17 +6,30 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from crons.base_crons import cron_jobs
 from auth.auth_key import api_key_auth
 from core import feedback
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
 app.schedule = AsyncIOScheduler()
+
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event('startup')
 async def startup():
     await pg_client.init()
     await feedback.init()
-    await recommendation_model.update()
+    #await recommendation_model.update()
     app.schedule.start()
     for job in cron_jobs:
         app.schedule.add_job(id=job['func'].__name__, **job)
@@ -47,4 +60,4 @@ async def get_feedback(data: FeedbackRecommendation):
 
 @app.get('/')
 async def health():
-    return 200
+    return {'status': 200}
