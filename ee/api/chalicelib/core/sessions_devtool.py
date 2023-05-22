@@ -25,10 +25,10 @@ def get_urls(session_id, project_id, context: schemas_ee.CurrentContext, check_e
     for k in __get_devtools_keys(project_id=project_id, session_id=session_id):
         if check_existence and not obj_store.exists(bucket=config("sessions_bucket"), key=k):
             continue
-        results.append(obj_store.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': config("sessions_bucket"), 'Key': k},
-            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        results.append(obj_store.get_presigned_url_for_sharing(
+            bucket=config("sessions_bucket"),
+            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900),
+            key=k
         ))
     return results
 
