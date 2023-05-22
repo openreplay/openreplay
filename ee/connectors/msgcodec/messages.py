@@ -689,7 +689,7 @@ class BatchMeta(Message):
         self.timestamp = timestamp
 
 
-class BatchMetadataDeprecated(Message):
+class BatchMetadata(Message):
     __id__ = 81
 
     def __init__(self, version, page_no, first_index, timestamp, location):
@@ -759,27 +759,15 @@ class ResourceTiming(Message):
         self.cached = cached
 
 
-class BatchMetadata(Message):
-    __id__ = 117
-
-    def __init__(self, version, page_no, first_index, timestamp, location, tab_id):
-        self.version = version
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-        self.location = location
-        self.tab_id = tab_id
-
-
 class TabChange(Message):
-    __id__ = 118
+    __id__ = 117
 
     def __init__(self, tab_id):
         self.tab_id = tab_id
 
 
 class TabData(Message):
-    __id__ = 119
+    __id__ = 118
 
     def __init__(self, tab_id):
         self.tab_id = tab_id

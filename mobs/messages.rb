@@ -432,7 +432,7 @@ message 80, 'BatchMeta', :replayer => false, :tracker => false do
 end
 
 # since tracker 3.6.0   TODO: for webworker only
-message 81, 'BatchMetadataDeprecated', :replayer => false do
+message 81, 'BatchMetadata', :replayer => false do
   uint 'Version'
   uint 'PageNo'
   uint 'FirstIndex'
@@ -484,20 +484,11 @@ message 116, 'ResourceTiming', :replayer => :devtools do
   boolean 'Cached'
 end
 
-message 117, 'BatchMetadata', :replayer => false do
-  uint 'Version'
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-  string 'Location'
-  string 'TabId'
-end
-
-message 118, 'TabChange' do
+message 117, 'TabChange' do
     string 'TabId'
 end
 
-message 119, 'TabData' do
+message 118, 'TabData' do
     string 'TabId'
 end
 

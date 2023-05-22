@@ -51,18 +51,14 @@ export default class BatchWriter {
       this.nextIndex,
       this.timestamp,
       this.url,
-      this.tabId,
     ]
-    console.log('meta', {
-      pageNo: this.pageNo,
-      nextIndex: this.nextIndex,
-      timestamp: this.timestamp,
-      url: this.url,
-      tabId: this.tabId,
-    })
+
+    const tabData: Messages.TabData = [Messages.Type.TabData, this.tabId]
 
     this.writeType(batchMetadata)
     this.writeFields(batchMetadata)
+    this.writeType(tabData as Message)
+    this.writeFields(tabData as Message)
     this.isEmpty = true
   }
 

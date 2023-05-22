@@ -61,16 +61,15 @@ export declare const enum Type {
   AdoptedSSRemoveOwner = 77,
   JSException = 78,
   Zustand = 79,
-  BatchMetadataDeprecated = 81,
+  BatchMetadata = 81,
   PartitionedMessage = 82,
   InputChange = 112,
   SelectionChange = 113,
   MouseThrashing = 114,
   UnbindNodes = 115,
   ResourceTiming = 116,
-  BatchMetadata = 117,
-  TabChange = 118,
-  TabData = 119,
+  TabChange = 117,
+  TabData = 118,
 }
 
 
@@ -483,8 +482,8 @@ export type Zustand = [
   /*state:*/ string,
 ]
 
-export type BatchMetadataDeprecated = [
-  /*type:*/ Type.BatchMetadataDeprecated,
+export type BatchMetadata = [
+  /*type:*/ Type.BatchMetadata,
   /*version:*/ number,
   /*pageNo:*/ number,
   /*firstIndex:*/ number,
@@ -539,16 +538,6 @@ export type ResourceTiming = [
   /*cached:*/ boolean,
 ]
 
-export type BatchMetadata = [
-  /*type:*/ Type.BatchMetadata,
-  /*version:*/ number,
-  /*pageNo:*/ number,
-  /*firstIndex:*/ number,
-  /*timestamp:*/ number,
-  /*location:*/ string,
-  /*tabId:*/ string,
-]
-
 export type TabChange = [
   /*type:*/ Type.TabChange,
   /*tabId:*/ string,
@@ -560,5 +549,5 @@ export type TabData = [
 ]
 
 
-type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadataDeprecated | PartitionedMessage | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming | BatchMetadata | TabChange | TabData
+type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming | TabChange | TabData
 export default Message

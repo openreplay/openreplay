@@ -1188,9 +1188,9 @@ func DecodeBatchMeta(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeBatchMetadataDeprecated(reader BytesReader) (Message, error) {
+func DecodeBatchMetadata(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &BatchMetadataDeprecated{}
+	msg := &BatchMetadata{}
 	if msg.Version, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1309,30 +1309,6 @@ func DecodeResourceTiming(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Cached, err = reader.ReadBoolean(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeBatchMetadata(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &BatchMetadata{}
-	if msg.Version, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.PageNo, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadInt(); err != nil {
-		return nil, err
-	}
-	if msg.Location, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.TabId, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1956,7 +1932,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 80:
 		return DecodeBatchMeta(reader)
 	case 81:
-		return DecodeBatchMetadataDeprecated(reader)
+		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
 	case 112:
@@ -1970,10 +1946,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 116:
 		return DecodeResourceTiming(reader)
 	case 117:
-		return DecodeBatchMetadata(reader)
-	case 118:
 		return DecodeTabChange(reader)
-	case 119:
+	case 118:
 		return DecodeTabData(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
