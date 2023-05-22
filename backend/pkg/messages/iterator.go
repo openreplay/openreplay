@@ -41,7 +41,7 @@ func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, auto
 		iter.filter = filter
 	}
 	iter.preFilter = map[int]struct{}{
-		MsgBatchMetadataDeprecated: {}, MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
+		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
 	}
 	return iter
@@ -128,22 +128,6 @@ func (i *messageIteratorImpl) zeroTsLog(msgType string) {
 
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	switch m := msg.(type) {
-	case *BatchMetadataDeprecated:
-		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
-			return fmt.Errorf("batchMetadata found at the end of the batch, info: %s", i.batchInfo.Info())
-		}
-		if m.Version > 1 {
-			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
-		}
-		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = uint64(m.Timestamp)
-		if m.Timestamp == 0 {
-			i.zeroTsLog("BatchMetadata")
-		}
-		i.messageInfo.Url = m.Location
-		i.version = m.Version
-		i.batchInfo.version = m.Version
-
 	case *BatchMetadata:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMetadata found at the end of the batch, info: %s", i.batchInfo.Info())
