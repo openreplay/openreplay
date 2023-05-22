@@ -93,8 +93,7 @@ export default class MFileReader extends RawMessageReader {
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
-      _index: this.noIndexes ? undefined : index,
-    })
+    }, !this.noIndexes ? { _index: index } : {})
 
     return msg
   }
