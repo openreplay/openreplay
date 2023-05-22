@@ -59,11 +59,13 @@ rm -rf ./chalicelib/utils/helper.py
 rm -rf ./chalicelib/utils/jira_client.py
 rm -rf ./chalicelib/utils/metrics_helper.py
 rm -rf ./chalicelib/utils/pg_client.py
-rm -rf ./chalicelib/utils/s3.py
 rm -rf ./chalicelib/utils/smtp.py
 rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
+rm -rf ./chalicelib/utils/objects/helpers.py
+rm -rf ./chalicelib/utils/objects/interface.py
+rm -rf ./chalicelib/utils/objects/s3.py
 rm -rf ./routers/app/__init__.py
 rm -rf ./crons/__init__.py
 rm -rf ./routers/subs/__init__.py
