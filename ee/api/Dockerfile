@@ -1,4 +1,7 @@
-FROM python:3.11-alpine
+#FROM python:3.11-alpine
+#use python:3.8-alpine3.10 until this issue is fixed:
+#https://github.com/xmlsec/python-xmlsec/issues/257
+FROM python:3.8-alpine3.10
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
