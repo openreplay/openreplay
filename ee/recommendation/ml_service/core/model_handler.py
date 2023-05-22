@@ -83,6 +83,7 @@ class Recommendations:
     def __init__(self):
         self.names = dict()
         self.models = dict()
+        self.to_download = list()
 
     async def update(self):
         r_models = mlflow.search_registered_models()
@@ -90,10 +91,18 @@ class Recommendations:
         for name, version in new_names.items():
             if (name, version) in self.names.items():
                 continue
+                self.to_download.append((name, version))
+            # s_model = ServedModel()
+            # s_model.load_model(name, version)
+            # self.models[name] = s_model
+        self.names = new_names
+
+    async def download_next(self):
+        if self.to_download:
+            name, version = self.to_download.pop(0)
             s_model = ServedModel()
             s_model.load_model(name, version)
             self.models[name] = s_model
-        self.names = new_names
 
     def info(self):
         print('Current models inside:')
