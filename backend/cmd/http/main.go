@@ -36,7 +36,10 @@ func main() {
 	defer dbConn.Close()
 
 	// Build all services
-	services := services.New(cfg, producer, dbConn)
+	services, err := services.New(cfg, producer, dbConn)
+	if err != nil {
+		log.Fatalf("failed while creating services: %s", err)
+	}
 
 	// Init server's routes
 	router, err := router.NewRouter(cfg, services)

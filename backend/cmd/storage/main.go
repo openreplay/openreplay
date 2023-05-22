@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	cloud "openreplay/backend/pkg/objectstorage/s3"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +13,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/storage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -25,8 +25,11 @@ func main() {
 
 	cfg := config.New()
 
-	s3 := cloud.NewS3(cfg.S3Region, cfg.S3Bucket, cfg.UseFileTags())
-	srv, err := storage.New(cfg, s3)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
+	srv, err := storage.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return

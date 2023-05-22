@@ -23,7 +23,7 @@ type storageImpl struct {
 	useTags  bool
 }
 
-func NewS3(region string, bucket string, useTags bool) objectstorage.ObjectStorage {
+func NewS3(region string, bucket string, useTags bool) (objectstorage.ObjectStorage, error) {
 	sess := env.AWSSessionOnRegion(region)
 	return &storageImpl{
 		uploader: s3manager.NewUploader(sess),
@@ -31,7 +31,7 @@ func NewS3(region string, bucket string, useTags bool) objectstorage.ObjectStora
 		bucket:   &bucket,
 		fileTag:  loadFileTag(),
 		useTags:  useTags,
-	}
+	}, nil
 }
 
 func (s *storageImpl) tagging() *string {
