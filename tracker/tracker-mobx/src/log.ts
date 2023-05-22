@@ -36,13 +36,6 @@ const getPropName = ev => {
   );
 };
 
-const action = ev => {
-  if (!isLoggingEnabled(ev)) {
-    return;
-  }
-
-  return { name: ev.name, arguments: ev.arguments, object: ev.object };
-};
 
 const reaction = ev => {
   const name = ev.name.replace('#null', '');
@@ -65,4 +58,22 @@ const compute = ev => {
   return { name };
 };
 
-export default { action, reaction, transaction, compute };
+
+const observeAction = ev => {
+  return {
+    name: ev.name,
+    object: ev.object,
+    type: ev.type
+  }
+}
+
+const action = ev => {
+  if (!isLoggingEnabled(ev)) {
+    return;
+  }
+
+  return { name: ev.name, arguments: ev.arguments, object: ev.object };
+};
+
+
+export default { action, reaction, transaction, compute, update: observeAction, delete: observeAction, add: observeAction };
