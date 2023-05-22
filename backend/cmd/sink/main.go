@@ -97,7 +97,6 @@ func main() {
 			msg = assetMessageHandler.ParseAssets(m)
 		}
 
-		switch m := msg.(type) {
 		// Filter message
 		if !messages.IsReplayerType(msg.TypeID()) {
 			return
