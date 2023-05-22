@@ -29,7 +29,7 @@ app.add_middleware(
 async def startup():
     await pg_client.init()
     await feedback.init()
-    #await recommendation_model.update()
+    await recommendation_model.update()
     app.schedule.start()
     for job in cron_jobs:
         app.schedule.add_job(id=job['func'].__name__, **job)
