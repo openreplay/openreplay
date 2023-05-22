@@ -6,4 +6,3 @@ node_modules
 *.log
 **/*.envrc
 .idea
-/.pre-commit-config.yaml
