@@ -13,7 +13,7 @@ import { withStore } from 'App/mstore';
 import APIClient from './api_client';
 import * as routes from './routes';
 import { OB_DEFAULT_TAB, isRoute } from 'App/routes';
-import Signup from './components/Signup/Signup';
+import Signup from 'Components/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
