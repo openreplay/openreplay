@@ -529,7 +529,7 @@ export default class App {
           timestamp: startTimestamp || timestamp,
           projectID,
         })
-        if (!isNewSession) {
+        if (!isNewSession && token === sessionToken) {
           console.log('continuing session on new tab', this.session.getTabId())
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           this.send(TabChange(this.session.getTabId()))
