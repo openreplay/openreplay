@@ -3,7 +3,8 @@ package objectstorage
 // Object storage configuration
 
 type ObjectsConfig struct {
-	CloudName string `env:"CLOUD,default=aws"`
+	ServiceName string `env:"SERVICE_NAME,required"`
+	CloudName   string `env:"CLOUD,default=aws"`
 	// S3 storage configuration
 	S3Region string `env:"AWS_REGION_WEB,required"`
 	S3Bucket string `env:"S3_BUCKET_WEB,required"`

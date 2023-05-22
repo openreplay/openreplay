@@ -9,17 +9,16 @@ import (
 	"log"
 	"mime"
 	"net/http"
-	metrics "openreplay/backend/pkg/metrics/assets"
-	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/objectstorage/s3"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	config "openreplay/backend/internal/config/assets"
+	metrics "openreplay/backend/pkg/metrics/assets"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/url/assets"
+
+	"github.com/pkg/errors"
 )
 
 const MAX_CACHE_DEPTH = 5
@@ -39,7 +38,14 @@ func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config) *cacher {
+func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, error) {
+	switch {
+	case cfg == nil:
+		return nil, errors.New("config is nil")
+	case store == nil:
+		return nil, errors.New("object storage is nil")
+	}
+
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 
 	tlsConfig := &tls.Config{
@@ -72,7 +78,7 @@ func NewCacher(cfg *config.Config) *cacher {
 
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
-		objStorage: s3.NewS3(cfg.AWSRegion, cfg.S3BucketAssets, cfg.UseFileTags()),
+		objStorage: store,
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
@@ -86,7 +92,7 @@ func NewCacher(cfg *config.Config) *cacher {
 		requestHeaders: cfg.AssetsRequestHeaders,
 	}
 	c.workers = NewPool(64, c.CacheFile)
-	return c
+	return c, nil
 }
 
 func (c *cacher) CacheFile(task *Task) {
