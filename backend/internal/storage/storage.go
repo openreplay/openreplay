@@ -169,7 +169,7 @@ func (s *Storage) openSession(sessID, filePath string, tp FileType) ([]byte, []b
 		return raw, nil, nil
 	}
 	start := time.Now()
-	first, second, err := s.sortSessionMessages(sessID, raw)
+	first, second, err := s.sortSessionMessages(sessID, raw, tp)
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't sort session, err: %s", err)
 	}
@@ -177,7 +177,7 @@ func (s *Storage) openSession(sessID, filePath string, tp FileType) ([]byte, []b
 	return first, second, nil
 }
 
-func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, []byte, error) {
+func (s *Storage) sortSessionMessages(sessID string, raw []byte, tp FileType) ([]byte, []byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
 	unsortedMessages, err := messages.SplitMessages(sessID, raw)
 	if err != nil {
@@ -185,8 +185,8 @@ func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, []byte
 		return raw, nil, nil
 	}
 	sortedMessages := messages.SortMessages(unsortedMessages)
-	splittingPivot := messages.SplitByDuration(sortedMessages, 15000) // split first 15 seconds
-	if splittingPivot == 0 {
+	splittingPivot := messages.SplitByDuration(sortedMessages, uint64(s.cfg.FileSplitDuration.Seconds()))
+	if splittingPivot == 0 || tp == DEV {
 		return messages.MergeMessages(raw, sortedMessages), nil, nil
 	}
 	return messages.MergeMessages(raw, sortedMessages[:splittingPivot]),
