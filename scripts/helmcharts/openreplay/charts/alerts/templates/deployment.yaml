@@ -71,7 +71,7 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
               {{- end}}
             - name: SITE_URL
-              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}'
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
             - name: S3_HOST
               {{- if contains "minio" .Values.global.s3.endpoint }}
               value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
