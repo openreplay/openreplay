@@ -46,6 +46,11 @@ type UnsuccessfulStart = {
   reason: typeof CANCELED | string
   success: false
 }
+
+type RickRoll =
+  | { line: 'never-gonna-give-you-up' }
+  | { line: 'never-gonna-let-you-down'; token: string }
+
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
 const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body, success: true })
 export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
@@ -110,6 +115,7 @@ export default class App {
   private readonly worker?: TypedWorker
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
+  private readonly bc: BroadcastChannel = new BroadcastChannel('rick')
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -213,6 +219,23 @@ export default class App {
       this.attachEventListener(document, 'visibilitychange', alertWorker, false)
     } catch (e) {
       this._debug('worker_start', e)
+    }
+
+    this.bc.postMessage({ line: 'never-gonna-give-you-up' })
+    this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+      if (ev.data.line === 'never-gonna-let-you-down') {
+        const sessionToken = ev.data.token
+        this.session.setSessionToken(sessionToken)
+      }
+      if (ev.data.line === 'never-gonna-give-you-up') {
+        const token = this.session.getSessionToken()
+        if (token) {
+          this.bc.postMessage({
+            line: 'never-gonna-let-you-down',
+            token,
+          })
+        }
+      }
     }
   }
 

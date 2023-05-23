@@ -92,11 +92,11 @@ export default class Session {
   }
 
   getSessionToken(): string | undefined {
-    return this.app.localStorage.getItem(this.options.session_token_key) || undefined
+    return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
   }
 
   setSessionToken(token: string): void {
-    this.app.localStorage.setItem(this.options.session_token_key, token)
+    this.app.sessionStorage.setItem(this.options.session_token_key, token)
   }
 
   applySessionHash(hash: string) {
@@ -109,7 +109,7 @@ export default class Session {
     if (!pageNoStr || !token) {
       return
     }
-    this.app.localStorage.setItem(this.options.session_token_key, token)
+    this.app.sessionStorage.setItem(this.options.session_token_key, token)
     this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNoStr)
   }
 
@@ -149,7 +149,7 @@ export default class Session {
   }
 
   reset(): void {
-    this.app.localStorage.removeItem(this.options.session_token_key)
+    this.app.sessionStorage.removeItem(this.options.session_token_key)
     this.metadata = {}
     this.userID = null
     this.sessionID = undefined
