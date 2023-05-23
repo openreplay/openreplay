@@ -221,14 +221,17 @@ export default class App {
       this._debug('worker_start', e)
     }
 
-    this.bc.postMessage({ line: 'never-gonna-give-you-up' })
+    const token = this.session.getSessionToken()
+    if (!token) {
+      this.bc.postMessage({ line: 'never-gonna-give-you-up' })
+    }
+
     this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
       if (ev.data.line === 'never-gonna-let-you-down') {
         const sessionToken = ev.data.token
         this.session.setSessionToken(sessionToken)
       }
       if (ev.data.line === 'never-gonna-give-you-up') {
-        const token = this.session.getSessionToken()
         if (token) {
           this.bc.postMessage({
             line: 'never-gonna-let-you-down',
