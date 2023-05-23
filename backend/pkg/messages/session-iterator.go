@@ -134,3 +134,26 @@ func SplitByDuration(messages []*msgInfo, duration uint64) int {
 	}
 	return 0
 }
+
+func DOMRatio(messages []*msgInfo) {
+	window := uint64(500) // 250ms
+	nextTs := messages[0].timestamp + window
+	domMsgs := 0
+	allMsgs := 0
+	result := make([]int, 0)
+	for _, msg := range messages {
+		if msg.timestamp >= nextTs {
+			result = append(result, (domMsgs*100)/allMsgs)
+			nextTs = msg.timestamp + window
+			domMsgs = 0
+			allMsgs = 0
+		}
+		switch msg.msgType {
+		case MsgCreateDocument, MsgCreateElementNode, MsgCreateTextNode, MsgMoveNode, MsgRemoveNode, MsgSetNodeAttribute,
+			MsgRemoveNodeAttribute, MsgSetNodeData, MsgSetCSSData:
+			domMsgs++
+		}
+		allMsgs++
+	}
+	log.Println("DOM ratio:", result)
+}
