@@ -186,7 +186,9 @@ func (s *Storage) sortSessionMessages(sessID string, raw []byte, tp FileType) ([
 	}
 	sortedMessages := messages.SortMessages(unsortedMessages)
 	splittingPivot := messages.SplitByDuration(sortedMessages, uint64(s.cfg.FileSplitDuration.Seconds()))
-	messages.DOMRatio(sortedMessages)
+	if tp == DOM {
+		messages.DOMRatio(sortedMessages)
+	}
 	if splittingPivot == 0 || tp == DEV {
 		return messages.MergeMessages(raw, sortedMessages), nil, nil
 	}

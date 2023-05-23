@@ -149,11 +149,23 @@ func DOMRatio(messages []*msgInfo) {
 			allMsgs = 0
 		}
 		switch msg.msgType {
-		case MsgCreateDocument, MsgCreateElementNode, MsgCreateTextNode, MsgMoveNode, MsgRemoveNode, MsgSetNodeAttribute,
-			MsgRemoveNodeAttribute, MsgSetNodeData, MsgSetCSSData:
+		case MsgCreateDocument, MsgCreateElementNode, MsgCreateTextNode, MsgMoveNode,
+			MsgSetNodeAttribute, MsgRemoveNodeAttribute, MsgSetNodeData, MsgSetCSSData:
 			domMsgs++
 		}
 		allMsgs++
 	}
 	log.Println("DOM ratio:", result)
+
+	// Find pivot point for mob file
+	prev := 0
+	for i, r := range result {
+		if r >= prev {
+			prev = r
+		} else {
+			if r < 10 {
+				log.Println("Pivot time:", uint64(i+1)*window)
+			}
+		}
+	}
 }
