@@ -47,9 +47,10 @@ type UnsuccessfulStart = {
   success: false
 }
 
-type RickRoll =
+type RickRoll = { source: string } & (
   | { line: 'never-gonna-give-you-up' }
   | { line: 'never-gonna-let-you-down'; token: string }
+)
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
 const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body, success: true })
@@ -221,21 +222,25 @@ export default class App {
       this._debug('worker_start', e)
     }
 
-    const token = this.session.getSessionToken()
-    if (!token) {
-      this.bc.postMessage({ line: 'never-gonna-give-you-up' })
+    const thisTab = this.session.getTabId()
+
+    if (!this.session.getSessionToken()) {
+      this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
     }
 
     this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+      if (ev.data.source === thisTab) return
       if (ev.data.line === 'never-gonna-let-you-down') {
         const sessionToken = ev.data.token
         this.session.setSessionToken(sessionToken)
       }
       if (ev.data.line === 'never-gonna-give-you-up') {
+        const token = this.session.getSessionToken()
         if (token) {
           this.bc.postMessage({
             line: 'never-gonna-let-you-down',
             token,
+            source: thisTab,
           })
         }
       }
@@ -493,6 +498,7 @@ export default class App {
     const sessionToken = this.session.getSessionToken()
     const isNewSession = needNewSessionID || !sessionToken
 
+    console.log('OpenReplay: starting session', needNewSessionID, sessionToken)
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
@@ -603,15 +609,25 @@ export default class App {
       })
   }
 
+  /**
+   * basically we ask other tabs during constructor
+   * and here we just apply 10ms delay just in case
+   * */
   start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
     if (!document.hidden) {
-      return this._start(...args)
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this._start(...args))
+        }, 10)
+      })
     } else {
       return new Promise((resolve) => {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            resolve(this._start(...args))
+            setTimeout(() => {
+              resolve(this._start(...args))
+            }, 10)
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
