@@ -152,7 +152,6 @@ export default class TabSessionManager {
       /* Lists: */
       case MType.ConsoleLog:
         if (msg.level === 'debug') break;
-        console.log(msg)
         this.lists.lists.log.append(
           // @ts-ignore : TODO: enums in the message schema
           Log(msg)

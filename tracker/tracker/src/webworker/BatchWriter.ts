@@ -57,8 +57,7 @@ export default class BatchWriter {
 
     this.writeType(batchMetadata)
     this.writeFields(batchMetadata)
-    this.writeType(tabData as Message)
-    this.writeFields(tabData as Message)
+    this.writeWithSize(tabData as Message)
     this.isEmpty = true
   }
 
