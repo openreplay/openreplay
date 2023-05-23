@@ -11,6 +11,7 @@ on:
       - dev
       - api-*
       - v1.11.0-patch
+      - actions_test
     paths:
       - "ee/api/**"
       - "api/**"
