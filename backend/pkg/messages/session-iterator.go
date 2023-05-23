@@ -135,7 +135,7 @@ func SplitByDuration(messages []*msgInfo, duration uint64) int {
 	return 0
 }
 
-func DOMRatio(messages []*msgInfo) {
+func DOMRatio(sessID string, messages []*msgInfo) {
 	window := uint64(500) // 250ms
 	nextTs := messages[0].timestamp + window
 	domMsgs := 0
@@ -155,17 +155,27 @@ func DOMRatio(messages []*msgInfo) {
 		}
 		allMsgs++
 	}
-	log.Println("DOM ratio:", result)
 
 	// Find pivot point for mob file
-	prev := 0
-	for i, r := range result {
-		if r >= prev {
-			prev = r
+	last := 0
+	piv := 0
+	low := -1
+	threshold := 15
+	dur := 3
+	for i := 1; i < len(result); i++ {
+		if result[i] >= result[i-1] {
+			last = i
 		} else {
-			if r < 10 {
-				log.Println("Pivot time:", uint64(i+1)*window)
+			if result[i] < threshold {
+				if low == -1 {
+					low = i
+				} else {
+					if i-low >= dur {
+						piv = last
+					}
+				}
 			}
 		}
 	}
+	log.Printf("SessID: %s, pivot: %d, dom ratio: %d", sessID, piv, result)
 }
