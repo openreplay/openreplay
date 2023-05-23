@@ -4,7 +4,6 @@ import logging
 from decouple import config
 from time import time
 
-#from utils import pg_client
 from mlflow.store.db.utils import create_sqlalchemy_engine
 from sqlalchemy.orm import sessionmaker, session
 from sqlalchemy import text
@@ -16,6 +15,7 @@ global_queue = None
 class ConnectionHandler:
     _sessions = sessionmaker()
     def __init__(self, uri):
+        """Connects into mlflow database."""
         self.engine = create_sqlalchemy_engine(uri)
 
     @contextmanager
@@ -36,6 +36,8 @@ class ConnectionHandler:
 
 class EventQueue:
     def __init__(self, queue_max_length=50):
+        """Saves all recommendations until queue_max_length (default 50) is reached
+        or max_retention_time surpassed (env value, default 1 hour)."""
         self.events = queue.Queue()
         self.events.maxsize = queue_max_length
         host = config('pg_host_ml')
@@ -47,9 +49,10 @@ class EventQueue:
         tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
         self.connection_handler = ConnectionHandler(tracking_uri)
         self.last_flush = time()
-        self.max_retention_time = config('max_retention_time', default=60*60) # One hour
+        self.max_retention_time = config('max_retention_time', default=60*60)
 
     def flush(self, conn):
+        """Insert recommendations into table recommendation_feedback from mlflow database."""
         events = list()
         params = dict()
         i = 0
@@ -73,6 +76,7 @@ class EventQueue:
         return 1
 
     def force_flush(self):
+        """Force method flush."""
         if not self.events.empty():
             try:
                 with self.connection_handler.get_live_session() as conn:
@@ -81,6 +85,7 @@ class EventQueue:
                 print(f'Error: {e}')
 
     def put(self, element):
+        """Adds recommendation into the queue."""
         current_time = time()
         if self.events.full() or current_time - self.last_flush > self.max_retention_time:
             try:

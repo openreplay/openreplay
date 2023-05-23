@@ -6,7 +6,6 @@ import pendulum
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from airflow.sensors.python import PythonSensor
 from decouple import config
 import os
 import mlflow
@@ -15,18 +14,8 @@ _work_dir = os.getcwd()
 client = mlflow.MlflowClient()
 models = [model.name for model in client.search_registered_models()]
 
-def false_func():
-    return False
 
-def example_airflow_db():
-    from airflow.settings import Session
-    with Session() as conn:
-        cur = conn.execute('SELECT * FROM dag LIMIT 5')
-        res = cur.fetchall()
-    return res
-
-
-def example_mlflow(ti):
+def split_training(ti):
     global models
     import hashlib
     projects = ti.xcom_pull(key='project_data').split(' ')
@@ -67,19 +56,7 @@ def continue_old(ti):
         return True
 
 
-def my_function():
-    l = os.listdir()
-    print(l)
-    print(f'AWS {config("AWS_ACCESS_KEY_ID", default="NotFound")}')
-    return l
-
-
-def status():
-    # SELECT dag_id, execution_date, state FROM airflow.dag_run;
-    pass
-
-
-def get_funtions(ti):
+def select_from_db(ti):
     import sys
     sys.path.insert(1, _work_dir)
     import asyncio
@@ -98,14 +75,8 @@ def get_funtions(ti):
         projects.append(str(e['project_id']))
         tenants.append(str(e['tenant_id']))
     asyncio.run(pg_client.terminate())
-    #task_instance = kwargs['task_instance']
-    #task_instance.xcom_push(key='project_data', value=' '.join(values))
-    #ti.xcom_push(key='new_project_data', value=' '.join([]))
-    #ti.xcom_push(key='new_tenant_data', value=' '.join([]))
     ti.xcom_push(key='project_data', value=' '.join(projects))
     ti.xcom_push(key='tenant_data', value=' '.join(tenants))
-    #XCom.serialize_value(value=' '.join(values), key='project_data', task_id='FirstTest')
-    #return res
 
 
 dag = DAG(
@@ -126,14 +97,14 @@ with dag:
     split = PythonOperator(
         task_id='Split_Create_and_Retrain',
         provide_context=True,
-        python_callable=example_mlflow,
+        python_callable=split_training,
         do_xcom_push=True
     )
 
     select_vp = PythonOperator(
         task_id='Select_Valid_Projects',
         provide_context=True,
-        python_callable=get_funtions,
+        python_callable=select_from_db,
         do_xcom_push=True
     )
 
