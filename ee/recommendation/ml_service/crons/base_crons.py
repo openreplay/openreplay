@@ -4,10 +4,12 @@ from core.model_handler import recommendation_model
 
 
 async def update_model():
+    """Update list of models to download."""
     await recommendation_model.update()
 
 
 async def download_model():
+    """Download next model in list."""
     await recommendation_model.download_next()
 
 cron_jobs = [

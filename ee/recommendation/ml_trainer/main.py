@@ -11,6 +11,9 @@ mlflow.set_tracking_uri(config('MLFLOW_TRACKING_URI'))
 
 
 def handle_database(x_train, y_train):
+    """
+    Verifies if database is well-balanced. If not and if possible fixes it.
+    """
     total = len(y_train)
     if total < 13:
         return None, None
@@ -42,6 +45,13 @@ def handle_database(x_train, y_train):
 
 
 def main(experiment_name, projectId, tenantId):
+    """
+    Main training method using mlflow for tracking and s3 for stocking.
+    Params:
+        experiment_name: experiment name for mlflow repo.
+        projectId: project id of sessions.
+        tenantId: tenant of the project id (used mainly as salt for hashing).
+    """
     hashed = hashlib.sha256(bytes(f'{projectId}-{tenantId}'.encode('utf-8'))).hexdigest()
     x_, y_, d = get_training_database(projectId, max_timestamp=1680248412284, favorites=True)
 
@@ -62,7 +72,6 @@ def main(experiment_name, projectId, tenantId):
             with mlflow.start_run(run_name=f'sub_run_with_{kernel}', nested=True):
                 print("--")
                 model = SVM_recommendation(kernel=kernel, test=True)
-                #mlflow.sklearn.autolog(silent=True)
                 model.fit(x, y)
                 mlflow.sklearn.log_model(model, "sk_learn",
                                          serialization_format="cloudpickle")
