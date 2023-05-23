@@ -27,7 +27,9 @@ public_app, app, app_apikey = get_routers()
 async def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": SAML2_helper.is_saml2_available(),
-                     "ssoProvider": SAML2_helper.get_saml2_provider(),
+                     # "ssoProvider": SAML2_helper.get_saml2_provider(),
+                     # TODO: enable after xmlsec fix
+                     "ssoProvider": None,
                      "enforceSSO": config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available(),
                      "edition": license.EDITION}}
 

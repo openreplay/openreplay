@@ -1,7 +1,4 @@
-#FROM python:3.11-alpine
-#use python:3.8-alpine3.10 until this issue is fixed:
-#https://github.com/xmlsec/python-xmlsec/issues/257
-FROM python:3.8-alpine3.10
+FROM python:3.11-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
@@ -14,8 +11,7 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
-RUN /usr/local/bin/python -m pip install --upgrade pip\
-    && pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 RUN mv env.default .env
