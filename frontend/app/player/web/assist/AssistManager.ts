@@ -166,15 +166,18 @@ export default class AssistManager {
         waitingForMessages = true
         this.setStatus(ConnectionStatus.WaitingMessages) // TODO: reconnect happens frequently on bad network
       })
+
+      let currentTab = ''
       socket.on('messages', messages => {
         jmr.append(messages) // as RawMessage[]
-
+        console.log(messages)
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
+          console.log(msg)
           this.handleMessage(msg, msg._index)
         }
       })

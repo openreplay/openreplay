@@ -75,7 +75,6 @@ function Controls(props: any) {
   } = store.get();
 
   const cssLoading = tabStates[currentTab]?.cssLoading ?? false;
-  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
   const profilesList = tabStates[currentTab]?.profilesList || [];
   const graphqlList = tabStates[currentTab]?.graphqlList || [];
   const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;

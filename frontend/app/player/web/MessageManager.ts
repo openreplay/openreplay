@@ -174,11 +174,12 @@ export default class MessageManager {
         this.state.update({ currentTab: tabId })
         this.activeTab = tabId
       }
-      if (!this.tabs[this.activeTab]) {
+
+      if (this.tabs[this.activeTab]) {
+        this.tabs[this.activeTab].move(t)
+      } else {
         console.error('missing tab state', this.tabs, this.activeTab, tabId, this.activeTabManager.list)
       }
-      // console.log(this.tabs, this.activeTab)
-      this.tabs[this.activeTab].move(t)
     })
 
     if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {

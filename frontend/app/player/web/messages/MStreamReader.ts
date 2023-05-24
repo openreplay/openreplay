@@ -11,6 +11,8 @@ export default class MStreamReader {
 
   private t: number = 0
   private idx: number = 0
+
+  currentTab = ''
   readNext(): Message & { _index: number } | null {
     let msg = this.r.readMessage()
     if (msg === null) { return null }
@@ -19,10 +21,15 @@ export default class MStreamReader {
       this.t = msg.timestamp - this.startTs
       return this.readNext()
     }
+    if (msg.tp === MType.TabData) {
+      this.currentTab = msg.tabId
+      return this.readNext()
+    }
 
     return Object.assign(msg, {
       time: this.t,
       _index: this.idx++,
+      tabId: this.currentTab,
     })
   }
 }
