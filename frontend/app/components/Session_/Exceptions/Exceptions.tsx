@@ -25,7 +25,8 @@ interface IProps {
 
 function Exceptions({ errorStack, sourcemapUploaded, loading }: IProps) {
   const { player, store } = React.useContext(PlayerContext);
-  const { logListNow: logs, exceptionsList: exceptions } = store.get();
+  const { tabStates, currentTab } = store.get();
+  const { logListNow: logs = [], exceptionsList: exceptions = [] } = tabStates[currentTab]
   const [filter, setFilter] = React.useState('');
   const [currentError, setCurrentErrorVal] = React.useState(null);
 

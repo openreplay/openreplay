@@ -134,7 +134,7 @@ export default class RemoteControl {
 
   toggleAnnotation(enable?: boolean) {
     if (typeof enable !== "boolean") {
-      enable = !!this.store.get().annotating
+      enable = this.store.get().annotating
     }
     if (enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()

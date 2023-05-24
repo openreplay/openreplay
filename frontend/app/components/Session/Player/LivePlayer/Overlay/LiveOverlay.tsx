@@ -25,13 +25,15 @@ function Overlay({
 
   const {
     messagesLoading,
-    cssLoading,
     peerConnectionStatus,
     livePlay,
     calling,
     remoteControl,
     recordingState,
+    tabStates,
+    currentTab
   } = store.get()
+  const cssLoading = tabStates[currentTab].cssLoading || false
   const loading = messagesLoading || cssLoading
   const liveStatusText = getStatusText(peerConnectionStatus)
   const connectionStatus = peerConnectionStatus

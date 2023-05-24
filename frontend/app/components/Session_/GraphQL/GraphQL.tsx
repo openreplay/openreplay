@@ -14,7 +14,8 @@ function renderDefaultStatus() {
 
 function GraphQL() {
   const { player, store } = React.useContext(PlayerContext);
-  const { graphqlList: list, graphqlListNow: listNow, time, livePlay } = store.get();
+  const { time, livePlay, tabStates, currentTab } = store.get();
+  const { graphqlList: list = [], graphqlListNow: listNow = [] } = tabStates[currentTab]
 
   const defaultState = {
     filter: '',
