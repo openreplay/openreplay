@@ -59,6 +59,8 @@ class ServedModel:
     def sort_by_recommendation(self, sessions, sessions_features):
         """Make prediction for sessions_features and sort them by relevance."""
         pred = self.predict(sessions_features)
+        if len(pred) == 0:
+            return []
         sorted_idx = np.argsort(pred)[::-1]
         return sessions[sorted_idx]
 
@@ -132,7 +134,7 @@ class Recommendations:
         try:
             model = self.models[model_name]
         except KeyError:
-            return None
+            return []
         return model.get_recommendations(userId, projectId)
 
 

@@ -10,7 +10,6 @@ RUN apt-get update \
 COPY auth auth
 COPY crons crons
 COPY core core
-COPY main.py .
 COPY entrypoint.sh .
 COPY api.py .
 

@@ -40,16 +40,16 @@ async def shutdown():
     await feedback.terminate()
     await pg_client.terminate()
 
-@app.get('/{user_id}/{project_id}', dependencies=[Depends(api_key_auth)])
+@app.get('/recommendations/{user_id}/{project_id}', dependencies=[Depends(api_key_auth)])
 async def get_recommended_sessions(user_id: int, project_id: int):
     recommendations = recommendation_model.get_recommendations(user_id, project_id)
     return {'userId': user_id,
             'projectId': project_id,
-            'recommendations': str(recommendations)
+            'recommendations': recommendations
             }
 
 
-@app.post('/feedback', dependencies=[Depends(api_key_auth)])
+@app.post('/recommendations/feedback', dependencies=[Depends(api_key_auth)])
 async def get_feedback(data: FeedbackRecommendation):
     try:
         feedback.global_queue.put(tuple(data.dict().values()))
