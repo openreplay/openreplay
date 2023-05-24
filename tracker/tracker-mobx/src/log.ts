@@ -61,8 +61,14 @@ const compute = ev => {
 
 
 const observeAction = ev => {
+  const state = {}
+  for (let property in ev.object) {
+    if (typeof property !== 'function') {
+      state[property] = ev.object[property]
+    }
+  }
   return {
-    state: ev.object,
+    state,
     type: ev.type,
     property: ev.name,
   }
