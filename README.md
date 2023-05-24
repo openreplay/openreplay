@@ -8,7 +8,7 @@
 </p>
 
 <h3 align="center">Session replay for developers</h3>
-<p align="center">The most advanced open-source session replay to build delightful web apps.</p>
+<p align="center">The most advanced session replay for developers, to build delightful web apps.</p>
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
