@@ -73,16 +73,52 @@ export default function (
     const { data: rData, headers: rHs, status: globStatus, response } = axiosResponseObj
     const { data: resData, headers: resHs, status: resStatus } = response || {}
 
+    const ihOpt = opts.ignoreHeaders
+    const isHIgnoring = Array.isArray(ihOpt) ? (name: string) => ihOpt.includes(name) : () => ihOpt
+
+    function writeHeader(hsObj: Record<string, string>, header: [string, string]) {
+      if (!isHIgnoring(header[0])) {
+        hsObj[header[0]] = header[1]
+      }
+    }
+
+    let requestHs: Record<string, string> = {}
+    let responseHs: Record<string, string> = {}
+    if (reqHs.toJSON) {
+      requestHs = reqHs.toJSON()
+    } else if (reqHs instanceof Headers) {
+      reqHs.forEach((v, n) => writeHeader(requestHs, [n, v]))
+    } else if (Array.isArray(reqHs)) {
+      reqHs.forEach((h: [string, string]) => writeHeader(requestHs, h))
+    } else if (typeof reqHs === 'object') {
+      Object.entries(reqHs).forEach((h) => writeHeader(requestHs, h as unknown as [string, string]))
+    }
+
+    const usedResHeader = resHs ? resHs : rHs
+    if (usedResHeader.toJSON) {
+      responseHs = usedResHeader.toJSON()
+    } else if (usedResHeader instanceof Headers) {
+      usedResHeader.forEach((v, n) => writeHeader(responseHs, [n, v]))
+    } else if (Array.isArray(usedResHeader)) {
+      usedResHeader.forEach((h: [string, string]) => writeHeader(responseHs, h))
+    } else if (typeof usedResHeader === 'object') {
+      Object.entries(usedResHeader as unknown as Record<string, string>).forEach(
+        ([n, v]: [string, string]) => {
+          if (!isHIgnoring(n)) responseHs[n] = v
+        },
+      )
+    }
+
     const reqResInfo = sanitize({
       url,
       method: method || '',
       status: globStatus || resStatus || 0,
       request: {
-        headers: reqHs.toJSON(),
+        headers: requestHs,
         body: reqData,
       },
       response: {
-        headers: resHs?.toJSON() || rHs.toJSON(),
+        headers: responseHs,
         body: resData || rData,
       },
     })
