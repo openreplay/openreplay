@@ -6,7 +6,7 @@ idna==3.4
 confluent-kafka
 pandas==1.5.1
 pytz==2022.6
-requests==2.28.1
+requests==2.31.0
 SQLAlchemy==1.4.43
 tzlocal
 urllib3==1.26.12
