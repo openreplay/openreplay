@@ -29,6 +29,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | urllib3 | MIT | Python |
 | boto3 | Apache2 | Python |
 | requests | Apache2 | Python |
+| pylint | GPLv2 | Python |
 | pyjwt | MIT | Python |
 | jsbeautifier | MIT | Python |
 | psycopg2-binary | LGPL | Python |
