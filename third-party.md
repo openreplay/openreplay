@@ -1,4 +1,4 @@
-## Licenses (as of April 7, 2023), 2023)
+## Licenses (as of May 25, 2023)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -29,6 +29,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | urllib3 | MIT | Python |
 | boto3 | Apache2 | Python |
 | requests | Apache2 | Python |
+| pylint | GPLv2 | Python |
 | pyjwt | MIT | Python |
 | jsbeautifier | MIT | Python |
 | psycopg2-binary | LGPL | Python |
