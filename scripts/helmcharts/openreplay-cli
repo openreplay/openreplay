@@ -56,6 +56,11 @@ function log () {
       echo -e "${GREEN}[INFO]" "$@" "${NC}"
       return
     ;;
+    warn)
+      shift
+      echo -e "${YELLOW}[WARN]" "$@" "${NC}"
+      return
+    ;;
     debug)
       shift
       echo -e "${YELLOW}[DEBUG]" "$@" "${NC}"
