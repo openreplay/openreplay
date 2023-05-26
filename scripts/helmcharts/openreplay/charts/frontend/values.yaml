@@ -88,9 +88,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  TOKEN_SECRET: secret_token_string # TODO: generate on buld
-  S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
-  CACHE_ASSETS: true
   HTTP_PORT: 80
 
 
