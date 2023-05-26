@@ -6,7 +6,8 @@ RUN apk add --no-cache tini
 ARG envarg
 ENV PRIVATE_ENDPOINTS=false \
     GIT_SHA=$GIT_SHA \
-    ENTERPRISE_BUILD=${envarg}
+    ENTERPRISE_BUILD=${envarg} \
+    NODE_ENV=production
 
 WORKDIR /work
 COPY package.json .
