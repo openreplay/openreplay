@@ -1,44 +1,70 @@
 package s3
 
 import (
+	"crypto/tls"
+	"fmt"
 	"io"
+	"net/http"
 	"net/url"
-	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"sort"
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	_session "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"openreplay/backend/pkg/env"
+	objConfig "openreplay/backend/internal/config/objectstorage"
+	"openreplay/backend/pkg/objectstorage"
 )
+
+const MAX_RETURNING_COUNT = 40
 
 type storageImpl struct {
 	uploader *s3manager.Uploader
 	svc      *s3.S3
 	bucket   *string
 	fileTag  string
-	useTags  bool
 }
 
-func NewS3(region string, bucket string, useTags bool) (objectstorage.ObjectStorage, error) {
-	sess := env.AWSSessionOnRegion(region)
+func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("s3 config is nil")
+	}
+	config := &aws.Config{
+		Region:      aws.String(cfg.AWSRegion),
+		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, ""),
+	}
+	if cfg.AWSEndpoint != "" {
+		config.Endpoint = aws.String(cfg.AWSEndpoint)
+		config.DisableSSL = aws.Bool(true)
+		config.S3ForcePathStyle = aws.Bool(true)
+
+		if cfg.AWSSkipSSLValidation {
+			tr := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+			client := &http.Client{Transport: tr}
+			config.HTTPClient = client
+		}
+	}
+	sess, err := _session.NewSession(config)
+	if err != nil {
+		return nil, fmt.Errorf("AWS session error: %v", err)
+	}
 	return &storageImpl{
 		uploader: s3manager.NewUploader(sess),
 		svc:      s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
-		bucket:   &bucket,
+		bucket:   &cfg.BucketName,
 		fileTag:  loadFileTag(),
-		useTags:  useTags,
 	}, nil
 }
 
 func (s *storageImpl) tagging() *string {
-	if s.useTags {
-		return &s.fileTag
-	}
-	return nil
+	return &s.fileTag
 }
 
 func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
@@ -97,8 +123,6 @@ func (s *storageImpl) GetCreationTime(key string) *time.Time {
 	}
 	return ans.LastModified
 }
-
-const MAX_RETURNING_COUNT = 40
 
 func (s *storageImpl) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 	prefix := strconv.FormatUint(projectID, 10) + "/"

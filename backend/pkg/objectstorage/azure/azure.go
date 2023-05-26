@@ -37,7 +37,7 @@ func NewStorage(cfg *config.ObjectsConfig) (objectstorage.ObjectStorage, error) 
 	}
 	return &storageImpl{
 		client:    client,
-		container: cfg.AzureBucket,
+		container: cfg.BucketName,
 		tags:      loadFileTag(),
 	}, nil
 }
