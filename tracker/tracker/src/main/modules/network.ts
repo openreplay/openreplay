@@ -259,7 +259,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
           const { headers: reqHs, body: reqBody } = getXHRRequestDataObject(xhr)
           const duration = startTime > 0 ? e.timeStamp - startTime : 0
 
-          const hString: string | null = xhr.getAllResponseHeaders() || '' // might be null (though only if no response received though)
+          const hString: string = xhr.getAllResponseHeaders() || '' // might be null (only if no response received though)
           const headersArr = hString.trim().split(/[\r\n]+/)
           const headerMap: Record<string, string> = {}
           headersArr.forEach(function (line) {
