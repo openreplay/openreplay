@@ -81,6 +81,7 @@ type AppOptions = {
   __debug__?: LoggerOptions
   localStorage: Storage | null
   sessionStorage: Storage | null
+  forceSingleTab?: boolean
 
   // @deprecated
   onStart?: StartCallback
@@ -141,6 +142,7 @@ export default class App {
         __debug_report_edp: null,
         localStorage: null,
         sessionStorage: null,
+        forceSingleTab: false,
       },
       options,
     )
@@ -224,7 +226,7 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    if (!this.session.getSessionToken()) {
+    if (!this.session.getSessionToken() && !this.options.forceSingleTab) {
       this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
     }
 
