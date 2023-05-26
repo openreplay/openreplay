@@ -128,7 +128,7 @@ FROM (
              LEFT JOIN
          (SELECT user_id as viewer_id
          FROM users
-         WHERE tenant_id IN (SELECT tenant_id FROM projects WHERE project_id = %(projectId)s)) AS T2 ON true
+         WHERE tenant_id = (SELECT tenant_id FROM projects WHERE project_id = %(projectId)s)) AS T2 ON true
      )"""
     conn.execute(
         conn.mogrify(query, {"projectId": projectId, "limit": limit})
