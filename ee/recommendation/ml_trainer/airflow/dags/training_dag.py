@@ -39,7 +39,6 @@ def split_training(ti):
     ti.xcom_push(key='old_tenant_data', value=' '.join(old_tenants))
 
 
-
 def continue_new(ti):
     L = ti.xcom_pull(key='new_project_data')
     if len(L) == 0:
@@ -65,9 +64,13 @@ def select_from_db(ti):
     from utils import pg_client
     asyncio.run(pg_client.init())
     with pg_client.PostgresClient() as conn:
-        conn.execute("""SELECT tenant_id, T1.project_id as project_id FROM (
-    (SELECT project_id, count(*) as n_events FROM frontend_signals GROUP BY project_id ORDER BY n_events DESC) AS T1
-        INNER JOIN (SELECT project_id, tenant_id FROM projects) AS T2 ON T1.project_id = T2.project_id)""")
+        conn.execute("""SELECT tenant_id, project_id as project_id
+                        FROM ((SELECT project_id, count(1) as n_events
+                               FROM frontend_signals
+                               GROUP BY project_id
+                               ORDER BY n_events DESC
+                               LIMIT 10) AS T1
+                            INNER JOIN projects AS T2 USING (project_id));""")
         res = conn.fetchall()
     projects = list()
     tenants = list()
@@ -91,8 +94,7 @@ dag = DAG(
     catchup=False,
 )
 
-
-#assigning the task for our dag to do
+# assigning the task for our dag to do
 with dag:
     split = PythonOperator(
         task_id='Split_Create_and_Retrain',
@@ -120,7 +122,7 @@ with dag:
 
     new_models = BashOperator(
         task_id='Create_Models',
-        bash_command=f"python {_work_dir}/main.py "+"--projects {{task_instance.xcom_pull(task_ids='Split_Create_and_Retrain', key='new_project_data')}} " +
+        bash_command=f"python {_work_dir}/main.py " + "--projects {{task_instance.xcom_pull(task_ids='Split_Create_and_Retrain', key='new_project_data')}} " +
                      "--tenants {{task_instance.xcom_pull(task_ids='Split_Create_and_Retrain', key='new_tenant_data')}}",
     )
 
