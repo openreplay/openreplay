@@ -108,7 +108,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | kafka | Apache2 | Infrastructure |
 | stern | Apache2 | Infrastructure |
 | k9s | Apache2 | Infrastructure |
-| minio | [AGPLv3](https://github.com/minio/minio/blob/master/LICENSE) | Infrastructure |
+| minio | AGPLv3| Infrastructure |
 | postgreSQL | PostgreSQL License | Infrastructure |
 | k3s | Apache2 | Infrastructure |
 | nginx | BSD2 | Infrastructure |
