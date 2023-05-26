@@ -1,15 +1,16 @@
-from datetime import timedelta
-from textwrap import dedent
-
+import asyncio
+import hashlib
+import mlflow
+import os
 import pendulum
-
+import sys
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
+from datetime import timedelta
 from decouple import config
-import os
-import mlflow
-import hashlib
+from textwrap import dedent
+from utils import pg_client
 
 _work_dir = os.getcwd()
 client = mlflow.MlflowClient()
@@ -50,12 +51,8 @@ def continue_old(ti):
 
 
 def select_from_db(ti):
-    import sys
     sys.path.insert(1, _work_dir)
-    import asyncio
-    import os
     os.environ['PG_POOL'] = 'true'
-    from utils import pg_client
     asyncio.run(pg_client.init())
     with pg_client.PostgresClient() as conn:
         conn.execute("""SELECT tenant_id, project_id as project_id
