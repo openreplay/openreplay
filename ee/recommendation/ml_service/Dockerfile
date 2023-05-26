@@ -1,11 +1,11 @@
 FROM recommendations_base
 
-COPY requirements.txt .
 RUN apt-get update \
-  && apt-get install gcc libc-dev g++ -y \
-  && apt-get install -y pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl \
-  && pip install -r requirements.txt \
+  && apt-get install -y gcc libc-dev g++ pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl \
   && apt-get clean
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY auth auth
 COPY crons crons
