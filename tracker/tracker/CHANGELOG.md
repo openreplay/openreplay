@@ -1,3 +1,7 @@
+# 7.0.2
+
+- fixed header sanitization for axios causing empty string in some cases
+
 # 7.0.1
 
 - fix time inputs capturing

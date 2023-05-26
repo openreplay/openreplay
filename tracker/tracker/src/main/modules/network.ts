@@ -259,17 +259,16 @@ export default function (app: App, opts: Partial<Options> = {}) {
           const { headers: reqHs, body: reqBody } = getXHRRequestDataObject(xhr)
           const duration = startTime > 0 ? e.timeStamp - startTime : 0
 
-          const hString: string | null = ignoreHeaders ? '' : xhr.getAllResponseHeaders() // might be null (though only if no response received though)
-          const resHs = hString
-            ? hString
-                .split('\r\n')
-                .map((h) => h.split(':'))
-                .filter((entry) => !isHIgnored(entry[0]))
-                .reduce(
-                  (hds, [name, value]) => ({ ...hds, [name]: value }),
-                  {} as Record<string, string>,
-                )
-            : {}
+          const hString: string | null = xhr.getAllResponseHeaders() // might be null (though only if no response received though)
+          const headersArr = hString.trim().split(/[\r\n]+/)
+          const headerMap: Record<string, string> = {}
+          headersArr.forEach(function (line) {
+            const parts = line.split(': ')
+            const header = parts.shift() as unknown as string
+            if (!isHIgnored(header)) {
+              headerMap[header] = parts.join(': ')
+            }
+          })
 
           const method = strMethod(initMethod)
           const reqResInfo = sanitize({
@@ -281,7 +280,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
               body: reqBody,
             },
             response: {
-              headers: resHs,
+              headers: headerMap,
               body: xhr.response,
             },
           })
