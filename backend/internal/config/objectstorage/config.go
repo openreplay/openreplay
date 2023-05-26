@@ -11,8 +11,6 @@ type ObjectsConfig struct {
 	// TEMP
 	AWSRegion      string `env:"AWS_REGION"`
 	S3BucketAssets string `env:"S3_BUCKET_ASSETS"`
-	//
-	S3BucketIOSImages string `env:"S3_BUCKET_IOS_IMAGES"`
 	// Azure Blob Storage configuration
 	AzureAccountName string `env:"AZURE_ACCOUNT_NAME,required"`
 	AzureAccountKey  string `env:"AZURE_ACCOUNT_KEY,required"`

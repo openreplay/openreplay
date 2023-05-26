@@ -104,10 +104,6 @@ func (e *Router) init() {
 		"/v1/web/not-started": e.notStartedHandlerWeb,
 		"/v1/web/start":       e.startSessionHandlerWeb,
 		"/v1/web/i":           e.pushMessagesHandlerWeb,
-		"/v1/ios/start":       e.startSessionHandlerIOS,
-		"/v1/ios/i":           e.pushMessagesHandlerIOS,
-		"/v1/ios/late":        e.pushLateMessagesHandlerIOS,
-		"/v1/ios/images":      e.imagesUploadHandlerIOS,
 	}
 	prefix := "/ingest"
 

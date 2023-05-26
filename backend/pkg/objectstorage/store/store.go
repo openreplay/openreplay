@@ -20,8 +20,6 @@ func NewStore(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error)
 	switch cfg.ServiceName {
 	case "assets":
 		return s3.NewS3(cfg.AWSRegion, cfg.S3BucketAssets, cfg.UseFileTags())
-	case "http":
-		return s3.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages, cfg.UseFileTags())
 	case "storage":
 		return s3.NewS3(cfg.S3Region, cfg.S3Bucket, cfg.UseFileTags())
 	default:
