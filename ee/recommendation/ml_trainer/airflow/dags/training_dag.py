@@ -9,6 +9,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from decouple import config
 import os
 import mlflow
+import hashlib
 
 _work_dir = os.getcwd()
 client = mlflow.MlflowClient()
@@ -17,7 +18,6 @@ models = [model.name for model in client.search_registered_models()]
 
 def split_training(ti):
     global models
-    import hashlib
     projects = ti.xcom_pull(key='project_data').split(' ')
     tenants = ti.xcom_pull(key='tenant_data').split(' ')
     new_projects = list()
@@ -41,18 +41,12 @@ def split_training(ti):
 
 def continue_new(ti):
     L = ti.xcom_pull(key='new_project_data')
-    if len(L) == 0:
-        return False
-    else:
-        return True
+    return len(L) > 0
 
 
 def continue_old(ti):
     L = ti.xcom_pull(key='old_project_data')
-    if len(L) == 0:
-        return False
-    else:
-        return True
+    return len(L) > 0
 
 
 def select_from_db(ti):

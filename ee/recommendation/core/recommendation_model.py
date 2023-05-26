@@ -1,5 +1,5 @@
 import mlflow.pyfunc
-
+import random
 import numpy as np
 from sklearn import metrics
 from sklearn.svm import SVC
@@ -20,11 +20,11 @@ def select_features(X, y):
     """
     knn = knc(n_neighbors=3)
     selector = sfs(knn, n_features_to_select=3)
-    selector.fit(X, y)
+    X_transformed = selector.fit_transform(X, y)
 
     def transform(input):
         return selector.transform(input)
-    return transform
+    return transform, X_transformed
 
 
 def sort_database(X, y):
@@ -35,7 +35,6 @@ def sort_database(X, y):
         y: Array of labels.
     Output: Tuple (X_rand_sorted, y_rand_sorted).
     """
-    import random
     sort_list = list(range(len(y)))
     random.shuffle(sort_list)
     return X[sort_list], y[sort_list]
@@ -62,12 +61,9 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
 
     def __init__(self, test=False, **params):
         f"""{SVC.__doc__}"""
-        if 'probability' not in params.keys():
-            params['probability'] = True
-        assert params['probability'], 'Models need probability parameter set to True'
-
+        params['probability'] = True
         self.svm = SVC(**params)
-        self.transforms = [lambda k: k]
+        self.transforms = []
         self.score = 0
         self.confusion_matrix = None
         if test:
@@ -84,8 +80,7 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
         assert X.shape[0] == y.shape[0], 'X and y must have same length'
         assert len(X.shape) == 2, 'X must be a two dimension vector'
         X, t1 = preprocess(X)
-        t2 = select_features(X, y)
-        X = t2(X)
+        t2, X = select_features(X, y)
         self.transforms = [t1, t2]
         self.svm.fit(X, y)
         pred = self.svm.predict(X)

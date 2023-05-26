@@ -107,7 +107,8 @@ class Recommendations:
         for name, version in new_names.items():
             if (name, version) in self.names.items():
                 continue
-                self.to_download.append((name, version))
+            #self.to_download.append((name, version))
+            self.download_model(name, version)
         self.names = new_names
 
     async def download_next(self):
@@ -117,6 +118,10 @@ class Recommendations:
             s_model = ServedModel()
             s_model.load_model(name, version)
             self.models[name] = s_model
+
+    def download_model(self, name, version):
+        model = ServedModel()
+        self.models[name] = model.load_model(name, version)
 
     def info(self):
         """Show current loaded models."""

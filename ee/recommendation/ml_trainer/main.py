@@ -5,7 +5,7 @@ import numpy as np
 from decouple import config
 from datetime import datetime
 from core.user_features import get_training_database
-from core.recommendation_model import SVM_recommendation
+from core.recommendation_model import SVM_recommendation, sort_database
 
 mlflow.set_tracking_uri(config('MLFLOW_TRACKING_URI'))
 
@@ -59,6 +59,7 @@ def main(experiment_name, projectId, tenantId):
     if x is None:
         print(f'[INFO] Project {projectId}: Not enough data to train model - {y_.sum()}/{len(y_)-y_.sum()}')
         return
+    x, y = sort_database(x, y)
 
     _experiment = mlflow.get_experiment_by_name(experiment_name)
     if _experiment is None:

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from contextlib import asynccontextmanager
 from utils import pg_client
 from core.model_handler import recommendation_model
 from utils.declarations import FeedbackRecommendation
@@ -7,7 +8,6 @@ from crons.base_crons import cron_jobs
 from auth.auth_key import api_key_auth
 from core import feedback
 from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
 app.schedule = AsyncIOScheduler()
@@ -25,17 +25,15 @@ app.add_middleware(
 )
 
 
-@app.on_event('startup')
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     await pg_client.init()
     await feedback.init()
     await recommendation_model.update()
     app.schedule.start()
     for job in cron_jobs:
         app.schedule.add_job(id=job['func'].__name__, **job)
-
-@app.on_event("shutdown")
-async def shutdown():
+    yield
     app.schedule.shutdown(wait=False)
     await feedback.terminate()
     await pg_client.terminate()
@@ -47,6 +45,11 @@ async def get_recommended_sessions(user_id: int, project_id: int):
             'projectId': project_id,
             'recommendations': recommendations
             }
+
+
+@app.get('/recommendations/{projectId}/{viewerId}/{sessionId}', dependencies=[Depends(api_key_auth)])
+async def already_gave_feedback(projectId: int, viewerId: int, sessionId: int):
+    return feedback.has_feedback((viewerId, sessionId, projectId))
 
 
 @app.post('/recommendations/feedback', dependencies=[Depends(api_key_auth)])

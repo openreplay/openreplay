@@ -19,6 +19,8 @@ if conn_str == '':
               "port": config("pg_port", cast=int),
               "application_name": config("APP_NAME", default="PY")}
 else:
+    import urllib.parse
+    conn_str = urllib.parse.unquote(conn_str)
     usr_info, host_info = conn_str.split('@')
     i = usr_info.find('://')
     pg_user, pg_password = usr_info[i+3:].split(':')

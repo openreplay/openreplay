@@ -50,6 +50,7 @@ class EventQueue:
         self.connection_handler = ConnectionHandler(tracking_uri)
         self.last_flush = time()
         self.max_retention_time = config('max_retention_time', default=60*60)
+        self.feedback_short_mem = list()
 
     def flush(self, conn):
         """Insert recommendations into table recommendation_feedback from mlflow database."""
@@ -67,6 +68,7 @@ class EventQueue:
                 f"(%(user_id_{i})s, %(session_id_{i})s, %(project_id_{i})s, %(payload_{i})s::jsonb, {insertion_time})")
             i += 1
         self.last_flush = time()
+        self.feedback_short_mem = list()
         if i == 0:
             return 0
         cur = conn.connection().connection.cursor()
@@ -94,7 +96,27 @@ class EventQueue:
             except Exception as e:
                 print(f'Error: {e}')
         self.events.put(element)
+        self.feedback_short_mem.append(element[:3])
         self.events.task_done()
+
+    def already_has_feedback(self, element):
+        """"This method verifies if a feedback is already send for the current user-project-sessionId."""
+        if element[:3] in self.feedback_short_mem:
+            return True
+        else:
+            with self.connection_handler.get_live_session() as conn:
+                cur = conn.connection().connection.cursor()
+                query = cur.mogrify("SELECT * FROM recommendation_feedback WHERE user_id=%(user_id)s AND session_id=%(session_id)s AND project_id=%(project_id)s LIMIT 1",
+                                    {'user_id': element[0], 'session_id': element[1], 'project_id': element[2]})
+                cur_result = conn.execute(text(query.decode('utf-8')))
+                res = cur_result.fetchall()
+            return len(res) == 1
+
+
+def has_feedback(data):
+    global global_queue
+    assert global_queue is not None, 'Global queue is not yet initialized'
+    return global_queue.already_has_feedback(data)
 
 
 async def init():
