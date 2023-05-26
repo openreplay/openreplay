@@ -2,6 +2,7 @@ import type App from '../app/index.js'
 import { NetworkRequest } from '../app/messages.gen.js'
 import { getTimeOrigin } from '../utils.js'
 import type { RequestResponseData, Options } from './network.js'
+import { getExceptionMessage } from './exception.js'
 
 interface RawAxiosHeaders {
   [key: string]: string
@@ -40,6 +41,7 @@ interface AxiosResponse<T = any> {
 }
 
 export interface AxiosInstance extends Record<string, any> {
+  getUri: (config?: AxiosRequestConfig) => string
   interceptors: {
     request: AxiosInterceptorManager<InternalAxiosRequestConfig>
     response: AxiosInterceptorManager<AxiosResponse>
@@ -68,8 +70,10 @@ export default function (
   sanitize: (data: RequestResponseData) => RequestResponseData | null,
   stringify: (data: { headers: Record<string, string>; body: any }) => string,
 ) {
+  app.debug.log('Openreplay: attaching axios spy to instance', instance)
   function captureResponseData(axiosResponseObj: AxiosResponse) {
-    const { headers: reqHs, data: reqData, method, url } = axiosResponseObj.config
+    app.debug.log('Openreplay: capturing axios response data', axiosResponseObj)
+    const { headers: reqHs, data: reqData, method, url, baseURL } = axiosResponseObj.config
     const { data: rData, headers: rHs, status: globStatus, response } = axiosResponseObj
     const { data: resData, headers: resHs, status: resStatus } = response || {}
 
@@ -123,11 +127,13 @@ export default function (
       },
     })
     if (!reqResInfo) {
+      app.debug.log('Openreplay: empty request/response info, skipping')
       return
     }
     const requestStart = axiosResponseObj.config.__openreplay_timing
     const duration = performance.now() - requestStart
 
+    app.debug.log('Openreplay: final req object', reqResInfo)
     app.send(
       NetworkRequest(
         'xhr',
@@ -143,6 +149,7 @@ export default function (
   }
 
   function getStartTime(config: InternalAxiosRequestConfig) {
+    app.debug.log('Openreplay: capturing API request', config)
     config.__openreplay_timing = performance.now()
     if (opts.sessionTokenHeader) {
       const header =
@@ -163,12 +170,22 @@ export default function (
     return response
   }
 
-  function captureNetworkError(error: any) {
-    captureResponseData(error as AxiosResponse)
+  function captureNetworkError(error: Record<string, any>) {
+    app.debug.log('Openreplay: capturing API request error', error)
+    if (isAxiosError(error)) {
+      captureResponseData(error.response as AxiosResponse)
+    } else if (error instanceof Error) {
+      app.send(getExceptionMessage(error, []))
+    }
     return Promise.reject(error)
   }
 
-  const reqInt = instance.interceptors.request.use(getStartTime, null, { synchronous: true })
+  function logRequestError(ev: any) {
+    app.debug.log('Openreplay: failed API request, skipping', ev)
+  }
+  const reqInt = instance.interceptors.request.use(getStartTime, logRequestError, {
+    synchronous: true,
+  })
   const resInt = instance.interceptors.response.use(captureNetworkRequest, captureNetworkError, {
     synchronous: true,
   })
@@ -177,4 +194,12 @@ export default function (
     instance.interceptors.request.eject?.(reqInt)
     instance.interceptors.response.eject?.(resInt)
   })
+}
+
+function isAxiosError(payload: Record<string, any>) {
+  return isObject(payload) && payload.isAxiosError === true
+}
+
+function isObject(thing: any) {
+  return thing !== null && typeof thing === 'object'
 }
