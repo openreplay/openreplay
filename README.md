@@ -5,6 +5,7 @@
     <a href="https://openreplay.com/#gh-dark-mode-only">
     <img src="static/openreplay-git-banner-dark.png" width="100%">
   </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fopenreplay%2Fopenreplay?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenreplay%2Fopenreplay.svg?type=shield"/></a>
 </p>
 
 <h3 align="center">Session replay for developers</h3>
@@ -94,3 +95,6 @@ Check out our [roadmap](https://www.notion.so/openreplay/Roadmap-889d2c3d968b478
 ## License
 
 This monorepo uses several licenses. See [LICENSE](/LICENSE) for more details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenreplay%2Fopenreplay.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fopenreplay%2Fopenreplay?ref=badge_large)
