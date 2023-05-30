@@ -97,6 +97,10 @@ piniaStorePlugin(examplePiniaStore)
 
 PiniaDoc.displayName = 'PiniaDoc';
 
-export default connect((state) => ({
-  projectKey: state.getIn(['site', 'instance', 'projectKey']),
-}))(PiniaDoc);
+export default connect((state: any) => {
+  const siteId = state.getIn(['integrations', 'siteId']);
+  const sites = state.getIn(['site', 'list']);
+  return {
+    projectKey: sites.find((site: any) => site.get('id') === siteId).get('projectKey'),
+  };
+})(PiniaDoc);

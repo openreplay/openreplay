@@ -57,12 +57,8 @@ function Integrations(props: Props) {
   }, [props.integratedList]);
 
   useEffect(() => {
-    if (!props.siteId) {
-      props.setSiteId(initialSiteId);
-      props.fetchIntegrationList(initialSiteId);
-    } else {
-      props.fetchIntegrationList(props.siteId);
-    }
+    props.fetchIntegrationList(initialSiteId);
+    props.setSiteId(initialSiteId);
   }, []);
 
   const onClick = (integration: any, width: number) => {
