@@ -16,6 +16,7 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
+import { toJS } from 'mobx';
 
 const INDEX_KEY = 'network';
 
@@ -172,9 +173,17 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
     // TODO: better merge (with body size info) - do it in player
     resourceList.filter(res => !fetchList.some(ft => {
       // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
+      if (res.name === ft.name) {
+        if (res.start === ft.start) return true;
+        if (res.url.includes(ft.url)) {
+          return Math.abs(res.time - ft.time) < 300;
+        }
+      }
+
       if (res.name !== ft.name) { return false }
-      if (Math.abs(res.time - ft.time) > 150) { return false } // TODO: find good epsilons
-      if (Math.abs(res.duration - ft.duration) > 100) { return false }
+      if (Math.abs(res.time - ft.time) > 250) { return false } // TODO: find good epsilons
+      if (Math.abs(res.duration - ft.duration) > 200) { return false }
+
       return true
     }))
     .concat(fetchList)
