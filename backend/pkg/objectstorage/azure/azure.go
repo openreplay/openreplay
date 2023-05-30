@@ -53,6 +53,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		gzipStr := "br"
 		contentEncoding = &gzipStr
 	}
+	log.Printf("Uploading to Azure Blob Storage, container: %s, key: %s", s.container, key)
 	_, err := s.client.UploadStream(context.Background(), s.container, key, reader, &azblob.UploadStreamOptions{
 		HTTPHeaders: &blob.HTTPHeaders{
 			BlobCacheControl:    &cacheControl,
