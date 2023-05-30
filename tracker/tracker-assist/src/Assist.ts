@@ -164,7 +164,7 @@ export default class Assist {
     if (!sessionId) {
       return app.debug.error('No session ID')
     }
-    const peerID = `${app.getProjectKey()}-${sessionId}`
+    const peerID = `${app.getProjectKey()}-${sessionId}-${app.session.getTabId()}`
 
     // SocketIO
     const socket = this.socket = connect(this.getHost(), {
