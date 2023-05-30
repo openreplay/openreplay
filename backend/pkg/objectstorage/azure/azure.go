@@ -58,7 +58,6 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	if strings.HasPrefix(key, "/") {
 		key = key[1:]
 	}
-	log.Printf("key: %s", key)
 	_, err := s.client.UploadStream(context.Background(), s.container, key, reader, &azblob.UploadStreamOptions{
 		HTTPHeaders: &blob.HTTPHeaders{
 			BlobCacheControl:    &cacheControl,
