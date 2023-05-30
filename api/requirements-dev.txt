@@ -1,2 +1,0 @@
-pylint==2.17.4
-pylint-pydantic==0.1.8
