@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	config "openreplay/backend/internal/config/objectstorage"
@@ -52,6 +53,10 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	case objectstorage.Brotli:
 		gzipStr := "br"
 		contentEncoding = &gzipStr
+	}
+	// Remove leading slash to avoid empty folder creation
+	if strings.HasPrefix(key, "/") {
+		key = key[1:]
 	}
 	log.Printf("Uploading to Azure Blob Storage, container: %s, key: %s", s.container, key)
 	_, err := s.client.UploadStream(context.Background(), s.container, key, reader, &azblob.UploadStreamOptions{
