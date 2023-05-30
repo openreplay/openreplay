@@ -136,7 +136,7 @@ func SplitByDuration(messages []*msgInfo, duration uint64) int {
 }
 
 func DOMRatio(sessID string, messages []*msgInfo) {
-	window := uint64(500) // 250ms
+	window := uint64(1000)
 	nextTs := messages[0].timestamp + window
 	domMsgs := 0
 	allMsgs := 0
