@@ -149,8 +149,7 @@ func DOMRatio(sessID string, messages []*msgInfo) {
 			allMsgs = 0
 		}
 		switch msg.msgType {
-		case MsgCreateDocument, MsgCreateElementNode, MsgCreateTextNode, MsgMoveNode,
-			MsgSetNodeAttribute, MsgRemoveNodeAttribute, MsgSetNodeData, MsgSetCSSData:
+		case MsgCreateDocument, MsgCreateElementNode, MsgCreateTextNode, MsgSetNodeAttribute, MsgSetNodeData, MsgSetCSSData:
 			domMsgs++
 		}
 		allMsgs++
