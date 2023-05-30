@@ -74,4 +74,10 @@ const fn = profiler('call_name')(() => {
 
 ProfilerDoc.displayName = 'ProfilerDoc';
 
-export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(ProfilerDoc)
+export default connect((state) => {
+  const siteId = state.getIn(['integrations', 'siteId']);
+  const sites = state.getIn(['site', 'list']);
+  return {
+    projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
+  };
+})(ProfilerDoc);

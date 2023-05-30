@@ -27,6 +27,7 @@ const NewSiteForm = ({
   location: { pathname },
   onClose,
   mstore,
+  activeSiteId,
 }) => {
   const [existsError, setExistsError] = useState(false);
 
@@ -75,6 +76,9 @@ const NewSiteForm = ({
     ) {
       remove(site.id).then(() => {
         onClose(null);
+        if (site.id === activeSiteId) {
+          setSiteId(null)
+        }
       });
     }
   };
@@ -124,6 +128,7 @@ const NewSiteForm = ({
 };
 
 const mapStateToProps = (state) => ({
+  activeSiteId: state.getIn(['site', 'active', 'id']),
   site: state.getIn(['site', 'instance']),
   siteList: state.getIn(['site', 'list']),
   loading: state.getIn(['site', 'save', 'loading']) || state.getIn(['site', 'remove', 'loading']),

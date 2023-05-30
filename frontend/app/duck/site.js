@@ -80,11 +80,12 @@ const reducer = (state = initialState, action = {}) => {
 			
 			return state.set('list', list)
 				.set('siteId', siteId)
-				.set('active', list.find(s => s.id === parseInt(siteId)));
+				.set('active', list.find(s => parseInt(s.id) === parseInt(siteId)));
 		case SET_SITE_ID:
-			localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)
-			const site = state.get('list').find(s => parseInt(s.id) == action.siteId);
-			return state.set('siteId', action.siteId).set('active', site);
+			const _siteId = action.siteId ? action.siteId : state.get('list').get(0).id;
+			localStorage.setItem(SITE_ID_STORAGE_KEY, _siteId)
+			const site = state.get('list').find(s => parseInt(s.id) == _siteId);
+			return state.set('siteId', _siteId).set('active', site);
 	}
 	return state;
 };

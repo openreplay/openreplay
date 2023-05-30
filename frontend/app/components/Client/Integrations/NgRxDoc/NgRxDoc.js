@@ -80,4 +80,10 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
 
 NgRxDoc.displayName = 'NgRxDoc';
 
-export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(NgRxDoc)
+export default connect((state) => {
+  const siteId = state.getIn(['integrations', 'siteId']);
+  const sites = state.getIn(['site', 'list']);
+  return {
+    projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
+  };
+})(NgRxDoc);
