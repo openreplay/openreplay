@@ -1,3 +1,4 @@
+import json
 from typing import List, Union
 
 import schemas
@@ -156,6 +157,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                 sort = 'start_ts'
 
             meta_keys = metadata.get(project_id=project_id)
+            meta_map = ",map(%s) AS 'metadata'" \
+                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -165,8 +168,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                  MIN(full_sessions.start_ts)                            AS first_session_ts,
                                                  ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order}) AS rn 
-                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
-                                                                    {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} {meta_map}
                                                     {query_part}
                                                     ) AS filtred_sessions
                                                 ) AS full_sessions
@@ -190,11 +192,13 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                 sort = helper.key_to_snake_case(data.sort)
 
             meta_keys = metadata.get(project_id=project_id)
+            meta_map = ",'metadata',toString(map(%s))" \
+                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
                                         FROM (SELECT total, details
                                               FROM (SELECT COUNT() OVER () AS total,
                                                     s.{sort} AS sort_key,
-                                                    map({SESSION_PROJECTION_COLS_CH_MAP}) AS details
+                                                    map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
                                                 {query_part}
                                               LEFT JOIN (SELECT session_id
                                                 FROM experimental.user_viewed_sessions
@@ -234,12 +238,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
-            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
-                                       if sessions[i][f'metadata_{k["index"]}'] is not None}
+            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
     else:
         for i in range(len(sessions)):
-            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
-                                       if sessions[i].get(f'metadata_{k["index"]}') is not None}
+            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
             sessions[i] = schemas_ee.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
 
     # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
