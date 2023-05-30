@@ -80,6 +80,7 @@ function Controls(props: any) {
   const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
   const resourceRedCount = tabStates[currentTab]?.resourceMarkedCountNow || 0;
   const stackRedCount = tabStates[currentTab]?.stackMarkedCountNow || 0;
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
 
   const {
     bottomBlock,
