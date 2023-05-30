@@ -64,7 +64,7 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
-  currentTab = ''
+  currentTab = 'back-compatability'
   readNext(): Message & { _index?: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
