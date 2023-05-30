@@ -29,6 +29,10 @@ spec:
             image: "{{ tpl .Values.sessionsCleaner.image.repository . }}:{{ .Values.sessionsCleaner.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: {{ .Values.sessionsCleaner.image.pullPolicy }}
             env:
+              {{- range $key, $val := .Values.global.env }}
+              - name: {{ $key }}
+                value: '{{ $val }}'
+              {{- end }}
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
               - name: version_number

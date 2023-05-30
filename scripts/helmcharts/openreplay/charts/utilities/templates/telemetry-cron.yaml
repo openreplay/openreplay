@@ -29,6 +29,10 @@ spec:
             image: "{{ tpl .Values.telemetry.image.repository . }}:{{ .Values.telemetry.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: {{ .Values.telemetry.image.pullPolicy }}
             env:
+              {{- range $key, $val := .Values.global.env }}
+              - name: {{ $key }}
+                value: '{{ $val }}'
+              {{- end }}
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
               - name: version_number
