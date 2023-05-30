@@ -3,7 +3,6 @@ package http
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
-	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/env"
 	"time"
 )
@@ -11,7 +10,6 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
-	objectstorage.ObjectsConfig
 	HTTPHost                string        `env:"HTTP_HOST,default="`
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
