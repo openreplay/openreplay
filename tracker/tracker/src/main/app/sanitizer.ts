@@ -14,6 +14,11 @@ export interface Options {
   domSanitizer?: (node: Element) => SanitizeLevel
 }
 
+export const stringWiper = (input: string) =>
+  input
+    .trim()
+    .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '█')
+
 export default class Sanitizer {
   private readonly obscured: Set<number> = new Set()
   private readonly hidden: Set<number> = new Set()
@@ -59,10 +64,9 @@ export default class Sanitizer {
   sanitize(id: number, data: string): string {
     if (this.obscured.has(id)) {
       // TODO: is it the best place to put trim() ? Might trimmed spaces be considered in layout in certain cases?
-      return data
-        .trim()
-        .replace(/[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '█')
+      return stringWiper(data)
     }
+
     if (this.options.obscureTextNumbers) {
       data = data.replace(/\d/g, '0')
     }

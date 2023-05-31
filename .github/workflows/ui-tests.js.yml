@@ -50,7 +50,7 @@ jobs:
       - name: Jest tests
         run: |
           cd tracker/tracker
-          yarn test
+          yarn test:ci
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
