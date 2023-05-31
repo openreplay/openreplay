@@ -22,7 +22,12 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
     if msg is None:
         return
     messages = codec.decode_detailed(msg.value())
-    session_id = codec.decode_key(msg.key())
+    try:
+        session_id = codec.decode_key(msg.key())
+    except Exception as e:
+        print('[WARN] Broken sessionid')
+        print(e)
+        return
     if messages is None:
         print('-')
         return
