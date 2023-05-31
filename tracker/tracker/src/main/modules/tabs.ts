@@ -9,7 +9,5 @@ export default function (app: App): void {
     }
   }
 
-  if (document.hidden !== undefined) {
-    app.attachEventListener(document, 'visibilitychange', changeTab as EventListener, false, false)
-  }
+  app.attachEventListener(window, 'focus', changeTab as EventListener, false, false)
 }
