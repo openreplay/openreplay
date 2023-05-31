@@ -174,9 +174,10 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
     resourceList.filter(res => !fetchList.some(ft => {
       // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
       if (res.name === ft.name) {
-        if (res.start === ft.start) return true;
+        if (res.time === ft.time) return true;
         if (res.url.includes(ft.url)) {
-          return Math.abs(res.time - ft.time) < 300;
+          return Math.abs(res.time - ft.time) < 350
+            || Math.abs(res.timestamp - ft.timestamp) < 350;
         }
       }
 
