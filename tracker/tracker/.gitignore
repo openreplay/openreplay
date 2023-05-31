@@ -4,3 +4,4 @@ lib
 cjs
 build
 .cache
+coverage
