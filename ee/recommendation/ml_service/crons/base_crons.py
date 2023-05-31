@@ -8,11 +8,11 @@ async def update_model():
     await recommendation_model.update()
 
 
-#async def download_model():
-#    """Download next model in list."""
-#    await recommendation_model.download_next()
+async def download_model():
+    """Download next model in list."""
+    await recommendation_model.download_next()
 
 cron_jobs = [
     {"func": update_model, "trigger": CronTrigger(hour=0), "max_instances": 1},
-    #{"func": download_model, "trigger": IntervalTrigger(seconds=10), "max_instances": 1},
+    {"func": download_model, "trigger": IntervalTrigger(seconds=10), "max_instances": 1},
 ]

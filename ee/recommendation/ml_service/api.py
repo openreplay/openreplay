@@ -9,7 +9,21 @@ from auth.auth_key import api_key_auth
 from core import feedback
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await pg_client.init()
+    await feedback.init()
+    # await recommendation_model.update()
+    app.schedule.start()
+    for job in cron_jobs:
+        app.schedule.add_job(id=job['func'].__name__, **job)
+    yield
+    app.schedule.shutdown(wait=False)
+    await feedback.terminate()
+    await pg_client.terminate()
+
+app = FastAPI(lifespan=lifespan)
 app.schedule = AsyncIOScheduler()
 
 origins = [
@@ -24,23 +38,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# @app.on_event('startup')
+# async def startup():
+#     await pg_client.init()
+#     await feedback.init()
+#     await recommendation_model.update()
+#     app.schedule.start()
+#     for job in cron_jobs:
+#         app.schedule.add_job(id=job['func'].__name__, **job)
+#
+#
+# @app.on_event('shutdown')
+# async def shutdown():
+#     app.schedule.shutdown(wait=False)
+#     await feedback.terminate()
+#     await pg_client.terminate()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await pg_client.init()
-    await feedback.init()
-    await recommendation_model.update()
-    app.schedule.start()
-    for job in cron_jobs:
-        app.schedule.add_job(id=job['func'].__name__, **job)
-    yield
-    app.schedule.shutdown(wait=False)
-    await feedback.terminate()
-    await pg_client.terminate()
 
 @app.get('/recommendations/{user_id}/{project_id}', dependencies=[Depends(api_key_auth)])
 async def get_recommended_sessions(user_id: int, project_id: int):
     recommendations = recommendation_model.get_recommendations(user_id, project_id)
+    print('[INFO] Recommendations achieved')
     return {'userId': user_id,
             'projectId': project_id,
             'recommendations': recommendations

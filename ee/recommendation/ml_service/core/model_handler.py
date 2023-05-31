@@ -16,6 +16,7 @@ password = config('pg_password_ml')
 
 tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
 mlflow.set_tracking_uri(tracking_uri)
+batch_download_size = config('batch_download_size', default=10, cast=int)
 
 
 def get_latest_uri(projectId, tenantId):
@@ -73,7 +74,7 @@ class ServedModel:
             query = conn.mogrify(
                 """SELECT project_id, session_id, user_id, %(userId)s as viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
                     FROM sessions
-                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL LIMIT {limit}""",
+                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL LIMIT %(limit)s""",
                 {'userId': userId, 'projectId': projectId, 'limit': limit}
             )
             conn.execute(query)
@@ -107,17 +108,18 @@ class Recommendations:
         for name, version in new_names.items():
             if (name, version) in self.names.items():
                 continue
-            #self.to_download.append((name, version))
-            self.download_model(name, version)
+            self.to_download.append((name, version))
+            # self.download_model(name, version)
         self.names = new_names
 
-    async def download_next(self):
+    async def download_next(self, n_loop=0):
         """Pop element from to_download, download and add it into models."""
-        if self.to_download:
+        if self.to_download and n_loop < batch_download_size:
             name, version = self.to_download.pop(0)
             s_model = ServedModel()
             s_model.load_model(name, version)
             self.models[name] = s_model
+            self.download_next(self, n_loop=n_loop+1)
 
     def download_model(self, name, version):
         model = ServedModel()

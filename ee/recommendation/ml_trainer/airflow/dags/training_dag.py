@@ -59,8 +59,7 @@ def select_from_db(ti):
                         FROM ((SELECT project_id, count(1) as n_events
                                FROM frontend_signals
                                GROUP BY project_id
-                               ORDER BY n_events DESC
-                               LIMIT 10) AS T1
+                               WHERE n_events > 10) AS T1
                             INNER JOIN projects AS T2 USING (project_id));""")
         res = conn.fetchall()
     projects = list()
