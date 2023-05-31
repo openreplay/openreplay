@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Cache tracker modules
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
           key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
@@ -77,7 +77,7 @@ jobs:
           npx wait-on http://localhost:3000
           cd ../../frontend
       - name: Cache node modules
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
