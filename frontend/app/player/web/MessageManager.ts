@@ -110,7 +110,7 @@ export default class MessageManager {
 
   public updateLists(lists: Partial<InitialLists>) {
     // update each tab with tabid from events !!!
-    Object.values(this.tabs)[0].updateLists(lists)
+    Object.values(this.tabs)[0]?.updateLists?.(lists)
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
