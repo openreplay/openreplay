@@ -193,7 +193,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
             meta_keys = metadata.get(project_id=project_id)
             meta_map = ",'metadata',toString(map(%s))" \
-                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
                                         FROM (SELECT total, details
                                               FROM (SELECT COUNT() OVER () AS total,
