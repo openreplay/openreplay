@@ -1,4 +1,4 @@
-import json
+import ast
 from typing import List, Union
 
 import schemas
@@ -158,7 +158,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
             meta_keys = metadata.get(project_id=project_id)
             meta_map = ",map(%s) AS 'metadata'" \
-                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -238,10 +238,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
-            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
     else:
         for i in range(len(sessions)):
-            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
             sessions[i] = schemas_ee.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
 
     # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
