@@ -11,7 +11,8 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
     MAPPING_WASM=/work/mappings.wasm \
     PRIVATE_ENDPOINTS=true \
     GIT_SHA=$GIT_SHA \
-    ENTERPRISE_BUILD=${envarg}
+    ENTERPRISE_BUILD=${envarg} \
+    NODE_ENV=production
 
 ADD https://unpkg.com/source-map@${SOURCE_MAP_VERSION}/lib/mappings.wasm ${MAPPING_WASM}
 WORKDIR /work

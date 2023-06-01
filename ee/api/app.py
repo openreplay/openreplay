@@ -14,9 +14,7 @@ from chalicelib.core import traces
 from chalicelib.utils import events_queue
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-# TODO: enable after xmlsec fix
-# from routers import core, core_dynamic, ee, saml
-from routers import core, core_dynamic, ee
+from routers import core, core_dynamic, ee, saml
 from crons import core_crons, ee_crons, core_dynamic_crons
 from routers.subs import insights, metrics, v1_api_ee
 from routers.subs import v1_api, health
@@ -99,10 +97,9 @@ app.include_router(core_dynamic.app_apikey)
 app.include_router(ee.public_app)
 app.include_router(ee.app)
 app.include_router(ee.app_apikey)
-# TODO: enable after xmlsec fix
-# app.include_router(saml.public_app)
-# app.include_router(saml.app)
-# app.include_router(saml.app_apikey)
+app.include_router(saml.public_app)
+app.include_router(saml.app)
+app.include_router(saml.app_apikey)
 app.include_router(metrics.app)
 app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)

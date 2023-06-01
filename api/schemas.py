@@ -1058,8 +1058,8 @@ class CardSchema(__CardSchema, CardChartSchema):
         MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+                     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     is_template: bool = Field(default=False)
 
@@ -1231,7 +1231,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
-        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+                      SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 

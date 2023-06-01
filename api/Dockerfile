@@ -27,3 +27,4 @@ USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ./entrypoint.sh
+

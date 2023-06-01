@@ -109,7 +109,7 @@ function SubHeader(props) {
           >
             <Icon size="20" name="event/link" className="mr-1" />
             <Tooltip title="Open in new tab" delay={0}>
-              <a href={location} target='_blank'>{location}</a>
+              <a href={currentLocation} target='_blank'>{location}</a>
             </Tooltip>
           </div>
         </>

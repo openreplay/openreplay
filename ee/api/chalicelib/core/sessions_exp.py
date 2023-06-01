@@ -1,4 +1,4 @@
-import json
+import ast
 from typing import List, Union
 
 import schemas
@@ -158,7 +158,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
             meta_keys = metadata.get(project_id=project_id)
             meta_map = ",map(%s) AS 'metadata'" \
-                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -193,7 +193,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
             meta_keys = metadata.get(project_id=project_id)
             meta_map = ",'metadata',toString(map(%s))" \
-                       % ','.join([f"'{m['key']}',metadata_{m['index']}" for m in meta_keys])
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
                                         FROM (SELECT total, details
                                               FROM (SELECT COUNT() OVER () AS total,
@@ -238,10 +238,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
-            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
     else:
         for i in range(len(sessions)):
-            sessions[i]["metadata"] = json.loads(sessions[i]["metadata"].replace("'", '"'))
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
             sessions[i] = schemas_ee.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
 
     # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
@@ -265,7 +265,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
                               AND ev.project_id = %(project_id)s
-                              AND ev.EventType = 'LOCATION'"""
+                              AND ev.event_type = 'LOCATION'"""
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
@@ -707,7 +707,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
@@ -723,7 +723,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
@@ -743,7 +743,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
@@ -758,7 +758,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
@@ -773,7 +773,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
@@ -785,7 +785,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             #     events_conditions.append({"type": event_where[-1]})
             #     if not is_any:
             #         event_where.append(
-            #             _multiple_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k})s", event.value,
+            #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
             #                                  value_key=e_k))
             #         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.STATEACTION.ui_type:
@@ -797,7 +797,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
@@ -834,7 +834,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
@@ -910,7 +910,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # TODO: no isNot for TimeBetweenEvents
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                # event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
+                # event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
                 event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")

@@ -1,4 +1,5 @@
 // Based on https://github.com/winterbe/mobx-logger/blob/master/src/log.js
+// though it is not used anymore due to spy() being no op in production
 
 interface TrackerMobXConfig {
   enabled?: boolean;
@@ -36,13 +37,6 @@ const getPropName = ev => {
   );
 };
 
-const action = ev => {
-  if (!isLoggingEnabled(ev)) {
-    return;
-  }
-
-  return { name: ev.name, arguments: ev.arguments, object: ev.object };
-};
 
 const reaction = ev => {
   const name = ev.name.replace('#null', '');
@@ -65,4 +59,36 @@ const compute = ev => {
   return { name };
 };
 
-export default { action, reaction, transaction, compute };
+
+const observeAction = ev => {
+  const state = {}
+  for (let property in ev.object) {
+    if (typeof property !== 'function') {
+      state[property] = ev.object[property]
+    }
+  }
+  return {
+    state,
+    type: ev.type,
+    property: ev.name,
+  }
+}
+
+const action = ev => {
+  if (!isLoggingEnabled(ev)) {
+    return;
+  }
+
+  return { name: ev.name, arguments: ev.arguments, object: ev.object };
+};
+
+
+export default {
+  // action,
+  // reaction,
+  // transaction,
+  // compute,
+  update: observeAction,
+  delete: observeAction,
+  add: observeAction
+};

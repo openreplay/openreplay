@@ -67,4 +67,10 @@ function SomeFunctionalComponent() {
 
 MobxDoc.displayName = 'MobxDoc';
 
-export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(MobxDoc)
+export default connect((state) => {
+    const siteId = state.getIn(['integrations', 'siteId']);
+    const sites = state.getIn(['site', 'list']);
+    return {
+      projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
+    };
+})(MobxDoc);

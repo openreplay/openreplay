@@ -2,8 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, Button, TextLink, NoContent } from 'UI';
-import { init, remove, fetchGDPR } from 'Duck/site';
-import { RED, YELLOW, GREEN } from 'Types/site';
+import { init, remove, fetchGDPR, setSiteId } from 'Duck/site';
 import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
 import { confirm, PageTitle } from 'UI';
@@ -30,6 +29,7 @@ const NEW_SITE_FORM = 'NEW_SITE_FORM';
         init,
         remove,
         fetchGDPR,
+        setSiteId,
     }
 )
 @withPageTitle('Projects - OpenReplay Preferences')
@@ -50,7 +50,8 @@ class Sites extends React.PureComponent {
                 confirmation: `Are you sure you want to delete this Project? We won't be able to record anymore sessions.`,
             })
         ) {
-            this.props.remove(site.id);
+            this.props.remove(site.id)
+            this.props.setSiteId(null);
         }
     };
 

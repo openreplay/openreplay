@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Cache tracker modules
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
           key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
@@ -51,6 +51,12 @@ jobs:
         run: |
           cd tracker/tracker
           yarn test
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: tracker
+          name: tracker
       - name: Build tracker inst
         run: |
           cd tracker/tracker
@@ -71,7 +77,7 @@ jobs:
           npx wait-on http://localhost:3000
           cd ../../frontend
       - name: Cache node modules
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}

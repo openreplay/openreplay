@@ -2,6 +2,7 @@ from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
+from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
@@ -11,6 +12,7 @@ from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
+from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
@@ -33,6 +35,42 @@ if not tenants.tenants_exists(use_pool=False):
     @public_app.put('/signup', tags=['signup'])
     async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
         return signup.create_tenant(data)
+
+
+@public_app.post('/login', tags=["authentication"])
+async def login_user(data: schemas.UserLoginSchema = Body(...)):
+    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid captcha."
+        )
+
+    r = users.authenticate(data.email, data.password)
+    if r is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You’ve entered invalid Email or Password."
+        )
+    if "errors" in r:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=r["errors"][0]
+        )
+
+    r["smtp"] = helper.has_smtp()
+    content = {
+        'jwt': r.pop('jwt'),
+        'data': {
+            "user": r
+        }
+    }
+
+    return content
+
+
+@app.get('/logout', tags=["login", "logout"])
+async def logout_user(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": "success"}
 
 
 @app.get('/account', tags=['accounts'])
@@ -149,7 +187,7 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
 
 @app.get('/projects', tags=['projects'])
 async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id)}
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
 # for backward compatibility

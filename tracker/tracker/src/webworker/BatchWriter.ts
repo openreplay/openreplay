@@ -134,7 +134,8 @@ export default class BatchWriter {
     if (this.isEmpty) {
       return
     }
-    this.onBatch(this.encoder.flush())
+    const batch = this.encoder.flush()
+    this.onBatch(batch)
     this.prepare()
   }
 

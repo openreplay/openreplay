@@ -7,7 +7,9 @@ export default class QueueSender {
   private readonly queue: Array<Uint8Array> = []
   private readonly ingestURL
   private token: string | null = null
-  private isCompressing = false
+  // its actually on #24
+  // eslint-disable-next-line
+  private isCompressing
 
   constructor(
     ingestBaseURL: string,
@@ -18,7 +20,11 @@ export default class QueueSender {
     private readonly onCompress?: (batch: Uint8Array) => any,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
-    if (onCompress !== undefined) this.isCompressing = true
+    if (onCompress !== undefined) {
+      this.isCompressing = true
+    } else {
+      this.isCompressing = false
+    }
   }
 
   authorise(token: string): void {
@@ -124,7 +130,11 @@ export default class QueueSender {
   }
 
   clean() {
-    this.queue.length = 0
-    this.token = null
+    // sending last batch and closing the shop
+    this.sendNext()
+    setTimeout(() => {
+      this.token = null
+      this.queue.length = 0
+    }, 100)
   }
 }

@@ -46,3 +46,4 @@ check_prereq
 [[ $1 == "ee" ]] && {
     build_crons $1
 }
+

@@ -27,6 +27,8 @@ const NewSiteForm = ({
   location: { pathname },
   onClose,
   mstore,
+  activeSiteId,
+  canDelete,
 }) => {
   const [existsError, setExistsError] = useState(false);
 
@@ -75,6 +77,9 @@ const NewSiteForm = ({
     ) {
       remove(site.id).then(() => {
         onClose(null);
+        if (site.id === activeSiteId) {
+          setSiteId(null)
+        }
       });
     }
   };
@@ -111,7 +116,7 @@ const NewSiteForm = ({
               {site.exists() ? 'Update' : 'Add'}
             </Button>
             {site.exists() && (
-              <Button variant="text" type="button" onClick={handleRemove}>
+              <Button variant="text" type="button" onClick={handleRemove} disabled={!canDelete}>
                 <Icon name="trash" size="16" />
               </Button>
             )}
@@ -124,9 +129,11 @@ const NewSiteForm = ({
 };
 
 const mapStateToProps = (state) => ({
+  activeSiteId: state.getIn(['site', 'active', 'id']),
   site: state.getIn(['site', 'instance']),
   siteList: state.getIn(['site', 'list']),
   loading: state.getIn(['site', 'save', 'loading']) || state.getIn(['site', 'remove', 'loading']),
+  canDelete: state.getIn(['site', 'list']).size > 1,
 });
 
 export default connect(mapStateToProps, {

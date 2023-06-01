@@ -6,7 +6,8 @@ ARG envarg
 ENV ENTERPRISE_BUILD=${envarg} \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     PRIVATE_ENDPOINTS=false \
-    LISTEN_PORT=9001
+    LISTEN_PORT=9001 \
+    NODE_ENV=production
 WORKDIR /work
 COPY package.json .
 COPY package-lock.json .
