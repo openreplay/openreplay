@@ -23,7 +23,8 @@ export interface TabState extends ListsState {
   performanceAvailability?: PerformanceTrackManager['availability']
   performanceChartData: PerformanceChartPoint[],
   performanceChartTime: PerformanceChartPoint[]
-  cssLoading: boolean,
+  cssLoading: boolean
+  location: string
 }
 
 /**
@@ -37,6 +38,7 @@ export default class TabSessionManager {
     performanceChartData: [],
     performanceChartTime: [],
     cssLoading: false,
+    location: '',
   }
 
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();

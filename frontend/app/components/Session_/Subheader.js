@@ -12,7 +12,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
-import cn from 'classnames';
+import Tab from 'Components/Session/Player/SharedComponents/Tab';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 
@@ -26,7 +26,7 @@ function SubHeader(props) {
   const currentLocation = tabStates[currentTab]?.location || '';
   const resourceList = tabStates[currentTab]?.resourceList || [];
   const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-  const eventsList = tabStates[currentTab]?.eventsList || [];
+  const eventsList = tabStates[currentTab]?.eventList || [];
   const graphqlList = tabStates[currentTab]?.graphqlList || [];
   const fetchList = tabStates[currentTab]?.fetchList || [];
 
@@ -102,19 +102,12 @@ function SubHeader(props) {
           </div>
         ) : null}
         {tabs.map((tab, i) => (
-          <div
-            key={tab}
-            style={{ marginBottom: '-2px' }}
-            onClick={() => player.changeTab(tab)}
-            className={cn(
-              'self-end py-1 px-4 cursor-pointer',
-              currentTab === tab
-                ? 'border-gray-light border-t border-l border-r !border-b-white bg-white rounded-tl rounded-tr font-semibold'
-                : 'cursor-pointer border-gray-light !border-b !border-t-0 !border-l-0 !border-r-0'
-            )}
-          >
-            Tab {i + 1}
-          </div>
+          <Tab
+            i={i}
+            tab={tab}
+            currentTab={currentTab}
+            changeTab={(changeTo) => player.changeTab(changeTo)}
+          />
         ))}
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
