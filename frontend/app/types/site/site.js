@@ -38,12 +38,11 @@ export default Record({
       return js;
     },
   },
-  fromJS: ({ gdpr, projectId, name, firstRecordedSessionAt, ...rest }) => ({
+  fromJS: ({ gdpr, projectId, name, ...rest }) => ({
     ...rest,
     host: name,
     name: name,
     id: projectId === undefined ? undefined : `${ projectId }`, //?!?!?!?!?
     gdpr: GDPR(gdpr),
-    recorded: !!firstRecordedSessionAt,
   })
 });
