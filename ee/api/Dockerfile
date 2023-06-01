@@ -16,8 +16,7 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY . .
 RUN mv env.default .env
 
-#RUN adduser -u 1001 openreplay -D
-RUN useradd -mu 1001 openreplay
+RUN adduser -u 1001 openreplay -D
 USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
