@@ -78,3 +78,6 @@ ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS user_state text;
 
 COMMIT;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);
