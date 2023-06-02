@@ -337,7 +337,7 @@ module.exports = {
                 } else {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
                     // TODO: new message structure: {meta: {tabId: string::id}, data: xxx -> args[0]}
-                    if (args[0].meta === undefined && args[0].data === undefined) {
+                    if (args[0].meta === undefined) {
                         debug && console.log(`received event:${eventName}, from:${socket.identity}, but message structure is wrong, stopping onAny.`);
                         return
                     }
