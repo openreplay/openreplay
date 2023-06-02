@@ -350,6 +350,28 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
                                             value_key=f_k))
 
+            elif filter_type == schemas.FilterType.user_city:
+                if is_any:
+                    extra_constraints.append('s.user_city IS NOT NULL')
+                    ss_constraints.append('ms.user_city IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
+
+            elif filter_type == schemas.FilterType.user_state:
+                if is_any:
+                    extra_constraints.append('s.user_state IS NOT NULL')
+                    ss_constraints.append('ms.user_state IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
+
             elif filter_type in [schemas.FilterType.utm_source]:
                 if is_any:
                     extra_constraints.append('s.utm_source IS NOT NULL')

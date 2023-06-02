@@ -557,6 +557,8 @@ $$
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_anonymous_id_idx ON sessions (project_id, user_anonymous_id);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_device_idx ON sessions (project_id, user_device);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_country_idx ON sessions (project_id, user_country);
+            CREATE INDEX IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
+            CREATE INDEX IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_browser_idx ON sessions (project_id, user_browser);
             CREATE INDEX IF NOT EXISTS sessions_project_id_metadata_1_idx ON sessions (project_id, metadata_1);
             CREATE INDEX IF NOT EXISTS sessions_project_id_metadata_2_idx ON sessions (project_id, metadata_2);

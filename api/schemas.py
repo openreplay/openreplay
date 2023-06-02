@@ -1010,8 +1010,6 @@ class MetricOfTable(str, Enum):
     user_browser = FilterType.user_browser.value
     user_device = FilterType.user_device.value
     user_country = FilterType.user_country.value
-    user_city = FilterType.user_city.value
-    user_state = FilterType.user_state.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
     visited_url = "location"
