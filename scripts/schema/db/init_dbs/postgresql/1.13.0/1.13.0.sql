@@ -66,11 +66,15 @@ ALTER TABLE IF EXISTS events.resources
     ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
 ALTER TABLE IF EXISTS events.state_actions
     ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
-ALTER TABLE IF EXISTS events.customs
+ALTER TABLE IF EXISTS events_common.customs
     ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
-ALTER TABLE IF EXISTS events.issues
+ALTER TABLE IF EXISTS events_common.issues
     ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
-ALTER TABLE IF EXISTS events.requests
+ALTER TABLE IF EXISTS events_common.requests
     ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS user_city  text,
+    ADD COLUMN IF NOT EXISTS user_state text;
 
 COMMIT;
