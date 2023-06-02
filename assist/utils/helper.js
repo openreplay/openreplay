@@ -15,7 +15,9 @@ const extractTabId = (peerId) => {
     return null;
 }
 const extractPeerId = (peerId) => {
+    console.log(peerId);
     let splited = peerId.split("-");
+    console.log(splited);
     if (splited.length < 2 || splited.length > 3) {
         debug && console.error(`cannot split peerId: ${peerId}`);
         return {};
@@ -27,7 +29,9 @@ const extractPeerId = (peerId) => {
     if (splited.length === 2) {
         return {projectKey: splited[0], sessionId: splited[1], tabId: null};
     }
-    return {projectKey: splited[0], sessionId: splited[1], tabId: splited[2]};
+    const parsed = {projectKey: splited[0], sessionId: splited[1], tabId: splited[2]}
+    console.log(parsed, splited, peerId, PROJECT_KEY_LENGTH, splited.length);
+    return (parsed);
 };
 const request_logger = (identity) => {
     return (req, res, next) => {
