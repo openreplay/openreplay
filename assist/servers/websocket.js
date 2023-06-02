@@ -155,13 +155,13 @@ const socketsLiveByProject = async function (req, res) {
                     if (withFilters) {
                         if (item.handshake.query.sessionInfo &&
                             isValidSession(item.handshake.query.sessionInfo, filters.filter) &&
-                            !sessIDs.has(item.handshake.query.sessionInfo.sessionId)
+                            !sessIDs.has(item.handshake.query.sessionInfo.sessionID)
                         ) {
                             liveSessions.add(item.handshake.query.sessionInfo);
-                            sessIDs.set(item.handshake.query.sessionInfo.sessionId);
+                            sessIDs.set(item.handshake.query.sessionInfo.sessionID);
                         }
                     } else {
-                        if (!sessIDs.has(item.handshake.query.sessionInfo.sessionId)) {
+                        if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
                             liveSessions.add(item.handshake.query.sessionInfo);
                         }
                     }
