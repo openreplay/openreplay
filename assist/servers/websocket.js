@@ -259,15 +259,27 @@ module.exports = {
             socket._connectedAt = new Date();
 
             socket.peerId = socket.handshake.query.peerId;
+            let {connProjectKey, connSessionId, connTabId} = extractPeerId(socket.peerId);
             socket.roomId = extractRoomId(socket.peerId);
-            socket.tabId = extractTabId(socket.peerId);
+            socket.tabId = tabId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
-                    debug && console.log(`session already connected, refusing new connexion`);
-                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
-                    return socket.disconnect();
+                    const rooms = await getAvailableRooms(io);
+                    for (let roomId of rooms.keys()) {
+                        let {projectKey} = extractPeerId(roomId);
+                        if (projectKey === connProjectKey) {
+                            const connected_sockets = await io.in(roomId).fetchSockets();
+                            for (let item of connected_sockets) {
+                                if (item.tabId === connTabId) {
+                                    debug && console.log(`session already connected, refusing new connexion`);
+                                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
+                                    return socket.disconnect();
+                                }
+                            }
+                        }
+                    }
                 }
                 extractSessionInfo(socket);
                 if (c_agents > 0) {
