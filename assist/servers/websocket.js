@@ -271,7 +271,7 @@ module.exports = {
                         let {projectKey} = extractPeerId(roomId);
                         if (projectKey === connProjectKey) {
                             const connected_sockets = await io.in(roomId).fetchSockets();
-                            debug && console.log(`connected_sockets:${JSON.stringify(connected_sockets)}`);
+                            // debug && console.log(`connected_sockets:${JSON.stringify(connected_sockets)}`);
                             for (let item of connected_sockets) {
                                 debug && console.log(`conn.tabId: ${item.tabId}`);
                                 if (item.tabId === connTabId) {
