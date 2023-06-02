@@ -380,7 +380,7 @@ module.exports = {
                         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
                     } else {
                         debug && console.log("message sent");
-                        io.to(socketId).emit(eventName, socket.id, args[0].data);
+                        io.to(socketId).emit(eventName, socket.id, args[0]);
                     }
                 }
             });
