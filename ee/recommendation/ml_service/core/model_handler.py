@@ -57,7 +57,7 @@ class ServedModel:
         """Make prediction for batch X."""
         return self.model.predict(X)
 
-    def sort_by_recommendation(self, sessions, sessions_features):
+    def sort_by_recommendation(self, sessions, sessions_features) -> np.ndarray:
         """Make prediction for sessions_features and sort them by relevance."""
         pred = self.predict(sessions_features)
         if len(pred) == 0:
@@ -86,7 +86,7 @@ class ServedModel:
         X_sessions_ids = dict()
         _process_pg_response(res, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=0)
 
-        return self.sort_by_recommendation(np.array(list(X_sessions_ids.keys())), _X)
+        return self.sort_by_recommendation(np.array(list(X_sessions_ids.keys())), _X).tolist()
 
 
 class Recommendations:
@@ -112,18 +112,28 @@ class Recommendations:
             # self.download_model(name, version)
         self.names = new_names
 
-    async def download_next(self, n_loop=0):
+    async def download_next(self):
         """Pop element from to_download, download and add it into models."""
-        if self.to_download and n_loop < batch_download_size:
-            name, version = self.to_download.pop(0)
-            s_model = ServedModel()
-            s_model.load_model(name, version)
-            self.models[name] = s_model
-            self.download_next(self, n_loop=n_loop+1)
+        download_loop_number = 0
+        if self.to_download:
+            while download_loop_number < batch_download_size:
+                try:
+                    name, version = self.to_download.pop(0)
+                    s_model = ServedModel()
+                    s_model.load_model(name, version)
+                    self.models[name] = s_model
+                    download_loop_number += 1
+                except IndexError:
+                    break
+                except Exception as e:
+                    print('[Error] Found exception')
+                    print(repr(e))
+                    break
 
     def download_model(self, name, version):
         model = ServedModel()
-        self.models[name] = model.load_model(name, version)
+        model.load_model(name, version)
+        self.models[name] = model
 
     def info(self):
         """Show current loaded models."""
@@ -132,7 +142,7 @@ class Recommendations:
             print('Name:', model_name)
             print(model.model)
 
-    def get_recommendations(self, userId, projectId):
+    def get_recommendations(self, userId, projectId, n_recommendations=3):
         """Gets recommendation for userId given the projectId.
         This method selects the corresponding model and gets recommended sessions ordered by relevance."""
         tenantId = get_tenant(projectId)
@@ -142,7 +152,7 @@ class Recommendations:
             model = self.models[model_name]
         except KeyError:
             return []
-        return model.get_recommendations(userId, projectId)
+        return model.get_recommendations(userId, projectId)[:n_recommendations]
 
 
 recommendation_model = Recommendations()

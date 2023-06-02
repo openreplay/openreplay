@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 async def lifespan(app: FastAPI):
     await pg_client.init()
     await feedback.init()
-    # await recommendation_model.update()
+    await recommendation_model.update()
     app.schedule.start()
     for job in cron_jobs:
         app.schedule.add_job(id=job['func'].__name__, **job)
@@ -58,7 +58,7 @@ app.add_middleware(
 @app.get('/recommendations/{user_id}/{project_id}', dependencies=[Depends(api_key_auth)])
 async def get_recommended_sessions(user_id: int, project_id: int):
     recommendations = recommendation_model.get_recommendations(user_id, project_id)
-    print('[INFO] Recommendations achieved')
+    print(f'[Meta] {recommendations}')
     return {'userId': user_id,
             'projectId': project_id,
             'recommendations': recommendations
