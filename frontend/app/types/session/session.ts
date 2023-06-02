@@ -74,6 +74,7 @@ export interface ISession {
   userBrowser: string;
   userBrowserVersion: string;
   userCountry: string;
+  userCity: string;
   userDevice: string;
   userDeviceType: string;
   isMobile: boolean;
@@ -160,6 +161,7 @@ export default class Session {
   userBrowser: ISession['userBrowser'];
   userBrowserVersion: ISession['userBrowserVersion'];
   userCountry: ISession['userCountry'];
+  userCity: ISession['userCity'];
   userDevice: ISession['userDevice'];
   userDeviceType: ISession['userDeviceType'];
   isMobile: ISession['isMobile'];

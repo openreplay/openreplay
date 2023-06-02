@@ -20,6 +20,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
         userBrowser,
         userDevice,
         userCountry,
+        userCity,
         userBrowserVersion,
         userOs,
         userOsVersion,
@@ -69,6 +70,9 @@ function UserCard({ className, request, session, width, height, similarSessions,
 
                         </span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
+                        {userCity && (
+                            <span className="mr-2">{userCity},</span>
+                        )}
                         <span>{countries[userCountry]}</span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
                         <span className="capitalize">
