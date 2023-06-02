@@ -261,7 +261,7 @@ module.exports = {
             socket.peerId = socket.handshake.query.peerId;
             let {connProjectKey, connSessionId, connTabId} = extractPeerId(socket.peerId);
             socket.roomId = extractRoomId(socket.peerId);
-            socket.tabId = tabId;
+            socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
