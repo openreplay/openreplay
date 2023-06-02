@@ -257,6 +257,7 @@ module.exports = {
             socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket._connectedAt = new Date();
+
             socket.peerId = socket.handshake.query.peerId;
             socket.roomId = extractRoomId(socket.peerId);
             socket.tabId = extractTabId(socket.peerId);
@@ -333,7 +334,7 @@ module.exports = {
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.roomId}`);
                     // TODO: emit message to all agents in the room (except tabs)
-                    socket.to(socket.peerId).emit(eventName, args[0]);
+                    socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
                     // TODO: new message structure: {meta: {tabId: string::id}, data: xxx -> args[0]}
