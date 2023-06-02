@@ -163,6 +163,7 @@ const socketsLiveByProject = async function (req, res) {
                     } else {
                         if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
                             liveSessions.add(item.handshake.query.sessionInfo);
+                            sessIDs.set(item.handshake.query.sessionInfo.sessionID);
                         }
                     }
                 }
