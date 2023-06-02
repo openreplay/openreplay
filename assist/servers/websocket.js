@@ -163,6 +163,7 @@ const socketsLiveByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
+    console.log("sessions: ", sessions);
     respond(res, _sessionId === undefined ? sortPaginate(sessions, filters)
         : sessions.length > 0 ? sessions[0]
             : null);
@@ -260,8 +261,8 @@ module.exports = {
 
             socket.peerId = socket.handshake.query.peerId;
             let {projectKey: connProjectKey, sessionId: connSessionId, tabId:connTabId} = extractPeerId(socket.handshake.query.peerId);
-            debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}`);
             socket.roomId = extractRoomId(socket.peerId);
+            debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -272,9 +273,7 @@ module.exports = {
                         let {projectKey} = extractPeerId(roomId);
                         if (projectKey === connProjectKey) {
                             const connected_sockets = await io.in(roomId).fetchSockets();
-                            // debug && console.log(`connected_sockets:${JSON.stringify(connected_sockets)}`);
                             for (let item of connected_sockets) {
-                                debug && console.log(`conn.tabId: ${item.tabId}`);
                                 if (item.tabId === connTabId) {
                                     debug && console.log(`session already connected, refusing new connexion`);
                                     io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
@@ -334,8 +333,21 @@ module.exports = {
                     debug && console.log('Ignoring update event.');
                     return
                 }
-                socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
+                Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
+                // Update sessionInfo for all sessions (TODO: rewrite this)
+                const rooms = await getAvailableRooms(io);
+                for (let roomId of rooms.keys()) {
+                    let {projectKey} = extractPeerId(roomId);
+                    if (projectKey === connProjectKey) {
+                        const connected_sockets = await io.in(roomId).fetchSockets();
+                        for (let item of connected_sockets) {
+                            if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
+                                Object.assign(item.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
+                            }
+                        }
+                    }
+                }
             });
 
             socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
