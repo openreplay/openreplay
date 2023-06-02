@@ -1,8 +1,22 @@
 let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
 let debug = process.env.debug === "1" || false;
+const extractRoomId = (peerId) => {
+    let {projectKey, sessionId, tabId} = extractPeerId(peerId);
+    if (projectKey && sessionId) {
+        return `${projectKey}-${sessionId}`;
+    }
+    return null;
+}
+const extractTabId = (peerId) => {
+    let {projectKey, sessionId, tabId} = extractPeerId(peerId);
+    if (tabId) {
+        return tabId;
+    }
+    return null;
+}
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
-    if (splited.length !== 2) {
+    if (splited.length < 2 || splited.length > 3) {
         debug && console.error(`cannot split peerId: ${peerId}`);
         return {};
     }
@@ -10,7 +24,10 @@ const extractPeerId = (peerId) => {
         debug && console.error(`wrong project key length for peerId: ${peerId}`);
         return {};
     }
-    return {projectKey: splited[0], sessionId: splited[1]};
+    if (splited.length === 2) {
+        return {projectKey: splited[0], sessionId: splited[1], tabId: null};
+    }
+    return {projectKey: splited[0], sessionId: splited[1], tabId: splited[2]};
 };
 const request_logger = (identity) => {
     return (req, res, next) => {
@@ -246,6 +263,8 @@ const getCompressionConfig = function () {
 }
 module.exports = {
     transformFilters,
+    extractRoomId,
+    extractTabId,
     extractPeerId,
     request_logger,
     getValidAttributes,
