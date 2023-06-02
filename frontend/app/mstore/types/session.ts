@@ -25,6 +25,7 @@ export default class Session {
     userId: string = ""
     userDeviceType: string = ""
     userCountry: string = ""
+    userCity: string = ""
     eventsCount: number = 0
     userNumericHash: number = 0
     userDisplayName: string = ""
@@ -55,6 +56,7 @@ export default class Session {
             this.userDeviceType = session.userDeviceType
             this.eventsCount = session.eventsCount
             this.userCountry = session.userCountry
+            this.userCity = session.userCity
             this.userNumericHash = hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || "")
             this.userDisplayName = session.userId || session.userAnonymousId || session.userID || 'Anonymous User'
         })  
