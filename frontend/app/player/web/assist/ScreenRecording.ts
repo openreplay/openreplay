@@ -10,6 +10,7 @@ export enum SessionRecordingStatus {
 
 export interface State {
 	recordingState: SessionRecordingStatus;
+  currentTab?: string;
 }
 
 export default class ScreenRecording {
@@ -46,14 +47,19 @@ export default class ScreenRecording {
     if (recordingState === SessionRecordingStatus.Requesting) return;
 
     this.store.update({ recordingState: SessionRecordingStatus.Requesting })
-    this.socket.emit("request_recording", JSON.stringify({
-      ...this.agentInfo,
-      query: document.location.search,
-    }))
+    this.emitData("request_recording", JSON.stringify({
+        ...this.agentInfo,
+        query: document.location.search,
+      })
+    )
+  }
+
+  private emitData = (event: string, data?: any) => {
+    this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
   }
 
   stopRecording = () => {
-    this.socket.emit("stop_recording")
+    this.emitData("stop_recording")
     this.toggleRecording(false)
   }
 

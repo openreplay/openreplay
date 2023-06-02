@@ -169,15 +169,13 @@ export default class AssistManager {
 
       let currentTab = ''
       socket.on('messages', messages => {
-        jmr.append(messages) // as RawMessage[]
-        console.log(messages)
+        jmr.append(messages.data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          console.log(msg)
           this.handleMessage(msg, msg._index)
         }
       })
@@ -188,9 +186,15 @@ export default class AssistManager {
         this.setStatus(ConnectionStatus.Connected)
       })
 
-      socket.on('UPDATE_SESSION', ({ active }) => {
+      socket.on('UPDATE_SESSION', (evData) => {
+        const { metadata, data } = evData
+        const { tabId } = metadata
+        const { active } = data
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
+        if (tabId !== currentTab) {
+          this.store.update({ currentTab: tabId })
+        }
         if (typeof active === "boolean") {
           this.clearInactiveTimeout()
           if (active) {

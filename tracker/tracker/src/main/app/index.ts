@@ -636,6 +636,10 @@ export default class App {
       })
     }
   }
+
+  getTabId() {
+    return this.session.getTabId()
+  }
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {

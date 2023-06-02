@@ -89,6 +89,9 @@ export default class RemoteControl {
     }
     this.mouse = new Mouse(agentName)
     this.mouse.mount()
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.releaseControl(false)
+    })
   }
 
   resetMouse = () => {
@@ -97,7 +100,9 @@ export default class RemoteControl {
   }
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
-  move = (id, xy) => { id === this.agentID && this.mouse?.move(xy) }
+  move = (id, xy) => {
+   return id === this.agentID && this.mouse?.move(xy)
+  }
   private focused: HTMLElement | null = null
   click = (id, xy) => {
     if (id !== this.agentID || !this.mouse) { return }

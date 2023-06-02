@@ -33,7 +33,8 @@ function Overlay({
     tabStates,
     currentTab
   } = store.get()
-  const cssLoading = tabStates[currentTab].cssLoading || false
+
+  const cssLoading = tabStates[currentTab]?.cssLoading || false
   const loading = messagesLoading || cssLoading
   const liveStatusText = getStatusText(peerConnectionStatus)
   const connectionStatus = peerConnectionStatus

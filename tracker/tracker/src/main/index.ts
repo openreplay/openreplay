@@ -218,6 +218,13 @@ export default class API {
     }
     return this.app.getSessionID()
   }
+
+  getTabId() {
+    if (this.app === null) {
+      return null
+    }
+    return this.app.getTabId()
+  }
   sessionID(): string | null | undefined {
     deprecationWarn("'sessionID' method", "'getSessionID' method", '/')
     return this.getSessionID()
