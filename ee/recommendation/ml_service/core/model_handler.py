@@ -1,12 +1,10 @@
 import mlflow
 import hashlib
-from queue import Queue
 import numpy as np
 from decouple import config
 from utils import pg_client
 from utils.df_utils import _process_pg_response
-# from core.session_features import get_training_database
-# import requests
+from time import time
 
 host = config('pg_host_ml')
 port = config('pg_port_ml')
@@ -47,21 +45,24 @@ class ServedModel:
     def __init__(self):
         """Handler of mlflow model."""
         self.model = None
-        self.queue = Queue(maxsize=config('queue_maxsize', default=20))
 
     def load_model(self, model_name, model_version=1):
-        """Load model from mlflow given the model version."""
+        """Load model from mlflow given the model version.
+        Params:
+            model_name: model name in mlflow repository
+            model_version: version of model to be downloaded"""
         self.model = mlflow.pyfunc.load_model(f'models:/{model_name}/{model_version}')
 
-    def predict(self, X):
+    def predict(self, X) -> np.ndarray:
         """Make prediction for batch X."""
+        assert self.model is not None, 'Model has to be loaded before predicting. See load_model.__doc__'
         return self.model.predict(X)
 
-    def sort_by_recommendation(self, sessions, sessions_features) -> np.ndarray:
+    def _sort_by_recommendation(self, sessions, sessions_features) -> np.ndarray:
         """Make prediction for sessions_features and sort them by relevance."""
         pred = self.predict(sessions_features)
-        if len(pred) == 0:
-            return []
+        if len(pred) == 0 or pred.max() < 0.6:
+            return np.array([])
         sorted_idx = np.argsort(pred)[::-1]
         return sessions[sorted_idx]
 
@@ -70,12 +71,13 @@ class ServedModel:
         Selects last unseen_selection_limit non seen sessions (env value, default 100)
         and sort them by pertinence using ML model"""
         limit = config('unseen_selection_limit', default=100, cast=int)
+        oldest_limit = time() - config('unseen_max_days_ago_selection', default=30, cast=int)*60*60*24
         with pg_client.PostgresClient() as conn:
             query = conn.mogrify(
                 """SELECT project_id, session_id, user_id, %(userId)s as viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
                     FROM sessions
-                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL LIMIT %(limit)s""",
-                {'userId': userId, 'projectId': projectId, 'limit': limit}
+                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL AND start_ts > %(oldest_limit)s LIMIT %(limit)s""",
+                {'userId': userId, 'projectId': projectId, 'limit': limit, 'oldest_limit': oldest_limit}
             )
             conn.execute(query)
             res = conn.fetchall()
@@ -86,7 +88,7 @@ class ServedModel:
         X_sessions_ids = dict()
         _process_pg_response(res, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=0)
 
-        return self.sort_by_recommendation(np.array(list(X_sessions_ids.keys())), _X).tolist()
+        return self._sort_by_recommendation(np.array(list(X_sessions_ids.keys())), _X).tolist()
 
 
 class Recommendations:
@@ -142,7 +144,7 @@ class Recommendations:
             print('Name:', model_name)
             print(model.model)
 
-    def get_recommendations(self, userId, projectId, n_recommendations=3):
+    def get_recommendations(self, userId, projectId, n_recommendations=20):
         """Gets recommendation for userId given the projectId.
         This method selects the corresponding model and gets recommended sessions ordered by relevance."""
         tenantId = get_tenant(projectId)
