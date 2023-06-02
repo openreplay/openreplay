@@ -93,16 +93,17 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
         self.confusion_matrix = np.array([[true_neg, false_pos], [false_neg, true_pos]])
         self.score = true_pos + true_neg
 
+
     def predict(self, x):
         """
-        Transform and prediction of input features and sorting of each by probability
-        Params:
-            X: Array of features.
-        Output: predictions.
-        """
+            Transform and prediction of input features and sorting of each by probability
+            Params:
+                X: Array of features.
+            Output: prediction probability for True (1).
+            """
         for t in self.transforms:
             x = t(x)
-        return self.svm.predict(x)
+        return self.svm.predict_proba(x)[:, 1]
 
     def recommendation_order(self, x):
         """

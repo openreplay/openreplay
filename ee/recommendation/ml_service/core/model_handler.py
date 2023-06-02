@@ -61,22 +61,25 @@ class ServedModel:
     def _sort_by_recommendation(self, sessions, sessions_features) -> np.ndarray:
         """Make prediction for sessions_features and sort them by relevance."""
         pred = self.predict(sessions_features)
-        if len(pred) == 0 or pred.max() < 0.6:
+        threshold = config('threshold_prediction', default=0.6, cast=float)
+        over_threshold = pred > threshold
+        pred = pred[over_threshold]
+        if len(pred) == 0:
             return np.array([])
         sorted_idx = np.argsort(pred)[::-1]
-        return sessions[sorted_idx]
+        return sessions[over_threshold][sorted_idx]
 
     def get_recommendations(self, userId, projectId):
         """Gets recommendations for userId for a given projectId.
         Selects last unseen_selection_limit non seen sessions (env value, default 100)
         and sort them by pertinence using ML model"""
         limit = config('unseen_selection_limit', default=100, cast=int)
-        oldest_limit = time() - config('unseen_max_days_ago_selection', default=30, cast=int)*60*60*24
+        oldest_limit = 1000*(time() - config('unseen_max_days_ago_selection', default=30, cast=int)*60*60*24)
         with pg_client.PostgresClient() as conn:
             query = conn.mogrify(
                 """SELECT project_id, session_id, user_id, %(userId)s as viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
                     FROM sessions
-                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL AND start_ts > %(oldest_limit)s LIMIT %(limit)s""",
+                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions WHERE user_id = %(userId)s) AND duration IS NOT NULL AND start_ts > %(oldest_limit)s LIMIT %(limit)s""",
                 {'userId': userId, 'projectId': projectId, 'limit': limit, 'oldest_limit': oldest_limit}
             )
             conn.execute(query)
@@ -144,7 +147,7 @@ class Recommendations:
             print('Name:', model_name)
             print(model.model)
 
-    def get_recommendations(self, userId, projectId, n_recommendations=20):
+    def get_recommendations(self, userId, projectId, n_recommendations=100):
         """Gets recommendation for userId given the projectId.
         This method selects the corresponding model and gets recommended sessions ordered by relevance."""
         tenantId = get_tenant(projectId)

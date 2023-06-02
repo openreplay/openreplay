@@ -10,9 +10,11 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from datetime import timedelta
 from decouple import config
 from textwrap import dedent
+_work_dir = os.getcwd()
+sys.path.insert(1, _work_dir)
 from utils import pg_client
 
-_work_dir = os.getcwd()
+
 client = mlflow.MlflowClient()
 models = [model.name for model in client.search_registered_models()]
 
@@ -51,15 +53,14 @@ def continue_old(ti):
 
 
 def select_from_db(ti):
-    sys.path.insert(1, _work_dir)
     os.environ['PG_POOL'] = 'true'
     asyncio.run(pg_client.init())
     with pg_client.PostgresClient() as conn:
         conn.execute("""SELECT tenant_id, project_id as project_id
-                        FROM ((SELECT project_id, count(1) as n_events
+                        FROM ((SELECT project_id
                                FROM frontend_signals
                                GROUP BY project_id
-                               WHERE n_events > 10) AS T1
+                               HAVING count(1) > 10) AS T1
                             INNER JOIN projects AS T2 USING (project_id));""")
         res = conn.fetchall()
     projects = list()

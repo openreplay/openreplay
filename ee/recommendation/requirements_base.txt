@@ -8,7 +8,7 @@ psycopg2-binary==2.9.5
 joblib==1.2.0
 scipy
 scikit-learn
-mlflow
+mlflow==2.3
 
 clickhouse-driver==0.2.5
 python3-saml==1.14.0

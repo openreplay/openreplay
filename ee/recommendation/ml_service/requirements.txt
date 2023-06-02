@@ -1,4 +1,4 @@
-fastapi
+fastapi==0.95.2
 apscheduler
 uvicorn
 SQLAlchemy

@@ -58,7 +58,6 @@ app.add_middleware(
 @app.get('/recommendations/{user_id}/{project_id}', dependencies=[Depends(api_key_auth)])
 async def get_recommended_sessions(user_id: int, project_id: int):
     recommendations = recommendation_model.get_recommendations(user_id, project_id)
-    print(f'[Meta] {recommendations}')
     return {'userId': user_id,
             'projectId': project_id,
             'recommendations': recommendations

@@ -57,7 +57,7 @@ def signals_features(conn, **kwargs):
                                    T.country,
                                    T.issue_score,
                                    T.device_type,
-                                   T2.interesting
+                                   T2.interesting as train_label
                             FROM (SELECT project_id,
                                          user_id                                                            as viewer_id,
                                          session_id,
