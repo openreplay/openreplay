@@ -158,12 +158,12 @@ const socketsLiveByProject = async function (req, res) {
                             !sessIDs.has(item.handshake.query.sessionInfo.sessionID)
                         ) {
                             liveSessions.add(item.handshake.query.sessionInfo);
-                            sessIDs.set(item.handshake.query.sessionInfo.sessionID);
+                            sessIDs.add(item.handshake.query.sessionInfo.sessionID);
                         }
                     } else {
                         if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
                             liveSessions.add(item.handshake.query.sessionInfo);
-                            sessIDs.set(item.handshake.query.sessionInfo.sessionID);
+                            sessIDs.add(item.handshake.query.sessionInfo.sessionID);
                         }
                     }
                 }
