@@ -259,7 +259,7 @@ module.exports = {
             socket._connectedAt = new Date();
 
             socket.peerId = socket.handshake.query.peerId;
-            let {connProjectKey, connSessionId, connTabId} = extractPeerId(socket.peerId);
+            let {connProjectKey, connSessionId, connTabId} = extractPeerId(socket.handshake.query.peerId);
             debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}`);
             socket.roomId = extractRoomId(socket.peerId);
             socket.tabId = connTabId;
