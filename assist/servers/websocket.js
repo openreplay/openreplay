@@ -260,6 +260,7 @@ module.exports = {
 
             socket.peerId = socket.handshake.query.peerId;
             let {connProjectKey, connSessionId, connTabId} = extractPeerId(socket.peerId);
+            debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}`);
             socket.roomId = extractRoomId(socket.peerId);
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
