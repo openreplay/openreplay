@@ -144,6 +144,7 @@ const socketsLiveByProject = async function (req, res) {
     let filters = await extractPayloadFromRequest(req);
     let withFilters = hasFilters(filters);
     let liveSessions = new Set();
+    const sessIDs = new Set();
     let rooms = await getAvailableRooms(io);
     for (let roomId of rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(roomId);
@@ -152,11 +153,17 @@ const socketsLiveByProject = async function (req, res) {
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     if (withFilters) {
-                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
+                        if (item.handshake.query.sessionInfo &&
+                            isValidSession(item.handshake.query.sessionInfo, filters.filter) &&
+                            !sessIDs.has(item.handshake.query.sessionInfo.sessionId)
+                        ) {
                             liveSessions.add(item.handshake.query.sessionInfo);
+                            sessIDs.set(item.handshake.query.sessionInfo.sessionId);
                         }
                     } else {
-                        liveSessions.add(item.handshake.query.sessionInfo);
+                        if (!sessIDs.has(item.handshake.query.sessionInfo.sessionId)) {
+                            liveSessions.add(item.handshake.query.sessionInfo);
+                        }
                     }
                 }
             }
@@ -164,9 +171,7 @@ const socketsLiveByProject = async function (req, res) {
     }
     let sessions = Array.from(liveSessions);
     console.log("sessions: ", sessions);
-    respond(res, _sessionId === undefined ? sortPaginate(sessions, filters)
-        : sessions.length > 0 ? sessions[0]
-            : null);
+    respond(res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
 const autocomplete = async function (req, res) {

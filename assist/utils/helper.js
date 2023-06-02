@@ -202,7 +202,7 @@ const sortPaginate = function (list, filters) {
     list.sort((a, b) => {
         const tA = getValue(a, "timestamp");
         const tB = getValue(b, "timestamp");
-        return tA < tB ? 1 : tA > tB ? -1 : 0;
+        return tA < tB ? 1 : tA > tB ? -1 : 0; // b - a
     });
     if (filters.sort.order) {
         list.reverse();
