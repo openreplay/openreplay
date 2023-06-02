@@ -29,7 +29,7 @@ class EventQueue():
                 if _key == 'data':
                     params[f'{_key}_{i}'] = json.dumps(_val)
                     if 'sessionId' in _val.keys():
-                        params[f'session_id_{i}'] = _val['sessionId']
+                        params[f'session_id_{i}'] = int(_val['sessionId'])
                     else:
                         params[f'session_id_{i}'] = None
                 else:

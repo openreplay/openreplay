@@ -640,6 +640,7 @@ $$
                 source     text                                           NOT NULL,
                 category   text                                           NOT NULL,
                 data       jsonb,
+                session_id integer
                 created_at timestamp DEFAULT timezone('utc'::text, now()) NOT NULL
             );
             CREATE INDEX IF NOT EXISTS frontend_signals_user_id_idx ON frontend_signals (user_id);
