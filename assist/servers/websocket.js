@@ -171,7 +171,6 @@ const socketsLiveByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
-    console.log("sessions: ", sessions);
     respond(res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
@@ -265,12 +264,13 @@ module.exports = {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket._connectedAt = new Date();
 
-            socket.peerId = socket.handshake.query.peerId;
             let {projectKey: connProjectKey, sessionId: connSessionId, tabId:connTabId} = extractPeerId(socket.handshake.query.peerId);
+            socket.peerId = socket.handshake.query.peerId;
             socket.roomId = extractRoomId(socket.peerId);
-            debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
+            debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
+
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
