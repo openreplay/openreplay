@@ -513,6 +513,11 @@ export default class Assist {
         })
 
         call.answer(lStreams[call.peer].stream)
+
+        document.addEventListener('visibilitychange', () => {
+          initiateCallEnd()
+        })
+
         this.setCallingState(CallingState.True)
         if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
 
