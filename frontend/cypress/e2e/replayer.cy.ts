@@ -60,7 +60,7 @@ describe(
         cy.wait(SECOND * 180);
         cy.visit(firstAlias.slice(27) + '?freeze=true');
         cy.log('loading session')
-        cy.wait(SECOND * 25);
+        cy.wait(SECOND * 10);
 
         cy.window().then(win => {
           const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
@@ -103,48 +103,49 @@ describe(
       });
     });
 
-    it('Checking Replayer at breakpoints, user events and console', () => {
-      cy.intercept('**/api/account').as('getAccount')
-      cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
-      cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
-      cy.log('testing premade session')
-
-      cy.visit('http://0.0.0.0:3333', {
-        onBeforeLoad: function (window) {
-          window.localStorage.setItem('notesFeatureViewed', 'true');
-        }
-      })
-      cy.get('[data-test-id=login]').type(Cypress.env('account').replaceAll('"', ''));
-      cy.get('[data-test-id=password]').type(Cypress.env('password').replaceAll('"', ''));
-      cy.get('[data-test-id=log-button]').click();
-      cy.wait('@getAccount')
-      cy.wait(SECOND * 2)
-      cy.visit('3/session/7585361734083637?jumpto=7500&freeze=true')
-      cy.wait('@getFirstMob')
-      cy.wait('@getSecondMob')
-      cy.wait(SECOND * 2)
-
-      cy.window().then(win => {
-        const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
-        jumpMethod(SECOND * 7.5)
-      })
-      cy.wait(SECOND * 4)
-      cy.matchImageSnapshot('1st-breakpoint');
-
-      cy.window().then(win => {
-        const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
-        jumpMethod(SECOND * 21)
-      })
-      cy.wait(SECOND * 4)
-      cy.matchImageSnapshot('2nd-breakpoint');
-
-      cy.get('[data-openreplay-label="User Steps"]').click()
-      cy.wait(SECOND * 0.5)
-      cy.matchImageSnapshot('User-Events');
-
-      cy.get('#control-button-network > .controlButton-module__label--YznMl').click()
-      cy.wait(SECOND * 0.5)
-      cy.matchImageSnapshot('Network-Events');
-    })
+    // this session is long gone
+    // it('Checking Replayer at breakpoints, user events and console', () => {
+    //   cy.intercept('**/api/account').as('getAccount')
+    //   cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
+    //   cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
+    //   cy.log('testing premade session')
+    //
+    //   cy.visit('http://0.0.0.0:3333', {
+    //     onBeforeLoad: function (window) {
+    //       window.localStorage.setItem('notesFeatureViewed', 'true');
+    //     }
+    //   })
+    //   cy.get('[data-test-id=login]').type(Cypress.env('account').replaceAll('"', ''));
+    //   cy.get('[data-test-id=password]').type(Cypress.env('password').replaceAll('"', ''));
+    //   cy.get('[data-test-id=log-button]').click();
+    //   cy.wait('@getAccount')
+    //   cy.wait(SECOND * 2)
+    //   cy.visit('3/session/7585361734083637?jumpto=7500&freeze=true')
+    //   cy.wait('@getFirstMob')
+    //   cy.wait('@getSecondMob')
+    //   cy.wait(SECOND * 2)
+    //
+    //   cy.window().then(win => {
+    //     const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+    //     jumpMethod(SECOND * 7.5)
+    //   })
+    //   cy.wait(SECOND * 4)
+    //   cy.matchImageSnapshot('1st-breakpoint');
+    //
+    //   cy.window().then(win => {
+    //     const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+    //     jumpMethod(SECOND * 21)
+    //   })
+    //   cy.wait(SECOND * 4)
+    //   cy.matchImageSnapshot('2nd-breakpoint');
+    //
+    //   cy.get('[data-openreplay-label="User Steps"]').click()
+    //   cy.wait(SECOND * 0.5)
+    //   cy.matchImageSnapshot('User-Events');
+    //
+    //   cy.get('#control-button-network > .controlButton-module__label--YznMl').click()
+    //   cy.wait(SECOND * 0.5)
+    //   cy.matchImageSnapshot('Network-Events');
+    // })
   }
 );
