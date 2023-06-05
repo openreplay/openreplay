@@ -147,12 +147,13 @@ class Recommendations:
             print('Name:', model_name)
             print(model.model)
 
-    def get_recommendations(self, userId, projectId, n_recommendations=100):
+    def get_recommendations(self, userId, projectId, n_recommendations=5):
         """Gets recommendation for userId given the projectId.
         This method selects the corresponding model and gets recommended sessions ordered by relevance."""
         tenantId = get_tenant(projectId)
         hashed = hashlib.sha256(bytes(f'{projectId}-{tenantId}'.encode('utf-8'))).hexdigest()
         model_name = f'{hashed}-RecModel'
+        n_recommendations = config('number_of_recommendations', default=5, cast=int)
         try:
             model = self.models[model_name]
         except KeyError:
