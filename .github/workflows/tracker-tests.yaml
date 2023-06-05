@@ -52,7 +52,7 @@ jobs:
       - name: Jest tests
         run: |
           cd tracker/tracker
-          yarn test:
+          yarn test:ci
       - name: Jest tests
         run: |
           cd tracker/tracker-assist
