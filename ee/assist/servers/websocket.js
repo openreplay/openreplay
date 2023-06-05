@@ -1,6 +1,7 @@
 const _io = require('socket.io');
 const express = require('express');
 const {
+    extractRoomId,
     extractPeerId,
     hasFilters,
     isValidSession,

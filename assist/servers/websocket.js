@@ -2,7 +2,6 @@ const _io = require('socket.io');
 const express = require('express');
 const {
     extractRoomId,
-    extractTabId,
     extractPeerId,
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
