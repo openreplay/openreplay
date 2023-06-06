@@ -308,7 +308,6 @@ export default class TabSessionManager {
   }
 
   public onFileReadSuccess = () => {
-    console.log('triggered', this.performanceTrackManager)
     const stateToUpdate : Partial<Record<string,any>> = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,

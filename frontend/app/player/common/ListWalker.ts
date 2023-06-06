@@ -38,7 +38,7 @@ export default class ListWalker<T extends Timed> {
 		if (this.list.length === 0) {
 			return null;
 		}
-		return this.list[ this.list.length - 1 ];
+		return this.list.slice(-1)[0];
 	}
 
 	get current(): T | null {

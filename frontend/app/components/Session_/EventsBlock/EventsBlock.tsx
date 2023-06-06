@@ -13,7 +13,8 @@ import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { InjectedEvent } from 'Types/session/event';
-import Session from 'Types/session';
+import Session, { mergeEventLists } from 'Types/session';
+import { toJS } from 'mobx';
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void;
@@ -36,7 +37,7 @@ function EventsBlock(props: IProps) {
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { playing, tabStates } = store.get();
+  const { playing, tabStates, tabChangeEvents } = store.get();
 
   const {
     filteredEvents,
@@ -47,13 +48,14 @@ function EventsBlock(props: IProps) {
     notesWithEvents,
   } = props;
 
-  // TODO! multitab tab id
   const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
     return acc.concat(tab.eventListNow)
   }, [])
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
-  const usedEvents = filteredEvents || notesWithEvents;
+  const usedEvents = React.useMemo(() => {
+    return mergeEventLists(filteredEvents || notesWithEvents, tabChangeEvents);
+  }, [filteredEvents.length, notesWithEvents.length])
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
@@ -114,6 +116,7 @@ function EventsBlock(props: IProps) {
     const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
+    const isTabChange = event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
 
     const heightBug =
@@ -134,6 +137,7 @@ function EventsBlock(props: IProps) {
               isCurrent={isCurrent}
               showSelection={!playing}
               isNote={isNote}
+              isTabChange={isTabChange}
               filterOutNote={filterOutNote}
             />
           </div>

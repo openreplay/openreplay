@@ -20,7 +20,9 @@ function SubHeader() {
     <>
       <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
         {tabs.map((tab, i) => (
-          <Tab i={i} tab={tab} currentTab={tabs.length === 1 ? tab : currentTab} />
+          <React.Fragment key={tab}>
+            <Tab i={i} tab={tab} currentTab={tabs.length === 1 ? tab : currentTab} />
+          </React.Fragment>
         ))}
       </div>
       {location && (

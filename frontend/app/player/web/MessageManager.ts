@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Decoder } from "syncod";
+import { Decoder } from 'syncod';
 import logger from 'App/logger';
 
 import type { Store, ILog } from 'Player';
@@ -9,52 +9,49 @@ import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
 
-import { MouseThrashing, MType } from "./messages";
-import type {
-  Message,
-  MouseClick,
-} from './messages';
+import { MouseThrashing, MType } from './messages';
+import type { Message, MouseClick } from './messages';
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
   State as ScreenState,
 } from './Screen/Screen';
 
-import type { InitialLists } from './Lists'
+import type { InitialLists } from './Lists';
 import type { SkipInterval } from './managers/ActivityManager';
-import TabSessionManager, { TabState } from "Player/web/TabManager";
-import ActiveTabManager from "Player/web/managers/ActiveTabManager";
+import TabSessionManager, { TabState } from 'Player/web/TabManager';
+import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 
 interface RawList {
-  event: Record<string, any>[] & { tabId: string | null }
-  frustrations: Record<string, any>[] & { tabId: string | null }
-  stack: Record<string, any>[] & { tabId: string | null }
-  exceptions: ILog[]
+  event: Record<string, any>[] & { tabId: string | null };
+  frustrations: Record<string, any>[] & { tabId: string | null };
+  stack: Record<string, any>[] & { tabId: string | null };
+  exceptions: ILog[];
 }
 
 export interface State extends ScreenState {
-  skipIntervals: SkipInterval[],
-  connType?: string,
-  connBandwidth?: number,
-  location?: string,
+  skipIntervals: SkipInterval[];
+  connType?: string;
+  connBandwidth?: number;
+  location?: string;
   tabStates: {
-    [tabId: string]: TabState,
-  }
+    [tabId: string]: TabState;
+  };
 
-  domContentLoadedTime?:  { time: number, value: number },
-  domBuildingTime?: number,
-  loadTime?: { time: number, value: number },
-  error: boolean,
-  messagesLoading: boolean,
+  domContentLoadedTime?: { time: number; value: number };
+  domBuildingTime?: number;
+  loadTime?: { time: number; value: number };
+  error: boolean;
+  messagesLoading: boolean;
 
-  ready: boolean,
-  lastMessageTime: number,
-  firstVisualEvent: number,
-  messagesProcessed: boolean,
-  currentTab: string,
-  tabs: string[],
+  ready: boolean;
+  lastMessageTime: number;
+  firstVisualEvent: number;
+  messagesProcessed: boolean;
+  currentTab: string;
+  tabs: string[];
+  tabChangeEvents: { tabId: string; timestamp: number; tabName: string }[];
 }
-
 
 export const visualChanges = [
   MType.MouseMove,
@@ -64,7 +61,7 @@ export const visualChanges = [
   MType.SetInputChecked,
   MType.SetViewportSize,
   MType.SetViewportScroll,
-]
+];
 
 export default class MessageManager {
   static INITIAL_STATE: State = {
@@ -79,13 +76,14 @@ export default class MessageManager {
     messagesLoading: false,
     currentTab: '',
     tabs: [],
-  }
+    tabChangeEvents: [],
+  };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
   private activityManager: ActivityManager | null = null;
   private mouseMoveManager: MouseMoveManager;
-  private activeTabManager = new ActiveTabManager()
+  private activeTabManager = new ActiveTabManager();
 
   public readonly decoder = new Decoder();
 
@@ -93,27 +91,28 @@ export default class MessageManager {
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
-  private activeTab = ''
+  private tabChangeEvents: Record<string, number>[] = [];
+  private activeTab = '';
 
   constructor(
     private readonly session: Record<string, any>,
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly initialLists?: Partial<InitialLists>,
-    private readonly uiErrorHandler?: { error: (error: string) => void, },
+    private readonly uiErrorHandler?: { error: (error: string) => void }
   ) {
-    this.mouseMoveManager = new MouseMoveManager(screen)
-    this.sessionStart = this.session.startedAt
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
+    this.mouseMoveManager = new MouseMoveManager(screen);
+    this.sessionStart = this.session.startedAt;
+    this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
   }
 
   public getListsFullState = () => {
-    const fullState: Record<string, any> = {}
+    const fullState: Record<string, any> = {};
     for (let tab in Object.keys(this.tabs)) {
-      fullState[tab] = this.tabs[tab].getListsFullState()
+      fullState[tab] = this.tabs[tab].getListsFullState();
     }
-    return Object.values(this.tabs)[0].getListsFullState()
-  }
+    return Object.values(this.tabs)[0].getListsFullState();
+  };
 
   public updateLists(lists: RawList) {
     // update each tab with tabid from events
@@ -123,96 +122,110 @@ export default class MessageManager {
         frustrations: lists.frustrations.filter((e) => e.tabId === tab),
         stack: lists.stack.filter((e) => e.tabId === tab),
         exceptions: lists.exceptions.filter((e) => e.tabId === tab),
-      }
+      };
       // saving some microseconds here probably
       if (Object.values(list).some((l) => l.length > 0)) {
-        this.tabs[tab]!.updateLists(list)
+        this.tabs[tab]!.updateLists(list);
       }
     }
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
-    Object.values(this.tabs).forEach(tab => tab._sortMessagesHack(msgs))
-  }
+    Object.values(this.tabs).forEach((tab) => tab._sortMessagesHack(msgs));
+  };
 
-  private waitingForFiles: boolean = false
+  private waitingForFiles: boolean = false;
   public onFileReadSuccess = () => {
     if (this.activityManager) {
-      this.activityManager.end()
-      this.state.update({ skipIntervals: this.activityManager.list })
+      this.activityManager.end();
+      this.state.update({ skipIntervals: this.activityManager.list });
     }
-    Object.values(this.tabs).forEach(tab => tab.onFileReadSuccess?.())
-  }
+    Object.values(this.tabs).forEach((tab) => tab.onFileReadSuccess?.());
+  };
 
   public onFileReadFailed = (e: any) => {
-    logger.error(e)
-    this.state.update({ error: true })
-    this.uiErrorHandler?.error('Error requesting a session file')
-  }
+    logger.error(e);
+    this.state.update({ error: true });
+    this.uiErrorHandler?.error('Error requesting a session file');
+  };
 
   public onFileReadFinally = () => {
-    this.waitingForFiles = false
-    this.state.update({ messagesProcessed: true })
-  }
+    this.waitingForFiles = false;
+    this.state.update({ messagesProcessed: true });
+  };
 
   public startLoading = () => {
-    this.waitingForFiles = true
-    this.state.update({ messagesProcessed: false })
-    this.setMessagesLoading(true)
-  }
+    this.waitingForFiles = true;
+    this.state.update({ messagesProcessed: false });
+    this.setMessagesLoading(true);
+  };
 
   resetMessageManagers() {
     this.clickManager = new ListWalker();
     this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
-    this.activeTabManager = new ActiveTabManager()
+    this.activeTabManager = new ActiveTabManager();
 
-    Object.values(this.tabs).forEach(tab => tab.resetMessageManagers())
+    Object.values(this.tabs).forEach((tab) => tab.resetMessageManagers());
   }
 
   move(t: number): any {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
-    this.activeTabManager.moveReady(t).then(tabId => {
+    this.activeTabManager.moveReady(t).then((tabId) => {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
-      if (!!lastClick && t - lastClick.time < 600) { // happened during last 600ms
+      if (!!lastClick && t - lastClick.time < 600) {
+        // happened during last 600ms
         this.screen.cursor.click();
       }
-      const lastThrashing = this.mouseThrashingManager.moveGetLast(t)
+      const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
       if (!!lastThrashing && t - lastThrashing.time < 300) {
         this.screen.cursor.shake();
       }
 
-      const activeTabs = this.state.get().tabs
+      const activeTabs = this.state.get().tabs;
       if (tabId && !activeTabs.includes(tabId)) {
-        this.state.update({ tabs: activeTabs.concat(tabId) })
+        this.state.update({ tabs: activeTabs.concat(tabId) });
       }
 
       if (tabId && this.activeTab !== tabId) {
-        this.state.update({ currentTab: tabId })
-        this.activeTab = tabId
+        this.state.update({ currentTab: tabId });
+        this.activeTab = tabId;
       }
 
       if (this.tabs[this.activeTab]) {
-        this.tabs[this.activeTab].move(t)
+        this.tabs[this.activeTab].move(t);
       } else {
-        console.error('missing tab state', this.tabs, this.activeTab, tabId, this.activeTabManager.list)
+        console.error(
+          'missing tab state',
+          this.tabs,
+          this.activeTab,
+          tabId,
+          this.activeTabManager.list
+        );
       }
-    })
+    });
 
-    if (this.waitingForFiles && this.lastMessageTime <= t && t !== this.session.duration.milliseconds) {
-      this.setMessagesLoading(true)
+    if (
+      this.waitingForFiles &&
+      this.lastMessageTime <= t &&
+      t !== this.session.duration.milliseconds
+    ) {
+      this.setMessagesLoading(true);
     }
   }
 
   public changeTab(tabId: string) {
-    this.activeTab = tabId
-    this.state.update({ currentTab: tabId })
-    this.tabs[tabId].move(this.state.get().time)
+    this.activeTab = tabId;
+    this.state.update({ currentTab: tabId });
+    this.tabs[tabId].move(this.state.get().time);
   }
 
+  public updateChangeEvents() {
+    this.state.update({ tabChangeEvents: this.tabChangeEvents });
+  }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
     if (!this.tabs[msg.tabId]) {
@@ -223,19 +236,29 @@ export default class MessageManager {
         msg.tabId,
         this.setSize,
         this.sessionStart,
-        this.initialLists,
-      )
+        this.initialLists
+      );
     }
 
-    const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
-    this.lastMessageTime = lastMessageTime
-    this.state.update({ lastMessageTime })
+    const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
+    this.lastMessageTime = lastMessageTime;
+    this.state.update({ lastMessageTime });
     if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
       case MType.TabChange:
-        this.activeTabManager.append(msg)
+        const prevChange = this.activeTabManager.last;
+        if (!prevChange || prevChange.tabId !== msg.tabId) {
+          this.tabChangeEvents.push({
+            tabId: msg.tabId,
+            timestamp: this.sessionStart + msg.time,
+            toTab: mapTabs(this.tabs)[msg.tabId],
+            fromTab: mapTabs(this.tabs)[prevChange.tabId],
+            type: 'TABCHANGE',
+          });
+          this.activeTabManager.append(msg);
+        }
         break;
       case MType.MouseThrashing:
         this.mouseThrashingManager.append(msg);
@@ -250,26 +273,33 @@ export default class MessageManager {
         switch (msg.tp) {
           case MType.CreateDocument:
             if (!this.firstVisualEventSet) {
-              this.activeTabManager.append({ tp: MType.TabChange, tabId: msg.tabId, time: 0 })
-              this.state.update({ firstVisualEvent: msg.time, currentTab: msg.tabId, tabs: [msg.tabId] });
+              this.activeTabManager.append({ tp: MType.TabChange, tabId: msg.tabId, time: 0 });
+              this.state.update({
+                firstVisualEvent: msg.time,
+                currentTab: msg.tabId,
+                tabs: [msg.tabId],
+              });
               this.firstVisualEventSet = true;
             }
         }
-        this.tabs[msg.tabId].distributeMessage(msg)
+        this.tabs[msg.tabId].distributeMessage(msg);
         break;
     }
-  }
+  };
 
   setMessagesLoading = (messagesLoading: boolean) => {
+    if (!messagesLoading) {
+      this.updateChangeEvents();
+    }
     this.screen.display(!messagesLoading);
     this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
-  }
+  };
 
   decodeMessage(msg: Message) {
-    return this.tabs[this.activeTab].decodeMessage(msg)
+    return this.tabs[this.activeTab].decodeMessage(msg);
   }
 
-  private setSize({ height, width }: { height: number, width: number }) {
+  private setSize({ height, width }: { height: number; width: number }) {
     this.screen.scale({ height, width });
     this.state.update({ width, height });
   }
@@ -278,5 +308,14 @@ export default class MessageManager {
   clean() {
     this.state.update(MessageManager.INITIAL_STATE);
   }
+}
 
+function mapTabs(tabs: Record<string, TabState>) {
+  const tabIds = Object.keys(tabs);
+  const tabMap = {};
+  tabIds.forEach((tabId) => {
+    tabMap[tabId] = `Tab ${tabIds.indexOf(tabId)+1}`;
+  });
+
+  return tabMap;
 }

@@ -9,7 +9,7 @@ import { toJS } from 'mobx';
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
-function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
+export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
   let merged = [];
   let index1 = 0;
   let index2 = 0;
