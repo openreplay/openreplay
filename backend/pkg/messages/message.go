@@ -20,6 +20,7 @@ type BatchInfo struct {
 	partition uint64
 	timestamp int64
 	version   uint64
+	tabID     string
 }
 
 func NewBatchInfo(sessID uint64, topic string, id, partition uint64, ts int64) *BatchInfo {
@@ -80,6 +81,13 @@ func (m *message) MsgID() uint64 {
 
 func (m *message) Time() uint64 {
 	return m.Meta().Timestamp
+}
+
+func (m *message) TabID() string {
+	if m.batch == nil {
+		return ""
+	}
+	return m.batch.tabID
 }
 
 func (m *message) SetSessionID(sessID uint64) {

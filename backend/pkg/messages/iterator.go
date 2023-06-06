@@ -43,6 +43,7 @@ func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, auto
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
+		MsgTabData: {},
 	}
 	return iter
 }
@@ -184,6 +185,10 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Url = m.URL
 		// Save session page url in cache for using in next batches
 		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
+
+	case *TabData:
+		// Save tabID for using in all messages in current batch
+		i.batchInfo.tabID = m.TabId
 	}
 	return nil
 }

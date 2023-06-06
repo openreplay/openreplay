@@ -104,15 +104,15 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	return conn.c.Exec(sqlRequest, sessionID)
 }
 
-func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
-	if err := conn.bulks.Get("requests").Append(sessionID, timestamp, index, url, duration, success); err != nil {
+func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool, tabID string) error {
+	if err := conn.bulks.Get("requests").Append(sessionID, timestamp, index, url, duration, success, tabID); err != nil {
 		return fmt.Errorf("insert request in bulk err: %s", err)
 	}
 	return nil
 }
 
-func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name string, payload string) error {
-	if err := conn.bulks.Get("customEvents").Append(sessionID, timestamp, index, name, payload); err != nil {
+func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name, payload, tabID string) error {
+	if err := conn.bulks.Get("customEvents").Append(sessionID, timestamp, index, name, payload, tabID); err != nil {
 		return fmt.Errorf("insert custom event in bulk err: %s", err)
 	}
 	return nil
@@ -157,12 +157,12 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, e.Type, e.ContextString); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
-	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
+	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload, e.TabID()); err != nil {
 		log.Printf("insert web issue event err: %s", err)
 	}
 	conn.updateSessionIssues(sessionID, 0, getIssueScore(e))
 	if e.Type == "custom" {
-		if err := conn.bulks.Get("webCustomEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
+		if err := conn.bulks.Get("webCustomEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error", e.TabID()); err != nil {
 			log.Printf("insert web custom event err: %s", err)
 		}
 	}
