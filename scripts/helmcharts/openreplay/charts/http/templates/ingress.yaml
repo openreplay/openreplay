@@ -14,9 +14,6 @@ metadata:
   {{- end }}
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Encoding,Content-Length"
-    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length"
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   tls:
