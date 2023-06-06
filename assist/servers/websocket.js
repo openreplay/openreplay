@@ -267,7 +267,7 @@ module.exports = {
             socket.peerId = socket.handshake.query.peerId;
             socket.roomId = extractRoomId(socket.peerId);
             if (connTabId === null) {
-                connTabId = "back-compatibility";
+                connTabId = (Math.random() + 1).toString(36).substring(2);
             }
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
