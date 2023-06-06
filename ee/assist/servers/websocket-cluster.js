@@ -318,7 +318,7 @@ module.exports = {
             socket.roomId = extractRoomId(socket.peerId);
             // Set default tabId for back compatibility
             if (connTabId === null) {
-                connTabId = "back-compatibility"
+                connTabId = (Math.random() + 1).toString(36).substring(2);
             }
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
