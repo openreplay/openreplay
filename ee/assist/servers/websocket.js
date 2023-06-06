@@ -391,15 +391,15 @@ module.exports = {
                     debug && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
                     return
                 }
+                // Back compatibility (add top layer with meta information)
+                if (args[0].meta === undefined) {
+                    args[0] = {meta: {tabId: socket.tabId}, data: args[0]};
+                }
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
-                    // Back compatibility (add top layer with meta information)
-                    if (args[0].meta === undefined) {
-                        args[0] = {meta: {tabId: socket.tabId}, data: args[0]};
-                    }
                     let socketId = await findSessionSocketId(io, socket.roomId, args[0].meta.tabId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.roomId}`);
