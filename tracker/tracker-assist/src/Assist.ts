@@ -282,7 +282,7 @@ export default class Assist {
       setTimeout(() => {
         this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
         // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-      }, 350)
+      }, 500)
     })
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
@@ -294,7 +294,10 @@ export default class Assist {
       })
       this.assistDemandedRestart = true
       this.app.stop()
-      this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+      setTimeout(() => {
+        this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+      }, 500)
 
      this.remoteControl?.reconnect(ids)
     })

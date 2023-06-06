@@ -105,7 +105,7 @@ function SubHeader(props) {
           <Tab
             i={i}
             tab={tab}
-            currentTab={currentTab}
+            currentTab={tabs.length === 1 ? tab : currentTab}
             changeTab={(changeTo) => player.changeTab(changeTo)}
           />
         ))}

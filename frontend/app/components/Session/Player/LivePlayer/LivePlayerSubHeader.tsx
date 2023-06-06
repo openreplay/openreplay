@@ -18,9 +18,9 @@ function SubHeader() {
 
   return (
     <>
-      <div className="w-full px-4 py-2 flex items-center border-b min-h-3">
+      <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
         {tabs.map((tab, i) => (
-          <Tab i={i} tab={tab} currentTab={currentTab} />
+          <Tab i={i} tab={tab} currentTab={tabs.length === 1 ? tab : currentTab} />
         ))}
       </div>
       {location && (
