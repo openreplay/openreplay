@@ -14,7 +14,6 @@ import { RootStore } from 'App/duck';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { InjectedEvent } from 'Types/session/event';
 import Session, { mergeEventLists } from 'Types/session';
-import { toJS } from 'mobx';
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void;

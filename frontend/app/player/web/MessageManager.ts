@@ -257,7 +257,7 @@ export default class MessageManager {
             tabId: msg.tabId,
             timestamp: this.sessionStart + msg.time,
             toTab: mapTabs(this.tabs)[msg.tabId],
-            fromTab: mapTabs(this.tabs)[prevChange.tabId],
+            fromTab: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
             type: 'TABCHANGE',
           });
           this.activeTabManager.append(msg);
