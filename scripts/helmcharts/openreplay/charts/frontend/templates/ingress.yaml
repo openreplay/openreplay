@@ -22,12 +22,12 @@ spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   tls:
     - hosts:
-        - {{ .Values.global.domainName }}
+        - {{ default .Values.global.domainName .Values.ingress.domainName }}
       {{- if .Values.ingress.tls.secretName}}
       secretName: {{ .Values.ingress.tls.secretName }}
       {{- end}}
   rules:
-    - host: {{ .Values.global.domainName }} 
+    - host: {{ default .Values.global.domainName .Values.ingress.domainName }} 
       http:
         paths:
           - pathType: Prefix
