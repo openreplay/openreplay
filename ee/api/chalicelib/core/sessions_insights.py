@@ -202,17 +202,17 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     conditions = ["event_type = 'ERROR'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
-                SELECT T1.hh, countIf(T2.session_id != 0) as sessions, T2.name as names, 
+                SELECT T1.hh, countIf(T2.session_id != 0) as sessions, T2.message_name as names, 
                         groupUniqArray(T2.source) as sources 
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
-                    LEFT JOIN (SELECT session_id, name, source, message, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime
+                    LEFT JOIN (SELECT session_id, concat(name,': ', message) as message_name, source, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime
                                FROM experimental.events 
                                {sub_query}
                                WHERE project_id = {project_id}
                                     AND datetime >= toDateTime(%(startTimestamp)s/1000)
                                     AND datetime < toDateTime(%(endTimestamp)s/1000)
                                     AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
-                GROUP BY T1.hh, T2.name 
+                GROUP BY T1.hh, T2.message_name 
                 ORDER BY T1.hh DESC;"""
 
     with ch_client.ClickHouseClient() as conn:
