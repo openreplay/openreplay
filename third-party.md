@@ -48,6 +48,9 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | pandas | BSD3 | Python |
 | numpy | BSD3 | Python |
 | scikit-learn | BSD3 | Python |
+|apache-airflow| Apache2| Python|
+|airflow-code-editor| Apache2 | Python|
+|mlflow| Apache2 | Python|
 | sqlalchemy | MIT | Python |
 | pandas-redshift | MIT | Python |
 | confluent-kafka | Apache2 | Python |
