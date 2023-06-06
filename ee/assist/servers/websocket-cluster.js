@@ -258,8 +258,8 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 async function sessions_agents_count(io, socket) {
     let c_sessions = 0, c_agents = 0;
     const rooms = await getAvailableRooms(io);
-    if (rooms.has(socket.peerId)) {
-        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+    if (rooms.has(socket.roomId)) {
+        const connected_sockets = await io.in(socket.roomId).fetchSockets();
 
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.session) {
@@ -278,8 +278,8 @@ async function sessions_agents_count(io, socket) {
 async function get_all_agents_ids(io, socket) {
     let agents = [];
     const rooms = await getAvailableRooms(io);
-    if (rooms.has(socket.peerId)) {
-        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+    if (rooms.has(socket.roomId)) {
+        const connected_sockets = await io.in(socket.roomId).fetchSockets();
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.agent) {
                 agents.push(item.id);
@@ -345,7 +345,7 @@ module.exports = {
                     debug && console.log(`notifying new session about agent-existence`);
                     let agents_ids = await get_all_agents_ids(io, socket);
                     io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agents_ids);
-                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
+                    socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
                 }
 
             } else if (c_sessions <= 0) {
@@ -355,7 +355,7 @@ module.exports = {
             await socket.join(socket.roomId);
             const rooms = await getAvailableRooms(io);
             if (rooms.has(socket.roomId)) {
-                let connectedSockets = await io.in(socket.peerId).fetchSockets();
+                let connectedSockets = await io.in(socket.roomId).fetchSockets();
                 debug && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
             }
             if (socket.identity === IDENTITIES.agent) {

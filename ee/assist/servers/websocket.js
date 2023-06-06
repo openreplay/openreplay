@@ -248,8 +248,8 @@ async function sessions_agents_count(io, socket) {
 async function get_all_agents_ids(io, socket) {
     let agents = [];
     const rooms = await getAvailableRooms(io);
-    if (rooms.get(socket.peerId)) {
-        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+    if (rooms.get(socket.roomId)) {
+        const connected_sockets = await io.in(socket.roomId).fetchSockets();
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.agent) {
                 agents.push(item.id);
