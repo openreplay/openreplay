@@ -95,17 +95,17 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.requests, err = NewBulk(conn.c,
 		"events_common.requests",
-		"(session_id, timestamp, seq_index, url, duration, success, tab_id)",
-		"($%d, $%d, $%d, LEFT($%d, 8000), $%d, $%d, $%d)",
-		7, 200)
+		"(session_id, timestamp, seq_index, url, duration, success)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), $%d, $%d)",
+		6, 200)
 	if err != nil {
 		log.Fatalf("can't create requests bulk: %s", err)
 	}
 	conn.customEvents, err = NewBulk(conn.c,
 		"events_common.customs",
-		"(session_id, timestamp, seq_index, name, payload, tab_id)",
-		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
-		6, 200)
+		"(session_id, timestamp, seq_index, name, payload)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), $%d)",
+		5, 200)
 	if err != nil {
 		log.Fatalf("can't create customEvents bulk: %s", err)
 	}
@@ -113,21 +113,21 @@ func (conn *BulkSet) initBulks() {
 		"events.pages",
 		"(session_id, message_id, timestamp, referrer, base_referrer, host, path, query, dom_content_loaded_time, "+
 			"load_time, response_end, first_paint_time, first_contentful_paint_time, speed_index, visually_complete, "+
-			"time_to_interactive, response_time, dom_building_time, tab_id)",
+			"time_to_interactive, response_time, dom_building_time)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), "+
 			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
-			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), $%d)",
-		19, 200)
+			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0))",
+		18, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
 	conn.webInputEvents, err = NewBulk(conn.c,
 		"events.inputs",
-		"(session_id, message_id, timestamp, label, tab_id)",
-		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''), $%d)",
-		5, 200)
+		"(session_id, message_id, timestamp, label)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''))",
+		4, 200)
 	if err != nil {
-		log.Fatalf("can't create webInputEvents bulk: %s", err)
+		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
 	conn.webInputDurations, err = NewBulk(conn.c,
 		"events.inputs",
@@ -135,7 +135,7 @@ func (conn *BulkSet) initBulks() {
 		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''), $%d, $%d)",
 		6, 200)
 	if err != nil {
-		log.Fatalf("can't create webInputDurations bulk: %s", err)
+		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
 	conn.webGraphQL, err = NewBulk(conn.c,
 		"events.graphql",
@@ -143,7 +143,7 @@ func (conn *BulkSet) initBulks() {
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
 		6, 200)
 	if err != nil {
-		log.Fatalf("can't create webGraphQL bulk: %s", err)
+		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
 	conn.webErrors, err = NewBulk(conn.c,
 		"errors",
@@ -179,35 +179,33 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.webIssueEvents, err = NewBulk(conn.c,
 		"events_common.issues",
-		"(session_id, issue_id, timestamp, seq_index, payload, tab_id)",
-		"($%d, $%d, $%d, $%d, CAST($%d AS jsonb), $%d)",
-		6, 200)
+		"(session_id, issue_id, timestamp, seq_index, payload)",
+		"($%d, $%d, $%d, $%d, CAST($%d AS jsonb))",
+		5, 200)
 	if err != nil {
 		log.Fatalf("can't create webIssueEvents bulk: %s", err)
 	}
 	conn.webCustomEvents, err = NewBulk(conn.c,
 		"events_common.customs",
-		"(session_id, seq_index, timestamp, name, payload, level, tab_id)",
-		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d, $%d)",
-		7, 200)
+		"(session_id, seq_index, timestamp, name, payload, level)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
+		6, 200)
 	if err != nil {
 		log.Fatalf("can't create webCustomEvents bulk: %s", err)
 	}
 	conn.webClickEvents, err = NewBulk(conn.c,
 		"events.clicks",
-		"(session_id, message_id, timestamp, label, selector, url, path, hesitation, tab_id)",
-		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d, $%d)",
-		9, 200)
+		"(session_id, message_id, timestamp, label, selector, url, path, hesitation)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d)",
+		8, 200)
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
 	}
 	conn.webNetworkRequest, err = NewBulk(conn.c,
 		"events_common.requests",
-		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, "+
-			"method, duration, success, tab_id)",
-		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, "+
-			"$%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d, $%d)",
-		14, 200)
+		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
+		13, 200)
 	if err != nil {
 		log.Fatalf("can't create webNetworkRequest bulk: %s", err)
 	}

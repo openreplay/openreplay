@@ -15,7 +15,6 @@ func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *Cu
 		truncSqIdx(e.Meta().Index),
 		e.Name,
 		e.Payload,
-		e.TabID(),
 	)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
@@ -47,7 +46,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	// base_path is deprecated
 	if err = conn.bulks.Get("webPageEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
-		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e), e.TabID()); err != nil {
+		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
 	if err = conn.InsertReferrer(sessionID, e.Referrer); err != nil {
@@ -67,7 +66,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Mou
 	}
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
-	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime, e.TabID()); err != nil {
+	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands
@@ -81,7 +80,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	if e.Label == "" {
 		return nil
 	}
-	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.TabID()); err != nil {
+	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
@@ -130,7 +129,7 @@ func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, sa
 		return err
 	}
 	conn.bulks.Get("webNetworkRequest").Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400, e.TabID())
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
 	return nil
 }
 
@@ -163,7 +162,7 @@ func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *Mo
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
-	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil, e.TabID()); err != nil {
+	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
 		log.Printf("insert web issue event err: %s", err)
 	}
 	conn.updateSessionIssues(sessionID, 0, 50)

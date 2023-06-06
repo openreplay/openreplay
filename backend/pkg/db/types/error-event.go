@@ -63,7 +63,7 @@ func WrapJSException(m *JSException) *ErrorEvent {
 	if err != nil {
 		log.Printf("Error on parsing Exception metadata: %v", err)
 	}
-	wrapper := &ErrorEvent{
+	return &ErrorEvent{
 		MessageID: m.Meta().Index,
 		Timestamp: uint64(m.Meta().Timestamp),
 		Source:    SOURCE_JS,
@@ -72,7 +72,6 @@ func WrapJSException(m *JSException) *ErrorEvent {
 		Payload:   m.Payload,
 		Tags:      meta,
 	}
-	return wrapper
 }
 
 func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {

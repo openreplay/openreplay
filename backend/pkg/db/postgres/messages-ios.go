@@ -8,7 +8,7 @@ import (
 
 func (conn *Conn) InsertIOSCustomEvent(e *messages.IOSCustomEvent) error {
 	sessionID := e.SessionID()
-	err := conn.InsertCustomEvent(sessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload, e.TabID())
+	err := conn.InsertCustomEvent(sessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "CUSTOM_IOS", e.Name)
 	}
@@ -35,7 +35,7 @@ func (conn *Conn) InsertIOSUserAnonymousID(userAnonymousID *messages.IOSUserAnon
 
 func (conn *Conn) InsertIOSNetworkCall(e *messages.IOSNetworkCall) error {
 	sessionID := e.SessionID()
-	err := conn.InsertRequest(sessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success, e.TabID())
+	err := conn.InsertRequest(sessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
 	}
