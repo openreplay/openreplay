@@ -317,9 +317,7 @@ module.exports = {
             socket.peerId = socket.handshake.query.peerId;
             socket.roomId = extractRoomId(socket.peerId);
             // Set default tabId for back compatibility
-            if (connTabId === null) {
-                connTabId = (Math.random() + 1).toString(36).substring(2);
-            }
+            connTabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
             debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);

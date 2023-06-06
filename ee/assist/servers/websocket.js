@@ -228,8 +228,8 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 async function sessions_agents_count(io, socket) {
     let c_sessions = 0, c_agents = 0;
     const rooms = await getAvailableRooms(io);
-    if (rooms.get(socket.peerId)) {
-        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+    if (rooms.get(socket.roomId)) {
+        const connected_sockets = await io.in(socket.roomId).fetchSockets();
 
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.session) {
@@ -287,9 +287,7 @@ module.exports = {
             socket.peerId = socket.handshake.query.peerId;
             socket.roomId = extractRoomId(socket.peerId);
             // Set default tabId for back compatibility
-            if (connTabId === null) {
-                connTabId = (Math.random() + 1).toString(36).substring(2);
-            }
+            connTabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
             socket.tabId = connTabId;
             socket.identity = socket.handshake.query.identity;
             debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
