@@ -183,7 +183,10 @@ function or_helm_upgrade() {
     openreplay
     )
   [[ $UPGRADE_OR_ONLY -eq 1 ]] && chart_names=( openreplay )
-  [[ $state == "reload" ]] && chart_names=( openreplay )
+  if [[ $state == "reload" ]]; then
+    chart_names=( openreplay )
+    HELM_OPTIONS="--set skipMigration=true"
+  fi
   for chart in "${chart_names[@]}"; do
     [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
     log info helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"
