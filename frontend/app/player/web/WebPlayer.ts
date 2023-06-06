@@ -83,7 +83,7 @@ export default class WebPlayer extends Player {
   }
 
   updateLists = (session: any) => {
-    let lists = {
+    const lists = {
       event: session.events || [],
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],

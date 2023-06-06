@@ -187,7 +187,7 @@ export default class AssistManager {
       })
 
       socket.on('UPDATE_SESSION', (evData) => {
-        const { metadata, data } = evData
+        const { metadata = {}, data = {} } = evData
         const { tabId } = metadata
         const { active } = data
         this.clearDisconnectTimeout()

@@ -55,7 +55,6 @@ export default class RemoteControl {
   }
 
   private emitData = (event: string, data?: any) => {
-    console.log('emit data', event, data, { meta: { tabId: this.store.get().currentTab }, data })
     this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
   }
 

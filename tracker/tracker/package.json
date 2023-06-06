@@ -23,7 +23,8 @@
     "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
-    "test:ci": "jest --coverage=true"
+    "test:ci": "jest --coverage=true",
+    "postversion": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",

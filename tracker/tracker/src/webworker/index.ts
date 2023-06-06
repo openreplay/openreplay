@@ -45,7 +45,7 @@ function resetSender(): void {
     // allowing some time to send last batch
     setTimeout(() => {
       sender = null
-    }, 500)
+    }, 20)
   }
 }
 
@@ -57,7 +57,9 @@ function reset(): void {
   }
   resetWriter()
   resetSender()
-  workerStatus = WorkerStatus.NotActive
+  setTimeout(() => {
+    workerStatus = WorkerStatus.NotActive
+  }, 100)
 }
 
 function initiateRestart(): void {

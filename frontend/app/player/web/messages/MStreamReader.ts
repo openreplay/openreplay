@@ -18,7 +18,10 @@ export default class MStreamReader {
     if (msg === null) { return null }
     if (msg.tp === MType.Timestamp) {
       this.startTs = this.startTs || msg.timestamp
-      this.t = msg.timestamp - this.startTs
+      const newT = msg.timestamp - this.startTs
+      if (newT > this.t) {
+        this.t = newT
+      }
       return this.readNext()
     }
     if (msg.tp === MType.TabData) {

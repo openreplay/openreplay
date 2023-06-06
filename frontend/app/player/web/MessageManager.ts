@@ -2,7 +2,7 @@
 import { Decoder } from "syncod";
 import logger from 'App/logger';
 
-import type { Store } from 'Player';
+import type { Store, ILog } from 'Player';
 import ListWalker from '../common/ListWalker';
 
 import MouseMoveManager from './managers/MouseMoveManager';
@@ -15,8 +15,6 @@ import type {
   MouseClick,
 } from './messages';
 
-import Lists from './Lists';
-
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
   State as ScreenState,
@@ -26,6 +24,13 @@ import type { InitialLists } from './Lists'
 import type { SkipInterval } from './managers/ActivityManager';
 import TabSessionManager, { TabState } from "Player/web/TabManager";
 import ActiveTabManager from "Player/web/managers/ActiveTabManager";
+
+interface RawList {
+  event: Record<string, any>[] & { tabId: string | null }
+  frustrations: Record<string, any>[] & { tabId: string | null }
+  stack: Record<string, any>[] & { tabId: string | null }
+  exceptions: ILog[]
+}
 
 export interface State extends ScreenState {
   skipIntervals: SkipInterval[],
@@ -103,14 +108,27 @@ export default class MessageManager {
   }
 
   public getListsFullState = () => {
-    // fullstate by tab
-    console.log(Object.values(this.tabs)[0].getListsFullState())
+    const fullState: Record<string, any> = {}
+    for (let tab in Object.keys(this.tabs)) {
+      fullState[tab] = this.tabs[tab].getListsFullState()
+    }
     return Object.values(this.tabs)[0].getListsFullState()
   }
 
-  public updateLists(lists: Partial<InitialLists>) {
-    // update each tab with tabid from events !!!
-    Object.values(this.tabs)[0]?.updateLists?.(lists)
+  public updateLists(lists: RawList) {
+    // update each tab with tabid from events
+    for (let tab in Object.keys(this.tabs)) {
+      const list = {
+        event: lists.event.filter((e) => e.tabId === tab),
+        frustrations: lists.frustrations.filter((e) => e.tabId === tab),
+        stack: lists.stack.filter((e) => e.tabId === tab),
+        exceptions: lists.exceptions.filter((e) => e.tabId === tab),
+      }
+      // saving some microseconds here probably
+      if (Object.values(list).some((l) => l.length > 0)) {
+        this.tabs[tab]!.updateLists(list)
+      }
+    }
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
@@ -153,6 +171,8 @@ export default class MessageManager {
   }
 
   move(t: number): any {
+    // usually means waiting for messages from live session
+    if (Object.keys(this.tabs).length === 0) return;
     this.activeTabManager.moveReady(t).then(tabId => {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
