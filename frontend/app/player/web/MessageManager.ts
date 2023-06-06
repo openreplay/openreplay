@@ -115,19 +115,22 @@ export default class MessageManager {
   };
 
   public updateLists(lists: RawList) {
-    // update each tab with tabid from events
-    for (let tab in Object.keys(this.tabs)) {
-      const list = {
-        event: lists.event.filter((e) => e.tabId === tab),
-        frustrations: lists.frustrations.filter((e) => e.tabId === tab),
-        stack: lists.stack.filter((e) => e.tabId === tab),
-        exceptions: lists.exceptions.filter((e) => e.tabId === tab),
-      };
-      // saving some microseconds here probably
-      if (Object.values(list).some((l) => l.length > 0)) {
-        this.tabs[tab]!.updateLists(list);
-      }
-    }
+    Object.keys(this.tabs).forEach((tab) => {
+      this.tabs[tab]!.updateLists(lists);
+      // once upon a time we wanted to insert events for each tab individually
+      // but then evil magician came and said "no, you don't want to do that"
+      // because it was bad for database size
+      // const list = {
+      //   event: lists.event.filter((e) => e.tabId === tab),
+      //   frustrations: lists.frustrations.filter((e) => e.tabId === tab),
+      //   stack: lists.stack.filter((e) => e.tabId === tab),
+      //   exceptions: lists.exceptions.filter((e) => e.tabId === tab),
+      // };
+      // // saving some microseconds here probably
+      // if (Object.values(list).some((l) => l.length > 0)) {
+      //   this.tabs[tab]!.updateLists(list);
+      // }
+    })
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {

@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "8.0.1-0",
+  "version": "8.0.0-beta.1",
   "keywords": [
     "logging",
     "replay"
@@ -24,7 +24,8 @@
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
-    "postversion": "npm run build"
+    "postversion": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",

@@ -58,7 +58,7 @@ function Storage(props: Props) {
     } else {
       currentState = decodeMessage(listNow[listNow.length - 1])
     }
-    const stateObj = currentState.state || currentState.payload.state
+    const stateObj = currentState?.state || currentState?.payload?.state || {}
     const newState = Object.assign(stateObject, stateObj);
     setState(newState);
 

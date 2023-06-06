@@ -45,9 +45,11 @@ function EventsBlock(props: IProps) {
     filterOutNote,
     query,
     setActiveTab,
-    notesWithEvents,
+    notesWithEvents = [],
   } = props;
 
+  const filteredLength = filteredEvents?.length || 0;
+  const notesWithEvtsLength = notesWithEvents?.length || 0;
   const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
     return acc.concat(tab.eventListNow)
   }, [])
@@ -55,7 +57,7 @@ function EventsBlock(props: IProps) {
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {
     return mergeEventLists(filteredEvents || notesWithEvents, tabChangeEvents);
-  }, [filteredEvents.length, notesWithEvents.length])
+  }, [filteredLength, notesWithEvtsLength])
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });

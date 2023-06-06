@@ -30,14 +30,14 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
   } = store.get();
   const states = Object.values(tabStates)
 
-  const stackEventList = states.reduce((acc: any, { stackList }) => acc.concat(stackList), [])
-  const eventsList = states.reduce((acc: any, { eventList }) => acc.concat(eventList), [])
-  const frustrationsList = states.reduce((acc: any, { frustrationsList }) => acc.concat(frustrationsList), [])
-  const exceptionsList = states.reduce((acc: any, { exceptionsList }) => acc.concat(exceptionsList), [])
-  const resourceListUnmap = states.reduce((acc: any, { resourceList }) => acc.concat(resourceList), [])
-  const fetchList = states.reduce((acc: any, { fetchList }) => acc.concat(fetchList), [])
-  const graphqlList = states.reduce((acc: any, { graphqlList }) => acc.concat(graphqlList), [])
-  const performanceChartData = states.reduce((acc: any, { performanceChartData }) => acc.concat(performanceChartData), [])
+  const stackEventList = tabStates[currentTab]?.stackList || []
+  const eventsList = tabStates[currentTab]?.eventList || []
+  const frustrationsList = tabStates[currentTab]?.frustrationsList || []
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || []
+  const resourceListUnmap = tabStates[currentTab]?.resourceList || []
+  const fetchList = tabStates[currentTab]?.fetchList || []
+  const graphqlList = tabStates[currentTab]?.graphqlList || []
+  const performanceChartData = tabStates[currentTab]?.performanceChartData || []
 
   const fetchPresented = fetchList.length > 0;
 

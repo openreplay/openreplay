@@ -43,16 +43,14 @@ function Timeline(props: IProps) {
     devtoolsLoading,
     domLoading,
     tabStates,
+    currentTab,
   } = store.get()
   const { issues } = props;
   const notes = notesStore.sessionNotes
 
   const progressRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const events = Object.values(tabStates)
-    .map(({ eventList }) => eventList)
-    .flat()
-    .filter(Boolean)
+  const events = tabStates[currentTab]?.eventList || [];
 
   const scale = 100 / endTime;
 
