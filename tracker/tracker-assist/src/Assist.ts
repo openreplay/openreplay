@@ -188,24 +188,19 @@ export default class Assist {
       app.debug.log('Socket:', ...args)
     })
 
-    this.remoteControl = new RemoteControl(
-      this.options,
-      id => {
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-        }
-        if (this.remoteControl){
-          callUI?.showRemoteControl(this.remoteControl.releaseControl)
-        }
-        this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
-        this.emit('control_granted', id)
-        annot = new AnnotationCanvas()
-        annot.mount()
-        return callingAgents.get(id)
-      },
-      (id, isDenied) => onRelease(id, isDenied),
-    )
-
+    const onGrand = (id) => {
+      if (!callUI) {
+        callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+      }
+      if (this.remoteControl){
+        callUI?.showRemoteControl(this.remoteControl.releaseControl)
+      }
+      this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
+      this.emit('control_granted', id)
+      annot = new AnnotationCanvas()
+      annot.mount()
+      return callingAgents.get(id)
+    }
     const onRelease = (id, isDenied) => {
       {
         if (id) {
@@ -229,6 +224,12 @@ export default class Assist {
         }
       }
     }
+
+    this.remoteControl = new RemoteControl(
+      this.options,
+      onGrand,
+      (id, isDenied) => onRelease(id, isDenied),
+    )
 
     const onAcceptRecording = () => {
       socket.emit('recording_accepted')
@@ -280,7 +281,11 @@ export default class Assist {
       this.assistDemandedRestart = true
       this.app.stop()
       setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+        this.app.start().then(() => { this.assistDemandedRestart = false })
+          .then(() => {
+              this.remoteControl?.reconnect([id,])
+          })
+          .catch(e => app.debug.error(e))
         // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
       }, 500)
     })
@@ -295,11 +300,14 @@ export default class Assist {
       this.assistDemandedRestart = true
       this.app.stop()
       setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+        this.app.start().then(() => { this.assistDemandedRestart = false })
+          .then(() => {
+            this.remoteControl?.reconnect(ids)
+          })
+          .catch(e => app.debug.error(e))
         // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
       }, 500)
 
-     this.remoteControl?.reconnect(ids)
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
@@ -547,7 +555,8 @@ export default class Assist {
   }
 
   private clean() {
-    this.remoteControl?.releaseControl()
+    // sometimes means new agent connected so we keep id for control
+    this.remoteControl?.releaseControl(false, true)
     if (this.peer) {
       this.peer.destroy()
       this.app.debug.log('Peer destroyed')

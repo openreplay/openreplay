@@ -145,7 +145,7 @@ export default class RemoteControl {
       const annot = this.annot = new AnnotationCanvas()
       annot.mount(this.screen.overlay)
       annot.canvas.addEventListener("mousedown", e => {
-        const data = this.screen.getInternalViewportCoordin1ates(e)
+        const data = this.screen.getInternalViewportCoordinates(e)
         annot.start([ data.x, data.y ])
         this.emitData("startAnnotation", [ data.x, data.y ])
       })

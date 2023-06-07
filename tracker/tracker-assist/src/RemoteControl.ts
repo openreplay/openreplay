@@ -67,14 +67,16 @@ export default class RemoteControl {
       })
   }
 
-  releaseControl = (isDenied?: boolean) => {
+  releaseControl = (isDenied?: boolean, keepId?: boolean) => {
     if (this.confirm) {
       this.confirm.remove()
       this.confirm = null
     }
     this.resetMouse()
     this.status = RCStatus.Disabled
-    sessionStorage.removeItem(this.options.session_control_peer_key)
+    if (!keepId) {
+      sessionStorage.removeItem(this.options.session_control_peer_key)
+    }
     this.onRelease(this.agentID, isDenied)
     this.agentID = null
   }
@@ -90,7 +92,7 @@ export default class RemoteControl {
     this.mouse = new Mouse(agentName)
     this.mouse.mount()
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.releaseControl(false)
+      if (document.hidden) this.releaseControl(false, false)
     })
   }
 

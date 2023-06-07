@@ -227,7 +227,12 @@ export default class Call {
 	private _callSessionPeer() {
 		if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) { return }
 		this.store.update({ calling: CallingState.Connecting })
-		this._peerConnection(this.peerID);
+		const tab = this.store.get().currentTab
+		if (!this.store.get().currentTab) {
+			console.warn('No tab data to connect to peer')
+		}
+		console.log(tab)
+		void this._peerConnection(`${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`);
 		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}
 
