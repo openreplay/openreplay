@@ -3,7 +3,7 @@ const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 const {extractPeerId} = require('./helper');
 
-let debug = process.env.debug === "1";
+let debug = true;//process.env.debug === "1";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
     listen: {
