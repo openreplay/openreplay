@@ -1,17 +1,17 @@
-requests==2.29.0
-urllib3==1.26.15
-boto3==1.26.145
+requests==2.31.0
+urllib3==1.26.16
+boto3==1.26.148
 pyjwt==2.7.0
 psycopg2-binary==2.9.6
-elasticsearch==8.7.0
-jira==3.5.0
+elasticsearch==8.8.0
+jira==3.5.1
 
 
-fastapi==0.95.2
+fastapi==0.96.0
 python-decouple==3.8
 pydantic[email]==1.10.8
 apscheduler==3.10.1
 
 clickhouse-driver==0.2.5
 clickhouse-driver[lz4]==0.2.5
-redis==4.5.4
+redis==4.5.5
