@@ -43,6 +43,8 @@ const BASE_sessionInfo = {
     "userDevice": "",
     "userDeviceType": "",
     "userCountry": "",
+    "userState": "",
+    "userCity": "",
     "projectId": 0
 };
 
