@@ -527,6 +527,8 @@ $$
                 user_device_memory_size integer               DEFAULT NULL,
                 user_device_heap_size   bigint                DEFAULT NULL,
                 user_country            country      NOT NULL,
+                user_city               text         NULL,
+                user_state              text         NULL,
                 pages_count             integer      NOT NULL DEFAULT 0,
                 events_count            integer      NOT NULL DEFAULT 0,
                 errors_count            integer      NOT NULL DEFAULT 0,
@@ -555,6 +557,8 @@ $$
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_anonymous_id_idx ON sessions (project_id, user_anonymous_id);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_device_idx ON sessions (project_id, user_device);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_country_idx ON sessions (project_id, user_country);
+            CREATE INDEX IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
+            CREATE INDEX IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);
             CREATE INDEX IF NOT EXISTS sessions_project_id_user_browser_idx ON sessions (project_id, user_browser);
             CREATE INDEX IF NOT EXISTS sessions_project_id_metadata_1_idx ON sessions (project_id, metadata_1);
             CREATE INDEX IF NOT EXISTS sessions_project_id_metadata_2_idx ON sessions (project_id, metadata_2);
@@ -964,6 +968,7 @@ $$
                 response_time               bigint  DEFAULT NULL,
                 response_end                bigint  DEFAULT NULL,
                 ttfb                        integer DEFAULT NULL,
+                tab_id                      text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS pages_session_id_idx ON events.pages (session_id);
@@ -1011,6 +1016,7 @@ $$
                 path       text,
                 selector   text    DEFAULT '' NOT NULL,
                 hesitation integer DEFAULT NULL,
+                tab_id     text               NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS clicks_session_id_idx ON events.clicks (session_id);
@@ -1035,6 +1041,7 @@ $$
                 value      text    DEFAULT NULL,
                 duration   integer DEFAULT NULL,
                 hesitation integer DEFAULT NULL,
+                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS inputs_session_id_idx ON events.inputs (session_id);
@@ -1048,6 +1055,7 @@ $$
                 message_id bigint NOT NULL,
                 timestamp  bigint NOT NULL,
                 error_id   text   NOT NULL REFERENCES errors (error_id) ON DELETE CASCADE,
+                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS errors_session_id_idx ON events.errors (session_id);
@@ -1087,6 +1095,7 @@ $$
                 request_body  text        NULL,
                 response_body text        NULL,
                 method        http_method NULL,
+                tab_id        text        NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS graphql_name_idx ON events.graphql (name);
@@ -1103,6 +1112,7 @@ $$
                 message_id bigint NOT NULL,
                 timestamp  bigint NOT NULL,
                 name       text   NOT NULL,
+                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS state_actions_name_gin_idx ON events.state_actions USING GIN (name gin_trgm_ops);
@@ -1135,6 +1145,7 @@ $$
                 header_size       bigint                 NULL,
                 encoded_body_size integer                NULL,
                 decoded_body_size integer                NULL,
+                tab_id            text                   NULL,
                 PRIMARY KEY (session_id, message_id, timestamp)
             );
             CREATE INDEX IF NOT EXISTS resources_session_id_idx ON events.resources (session_id);
@@ -1174,6 +1185,7 @@ $$
                 min_used_js_heap_size  bigint   NOT NULL,
                 avg_used_js_heap_size  bigint   NOT NULL,
                 max_used_js_heap_size  bigint   NOT NULL,
+                tab_id                 text     NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS performance_session_id_idx ON events.performance (session_id);
@@ -1213,6 +1225,7 @@ $$
                 name       text                       NOT NULL,
                 payload    jsonb                      NOT NULL,
                 level      events_common.custom_level NOT NULL DEFAULT 'info',
+                tab_id     text                       NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX IF NOT EXISTS customs_name_idx ON events_common.customs (name);
@@ -1227,6 +1240,7 @@ $$
                 seq_index  integer NOT NULL,
                 issue_id   text    NOT NULL REFERENCES issues (issue_id) ON DELETE CASCADE,
                 payload    jsonb DEFAULT NULL,
+                tab_id     text    NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX IF NOT EXISTS issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
@@ -1252,6 +1266,7 @@ $$
                 host          text        NULL,
                 path          text        NULL,
                 query         text        NULL,
+                tab_id        text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
 

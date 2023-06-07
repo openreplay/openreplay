@@ -62,7 +62,7 @@ async def add_card_to_dashboard(projectId: int, dashboardId: int,
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 async def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
-                                             data: schemas.CreateCardSchema = Body(...),
+                                             data: schemas.CardSchema = Body(...),
                                              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
                                                         dashboard_id=dashboardId, data=data)}
@@ -100,7 +100,7 @@ async def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetI
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-async def try_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
+async def try_card(projectId: int, data: schemas.CardSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
@@ -139,7 +139,7 @@ async def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR
 @app.put('/{projectId}/metrics', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
-async def create_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
+async def create_card(projectId: int, data: schemas.CardSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 

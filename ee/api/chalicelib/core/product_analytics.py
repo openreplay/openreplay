@@ -24,18 +24,19 @@ JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
     "PAGES": {"table": "pages", "column": "url_path"},
     "CLICK": {"table": "clicks", "column": "label"},
-    # "VIEW": {"table": "events_ios.views", "column": "name"}, TODO: enable this for SAAS only
+    # TODO: support input event
     "EVENT": {"table": "customs", "column": "name"}
 }
 
 
-
-def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
+def path_analysis(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[],
+                  **args):
     event_start = None
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
     extra_values = {}
     meta_condition = []
+    # TODO: support multi-value
     for f in filters:
         if f["type"] == "START_POINT":
             event_start = f["value"]
@@ -190,7 +191,6 @@ def __complete_acquisition(rows, start_date, end_date=None):
     return rows
 
 
-
 def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                     **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -231,7 +231,6 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
         "startTimestamp": startTimestamp,
         "chart": __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
     }
-
 
 
 def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -284,7 +283,6 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         "startTimestamp": startTimestamp,
         "chart": __complete_acquisition(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
     }
-
 
 
 def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -384,7 +382,6 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
         "chart": __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
     }
-
 
 
 def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -497,7 +494,6 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     }
 
 
-
 def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -570,7 +566,6 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
             p["frequency"] = frequencies[p["value"]] / total_usage
 
     return popularity
-
 
 
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
@@ -658,7 +653,6 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-
 def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                filters=[], **args):
     event_type = "CLICK"
@@ -728,7 +722,6 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-
 def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
     event_type = "CLICK"
@@ -796,7 +789,6 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-
 def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                       **args):
     event_table = JOURNEY_TYPES["CLICK"]["table"]
@@ -836,7 +828,6 @@ PERIOD_TO_FUNCTION = {
     "DAY": "toStartOfDay",
     "WEEK": "toStartOfWeek"
 }
-
 
 
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
@@ -885,7 +876,6 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     return {"avg": avg, "chart": rows}
 
 
-
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[], **args):
     ch_sub_query = __get_basic_constraints(table_name="sessions_metadata", data=args)
     meta_condition = __get_meta_constraint(args)
@@ -923,7 +913,6 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
         rows = ch.execute(ch_query, params)
 
     return {"avg": avg, "partition": helper.list_to_camel_case(rows)}
-
 
 
 def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
@@ -1006,7 +995,6 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
         "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
         "list": helper.list_to_camel_case(rows)
     }
-
 
 
 def search(text, feature_type, project_id, platform=None):

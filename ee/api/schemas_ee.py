@@ -53,7 +53,7 @@ class GetInsightsSchema(schemas._TimedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     metricValue: List[InsightCategories] = Field(default=[])
-    series: List[schemas.CardCreateSeriesSchema] = Field(default=[])
+    series: List[schemas.CardSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
@@ -150,7 +150,7 @@ class MetricOfInsights(str, Enum):
     issue_categories = "issueCategories"
 
 
-class CreateCardSchema(schemas.CreateCardSchema):
+class CardSchema(schemas.CardSchema):
     metric_of: Union[schemas.MetricOfTimeseries, schemas.MetricOfTable, \
         schemas.MetricOfErrors, schemas.MetricOfPerformance, \
         schemas.MetricOfResources, schemas.MetricOfWebVitals, \
@@ -177,5 +177,5 @@ class CreateCardSchema(schemas.CreateCardSchema):
         return values
 
 
-class UpdateCardSchema(CreateCardSchema):
+class UpdateCardSchema(CardSchema):
     series: List[schemas.CardUpdateSeriesSchema] = Field(...)
