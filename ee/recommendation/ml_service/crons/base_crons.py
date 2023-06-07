@@ -13,6 +13,6 @@ async def download_model():
     await recommendation_model.download_next()
 
 cron_jobs = [
-    {"func": update_model, "trigger": CronTrigger(hour=0), "max_instances": 1},
-    {"func": download_model, "trigger": IntervalTrigger(seconds=10), "max_instances": 1},
+    {"func": update_model, "trigger": CronTrigger(hour=0), "misfire_grace_time": 60, "max_instances": 1},
+    {"func": download_model, "trigger": IntervalTrigger(seconds=10), "misfire_grace_time": 60, "max_instances": 1},
 ]
