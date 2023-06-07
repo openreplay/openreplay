@@ -8,6 +8,8 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "declaration": true,
-    "outDir": "./lib"
-  }
+    "outDir": "./lib",
+    "rootDir": "src"
+  },
+  "exclude": ["**/*.test.ts"]
 }

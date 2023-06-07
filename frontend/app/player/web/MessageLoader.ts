@@ -29,6 +29,7 @@ export default class MessageLoader {
     private store: Store<State>,
     private messageManager: MessageManager,
     private isClickmap: boolean,
+    private uiErrorHandler?: { error: (msg: string) => void }
   ) {}
 
   createNewParser(shouldDecrypt = true, file?: string, toggleStatus?: (isLoading: boolean) => void) {
@@ -57,6 +58,9 @@ export default class MessageLoader {
       this.messageManager._sortMessagesHack(sorted)
       toggleStatus?.(false);
       this.messageManager.setMessagesLoading(false)
+    }).catch(e => {
+      console.error(e)
+      this.uiErrorHandler?.error('Error parsing file: ' + e.message)
     })
   }
 

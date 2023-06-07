@@ -2,7 +2,7 @@ import { IssueCategory } from 'App/types/filter/filterType';
 import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
-import { numberWithCommas } from 'App/utils'
+import { numberWithCommas } from 'App/utils';
 
 interface Props {
   item: any;
@@ -29,8 +29,7 @@ function InsightItem(props: Props) {
 
 export default InsightItem;
 
-
-function Change({ change, isIncreased, unit = "%" }: any) {
+function Change({ change, isIncreased, unit = '%' }: any) {
   return (
     <div
       className={cn('font-medium flex items-center', {
@@ -54,17 +53,25 @@ function ErrorItem({ item, className, onClick }: any) {
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       {item.isNew ? (
         <>
+          <div className="mx-1">Users are experimenting a new error</div>
           <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
-          <div className="mx-1">error observed</div>
+          <div className="mx-1"> - this error has arisen a total of </div>
           <div className="mx-1 font-medium color-red">{item.ratio}%</div>
-          <div className="mx-1">more than other new errors</div>
+          <div className="mx-1">times</div>
         </>
       ) : (
         <>
-          <div className="mx-1">{item.isIncreased ? 'Increase' : 'Decrease'}</div>
-          <div className="mx-1">in</div>
+          <div className="mx-1">There is been an</div>
+          <div className="mx-1">{item.isIncreased ? 'increase' : 'decrease'}</div>
+          <div className="mx-1">of error</div>
           <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+          <div className="mx-1">from</div>
+          <div className="mx-1">{item.oldValue}</div>
+          <div className="mx-1">to</div>
+          <div className="mx-1">{item.value},</div>
+          <div className="mx-1">representing a</div>
           <Change change={item.change} isIncreased={item.isIncreased} />
+          <div className="mx-1">among all sessions.</div>
         </>
       )}
     </div>
@@ -75,10 +82,12 @@ function NetworkItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
-      <div className="mx-1">Network request to path</div>
-      <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
-      <div className="mx-1">has {item.change > 0 ? 'increased' : 'decreased'}</div>
-      <Change change={item.change} isIncreased={item.isIncreased} unit="sec" />
+      <div className="flex items-center gap-2">
+        <div>Network request to path</div>
+        <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+        <div>has {item.change > 0 ? 'increased' : 'decreased'}</div>
+        <Change change={item.change} isIncreased={item.isIncreased} unit="sec" />
+      </div>
     </div>
   );
 }
@@ -87,11 +96,14 @@ function ResourcesItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
-      <div className="mx-1">{item.change > 0 ? 'Increase' : 'Decrease'}</div>
-      <div className="mx-1">in</div>
-      <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
-      <div className="mx-1">usage by</div>
-      <Change change={item.change} isIncreased={item.isIncreased} />
+      <div className="flex items-center gap-2">
+        <div>There has been</div>
+        <div>{item.change > 0 ? 'Increase' : 'Decrease'}</div>
+        <div>in</div>
+        <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+        <div>usage by</div>
+        <Change change={item.change} isIncreased={item.isIncreased} />
+      </div>
     </div>
   );
 }
@@ -100,16 +112,25 @@ function RageItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
-      <div className="mx-1 bg-gray-100 px-2 rounded">{item.isNew ? item.name : 'Click Rage'}</div>
-      {item.isNew && <div className="mx-1">has</div>}
-      {!item.isNew && <div className="mx-1">on <span className="mx-1 bg-gray-100 px-2 rounded">{item.name}</span></div>}
-      {item.isNew && <div className="font-medium text-red">{item.ratio}%</div>}
-      {item.isNew && <div className="mx-1">more clickrage than other raged elements.</div>}
-      {!item.isNew && (
-        <>
-          <div className="mx-1">{item.isIncreased ? 'increased' : 'decreased'} by</div>
+      {item.isNew ? (
+        <div className="flex items-center gap-2">
+          <div>New Click Rage detected</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded">{item.value}</div>
+          <div>times on</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <div>Click rage has</div>
+          <div>{item.isIncreased ? 'increased' : 'decreased'} on</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+          <div>passing from</div>
+          <div>{item.oldValue}</div>
+          <div>to</div>
+          <div>{item.value}</div>
+          <div>representing a</div>
           <Change change={item.change} isIncreased={item.isIncreased} />
-        </>
+        </div>
       )}
     </div>
   );

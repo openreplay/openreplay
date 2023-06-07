@@ -127,8 +127,8 @@ export default class Assist {
     app.session.attachUpdateCallback(sessInfo => this.emit('UPDATE_SESSION', sessInfo))
   }
 
-  private emit(ev: string, ...args): void {
-    this.socket && this.socket.emit(ev, ...args)
+  private emit(ev: string, args?: any): void {
+    this.socket && this.socket.emit(ev, { meta: { tabId: this.app.getTabId(), }, data: args, })
   }
 
   private get agentsConnected(): boolean {
@@ -164,7 +164,7 @@ export default class Assist {
     if (!sessionId) {
       return app.debug.error('No session ID')
     }
-    const peerID = `${app.getProjectKey()}-${sessionId}`
+    const peerID = `${app.getProjectKey()}-${sessionId}-${this.app.getTabId()}`
 
     // SocketIO
     const socket = this.socket = connect(this.getHost(), {
@@ -172,6 +172,7 @@ export default class Assist {
       query: {
         'peerId': peerID,
         'identity': 'session',
+        'tabId': this.app.getTabId(),
         'sessionInfo': JSON.stringify({
           pageTitle: document.title,
           active: true,
@@ -180,24 +181,28 @@ export default class Assist {
       },
       transports: ['websocket',],
     })
-    socket.onAny((...args) => app.debug.log('Socket:', ...args))
+    socket.onAny((...args) => {
+      if (args[0] === 'messages' || args[0] === 'UPDATE_SESSION') {
+        return
+      }
+      app.debug.log('Socket:', ...args)
+    })
 
-    this.remoteControl = new RemoteControl(
-      this.options,
-      id => {
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-        }
-        if (this.remoteControl){
-          callUI?.showRemoteControl(this.remoteControl.releaseControl)
-        }
-        this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
-        this.emit('control_granted', id)
-        annot = new AnnotationCanvas()
-        annot.mount()
-        return callingAgents.get(id)
-      },
-      (id, isDenied) => {
+    const onGrand = (id) => {
+      if (!callUI) {
+        callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+      }
+      if (this.remoteControl){
+        callUI?.showRemoteControl(this.remoteControl.releaseControl)
+      }
+      this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
+      this.emit('control_granted', id)
+      annot = new AnnotationCanvas()
+      annot.mount()
+      return callingAgents.get(id)
+    }
+    const onRelease = (id, isDenied) => {
+      {
         if (id) {
           const cb = this.agents[id].onControlReleased
           delete this.agents[id].onControlReleased
@@ -217,7 +222,13 @@ export default class Assist {
           const info = id ? this.agents[id]?.agentInfo : {}
           this.options.onRemoteControlDeny?.(info || {})
         }
-      },
+      }
+    }
+
+    this.remoteControl = new RemoteControl(
+      this.options,
+      onGrand,
+      (id, isDenied) => onRelease(id, isDenied),
     )
 
     const onAcceptRecording = () => {
@@ -230,24 +241,37 @@ export default class Assist {
     }
     const recordingState = new ScreenRecordingState(this.options.recordingConfirm)
 
-    // TODO: check incoming args
-    socket.on('request_control', this.remoteControl.requestControl)
-    socket.on('release_control', this.remoteControl.releaseControl)
-    socket.on('scroll', this.remoteControl.scroll)
-    socket.on('click', this.remoteControl.click)
-    socket.on('move', this.remoteControl.move)
-    socket.on('focus', (clientID, nodeID) => {
-      const el = app.nodes.getNode(nodeID)
-      if (el instanceof HTMLElement && this.remoteControl) {
-        this.remoteControl.focus(clientID, el)
+    function processEvent(agentId: string, event: { meta: { tabId: string }, data?: any }, callback?: (id: string, data: any) => void) {
+      if (app.getTabId() === event.meta.tabId) {
+        return callback?.(agentId, event.data)
       }
-    })
-    socket.on('input', this.remoteControl.input)
+    }
+    if (this.remoteControl !== null) {
+      socket.on('request_control', (agentId, dataObj) => {
+        processEvent(agentId, dataObj, this.remoteControl?.requestControl)
+      })
+      socket.on('release_control', (agentId, dataObj) => {
+        processEvent(agentId, dataObj, (_, data) =>
+          this.remoteControl?.releaseControl(data)
+        )
+      })
+      socket.on('scroll', (id, event) => processEvent(id, event, this.remoteControl?.scroll))
+      socket.on('click', (id, event) => processEvent(id, event, this.remoteControl?.click))
+      socket.on('move', (id, event) => processEvent(id, event, this.remoteControl?.move))
+      socket.on('focus', (id, event) => processEvent(id, event, (clientID, nodeID) => {
+        const el = app.nodes.getNode(nodeID)
+        if (el instanceof HTMLElement && this.remoteControl) {
+          this.remoteControl.focus(clientID, el)
+        }
+      }))
+      socket.on('input', (id, event) => processEvent(id, event, this.remoteControl?.input))
+    }
 
 
-    socket.on('moveAnnotation', (_, p) => annot && annot.move(p)) // TODO: restrict by id
-    socket.on('startAnnotation', (_, p) => annot && annot.start(p))
-    socket.on('stopAnnotation', () => annot && annot.stop())
+    // TODO: restrict by id
+    socket.on('moveAnnotation', (id, event) => processEvent(id, event, (_,  d) => annot && annot.move(d)))
+    socket.on('startAnnotation', (id, event) => processEvent(id, event, (_,  d) => annot?.start(d)))
+    socket.on('stopAnnotation', (id, event) => processEvent(id, event, annot?.stop))
 
     socket.on('NEW_AGENT', (id: string, info) => {
       this.agents[id] = {
@@ -256,7 +280,14 @@ export default class Assist {
       }
       this.assistDemandedRestart = true
       this.app.stop()
-      this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+      setTimeout(() => {
+        this.app.start().then(() => { this.assistDemandedRestart = false })
+          .then(() => {
+              this.remoteControl?.reconnect([id,])
+          })
+          .catch(e => app.debug.error(e))
+        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+      }, 500)
     })
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
@@ -268,9 +299,15 @@ export default class Assist {
       })
       this.assistDemandedRestart = true
       this.app.stop()
-      this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
+      setTimeout(() => {
+        this.app.start().then(() => { this.assistDemandedRestart = false })
+          .then(() => {
+            this.remoteControl?.reconnect(ids)
+          })
+          .catch(e => app.debug.error(e))
+        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+      }, 500)
 
-     this.remoteControl?.reconnect(ids)
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
@@ -295,14 +332,20 @@ export default class Assist {
       endAgentCall(id)
     })
 
-    socket.on('_agent_name', (id, name) => {
+    socket.on('_agent_name', (id, info) => {
+      if (app.getTabId() !== info.meta.tabId) return
+      const name = info.data
       callingAgents.set(id, name)
       updateCallerNames()
     })
-    socket.on('videofeed', (_, feedState) => {
+    socket.on('videofeed', (_, info) => {
+      if (app.getTabId() !== info.meta.tabId) return
+      const feedState = info.data
       callUI?.toggleVideoStream(feedState)
     })
-    socket.on('request_recording', (id, agentData) => {
+    socket.on('request_recording', (id, info) => {
+      if (app.getTabId() !== info.meta.tabId) return
+      const agentData = info.data
       if (!recordingState.isActive) {
         this.options.onRecordingRequest?.(JSON.parse(agentData))
         recordingState.requestRecording(id, onAcceptRecording, () => onRejectRecording(agentData))
@@ -310,7 +353,8 @@ export default class Assist {
         this.emit('recording_busy')
       }
     })
-    socket.on('stop_recording', (id) => {
+    socket.on('stop_recording', (id, info) => {
+      if (app.getTabId() !== info.meta.tabId) return
       if (recordingState.isActive) {
         recordingState.stopAgentRecording(id)
       }
@@ -482,6 +526,11 @@ export default class Assist {
         })
 
         call.answer(lStreams[call.peer].stream)
+
+        document.addEventListener('visibilitychange', () => {
+          initiateCallEnd()
+        })
+
         this.setCallingState(CallingState.True)
         if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
 
@@ -505,7 +554,8 @@ export default class Assist {
   }
 
   private clean() {
-    this.remoteControl?.releaseControl()
+    // sometimes means new agent connected so we keep id for control
+    this.remoteControl?.releaseControl(false, true)
     if (this.peer) {
       this.peer.destroy()
       this.app.debug.log('Peer destroyed')

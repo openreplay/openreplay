@@ -113,7 +113,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
         // REQUIRED FOR FUTURE USAGE AND AS AN EXAMPLE OF THE FUNCTIONALITY
 
         function buildPng() {
-          html2canvas(reportRef.current, {
+          html2canvas(reportRef.current!, {
             scale: 2,
             ignoreElements: (e) => e.id.includes('pdf-ignore'),
           }).then((canvas) => {
@@ -147,11 +147,11 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
         }
         function buildText() {
           doc
-            .html(reportRef.current, {
+            .html(reportRef.current!, {
               x: 0,
               y: 0,
               width: 210,
-              windowWidth: reportRef.current.getBoundingClientRect().width,
+              windowWidth: reportRef.current!.getBoundingClientRect().width,
               autoPaging: 'text',
               html2canvas: {
                 ignoreElements: (e) => e.id.includes('pdf-ignore') || e instanceof SVGElement,

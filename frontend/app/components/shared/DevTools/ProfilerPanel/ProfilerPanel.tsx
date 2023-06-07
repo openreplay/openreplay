@@ -15,8 +15,8 @@ const renderName = (p: any) => <TextEllipsis text={p.name} />;
 
 function ProfilerPanel() {
   const { store } = React.useContext(PlayerContext)
-
-  const profiles = store.get().profilesList as any[] // TODO lest internal types
+  const { tabStates, currentTab } = store.get()
+  const profiles = tabStates[currentTab].profilesList || [] as any[] // TODO lest internal types
 
   const { showModal } = useModal();
   const [ filter, onFilterChange ] = useInputState()

@@ -13,6 +13,7 @@ export interface ILog {
   time: number
   index?: number
   errorId?: string
+  tabId?: string
 }
 
 export const Log = (log: ILog) => ({

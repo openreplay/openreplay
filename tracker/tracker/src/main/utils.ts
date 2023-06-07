@@ -82,14 +82,6 @@ export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
   return false
 }
 
-export function isIframeCrossdomain(e: HTMLIFrameElement): boolean {
-  try {
-    return e.contentWindow?.location.href !== window.location.href
-  } catch (e) {
-    return true
-  }
-}
-
 /**
  * checks if iframe is accessible
  **/
@@ -99,4 +91,17 @@ export function canAccessIframe(iframe: HTMLIFrameElement) {
   } catch (e) {
     return false
   }
+}
+
+function dec2hex(dec: number) {
+  return dec.toString(16).padStart(2, '0')
+}
+
+export function generateRandomId(len?: number) {
+  const arr: Uint8Array = new Uint8Array((len || 40) / 2)
+  // msCrypto = IE11
+  // @ts-ignore
+  const safeCrypto = window.crypto || window.msCrypto
+  safeCrypto.getRandomValues(arr)
+  return Array.from(arr, dec2hex).join('')
 }

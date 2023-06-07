@@ -21,6 +21,7 @@ import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
+import { toJS } from "mobx";
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -183,17 +184,22 @@ function Performance({
   const [_data, setData] = React.useState<any[]>([])
 
   const {
-    performanceChartTime,
-    performanceChartData,
     connType,
     connBandwidth,
-    performanceAvailability: availability,
+    tabStates,
+    currentTab,
   } = store.get();
 
-  React.useState(() => {
+  const {
+    performanceChartTime = [],
+    performanceChartData = [],
+    performanceAvailability: availability = {}
+  } = tabStates[currentTab];
+
+  React.useEffect(() => {
     setTicks(generateTicks(performanceChartData));
     setData(addFpsMetadata(performanceChartData));
-  })
+  }, [currentTab])
 
 
   const onDotClick = ({ index: pointer }: { index: number }) => {

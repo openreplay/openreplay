@@ -18,6 +18,7 @@ export enum CallingState {
 
 export interface State {
 	calling: CallingState;
+	currentTab?: string;
 }
 
 export default class Call {
@@ -158,7 +159,7 @@ export default class Call {
 	}
 
 	initiateCallEnd = async () => {
-		this.socket?.emit("call_end", appStore.getState().getIn([ 'user', 'account', 'name']))
+		this.emitData("call_end", appStore.getState().getIn([ 'user', 'account', 'name']))
 		this.handleCallEnd()
 		// TODO:  We have it separated, right? (check)
 		// const remoteControl = this.store.get().remoteControl
@@ -166,6 +167,10 @@ export default class Call {
 		//   this.socket.emit("release_control")
 		//   this.toggleRemoteControl(false)
 		// }
+	}
+
+	private emitData = (event: string, data?: any) => {
+		this.socket?.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
 	}
 
 
@@ -206,7 +211,7 @@ export default class Call {
 
 	toggleVideoLocalStream(enabled: boolean) {
     this.getPeer().then((peer) => {
-      this.socket.emit('videofeed', { streamId: peer.id, enabled })
+      this.emitData('videofeed', { streamId: peer.id, enabled })
     })
   }
 
@@ -222,8 +227,13 @@ export default class Call {
 	private _callSessionPeer() {
 		if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) { return }
 		this.store.update({ calling: CallingState.Connecting })
-		this._peerConnection(this.peerID);
-		this.socket.emit("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
+		const tab = this.store.get().currentTab
+		if (!this.store.get().currentTab) {
+			console.warn('No tab data to connect to peer')
+		}
+		console.log(tab)
+		void this._peerConnection(`${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`);
+		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}
 
 	private async _peerConnection(remotePeerId: string) {

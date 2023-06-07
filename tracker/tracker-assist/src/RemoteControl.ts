@@ -18,8 +18,8 @@ if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
 
 
 export default class RemoteControl {
-  private mouse: Mouse | null
-  status: RCStatus = RCStatus.Disabled
+  private mouse: Mouse | null = null
+  public status: RCStatus = RCStatus.Disabled
   private agentID: string | null = null
 
   constructor(
@@ -67,14 +67,16 @@ export default class RemoteControl {
       })
   }
 
-  releaseControl = (isDenied?: boolean) => {
+  releaseControl = (isDenied?: boolean, keepId?: boolean) => {
     if (this.confirm) {
       this.confirm.remove()
       this.confirm = null
     }
     this.resetMouse()
     this.status = RCStatus.Disabled
-    sessionStorage.removeItem(this.options.session_control_peer_key)
+    if (!keepId) {
+      sessionStorage.removeItem(this.options.session_control_peer_key)
+    }
     this.onRelease(this.agentID, isDenied)
     this.agentID = null
   }
@@ -89,6 +91,14 @@ export default class RemoteControl {
     }
     this.mouse = new Mouse(agentName)
     this.mouse.mount()
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.releaseControl(false, true)
+      else {
+        if (this.status === RCStatus.Disabled) {
+          this.reconnect([id,])
+        }
+      }
+    })
   }
 
   resetMouse = () => {
@@ -97,7 +107,9 @@ export default class RemoteControl {
   }
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
-  move = (id, xy) => { id === this.agentID && this.mouse?.move(xy) }
+  move = (id, xy) => {
+   return id === this.agentID && this.mouse?.move(xy)
+  }
   private focused: HTMLElement | null = null
   click = (id, xy) => {
     if (id !== this.agentID || !this.mouse) { return }
@@ -109,7 +121,9 @@ export default class RemoteControl {
   input = (id, value: string) => {
     if (id !== this.agentID || !this.mouse || !this.focused) { return }
     if (this.focused instanceof HTMLTextAreaElement
-      || this.focused instanceof HTMLInputElement) {
+      || this.focused instanceof HTMLInputElement
+      || this.focused.tagName === 'INPUT'
+      || this.focused.tagName === 'TEXTAREA') {
       setInputValue.call(this.focused, value)
       const ev = new Event('input', { bubbles: true,})
       this.focused.dispatchEvent(ev)

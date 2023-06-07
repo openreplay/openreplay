@@ -5,6 +5,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
+// @ts-ignore
 import { diff } from 'deep-diff';
 import { STORAGE_TYPES, selectStorageList, selectStorageListNow, selectStorageType } from 'Player';
 import Autoscroll from '../Autoscroll';
@@ -40,12 +41,28 @@ interface Props {
 function Storage(props: Props) {
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
-  const { player, store } = React.useContext(PlayerContext);
-  const state = store.get();
+  const [stateObject, setState] = React.useState({});
 
-  const listNow = selectStorageListNow(state);
-  const list = selectStorageList(state);
-  const type = selectStorageType(state);
+  const { player, store } = React.useContext(PlayerContext);
+  const { tabStates, currentTab } = store.get()
+  const state = tabStates[currentTab] || {}
+
+  const listNow = selectStorageListNow(state) || [];
+  const list = selectStorageList(state) || [];
+  const type = selectStorageType(state) || STORAGE_TYPES.NONE
+
+  React.useEffect(() => {
+    let currentState;
+    if (listNow.length === 0) {
+      currentState = decodeMessage(list[0])
+    } else {
+      currentState = decodeMessage(listNow[listNow.length - 1])
+    }
+    const stateObj = currentState?.state || currentState?.payload?.state || {}
+    const newState = Object.assign(stateObject, stateObj);
+    setState(newState);
+
+  }, [listNow.length]);
 
   const decodeMessage = (msg: any) => {
     const decoded = {};
@@ -84,7 +101,11 @@ function Storage(props: Props) {
     focusNextButton();
   }, [listNow]);
 
-  const renderDiff = (item: Record<string, any>, prevItem: Record<string, any>) => {
+  const renderDiff = (item: Record<string, any>, prevItem?: Record<string, any>) => {
+    if (!showDiffs) {
+      return;
+    }
+
     if (!prevItem) {
       // we don't have state before first action
       return <div style={{ flex: 3 }} className="p-1" />;
@@ -166,7 +187,7 @@ function Storage(props: Props) {
         name = itemD.mutation.join('');
     }
 
-    if (src !== null && !showDiffs) {
+    if (src !== null && !showDiffs && itemD.state) {
       setShowDiffs(true);
     }
 
@@ -182,7 +203,7 @@ function Storage(props: Props) {
         ) : (
           <>
             {renderDiff(itemD, prevItemD)}
-            <div style={{ flex: 2 }} className="flex pl-10 pt-2">
+            <div style={{ flex: 2 }} className={cn("flex pt-2", showDiffs && 'pl-10')}>
               <JSONTree
                 name={ensureString(name)}
                 src={src}
@@ -218,17 +239,14 @@ function Storage(props: Props) {
 
   const { hintIsHidden } = props;
 
-  const showStore = type !== STORAGE_TYPES.MOBX;
   return (
     <BottomBlock>
       <BottomBlock.Header>
         {list.length > 0 && (
           <div className="flex w-full">
-            {showStore && (
-              <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
-                {'STATE'}
-              </h3>
-            )}
+            <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
+              {'STATE'}
+            </h3>
             {showDiffs ? (
               <h3 style={{ width: '39%' }} className="font-semibold">
                 DIFFS
@@ -311,22 +329,17 @@ function Storage(props: Props) {
           size="small"
           show={list.length === 0}
         >
-          {showStore && (
-            <div className="ph-10 scroll-y" style={{ width: '25%' }}>
-              {list.length === 0 ? (
-                <div className="color-gray-light font-size-16 mt-20 text-center">
-                  {'Empty state.'}
-                </div>
-              ) : (
-                <JSONTree collapsed={2} src={
-                  listNow.length === 0
-                    ? decodeMessage(list[0]).state
-                    : decodeMessage(listNow[listNow.length - 1]).state}
-                />
-              )}
-            </div>
-          )}
-          <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
+          <div className="ph-10 scroll-y" style={{ width: '25%' }}>
+            {list.length === 0 ? (
+              <div className="color-gray-light font-size-16 mt-20 text-center">
+                {'Empty state.'}
+              </div>
+            ) : (
+              <JSONTree collapsed={2} src={stateObject}
+              />
+            )}
+          </div>
+          <div className="flex" style={{ width: '75%' }}>
             <Autoscroll className="ph-10">
               {decodedList.map((item: Record<string, any>, i: number) =>
                 renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined)

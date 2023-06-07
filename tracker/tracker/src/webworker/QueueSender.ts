@@ -135,6 +135,6 @@ export default class QueueSender {
     setTimeout(() => {
       this.token = null
       this.queue.length = 0
-    }, 100)
+    }, 10)
   }
 }

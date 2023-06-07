@@ -22,13 +22,14 @@ function Overlay({
   const {
     playing,
     messagesLoading,
-    cssLoading,
     completed,
     autoplay,
     inspectorMode,
     markedTargets,
     activeTargetIndex,
+    tabStates,
   } = store.get()
+  const cssLoading = Object.values(tabStates).some(({ cssLoading }) => cssLoading)
   const loading = messagesLoading || cssLoading
 
   const showAutoplayTimer = completed && autoplay && nextId

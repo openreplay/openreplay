@@ -22,7 +22,12 @@ const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }))
 function StackEventPanel() {
   const { player, store } = React.useContext(PlayerContext)
   const jump = (t: number) => player.jump(t)
-  const { stackList: list, stackListNow: listNow } = store.get()
+  const { currentTab, tabStates } = store.get()
+
+  const {
+    stackList: list = [],
+    stackListNow: listNow = [],
+  } = tabStates[currentTab]
 
   const {
     sessionStore: { devTools },

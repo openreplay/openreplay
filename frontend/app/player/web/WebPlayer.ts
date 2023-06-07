@@ -53,7 +53,8 @@ export default class WebPlayer extends Player {
       session,
       wpState,
       messageManager,
-      isClickMap
+      isClickMap,
+      uiErrorHandler
     )
     super(wpState, messageManager)
     this.screen = screen
@@ -82,7 +83,7 @@ export default class WebPlayer extends Player {
   }
 
   updateLists = (session: any) => {
-    let lists = {
+    const lists = {
       event: session.events || [],
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
@@ -160,6 +161,10 @@ export default class WebPlayer extends Player {
 
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name)
+  }
+
+  changeTab = (tab: string) => {
+    this.messageManager.changeTab(tab)
   }
 
   clean = () => {

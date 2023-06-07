@@ -166,9 +166,9 @@ export default class AssistManager {
         waitingForMessages = true
         this.setStatus(ConnectionStatus.WaitingMessages) // TODO: reconnect happens frequently on bad network
       })
-      socket.on('messages', messages => {
-        jmr.append(messages) // as RawMessage[]
 
+      socket.on('messages', messages => {
+        jmr.append(messages.data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
@@ -185,9 +185,15 @@ export default class AssistManager {
         this.setStatus(ConnectionStatus.Connected)
       })
 
-      socket.on('UPDATE_SESSION', ({ active }) => {
+      socket.on('UPDATE_SESSION', (evData) => {
+        const { metadata = {}, data = {} } = evData
+        const { tabId } = metadata
+        const { active } = data
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
+        if (Boolean(tabId) && tabId !== this.store.get().currentTab) {
+          this.store.update({ currentTab: tabId })
+        }
         if (typeof active === "boolean") {
           this.clearInactiveTimeout()
           if (active) {

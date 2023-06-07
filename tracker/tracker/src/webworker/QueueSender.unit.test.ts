@@ -4,13 +4,11 @@ import QueueSender from './QueueSender.js'
 global.fetch = () => Promise.resolve(new Response()) // jsdom does not have it
 
 function mockFetch(status: number, headers?: Record<string, string>) {
-  return jest
-    .spyOn(global, 'fetch')
-    .mockImplementation((request) =>
-      Promise.resolve({ status, headers, request } as unknown as Response & {
-        request: RequestInfo
-      }),
-    )
+  return jest.spyOn(global, 'fetch').mockImplementation((request) =>
+    Promise.resolve({ status, headers, request } as unknown as Response & {
+      request: RequestInfo
+    }),
+  )
 }
 const baseURL = 'MYBASEURL'
 const sampleArray = new Uint8Array(1)
@@ -40,6 +38,7 @@ function defaultQueueSender({
 describe('QueueSender', () => {
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.useRealTimers()
   })
 
   // Test fetch first parameter + authorization header to be present
@@ -93,9 +92,10 @@ describe('QueueSender', () => {
   test("Doesn't call fetch on push() after clean()", () => {
     const queueSender = defaultQueueSender()
     const fetchMock = mockFetch(200)
-
+    jest.useFakeTimers()
     queueSender.authorise(randomToken)
     queueSender.clean()
+    jest.runAllTimers()
     queueSender.push(sampleArray)
     expect(fetchMock).not.toBeCalled()
   })

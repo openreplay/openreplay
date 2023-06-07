@@ -11,6 +11,7 @@ type Start = {
   pageNo: number
   timestamp: number
   url: string
+  tabId: string
 } & Options
 
 type Auth = {
