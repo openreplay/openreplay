@@ -1,5 +1,5 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID, Type as MType } from './messages.gen.js'
+import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
 import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
@@ -46,6 +46,12 @@ type UnsuccessfulStart = {
   reason: typeof CANCELED | string
   success: false
 }
+
+type RickRoll = { source: string } & (
+  | { line: 'never-gonna-give-you-up' }
+  | { line: 'never-gonna-let-you-down'; token: string }
+)
+
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
 const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body, success: true })
 export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
@@ -64,6 +70,7 @@ type AppOptions = {
   session_reset_key: string
   session_token_key: string
   session_pageno_key: string
+  session_tabid_key: string
   local_uuid_key: string
   ingestPoint: string
   resourceBaseHref: string | null // resourceHref?
@@ -74,6 +81,7 @@ type AppOptions = {
   __debug__?: LoggerOptions
   localStorage: Storage | null
   sessionStorage: Storage | null
+  forceSingleTab?: boolean
 
   // @deprecated
   onStart?: StartCallback
@@ -109,6 +117,7 @@ export default class App {
   private readonly worker?: TypedWorker
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
+  private readonly bc: BroadcastChannel = new BroadcastChannel('rick')
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -124,6 +133,7 @@ export default class App {
         session_token_key: '__openreplay_token',
         session_pageno_key: '__openreplay_pageno',
         session_reset_key: '__openreplay_reset',
+        session_tabid_key: '__openreplay_tabid',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         resourceBaseHref: null,
@@ -132,6 +142,7 @@ export default class App {
         __debug_report_edp: null,
         localStorage: null,
         sessionStorage: null,
+        forceSingleTab: false,
       },
       options,
     )
@@ -212,6 +223,30 @@ export default class App {
     } catch (e) {
       this._debug('worker_start', e)
     }
+
+    const thisTab = this.session.getTabId()
+
+    if (!this.session.getSessionToken() && !this.options.forceSingleTab) {
+      this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
+    }
+
+    this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+      if (ev.data.source === thisTab) return
+      if (ev.data.line === 'never-gonna-let-you-down') {
+        const sessionToken = ev.data.token
+        this.session.setSessionToken(sessionToken)
+      }
+      if (ev.data.line === 'never-gonna-give-you-up') {
+        const token = this.session.getSessionToken()
+        if (token) {
+          this.bc.postMessage({
+            line: 'never-gonna-let-you-down',
+            token,
+            source: thisTab,
+          })
+        }
+      }
+    }
   }
 
   private _debug(context: string, e: any) {
@@ -257,6 +292,7 @@ export default class App {
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
+      this.messages.unshift(TabData(this.session.getTabId()))
       this.messages.unshift(Timestamp(this.timestamp()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
@@ -455,12 +491,16 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      tabId: this.session.getTabId(),
     })
 
     const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     this.sessionStorage.removeItem(this.options.session_reset_key)
     const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
+    const sessionToken = this.session.getSessionToken()
+    const isNewSession = needNewSessionID || !sessionToken
 
+    console.log('OpenReplay: starting session', needNewSessionID, sessionToken)
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
@@ -471,7 +511,7 @@ export default class App {
           ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: needNewSessionID ? undefined : this.session.getSessionToken(),
+          token: isNewSession ? undefined : sessionToken,
           deviceMemory,
           jsHeapSizeLimit,
         }),
@@ -523,6 +563,11 @@ export default class App {
           timestamp: startTimestamp || timestamp,
           projectID,
         })
+        if (!isNewSession && token === sessionToken) {
+          console.log('continuing session on new tab', this.session.getTabId())
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          this.send(TabChange(this.session.getTabId()))
+        }
         // (Re)send Metadata for the case of a new session
         Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
           this.send(Metadata(key, value)),
@@ -566,20 +611,34 @@ export default class App {
       })
   }
 
+  /**
+   * basically we ask other tabs during constructor
+   * and here we just apply 10ms delay just in case
+   * */
   start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
     if (!document.hidden) {
-      return this._start(...args)
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this._start(...args))
+        }, 10)
+      })
     } else {
       return new Promise((resolve) => {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            resolve(this._start(...args))
+            setTimeout(() => {
+              resolve(this._start(...args))
+            }, 10)
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
       })
     }
+  }
+
+  getTabId() {
+    return this.session.getTabId()
   }
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {

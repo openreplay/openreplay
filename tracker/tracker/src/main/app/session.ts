@@ -1,4 +1,5 @@
 import type App from './index.js'
+import { generateRandomId } from '../utils.js'
 
 interface SessionInfo {
   sessionID: string | undefined
@@ -12,6 +13,7 @@ type OnUpdateCallback = (i: Partial<SessionInfo>) => void
 export type Options = {
   session_token_key: string
   session_pageno_key: string
+  session_tabid_key: string
 }
 
 export default class Session {
@@ -21,8 +23,11 @@ export default class Session {
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
   private projectID: string | undefined
+  private tabId: string
 
-  constructor(private readonly app: App, private readonly options: Options) {}
+  constructor(private readonly app: App, private readonly options: Options) {
+    this.createTabId()
+  }
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
@@ -61,6 +66,7 @@ export default class Session {
     this.metadata[key] = value
     this.handleUpdate({ metadata: { [key]: value } })
   }
+
   setUserID(userID: string) {
     this.userID = userID
     this.handleUpdate({ userID })
@@ -88,6 +94,7 @@ export default class Session {
   getSessionToken(): string | undefined {
     return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
   }
+
   setSessionToken(token: string): void {
     this.app.sessionStorage.setItem(this.options.session_token_key, token)
   }
@@ -113,6 +120,22 @@ export default class Session {
       return
     }
     return encodeURI(String(pageNo) + '&' + token)
+  }
+
+  public getTabId(): string {
+    if (!this.tabId) this.createTabId()
+    return this.tabId
+  }
+
+  private createTabId() {
+    const localId = this.app.sessionStorage.getItem(this.options.session_tabid_key)
+    if (localId) {
+      this.tabId = localId
+    } else {
+      const randomId = generateRandomId(12)
+      this.app.sessionStorage.setItem(this.options.session_tabid_key, randomId)
+      this.tabId = randomId
+    }
   }
 
   getInfo(): SessionInfo {

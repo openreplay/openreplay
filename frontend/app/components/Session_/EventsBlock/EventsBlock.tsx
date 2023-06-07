@@ -13,7 +13,7 @@ import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { InjectedEvent } from 'Types/session/event';
-import Session from 'Types/session';
+import Session, { mergeEventLists } from 'Types/session';
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void;
@@ -29,14 +29,14 @@ interface IProps {
 function EventsBlock(props: IProps) {
   const [mouseOver, setMouseOver] = React.useState(true);
   const scroller = React.useRef<List>(null);
-  const cache = useCellMeasurerCache( {
+  const cache = useCellMeasurerCache({
     fixedWidth: true,
     defaultHeight: 300,
   });
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { eventListNow, playing } = store.get();
+  const { playing, tabStates, tabChangeEvents } = store.get();
 
   const {
     filteredEvents,
@@ -44,12 +44,19 @@ function EventsBlock(props: IProps) {
     filterOutNote,
     query,
     setActiveTab,
-    events,
-    notesWithEvents,
+    notesWithEvents = [],
   } = props;
 
+  const filteredLength = filteredEvents?.length || 0;
+  const notesWithEvtsLength = notesWithEvents?.length || 0;
+  const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
+    return acc.concat(tab.eventListNow)
+  }, [])
+
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
-  const usedEvents = filteredEvents || notesWithEvents;
+  const usedEvents = React.useMemo(() => {
+    return mergeEventLists(filteredEvents || notesWithEvents, tabChangeEvents);
+  }, [filteredLength, notesWithEvtsLength])
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
@@ -110,6 +117,7 @@ function EventsBlock(props: IProps) {
     const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
+    const isTabChange = event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
 
     const heightBug =
@@ -130,6 +138,7 @@ function EventsBlock(props: IProps) {
               isCurrent={isCurrent}
               showSelection={!playing}
               isNote={isNote}
+              isTabChange={isTabChange}
               filterOutNote={filterOutNote}
             />
           </div>

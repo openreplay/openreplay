@@ -151,11 +151,16 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
     domContentLoadedTime,
     loadTime,
     domBuildingTime,
-    fetchList,
-    resourceList,
-    fetchListNow,
-    resourceListNow,
+    tabStates,
+    currentTab
   } = store.get()
+  const {
+    fetchList = [],
+    resourceList = [],
+    fetchListNow = [],
+    resourceListNow = []
+  } = tabStates[currentTab]
+
   const { showModal } = useModal();
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);

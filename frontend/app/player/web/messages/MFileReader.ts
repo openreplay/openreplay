@@ -22,6 +22,7 @@ export default class MFileReader extends RawMessageReader {
     // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes + weird failover (don't ask)
     const skipIndexes = this.readCustomIndex(this.buf.slice(0, 8)) === 72057594037927940
       || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
+
     if (skipIndexes) {
       this.noIndexes = true
       this.skip(8)
@@ -63,6 +64,7 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
+  currentTab = 'back-compatability'
   readNext(): Message & { _index?: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
@@ -82,6 +84,10 @@ export default class MFileReader extends RawMessageReader {
       return null
     }
 
+    if (rMsg.tp === MType.TabData) {
+      this.currentTab = rMsg.tabId
+      return this.readNext()
+    }
     if (rMsg.tp === MType.Timestamp) {
       if (!this.startTime) {
         this.startTime = rMsg.timestamp
@@ -93,6 +99,7 @@ export default class MFileReader extends RawMessageReader {
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
+      tabId: this.currentTab,
     }, !this.noIndexes ? { _index: index } : {})
 
     return msg

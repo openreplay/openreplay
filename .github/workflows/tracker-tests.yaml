@@ -1,0 +1,65 @@
+# Checking unit tests for tracker and assist
+name: Tracker tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - tracker/**
+  pull_request:
+    branches: [ "dev", "main" ]
+    paths:
+      - frontend/**
+      - tracker/**
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    name: Build and test Tracker
+    strategy:
+      matrix:
+        node-version: [ 16.x ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache tracker modules
+        uses: actions/cache@v3
+        with:
+          path: tracker/tracker/node_modules
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            test_tracker_build{{ runner.OS }}-build-
+            test_tracker_build{{ runner.OS }}-
+      - name: Cache tracker-assist modules
+        uses: actions/cache@v3
+        with:
+          path: tracker/tracker-assist/node_modules
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            test_tracker_build{{ runner.OS }}-build-
+            test_tracker_build{{ runner.OS }}-
+      - name: Setup Testing packages
+        run: |
+          cd tracker/tracker
+          npm i -g yarn
+          yarn
+      - name: Setup Testing packages
+        run: |
+          cd tracker/tracker-assist
+          yarn
+      - name: Jest tests
+        run: |
+          cd tracker/tracker
+          yarn test:ci
+      - name: Jest tests
+        run: |
+          cd tracker/tracker-assist
+          yarn test:ci
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: tracker
+          name: tracker

@@ -9,7 +9,7 @@ describe('BatchWriter', () => {
 
   beforeEach(() => {
     onBatchMock = jest.fn()
-    batchWriter = new BatchWriter(1, 123456789, 'example.com', onBatchMock)
+    batchWriter = new BatchWriter(1, 123456789, 'example.com', onBatchMock, '123')
   })
 
   afterEach(() => {
@@ -21,7 +21,8 @@ describe('BatchWriter', () => {
     expect(batchWriter['timestamp']).toBe(123456789)
     expect(batchWriter['url']).toBe('example.com')
     expect(batchWriter['onBatch']).toBe(onBatchMock)
-    expect(batchWriter['nextIndex']).toBe(0)
+    // we add tab id as first in the batch
+    expect(batchWriter['nextIndex']).toBe(1)
     expect(batchWriter['beaconSize']).toBe(200000)
     expect(batchWriter['encoder']).toBeDefined()
     expect(batchWriter['strDict']).toBeDefined()
@@ -30,12 +31,14 @@ describe('BatchWriter', () => {
   })
 
   test('writeType writes the type of the message', () => {
+    // @ts-ignore
     const message = [Messages.Type.BatchMetadata, 1, 2, 3, 4, 'example.com']
     const result = batchWriter['writeType'](message as Message)
     expect(result).toBe(true)
   })
 
   test('writeFields encodes the message fields', () => {
+    // @ts-ignore
     const message = [Messages.Type.BatchMetadata, 1, 2, 3, 4, 'example.com']
     const result = batchWriter['writeFields'](message as Message)
     expect(result).toBe(true)
@@ -52,6 +55,7 @@ describe('BatchWriter', () => {
   })
 
   test('writeWithSize writes the message with its size', () => {
+    // @ts-ignore
     const message = [Messages.Type.BatchMetadata, 1, 2, 3, 4, 'example.com']
     const result = batchWriter['writeWithSize'](message as Message)
     expect(result).toBe(true)
@@ -72,6 +76,7 @@ describe('BatchWriter', () => {
   })
 
   test('writeMessage writes the given message', () => {
+    // @ts-ignore
     const message = [Messages.Type.Timestamp, 987654321]
     // @ts-ignore
     batchWriter['writeWithSize'] = jest.fn().mockReturnValue(true)

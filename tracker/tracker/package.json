@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "7.0.3",
+  "version": "8.0.0-beta.1",
   "keywords": [
     "logging",
     "replay"
@@ -22,7 +22,10 @@
     "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
     "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",
-    "test": "jest"
+    "test": "jest --coverage=false",
+    "test:ci": "jest --coverage=true",
+    "postversion": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",

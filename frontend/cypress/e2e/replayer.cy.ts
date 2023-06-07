@@ -34,7 +34,7 @@ describe(
         cy.get('#redcounter').click().click().click();
         cy.get('#test-api').click().click();
         cy.get('#test-event').click().click();
-        cy.wait(SECOND * 3);
+        cy.wait(SECOND * 15);
 
         cy.log('finished generating a session')
 

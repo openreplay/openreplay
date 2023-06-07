@@ -484,6 +484,14 @@ message 116, 'ResourceTiming', :replayer => :devtools do
   boolean 'Cached'
 end
 
+message 117, 'TabChange' do
+    string 'TabId'
+end
+
+message 118, 'TabData' do
+    string 'TabId'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

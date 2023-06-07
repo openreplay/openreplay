@@ -12,6 +12,7 @@ export enum RemoteControlStatus {
 export interface State {
 	annotating: boolean
 	remoteControl: RemoteControlStatus
+  currentTab?: string
 }
 
 export default class RemoteControl {
@@ -28,11 +29,11 @@ export default class RemoteControl {
 		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
 	){
-		socket.on("control_granted", id => {
-      this.toggleRemoteControl(id === socket.id)
+		socket.on("control_granted", ({ meta, data }) => {
+      this.toggleRemoteControl(data === socket.id)
     })
-    socket.on("control_rejected", id => {
-      id === socket.id && this.toggleRemoteControl(false)
+    socket.on("control_rejected", ({ meta, data }) => {
+      data === socket.id && this.toggleRemoteControl(false)
       this.onReject()
     })
     socket.on('SESSION_DISCONNECTED', () => {
@@ -50,14 +51,18 @@ export default class RemoteControl {
 
 	private onMouseMove = (e: MouseEvent): void => {
     const data = this.screen.getInternalCoordinates(e)
-    this.socket.emit("move", [ data.x, data.y ])
+    this.emitData("move", [ data.x, data.y ])
+  }
+
+  private emitData = (event: string, data?: any) => {
+    this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
   }
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault()
     //throttling makes movements less smooth, so it is omitted
     //this.onMouseMove(e)
-    this.socket.emit("scroll", [ e.deltaX, e.deltaY ])
+    this.emitData("scroll", [ e.deltaX, e.deltaY ])
   }
 
   public setCallbacks = ({ onReject }: { onReject: () => void }) => {
@@ -76,9 +81,9 @@ export default class RemoteControl {
         if (el instanceof HTMLTextAreaElement
           || el instanceof HTMLInputElement
         ) {
-          this.socket && this.socket.emit("input", el.value)
+          this.socket && this.emitData("input", el.value)
         } else if (el.isContentEditable) {
-          this.socket && this.socket.emit("input", el.innerText)
+          this.socket && this.emitData("input", el.innerText)
         }
       }
       // TODO: send "focus" event to assist with the nodeID
@@ -92,7 +97,7 @@ export default class RemoteControl {
         el.onblur = null
       }
     }
-    this.socket.emit("click",  [ data.x, data.y ]);
+    this.emitData("click",  [ data.x, data.y ]);
   }
 
   private toggleRemoteControl(enable: boolean){
@@ -116,17 +121,17 @@ export default class RemoteControl {
     if (remoteControl === RemoteControlStatus.Requesting) { return }
     if (remoteControl === RemoteControlStatus.Disabled) {
       this.store.update({ remoteControl: RemoteControlStatus.Requesting })
-      this.socket.emit("request_control", JSON.stringify({
-        ...this.agentInfo,
-        query: document.location.search
-      }))
+      this.emitData("request_control", JSON.stringify({
+          ...this.agentInfo,
+          query: document.location.search
+        }))
     } else {
       this.releaseRemoteControl()
     }
   }
 
   releaseRemoteControl = () => {
-    this.socket.emit("release_control")
+    this.emitData("release_control",)
     this.toggleRemoteControl(false)
   }
 
@@ -134,30 +139,30 @@ export default class RemoteControl {
 
   toggleAnnotation(enable?: boolean) {
     if (typeof enable !== "boolean") {
-      enable = !!this.store.get().annotating
+      enable = this.store.get().annotating
     }
     if (enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()
       annot.mount(this.screen.overlay)
       annot.canvas.addEventListener("mousedown", e => {
-        const data = this.screen.getInternalViewportCoordinates(e)
+        const data = this.screen.getInternalViewportCoordin1ates(e)
         annot.start([ data.x, data.y ])
-        this.socket.emit("startAnnotation", [ data.x, data.y ])
+        this.emitData("startAnnotation", [ data.x, data.y ])
       })
       annot.canvas.addEventListener("mouseleave", () => {
         annot.stop()
-        this.socket.emit("stopAnnotation")
+        this.emitData("stopAnnotation")
       })
       annot.canvas.addEventListener("mouseup", () => {
         annot.stop()
-        this.socket.emit("stopAnnotation")
+        this.emitData("stopAnnotation")
       })
       annot.canvas.addEventListener("mousemove", e => {
         if (!annot.isPainting()) { return }
 
         const data = this.screen.getInternalViewportCoordinates(e)
         annot.move([ data.x, data.y ])
-        this.socket.emit("moveAnnotation", [ data.x, data.y ])
+        this.emitData("moveAnnotation", [ data.x, data.y ])
       })
       this.store.update({ annotating: true })
     } else if (!enable && !!this.annot) {

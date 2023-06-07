@@ -25,15 +25,19 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
 
   const {
     endTime,
-    performanceChartData,
-    stackList: stackEventList,
-    eventList: eventsList,
-    frustrationsList,
-    exceptionsList,
-    resourceList: resourceListUnmap,
-    fetchList,
-    graphqlList,
+    currentTab,
+    tabStates,
   } = store.get();
+  const states = Object.values(tabStates)
+
+  const stackEventList = tabStates[currentTab]?.stackList || []
+  const eventsList = tabStates[currentTab]?.eventList || []
+  const frustrationsList = tabStates[currentTab]?.frustrationsList || []
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || []
+  const resourceListUnmap = tabStates[currentTab]?.resourceList || []
+  const fetchList = tabStates[currentTab]?.fetchList || []
+  const graphqlList = tabStates[currentTab]?.graphqlList || []
+  const performanceChartData = tabStates[currentTab]?.performanceChartData || []
 
   const fetchPresented = fetchList.length > 0;
 
@@ -50,7 +54,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
       PERFORMANCE: performanceChartData,
       FRUSTRATIONS: frustrationsList,
     };
-  }, [dataLoaded]);
+  }, [dataLoaded, currentTab]);
 
   useEffect(() => {
     if (dataLoaded) {
@@ -67,7 +71,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
     ) {
       setDataLoaded(true);
     }
-  }, [resourceList, issuesList, exceptionsList, eventsList, stackEventList, performanceChartData]);
+  }, [resourceList, issuesList, exceptionsList, eventsList, stackEventList, performanceChartData, currentTab]);
 
   return (
     <React.Fragment>

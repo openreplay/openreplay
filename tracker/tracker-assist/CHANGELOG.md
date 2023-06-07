@@ -1,3 +1,7 @@
+## 6.0.0
+
+- added support for multi tab assist session
+
 ## 5.0.2
 
 - Added `onCallDeny`, `onRemoteControlDeny` and `onRecordingDeny` callbacks to signal denial of user's consent to call/control/recording

@@ -47,16 +47,6 @@ jobs:
           cd tracker/tracker
           npm i -g yarn
           yarn
-      - name: Jest tests
-        run: |
-          cd tracker/tracker
-          yarn test
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: tracker
-          name: tracker
       - name: Build tracker inst
         run: |
           cd tracker/tracker

@@ -12,16 +12,15 @@ export enum StorageType {
 export const STORAGE_TYPES = StorageType // TODO: update name everywhere
 
 export function selectStorageType(state: State): StorageType {
-	if (!state.reduxList) return StorageType.NONE
-	if (state.reduxList.length > 0) {
+	if (state.reduxList?.length > 0) {
 		return StorageType.REDUX
-	} else if (state.vuexList.length > 0) {
+	} else if (state.vuexList?.length > 0) {
 		return StorageType.VUEX
-	} else if (state.mobxList.length > 0) {
+	} else if (state.mobxList?.length > 0) {
 		return StorageType.MOBX
-	} else if (state.ngrxList.length > 0) {
+	} else if (state.ngrxList?.length > 0) {
 		return StorageType.NGRX
-	} else if (state.zustandList.length > 0) {
+	} else if (state.zustandList?.length > 0) {
 		return StorageType.ZUSTAND
 	}
 	return StorageType.NONE

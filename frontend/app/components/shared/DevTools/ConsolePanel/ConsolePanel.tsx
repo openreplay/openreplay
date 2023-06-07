@@ -13,6 +13,7 @@ import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+import { toJS } from 'mobx'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -74,7 +75,9 @@ function ConsolePanel({ isLive }: { isLive: boolean }) {
   const { player, store } = React.useContext(PlayerContext)
   const jump = (t: number) => player.jump(t)
 
-  const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
+  const { currentTab, tabStates } = store.get()
+  const { logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [] } = tabStates[currentTab]
+
   const list = isLive ?
     useMemo(() => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
       [logListNow.length, exceptionsListNow.length]

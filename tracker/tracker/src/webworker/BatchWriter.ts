@@ -19,6 +19,7 @@ export default class BatchWriter {
     private timestamp: number,
     private url: string,
     private readonly onBatch: (batch: Uint8Array) => void,
+    private tabId: string,
   ) {
     this.prepare()
   }
@@ -51,8 +52,12 @@ export default class BatchWriter {
       this.timestamp,
       this.url,
     ]
+
+    const tabData: Messages.TabData = [Messages.Type.TabData, this.tabId]
+
     this.writeType(batchMetadata)
     this.writeFields(batchMetadata)
+    this.writeWithSize(tabData as Message)
     this.isEmpty = true
   }
 
