@@ -29,7 +29,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			tracker_version, issue_score,
 			platform,
 			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
-			user_id
+			user_id, user_state, user_city
 		) VALUES (
 			$1, $2, $3,
 			$4, $5, $6, $7, 
@@ -38,7 +38,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
-			NULLIF(LEFT($19, 8000), '')
+			NULLIF(LEFT($19, 8000), ''), NULLIF($20, ''), NULLIF($21, '')
 		)`,
 		sessionID, s.ProjectID, s.Timestamp,
 		s.UserUUID, s.UserDevice, s.UserDeviceType, s.UserCountry,
@@ -47,7 +47,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 		s.TrackerVersion, s.Timestamp/1000,
 		s.Platform,
 		s.UserAgent, s.UserBrowser, s.UserBrowserVersion, s.UserDeviceMemorySize, s.UserDeviceHeapSize,
-		s.UserID,
+		s.UserID, s.UserState, s.UserCity,
 	)
 }
 

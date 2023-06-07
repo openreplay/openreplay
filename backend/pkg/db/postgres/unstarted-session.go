@@ -13,6 +13,8 @@ type UnstartedSession struct {
 	UserDevice         string
 	UserDeviceType     string
 	UserCountry        string
+	UserState          string
+	UserCity           string
 }
 
 func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
@@ -24,7 +26,7 @@ func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
 			user_os, user_os_version, 
 			user_browser, user_browser_version,
 			user_device, user_device_type, 
-			user_country
+			user_country, user_state, user_city
 		) VALUES (
 			(SELECT project_id FROM projects WHERE project_key = $1), 
 			$2, $3,
@@ -32,7 +34,7 @@ func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
 			$6, $7, 
 			$8, $9,
 			$10, $11,
-			$12
+			$12, NULLIF($13, ''), NULLIF($14, '')
 		)`,
 		s.ProjectKey,
 		s.TrackerVersion, s.DoNotTrack,
@@ -40,6 +42,6 @@ func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
 		s.UserOS, s.UserOSVersion,
 		s.UserBrowser, s.UserBrowserVersion,
 		s.UserDevice, s.UserDeviceType,
-		s.UserCountry,
+		s.UserCountry, s.UserState, s.UserCity,
 	)
 }

@@ -1,41 +1,65 @@
 package geoip
 
 import (
+	"github.com/oschwald/maxminddb-golang"
 	"log"
 	"net"
-
-	maxminddb "github.com/oschwald/maxminddb-golang"
 )
 
 type geoIPRecord struct {
 	Country struct {
 		ISOCode string `maxminddb:"iso_code"`
 	} `maxminddb:"country"`
+	States []struct {
+		Names map[string]string `maxminddb:"names"`
+	} `maxminddb:"subdivisions"`
+	City struct {
+		Names map[string]string `maxminddb:"names"`
+	} `maxminddb:"city"`
 }
 
-type GeoIP struct {
+type GeoRecord struct {
+	Country string
+	State   string
+	City    string
+}
+
+type GeoParser interface {
+	Parse(ip net.IP) *GeoRecord
+}
+
+type geoParser struct {
 	r *maxminddb.Reader
 }
 
-func NewGeoIP(file string) *GeoIP {
+func New(file string) GeoParser {
 	r, err := maxminddb.Open(file)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	return &GeoIP{r}
+	return &geoParser{r}
 }
 
-func (geoIP *GeoIP) ExtractISOCode(ip net.IP) string {
+func (geoIP *geoParser) Parse(ip net.IP) *GeoRecord {
+	res := &GeoRecord{
+		Country: "UN",
+		State:   "",
+		City:    "",
+	}
 	if ip == nil {
-		return "UN"
+		return res
 	}
-	var code string
 	var record geoIPRecord
-	if geoIP.r.Lookup(ip, &record) == nil {
-		code = record.Country.ISOCode
+	if err := geoIP.r.Lookup(ip, &record); err != nil {
+		log.Println(err)
+		return res
 	}
-	if code == "" {
-		code = "UN"
+	if record.Country.ISOCode != "" {
+		res.Country = record.Country.ISOCode
 	}
-	return code
+	if len(record.States) > 0 {
+		res.State = record.States[0].Names["en"]
+	}
+	res.City = record.City.Names["en"]
+	return res
 }
