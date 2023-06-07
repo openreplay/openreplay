@@ -92,7 +92,12 @@ export default class RemoteControl {
     this.mouse = new Mouse(agentName)
     this.mouse.mount()
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.releaseControl(false, false)
+      if (document.hidden) this.releaseControl(false, true)
+      else {
+        if (this.status === RCStatus.Disabled) {
+          this.reconnect([id,])
+        }
+      }
     })
   }
 
