@@ -324,8 +324,7 @@ export default class Assist {
       this.agents = {}
       if (recordingState.isActive) recordingState.stopRecording()
     })
-    socket.on('call_end', (info) => {
-      const id = info.data
+    socket.on('call_end', (id) => {
       if (!callingAgents.has(id)) {
         app.debug.warn('Received call_end from unknown agent', id)
         return
