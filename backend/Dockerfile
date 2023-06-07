@@ -87,8 +87,11 @@ ENV TZ=UTC \
     MAX_FILE_SIZE=100000000 \
     USE_ENCRYPTION=false \
     # Use to enable cloud specific feature
-    CLOUD="aws"
-
+    CLOUD="aws" \
+    # Use to set compression threshold for tracker requests (20kb by default)
+    COMPRESSION_THRESHOLD=20000 \
+    # Set Access-Control-* headers for tracker requests if true
+    USE_CORS=false
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\

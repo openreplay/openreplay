@@ -116,10 +116,12 @@ func (e *Router) root(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Prepare headers for preflight requests
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
+		if e.cfg.UseAccessControlHeaders {
+			// Prepare headers for preflight requests
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
+		}
 		if r.Method == http.MethodOptions {
 			w.Header().Set("Cache-Control", "max-age=86400")
 			w.WriteHeader(http.StatusOK)
