@@ -61,13 +61,17 @@ const extractSessionInfo = function (socket) {
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
         socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
         socket.handshake.query.sessionInfo.userCountry = null;
+        socket.handshake.query.sessionInfo.userState = null;
+        socket.handshake.query.sessionInfo.userCity = null;
         if (geoip() !== null) {
             debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
             try {
                 let ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
                 ip = ip.split(",")[0];
-                let country = geoip().country(ip);
+                let info = geoip().city(ip);
                 socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+                socket.handshake.query.sessionInfo.userCity = country.city.names.en;
+                socket.handshake.query.sessionInfo.userState = country.subdivisions.length > 0 ? country.subdivisions[0].names.en : null;
             } catch (e) {
                 debug && console.log("geoip-country failed");
                 debug && console.log(e);
