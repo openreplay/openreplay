@@ -9,7 +9,7 @@ import schemas_ee
 from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.objects.store import obj_store
+from chalicelib.utils.objects.store import StorageClient
 from chalicelib.utils.objects import extra
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
@@ -642,7 +642,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
             mob_exists = False
             for k in keys:
-                if obj_store.exists(bucket=config("sessions_bucket"), key=k):
+                if StorageClient.exists(bucket=config("sessions_bucket"), key=k):
                     mob_exists = True
                     break
             if mob_exists:

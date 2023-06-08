@@ -6,7 +6,7 @@ import schemas
 import schemas_ee
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.objects.store import obj_store
+from chalicelib.utils.objects.store import StorageClient
 from chalicelib.utils.objects import extra
 
 
@@ -16,7 +16,7 @@ def generate_file_key(project_id, key):
 
 def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
-    presigned_url = obj_store.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
+    presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
     return {"URL": presigned_url, "key": key}
 
 
@@ -32,7 +32,7 @@ def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, cont
             params)
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
-        result["URL"] = obj_store.generate_presigned_url(
+        result["URL"] = StorageClient.generate_presigned_url(
             'get_object',
             Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
             ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
@@ -103,7 +103,7 @@ def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if result:
-            result["URL"] = obj_store.generate_presigned_url(
+            result["URL"] = StorageClient.generate_presigned_url(
                 'get_object',
                 Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
                 ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
@@ -130,7 +130,7 @@ def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayl
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
             return {"errors": ["record not found"]}
-        result["URL"] = obj_store.generate_presigned_url(
+        result["URL"] = StorageClient.generate_presigned_url(
             'get_object',
             Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
             ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)

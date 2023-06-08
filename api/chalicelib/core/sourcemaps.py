@@ -4,14 +4,14 @@ import requests
 from decouple import config
 
 from chalicelib.core import sourcemaps_parser
-from chalicelib.utils.objects.store import obj_store
+from chalicelib.utils.objects.store import StorageClient
 from chalicelib.utils.objects import generators
 
 
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(obj_store.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
+        results.append(StorageClient.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
                                                                key=generators.generate_file_key_from_url(project_id, u),
                                                                check_exists=True))
     return results
@@ -20,7 +20,7 @@ def presign_share_urls(project_id, urls):
 def presign_upload_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(obj_store.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
+        results.append(StorageClient.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
                                                               expires_in=1800,
                                                               key=generators.generate_file_key_from_url(project_id, u)))
     return results
@@ -96,7 +96,7 @@ def get_traces_group(project_id, payload):
             payloads[key] = None
 
         if key not in payloads:
-            file_exists_in_bucket = len(file_url) > 0 and obj_store.exists(config('sourcemaps_bucket'), key)
+            file_exists_in_bucket = len(file_url) > 0 and StorageClient.exists(config('sourcemaps_bucket'), key)
             if len(file_url) > 0 and not file_exists_in_bucket:
                 print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
                 if not file_url.endswith(".map"):
@@ -154,7 +154,7 @@ def fetch_missed_contexts(frames):
             file = source_cache[file_abs_path]
         else:
             file_path = get_js_cache_path(file_abs_path)
-            file = obj_store.get_file(config('js_cache_bucket'), file_path)
+            file = StorageClient.get_file(config('js_cache_bucket'), file_path)
             if file is None:
                 print(f"Missing abs_path: {file_abs_path}, file {file_path} not found in {config('js_cache_bucket')}")
             source_cache[file_abs_path] = file

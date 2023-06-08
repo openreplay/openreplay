@@ -5,6 +5,6 @@ from chalicelib.utils.objects.s3 import AmazonS3Storage
 
 # Init global object storage client
 if config("CLOUD") == "azure":
-    obj_store = AzureBlobStorage()
+    StorageClient = AzureBlobStorage()
 else:
-    obj_store = AmazonS3Storage()
+    StorageClient = AmazonS3Storage()
