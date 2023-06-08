@@ -205,7 +205,6 @@ def get_health():
     }
     return __process_health(health_map=health_map)
 
-  
 
 def __process_health(health_map):
     for parent_key in health_map.keys():
