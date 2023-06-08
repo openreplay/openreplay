@@ -9,7 +9,7 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
-	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=20m"`
+	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	GroupEnder        string        `env:"GROUP_ENDER,required"`
 	LoggerTimeout     int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
 	TopicRawWeb       string        `env:"TOPIC_RAW_WEB,required"`

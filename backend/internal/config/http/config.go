@@ -24,7 +24,7 @@ type Config struct {
 	MaxMinDBFile            string        `env:"MAXMINDDB_FILE,required"`
 	UseProfiler             bool          `env:"PROFILER_ENABLED,default=false"`
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
-	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=20m"`
+	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	WorkerID                uint16
 }
 
