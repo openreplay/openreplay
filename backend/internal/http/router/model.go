@@ -31,22 +31,3 @@ type NotStartedRequest struct {
 	TrackerVersion string  `json:"trackerVersion"`
 	DoNotTrack     bool    `json:"DoNotTrack"`
 }
-
-type StartIOSSessionRequest struct {
-	Token          string  `json:"token"`
-	ProjectKey     *string `json:"projectKey"`
-	TrackerVersion string  `json:"trackerVersion"`
-	RevID          string  `json:"revID"`
-	UserUUID       *string `json:"userUUID"`
-	UserOSVersion  string  `json:"userOSVersion"`
-	UserDevice     string  `json:"userDevice"`
-	Timestamp      uint64  `json:"timestamp"`
-}
-
-type StartIOSSessionResponse struct {
-	Token           string   `json:"token"`
-	ImagesHashList  []string `json:"imagesHashList"`
-	UserUUID        string   `json:"userUUID"`
-	BeaconSizeLimit int64    `json:"beaconSizeLimit"`
-	SessionID       string   `json:"sessionID"`
-}
