@@ -203,10 +203,10 @@ def get_health():
         "details": __get_sessions_stats,
         "ssl": __check_SSL
     }
-    return __process_health(health_map)
+    return __process_health(health_map=health_map)
 
 
-def __process_health(tenant_id, health_map):
+def __process_health(health_map):
     for parent_key in health_map.keys():
         if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
             health_map.pop(parent_key)
