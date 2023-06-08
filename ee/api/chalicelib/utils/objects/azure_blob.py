@@ -1,10 +1,10 @@
 from decouple import config
 from datetime import datetime, timedelta
-from chalicelib.utils.objects.interface import ObjectStorageInterface
+from chalicelib.utils.objects.interface import ObjectStorage
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
 
 
-class AzureBlobStorage(ObjectStorageInterface):
+class AzureBlobStorage(ObjectStorage):
     # Prepare blob storage client
     client = BlobServiceClient(
         account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",

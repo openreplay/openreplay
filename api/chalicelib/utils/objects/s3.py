@@ -4,10 +4,10 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 from decouple import config
 from requests.models import PreparedRequest
-from chalicelib.utils.objects.interface import ObjectStorageInterface
+from chalicelib.utils.objects.interface import ObjectStorage
 
 
-class AmazonS3Storage(ObjectStorageInterface):
+class AmazonS3Storage(ObjectStorage):
     if not config("S3_HOST", default=False):
         client = boto3.client('s3')
         resource = boto3.resource('s3')
