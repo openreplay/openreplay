@@ -16,7 +16,7 @@ COPY . .
 
 RUN adduser -u 1001 openreplay -D
 USER 1001
-ADD --chown=1001 https://static.openreplay.com/geoip/GeoLite2-Country.mmdb  $MAXMINDDB_FILE
+ADD --chown=1001 https://static.openreplay.com/geoip/GeoLite2-City.mmdb  $MAXMINDDB_FILE
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD npm start
