@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"log"
 	. "openreplay/backend/pkg/db/types"
 )
 
@@ -34,5 +35,6 @@ func (conn *Conn) GetProject(projectID uint32) (*Project, error) {
 		&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
 		return nil, err
 	}
+	log.Printf("Project %+v fetched", p)
 	return p, nil
 }
