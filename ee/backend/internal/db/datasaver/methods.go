@@ -68,7 +68,7 @@ func (s *saverImpl) handleExtraMessage(msg Message) error {
 	case *CustomEvent:
 		return s.ch.InsertCustom(session, m)
 	case *NetworkRequest:
-		project, err := s.pg.GetProject(session.ProjectID)
+		project, err := s.pg.Cache.GetProject(session.ProjectID)
 		if err != nil {
 			log.Printf("can't get project: %s", err)
 		} else {
