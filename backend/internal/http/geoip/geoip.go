@@ -4,6 +4,7 @@ import (
 	"github.com/oschwald/maxminddb-golang"
 	"log"
 	"net"
+	"strings"
 )
 
 type geoIPRecord struct {
@@ -22,6 +23,24 @@ type GeoRecord struct {
 	Country string
 	State   string
 	City    string
+}
+
+func (r *GeoRecord) Pack() string {
+	return r.Country + "|" + r.State + "|" + r.City
+}
+
+func UnpackGeoRecord(pkg string) *GeoRecord {
+	parts := strings.Split(pkg, "|")
+	if len(parts) != 3 {
+		return &GeoRecord{
+			Country: pkg,
+		}
+	}
+	return &GeoRecord{
+		Country: parts[0],
+		State:   parts[1],
+		City:    parts[2],
+	}
 }
 
 type GeoParser interface {

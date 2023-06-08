@@ -55,6 +55,8 @@ func (conn *Conn) HandleSessionStart(sessionID uint64, s *types.Session) error {
 	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USEROS", s.Platform), s.UserOS)
 	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERDEVICE", s.Platform), s.UserDevice)
 	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERCOUNTRY", s.Platform), s.UserCountry)
+	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERSTATE", s.Platform), s.UserState)
+	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERCITY", s.Platform), s.UserCity)
 	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("REVID", s.Platform), s.RevID)
 	// s.Platform == "web"
 	conn.insertAutocompleteValue(sessionID, s.ProjectID, "USERBROWSER", s.UserBrowser)
