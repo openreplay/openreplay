@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"log"
 	. "openreplay/backend/pkg/db/types"
 	"time"
 )
@@ -35,6 +34,6 @@ func (c *cacheImpl) GetProject(projectID uint32) (*Project, error) {
 		return nil, err
 	}
 	c.projects[projectID] = &ProjectMeta{p, time.Now().Add(c.projectExpirationTimeout)}
-	log.Printf("Project %+v cached", p)
+	//c.projectsByKeys.Store(p.ProjectKey, c.projects[ projectID ])
 	return p, nil
 }
