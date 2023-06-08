@@ -28,9 +28,13 @@ class EventQueue():
             for _key, _val in element.dict().items():
                 if _key == 'data':
                     params[f'{_key}_{i}'] = json.dumps(_val)
+                    if 'sessionId' in _val.keys():
+                        params[f'session_id_{i}'] = int(_val['sessionId'])
+                    else:
+                        params[f'session_id_{i}'] = None
                 else:
                     params[f'{_key}_{i}'] = _val
-            events.append(f"(%(project_id_{i})s, %(user_id_{i})s, %(timestamp_{i})s, %(action_{i})s, %(source_{i})s, %(category_{i})s, %(data_{i})s::jsonb)")
+            events.append(f"(%(project_id_{i})s, %(user_id_{i})s, %(timestamp_{i})s, %(action_{i})s, %(source_{i})s, %(category_{i})s, %(data_{i})s::jsonb, %(session_id_{i})s)")
             i += 1
         if i == 0:
             return 0
@@ -38,7 +42,7 @@ class EventQueue():
             print(events)
             return 1
         conn.execute(
-            conn.mogrify(f"""INSERT INTO public.frontend_signals (project_id, user_id, timestamp, action, source, category, data)
+            conn.mogrify(f"""INSERT INTO public.frontend_signals (project_id, user_id, timestamp, action, source, category, data, session_id)
                         VALUES {' , '.join(events)}""", params)
         )
         return 1
