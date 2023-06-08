@@ -41,8 +41,8 @@ export default class TabSessionManager {
     location: '',
   }
 
+  public locationManager: ListWalker<SetPageLocation> = new ListWalker();
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
-  private locationManager: ListWalker<SetPageLocation> = new ListWalker();
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
   private connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
   private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
@@ -311,6 +311,7 @@ export default class TabSessionManager {
     const stateToUpdate : Partial<Record<string,any>> = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,
+      urlsList: this.locationManager.list,
       ...this.lists.getFullListsState(),
     }
 

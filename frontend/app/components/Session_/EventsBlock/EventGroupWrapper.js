@@ -108,7 +108,7 @@ class EventGroupWrapper extends React.Component {
               isLastInGroup={isLastInGroup}
               whiteBg={true}
             />
-          ) : isTabChange ? (<TabChange from={event.fromTab} to={event.toTab} />) : (
+          ) : isTabChange ? (<TabChange onClick={this.onEventClick} from={event.fromTab} to={event.toTab} activeUrl={event.activeUrl} />) : (
             <Event
               key={event.key}
               event={event}
@@ -130,18 +130,29 @@ class EventGroupWrapper extends React.Component {
   }
 }
 
-function TabChange({ from, to }) { return (
-    <div className={'text-center p-2 bg-gray-lightest w-full my-2 flex items-center gap-2 justify-center'}>
-      <span>Tab change:</span>
-      <span className={'font-semibold'}>
-        {from}
-      </span>
-      <Icon name={"arrow-right-short"} size={18} color={"gray-dark"}/>
-      <span className={'font-semibold'}>
-        {to}
-      </span>
-    </div>
-)
+function TabChange({ from, to, activeUrl, onClick }) {
+    if (!from) {
+        return null;
+    }
+    return (
+        <div
+            onClick={onClick}
+            className={'p-2 cursor-pointer bg-gray-lightest w-full border-gray-light border-t border-b !border-l-0 !border-r-0'}
+        >
+            <div className={'flex items-center gap-2 px-4'}>
+              <span style={{ fontWeight: 500 }}>
+                {from}
+              </span>
+              <Icon name={"arrow-right-short"} size={18} color={"gray-dark"}/>
+              <span style={{ fontWeight: 500 }}>
+                {to}
+              </span>
+            </div>
+            <div className={'break-words mt-1 px-4 text-sm font-normal color-gray-medium'}>
+                {activeUrl}
+            </div>
+        </div>
+    )
 }
 
 export default EventGroupWrapper;

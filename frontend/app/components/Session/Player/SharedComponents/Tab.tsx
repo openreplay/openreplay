@@ -15,10 +15,11 @@ function Tab({ i, tab, currentTab, changeTab }: Props) {
       style={{ marginBottom: '-2px' }}
       onClick={() => changeTab?.(tab)}
       className={cn(
-        'self-end py-1 px-4 cursor-pointer',
+        'self-end py-1 px-4 text-sm',
+        changeTab && 'cursor-pointer',
         currentTab === tab
           ? 'border-gray-light border-t border-l border-r !border-b-white bg-white rounded-tl rounded-tr font-semibold'
-          : 'cursor-pointer border-gray-light !border-b !border-t-0 !border-l-0 !border-r-0'
+          : 'cursor-pointer border-gray-light !border-b !border-t-transparent !border-l-transparent !border-r-transparent'
       )}
     >
       Tab {i + 1}

@@ -140,6 +140,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			Delay:   startTimeMili - req.Timestamp,
 			ExpTime: expTime.UnixMilli(),
 		}
+		geoInfo := e.ExtractGeoData(r)
 
 		sessionStart := &SessionStart{
 			Timestamp:            getSessionTimestamp(req, startTimeMili),
@@ -154,14 +155,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			UserBrowserVersion:   ua.BrowserVersion,
 			UserDevice:           ua.Device,
 			UserDeviceType:       ua.DeviceType,
-			UserCountry:          e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r),
+			UserCountry:          geoInfo.Pack(),
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
 			UserID:               req.UserID,
 		}
 
 		// Save sessionStart to db
-		if err := e.services.Database.InsertWebSessionStart(sessionID, sessionStart); err != nil {
+		if err := e.services.Database.InsertWebSessionStart(sessionID, sessionStart, geoInfo); err != nil {
 			log.Printf("can't insert session start: %s", err)
 		}
 
@@ -257,7 +258,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
+	geoInfo := e.ExtractGeoData(r)
 	err = e.services.Database.InsertUnstartedSession(postgres.UnstartedSession{
 		ProjectKey:         *req.ProjectKey,
 		TrackerVersion:     req.TrackerVersion,
@@ -270,7 +271,9 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		UserBrowserVersion: ua.BrowserVersion,
 		UserDevice:         ua.Device,
 		UserDeviceType:     ua.DeviceType,
-		UserCountry:        country,
+		UserCountry:        geoInfo.Country,
+		UserState:          geoInfo.State,
+		UserCity:           geoInfo.City,
 	})
 	if err != nil {
 		log.Printf("Unable to insert Unstarted Session: %v\n", err)

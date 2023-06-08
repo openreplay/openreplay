@@ -96,7 +96,7 @@ ENV TZ=UTC \
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi
+  wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; fi
 
 
 COPY --from=build /root/service /home/openreplay/service

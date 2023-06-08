@@ -54,6 +54,9 @@ UPDATE public.roles
 SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{FEATURE_FLAGS}') AS e)
 where not permissions @> '{FEATURE_FLAGS}';
 
+ALTER TABLE IF EXISTS public.frontend_signals
+    ADD COLUMN IF NOT EXISTS session_id integer NULL REFERENCES sessions (session_id) ON DELETE SET NULL;
+
 ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS user_city  text,
     ADD COLUMN IF NOT EXISTS user_state text;

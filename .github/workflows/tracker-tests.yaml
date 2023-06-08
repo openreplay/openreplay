@@ -3,7 +3,7 @@ name: Tracker tests
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
     paths:
       - tracker/**
   pull_request:

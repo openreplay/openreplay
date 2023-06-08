@@ -9,25 +9,25 @@ import (
 	"log"
 	"mime"
 	"net/http"
-	metrics "openreplay/backend/pkg/metrics/assets"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	config "openreplay/backend/internal/config/assets"
-	"openreplay/backend/pkg/storage"
+	metrics "openreplay/backend/pkg/metrics/assets"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/url/assets"
+
+	"github.com/pkg/errors"
 )
 
 const MAX_CACHE_DEPTH = 5
 
 type cacher struct {
-	timeoutMap     *timeoutMap      // Concurrency implemented
-	s3             *storage.S3      // AWS Docs: "These clients are safe to use concurrently."
-	httpClient     *http.Client     // Docs: "Clients are safe for concurrent use by multiple goroutines."
-	rewriter       *assets.Rewriter // Read only
+	timeoutMap     *timeoutMap                 // Concurrency implemented
+	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
+	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
+	rewriter       *assets.Rewriter            // Read only
 	Errors         chan error
 	sizeLimit      int
 	requestHeaders map[string]string
@@ -38,7 +38,14 @@ func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config) *cacher {
+func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, error) {
+	switch {
+	case cfg == nil:
+		return nil, errors.New("config is nil")
+	case store == nil:
+		return nil, errors.New("object storage is nil")
+	}
+
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 
 	tlsConfig := &tls.Config{
@@ -71,7 +78,7 @@ func NewCacher(cfg *config.Config) *cacher {
 
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
-		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets, cfg.UseFileTags()),
+		objStorage: store,
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
@@ -85,7 +92,7 @@ func NewCacher(cfg *config.Config) *cacher {
 		requestHeaders: cfg.AssetsRequestHeaders,
 	}
 	c.workers = NewPool(64, c.CacheFile)
-	return c
+	return c, nil
 }
 
 func (c *cacher) CacheFile(task *Task) {
@@ -151,7 +158,7 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// TODO: implement in streams
 	start = time.Now()
-	err = c.s3.Upload(strings.NewReader(strData), t.cachePath, contentType, storage.NoCompression)
+	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, objectstorage.NoCompression)
 	if err != nil {
 		metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 		c.Errors <- errors.Wrap(err, t.urlContext)
@@ -198,7 +205,7 @@ func (c *cacher) checkTask(newTask *Task) {
 		return
 	}
 	c.timeoutMap.add(cachePath)
-	crTime := c.s3.GetCreationTime(cachePath)
+	crTime := c.objStorage.GetCreationTime(cachePath)
 	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
 		return
 	}

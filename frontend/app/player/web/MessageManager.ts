@@ -49,7 +49,7 @@ export interface State extends ScreenState {
   firstVisualEvent: number;
   messagesProcessed: boolean;
   currentTab: string;
-  tabs: string[];
+  tabs: Set<string>;
   tabChangeEvents: { tabId: string; timestamp: number; tabName: string }[];
 }
 
@@ -75,7 +75,7 @@ export default class MessageManager {
     messagesProcessed: false,
     messagesLoading: false,
     currentTab: '',
-    tabs: [],
+    tabs: new Set(),
     tabChangeEvents: [],
   };
 
@@ -179,8 +179,8 @@ export default class MessageManager {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
+      // getting clicks happened during last 600ms
       if (!!lastClick && t - lastClick.time < 600) {
-        // happened during last 600ms
         this.screen.cursor.click();
       }
       const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
@@ -188,19 +188,22 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
 
-      const activeTabs = this.state.get().tabs;
-      if (tabId && !activeTabs.includes(tabId)) {
-        this.state.update({ tabs: activeTabs.concat(tabId) });
-      }
 
-      if (tabId && this.activeTab !== tabId) {
-        this.state.update({ currentTab: tabId });
-        this.activeTab = tabId;
+      if (tabId) {
+        if (this.activeTab !== tabId) {
+          this.state.update({ currentTab: tabId });
+          this.activeTab = tabId;
+        }
+        const activeTabs = this.state.get().tabs;
+        if (activeTabs.length !== this.activeTabManager.tabInstances.size) {
+          this.state.update({ tabs: this.activeTabManager.tabInstances });
+        }
       }
 
       if (this.tabs[this.activeTab]) {
         this.tabs[this.activeTab].move(t);
       } else {
+        // should we add ui error here?
         console.error(
           'missing tab state',
           this.tabs,
@@ -255,6 +258,7 @@ export default class MessageManager {
         if (!prevChange || prevChange.tabId !== msg.tabId) {
           this.tabChangeEvents.push({
             tabId: msg.tabId,
+            time: msg.time,
             timestamp: this.sessionStart + msg.time,
             toTab: mapTabs(this.tabs)[msg.tabId],
             fromTab: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
@@ -276,11 +280,11 @@ export default class MessageManager {
         switch (msg.tp) {
           case MType.CreateDocument:
             if (!this.firstVisualEventSet) {
-              this.activeTabManager.append({ tp: MType.TabChange, tabId: msg.tabId, time: 0 });
+              this.activeTabManager.unshift({ tp: MType.TabChange, tabId: msg.tabId, time: 0 });
               this.state.update({
                 firstVisualEvent: msg.time,
                 currentTab: msg.tabId,
-                tabs: [msg.tabId],
+                tabs: new Set([msg.tabId]),
               });
               this.firstVisualEventSet = true;
             }

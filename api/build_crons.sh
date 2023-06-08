@@ -45,5 +45,8 @@ function build_crons(){
 check_prereq
 [[ $1 == "ee" ]] && {
     build_crons $1
+} || {
+echo -e "Crons is only for ee. Rerun the script using \n bash $0 ee"
+exit 100
 }
 

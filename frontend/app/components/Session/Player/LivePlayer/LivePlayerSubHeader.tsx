@@ -19,7 +19,7 @@ function SubHeader() {
   return (
     <>
       <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
-        {tabs.map((tab, i) => (
+        {Array.from(tabs).map((tab, i) => (
           <React.Fragment key={tab}>
             <Tab i={i} tab={tab} currentTab={tabs.length === 1 ? tab : currentTab} />
           </React.Fragment>

@@ -29,6 +29,10 @@ spec:
             image: "{{ tpl .Values.report.image.repository . }}:{{ .Values.report.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: "{{ .Values.report.image.pullPolicy}}"
             env:
+              {{- range $key, $val := .Values.global.env }}
+              - name: {{ $key }}
+                value: '{{ $val }}'
+              {{- end }}
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
               - name: version_number

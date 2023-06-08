@@ -15,6 +15,12 @@ SUPPORTED_TYPES = {
     schemas.FilterType.user_country: SupportedFilter(
         get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country),
         query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country)),
+    schemas.FilterType.user_city: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_city),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_city)),
+    schemas.FilterType.user_state: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_state),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_state)),
     schemas.FilterType.user_id: SupportedFilter(
         get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id),
         query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id)),

@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	assetsMetrics "openreplay/backend/pkg/metrics/assets"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -24,7 +25,14 @@ func main() {
 
 	cfg := config.New()
 
-	cacher := cacher.NewCacher(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("Error on object storage creation: %v", err)
+	}
+	cacher, err := cacher.NewCacher(cfg, objStore)
+	if err != nil {
+		log.Fatalf("Error on cacher creation: %v", err)
+	}
 
 	msgHandler := func(msg messages.Message) {
 		switch m := msg.(type) {

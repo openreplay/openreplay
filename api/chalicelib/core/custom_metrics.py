@@ -6,8 +6,9 @@ from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import sessions, funnels, errors, issues, metrics, click_maps, sessions_mobs, product_analytics
-from chalicelib.utils import helper, pg_client, s3
+from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.storage import StorageClient
 
 PIE_CHART_GROUP = 5
 
@@ -601,7 +602,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
             mob_exists = False
             for k in keys:
-                if s3.exists(bucket=config("sessions_bucket"), key=k):
+                if StorageClient.exists(bucket=config("sessions_bucket"), key=k):
                     mob_exists = True
                     break
             if mob_exists:

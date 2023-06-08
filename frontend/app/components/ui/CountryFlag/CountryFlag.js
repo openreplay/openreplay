@@ -4,7 +4,7 @@ import { countries } from 'App/constants';
 import { Icon } from 'UI';
 import stl from './countryFlag.module.css';
 
-const CountryFlag = ({ city = '', country = '', className = '', style = {}, label = false, width = 22, height = 15}) => {
+const CountryFlag = ({ country = '', className = '', style = {}, label = false, width = 22, height = 15}) => {
 	const knownCountry = !!country && country !== 'UN';
   	const countryFlag = knownCountry ? country.toLowerCase() : '';
   	const countryName = knownCountry ? countries[ country ] : 'Unknown Country';
@@ -19,7 +19,6 @@ const CountryFlag = ({ city = '', country = '', className = '', style = {}, labe
 						<div className="ml-2 leading-none" style={{ whiteSpace: 'nowrap'}}>Unknown Country</div>
 					</div>
 			)}
-			{ city && <div className={ cn(stl.label, 'ml-2') }>{ city }, </div> }
 			{ knownCountry && label && <div className={ cn(stl.label, 'ml-1') }>{ countryName }</div> }
 		</div>
 	);

@@ -93,7 +93,6 @@ function SessionItem(props: RouteComponentProps & Props) {
     userAnonymousId,
     userDisplayName,
     userCountry,
-    userCity,
     startedAt,
     duration,
     eventsCount,
@@ -219,7 +218,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             </div>
             <div style={{ width: '30%' }} className="px-2 flex flex-col justify-between">
               <div style={{ height: '21px' }}>
-                <CountryFlag city={userCity} country={userCountry} style={{ paddingTop: '4px' }} label />
+                <CountryFlag country={userCountry} style={{ paddingTop: '4px' }} label />
               </div>
               <div className="color-gray-medium flex items-center py-1">
                 <span className="capitalize" style={{ maxWidth: '70px' }}>

@@ -132,7 +132,8 @@ $$
                                             ('webhooks'),
                                             ('sessions_notes'),
                                             ('assist_records'),
-                                            ('projects_stats'))
+                                            ('projects_stats'),
+                                            ('frontend_signals'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'public'
@@ -637,14 +638,15 @@ $$
 
             CREATE TABLE IF NOT EXISTS frontend_signals
             (
-                project_id integer                                        NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-                user_id    integer                                        NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-                timestamp  bigint                                         NOT NULL,
-                action     text                                           NOT NULL,
-                source     text                                           NOT NULL,
-                category   text                                           NOT NULL,
-                data       jsonb,
-                created_at timestamp DEFAULT timezone('utc'::text, now()) NOT NULL
+                project_id integer   NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+                user_id    integer   NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+                timestamp  bigint    NOT NULL,
+                action     text      NOT NULL,
+                source     text      NOT NULL,
+                category   text      NOT NULL,
+                data       jsonb     NULL,
+                session_id integer   NULL REFERENCES sessions (session_id) ON DELETE SET NULL,
+                created_at timestamp NOT NULL DEFAULT timezone('utc'::text, now())
             );
             CREATE INDEX IF NOT EXISTS frontend_signals_user_id_idx ON frontend_signals (user_id);
 

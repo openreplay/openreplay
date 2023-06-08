@@ -101,7 +101,7 @@ function SubHeader(props) {
                         </div>
                     </div>
                 ) : null}
-                {tabs.map((tab, i) => (
+                {Array.from(tabs).map((tab, i) => (
                     <React.Fragment key={tab}>
                         <Tab
                             i={i}

@@ -34,6 +34,8 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
       return 'country';
     case FilterKey.USER_CITY:
       return 'city';
+    case FilterKey.USER_STATE:
+      return 'state';
     case FilterKey.REFERRER:
       return 'ref';
     case FilterKey.CUSTOM:
@@ -102,6 +104,9 @@ export const getFilterKeyTypeByKey = (key: string) => {
     case 'city':
     case 'userCity':
       return FilterKey.USER_CITY;
+    case 'state':
+    case 'userState':
+      return FilterKey.USER_STATE;
     case 'ref':
     case 'referrer':
       return FilterKey.REFERRER;
@@ -203,6 +208,7 @@ export enum FilterKey {
   REFERRER = 'referrer',
   USER_COUNTRY = 'userCountry',
   USER_CITY = 'userCity',
+  USER_STATE = 'userState',
   JOURNEY = 'journey',
   REQUEST = 'request',
   GRAPHQL = 'graphql',
