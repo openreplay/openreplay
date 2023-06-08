@@ -63,13 +63,9 @@ spec:
               {{- end }}
             - name: AWS_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
-            - name: AWS_REGION_WEB
+            - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
-            - name: AWS_REGION_IOS
-              value: '{{ .Values.global.s3.region }}'
-            - name: S3_BUCKET_WEB
-              value: {{ .Values.global.s3.recordingsBucket }}
-            - name: S3_BUCKET_IOS
+            - name: BUCKET_NAME
               value: {{ .Values.global.s3.recordingsBucket }}
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'

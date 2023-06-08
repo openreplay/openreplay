@@ -4,24 +4,24 @@ import requests
 from decouple import config
 
 from chalicelib.core import sourcemaps_parser
-from chalicelib.utils import s3
+from chalicelib.utils.storage import StorageClient, generators
 
 
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
-                                                        key=s3.generate_file_key_from_url(project_id, u),
-                                                        check_exists=True))
+        results.append(StorageClient.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
+                                                               key=generators.generate_file_key_from_url(project_id, u),
+                                                               check_exists=True))
     return results
 
 
 def presign_upload_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
-                                                       expires_in=1800,
-                                                       key=s3.generate_file_key_from_url(project_id, u)))
+        results.append(StorageClient.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
+                                                              expires_in=1800,
+                                                              key=generators.generate_file_key_from_url(project_id, u)))
     return results
 
 
@@ -87,7 +87,7 @@ def get_traces_group(project_id, payload):
         file_exists_in_bucket = False
         file_exists_in_server = False
         file_url = u["absPath"]
-        key = s3.generate_file_key_from_url(project_id, file_url)  # use filename instead?
+        key = generators.generate_file_key_from_url(project_id, file_url)  # use filename instead?
         params_idx = file_url.find("?")
         if file_url and len(file_url) > 0 \
                 and not (file_url[:params_idx] if params_idx > -1 else file_url).endswith(".js"):
@@ -95,7 +95,7 @@ def get_traces_group(project_id, payload):
             payloads[key] = None
 
         if key not in payloads:
-            file_exists_in_bucket = len(file_url) > 0 and s3.exists(config('sourcemaps_bucket'), key)
+            file_exists_in_bucket = len(file_url) > 0 and StorageClient.exists(config('sourcemaps_bucket'), key)
             if len(file_url) > 0 and not file_exists_in_bucket:
                 print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
                 if not file_url.endswith(".map"):
@@ -153,7 +153,7 @@ def fetch_missed_contexts(frames):
             file = source_cache[file_abs_path]
         else:
             file_path = get_js_cache_path(file_abs_path)
-            file = s3.get_file(config('js_cache_bucket'), file_path)
+            file = StorageClient.get_file(config('js_cache_bucket'), file_path)
             if file is None:
                 print(f"Missing abs_path: {file_abs_path}, file {file_path} not found in {config('js_cache_bucket')}")
             source_cache[file_abs_path] = file
