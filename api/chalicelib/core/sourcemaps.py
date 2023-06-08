@@ -5,14 +5,14 @@ from decouple import config
 
 from chalicelib.core import sourcemaps_parser
 from chalicelib.utils.objects.store import obj_store
-from chalicelib.utils.objects import helpers
+from chalicelib.utils.objects import generators
 
 
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
         results.append(obj_store.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
-                                                               key=helpers.generate_file_key_from_url(project_id, u),
+                                                               key=generators.generate_file_key_from_url(project_id, u),
                                                                check_exists=True))
     return results
 
@@ -22,7 +22,7 @@ def presign_upload_urls(project_id, urls):
     for u in urls:
         results.append(obj_store.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
                                                               expires_in=1800,
-                                                              key=helpers.generate_file_key_from_url(project_id, u)))
+                                                              key=generators.generate_file_key_from_url(project_id, u)))
     return results
 
 
@@ -88,7 +88,7 @@ def get_traces_group(project_id, payload):
         file_exists_in_bucket = False
         file_exists_in_server = False
         file_url = u["absPath"]
-        key = helpers.generate_file_key_from_url(project_id, file_url)  # use filename instead?
+        key = generators.generate_file_key_from_url(project_id, file_url)  # use filename instead?
         params_idx = file_url.find("?")
         if file_url and len(file_url) > 0 \
                 and not (file_url[:params_idx] if params_idx > -1 else file_url).endswith(".js"):
