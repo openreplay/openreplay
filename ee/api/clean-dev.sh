@@ -63,7 +63,7 @@ rm -rf ./chalicelib/utils/smtp.py
 rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
-rm -rf ./chalicelib/utils/objects/helpers.py
+rm -rf ./chalicelib/utils/objects/generators.py
 rm -rf ./chalicelib/utils/objects/interface.py
 rm -rf ./chalicelib/utils/objects/s3.py
 rm -rf ./routers/app/__init__.py
