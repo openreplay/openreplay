@@ -12,6 +12,10 @@ export default class ListWalker<T extends Timed> {
 		this.list.push(m);
 	}
 
+	unshift(m: T): void {
+		this.list.unshift(m)
+	}
+
 	insert(m: T): void {
 		let index = this.list.findIndex(om => om.time > m.time)
 		if (index === -1) {
@@ -129,30 +133,6 @@ export default class ListWalker<T extends Timed> {
 		}
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
-
-	moveGetLastDebug(t: number, index?: number): T | null {
-		let key: string = "time"; //TODO
-		let val = t;
-		if (index) {
-			key = "_index";
-			val = index;
-		}
-
-		let changed = false;
-		while (this.p < this.length && this.list[this.p][key] <= val) {
-			this.moveNext()
-			changed = true;
-		}
-		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
-			this.movePrev()
-			changed = true;
-		}
-
-		// console.log(this.list[this.p - 1])
-		return changed ? this.list[ this.p - 1 ] : null;
-	}
-
-
 
 	/**
 	 * Moves over the messages starting from the current+1 to the last one with the time <= t

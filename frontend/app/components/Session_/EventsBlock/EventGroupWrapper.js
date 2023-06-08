@@ -130,18 +130,22 @@ class EventGroupWrapper extends React.Component {
   }
 }
 
-function TabChange({ from, to }) { return (
-    <div className={'text-center p-2 bg-gray-lightest w-full my-2 flex items-center gap-2 justify-center'}>
-      <span>Tab change:</span>
-      <span className={'font-semibold'}>
-        {from}
-      </span>
-      <Icon name={"arrow-right-short"} size={18} color={"gray-dark"}/>
-      <span className={'font-semibold'}>
-        {to}
-      </span>
-    </div>
-)
+function TabChange({ from, to }) {
+    if (!from) {
+        return null;
+    }
+    return (
+        <div className={'text-center p-2 bg-gray-lightest w-full my-2 flex items-center gap-2 justify-center'}>
+          <span>Tab change:</span>
+          <span style={{ fontWeight: 500 }}>
+            {from}
+          </span>
+          <Icon name={"arrow-right-short"} size={18} color={"gray-dark"}/>
+          <span style={{ fontWeight: 500 }}>
+            {to}
+          </span>
+        </div>
+    )
 }
 
 export default EventGroupWrapper;
