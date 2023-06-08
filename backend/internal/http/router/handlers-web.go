@@ -155,7 +155,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			UserBrowserVersion:   ua.BrowserVersion,
 			UserDevice:           ua.Device,
 			UserDeviceType:       ua.DeviceType,
-			UserCountry:          geoInfo.Country,
+			UserCountry:          geoInfo.Pack(),
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
 			UserID:               req.UserID,

@@ -37,19 +37,21 @@ func (c *PGCache) HandleWebSessionStart(s *SessionStart) error {
 	if c.Cache.HasSession(sessionID) {
 		return fmt.Errorf("session %d already in cache", sessionID)
 	}
+	geoInfo := geoip.UnpackGeoRecord(s.UserCountry)
 	newSess := &Session{
-		SessionID:      sessionID,
-		Platform:       "web",
-		Timestamp:      s.Timestamp,
-		ProjectID:      uint32(s.ProjectID),
-		TrackerVersion: s.TrackerVersion,
-		RevID:          s.RevID,
-		UserUUID:       s.UserUUID,
-		UserOS:         s.UserOS,
-		UserOSVersion:  s.UserOSVersion,
-		UserDevice:     s.UserDevice,
-		UserCountry:    s.UserCountry,
-		// web properties (TODO: unite different platform types)
+		SessionID:            sessionID,
+		Platform:             "web",
+		Timestamp:            s.Timestamp,
+		ProjectID:            uint32(s.ProjectID),
+		TrackerVersion:       s.TrackerVersion,
+		RevID:                s.RevID,
+		UserUUID:             s.UserUUID,
+		UserOS:               s.UserOS,
+		UserOSVersion:        s.UserOSVersion,
+		UserDevice:           s.UserDevice,
+		UserCountry:          geoInfo.Country,
+		UserState:            geoInfo.State,
+		UserCity:             geoInfo.City,
 		UserAgent:            s.UserAgent,
 		UserBrowser:          s.UserBrowser,
 		UserBrowserVersion:   s.UserBrowserVersion,
@@ -60,7 +62,6 @@ func (c *PGCache) HandleWebSessionStart(s *SessionStart) error {
 	}
 	c.Cache.SetSession(newSess)
 	if err := c.Conn.HandleSessionStart(sessionID, newSess); err != nil {
-		// don't know why?
 		c.Cache.SetSession(nil)
 		return err
 	}
