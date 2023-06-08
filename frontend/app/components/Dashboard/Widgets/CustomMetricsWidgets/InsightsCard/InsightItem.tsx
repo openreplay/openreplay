@@ -52,27 +52,27 @@ function ErrorItem({ item, className, onClick }: any) {
     <div className={className} onClick={onClick}>
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       {item.isNew ? (
-        <>
-          <div className="mx-1">Users are experimenting a new error</div>
-          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
-          <div className="mx-1"> - this error has arisen a total of </div>
-          <div className="mx-1 font-medium color-red">{item.ratio}%</div>
-          <div className="mx-1">times</div>
-        </>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <div>Users are encountering a new error called:</div>
+          <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+          <div>This error has occurred a total of</div>
+          <div className="font-medium color-red">{item.value}</div>
+          <div>times</div>
+        </div>
       ) : (
-        <>
-          <div className="mx-1">There is been an</div>
-          <div className="mx-1">{item.isIncreased ? 'increase' : 'decrease'}</div>
-          <div className="mx-1">of error</div>
-          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
-          <div className="mx-1">from</div>
-          <div className="mx-1">{item.oldValue}</div>
-          <div className="mx-1">to</div>
-          <div className="mx-1">{item.value},</div>
-          <div className="mx-1">representing a</div>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <div>There has been an</div>
+          <div>{item.isIncreased ? 'increase' : 'decrease'}</div>
+          <div>in the error</div>
+          <div className="bg-gray-100 px-2 rounded">{item.name}</div>
+          <div>from</div>
+          <div>{item.oldValue}</div>
+          <div>to</div>
+          <div>{item.value},</div>
+          <div>representing a</div>
           <Change change={item.change} isIncreased={item.isIncreased} />
-          <div className="mx-1">among all sessions.</div>
-        </>
+          <div>across all sessions.</div>
+        </div>
       )}
     </div>
   );
