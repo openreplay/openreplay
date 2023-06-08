@@ -1,97 +1,74 @@
 import { makeAutoObservable } from "mobx";
+import { SingleFFlag } from 'App/services/FFlagsService';
+
+const initData = {
+  name: 'New Feature Flag',
+  flagKey: '',
+  isActive: false,
+  isPersist: false,
+  isSingleOption: true,
+  conditions: [],
+  description: '',
+  featureFlagId: 0,
+}
 
 export default class FeatureFlag {
-  constructor(data?: any) {
+  flagKey: SingleFFlag['flagKey']
+  conditions: SingleFFlag['conditions']
+  createdBy?: SingleFFlag['createdBy']
+  createdAt?: SingleFFlag['createdAt']
+  updatedAt?: SingleFFlag['updatedAt']
+  isActive: SingleFFlag['isActive']
+  description: SingleFFlag['description']
+  isPersist: SingleFFlag['isPersist']
+  isSingleOption: boolean
+  featureFlagId: SingleFFlag['featureFlagId']
+  name: SingleFFlag['name'];
+
+  constructor(data: SingleFFlag) {
+    Object.assign(this, initData, data)
+
     makeAutoObservable(this);
-    if (data) {
-      this._key = data._key;
-      this._condition = data.condition;
-      this._author = data.author;
-      this._createdAt = data.createdAt;
-      this._isEnabled = data.isEnabled;
-      this._description = data.description;
-      this._isPersist = data.isPersist;
-      this._isSingleOption = data.isSingleOption;
+  }
+
+  toJS() {
+    return {
+      name: this.name,
+      flagKey: this.flagKey,
+      conditions: this.conditions,
+      createdBy: this.createdBy,
+      updatedBy: this.createdBy,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      isActive: this.isActive,
+      description: this.description,
+      isPersist: this.isPersist,
+      flagType: this.isSingleOption ? 'single' : 'multi',
+      featureFlagId: this.featureFlagId,
     }
   }
 
-  private _isSingleOption: boolean = true
-
-  get isSingleOption(): boolean {
-    return this._isSingleOption;
+  setFlagKey = (flagKey: string) => {
+    this.flagKey = flagKey;
   }
 
-  set isSingleOption(value: boolean) {
-    this._isSingleOption = value;
+  setDescription = (description: string) => {
+    this.description = description;
   }
 
-  private _isPersist: boolean = false
-
-  get isPersist(): boolean {
-    return this._isPersist;
+  setIsPersist = (isPersist: boolean) => {
+    this.isPersist = isPersist;
   }
 
-  set isPersist(value: boolean) {
-    this._isPersist = value;
+  setIsSingleOption = (isSingleOption: boolean) => {
+    this.isSingleOption = isSingleOption;
   }
 
-  private _description: string = ''
-
-  get description(): string {
-    return this._description;
+  setIsEnabled = (isEnabled: boolean) => {
+    this.isActive = isEnabled;
   }
 
-  set description(value: string) {
-    this._description = value;
-  }
-
-  private _key: string = ''
-
-  get key(): string {
-    return this._key;
-  }
-
-  set key(value: string) {
-    this._key = value;
-  }
-
-  private _condition: string = ''
-
-  get condition(): string {
-    return this._condition;
-  }
-
-  set condition(value: string) {
-    this._condition = value;
-  }
-
-  private _author: string = ''
-
-  get author(): string {
-    return this._author;
-  }
-
-  set author(value: string) {
-    this._author = value;
-  }
-
-  private _createdAt: string = ''
-
-  get createdAt(): string {
-    return this._createdAt;
-  }
-
-  set createdAt(value: string) {
-    this._createdAt = value;
-  }
-
-  private _isEnabled: boolean = false
-
-  get isEnabled(): boolean {
-    return this._isEnabled;
-  }
-
-  set isEnabled(value: boolean) {
-    this._isEnabled = value;
+  setName = (name: string) => {
+    this.name = name;
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from "App/mstore";
-import { PageTitle, Button, Input, SegmentSelection, Toggler } from 'UI'
+import { PageTitle, Button, Input, SegmentSelection, Toggler, Loader, Icon } from 'UI'
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from "Components/FFlags/NewFFlag/HowTo";
@@ -34,8 +34,9 @@ function NewFFlag({ siteId }: { siteId: string }) {
     history.push(withSiteId(fflags(), siteId))
   }
 
-  const showDescription = Boolean(current?.description.length)
+  if (!current) return <Loader loading={true} />;
 
+  const showDescription = Boolean(current.description.length)
   return (
     <div className={'w-full mx-auto'} style={{ maxWidth: 1300 }}>
       <Breadcrumb
@@ -48,7 +49,33 @@ function NewFFlag({ siteId }: { siteId: string }) {
         className={'w-full bg-white rounded p-4 widget-wrapper'}
       >
         <div className="flex justify-between items-center">
-          <PageTitle title={'New Feature Flag'} />
+          {featureFlagsStore.isTitleEditing
+            ? <input
+              ref={inputRef}
+              name="flag-description"
+              placeholder="Title..."
+              autoFocus
+              className="rounded fluid border px-2 py-1 w-full"
+              value={current.name}
+              onChange={(e) => {
+                if (current) current.setName(e.target.value)
+              }}
+              onBlur={() => featureFlagsStore.setEditing({ isTitleEditing: false })}
+              onFocus={() => featureFlagsStore.setEditing({ isTitleEditing: true })}
+            />
+            :
+              <div
+                onClick={() => featureFlagsStore.setEditing({ isTitleEditing: true })}
+                className={cn(
+                  'cursor-pointer border-b w-fit flex items-center gap-2',
+                  'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
+                )}
+              >
+                <PageTitle title={current.name} />
+                <Icon name={'edit'} />
+              </div>
+          }
+
           <div className={'flex items-center gap-2'}>
             <Button variant="text-primary" onClick={onCancel}>
               Cancel
@@ -64,7 +91,7 @@ function NewFFlag({ siteId }: { siteId: string }) {
         <Input
           type="text"
           placeholder={'E.g. new_payment_method'}
-          value={current?.key}
+          value={current.key}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             if (current) {
               current.key = e.target.value
@@ -81,7 +108,7 @@ function NewFFlag({ siteId }: { siteId: string }) {
 
         <div className={'mt-4'}>
           <label><span className={'font-semibold'}>Description </span> (Optional)</label>
-          {featureFlagsStore.isEditing
+          {featureFlagsStore.isDescrEditing
             ? <textarea
               ref={inputRef}
               name="flag-description"
@@ -89,27 +116,27 @@ function NewFFlag({ siteId }: { siteId: string }) {
               rows={3}
               autoFocus
               className="rounded fluid border px-2 py-1 w-full"
-              value={current?.description}
+              value={current.description}
               onChange={(e) => {
-                if (current) current.description = e.target.value
+                if (current) current.setDescription(e.target.value)
               }}
-              onBlur={() => featureFlagsStore.setEditing(false)}
-              onFocus={() => featureFlagsStore.setEditing(true)}
+              onBlur={() => featureFlagsStore.setEditing({ isDescrEditing: false })}
+              onFocus={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
             />
             : showDescription
               ? <div
-                onClick={() => featureFlagsStore.setEditing(true)}
+                onClick={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
                 className={cn(
                   'cursor-pointer border-b w-fit',
                   'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
                 )}
               >
-                {current?.description}
+                {current.description}
               </div>
               : <Button
                 variant={'text-primary'}
                 icon={'edit'}
-                onClick={() => featureFlagsStore.setEditing(true)}
+                onClick={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
               >
                 Add
               </Button>
@@ -124,16 +151,16 @@ function NewFFlag({ siteId }: { siteId: string }) {
               name={'feature-type'}
               size={'small'}
               onSelect={(_: any, { value }: any) => {
-                if (current) current.isSingleOption = Boolean(value)
+                current.setIsSingleOption(Boolean(value))
               }}
-              value={{ value: current?.isSingleOption ? 1 : 0 }}
+              value={{ value: current.isSingleOption ? 1 : 0 }}
               list={[
                 { name: 'Single Variant (Boolean)', value: 1 },
                 { name: 'Multi-Variant (String)', value: 0 },
               ]}
             />
           </div>
-          {current?.isSingleOption ? (
+          {current.isSingleOption ? (
             <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
               Users will be served <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they
               match one or more rollout
@@ -145,24 +172,28 @@ function NewFFlag({ siteId }: { siteId: string }) {
         <div className={'mt-4'}>
           <label className={'font-semibold'}>Persist flag across authentication</label>
           <Toggler
-            checked={current?.isPersist}
+            checked={current.isPersist}
             name={'persist-flag'}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              if (current) current.isPersist = !e.target.checked
+            onChange={() => {
+              current.setIsPersist(!current.isPersist);
             }}
-            label={'No'}
+            label={current.isPersist ? 'Yes' : 'No'}
           />
+          <div className={'text-sm text-disabled-text flex items-center gap-1'}>
+            Persist flag to not reset this feature flag status after a user is identified.
+          </div>
+
         </div>
 
         <div className={'mt-4'}>
           <label className={'font-semibold'}>Enable this feature flag (Status)?</label>
           <Toggler
-            checked={current?.isEnabled}
+            checked={current.isActive}
             name={'persist-flag'}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              if (current) current.isEnabled = !e.target.checked
+            onChange={() => {
+               current.setIsEnabled(!current.isActive)
             }}
-            label={'Enabled'}
+            label={current.isActive ? 'Enabled' : 'Disabled'}
           />
         </div>
 

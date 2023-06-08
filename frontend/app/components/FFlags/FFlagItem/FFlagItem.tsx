@@ -1,11 +1,17 @@
 import React from 'react'
 import FeatureFlag from 'App/mstore/types/FeatureFlag'
 import { Icon, Toggler, Link } from 'UI'
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 function FFlagItem({ flag }: { flag: FeatureFlag }) {
+  const { featureFlagsStore } = useStore();
 
+  const onFlagClick = () => {
+    featureFlagsStore.getFlagById(flag.featureFlagId);
+  }
   return (
-    <div className={'flex items-center w-full py-2 border-b'}>
+    <div className={'flex items-center w-full py-2 border-b'} onClick={onFlagClick}>
       <div style={{ flex: 1 }}>icon + {flag.isSingleOption}</div>
       <Link style={{ flex: 1 }} to={flag.key}>{flag.key}</Link>
       <div style={{ flex: 1 }}>{flag.createdAt}</div>
@@ -26,4 +32,4 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   )
 }
 
-export default FFlagItem
+export default observer(FFlagItem);
