@@ -258,7 +258,7 @@ export default class MessageManager {
         if (!prevChange || prevChange.tabId !== msg.tabId) {
           this.tabChangeEvents.push({
             tabId: msg.tabId,
-            mTime: msg.time,
+            time: msg.time,
             timestamp: this.sessionStart + msg.time,
             toTab: mapTabs(this.tabs)[msg.tabId],
             fromTab: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',

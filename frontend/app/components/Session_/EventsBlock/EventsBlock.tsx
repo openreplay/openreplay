@@ -61,7 +61,7 @@ function EventsBlock(props: IProps) {
       let i = urlsList.length - 1;
       while (!found && i >= 0) {
         const item = urlsList[i]
-        if (item.url && item.time <= ev.mTime) {
+        if (item.url && item.time <= ev.time) {
           found = true;
           ev.activeUrl = item.url.replace(/.*\/\/[^\/]*/, '');
         }

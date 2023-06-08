@@ -108,7 +108,7 @@ class EventGroupWrapper extends React.Component {
               isLastInGroup={isLastInGroup}
               whiteBg={true}
             />
-          ) : isTabChange ? (<TabChange from={event.fromTab} to={event.toTab} activeUrl={event.activeUrl} />) : (
+          ) : isTabChange ? (<TabChange onClick={this.onEventClick} from={event.fromTab} to={event.toTab} activeUrl={event.activeUrl} />) : (
             <Event
               key={event.key}
               event={event}
@@ -130,12 +130,15 @@ class EventGroupWrapper extends React.Component {
   }
 }
 
-function TabChange({ from, to, activeUrl }) {
+function TabChange({ from, to, activeUrl, onClick }) {
     if (!from) {
         return null;
     }
     return (
-        <div className={'p-2 bg-gray-lightest w-full my-2 border-gray-light border-t border-b !border-l-0 !border-r-0'}>
+        <div
+            onClick={onClick}
+            className={'p-2 cursor-pointer bg-gray-lightest w-full border-gray-light border-t border-b !border-l-0 !border-r-0'}
+        >
             <div className={'flex items-center gap-2 px-4'}>
               <span style={{ fontWeight: 500 }}>
                 {from}
