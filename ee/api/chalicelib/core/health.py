@@ -212,7 +212,7 @@ def get_health(tenant_id=None):
         "details": __get_sessions_stats,
         "ssl": __check_SSL
     }
-    return __process_health(tenant_id, health_map)
+    return __process_health(tenant_id=tenant_id, health_map=health_map)
 
 
 def __process_health(tenant_id, health_map):
