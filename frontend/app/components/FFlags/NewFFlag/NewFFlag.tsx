@@ -1,42 +1,42 @@
-import React from 'react'
-import { observer } from 'mobx-react-lite'
-import { useStore } from "App/mstore";
-import { PageTitle, Button, Input, SegmentSelection, Toggler, Loader, Icon } from 'UI'
+import React from 'react';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
+import { Input, SegmentSelection, Toggler, Loader } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
-import HowTo from "Components/FFlags/NewFFlag/HowTo";
-import cn from 'classnames'
-import { useHistory } from "react-router";
-import { withSiteId, fflags } from "App/routes";
+import HowTo from 'Components/FFlags/NewFFlag/HowTo';
+import { useHistory } from 'react-router';
+import { withSiteId, fflags } from 'App/routes';
+import Description from './Description';
+import Header from './Header';
 
 function NewFFlag({ siteId }: { siteId: string }) {
   const { featureFlagsStore } = useStore();
-  const current = featureFlagsStore.currentFflag
+  const current = featureFlagsStore.currentFflag;
   const { showModal } = useModal();
-  const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const history = useHistory()
+  const history = useHistory();
 
   React.useEffect(() => {
-    featureFlagsStore.initNewFlag()
-  }, [])
+    featureFlagsStore.initNewFlag();
+  }, []);
 
   const onImplementClick = () => {
-    showModal(<HowTo />, { right: true, width: 450 })
-  }
+    showModal(<HowTo />, { right: true, width: 450 });
+  };
 
   const onCancel = () => {
-    featureFlagsStore.setCurrentFlag(null)
-    history.push(withSiteId(fflags(), siteId))
-  }
+    featureFlagsStore.setCurrentFlag(null);
+    history.push(withSiteId(fflags(), siteId));
+  };
 
   const onSave = () => {
-    featureFlagsStore.addFlag(current!)
-    history.push(withSiteId(fflags(), siteId))
-  }
+    featureFlagsStore.addFlag(current!);
+    history.push(withSiteId(fflags(), siteId));
+  };
 
   if (!current) return <Loader loading={true} />;
 
-  const showDescription = Boolean(current.description.length)
+  const showDescription = Boolean(current.description.length);
   return (
     <div className={'w-full mx-auto'} style={{ maxWidth: 1300 }}>
       <Breadcrumb
@@ -45,45 +45,15 @@ function NewFFlag({ siteId }: { siteId: string }) {
           { label: 'New Feature Flag' },
         ]}
       />
-      <div
-        className={'w-full bg-white rounded p-4 widget-wrapper'}
-      >
+      <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
         <div className="flex justify-between items-center">
-          {featureFlagsStore.isTitleEditing
-            ? <input
-              ref={inputRef}
-              name="flag-description"
-              placeholder="Title..."
-              autoFocus
-              className="rounded fluid border px-2 py-1 w-full"
-              value={current.name}
-              onChange={(e) => {
-                if (current) current.setName(e.target.value)
-              }}
-              onBlur={() => featureFlagsStore.setEditing({ isTitleEditing: false })}
-              onFocus={() => featureFlagsStore.setEditing({ isTitleEditing: true })}
-            />
-            :
-              <div
-                onClick={() => featureFlagsStore.setEditing({ isTitleEditing: true })}
-                className={cn(
-                  'cursor-pointer border-b w-fit flex items-center gap-2',
-                  'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
-                )}
-              >
-                <PageTitle title={current.name} />
-                <Icon name={'edit'} />
-              </div>
-          }
-
-          <div className={'flex items-center gap-2'}>
-            <Button variant="text-primary" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={onSave}>
-              Save
-            </Button>
-          </div>
+          <Header
+            current={current}
+            onCancel={onCancel}
+            onSave={onSave}
+            setEditing={featureFlagsStore.setEditing}
+            isTitleEditing={featureFlagsStore.isTitleEditing}
+          />
         </div>
         <div className={'w-full border-b border-light-gray my-2'} />
 
@@ -91,11 +61,9 @@ function NewFFlag({ siteId }: { siteId: string }) {
         <Input
           type="text"
           placeholder={'E.g. new_payment_method'}
-          value={current.key}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            if (current) {
-              current.key = e.target.value
-            }
+          value={current.flagKey}
+          onChange={(e) => {
+            current.setFlagKey(e.target.value.replace(/\s/g, '_'));
           }}
         />
         <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
@@ -107,40 +75,12 @@ function NewFFlag({ siteId }: { siteId: string }) {
         </div>
 
         <div className={'mt-4'}>
-          <label><span className={'font-semibold'}>Description </span> (Optional)</label>
-          {featureFlagsStore.isDescrEditing
-            ? <textarea
-              ref={inputRef}
-              name="flag-description"
-              placeholder="Description..."
-              rows={3}
-              autoFocus
-              className="rounded fluid border px-2 py-1 w-full"
-              value={current.description}
-              onChange={(e) => {
-                if (current) current.setDescription(e.target.value)
-              }}
-              onBlur={() => featureFlagsStore.setEditing({ isDescrEditing: false })}
-              onFocus={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
-            />
-            : showDescription
-              ? <div
-                onClick={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
-                className={cn(
-                  'cursor-pointer border-b w-fit',
-                  'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
-                )}
-              >
-                {current.description}
-              </div>
-              : <Button
-                variant={'text-primary'}
-                icon={'edit'}
-                onClick={() => featureFlagsStore.setEditing({ isDescrEditing: true })}
-              >
-                Add
-              </Button>
-          }
+          <Description
+            current={current}
+            isDescrEditing={featureFlagsStore.isDescrEditing}
+            setEditing={featureFlagsStore.setEditing}
+            showDescription={showDescription}
+          />
         </div>
 
         <div className={'mt-4'}>
@@ -151,7 +91,7 @@ function NewFFlag({ siteId }: { siteId: string }) {
               name={'feature-type'}
               size={'small'}
               onSelect={(_: any, { value }: any) => {
-                current.setIsSingleOption(Boolean(value))
+                current.setIsSingleOption(Boolean(value));
               }}
               value={{ value: current.isSingleOption ? 1 : 0 }}
               list={[
@@ -162,9 +102,9 @@ function NewFFlag({ siteId }: { siteId: string }) {
           </div>
           {current.isSingleOption ? (
             <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
-              Users will be served <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they
-              match one or more rollout
-              conditions.
+              Users will be served{' '}
+              <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
+              one or more rollout conditions.
             </div>
           ) : null}
         </div>
@@ -182,7 +122,6 @@ function NewFFlag({ siteId }: { siteId: string }) {
           <div className={'text-sm text-disabled-text flex items-center gap-1'}>
             Persist flag to not reset this feature flag status after a user is identified.
           </div>
-
         </div>
 
         <div className={'mt-4'}>
@@ -191,7 +130,7 @@ function NewFFlag({ siteId }: { siteId: string }) {
             checked={current.isActive}
             name={'persist-flag'}
             onChange={() => {
-               current.setIsEnabled(!current.isActive)
+              current.setIsEnabled(!current.isActive);
             }}
             label={current.isActive ? 'Enabled' : 'Disabled'}
           />
@@ -200,14 +139,13 @@ function NewFFlag({ siteId }: { siteId: string }) {
         <div className={'mt-4'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
           <div className={'text-sm text-disabled-text flex items-center gap-1'}>
-            Indicate the users for whom you intend to make this flag available.
-            Keep in mind that each set of conditions will be deployed separately from one another.
+            Indicate the users for whom you intend to make this flag available. Keep in mind that
+            each set of conditions will be deployed separately from one another.
           </div>
         </div>
       </div>
-
     </div>
-  )
+  );
 }
 
-export default observer(NewFFlag)
+export default observer(NewFFlag);
