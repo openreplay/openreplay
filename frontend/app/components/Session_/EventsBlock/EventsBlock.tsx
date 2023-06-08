@@ -55,6 +55,19 @@ function EventsBlock(props: IProps) {
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {
+    tabChangeEvents.forEach(ev => {
+      const urlsList = tabStates[ev.tabId].urlsList;
+      let found = false;
+      let i = urlsList.length - 1;
+      while (!found && i >= 0) {
+        const item = urlsList[i]
+        if (item.url && item.time <= ev.mTime) {
+          found = true;
+          ev.activeUrl = item.url.replace(/.*\/\/[^\/]*/, '');
+        }
+        i--;
+      }
+    })
     return mergeEventLists(filteredEvents || notesWithEvents, tabChangeEvents);
   }, [filteredLength, notesWithEvtsLength])
 
