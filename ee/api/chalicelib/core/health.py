@@ -212,10 +212,19 @@ def get_health(tenant_id=None):
         "details": __get_sessions_stats,
         "ssl": __check_SSL
     }
+    return __process_health(tenant_id, health_map)
+
+
+def __process_health(tenant_id, health_map):
     for parent_key in health_map.keys():
-        if isinstance(health_map[parent_key], dict):
+        if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
+            health_map.pop(parent_key)
+        elif isinstance(health_map[parent_key], dict):
             for element_key in health_map[parent_key]:
-                health_map[parent_key][element_key] = health_map[parent_key][element_key](tenant_id)
+                if config(f"SKIP_H_{parent_key.upper()}_{element_key.upper()}", cast=bool, default=False):
+                    health_map[parent_key].pop(element_key)
+                else:
+                    health_map[parent_key][element_key] = health_map[parent_key][element_key](tenant_id)
         else:
             health_map[parent_key] = health_map[parent_key](tenant_id)
     return health_map
