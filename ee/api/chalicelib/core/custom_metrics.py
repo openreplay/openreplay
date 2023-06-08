@@ -9,8 +9,7 @@ import schemas_ee
 from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.objects.store import StorageClient
-from chalicelib.utils.objects import extra
+from chalicelib.utils.storage import StorageClient, extra
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     print(">>> Using experimental error search")

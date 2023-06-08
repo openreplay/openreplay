@@ -4,8 +4,7 @@ import requests
 from decouple import config
 
 from chalicelib.core import sourcemaps_parser
-from chalicelib.utils.objects.store import StorageClient
-from chalicelib.utils.objects import generators
+from chalicelib.utils.storage import StorageClient, generators
 
 
 def presign_share_urls(project_id, urls):

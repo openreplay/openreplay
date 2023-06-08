@@ -1,7 +1,7 @@
 from decouple import config
 
-from chalicelib.utils.objects.azure_blob import AzureBlobStorage
-from chalicelib.utils.objects.s3 import AmazonS3Storage
+from .azure_blob import AzureBlobStorage
+from .s3 import AmazonS3Storage
 
 # Init global object storage client
 if config("CLOUD") == "azure":

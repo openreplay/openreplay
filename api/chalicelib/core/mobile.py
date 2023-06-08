@@ -1,5 +1,5 @@
 from chalicelib.core import projects
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 from decouple import config
 
 

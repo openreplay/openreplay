@@ -1,6 +1,6 @@
 from decouple import config
 
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 
 
 def __get_mob_keys(project_id, session_id):

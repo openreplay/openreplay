@@ -3,7 +3,7 @@ from fastapi.security import SecurityScopes
 
 import schemas_ee
 from chalicelib.core import permissions
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 
 SCOPES = SecurityScopes([schemas_ee.Permissions.dev_tools])
 

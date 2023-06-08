@@ -6,7 +6,7 @@ import schemas
 import schemas_ee
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 from chalicelib.utils.objects import extra
 
 

@@ -1,5 +1,5 @@
 from decouple import config
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 
 
 def tag_session(file_key, tag_key='retention', tag_value='vault'):

@@ -8,7 +8,7 @@ import schemas
 from chalicelib.core import sessions, funnels, errors, issues, metrics, click_maps, sessions_mobs, product_analytics
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.objects.store import StorageClient
+from chalicelib.utils.storage import StorageClient
 
 PIE_CHART_GROUP = 5
 

@@ -243,9 +243,9 @@ Pipfile.lock
 /chalicelib/utils/sql_helper.py
 /chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
-/chalicelib/utils/objects/generators.py
-/chalicelib/utils/objects/interface.py
-/chalicelib/utils/objects/s3.py
+/chalicelib/utils/storage/generators.py
+/chalicelib/utils/storage/interface.py
+/chalicelib/utils/storage/s3.py
 /routers/app/__init__.py
 /crons/__init__.py
 /routers/subs/__init__.py
