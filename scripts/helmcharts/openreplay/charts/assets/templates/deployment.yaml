@@ -69,7 +69,7 @@ spec:
               {{- else }}
               value: {{ .Values.global.s3.secretKey }}
               {{- end }}
-            - name: S3_BUCKET_ASSETS
+            - name: BUCKET_NAME
               value: {{ .Values.global.s3.assetsBucket }}
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'

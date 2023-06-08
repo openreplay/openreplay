@@ -12,6 +12,10 @@ export default class ListWalker<T extends Timed> {
 		this.list.push(m);
 	}
 
+	unshift(m: T): void {
+		this.list.unshift(m)
+	}
+
 	insert(m: T): void {
 		let index = this.list.findIndex(om => om.time > m.time)
 		if (index === -1) {
@@ -38,7 +42,7 @@ export default class ListWalker<T extends Timed> {
 		if (this.list.length === 0) {
 			return null;
 		}
-		return this.list[ this.list.length - 1 ];
+		return this.list.slice(-1)[0];
 	}
 
 	get current(): T | null {
@@ -108,7 +112,7 @@ export default class ListWalker<T extends Timed> {
 	/**
 	 * @returns last message with the time <= t.
 	 * Assumed that the current message is already handled so
-	 * if pointer doesn't cahnge <null> is returned.
+	 * if pointer doesn't change <null> is returned.
 	 */
 	moveGetLast(t: number, index?: number): T | null {
 		let key: string = "time"; //TODO

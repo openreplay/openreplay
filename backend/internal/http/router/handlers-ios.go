@@ -9,7 +9,7 @@ import (
 	"openreplay/backend/internal/http/ios"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/internal/http/uuid"
-	"openreplay/backend/pkg/storage"
+	"openreplay/backend/pkg/objectstorage"
 	"strconv"
 	"time"
 
@@ -71,8 +71,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{sessionID, 0, expTime.UnixMilli()}
-
-		country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
+		geoInfo := e.ExtractGeoData(r)
 
 		// The difference with web is mostly here:
 		sessStart := &IOSSessionStart{
@@ -85,7 +84,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			UserOSVersion:  req.UserOSVersion,
 			UserDevice:     ios.MapIOSDevice(req.UserDevice),
 			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
-			UserCountry:    country,
+			UserCountry:    geoInfo.Country,
 		}
 		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode())
 	}
@@ -167,7 +166,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			key := prefix + fileHeader.Filename
 			log.Printf("Uploading image... %v", util.SafeString(key))
 			go func() { //TODO: mime type from header
-				if err := e.services.Storage.Upload(file, key, "image/jpeg", storage.NoCompression); err != nil {
+				if err := e.services.Storage.Upload(file, key, "image/jpeg", objectstorage.NoCompression); err != nil {
 					log.Printf("Upload ios screen error. %v", err)
 				}
 			}()

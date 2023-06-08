@@ -2,8 +2,11 @@ package router
 
 import (
 	"fmt"
+	"github.com/tomasen/realip"
 	"log"
+	"net"
 	"net/http"
+	"openreplay/backend/internal/http/geoip"
 	"sync"
 	"time"
 
@@ -86,6 +89,11 @@ func (e *Router) clearBeaconSizes() {
 	}
 }
 
+func (e *Router) ExtractGeoData(r *http.Request) *geoip.GeoRecord {
+	ip := net.ParseIP(realip.FromRequest(r))
+	return e.services.GeoIP.Parse(ip)
+}
+
 func (e *Router) init() {
 	e.router = mux.NewRouter()
 
@@ -96,10 +104,6 @@ func (e *Router) init() {
 		"/v1/web/not-started": e.notStartedHandlerWeb,
 		"/v1/web/start":       e.startSessionHandlerWeb,
 		"/v1/web/i":           e.pushMessagesHandlerWeb,
-		"/v1/ios/start":       e.startSessionHandlerIOS,
-		"/v1/ios/i":           e.pushMessagesHandlerIOS,
-		"/v1/ios/late":        e.pushLateMessagesHandlerIOS,
-		"/v1/ios/images":      e.imagesUploadHandlerIOS,
 	}
 	prefix := "/ingest"
 
@@ -118,10 +122,12 @@ func (e *Router) root(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Prepare headers for preflight requests
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
+		if e.cfg.UseAccessControlHeaders {
+			// Prepare headers for preflight requests
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
+		}
 		if r.Method == http.MethodOptions {
 			w.Header().Set("Cache-Control", "max-age=86400")
 			w.WriteHeader(http.StatusOK)

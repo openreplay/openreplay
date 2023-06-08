@@ -32,6 +32,10 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
       return 'revid';
     case FilterKey.USER_COUNTRY:
       return 'country';
+    case FilterKey.USER_CITY:
+      return 'city';
+    case FilterKey.USER_STATE:
+      return 'state';
     case FilterKey.REFERRER:
       return 'ref';
     case FilterKey.CUSTOM:
@@ -56,6 +60,8 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
       return 'amem';
     case FilterKey.FETCH_FAILED:
       return 'ff';
+    case FilterKey.DURATION:
+      return 'duration';
   }
 };
 
@@ -95,6 +101,12 @@ export const getFilterKeyTypeByKey = (key: string) => {
     case 'country':
     case 'userCountry':
       return FilterKey.USER_COUNTRY;
+    case 'city':
+    case 'userCity':
+      return FilterKey.USER_CITY;
+    case 'state':
+    case 'userState':
+      return FilterKey.USER_STATE;
     case 'ref':
     case 'referrer':
       return FilterKey.REFERRER;
@@ -131,6 +143,8 @@ export const getFilterKeyTypeByKey = (key: string) => {
     case 'ff':
     case 'fetchFailed':
       return FilterKey.FETCH_FAILED;
+    case 'duration':
+      return FilterKey.DURATION;
   }
 };
 
@@ -193,6 +207,8 @@ export enum FilterKey {
   DURATION = 'duration',
   REFERRER = 'referrer',
   USER_COUNTRY = 'userCountry',
+  USER_CITY = 'userCity',
+  USER_STATE = 'userState',
   JOURNEY = 'journey',
   REQUEST = 'request',
   GRAPHQL = 'graphql',

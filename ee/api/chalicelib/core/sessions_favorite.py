@@ -2,7 +2,8 @@ from decouple import config
 
 import schemas_ee
 from chalicelib.core import sessions, sessions_favorite_exp, sessions_mobs, sessions_devtool
-from chalicelib.utils import pg_client, s3_extra
+from chalicelib.utils import pg_client
+from chalicelib.utils.objects import extra
 
 
 def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
@@ -48,7 +49,7 @@ def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id)
 
         for k in keys:
             try:
-                s3_extra.tag_session(file_key=k, tag_value=tag)
+                extra.tag_session(file_key=k, tag_value=tag)
             except Exception as e:
                 print(f"!!!Error while tagging: {k} to {tag} for removal")
                 print(str(e))
@@ -59,7 +60,7 @@ def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id)
 
     for k in keys:
         try:
-            s3_extra.tag_session(file_key=k, tag_value=tag)
+            extra.tag_session(file_key=k, tag_value=tag)
         except Exception as e:
             print(f"!!!Error while tagging: {k} to {tag} for vault")
             print(str(e))

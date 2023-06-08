@@ -23,6 +23,7 @@ interface IEvent {
   key: number;
   label: string;
   targetPath: string;
+  tabId?: string;
   target: {
     path: string;
     label: string;
@@ -69,12 +70,14 @@ class Event {
   time: IEvent['time'];
   label: IEvent['label'];
   target: IEvent['target'];
+  tabId: IEvent['tabId'];
 
   constructor(event: IEvent) {
     Object.assign(this, {
       time: event.time,
       label: event.label,
       key: event.key,
+      tabId: event.tabId,
       target: {
         path: event.target?.path || event.targetPath,
         label: event.target?.label,

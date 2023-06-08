@@ -869,3 +869,21 @@ export function ResourceTiming(
   ]
 }
 
+export function TabChange(
+  tabId: string,
+): Messages.TabChange {
+  return [
+    Messages.Type.TabChange,
+    tabId,
+  ]
+}
+
+export function TabData(
+  tabId: string,
+): Messages.TabData {
+  return [
+    Messages.Type.TabData,
+    tabId,
+  ]
+}
+

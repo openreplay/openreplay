@@ -1,8 +1,6 @@
 from typing import Union
 
-from decouple import config
-from fastapi import Depends, Body, HTTPException, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import Depends, Body
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -14,50 +12,10 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     custom_metrics, saved_search, integrations_global, feature_flags
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import helper, captcha, s3
 from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
-
-
-@public_app.post('/login', tags=["authentication"])
-async def login(data: schemas.UserLoginSchema = Body(...)):
-    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid captcha."
-        )
-
-    r = users.authenticate(data.email, data.password)
-    if r is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You’ve entered invalid Email or Password."
-        )
-    if "errors" in r:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=r["errors"][0]
-        )
-
-    r["smtp"] = helper.has_smtp()
-    content = {
-        'jwt': r.pop('jwt'),
-        'data': {
-            "user": r
-        }
-    }
-    response = JSONResponse(content=content)
-    response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
-                        expires=config("JWT_EXPIRATION", cast=int))
-    return response
-
-
-@app.get('/logout', tags=["login", "logout"])
-async def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
-    response.delete_cookie("jwt")
-    return {"data": "success"}
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])

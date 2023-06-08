@@ -24,9 +24,12 @@ function Controls(props: any) {
   const { jumpToLive } = player;
   const {
     livePlay,
-    logMarkedCountNow: logRedCount,
-    exceptionsList,
+    currentTab,
+    tabStates
   } = store.get();
+
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
+  const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
   const showExceptions = exceptionsList.length > 0;
   const {
     bottomBlock,

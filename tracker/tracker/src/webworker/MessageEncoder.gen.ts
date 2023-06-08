@@ -274,6 +274,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8]) && this.uint(msg[9]) && this.boolean(msg[10])
     break
 
+    case Messages.Type.TabChange:
+      return  this.string(msg[1])
+    break
+
+    case Messages.Type.TabData:
+      return  this.string(msg[1])
+    break
+
     }
   }
 

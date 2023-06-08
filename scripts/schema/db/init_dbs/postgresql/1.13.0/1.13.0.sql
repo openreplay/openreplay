@@ -50,4 +50,34 @@ CREATE TABLE IF NOT EXISTS public.feature_flags_conditions
     filters            jsonb   NOT NULL DEFAULT '[]'::jsonb
 );
 
+ALTER TABLE IF EXISTS events.clicks
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.errors
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.graphql
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.inputs
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.pages
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.performance
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.resources
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events.state_actions
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events_common.customs
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events_common.issues
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+ALTER TABLE IF EXISTS events_common.requests
+    ADD COLUMN IF NOT EXISTS tab_id text DEFAULT NULL;
+
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS user_city  text,
+    ADD COLUMN IF NOT EXISTS user_state text;
+
 COMMIT;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);

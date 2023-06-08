@@ -70,6 +70,11 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "120"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/cors-allow-methods: POST
+    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type,Authorization,Content-Encoding
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length"
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   tls:
@@ -96,7 +101,6 @@ autoscaling:
 
 env:
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
-  S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
   CACHE_ASSETS: true
 
 

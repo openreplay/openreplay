@@ -151,7 +151,7 @@ func main() {
 		}
 
 		// Add message to dev buffer
-		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp || msg.TypeID() == messages.MsgTabData {
 			// Write message index
 			n, err = devBuffer.Write(messageIndex)
 			if err != nil {

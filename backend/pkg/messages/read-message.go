@@ -1314,6 +1314,24 @@ func DecodeResourceTiming(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeTabChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &TabChange{}
+	if msg.TabId, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeTabData(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &TabData{}
+	if msg.TabId, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1927,6 +1945,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeUnbindNodes(reader)
 	case 116:
 		return DecodeResourceTiming(reader)
+	case 117:
+		return DecodeTabChange(reader)
+	case 118:
+		return DecodeTabData(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

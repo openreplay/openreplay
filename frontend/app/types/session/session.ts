@@ -9,7 +9,7 @@ import { toJS } from 'mobx';
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
-function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
+export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
   let merged = [];
   let index1 = 0;
   let index2 = 0;
@@ -74,6 +74,8 @@ export interface ISession {
   userBrowser: string;
   userBrowserVersion: string;
   userCountry: string;
+  userCity: string;
+  userState: string;
   userDevice: string;
   userDeviceType: string;
   isMobile: boolean;
@@ -160,6 +162,8 @@ export default class Session {
   userBrowser: ISession['userBrowser'];
   userBrowserVersion: ISession['userBrowserVersion'];
   userCountry: ISession['userCountry'];
+  userCity: ISession['userCity'];
+  userState: ISession['userState'];
   userDevice: ISession['userDevice'];
   userDeviceType: ISession['userDeviceType'];
   isMobile: ISession['isMobile'];

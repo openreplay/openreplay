@@ -89,12 +89,14 @@ ENV TZ=UTC \
     # Use to enable cloud specific feature
     CLOUD="aws" \
     # Use to set compression threshold for tracker requests (20kb by default)
-    COMPRESSION_THRESHOLD="20000"
+    COMPRESSION_THRESHOLD="20000" \
+    # Set Access-Control-* headers for tracker requests if true
+    USE_CORS=false
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi
+  wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; fi
 
 
 COPY --from=build /root/service /home/openreplay/service

@@ -41,8 +41,9 @@ function DefaultMenuView(props: Props) {
         to={withSiteId(SESSIONS_PATH, siteId)}
         className={styles.nav}
         activeClassName={styles.active}
+        data-test-id={"sessions"}
       >
-        {'Sessions'}
+        Sessions
       </NavLink>
       <NavLink
         to={withSiteId(ASSIST_PATH, siteId)}
@@ -53,8 +54,9 @@ function DefaultMenuView(props: Props) {
             location.pathname.includes(ASSIST_PATH) || location.pathname.includes(RECORDINGS_PATH)
           );
         }}
+        data-test-id={"assist"}
       >
-        {'Assist'}
+        Assist
       </NavLink>
       <NavLink
         to={withSiteId(DASHBOARD_PATH, siteId)}
@@ -65,8 +67,9 @@ function DefaultMenuView(props: Props) {
             location.pathname.includes(DASHBOARD_PATH) || location.pathname.includes(METRICS_PATH)
           );
         }}
+        data-test-id={"dashboards"}
       >
-        <span>{'Dashboards'}</span>
+        Dashboards
       </NavLink>
     </div>
   );

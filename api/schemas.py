@@ -342,7 +342,6 @@ class MathOperator(str, Enum):
 class _AlertQuerySchema(BaseModel):
     left: Union[AlertColumn, int] = Field(...)
     right: float = Field(...)
-    # operator: Literal["<", ">", "<=", ">="] = Field(...)
     operator: MathOperator = Field(...)
 
 
@@ -429,6 +428,8 @@ class FilterType(str, Enum):
     user_browser = "userBrowser"
     user_device = "userDevice"
     user_country = "userCountry"
+    user_city = "userCity"
+    user_state = "userState"
     user_id = "userId"
     user_anonymous_id = "userAnonymousId"
     referrer = "referrer"
@@ -844,12 +845,41 @@ class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
-class MetricPayloadSchema(_TimedSchema):
+class ProductAnalyticsFilterType(str, Enum):
+    event_type = 'eventType'
+    start_point = 'startPoint'
+    user_id = FilterType.user_id.value
+
+
+class ProductAnalyticsEventType(str, Enum):
+    click = EventType.click.value
+    input = EventType.input.value
+    location = EventType.location.value
+    custom_event = EventType.custom.value
+
+
+class ProductAnalyticsFilter(BaseModel):
+    type: ProductAnalyticsFilterType = Field(...)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
+    value: List[Union[ProductAnalyticsEventType | str]] = Field(...)
+
+    @root_validator
+    def validator(cls, values):
+        if values.get("type") == ProductAnalyticsFilterType.event_type:
+            assert values.get("value") is not None and len(values["value"]) > 0, \
+                f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
+            assert isinstance(values["value"][0], ProductAnalyticsEventType), \
+                f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
+
+        return values
+
+
+class PathAnalysisSchema(_TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(delta_days=-1))
     endTimestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
-    filters: List[dict] = Field([])
-    type: Optional[str] = Field(None)
+    filters: List[ProductAnalyticsFilter] = Field(default=[])
+    type: Optional[str] = Field(default=None)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -877,11 +907,11 @@ class CardSeriesFilterSchema(SearchErrorsSchema):
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
-class CardCreateSeriesSchema(BaseModel):
+class CardSeriesSchema(BaseModel):
     series_id: Optional[int] = Field(None)
     name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
-    filter: Optional[CardSeriesFilterSchema] = Field([])
+    filter: Optional[Union[CardSeriesFilterSchema | PathAnalysisSchema]] = Field(default=None)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -980,6 +1010,8 @@ class MetricOfTable(str, Enum):
     user_browser = FilterType.user_browser.value
     user_device = FilterType.user_device.value
     user_country = FilterType.user_country.value
+    user_city = FilterType.user_city.value
+    user_state = FilterType.user_state.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
     visited_url = "location"
@@ -998,7 +1030,7 @@ class MetricOfClickMap(str, Enum):
 class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
-    series: List[CardCreateSeriesSchema] = Field(default=[])
+    series: List[CardSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -1014,20 +1046,26 @@ class CardConfigSchema(BaseModel):
     position: Optional[int] = Field(default=0)
 
 
-class CreateCardSchema(CardChartSchema):
+class __CardSchema(BaseModel):
     name: Optional[str] = Field(...)
     is_public: bool = Field(default=True)
+    default_config: CardConfigSchema = Field(..., alias="config")
+    thumbnail: Optional[str] = Field(default=None)
+    metric_format: Optional[MetricFormatType] = Field(default=None)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CardSchema(__CardSchema, CardChartSchema):
     view_type: Union[MetricTimeseriesViewType, \
-                     MetricTableViewType, MetricOtherViewType] = Field(...)
+        MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
                      MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-                     MetricOfClickMap] = Field(MetricOfTable.user_id)
+                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
-    metric_format: Optional[MetricFormatType] = Field(default=None)
-    default_config: CardConfigSchema = Field(..., alias="config")
     is_template: bool = Field(default=False)
-    thumbnail: Optional[str] = Field(default=None)
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
@@ -1039,14 +1077,15 @@ class CreateCardSchema(CardChartSchema):
                 and values.get("metricOf") != MetricOfTable.issues:
             values["metricValue"] = []
 
-        if values.get("metricType") == MetricType.funnel and \
+        if values.get("metricType") in [MetricType.funnel, MetricType.pathAnalysis] and \
                 values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         elif values.get("metricType") not in [MetricType.table,
                                               MetricType.timeseries,
                                               MetricType.insights,
                                               MetricType.click_map,
-                                              MetricType.funnel] \
+                                              MetricType.funnel,
+                                              MetricType.pathAnalysis] \
                 and values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = []
 
@@ -1082,6 +1121,8 @@ class CreateCardSchema(CardChartSchema):
             # ignore this for now, let the UI send whatever he wants for metric_of
             # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
             #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
+        elif values.get("metric_type") == MetricType.pathAnalysis:
+            pass
         else:
             if values.get("metric_type") == MetricType.errors:
                 assert isinstance(values.get("metric_of"), MetricOfErrors), \
@@ -1112,14 +1153,14 @@ class CreateCardSchema(CardChartSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CardUpdateSeriesSchema(CardCreateSeriesSchema):
+class CardUpdateSeriesSchema(CardSeriesSchema):
     series_id: Optional[int] = Field(None)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
-class UpdateCardSchema(CreateCardSchema):
+class UpdateCardSchema(CardSchema):
     series: List[CardUpdateSeriesSchema] = Field(...)
 
 

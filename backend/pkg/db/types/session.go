@@ -11,6 +11,8 @@ type Session struct {
 	UserOSVersion  string
 	UserDevice     string
 	UserCountry    string
+	UserState      string
+	UserCity       string
 	Referrer       *string
 
 	Duration    *uint64

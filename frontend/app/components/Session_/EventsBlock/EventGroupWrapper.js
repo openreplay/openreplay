@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { TextEllipsis } from 'UI';
+import { TextEllipsis, Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import Event from './Event';
@@ -57,6 +57,7 @@ class EventGroupWrapper extends React.Component {
       isFirst,
       presentInSearch,
       isNote,
+      isTabChange,
       filterOutNote
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
@@ -107,7 +108,7 @@ class EventGroupWrapper extends React.Component {
               isLastInGroup={isLastInGroup}
               whiteBg={true}
             />
-          ) : (
+          ) : isTabChange ? (<TabChange from={event.fromTab} to={event.toTab} />) : (
             <Event
               key={event.key}
               event={event}
@@ -123,10 +124,28 @@ class EventGroupWrapper extends React.Component {
             />
           )}
         </div>
-        {isLastInGroup && <div className='border-t border-color-gray-light-shade' />}
+        {(isLastInGroup && !isTabChange) && <div className='border-t border-color-gray-light-shade' />}
       </>
     );
   }
+}
+
+function TabChange({ from, to }) {
+    if (!from) {
+        return null;
+    }
+    return (
+        <div className={'text-center p-2 bg-gray-lightest w-full my-2 flex items-center gap-2 justify-center'}>
+          <span>Tab change:</span>
+          <span style={{ fontWeight: 500 }}>
+            {from}
+          </span>
+          <Icon name={"arrow-right-short"} size={18} color={"gray-dark"}/>
+          <span style={{ fontWeight: 500 }}>
+            {to}
+          </span>
+        </div>
+    )
 }
 
 export default EventGroupWrapper;

@@ -81,6 +81,8 @@ const (
 	MsgMouseThrashing              = 114
 	MsgUnbindNodes                 = 115
 	MsgResourceTiming              = 116
+	MsgTabChange                   = 117
+	MsgTabData                     = 118
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2161,6 +2163,48 @@ func (msg *ResourceTiming) Decode() Message {
 
 func (msg *ResourceTiming) TypeID() int {
 	return 116
+}
+
+type TabChange struct {
+	message
+	TabId string
+}
+
+func (msg *TabChange) Encode() []byte {
+	buf := make([]byte, 11+len(msg.TabId))
+	buf[0] = 117
+	p := 1
+	p = WriteString(msg.TabId, buf, p)
+	return buf[:p]
+}
+
+func (msg *TabChange) Decode() Message {
+	return msg
+}
+
+func (msg *TabChange) TypeID() int {
+	return 117
+}
+
+type TabData struct {
+	message
+	TabId string
+}
+
+func (msg *TabData) Encode() []byte {
+	buf := make([]byte, 11+len(msg.TabId))
+	buf[0] = 118
+	p := 1
+	p = WriteString(msg.TabId, buf, p)
+	return buf[:p]
+}
+
+func (msg *TabData) Decode() Message {
+	return msg
+}
+
+func (msg *TabData) TypeID() int {
+	return 118
 }
 
 type IssueEvent struct {

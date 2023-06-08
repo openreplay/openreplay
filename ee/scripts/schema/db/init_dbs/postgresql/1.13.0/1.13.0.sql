@@ -57,4 +57,11 @@ where not permissions @> '{FEATURE_FLAGS}';
 ALTER TABLE IF EXISTS public.frontend_signals
     ADD COLUMN IF NOT EXISTS session_id integer NULL REFERENCES sessions (session_id) ON DELETE SET NULL;
 
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS user_city  text,
+    ADD COLUMN IF NOT EXISTS user_state text;
+
 COMMIT;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);

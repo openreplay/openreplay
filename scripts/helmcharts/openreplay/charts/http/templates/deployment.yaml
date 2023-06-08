@@ -88,26 +88,6 @@ spec:
               {{- end}}
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
-            # We need to check what is the object store endpoint.
-            # There can be 4 options
-            # 1. Using minio inside kube clster
-            # 2. Using minio managed external cluster, like aws minio offering
-            # 3. Using GCP or other object stores compatible with s3 apis
-            # 4. Using AWS itself.
-            # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
-            - name: ASSETS_ORIGIN
-            {{- if contains "minio" .Values.global.s3.endpoint }}
-              # Local minio Installation
-              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}/{{.Values.global.s3.assetsBucket}}'
-            {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
-              # AWS S3
-              # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
-              # We need https://bucketname.s3endpoint
-              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
-            {{- else }}
-              # S3 compatible storage
-              value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
-            {{- end }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}

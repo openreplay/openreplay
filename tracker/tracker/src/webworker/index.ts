@@ -2,7 +2,7 @@
 // https://github.com/microsoft/TypeScript/issues/14877
 // At the moment "webworker" lib conflicts with  jest-environment-jsdom that uses "dom" lib
 import { Type as MType } from '../common/messages.gen.js'
-import { ToWorkerData, FromWorkerData } from '../common/interaction.js'
+import { FromWorkerData } from '../common/interaction.js'
 
 import QueueSender from './QueueSender.js'
 import BatchWriter from './BatchWriter.js'
@@ -14,14 +14,16 @@ enum WorkerStatus {
   Starting,
   Stopping,
   Active,
+  Stopped,
 }
 
 const AUTO_SEND_INTERVAL = 10 * 1000
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
-// let afterSleepRestarts = 0
+
 function finalize(): void {
   if (!writer) {
     return
@@ -32,6 +34,7 @@ function finalize(): void {
 function resetWriter(): void {
   if (writer) {
     writer.clean()
+    // we don't need to wait for anything here since its sync
     writer = null
   }
 }
@@ -39,7 +42,10 @@ function resetWriter(): void {
 function resetSender(): void {
   if (sender) {
     sender.clean()
-    sender = null
+    // allowing some time to send last batch
+    setTimeout(() => {
+      sender = null
+    }, 20)
   }
 }
 
@@ -51,10 +57,13 @@ function reset(): void {
   }
   resetWriter()
   resetSender()
-  workerStatus = WorkerStatus.NotActive
+  setTimeout(() => {
+    workerStatus = WorkerStatus.NotActive
+  }, 100)
 }
 
 function initiateRestart(): void {
+  if (workerStatus === WorkerStatus.Stopped) return
   postMessage('restart')
   reset()
 }
@@ -67,7 +76,7 @@ let sendIntervalID: ReturnType<typeof setInterval> | null = null
 let restartTimeoutID: ReturnType<typeof setTimeout>
 
 // @ts-ignore
-self.onmessage = ({ data }: any): any => {
+self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   if (data == null) {
     finalize()
     return
@@ -75,7 +84,7 @@ self.onmessage = ({ data }: any): any => {
   if (data === 'stop') {
     finalize()
     reset()
-    return
+    return (workerStatus = WorkerStatus.Stopped)
   }
 
   if (Array.isArray(data)) {
@@ -140,6 +149,7 @@ self.onmessage = ({ data }: any): any => {
       data.timestamp,
       data.url,
       (batch) => sender && sender.push(batch),
+      data.tabId,
     )
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
