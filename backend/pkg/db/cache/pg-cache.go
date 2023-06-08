@@ -2,6 +2,7 @@ package cache
 
 import (
 	"openreplay/backend/pkg/db/postgres"
+	"time"
 )
 
 type PGCache struct {
@@ -9,9 +10,9 @@ type PGCache struct {
 	Cache Cache
 }
 
-func NewPGCache(conn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCache {
+func NewPGCache(conn *postgres.Conn, projectExpiration time.Duration) *PGCache {
 	// Create in-memory cache layer for sessions and projects
-	c := NewCache(conn, projectExpirationTimeoutMs)
+	c := NewCache(conn, projectExpiration)
 	// Return PG wrapper with integrated cache layer
 	return &PGCache{
 		Conn:  conn,
