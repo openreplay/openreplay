@@ -2,8 +2,11 @@ package router
 
 import (
 	"fmt"
+	"github.com/tomasen/realip"
 	"log"
+	"net"
 	"net/http"
+	"openreplay/backend/internal/http/geoip"
 	"sync"
 	"time"
 
@@ -84,6 +87,11 @@ func (e *Router) clearBeaconSizes() {
 		}
 		e.mutex.Unlock()
 	}
+}
+
+func (e *Router) ExtractGeoData(r *http.Request) *geoip.GeoRecord {
+	ip := net.ParseIP(realip.FromRequest(r))
+	return e.services.GeoIP.Parse(ip)
 }
 
 func (e *Router) init() {

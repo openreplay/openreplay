@@ -16,7 +16,7 @@ type ServicesBuilder struct {
 	Producer  types.Producer
 	Flaker    *flakeid.Flaker
 	UaParser  *uaparser.UAParser
-	GeoIP     *geoip.GeoIP
+	GeoIP     geoip.GeoParser
 	Tokenizer *token.Tokenizer
 	Storage   *storage.S3
 }
@@ -28,7 +28,7 @@ func New(cfg *http.Config, producer types.Producer, pgconn *cache.PGCache) *Serv
 		Storage:   storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages, cfg.UseFileTags()),
 		Tokenizer: token.NewTokenizer(cfg.TokenSecret),
 		UaParser:  uaparser.NewUAParser(cfg.UAParserFile),
-		GeoIP:     geoip.NewGeoIP(cfg.MaxMinDBFile),
+		GeoIP:     geoip.New(cfg.MaxMinDBFile),
 		Flaker:    flakeid.NewFlaker(cfg.WorkerID),
 	}
 }
