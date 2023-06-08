@@ -12,8 +12,14 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   }
   return (
     <div className={'flex items-center w-full py-2 border-b'} onClick={onFlagClick}>
-      <div style={{ flex: 1 }}>icon + {flag.isSingleOption}</div>
-      <Link style={{ flex: 1 }} to={flag.key}>{flag.key}</Link>
+      <Link style={{ flex: 1 }} to={flag.flagKey}>
+        <div className={'flex items-center gap-2'}>
+          <div className={'p-2 bg-gray-lightest'}>
+            <Icon name={flag.isSingleOption ? 'flag-single' : 'fflag-multi'} />
+          </div>
+          {flag.flagKey}
+        </div>
+      </Link>
       <div style={{ flex: 1 }}>{flag.createdAt}</div>
       <div style={{ flex: 1 }}>
         <Icon name={'person-fill'} />
@@ -22,9 +28,9 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
       </div>
       <div style={{ flex: 1 }}>
         <Toggler
-          checked={flag.isEnabled}
+          checked={flag.isActive}
           name={'persist-flag'}
-          label={flag.isEnabled ? 'Enabled' : 'Disabled'}
+          label={flag.isActive ? 'Enabled' : 'Disabled'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => console.log(e.target.checked)}
         />
       </div>
