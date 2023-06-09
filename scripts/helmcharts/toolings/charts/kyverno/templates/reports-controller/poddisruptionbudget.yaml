@@ -1,0 +1,16 @@
+{{- if .Values.reportsController.enabled -}}
+{{- if (gt (int .Values.reportsController.replicas) 1) -}}
+apiVersion: {{ template "kyverno.pdb.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "kyverno.reports-controller.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.reports-controller.labels" . | nindent 4 }}
+spec:
+  {{- include "kyverno.pdb.spec" .Values.reportsController.podDisruptionBudget | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "kyverno.reports-controller.matchLabels" . | nindent 6 }}
+{{- end -}}
+{{- end -}}

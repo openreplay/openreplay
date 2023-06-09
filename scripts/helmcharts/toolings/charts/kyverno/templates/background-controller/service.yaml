@@ -1,0 +1,27 @@
+{{- if .Values.backgroundController.enabled -}}
+{{- if .Values.backgroundController.metricsService.create -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kyverno.background-controller.name" . }}-metrics
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.background-controller.labels" . | nindent 4 }}
+  {{- with .Values.backgroundController.metricsService.annotations }}
+  annotations:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+  - port: {{ .Values.backgroundController.metricsService.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: metrics-port
+    {{- if and (eq .Values.backgroundController.metricsService.type "NodePort") (not (empty .Values.backgroundController.metricsService.nodePort)) }}
+    nodePort: {{ .Values.backgroundController.metricsService.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "kyverno.background-controller.matchLabels" . | nindent 4 }}
+  type: {{ .Values.backgroundController.metricsService.type }}
+{{- end -}}
+{{- end -}}

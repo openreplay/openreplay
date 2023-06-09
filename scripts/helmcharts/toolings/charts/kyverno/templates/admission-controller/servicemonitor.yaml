@@ -1,0 +1,32 @@
+{{- if .Values.admissionController.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "kyverno.admission-controller.name" . }}
+  {{- if .Values.admissionController.serviceMonitor.namespace }}
+  namespace: {{ .Values.admissionController.serviceMonitor.namespace }}
+  {{- else }}
+  namespace: {{ template "kyverno.namespace" . }}
+  {{- end }}
+  labels:
+    {{- include "kyverno.admission-controller.labels" . | nindent 4 }}
+    {{- with .Values.admissionController.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kyverno.admission-controller.matchLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+    - {{ template "kyverno.namespace" . }}
+  endpoints:
+  - port: metrics-port
+    interval: {{ .Values.admissionController.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.admissionController.serviceMonitor.scrapeTimeout }}
+    {{- if .Values.admissionController.serviceMonitor.secure }}
+    scheme: https
+    tlsConfig:
+      {{- toYaml .Values.admissionController.serviceMonitor.tlsConfig | nindent 8 }}
+    {{- end }}
+{{- end -}}

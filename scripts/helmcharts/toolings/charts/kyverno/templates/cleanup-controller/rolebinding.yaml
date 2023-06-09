@@ -12,8 +12,8 @@ roleRef:
   kind: Role
   name: {{ template "kyverno.cleanup-controller.roleName" . }}
 subjects:
-- kind: ServiceAccount
-  name: {{ template "kyverno.cleanup-controller.serviceAccountName" . }}
-  namespace: {{ template "kyverno.namespace" . }}
+  - kind: ServiceAccount
+    name: {{ template "kyverno.cleanup-controller.serviceAccountName" . }}
+    namespace: {{ template "kyverno.namespace" . }}
 {{- end -}}
 {{- end -}}

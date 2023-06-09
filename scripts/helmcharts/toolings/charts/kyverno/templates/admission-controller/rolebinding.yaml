@@ -1,0 +1,17 @@
+{{- if .Values.admissionController.rbac.create -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "kyverno.admission-controller.roleName" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.admission-controller.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "kyverno.admission-controller.roleName" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kyverno.admission-controller.serviceAccountName" . }}
+    namespace: {{ template "kyverno.namespace" . }}
+{{- end -}}

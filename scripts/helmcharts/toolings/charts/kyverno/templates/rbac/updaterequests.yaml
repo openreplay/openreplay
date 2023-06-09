@@ -1,0 +1,37 @@
+{{- if .Values.admissionController.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kyverno.rbac.roleName" . }}:admin:updaterequests
+  labels:
+    {{- include "kyverno.rbac.labels.admin" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - updaterequests
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kyverno.rbac.roleName" . }}:view:updaterequests
+  labels:
+    {{- include "kyverno.rbac.labels.view" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - updaterequests
+    verbs:
+      - get
+      - list
+      - watch
+{{- end -}}

@@ -1,0 +1,19 @@
+{{- if .Values.reportsController.enabled -}}
+{{- if .Values.reportsController.rbac.create -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "kyverno.reports-controller.roleName" . }}
+  labels:
+    {{- include "kyverno.reports-controller.labels" . | nindent 4 }}
+  namespace: {{ template "kyverno.namespace" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "kyverno.reports-controller.roleName" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kyverno.reports-controller.serviceAccountName" . }}
+    namespace: {{ template "kyverno.namespace" . }}
+{{- end -}}
+{{- end -}}

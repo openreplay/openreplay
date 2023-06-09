@@ -1,0 +1,29 @@
+{{- if .Values.cleanupController.enabled -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ template "kyverno.fullname" . }}-cleanup-controller-readiness
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.test.labels" . | nindent 4 }}
+  annotations:
+    {{- include "kyverno.test.annotations" . | nindent 4 }}
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: {{ template "kyverno.test.image" . }}
+      imagePullPolicy: {{ template "kyverno.test.imagePullPolicy" . }}
+      {{- with .Values.test.resources }}
+      resources:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.test.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      command:
+        - /bin/sh
+        - -c
+        - sleep 20 ; wget -O- -S --no-check-certificate https://{{ template "kyverno.cleanup-controller.name" . }}.{{ template "kyverno.namespace" . }}:{{ .Values.cleanupController.service.port }}/health/readiness
+{{- end -}}

@@ -1,0 +1,20 @@
+{{- if .Values.metricsConfig.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kyverno.config.metricsConfigMapName" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.config.labels" . | nindent 4 }}
+  {{- with .Values.metricsConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  {{- with .Values.metricsConfig.namespaces }}
+  namespaces: {{ toJson . | quote }}
+  {{- end }}
+  {{- with .Values.metricsConfig.metricsRefreshInterval }}
+  metricsRefreshInterval: {{ . }}
+  {{- end }}
+{{- end -}}

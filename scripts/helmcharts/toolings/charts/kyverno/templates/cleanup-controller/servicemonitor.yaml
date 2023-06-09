@@ -12,7 +12,7 @@ metadata:
   labels:
     {{- include "kyverno.cleanup-controller.labels" . | nindent 4 }}
     {{- with .Values.cleanupController.serviceMonitor.additionalLabels }}
-    {{- toYaml .Values.cleanupController.serviceMonitor.additionalLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   selector:

@@ -1,13 +1,30 @@
-{{- if hasKey .Values "mode" }}
-  {{ fail "mode is not supported anymore, please remove it from your release and use replicaCount instead." }}
-{{- end }}
+{{- if hasKey .Values "mode" -}}
+  {{- fail "mode is not supported anymore, please remove it from your release and use admissionController.replicas instead." -}}
+{{- end -}}
 
-{{- if .Values.replicaCount }}
-  {{- if eq (int .Values.replicaCount) 2 }}
-    {{ fail "Kyverno does not support running with 2 replicas. For a highly-available deployment, select 3 replicas or for standalone select 1 replica." }}
-  {{- end }}
-{{- end }}
+{{- if .Values.admissionController.replicas -}}
+  {{- if eq (int .Values.admissionController.replicas) 2 -}}
+    {{- fail "Kyverno does not support running with 2 replicas. For a highly-available deployment, select 3 replicas or for standalone select 1 replica." -}}
+  {{- end -}}
+{{- end -}}
 
-{{- if eq (include "kyverno.namespace" .) "kube-system" }}
-    {{ fail "Kyverno cannot be installed in namespace kube-system." }}
-{{- end }}
+{{- if eq (include "kyverno.namespace" .) "kube-system" -}}
+  {{- fail "Kyverno cannot be installed in namespace kube-system." -}}
+{{- end -}}
+
+{{- if not .Values.upgrade.fromV2 -}}
+  {{- $v2 := lookup "apps/v1" "Deployment" (include "kyverno.namespace" .) (include "kyverno.fullname" .) -}}
+  {{- if $v2 -}}
+    {{- fail (join "\n" (list
+      ""
+      ""
+      "  +--------------------------------------------------------------------------------------------------------------------------------------+"
+      "  | An earlier Helm installation of Kyverno was detected.                                                                                |"
+      "  | Given this chart version has significant breaking changes, the upgrade has been blocked.                                             |"
+      "  | Please review the release notes and chart README section and then, once prepared, set `upgrade.fromV2: true` once ready to proceed.  |"
+      "  +--------------------------------------------------------------------------------------------------------------------------------------+"
+      ""
+      ))
+    -}}
+  {{- end -}}
+{{- end -}}

@@ -1,0 +1,33 @@
+{{- if .Values.backgroundController.enabled -}}
+{{- if .Values.backgroundController.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "kyverno.background-controller.roleName" . }}
+  labels:
+    {{- include "kyverno.background-controller.labels" . | nindent 4 }}
+  namespace: {{ template "kyverno.namespace" . }}
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+    resourceNames:
+      - {{ include "kyverno.config.configMapName" . }}
+      - {{ include "kyverno.config.metricsConfigMapName" . }}
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - patch
+      - update
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,39 @@
+{{- if .Values.admissionController.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kyverno.rbac.roleName" . }}:admin:policyreports
+  labels:
+    {{- include "kyverno.rbac.labels.admin" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreports
+      - clusterpolicyreports
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kyverno.rbac.roleName" . }}:view:policyreports
+  labels:
+    {{- include "kyverno.rbac.labels.view" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreports
+      - clusterpolicyreports
+    verbs:
+      - get
+      - list
+      - watch
+{{- end -}}

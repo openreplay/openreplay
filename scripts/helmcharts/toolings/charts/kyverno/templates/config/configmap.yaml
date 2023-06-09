@@ -1,0 +1,45 @@
+{{- if .Values.config.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kyverno.config.configMapName" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.config.labels" . | nindent 4 }}
+  {{- with .Values.config.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  enableDefaultRegistryMutation: {{ .Values.config.enableDefaultRegistryMutation | quote }}
+  {{- with .Values.config.defaultRegistry }}
+  defaultRegistry: {{ . | quote }}
+  {{- end }}
+  generateSuccessEvents: {{ .Values.config.generateSuccessEvents | quote }}
+  {{- with .Values.config.excludeGroups }}
+  excludeGroups: {{ join "," . | quote }}
+  {{- end -}}
+  {{- with .Values.config.excludeUsernames }}
+  excludeUsernames: {{ join "," . | quote }}
+  {{- end -}}
+  {{- with .Values.config.excludeRoles }}
+  excludeRoles: {{ join "," . | quote }}
+  {{- end -}}
+  {{- with .Values.config.excludeClusterRoles }}
+  excludeClusterRoles: {{ join "," . | quote }}
+  {{- end -}}
+  {{- if .Values.config.resourceFilters }}
+  resourceFilters: >-
+    {{- include "kyverno.config.resourceFilters" . | trim | nindent 4 }}
+  {{- end -}}
+  {{- if and .Values.config.webhooks .Values.config.excludeKyvernoNamespace }}
+  webhooks: {{ include "kyverno.config.webhooks" . | quote }}
+  {{- else if .Values.config.webhooks }}
+  webhooks: {{ .Values.config.webhooks | toJson | quote }}
+  {{- else if .Values.config.excludeKyvernoNamespace }}
+  webhooks: '[{"namespaceSelector": {"matchExpressions": [{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["{{ include "kyverno.namespace" . }}"]}]}}]'
+  {{- end -}}
+  {{- with .Values.config.webhookAnnotations }}
+  webhookAnnotations: {{ toJson . | quote }}
+  {{- end }}
+{{- end -}}

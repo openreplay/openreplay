@@ -1,0 +1,31 @@
+{{- if .Values.admissionController.networkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "kyverno.admission-controller.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.admission-controller.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "kyverno.admission-controller.matchLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  {{- if .Values.admissionController.networkPolicy.ingressFrom }}
+  ingress:
+    - from:
+        {{- toYaml .Values.admissionController.networkPolicy.ingressFrom | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 9443 # webhook access
+        # Allow prometheus scrapes for metrics
+        {{- if .Values.admissionController.metricsService.create }}
+        - protocol: TCP
+          port: {{ .Values.admissionController.metricsService.port }}
+        {{- end }}
+  {{- else }}
+  ingress:
+    - {}
+  {{- end }}
+{{- end -}}

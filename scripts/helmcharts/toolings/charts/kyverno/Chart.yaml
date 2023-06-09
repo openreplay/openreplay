@@ -1,16 +1,14 @@
 annotations:
   artifacthub.io/changes: |
-    - kind: changed
-      description: Syntax change for webhooksCleanup switch to match with the rest of the file
     - kind: fixed
-      description: Handle multiple extraArgs in init container
+      description: incorrect config map names
   artifacthub.io/links: |
     - name: Documentation
       url: https://kyverno.io/docs
   artifacthub.io/operator: "false"
   artifacthub.io/prerelease: "false"
 apiVersion: v2
-appVersion: v1.9.2
+appVersion: v1.10.0
 description: Kubernetes Native Policy Management
 home: https://kyverno.io/
 icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
@@ -28,4 +26,4 @@ name: kyverno
 sources:
 - https://github.com/kyverno/kyverno
 type: application
-version: 2.7.2
+version: 3.0.1

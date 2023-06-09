@@ -1,0 +1,33 @@
+{{- if .Values.webhooksCleanup.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "kyverno.fullname" . }}-hook-pre-delete
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.hooks.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      serviceAccount: {{ template "kyverno.admission-controller.serviceAccountName" . }}
+      restartPolicy: Never
+      {{- with .Values.webhooksCleanup.imagePullSecrets }}
+      imagePullSecrets: 
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: kubectl
+          image: {{ .Values.webhooksCleanup.image }}
+          command:
+            - sh
+            - '-c'
+            - |-
+              kubectl scale -n {{ template "kyverno.namespace" . }} deployment --all --replicas=0
+              sleep 30
+              kubectl delete validatingwebhookconfiguration -l webhook.kyverno.io/managed-by=kyverno
+              kubectl delete mutatingwebhookconfiguration -l webhook.kyverno.io/managed-by=kyverno
+{{- end -}}

@@ -1,0 +1,14 @@
+{{- if (gt (int .Values.admissionController.replicas) 1) -}}
+apiVersion: {{ template "kyverno.pdb.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "kyverno.admission-controller.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.admission-controller.labels" . | nindent 4 }}
+spec:
+  {{- include "kyverno.pdb.spec" .Values.admissionController.podDisruptionBudget | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "kyverno.admission-controller.matchLabels" . | nindent 6 }}
+{{- end -}}

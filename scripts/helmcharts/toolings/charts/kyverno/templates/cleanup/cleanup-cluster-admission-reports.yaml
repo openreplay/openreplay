@@ -1,0 +1,43 @@
+{{- if .Values.cleanupJobs.clusterAdmissionReports.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "kyverno.name" . }}-cleanup-cluster-admission-reports
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.labels.merge" (list (include "kyverno.labels.common" .) (include "kyverno.matchLabels.common" .)) | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanupJobs.clusterAdmissionReports.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.cleanupJobs.clusterAdmissionReports.history.success }}
+  failedJobsHistoryLimit: {{ .Values.cleanupJobs.clusterAdmissionReports.history.failure }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ template "kyverno.name" . }}-cleanup-jobs
+          {{- with .Values.cleanupJobs.clusterAdmissionReports.podSecurityContext }}
+          securityContext:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          containers:
+          - name: cleanup
+            image: {{ template "kyverno.image" .Values.cleanupJobs.clusterAdmissionReports }}
+            imagePullPolicy: {{ .Values.cleanupJobs.clusterAdmissionReports.image.pullPolicy }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              COUNT=$(kubectl get clusteradmissionreports.kyverno.io -A | wc -l)
+              if [ "$COUNT" -gt {{ .Values.cleanupJobs.clusterAdmissionReports.threshold }} ]; then
+                echo "too many reports found ($COUNT), cleaning up..."
+                kubectl delete clusteradmissionreports.kyverno.io -A -l='!audit.kyverno.io/report.aggregate'
+              else
+                echo "($COUNT) reports found, no clean up needed"
+              fi
+            {{- with .Values.cleanupJobs.clusterAdmissionReports.securityContext }}
+            securityContext:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          restartPolicy: OnFailure
+{{- end -}}

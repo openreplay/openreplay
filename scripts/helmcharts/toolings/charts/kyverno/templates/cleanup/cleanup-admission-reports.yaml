@@ -1,0 +1,43 @@
+{{- if .Values.cleanupJobs.admissionReports.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "kyverno.name" . }}-cleanup-admission-reports
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.labels.merge" (list (include "kyverno.labels.common" .) (include "kyverno.matchLabels.common" .)) | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanupJobs.admissionReports.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.cleanupJobs.admissionReports.history.success }}
+  failedJobsHistoryLimit: {{ .Values.cleanupJobs.admissionReports.history.failure }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ template "kyverno.name" . }}-cleanup-jobs
+          {{- with .Values.cleanupJobs.admissionReports.podSecurityContext }}
+          securityContext:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          containers:
+          - name: cleanup
+            image: {{ template "kyverno.image" .Values.cleanupJobs.admissionReports }}
+            imagePullPolicy: {{ .Values.cleanupJobs.admissionReports.image.pullPolicy }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              COUNT=$(kubectl get admissionreports.kyverno.io -A | wc -l)
+              if [ "$COUNT" -gt {{ .Values.cleanupJobs.admissionReports.threshold }} ]; then
+                echo "too many reports found ($COUNT), cleaning up..."
+                kubectl delete admissionreports.kyverno.io -A -l='!audit.kyverno.io/report.aggregate'
+              else
+                echo "($COUNT) reports found, no clean up needed"
+              fi
+            {{- with .Values.cleanupJobs.admissionReports.securityContext }}
+            securityContext:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          restartPolicy: OnFailure
+{{- end -}}

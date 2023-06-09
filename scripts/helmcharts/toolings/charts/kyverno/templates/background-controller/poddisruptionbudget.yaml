@@ -1,0 +1,16 @@
+{{- if .Values.backgroundController.enabled -}}
+{{- if (gt (int .Values.backgroundController.replicas) 1) -}}
+apiVersion: {{ template "kyverno.pdb.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "kyverno.background-controller.name" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+  labels:
+    {{- include "kyverno.background-controller.labels" . | nindent 4 }}
+spec:
+  {{- include "kyverno.pdb.spec" .Values.backgroundController.podDisruptionBudget | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "kyverno.background-controller.matchLabels" . | nindent 6 }}
+{{- end -}}
+{{- end -}}

@@ -8,33 +8,36 @@ metadata:
     {{- include "kyverno.cleanup-controller.labels" . | nindent 4 }}
   namespace: {{ template "kyverno.namespace" . }}
 rules:
-- apiGroups:
-    - ''
-  resources:
-    - secrets
-  verbs:
-    - get
-    - list
-    - watch
-    - create
-    - update
-- apiGroups:
-    - ''
-  resources:
-    - configmaps
-  verbs:
-    - get
-    - list
-    - watch
-- apiGroups:
-    - coordination.k8s.io
-  resources:
-    - leases
-  verbs:
-    - create
-    - delete
-    - get
-    - patch
-    - update
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+    resourceNames:
+      - {{ include "kyverno.config.configMapName" . }}
+      - {{ include "kyverno.config.metricsConfigMapName" . }}
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - patch
+      - update
 {{- end -}}
 {{- end -}}

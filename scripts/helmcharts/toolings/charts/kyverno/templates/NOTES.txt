@@ -1,12 +1,30 @@
 Chart version: {{ .Chart.Version }}
-Kyverno version: {{ default .Chart.AppVersion (default .Values.image.tag .Values.initImage.tag) }}
+Kyverno version: {{ default .Chart.AppVersion (default .Values.admissionController.container.image.tag .Values.admissionController.initContainer.image.tag) }}
 
 Thank you for installing {{ .Chart.Name }}! Your release is named {{ .Release.Name }}.
 
-{{- if not .Values.replicaCount }}
-⚠️  WARNING: Setting replicas count below 3 means Kyverno is not running in high availability mode.
-{{- else if lt (int .Values.replicaCount) 3 }}
-⚠️  WARNING: Setting replicas count below 3 means Kyverno is not running in high availability mode.
+The following components have been installed in your cluster:
+{{- if .Values.crds.install }}
+- CRDs
+{{- end }}
+- Admission controller
+{{- if .Values.reportsController.enabled }}
+- Reports controller
+{{- end }}
+{{- if .Values.cleanupController.enabled }}
+- Cleanup controller
+{{- end }}
+{{- if .Values.backgroundController.enabled }}
+- Background controller
+{{- end }}
+{{- if .Values.grafana.enabled }}
+- Grafana dashboard
+{{- end }}
+
+{{ if not .Values.admissionController.replicas }}
+⚠️  WARNING: Setting the admission controller replica count below 3 means Kyverno is not running in high availability mode.
+{{- else if lt (int .Values.admissionController.replicas) 3 }}
+⚠️  WARNING: Setting the admission controller replica count below 3 means Kyverno is not running in high availability mode.
 {{- end }}
 
 💡 Note: There is a trade-off when deciding which approach to take regarding Namespace exclusions. Please see the documentation at https://kyverno.io/docs/installation/#security-vs-operability to understand the risks.
