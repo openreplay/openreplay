@@ -177,7 +177,7 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['mx-4 rounded']: event.type !== TYPES.LOCATION
+        ['pl-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}

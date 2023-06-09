@@ -72,12 +72,12 @@ class EventGroupWrapper extends React.Component {
         <div
           className={cn(
             {
-              [stl.last]: isLastInGroup,
-              [stl.first]: event.type === TYPES.LOCATION,
-              [stl.dashAfter]: isLastInGroup && !isLastEvent
+              // [stl.last]: isLastInGroup,
+              // [stl.first]: event.type === TYPES.LOCATION,
+              // [stl.dashAfter]: isLastInGroup && !isLastEvent
             },
-            isLastInGroup && '!pb-2',
-            event.type === TYPES.LOCATION && '!pb-2'
+            // isLastInGroup && '!pb-2',
+            // event.type === TYPES.LOCATION && '!pb-2'
           )}
         >
           {isFirst && isLocation && event.referrer && (
@@ -124,7 +124,7 @@ class EventGroupWrapper extends React.Component {
             />
           )}
         </div>
-        {(isLastInGroup && !isTabChange) && <div className='border-t border-color-gray-light-shade' />}
+        {(isLastInGroup && !isTabChange) && <div className='border-color-gray-light-shade' />}
       </>
     );
   }
@@ -137,7 +137,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
     return (
         <div
             onClick={onClick}
-            className={'p-2 cursor-pointer bg-gray-lightest w-full border-gray-light border-t border-b !border-l-0 !border-r-0'}
+            className={'cursor-pointer bg-gray-lightest w-full py-2 border-b hover:bg-active-blue'}
         >
             <div className={'flex items-center gap-2 px-4'}>
               <span style={{ fontWeight: 500 }}>
@@ -148,7 +148,7 @@ function TabChange({ from, to, activeUrl, onClick }) {
                 {to}
               </span>
             </div>
-            <div className={'break-words mt-1 px-4 text-sm font-normal color-gray-medium'}>
+            <div className={'break-words mt-1 px-4 text-sm font-normal color-gray-medium whitespace-nowrap'}>
                 {activeUrl}
             </div>
         </div>
