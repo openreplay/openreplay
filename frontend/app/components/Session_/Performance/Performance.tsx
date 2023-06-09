@@ -54,6 +54,7 @@ const CPU = 'CPU Load';
 const NODES_COUNT = 'Nodes Сount';
 
 const FPSTooltip = ({ active, payload }) => {
+  if (!payload) return null;
   if (!active || !payload || payload.length < 3) {
     return null;
   }
@@ -82,6 +83,7 @@ const FPSTooltip = ({ active, payload }) => {
 };
 
 const CPUTooltip = ({ active, payload }) => {
+  if (!payload) return null;
   if (!active || payload.length < 1 || payload[0].value === null) {
     return null;
   }
@@ -95,6 +97,7 @@ const CPUTooltip = ({ active, payload }) => {
 };
 
 const HeapTooltip = ({ active, payload }) => {
+  if (!payload) return null;
   if (!active || payload.length < 2) return null;
   return (
     <div className={stl.tooltipWrapper}>
@@ -111,6 +114,7 @@ const HeapTooltip = ({ active, payload }) => {
 };
 
 const NodesCountTooltip = ({ active, payload }) => {
+  if (!payload) return null;
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className={stl.tooltipWrapper}>
