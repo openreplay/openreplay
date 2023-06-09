@@ -1,7 +1,7 @@
 pandas==1.5.1
 confluent-kafka
 SQLAlchemy==1.4.43
-snowflake-connector-python==2.8.2
+snowflake-connector-python==3.0.2
 snowflake-sqlalchemy==1.4.4
 PyYAML
 asn1crypto==1.5.1
