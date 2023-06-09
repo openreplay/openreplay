@@ -216,18 +216,19 @@ def get_health(tenant_id=None):
 
 
 def __process_health(tenant_id, health_map):
+    response = dict(health_map)
     for parent_key in health_map.keys():
         if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
-            health_map.pop(parent_key)
+            response.pop(parent_key)
         elif isinstance(health_map[parent_key], dict):
             for element_key in health_map[parent_key]:
                 if config(f"SKIP_H_{parent_key.upper()}_{element_key.upper()}", cast=bool, default=False):
-                    health_map[parent_key].pop(element_key)
+                    response[parent_key].pop(element_key)
                 else:
-                    health_map[parent_key][element_key] = health_map[parent_key][element_key](tenant_id)
+                    response[parent_key][element_key] = health_map[parent_key][element_key](tenant_id)
         else:
-            health_map[parent_key] = health_map[parent_key](tenant_id)
-    return health_map
+            response[parent_key] = health_map[parent_key](tenant_id)
+    return response
 
 
 def cron():
