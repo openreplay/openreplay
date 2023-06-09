@@ -7,7 +7,7 @@ import schemas_ee
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient
-from chalicelib.utils.objects import extra
+from chalicelib.utils.storage import extra
 
 
 def generate_file_key(project_id, key):
@@ -16,7 +16,8 @@ def generate_file_key(project_id, key):
 
 def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
-    presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
+    presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800,
+                                                               key=key)
     return {"URL": presigned_url, "key": key}
 
 
