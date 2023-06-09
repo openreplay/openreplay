@@ -526,7 +526,6 @@ $$
                 name       text                       NOT NULL,
                 payload    jsonb                      NOT NULL,
                 level      events_common.custom_level NOT NULL DEFAULT 'info',
-                tab_id     text                       NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX customs_name_idx ON events_common.customs (name);
@@ -541,7 +540,6 @@ $$
                 seq_index  integer NOT NULL,
                 issue_id   text    NOT NULL REFERENCES issues (issue_id) ON DELETE CASCADE,
                 payload    jsonb DEFAULT NULL,
-                tab_id     text    NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
@@ -563,7 +561,6 @@ $$
                 host          text        NULL,
                 path          text        NULL,
                 query         text        NULL,
-                tab_id        text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
 
@@ -601,7 +598,6 @@ $$
                 response_time               bigint  DEFAULT NULL,
                 response_end                bigint  DEFAULT NULL,
                 ttfb                        integer DEFAULT NULL,
-                tab_id                      text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX pages_session_id_idx ON events.pages (session_id);
@@ -646,7 +642,6 @@ $$
                 path       text,
                 selector   text    DEFAULT '' NOT NULL,
                 hesitation integer DEFAULT NULL,
-                tab_id     text               NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX clicks_session_id_idx ON events.clicks (session_id);
@@ -670,7 +665,6 @@ $$
                 value      text    DEFAULT NULL,
                 duration   integer DEFAULT NULL,
                 hesitation integer DEFAULT NULL,
-                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX inputs_session_id_idx ON events.inputs (session_id);
@@ -684,7 +678,6 @@ $$
                 message_id bigint NOT NULL,
                 timestamp  bigint NOT NULL,
                 error_id   text   NOT NULL REFERENCES errors (error_id) ON DELETE CASCADE,
-                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX errors_session_id_idx ON events.errors (session_id);
@@ -719,7 +712,6 @@ $$
                 request_body  text        NULL,
                 response_body text        NULL,
                 method        http_method NULL,
-                tab_id        text        NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX graphql_name_idx ON events.graphql (name);
@@ -736,7 +728,6 @@ $$
                 message_id bigint NOT NULL,
                 timestamp  bigint NOT NULL,
                 name       text   NOT NULL,
-                tab_id     text   NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX state_actions_name_gin_idx ON events.state_actions USING GIN (name gin_trgm_ops);
@@ -761,7 +752,6 @@ $$
                 header_size       bigint                 NULL,
                 encoded_body_size integer                NULL,
                 decoded_body_size integer                NULL,
-                tab_id            text                   NULL,
                 PRIMARY KEY (session_id, message_id, timestamp)
             );
             CREATE INDEX resources_session_id_idx ON events.resources (session_id);
@@ -801,7 +791,6 @@ $$
                 min_used_js_heap_size  bigint   NOT NULL,
                 avg_used_js_heap_size  bigint   NOT NULL,
                 max_used_js_heap_size  bigint   NOT NULL,
-                tab_id                 text     NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX performance_session_id_idx ON events.performance (session_id);
