@@ -1,15 +1,18 @@
 from decouple import config
 from datetime import datetime, timedelta
-from chalicelib.utils.objects.interface import ObjectStorage
+from chalicelib.utils.storage.interface import ObjectStorage
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
 
 
 class AzureBlobStorage(ObjectStorage):
-    # Prepare blob storage client
-    client = BlobServiceClient(
-        account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
-        credential=config("AZURE_ACCOUNT_KEY"),
-    )
+    client = None
+
+    def __init__(self):
+        # Prepare blob storage client
+        self.client = BlobServiceClient(
+            account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
+            credential=config("AZURE_ACCOUNT_KEY"),
+        )
 
     def exists(self, bucket, key):
         return self.client.get_blob_client(bucket, key).exists()
