@@ -5,11 +5,14 @@ from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_b
 
 
 class AzureBlobStorage(ObjectStorage):
-    # Prepare blob storage client
-    client = BlobServiceClient(
-        account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
-        credential=config("AZURE_ACCOUNT_KEY"),
-    )
+    client = None
+
+    def __init__(self):
+        # Prepare blob storage client
+        self.client = BlobServiceClient(
+            account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
+            credential=config("AZURE_ACCOUNT_KEY"),
+        )
 
     def exists(self, bucket, key):
         return self.client.get_blob_client(bucket, key).exists()
