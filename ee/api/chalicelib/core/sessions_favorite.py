@@ -3,7 +3,7 @@ from decouple import config
 import schemas_ee
 from chalicelib.core import sessions, sessions_favorite_exp, sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client
-from chalicelib.utils.objects import extra
+from chalicelib.utils.storage import extra
 
 
 def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
