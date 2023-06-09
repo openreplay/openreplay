@@ -1,13 +1,15 @@
 import React from 'react';
-import { Form, Input, Loader, Button, Link, Icon, Message } from 'UI';
+import { Form, Input, Loader, Button, Icon } from 'UI';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { connect } from 'react-redux';
-import { requestResetPassword, resetPassword, resetErrors } from 'Duck/user';
+import { requestResetPassword } from 'Duck/user';
 
 interface Props {
   requestResetPassword: Function;
+  loading?: boolean;
 }
 function ResetPasswordRequest(props: Props) {
+  const { loading = false } = props;
   const recaptchaRef = React.createRef();
   const [requested, setRequested] = React.useState(false);
   const [email, setEmail] = React.useState('');
@@ -71,7 +73,7 @@ function ResetPasswordRequest(props: Props) {
                 required
               />
             </Form.Field>
-            <Button type="submit" variant="primary" className="mt-4">
+            <Button type="submit" variant="primary" className="mt-4" loading={loading} disabled={loading}>
               Email password reset link
             </Button>
           </>
@@ -102,4 +104,6 @@ function ResetPasswordRequest(props: Props) {
   );
 }
 
-export default connect((state: any) => ({}), { requestResetPassword })(ResetPasswordRequest);
+export default connect((state: any) => ({
+  loading: state.getIn(['user', 'requestResetPassowrd', 'loading']),
+}), { requestResetPassword })(ResetPasswordRequest);
