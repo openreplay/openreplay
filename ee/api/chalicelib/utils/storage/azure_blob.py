@@ -1,6 +1,6 @@
 from decouple import config
 from datetime import datetime, timedelta
-from chalicelib.utils.objects.interface import ObjectStorage
+from chalicelib.utils.storage.interface import ObjectStorage
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
 
 
