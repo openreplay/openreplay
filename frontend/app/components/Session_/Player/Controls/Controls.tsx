@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
-import { Icon, Tooltip } from 'UI';
+import { Tooltip } from 'UI';
 import {
   CONSOLE,
   fullscreenOff,
@@ -68,19 +68,9 @@ function Controls(props: any) {
     skip,
     speed,
     messagesLoading,
-    inspectorMode,
     markedTargets,
-    currentTab,
-    tabStates
+    inspectorMode,
   } = store.get();
-
-  const cssLoading = tabStates[currentTab]?.cssLoading ?? false;
-  const profilesList = tabStates[currentTab]?.profilesList || [];
-  const graphqlList = tabStates[currentTab]?.graphqlList || [];
-  const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
-  const resourceRedCount = tabStates[currentTab]?.resourceMarkedCountNow || 0;
-  const stackRedCount = tabStates[currentTab]?.stackMarkedCountNow || 0;
-  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
 
   const {
     bottomBlock,
@@ -92,15 +82,8 @@ function Controls(props: any) {
     showStorageRedux,
     session,
   } = props;
-  
-  const storageType = store.get().tabStates[currentTab] ? selectStorageType(store.get().tabStates[currentTab]) : StorageType.NONE
-  const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
-  const profilesCount = profilesList.length;
-  const graphqlCount = graphqlList.length;
-  const showGraphql = graphqlCount > 0;
-  const showProfiler = profilesCount > 0;
-  const showExceptions = exceptionsList.length > 0;
-  const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
+
+  const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
 
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -186,83 +169,15 @@ function Controls(props: any) {
           </div>
 
           <div className="flex items-center h-full">
-            <ControlButton
-              disabled={disabled && !inspectorMode}
-              onClick={() => toggleBottomTools(CONSOLE)}
-              active={bottomBlock === CONSOLE && !inspectorMode}
-              label="CONSOLE"
-              noIcon
-              labelClassName="!text-base font-semibold"
-              hasErrors={logRedCount > 0 || showExceptions}
-              containerClassName="mx-2"
+            <DevtoolsButtons
+              showStorageRedux={showStorageRedux}
+              disabledRedux={disabledRedux}
+              toggleBottomTools={toggleBottomTools}
+              bottomBlock={bottomBlock}
+              markedTargets={markedTargets}
+              messagesLoading={messagesLoading}
+
             />
-
-            <ControlButton
-              disabled={disabled && !inspectorMode}
-              onClick={() => toggleBottomTools(NETWORK)}
-              active={bottomBlock === NETWORK && !inspectorMode}
-              label="NETWORK"
-              hasErrors={resourceRedCount > 0}
-              noIcon
-              labelClassName="!text-base font-semibold"
-              containerClassName="mx-2"
-            />
-
-            <ControlButton
-              disabled={disabled && !inspectorMode}
-              onClick={() => toggleBottomTools(PERFORMANCE)}
-              active={bottomBlock === PERFORMANCE && !inspectorMode}
-              label="PERFORMANCE"
-              noIcon
-              labelClassName="!text-base font-semibold"
-              containerClassName="mx-2"
-            />
-
-            {showGraphql && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(GRAPHQL)}
-                active={bottomBlock === GRAPHQL && !inspectorMode}
-                label="GRAPHQL"
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-              />
-            )}
-
-            {showStorage && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(STORAGE)}
-                active={bottomBlock === STORAGE && !inspectorMode}
-                label={getStorageName(storageType)}
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-              />
-            )}
-            <ControlButton
-              disabled={disabled && !inspectorMode}
-              onClick={() => toggleBottomTools(STACKEVENTS)}
-              active={bottomBlock === STACKEVENTS && !inspectorMode}
-              label="EVENTS"
-              noIcon
-              labelClassName="!text-base font-semibold"
-              containerClassName="mx-2"
-              hasErrors={stackRedCount > 0}
-            />
-            {showProfiler && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(PROFILER)}
-                active={bottomBlock === PROFILER && !inspectorMode}
-                label="PROFILER"
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-              />
-            )}
-
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
                 size={16}
@@ -275,6 +190,114 @@ function Controls(props: any) {
       )}
     </div>
   );
+}
+
+function DevtoolsButtons({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets}) {
+  const { store } = React.useContext(PlayerContext);
+
+  const {
+    inspectorMode,
+    currentTab,
+    tabStates
+  } = store.get();
+
+  const cssLoading = tabStates[currentTab]?.cssLoading ?? false;
+  const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
+
+  const profilesList = tabStates[currentTab]?.profilesList || [];
+  const graphqlList = tabStates[currentTab]?.graphqlList || [];
+  const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
+  const resourceRedCount = tabStates[currentTab]?.resourceMarkedCountNow || 0;
+  const stackRedCount = tabStates[currentTab]?.stackMarkedCountNow || 0;
+  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
+
+  const storageType = store.get().tabStates[currentTab] ? selectStorageType(store.get().tabStates[currentTab]) : StorageType.NONE
+  const profilesCount = profilesList.length;
+  const graphqlCount = graphqlList.length;
+  const showGraphql = graphqlCount > 0;
+  const showProfiler = profilesCount > 0;
+  const showExceptions = exceptionsList.length > 0;
+  const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
+  return (
+    <>
+      <ControlButton
+        disabled={disabled && !inspectorMode}
+        onClick={() => toggleBottomTools(CONSOLE)}
+        active={bottomBlock === CONSOLE && !inspectorMode}
+        label="CONSOLE"
+        noIcon
+        labelClassName="!text-base font-semibold"
+        hasErrors={logRedCount > 0 || showExceptions}
+        containerClassName="mx-2"
+      />
+
+    <ControlButton
+      disabled={disabled && !inspectorMode}
+      onClick={() => toggleBottomTools(NETWORK)}
+      active={bottomBlock === NETWORK && !inspectorMode}
+      label="NETWORK"
+      hasErrors={resourceRedCount > 0}
+      noIcon
+      labelClassName="!text-base font-semibold"
+      containerClassName="mx-2"
+    />
+
+    <ControlButton
+      disabled={disabled && !inspectorMode}
+      onClick={() => toggleBottomTools(PERFORMANCE)}
+      active={bottomBlock === PERFORMANCE && !inspectorMode}
+      label="PERFORMANCE"
+      noIcon
+      labelClassName="!text-base font-semibold"
+      containerClassName="mx-2"
+    />
+
+    {showGraphql && (
+      <ControlButton
+        disabled={disabled && !inspectorMode}
+        onClick={() => toggleBottomTools(GRAPHQL)}
+        active={bottomBlock === GRAPHQL && !inspectorMode}
+        label="GRAPHQL"
+        noIcon
+        labelClassName="!text-base font-semibold"
+        containerClassName="mx-2"
+      />
+    )}
+
+    {showStorage && (
+      <ControlButton
+        disabled={disabled && !inspectorMode}
+        onClick={() => toggleBottomTools(STORAGE)}
+        active={bottomBlock === STORAGE && !inspectorMode}
+        label={getStorageName(storageType)}
+        noIcon
+        labelClassName="!text-base font-semibold"
+        containerClassName="mx-2"
+      />
+    )}
+    <ControlButton
+      disabled={disabled && !inspectorMode}
+      onClick={() => toggleBottomTools(STACKEVENTS)}
+      active={bottomBlock === STACKEVENTS && !inspectorMode}
+      label="EVENTS"
+      noIcon
+      labelClassName="!text-base font-semibold"
+      containerClassName="mx-2"
+      hasErrors={stackRedCount > 0}
+    />
+    {showProfiler && (
+      <ControlButton
+        disabled={disabled && !inspectorMode}
+        onClick={() => toggleBottomTools(PROFILER)}
+        active={bottomBlock === PROFILER && !inspectorMode}
+        label="PROFILER"
+        noIcon
+        labelClassName="!text-base font-semibold"
+        containerClassName="mx-2"
+      />
+    )}
+    </>
+  )
 }
 
 const ControlPlayer = observer(Controls);

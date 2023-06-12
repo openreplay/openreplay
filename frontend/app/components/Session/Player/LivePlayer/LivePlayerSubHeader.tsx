@@ -6,9 +6,8 @@ import Tab from 'Components/Session/Player/SharedComponents/Tab';
 
 function SubHeader() {
   const { store } = React.useContext(PlayerContext);
-  const { tabStates, currentTab, tabs } = store.get();
+  const { currentTab, tabs, location: currentLocation = '' } = store.get();
 
-  const currentLocation = tabStates[currentTab]?.location || '';
   const location =
     currentLocation !== undefined
       ? currentLocation.length > 70
