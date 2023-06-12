@@ -1,1 +1,1 @@
-export { default, mergeEventLists } from './session';
+export { default, mergeEventLists, sortEvents } from './session';

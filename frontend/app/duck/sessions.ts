@@ -60,6 +60,7 @@ const initObj = {
     list: [],
     sessionIds: [],
     current: new Session(),
+    eventsAsked: false,
     total: 0,
     keyMap: Map(),
     wdTypeCount: Map(),
@@ -246,7 +247,8 @@ const reducer = (state = initialState, action: IAction) => {
             if (notes.length > 0) {
                 const session = state.get('current') as Session;
                 const newSession = session.addNotes(notes);
-                return state.set('current', newSession);
+                const forceUpdate = state.set('current', {})
+                return forceUpdate.set('current', newSession);
             }
             return state
         }
@@ -436,13 +438,7 @@ export const fetchV2 = (sessionId: string) =>
           } else {
               dispatch({ type: FETCHV2.SUCCESS, data, ...filter });
 
-              let [events, notes] = await Promise.all([
-                  apiGet(`/sessions/${sessionId}/events`, dispatch),
-                  apiGet(`/sessions/${sessionId}/notes`, dispatch),
-              ]);
-              if (notes) {
-                dispatch({ type: FETCH_NOTES.SUCCESS, data: notes.data });
-              }
+              const events = await apiGet(`/sessions/${sessionId}/events`, dispatch);
               if (events) {
                   dispatch({ type: FETCH_EVENTS.SUCCESS, data: events.data, filter });
               }

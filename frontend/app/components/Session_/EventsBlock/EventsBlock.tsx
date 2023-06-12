@@ -13,7 +13,8 @@ import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { InjectedEvent } from 'Types/session/event';
-import Session, { mergeEventLists } from 'Types/session';
+import Session, { mergeEventLists, sortEvents } from 'Types/session';
+import { useStore } from 'App/mstore';
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void;
@@ -27,6 +28,7 @@ interface IProps {
 }
 
 function EventsBlock(props: IProps) {
+  const { notesStore } = useStore();
   const [mouseOver, setMouseOver] = React.useState(true);
   const scroller = React.useRef<List>(null);
   const cache = useCellMeasurerCache({
@@ -46,9 +48,11 @@ function EventsBlock(props: IProps) {
     setActiveTab,
     notesWithEvents = [],
   } = props;
+  const notes = notesStore.sessionNotes;
 
   const filteredLength = filteredEvents?.length || 0;
   const notesWithEvtsLength = notesWithEvents?.length || 0;
+  const notesLength = notes.length;
   const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
     return acc.concat(tab.eventListNow)
   }, [])
@@ -68,8 +72,9 @@ function EventsBlock(props: IProps) {
         i--;
       }
     })
-    return mergeEventLists(filteredEvents || notesWithEvents, tabChangeEvents);
-  }, [filteredLength, notesWithEvtsLength])
+    const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
+    return mergeEventLists(filteredLength > 0 ? filteredEvents : eventsWithMobxNotes, tabChangeEvents);
+  }, [filteredLength, notesWithEvtsLength, notesLength])
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });

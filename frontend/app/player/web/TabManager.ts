@@ -84,7 +84,6 @@ export default class TabSessionManager {
         this.locationEventManager.append(e);
       }
     })
-
     this.updateLocalState({ ...this.lists.getFullListsState() });
   }
 

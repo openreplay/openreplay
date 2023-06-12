@@ -33,7 +33,6 @@ function WebPlayer(props: any) {
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
-  const [showNoteModal, setShowNote] = useState(false);
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
   // @ts-ignore
@@ -57,7 +56,6 @@ function WebPlayer(props: any) {
       const note = props.query.get('note');
       if (note) {
         setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-        setShowNote(true);
         WebPlayerInst.pause();
       }
     })
@@ -77,11 +75,11 @@ function WebPlayer(props: any) {
   const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {}
 
   React.useEffect(() => {
-    if (showNoteModal) {
+    if (noteItem !== undefined) {
       contextValue.player.pause()
     }
 
-    if (activeTab === '' && !showNoteModal && messagesProcessed && contextValue.player) {
+    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
       const jumpToTime = props.query.get('jumpto');
       const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted
 
@@ -96,7 +94,7 @@ function WebPlayer(props: any) {
 
       contextValue.player.play()
     }
-  }, [activeTab, showNoteModal, visualOffset, messagesProcessed])
+  }, [activeTab, noteItem, visualOffset, messagesProcessed])
 
   React.useEffect(() => {
     if (activeTab === 'Click Map') {
@@ -118,7 +116,7 @@ function WebPlayer(props: any) {
   );
 
   const onNoteClose = () => {
-    setShowNote(false);
+    setNoteItem(undefined)
     contextValue.player.play();
   };
 
@@ -140,8 +138,8 @@ function WebPlayer(props: any) {
         setActiveTab={setActiveTab}
         session={session}
       /> : <Loader style={{ position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)' }} />}
-      <Modal open={showNoteModal} onClose={onNoteClose}>
-        {showNoteModal ? (
+      <Modal open={noteItem !== undefined} onClose={onNoteClose}>
+        {noteItem !== undefined ? (
           <ReadNote
             note={noteItem}
             onClose={onNoteClose}

@@ -33,9 +33,10 @@ export function mergeEventLists<T extends Record<string, any>, Y extends Record<
 
   return merged;
 }
-function sortEvents(a: Record<string, any>, b: Record<string, any>) {
-  const aTs = a.timestamp || a.time;
-  const bTs = b.timestamp || b.time;
+export function sortEvents(a: Record<string, any>, b: Record<string, any>) {
+
+  const aTs = a.time || a.timestamp;
+  const bTs = b.time || b.timestamp;
 
   return aTs - bTs;
 }
@@ -375,16 +376,18 @@ export default class Session {
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;
-
     return this;
   }
 
   addNotes(sessionNotes: Note[]) {
+    sessionNotes.forEach((note) => {
+      note.time = note.timestamp
+    })
     // @ts-ignore
     this.notesWithEvents =
       [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
     this.notes = sessionNotes;
-    console.log(this.notesWithEvents, sessionNotes)
+
     return this;
   }
 

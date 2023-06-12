@@ -13,7 +13,6 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
 import Issue from "Types/session/issue";
-import { toJS } from 'mobx'
 
 function getTimelinePosition(value: number, scale: number) {
   const pos = value * scale;
@@ -23,6 +22,7 @@ function getTimelinePosition(value: number, scale: number) {
 
 interface IProps {
   issues: Issue[]
+  eventsLength: number
   setTimelineHoverTime: (t: number) => void
   startedAt: number
   tooltipVisible: boolean
@@ -44,14 +44,17 @@ function Timeline(props: IProps) {
     domLoading,
     tabStates,
   } = store.get()
-  const { issues } = props;
-  const notes = notesStore.sessionNotes
+  const { issues, eventsLength } = props;
+  const notes = notesStore.sessionNotes;
 
   const progressRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const events = Object.keys(tabStates).length > 0 ? Object.keys(tabStates).reduce((acc, tabId) => {
-    return acc.concat(tabStates[tabId].eventList)
-  }, []) : []
+  const events = React.useMemo(() => {
+    // console.log(eventsLength, tabStates)
+    return Object.keys(tabStates).length > 0 ? Object.keys(tabStates).reduce((acc, tabId) => {
+      return acc.concat(tabStates[tabId].eventList)
+    }, []) : []
+  }, [eventsLength])
 
   const scale = 100 / endTime;
 
@@ -177,14 +180,16 @@ function Timeline(props: IProps) {
             {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
           </div>
 
-          {events.map((e) => (
+          {events.map((e) => {
+            if (!e || e.key == undefined) console.log(e)
+            return (
             <div
               /*@ts-ignore TODO */
               key={e.key}
               className={stl.event}
               style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
             />
-          ))}
+          )})}
           {/* TODO: refactor and make any sense out of this */}
 
           {/*  {issues.map((i: Issue) => (*/}
@@ -217,6 +222,7 @@ function Timeline(props: IProps) {
 
 export default connect(
   (state: any) => ({
+    eventsLength: state.getIn(['sessions', 'current'])?.notesWithEvents?.length || 0,
     issues: state.getIn(['sessions', 'current']).issues || [],
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),

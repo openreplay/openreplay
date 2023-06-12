@@ -44,6 +44,7 @@ export default class NotesStore {
     this.loading = true
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
+      notes.forEach(note => note.time = note.timestamp)
       this.setNotes(notes)
       return notes;
     } catch (e) {
