@@ -190,7 +190,6 @@ export default class AssistManager {
         const { tabId } = meta
         const { active } = data
         const currentTab = this.store.get().currentTab
-        console.log(currentTab, tabId, active)
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
         if (typeof active === "boolean") {
