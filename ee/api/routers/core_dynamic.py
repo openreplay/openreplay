@@ -97,10 +97,9 @@ async def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/account', tags=["account"])
-async def edit_account(data: schemas_ee.EditUserSchema = Body(...),
+async def edit_account(data: schemas.EditAccountSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
-                      editor_id=context.user_id)
+    return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
 
 
 @app.post('/integrations/slack', tags=['integrations'])

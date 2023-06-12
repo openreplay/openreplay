@@ -37,13 +37,13 @@ class UserSignupSchema(UserLoginSchema):
         alias_generator = attribute_to_camel_case
 
 
-class EditUserSchema(BaseModel):
+class EditAccountSchema(BaseModel):
     name: Optional[str] = Field(None)
-    email: Optional[EmailStr] = Field(None)
-    admin: Optional[bool] = Field(None)
+    tenantName: Optional[str] = Field(None)
+    opt_out: Optional[bool] = Field(None)
 
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+    _transform_tenantName = validator('tenantName', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
@@ -63,6 +63,7 @@ class EditUserPasswordSchema(BaseModel):
 class UpdateTenantSchema(BaseModel):
     name: Optional[str] = Field(None)
     opt_out: Optional[bool] = Field(None)
+    tenant_name: Optional[str] = Field(None)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -149,7 +150,7 @@ class CreateMemberSchema(BaseModel):
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
-class EditMemberSchema(EditUserSchema):
+class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
@@ -1062,8 +1063,8 @@ class CardSchema(__CardSchema, CardChartSchema):
         MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-                     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     is_template: bool = Field(default=False)
 
@@ -1235,7 +1236,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
-                      SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 

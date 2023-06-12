@@ -63,11 +63,7 @@ class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(None)
 
 
-class EditUserSchema(schemas.EditUserSchema):
-    roleId: Optional[int] = Field(None)
-
-
-class EditMemberSchema(EditUserSchema):
+class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)

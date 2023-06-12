@@ -259,37 +259,41 @@ def generate_new_api_key(user_id):
     return helper.dict_to_camel_case(r)
 
 
-def edit(user_id_to_update, tenant_id, changes: schemas.EditUserSchema, editor_id):
-    user = get(user_id=user_id_to_update, tenant_id=tenant_id)
-    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
-        admin = get(tenant_id=tenant_id, user_id=editor_id)
-        if not admin["superAdmin"] and not admin["admin"]:
-            return {"errors": ["unauthorized"]}
-    _changes = {}
-    if editor_id == user_id_to_update:
-        if changes.admin is not None:
-            if user["superAdmin"]:
-                changes.admin = None
-            elif changes.admin != user["admin"]:
-                return {"errors": ["cannot change your own role"]}
+def __get_account_info(tenant_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT users.name, 
+                           tenants.name AS tenant_name, 
+                           tenants.opt_out
+                    FROM public.users INNER JOIN public.tenants ON(TRUE)
+                    WHERE users.user_id = %(userId)s
+                        AND users.deleted_at IS NULL;""",
+                {"tenantId": tenant_id, "userId": user_id})
+        )
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
 
-    if changes.email is not None and changes.email != user["email"]:
-        if email_exists(changes.email):
-            return {"errors": ["email already exists."]}
-        if get_deleted_user_by_email(changes.email) is not None:
-            return {"errors": ["email previously deleted."]}
-        _changes["email"] = changes.email
+
+def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
+    if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
+        user = get(user_id=user_id, tenant_id=tenant_id)
+        if not user["superAdmin"] and not user["admin"]:
+            return {"errors": ["unauthorized"]}
 
     if changes.name is not None and len(changes.name) > 0:
-        _changes["name"] = changes.name
+        update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
 
-    if changes.admin is not None:
-        _changes["role"] = "admin" if changes.admin else "member"
+    _tenant_changes = {}
+    if changes.tenantName is not None and len(changes.tenantName) > 0:
+        _tenant_changes["name"] = changes.tenantName
 
-    if len(_changes.keys()) > 0:
-        updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
-        return {"data": updated_user}
-    return {"data": user}
+    if changes.opt_out is not None:
+        _tenant_changes["opt_out"] = changes.opt_out
+    if len(_tenant_changes.keys()) > 0:
+        tenants.edit_client(tenant_id=tenant_id, changes=_tenant_changes)
+
+    return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
 
 def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
