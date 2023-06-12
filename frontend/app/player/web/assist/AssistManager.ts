@@ -186,10 +186,11 @@ export default class AssistManager {
       })
 
       socket.on('UPDATE_SESSION', (evData) => {
-        const { metadata = {}, data = {} } = evData
-        const { tabId } = metadata
+        const { meta = {}, data = {} } = evData
+        const { tabId } = meta
         const { active } = data
         const currentTab = this.store.get().currentTab
+        console.log(currentTab, tabId, active)
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
         if (typeof active === "boolean") {
