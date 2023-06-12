@@ -1,9 +1,12 @@
 package url
 
+import "strings"
+
 var METHODS = []string{"GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
 var TYPES = []string{"other", "script", "stylesheet", "fetch", "img", "media"}
 
 func EnsureMethod(method string) string {
+	method = strings.ToUpper(method)
 	for _, m := range METHODS {
 		if m == method {
 			return method
