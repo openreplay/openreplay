@@ -33,24 +33,23 @@ export const initialState = Map({
   errors: List(),
   loginRequest: {
     loading: false,
-    errors: []
+    errors: [],
   },
 });
 
 const setClient = (state, data) => {
   const client = Client(data);
-  return state.set('client', client)
-}
+  return state.set('client', client);
+};
 
 export const UPDATE_JWT = 'jwt/UPDATE';
-export const DELETE = new RequestTypes('jwt/DELETE')
+export const DELETE = new RequestTypes('jwt/DELETE');
 export function setJwt(data) {
   return {
     type: UPDATE_JWT,
     data,
   };
 }
-
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
@@ -59,13 +58,15 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_JWT:
       return state.set('jwt', action.data);
     case LOGIN.REQUEST:
-      return state.set('loginRequest', { loading: true, errors: [] })
+      return state.set('loginRequest', { loading: true, errors: [] });
     case RESET_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      return state.set('account', Account({...action.data.user })).set('loginRequest', { loading: false, errors: [] })
+      return state
+        .set('account', Account({ ...action.data.user }))
+        .set('loginRequest', { loading: false, errors: [] });
     case UPDATE_PASSWORD.REQUEST:
     case UPDATE_PASSWORD.SUCCESS:
-      return state.set('passwordErrors', List())
+      return state.set('passwordErrors', List());
     case SIGNUP.SUCCESS:
       state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
@@ -76,89 +77,99 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
     case UPDATE_PASSWORD.FAILURE:
-      return state.set('passwordErrors', List(action.errors))
+      return state.set('passwordErrors', List(action.errors));
     case LOGIN.FAILURE:
       console.log('login failed', action);
-      deleteCookie('jwt', '/', 'openreplay.com')
+      deleteCookie('jwt', '/', 'openreplay.com');
       return state.set('loginRequest', { loading: false, errors: action.errors });
     case FETCH_ACCOUNT.FAILURE:
     case DELETE.SUCCESS:
     case DELETE.FAILURE:
-      deleteCookie('jwt', '/', 'openreplay.com')
+      deleteCookie('jwt', '/', 'openreplay.com');
       return initialState;
     case PUT_CLIENT.REQUEST:
-      return state.mergeIn([ 'account' ], action.params);
+      const _data = { ...action.params };
+      if (_data.name) {
+        _data.tenantName = _data.name;
+        delete _data.name;
+      }
+      return state.mergeIn(['account'], _data);
     case FETCH_CLIENT.SUCCESS:
       return setClient(state, action.data);
     case PUSH_NEW_SITE:
-      return state.updateIn([ 'site', 'list' ], list =>
-        list.push(action.newSite));
+      return state.updateIn(['site', 'list'], (list) => list.push(action.newSite));
     case SET_ONBOARDING:
-      return state.set('onboarding', action.state)
+      return state.set('onboarding', action.state);
   }
   return state;
 };
 
+export default withRequestState(
+  {
+    signupRequest: SIGNUP,
+    // loginRequest: LOGIN,
+    updatePasswordRequest: UPDATE_PASSWORD,
+    requestResetPassowrd: REQUEST_RESET_PASSWORD,
+    resetPassword: RESET_PASSWORD,
+    fetchUserInfoRequest: [FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS],
+    putClientRequest: PUT_CLIENT,
+    updateAccountRequest: UPDATE_ACCOUNT,
+  },
+  reducer
+);
 
-export default withRequestState({
-  signupRequest: SIGNUP,
-  // loginRequest: LOGIN,
-  updatePasswordRequest: UPDATE_PASSWORD,
-  requestResetPassowrd: REQUEST_RESET_PASSWORD,
-  resetPassword: RESET_PASSWORD,
-  fetchUserInfoRequest: [ FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS ],
-  putClientRequest: PUT_CLIENT,
-  updateAccountRequest: UPDATE_ACCOUNT,
-}, reducer);
-
-export const login = params => ({
+export const login = (params) => ({
   types: LOGIN.toArray(),
-  call: client => client.post('/login', params),
+  call: (client) => client.post('/login', params),
 });
 
-export const signup = params => dispatch => dispatch({
-  types: SIGNUP.toArray(),
-  call: client => client.post('/signup', params),
-});
+export const signup = (params) => (dispatch) =>
+  dispatch({
+    types: SIGNUP.toArray(),
+    call: (client) => client.post('/signup', params),
+  });
 
-export const resetPassword = params => dispatch => dispatch({
-  types: RESET_PASSWORD.toArray(),
-  call: client => client.post('/password/reset', params)
-});
+export const resetPassword = (params) => (dispatch) =>
+  dispatch({
+    types: RESET_PASSWORD.toArray(),
+    call: (client) => client.post('/password/reset', params),
+  });
 
-export const requestResetPassword = params => dispatch => dispatch({
-  types: REQUEST_RESET_PASSWORD.toArray(),
-  call: client => client.post('/password/reset-link', params),
-});
+export const requestResetPassword = (params) => (dispatch) =>
+  dispatch({
+    types: REQUEST_RESET_PASSWORD.toArray(),
+    call: (client) => client.post('/password/reset-link', params),
+  });
 
-export const updatePassword = params => dispatch => dispatch({
-  types: UPDATE_PASSWORD.toArray(),
-  call: client => client.post('/account/password', params),
-})
+export const updatePassword = (params) => (dispatch) =>
+  dispatch({
+    types: UPDATE_PASSWORD.toArray(),
+    call: (client) => client.post('/account/password', params),
+  });
 
 export function fetchTenants() {
   return {
     types: FETCH_TENANTS.toArray(),
-    call: client => client.get('/signup')
-  }
+    call: (client) => client.get('/signup'),
+  };
 }
 
 export const fetchUserInfo = () => ({
-    types: FETCH_ACCOUNT.toArray(),
-    call: client => client.get('/account'),
-  });
+  types: FETCH_ACCOUNT.toArray(),
+  call: (client) => client.get('/account'),
+});
 
 export function logout() {
   return {
     types: DELETE.toArray(),
-    call: client => client.get('/logout')
+    call: (client) => client.get('/logout'),
   };
 }
 
 export function updateClient(params) {
   return {
     types: PUT_CLIENT.toArray(),
-    call: client => client.put('/client', params),
+    call: (client) => client.put('/client', params),
     params,
   };
 }
@@ -166,15 +177,15 @@ export function updateClient(params) {
 export function updateAccount(params) {
   return {
     types: UPDATE_ACCOUNT.toArray(),
-    call: client => client.post('/account', params),
-  }
+    call: (client) => client.post('/account', params),
+  };
 }
 
 export function resendEmailVerification(email) {
   return {
     types: RESEND_EMAIL_VERIFICATION.toArray(),
-    call: client => client.post('/re-validate', { email }),
-  }
+    call: (client) => client.post('/re-validate', { email }),
+  };
 }
 
 export function pushNewSite(newSite) {
@@ -187,7 +198,7 @@ export function pushNewSite(newSite) {
 export function setOnboarding(state = false) {
   return {
     type: SET_ONBOARDING,
-    state
+    state,
   };
 }
 
