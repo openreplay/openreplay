@@ -159,7 +159,7 @@ export function logout() {
 export function updateClient(params) {
   return {
     types: PUT_CLIENT.toArray(),
-    call: client => client.put('/client', params),
+    call: client => client.post('/account', params),
     params,
   };
 }
