@@ -265,32 +265,6 @@ class MetadataListSchema(BaseModel):
     list: List[MetadataBasicSchema] = Field(...)
 
 
-class EmailPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    link: str = Field(...)
-    message: str = Field(...)
-
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
-
-
-class MemberInvitationPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    invitation_link: str = Field(...)
-    client_id: str = Field(...)
-    sender_name: str = Field(...)
-
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
-class ErrorIdsPayloadSchema(BaseModel):
-    errors: List[str] = Field([])
-
-
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)

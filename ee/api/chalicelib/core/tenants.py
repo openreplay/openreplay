@@ -1,5 +1,4 @@
-import schemas
-from chalicelib.core import users, license
+from chalicelib.core import license
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
@@ -68,7 +67,7 @@ def generate_new_api_key(tenant_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def edit_client(tenant_id, changes):
+def edit_tenant(tenant_id, changes):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants 
                                 SET {", ".join([f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()])}
@@ -77,21 +76,6 @@ def edit_client(tenant_id, changes):
                             {"tenant_id": tenant_id, **changes})
         cur.execute(query=query)
         return helper.dict_to_camel_case(cur.fetchone())
-
-
-def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
-
-    if not admin["admin"] and not admin["superAdmin"]:
-        return {"errors": ["unauthorized, needs admin or owner"]}
-    if data.name is None and data.opt_out is None:
-        return {"errors": ["please provide 'name' of 'optOut' attribute for update"]}
-    changes = {}
-    if data.name is not None and len(data.name) > 0:
-        changes["name"] = data.name
-    if data.opt_out is not None:
-        changes["optOut"] = data.opt_out
-    return edit_client(tenant_id=tenant_id, changes=changes)
 
 
 def tenants_exists(use_pool=True):
