@@ -189,17 +189,17 @@ export default class AssistManager {
         const { metadata = {}, data = {} } = evData
         const { tabId } = metadata
         const { active } = data
+        const currentTab = this.store.get().currentTab
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
-        if (Boolean(tabId) && tabId !== this.store.get().currentTab) {
-          this.store.update({ currentTab: tabId })
-        }
         if (typeof active === "boolean") {
           this.clearInactiveTimeout()
           if (active) {
             this.setStatus(ConnectionStatus.Connected)
           } else {
-            this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            if (tabId === currentTab) {
+              this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            }
           }
         }
       })

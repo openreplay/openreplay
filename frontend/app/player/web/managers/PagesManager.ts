@@ -68,5 +68,4 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		}
 		return Promise.resolve()
 	}
-
 }

@@ -188,11 +188,11 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
 
-
       if (tabId) {
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
           this.activeTab = tabId;
+          this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
         if (activeTabs.length !== this.activeTabManager.tabInstances.size) {
@@ -226,6 +226,7 @@ export default class MessageManager {
   public changeTab(tabId: string) {
     this.activeTab = tabId;
     this.state.update({ currentTab: tabId });
+    this.tabs[tabId].clean();
     this.tabs[tabId].move(this.state.get().time);
   }
 

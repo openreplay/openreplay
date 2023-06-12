@@ -1,6 +1,6 @@
 import type App from '../app/index.js'
 import { isURL, IS_FIREFOX, MAX_STR_LEN } from '../utils.js'
-import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.gen.js'
+import { ResourceTiming, SetNodeAttributeURLBased } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
 function resolveURL(url: string, location: Location = document.location) {
@@ -28,13 +28,13 @@ const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
 
 export default function (app: App): void {
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
-    app.send(SetNodeAttribute(id, 'src', PLACEHOLDER_SRC))
+    app.attributeSender.sendSetAttribute(id, 'src', PLACEHOLDER_SRC)
     const { width, height } = node.getBoundingClientRect()
     if (!node.hasAttribute('width')) {
-      app.send(SetNodeAttribute(id, 'width', String(width)))
+      app.attributeSender.sendSetAttribute(id, 'width', String(width))
     }
     if (!node.hasAttribute('height')) {
-      app.send(SetNodeAttribute(id, 'height', String(height)))
+      app.attributeSender.sendSetAttribute(id, 'height', String(height))
     }
   }
 
@@ -47,7 +47,7 @@ export default function (app: App): void {
       .split(',')
       .map((str) => resolveURL(str))
       .join(',')
-    app.send(SetNodeAttribute(id, 'srcset', resolvedSrcset))
+    app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
   }
 
   const sendSrc = function (id: number, img: HTMLImageElement): void {
