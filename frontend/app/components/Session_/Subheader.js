@@ -21,14 +21,7 @@ function SubHeader(props) {
     const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1';
     const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
     const { player, store } = React.useContext(PlayerContext);
-    const { width, height, endTime, tabStates, currentTab, tabs } = store.get();
-
-    const currentLocation = tabStates[currentTab]?.location || '';
-    const resourceList = tabStates[currentTab]?.resourceList || [];
-    const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-    const eventsList = tabStates[currentTab]?.eventList || [];
-    const graphqlList = tabStates[currentTab]?.graphqlList || [];
-    const fetchList = tabStates[currentTab]?.fetchList || [];
+    const { width, height, endTime, location: currentLocation = '', tabs, currentTab } = store.get();
 
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;
@@ -39,11 +32,6 @@ function SubHeader(props) {
         return integrations.some((i) => i.token);
     });
 
-    const mappedResourceList = resourceList
-        .filter((r) => r.isRed || r.isYellow)
-        .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
-        .concat(graphqlList.filter((i) => parseInt(i.status) >= 400));
-
     const { showModal, hideModal } = useModal();
 
     const location =
@@ -52,6 +40,18 @@ function SubHeader(props) {
             : currentLocation;
 
     const showReportModal = () => {
+        const { tabStates } = store.get();
+        const resourceList = tabStates[currentTab]?.resourceList || [];
+        const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
+        const eventsList = tabStates[currentTab]?.eventList || [];
+        const graphqlList = tabStates[currentTab]?.graphqlList || [];
+        const fetchList = tabStates[currentTab]?.fetchList || [];
+
+        const mappedResourceList = resourceList
+            .filter((r) => r.isRed || r.isYellow)
+            .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
+            .concat(graphqlList.filter((i) => parseInt(i.status) >= 400));
+
         player.pause();
         const xrayProps = {
             currentLocation: currentLocation,

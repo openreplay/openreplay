@@ -246,7 +246,7 @@ export default class TabSessionManager {
     /* === */
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
-      stateToUpdate.location = lastLocationMsg.url;
+      this.state.update({ location: lastLocationMsg.url })
     }
     const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
     if (!!lastConnectionInfoMsg) {
