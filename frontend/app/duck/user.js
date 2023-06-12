@@ -87,7 +87,6 @@ const reducer = (state = initialState, action = {}) => {
       deleteCookie('jwt', '/', 'openreplay.com')
       return initialState;
     case PUT_CLIENT.REQUEST:
-      console.log('put client request', action);
       return state.mergeIn([ 'account' ], action.params);
     case FETCH_CLIENT.SUCCESS:
       return setClient(state, action.data);
