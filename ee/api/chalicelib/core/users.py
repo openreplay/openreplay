@@ -339,7 +339,7 @@ def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None:
         _tenant_changes["opt_out"] = changes.opt_out
     if len(_tenant_changes.keys()) > 0:
-        tenants.edit_client(tenant_id=tenant_id, changes=_tenant_changes)
+        tenants.edit_tenant(tenant_id=tenant_id, changes=_tenant_changes)
 
     return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
