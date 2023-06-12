@@ -1,5 +1,5 @@
 import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
-import StringDictionary from './StringDictionary.js'
+import { StringDictionary } from '../main/modules/attributeSender.js'
 
 describe('StringDictionary', () => {
   test('key is non-zero', () => {

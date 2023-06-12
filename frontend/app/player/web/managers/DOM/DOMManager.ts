@@ -13,7 +13,6 @@ import {
   VDocument,
   VElement,
   VHTMLElement,
-  VNode,
   VShadowRoot,
   VText,
   OnloadVRoot,

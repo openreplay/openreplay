@@ -9,7 +9,7 @@ import Logger, { LogLevel } from './logger.js'
 import Session from './session.js'
 import { gzip } from 'fflate'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
-
+import AttributeSender from '../modules/attributeSender.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
@@ -118,6 +118,7 @@ export default class App {
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
   private readonly bc: BroadcastChannel = new BroadcastChannel('rick')
+  public attributeSender: AttributeSender
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -158,6 +159,7 @@ export default class App {
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
     this.session = new Session(this, this.options)
+    this.attributeSender = new AttributeSender(this)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -643,6 +645,7 @@ export default class App {
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
+        this.attributeSender.clear()
         this.sanitizer.clear()
         this.observer.disconnect()
         this.nodes.clear()

@@ -25,7 +25,6 @@ describe('BatchWriter', () => {
     expect(batchWriter['nextIndex']).toBe(1)
     expect(batchWriter['beaconSize']).toBe(200000)
     expect(batchWriter['encoder']).toBeDefined()
-    expect(batchWriter['strDict']).toBeDefined()
     expect(batchWriter['sizeBuffer']).toHaveLength(3)
     expect(batchWriter['isEmpty']).toBe(true)
   })
@@ -64,15 +63,6 @@ describe('BatchWriter', () => {
   test('setBeaconSizeLimit sets the beacon size limit', () => {
     batchWriter['setBeaconSizeLimit'](500000)
     expect(batchWriter['beaconSizeLimit']).toBe(500000)
-  })
-
-  test('Set note attribute tries to use dictionary', () => {
-    const spyOnStrGetKey = jest.spyOn(batchWriter['strDict'], 'getKey')
-    // @ts-ignore
-    batchWriter['writeMessage']([Messages.Type.SetNodeAttribute, 1, 'name', 'value'])
-    expect(spyOnStrGetKey).toHaveBeenCalledTimes(2)
-    expect(spyOnStrGetKey).toHaveBeenCalledWith('name')
-    expect(spyOnStrGetKey).toHaveBeenCalledWith('value')
   })
 
   test('writeMessage writes the given message', () => {

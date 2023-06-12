@@ -1,6 +1,5 @@
 import {
   RemoveNodeAttribute,
-  SetNodeAttribute,
   SetNodeAttributeURLBased,
   SetCSSDataURLBased,
   SetNodeData,
@@ -139,7 +138,7 @@ export default abstract class Observer {
         }
         this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
       } else {
-        this.app.send(SetNodeAttribute(id, name, value))
+        this.app.attributeSender.sendSetAttribute(id, name, value)
       }
       return
     }
@@ -173,7 +172,7 @@ export default abstract class Observer {
     if (name === 'href' || value.length > 1e5) {
       value = ''
     }
-    this.app.send(SetNodeAttribute(id, name, value))
+    this.app.attributeSender.sendSetAttribute(id, name, value)
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
