@@ -178,6 +178,10 @@ function or_helm_upgrade() {
     openreplay
     )
   [[ $UPGRADE_OR_ONLY -eq 1 ]] && chart_names=( openreplay )
+  # Cleaning up toolings
+  [[ $CLEANUP_TOOLING -eq 1 ]] && {
+    helm uninstall toolings -n "$APP_NS"
+  }
   if [[ $state == "reload" ]]; then
     chart_names=( openreplay )
     HELM_OPTIONS="${HELM_OPTIONS} --set skipMigration=true"
@@ -384,6 +388,7 @@ do
       else
         log title "Applying Latest OpenReplay Patches"
       fi
+      CLEANUP_TOOLING=1
       upgrade
       clean_tmp_dir
       exit 0
