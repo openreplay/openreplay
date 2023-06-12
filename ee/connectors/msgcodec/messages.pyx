@@ -1,5 +1,5 @@
 # Auto-generated, do not edit
-cimport abc
+
 from abc cimport ABC
 
 class Message(ABC):
@@ -17,7 +17,6 @@ cdef class Timestamp(PyMessage):
     def __init__(self, unsigned long timestamp):
         self.__id__ = 0
         self.timestamp = timestamp
-
 
 
 cdef class SessionStart(PyMessage):
@@ -105,10 +104,11 @@ cdef class SetViewportScroll(PyMessage):
 
 cdef class CreateDocument(PyMessage):
     cdef public int __id__
+    
 
     def __init__(self, ):
         self.__id__ = 7
-        pass
+        
 
 
 cdef class CreateElementNode(PyMessage):
@@ -237,9 +237,9 @@ cdef class SetInputValue(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
     cdef public str value
-    cdef public int mask
+    cdef public long mask
 
-    def __init__(self, unsigned long id, str value, int mask):
+    def __init__(self, unsigned long id, str value, long mask):
         self.__id__ = 18
         self.id = id
         self.value = value
@@ -259,10 +259,10 @@ cdef class SetInputChecked(PyMessage):
 
 cdef class MouseMove(PyMessage):
     cdef public int __id__
-    cdef public long x
-    cdef public long y
+    cdef public unsigned long x
+    cdef public unsigned long y
 
-    def __init__(self, long x, long y):
+    def __init__(self, unsigned long x, unsigned long y):
         self.__id__ = 20
         self.x = x
         self.y = y
@@ -412,25 +412,25 @@ cdef class Metadata(PyMessage):
 
 cdef class PageEvent(PyMessage):
     cdef public int __id__
-    cdef public str message_id
+    cdef public unsigned long message_id
     cdef public unsigned long timestamp
     cdef public str url
     cdef public str referrer
-    cdef loaded
-    cdef public str request_start
-    cdef public str response_start
-    cdef public str response_end
-    cdef dom_content_loaded_event_start
-    cdef dom_content_loaded_event_end
-    cdef load_event_start
-    cdef load_event_end
-    cdef first_paint
-    cdef first_contentful_paint
-    cdef speed_index
-    cdef visually_complete
-    cdef time_to_interactive
+    cdef public bint loaded
+    cdef public unsigned long request_start
+    cdef public unsigned long response_start
+    cdef public unsigned long response_end
+    cdef public unsigned long dom_content_loaded_event_start
+    cdef public unsigned long dom_content_loaded_event_end
+    cdef public unsigned long load_event_start
+    cdef public unsigned long load_event_end
+    cdef public unsigned long first_paint
+    cdef public unsigned long first_contentful_paint
+    cdef public unsigned long speed_index
+    cdef public unsigned long visually_complete
+    cdef public unsigned long time_to_interactive
 
-    def __init__(self, str message_id, unsigned long timestamp, str url, str referrer, loaded, str request_start, str response_start, str response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint, speed_index, visually_complete, time_to_interactive):
+    def __init__(self, unsigned long message_id, unsigned long timestamp, str url, str referrer, bint loaded, unsigned long request_start, unsigned long response_start, unsigned long response_end, unsigned long dom_content_loaded_event_start, unsigned long dom_content_loaded_event_end, unsigned long load_event_start, unsigned long load_event_end, unsigned long first_paint, unsigned long first_contentful_paint, unsigned long speed_index, unsigned long visually_complete, unsigned long time_to_interactive):
         self.__id__ = 31
         self.message_id = message_id
         self.timestamp = timestamp
@@ -453,13 +453,13 @@ cdef class PageEvent(PyMessage):
 
 cdef class InputEvent(PyMessage):
     cdef public int __id__
-    cdef public str message_id
+    cdef public unsigned long message_id
     cdef public unsigned long timestamp
     cdef public str value
     cdef public bint value_masked
     cdef public str label
 
-    def __init__(self, str message_id, unsigned long timestamp, str value, bint value_masked, str label):
+    def __init__(self, unsigned long message_id, unsigned long timestamp, str value, bint value_masked, str label):
         self.__id__ = 32
         self.message_id = message_id
         self.timestamp = timestamp
@@ -803,14 +803,14 @@ cdef class SetCSSDataURLBased(PyMessage):
 
 cdef class IssueEventDeprecated(PyMessage):
     cdef public int __id__
-    cdef public str message_id
+    cdef public unsigned long message_id
     cdef public unsigned long timestamp
     cdef public str type
     cdef public str context_string
     cdef public str context
     cdef public str payload
 
-    def __init__(self, str message_id, unsigned long timestamp, str type, str context_string, str context, str payload):
+    def __init__(self, unsigned long message_id, unsigned long timestamp, str type, str context_string, str context, str payload):
         self.__id__ = 62
         self.message_id = message_id
         self.timestamp = timestamp
@@ -1033,7 +1033,7 @@ cdef class BatchMetadata(PyMessage):
         self.location = location
 
 
-cdef class PartitionedPyMessage(PyMessage):
+cdef class PartitionedMessage(PyMessage):
     cdef public int __id__
     cdef public unsigned long part_no
     cdef public unsigned long part_total
@@ -1053,7 +1053,7 @@ cdef class InputChange(PyMessage):
     cdef public long hesitation_time
     cdef public long input_duration
 
-    def __init__(self, unsigned long id, str value, bint value_masked, str label, unsigned long hesitation_time, unsigned long input_duration):
+    def __init__(self, unsigned long id, str value, bint value_masked, str label, long hesitation_time, long input_duration):
         self.__id__ = 112
         self.id = id
         self.value = value
@@ -1123,7 +1123,7 @@ cdef class ResourceTiming(PyMessage):
 
 cdef class IssueEvent(PyMessage):
     cdef public int __id__
-    cdef public str message_id
+    cdef public unsigned long message_id
     cdef public unsigned long timestamp
     cdef public str type
     cdef public str context_string
@@ -1131,7 +1131,7 @@ cdef class IssueEvent(PyMessage):
     cdef public str payload
     cdef public str url
 
-    def __init__(self, str message_id, unsigned long timestamp, str type, str context_string, str context, str payload, str url):
+    def __init__(self, unsigned long message_id, unsigned long timestamp, str type, str context_string, str context, str payload, str url):
         self.__id__ = 125
         self.message_id = message_id
         self.timestamp = timestamp
@@ -1273,12 +1273,12 @@ cdef class IOSScreenChanges(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public long x
-    cdef public long y
+    cdef public unsigned long x
+    cdef public unsigned long y
     cdef public unsigned long width
     cdef public unsigned long height
 
-    def __init__(self, unsigned long timestamp, unsigned long length, long x, long y, unsigned long width, unsigned long height):
+    def __init__(self, unsigned long timestamp, unsigned long length, unsigned long x, unsigned long y, unsigned long width, unsigned long height):
         self.__id__ = 96
         self.timestamp = timestamp
         self.length = length
@@ -1340,10 +1340,10 @@ cdef class IOSClickEvent(PyMessage):
     cdef public unsigned long timestamp
     cdef public unsigned long length
     cdef public str label
-    cdef public long x
-    cdef public long y
+    cdef public unsigned long x
+    cdef public unsigned long y
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str label, long x, long y):
+    def __init__(self, unsigned long timestamp, unsigned long length, str label, unsigned long x, unsigned long y):
         self.__id__ = 100
         self.timestamp = timestamp
         self.length = length
@@ -1374,9 +1374,9 @@ cdef class IOSPerformanceEvent(PyMessage):
     cdef public unsigned long timestamp
     cdef public unsigned long length
     cdef public str name
-    cdef public str value
+    cdef public unsigned long value
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str name, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str name, unsigned long value):
         self.__id__ = 102
         self.timestamp = timestamp
         self.length = length
@@ -1487,3 +1487,5 @@ cdef class IOSIssueEvent(PyMessage):
         self.context_string = context_string
         self.context = context
         self.payload = payload
+
+

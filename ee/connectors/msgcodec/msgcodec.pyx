@@ -1,56 +1,52 @@
 # Auto-generated, do not edit
 
-from codec cimport Codec
+from msgcodec.codec import Codec
 from msgcodec.messages import *
-cimport io
+from typing import List
+import io
 
-ctypedef object PyBytesIO
-ctypedef object PyMessage
+class MessageCodec(Codec):
 
-cdef class MessageCodec(Codec):
-
-    def __init__(self, list msg_selector = list()):
+    def __init__(self, msg_selector: List[int] = list()):
         self.msg_selector = msg_selector
 
-    cdef int read_message_id(self, PyBytesIO reader):
+    def read_message_id(self, reader: io.BytesIO) -> int:
         """
         Read and return the first byte where the message id is encoded
         """
-        cdef int id_ = self.read_uint(reader)
+        id_ = self.read_uint(reader)
         return id_
 
-    cdef bytes encode(self, PyMessage m):
+    def encode(self, m: Message) -> bytes:
         ...
 
-    cdef PyMessage decode(self, bytes b):
-        cdef PyBytesIO reader = io.BytesIO(b)
+    def decode(self, b: bytes) -> Message:
+        reader = io.BytesIO(b)
         return self.read_head_message(reader)
 
     @staticmethod
-    cdef int check_message_id(bytes b):
+    def check_message_id(b: bytes) -> int:
         """
         todo: make it static and without reader. It's just the first byte
         Read and return the first byte where the message id is encoded
         """
-        cdef PyBytesIO reader = io.BytesIO(b)
-        cdef int id_ = Codec.read_uint(reader)
+        reader = io.BytesIO(b)
+        id_ = Codec.read_uint(reader)
 
         return id_
 
     @staticmethod
-    cdef int decode_key(bytes b):
+    def decode_key(b) -> int:
         """
         Decode the message key (encoded with little endian)
         """
-        cdef int decoded
         try:
             decoded = int.from_bytes(b, "little", signed=False)
         except Exception as e:
-            print(f"Error while decoding message key (SessionID) from {b}\n{e}")
-            raise e
+            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
         return decoded
 
-    def decode_detailed(self, bytes b):
+    def decode_detailed(self, b: bytes) -> List[Message]:
         reader = io.BytesIO(b)
         messages_list = list()
         try:
@@ -78,9 +74,10 @@ cdef class MessageCodec(Codec):
                 break
         return messages_list
 
-    cdef PyMessage handler(self, PyBytesIO reader, int mode = 0):
-        cdef int message_id = self.read_message_id(reader)
-        cdef int r_size
+    def handler(self, reader: io.BytesIO, mode=0) -> Message:
+        message_id = self.read_message_id(reader)
+        #print(f'[INFO-context] Current mode {mode}')
+        #print(f'[INFO] Currently processing message type {message_id}')
         if mode == 1:
             # We read the three bytes representing the length of message. It can be used to skip unwanted messages
             r_size = self.read_size(reader)
@@ -94,7 +91,7 @@ cdef class MessageCodec(Codec):
         else:
             raise IOError()
 
-    cdef PyMessage read_head_message(self, PyBytesIO reader, int message_id):
+    def read_head_message(self, reader: io.BytesIO, message_id) -> Message:
 
         if message_id == 0:
             return Timestamp(

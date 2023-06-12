@@ -69,6 +69,23 @@ class Attribute
     end
   end
 
+  def type_pyx
+    case @type
+    when :int
+      'long'
+    when :uint
+      'unsigned long'
+    when :string
+      'str'
+    when :data
+      'str'
+    when :boolean
+      'bint'
+    when :json
+      'str'
+    end
+  end
+
   def lengh_encoded
     case @type
     when :string, :data
