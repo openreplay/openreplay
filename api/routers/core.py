@@ -655,11 +655,11 @@ async def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR
     }
 
 
-@app.post('/client', tags=['client'])
-@app.put('/client', tags=['client'])
-async def edit_client(data: schemas.UpdateTenantSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
-    return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
+# @app.post('/client', tags=['client'])
+# @app.put('/client', tags=['client'])
+# async def edit_client(data: schemas.UpdateTenantSchema = Body(...),
+#                       context: schemas.CurrentContext = Depends(OR_context)):
+#     return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.get('/notifications', tags=['notifications'])
