@@ -138,12 +138,10 @@ function EventsBlock(props: IProps) {
     const isTabChange = event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
 
-    const heightBug =
-      index === 0 && event?.type === TYPES.LOCATION && 'referrer' in event ? { top: 2 } : {};
     return (
       <CellMeasurer key={key} cache={cache} parent={parent} rowIndex={index}>
         {({ measure, registerChild }) => (
-          <div style={{ ...style, ...heightBug }} ref={registerChild}>
+          <div style={{ ...style }} ref={registerChild}>
             <EventGroupWrapper
               query={query}
               presentInSearch={eventsIndex.includes(index)}

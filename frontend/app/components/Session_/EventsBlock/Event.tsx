@@ -149,7 +149,7 @@ const Event: React.FC<Props> = ({
             </div>
           </div>
           {isLocation && (
-            <div className='mt-1 px-4'>
+            <div className='pt-1 px-4'>
               <span className='text-sm font-normal color-gray-medium'>{body}</span>
             </div>
           )}
@@ -177,7 +177,7 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['pl-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION
+        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}
