@@ -21,7 +21,7 @@ function SubHeader(props) {
     const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1';
     const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
     const { player, store } = React.useContext(PlayerContext);
-    const { width, height, endTime, location: currentLocation = '', tabs, currentTab } = store.get();
+    const { width, height, endTime, location: currentLocation = 'loading...', tabs = new Set('back-compat'), currentTab } = store.get();
 
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;

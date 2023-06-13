@@ -6,14 +6,11 @@ import Tab from 'Components/Session/Player/SharedComponents/Tab';
 
 function SubHeader() {
   const { store } = React.useContext(PlayerContext);
-  const { currentTab, tabs, location: currentLocation = '' } = store.get();
+  const { currentTab, tabs = new Set('back-compat'), location: currentLocation = 'loading...' } = store.get();
 
-  const location =
-    currentLocation !== undefined
-      ? currentLocation.length > 70
+  const location = currentLocation.length > 70
         ? `${currentLocation.slice(0, 70)}...`
-        : currentLocation
-      : undefined;
+        : currentLocation;
 
   return (
     <>
