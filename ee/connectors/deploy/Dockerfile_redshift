@@ -12,6 +12,11 @@ COPY build_modules.sh .
 RUN apk add --no-cache --virtual .build-deps gcc g++ musl-dev postgresql-dev && \
  ./build_modules.sh && python3 -m pip install -r requirements_redshift.txt --no-cache-dir && \
  apk --purge del .build-deps
-COPY . .
+COPY utils utils
+COPY db db
+COPY sql sql
+COPY handler.py .
+COPY consumer_async.py .
+COPY entrypoint.sh .
 
 ENTRYPOINT ./entrypoint.sh

@@ -1,4 +1,4 @@
-FROM amancevice/pandas:2.0.0-alpine
+FROM amancevice/pandas:2.0.2-alpine
 
 WORKDIR /usr/src/app
 ENV LIBRD_VER=2.1.1
