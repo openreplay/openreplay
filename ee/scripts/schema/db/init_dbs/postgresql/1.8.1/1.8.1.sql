@@ -1,27 +1,23 @@
-DO
-$$
-    DECLARE
-        previous_version CONSTANT text := 'v1.8.0-ee';
-        next_version     CONSTANT text := 'v1.8.1-ee';
-    BEGIN
-        IF (SELECT openreplay_version()) = previous_version THEN
-            raise notice 'valid previous DB version';
-        ELSEIF (SELECT openreplay_version()) = next_version THEN
-            raise notice 'new version detected, nothing to do';
-        ELSE
-            RAISE EXCEPTION 'upgrade to % failed, invalid previous version, expected %, got %', next_version,previous_version,(SELECT openreplay_version());
-        END IF;
-    END ;
-$$
-LANGUAGE plpgsql;
+\set previous_version 'v1.8.0-ee'
+\set next_version 'v1.8.1-ee'
+SELECT openreplay_version()                       AS current_version,
+       openreplay_version() = :'previous_version' AS valid_previous,
+       openreplay_version() = :'next_version'     AS is_next
+\gset
 
+\if :valid_previous
+\echo valid previous DB version :'previous_version', starting DB upgrade to :'next_version'
 BEGIN;
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.8.1-ee'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
+$fn_def$, :'next_version')
+\gexec
 
+--
 
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
@@ -53,3 +49,9 @@ DROP INDEX IF EXISTS oauth_authentication_user_id_provider_key;
 CREATE UNIQUE INDEX IF NOT EXISTS oauth_authentication_unique_user_id_provider_idx ON oauth_authentication (user_id, provider);
 
 COMMIT;
+
+\elif :is_next
+\echo new version detected :'next_version', nothing to do
+\else
+\warn skipping DB upgrade of :'next_version', expected previous version :'previous_version', found :'current_version'
+\endif

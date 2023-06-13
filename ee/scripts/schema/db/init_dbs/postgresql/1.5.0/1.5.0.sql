@@ -1,26 +1,21 @@
-DO
-$$
-    DECLARE
-        previous_version CONSTANT text := 'v1.4.0-ee';
-        next_version     CONSTANT text := 'v1.5.0-ee';
-    BEGIN
-        IF (SELECT openreplay_version()) = previous_version THEN
-            raise notice 'valid previous DB version';
-        ELSEIF (SELECT openreplay_version()) = next_version THEN
-            raise notice 'new version detected, nothing to do';
-        ELSE
-            RAISE EXCEPTION 'upgrade to % failed, invalid previous version, expected %, got %', next_version,previous_version,(SELECT openreplay_version());
-        END IF;
-    END ;
-$$
-LANGUAGE plpgsql;
+\set previous_version 'v1.4.0-ee'
+\set next_version 'v1.5.0-ee'
+SELECT openreplay_version()                       AS current_version,
+       openreplay_version() = :'previous_version' AS valid_previous,
+       openreplay_version() = :'next_version'     AS is_next
+\gset
 
+\if :valid_previous
+\echo valid previous DB version :'previous_version', starting DB upgrade to :'next_version'
 BEGIN;
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.5.0-ee'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
+$fn_def$, :'next_version')
+\gexec
 
 --
 CREATE TABLE IF NOT EXISTS traces
@@ -184,3 +179,9 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS alerts_series_id_idx ON alerts (series_i
 CREATE INDEX CONCURRENTLY IF NOT EXISTS metrics_user_id_is_public_idx ON public.metrics (user_id, is_public);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS metric_series_metric_id_idx ON public.metric_series (metric_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS funnels_project_id_idx ON public.funnels (project_id);
+
+\elif :is_next
+\echo new version detected :'next_version', nothing to do
+\else
+\warn skipping DB upgrade of :'next_version', expected previous version :'previous_version', found :'current_version'
+\endif

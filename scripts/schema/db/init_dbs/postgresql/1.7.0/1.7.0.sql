@@ -1,27 +1,23 @@
-DO
-$$
-    DECLARE
-        previous_version CONSTANT text := 'v1.6.0';
-        next_version     CONSTANT text := 'v1.7.0';
-    BEGIN
-        IF (SELECT openreplay_version()) = previous_version THEN
-            raise notice 'valid previous DB version';
-        ELSEIF (SELECT openreplay_version()) = next_version THEN
-            raise notice 'new version detected, nothing to do';
-        ELSE
-            RAISE EXCEPTION 'upgrade to % failed, invalid previous version, expected %, got %', next_version,previous_version,(SELECT openreplay_version());
-        END IF;
-    END ;
-$$
-LANGUAGE plpgsql;
+\set previous_version 'v1.6.0'
+\set next_version 'v1.7.0'
+SELECT openreplay_version()                       AS current_version,
+       openreplay_version() = :'previous_version' AS valid_previous,
+       openreplay_version() = :'next_version'     AS is_next
+\gset
 
+\if :valid_previous
+\echo valid previous DB version :'previous_version', starting DB upgrade to :'next_version'
 BEGIN;
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.7.0'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
+$fn_def$, :'next_version')
+\gexec
 
+--
 
 ALTER TABLE IF EXISTS dashboards
     ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
@@ -219,3 +215,9 @@ $$
 $$;
 DROP INDEX IF EXISTS autocomplete_unique;
 COMMIT;
+
+\elif :is_next
+\echo new version detected :'next_version', nothing to do
+\else
+\warn skipping DB upgrade of :'next_version', expected previous version :'previous_version', found :'current_version'
+\endif
