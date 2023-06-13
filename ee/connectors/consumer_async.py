@@ -6,8 +6,8 @@ import asyncio
 from time import time, sleep
 from copy import deepcopy
 
-from msgcodec.msgcodec import MessageCodec
-from msgcodec.messages import SessionEnd
+from msgcodec import MessageCodec
+from messages import SessionEnd
 from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
 from db.writer import insert_batch, update_batch
@@ -148,7 +148,8 @@ def decode_key(b) -> int:
     try:
         decoded = int.from_bytes(b, "little", signed=False)
     except Exception as e:
-        raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
+        print(f'Error while decoding message key (SessionId) from {b}')
+        raise e
     return decoded
 
         

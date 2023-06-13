@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from db.models import Event, DetailedEvent, Session
-from msgcodec.messages import *
+from messages import *
 
 
 def handle_normal_message(message: Message) -> Optional[Event]:

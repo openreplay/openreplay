@@ -7,8 +7,10 @@ ENV CLOUD_SERVICE=redshift \
     PG_MAXCONN=10
 RUN apk add --no-cache postgresql-libs lz4-libs zstd-libs
 COPY deploy/requirements_redshift.txt .
+COPY msgcodec msgcodec
+COPY build_modules.sh .
 RUN apk add --no-cache --virtual .build-deps gcc g++ musl-dev postgresql-dev && \
- python3 -m pip install -r requirements_redshift.txt --no-cache-dir && \
+ ./build_modules.sh && python3 -m pip install -r requirements_redshift.txt --no-cache-dir && \
  apk --purge del .build-deps
 COPY . .
 

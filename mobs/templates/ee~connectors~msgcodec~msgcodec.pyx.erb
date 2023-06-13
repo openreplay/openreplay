@@ -135,18 +135,18 @@ cdef class MessageCodec:
         """
         Decode the message key (encoded with little endian)
         """
-        cdef int decoded
+        cdef unsigned long decoded
         try:
             decoded = int.from_bytes(b, "little", signed=False)
         except Exception as e:
-            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
+            print(f"Error while decoding message key (SessionID) from {b}")
+            raise e
         return decoded
 
     def decode_detailed(self, bytes b):
         cdef PyBytesIO reader = BytesIO(b)
         cdef list messages_list
         cdef int mode
-        #cdef PyMsg msg_decoded
         try:
             messages_list = [self.handler(reader, 0)]
         except IndexError:
@@ -175,8 +175,6 @@ cdef class MessageCodec:
     def handler(self, PyBytesIO reader, int mode = 0):
         cdef unsigned long message_id = MessageCodec.read_message_id(reader)
         cdef int r_size
-        #print(f'[INFO-context] Current mode {mode}')
-        #print(f'[INFO] Currently processing message type {message_id}')
         if mode == 1:
             # We read the three bytes representing the length of message. It can be used to skip unwanted messages
             r_size = MessageCodec.read_size(reader)
