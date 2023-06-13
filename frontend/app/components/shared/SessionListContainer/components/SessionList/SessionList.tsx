@@ -15,6 +15,7 @@ import {
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { toggleFavorite } from 'Duck/sessions';
+import SessionDateRange from './SessionDateRange';
 
 enum NoContentType {
   Bookmarked,
@@ -80,7 +81,7 @@ function SessionList(props: Props) {
     setNoContentType(NoContentType.ToDate);
     return {
       icon: ICONS.NO_SESSIONS,
-      message: 'No relevant sessions found for the selected time period.',
+      message: <SessionDateRange />,
     };
   }, [isBookmark, isVault, activeTab]);
 
@@ -152,11 +153,11 @@ function SessionList(props: Props) {
             <div className="mt-4" />
             <div className="text-center relative">
               {NO_CONTENT.message}
-              {noContentType === NoContentType.ToDate ? (
+              {/* {noContentType === NoContentType.ToDate ? (
                 <div style={{ position: 'absolute', right: -160, top: -170 }}>
                   <Icon name="pointer-sessions-search" size={250} width={240} />
                 </div>
-              ) : null}
+              ) : null} */}
             </div>
           </div>
         }
@@ -165,8 +166,8 @@ function SessionList(props: Props) {
             {(isVault || isBookmark) && (
               <div>
                 {isVault
-                  ? 'Add any session to your vault from the replay page and retain it longer.'
-                  : 'Bookmark important sessions in player screen and quickly find them here.'}
+                  ? 'Extend the retention period of any session by adding it to your vault directly from the player screen.'
+                  : 'Effortlessly find important sessions by bookmarking them directly from the player screen.'}
               </div>
             )}
             <Button

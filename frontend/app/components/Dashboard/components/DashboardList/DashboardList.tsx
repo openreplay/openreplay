@@ -26,7 +26,7 @@ function DashboardList() {
       }
       subtext={
         <div>
-          A Dashboard is a collection of <Tooltip title={<div className="text-center">Utilize cards to capture key interactions and track KPIs effectively.</div>} className="text-center"><span className="underline decoration-dotted">Cards</span></Tooltip> that can be shared across teams.
+          A Dashboard is a collection of <Tooltip title={<div className="text-center">Utilize cards to visualize key user interactions or product performance metrics.</div>} className="text-center"><span className="underline decoration-dotted">Cards</span></Tooltip> that can be shared across teams.
         </div>
       }
     >

@@ -28,7 +28,7 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
         }
         subtext={
           <div className="text-center flex justify-center items-center flex-col">
-            Create notes when replaying sessions and share your insights with the team.
+            Note observations during session replays and share them with your team.
           </div>
         }
       >
