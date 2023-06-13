@@ -77,7 +77,7 @@ export default class FilterItem {
         this.options = _filter.options;
         this.isEvent = _filter.isEvent;
 
-        (this.value = json.value.length === 0 || !json.value ? [''] : json.value);
+        (this.value = !json.value || json.value.length === 0 ? [''] : json.value);
         (this.operator = json.operator);
         this.source = json.source;
         this.sourceOperator = json.sourceOperator;

@@ -1,36 +1,31 @@
 import React from 'react'
 import { Icon, Input, Button } from "UI";
 import cn from 'classnames';
+import FilterList from 'Shared/Filters/FilterList';
+import { nonFlagFilters } from 'Types/filter/newFilter'
+import { observer } from 'mobx-react-lite';
 
-const stringOperators = ['is', 'isNot', 'contains', 'doesNotContain']
-const presenceOperators = ['isPresent', 'isNotPresent']
-const simpleConditions = ['country', 'state', 'city', 'browser', 'os', 'osVersion', 'userDevice', 'referrer']
-const conditionsMap = [
-  {
-    name: 'userId',
-    operators: presenceOperators,
-  },
-  {
-    name: 'metadata',
-    multiOperators: [{
-      operators: ['contains', 'doesNotContain'],
-      value: 'keys',
-    }, {
-      value: 'values',
-      operators: ['value'],
-      subOperators: stringOperators,
-    }]
-  }
-]
-simpleConditions.forEach(condition => {
-  conditionsMap.push({
-    name: condition,
-      operators: [...stringOperators, ...presenceOperators],
-  })
-})
-
-function RolloutCondition({ set }) {
+function RolloutCondition({ set, conditions, addCondition, removeCondition, index }) {
   const [rolloutPercent, setPercent] = React.useState('100');
+  const [forceRender, forceRerender] = React.useState(false)
+  const onAddFilter = () => {
+    conditions.filter.addFilter({});
+    forceRerender(!forceRender)
+  }
+  const onUpdateFilter = (filterIndex: number, filter: any) => {
+    conditions.filter.updateFilter(filterIndex, filter)
+    forceRerender(!forceRender)
+  }
+
+  const onChangeEventsOrder = (_: any, { name, value }: any) => {
+    conditions.filter.updateKey(name, value)
+    forceRerender(!forceRender)
+  }
+
+  const onRemoveFilter = (filterIndex: number) => {
+    conditions.filter.removeFilter(filterIndex)
+    forceRerender(!forceRender)
+  }
 
   const onPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -38,6 +33,7 @@ function RolloutCondition({ set }) {
     if (parseInt(value, 10) > 100) return setPercent("100")
     setPercent(e.target.value);
   }
+
   return (
     <div className={"border bg-white rounded"}>
       <div className={'flex items-center border-b px-4 py-2 gap-2'}>
@@ -48,13 +44,25 @@ function RolloutCondition({ set }) {
             "p-2 cursor-pointer rounded ml-auto",
             set === 1 ? "cursor-not-allowed" : "hover:bg-teal-light"
           )
-        }>
+        }
+        onClick={() => index === 0 ? null : removeCondition(index)}
+        >
           <Icon name={"trash"} color={set === 1 ? "" : "main"} />
         </div>
       </div>
       <div className={"p-2 border-b"}>
-        <div className={"p-2 border-b mb-2"}>conditions buttons</div>
-        <Button variant={"text-primary"}>+ Add Condition</Button>
+        <div className={"p-2 border-b mb-2"}>
+          <FilterList
+            filter={conditions.filter}
+            onUpdateFilter={onUpdateFilter}
+            onRemoveFilter={onRemoveFilter}
+            onChangeEventsOrder={onChangeEventsOrder}
+            supportsEmpty
+            hideEventsOrder
+            excludeFilterKeys={nonFlagFilters}
+          />
+        </div>
+        <Button variant={"text-primary"} onClick={() => onAddFilter()}>+ Add Condition</Button>
       </div>
       <div className={"px-4 py-2 flex items-center gap-2"}>
         <span>Rollout to</span>
@@ -71,4 +79,4 @@ function RolloutCondition({ set }) {
   )
 }
 
-export default RolloutCondition;
+export default observer(RolloutCondition);

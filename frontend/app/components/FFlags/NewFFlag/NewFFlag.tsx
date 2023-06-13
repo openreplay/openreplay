@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Toggler, Loader, IconButton, Icon } from 'UI';
+import { Input, SegmentSelection, Toggler, Loader, Button } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
@@ -143,7 +143,26 @@ function NewFFlag({ siteId }: { siteId: string }) {
             Indicate the users for whom you intend to make this flag available. Keep in mind that
             each set of conditions will be deployed separately from one another.
           </div>
-          <RolloutCondition set={1} />
+          {current.conditions.map((condition, index) => (
+            <React.Fragment key={index}>
+              <RolloutCondition
+                set={index+1}
+                index={index}
+                conditions={condition}
+                addCondition={current.addCondition}
+                removeCondition={current.removeCondition}
+              />
+              <div className={"my-2 w-full text-center"}>OR</div>
+            </React.Fragment>
+          ))}
+          <div
+            onClick={() => current!.addCondition()}
+            className={"flex items-center justify-center w-full bg-white rounded border mt-2 p-2"}
+          >
+            <Button variant={"text-primary"}>
+              + Create Condition Set
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -17,10 +17,12 @@ interface Props {
 }
 function FilterList(props: Props) {
   const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads, supportsEmpty = true, excludeFilterKeys = [] } = props;
+  console.log(filter.filters)
   const filters = List(filter.filters);
   const eventsOrderSupport = filter.eventsOrderSupport;
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
+
   let rowIndex = 0;
   const cannotDeleteFilter = hasEvents && !supportsEmpty;
 

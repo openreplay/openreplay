@@ -1,5 +1,17 @@
 import { makeAutoObservable } from "mobx";
 import { SingleFFlag } from 'App/services/FFlagsService';
+import Filter from "App/mstore/types/filter";
+import { flagConditionFilters } from "Types/filter/newFilter";
+
+class Conditions {
+  filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
+  observeSwitch = false;
+
+  constructor() {
+    makeAutoObservable(this)
+    this.filter.addFilter(flagConditionFilters[0])
+  }
+}
 
 const initData = {
   name: 'New Feature Flag',
@@ -7,7 +19,7 @@ const initData = {
   isActive: false,
   isPersist: false,
   isSingleOption: true,
-  conditions: [],
+  conditions: [new Conditions()],
   description: '',
   featureFlagId: 0,
 }
@@ -46,6 +58,14 @@ export default class FeatureFlag {
       flagType: this.isSingleOption ? 'single' : 'multi',
       featureFlagId: this.featureFlagId,
     }
+  }
+
+  addCondition = () => {
+    this.conditions.push(new Conditions())
+  }
+
+  removeCondition = (index: number) => {
+    this.conditions.splice(index, 1)
   }
 
   setFlagKey = (flagKey: string) => {
