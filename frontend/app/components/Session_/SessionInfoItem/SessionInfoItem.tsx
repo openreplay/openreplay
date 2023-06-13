@@ -18,7 +18,7 @@ export default function SessionInfoItem(props: Props) {
                 { comp && comp }
             </div>
             <div className="px-2 capitalize" style={{ minWidth: '160px' }}>{label}</div>
-            <div className="color-gray-medium px-2" style={{ minWidth: '130px' }}>{value}</div>
+            <div className="color-gray-medium px-2" style={{ minWidth: '160px' }}>{value}</div>
         </div>
     )
 }

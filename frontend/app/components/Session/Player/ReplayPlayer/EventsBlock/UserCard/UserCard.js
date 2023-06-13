@@ -89,7 +89,12 @@ function UserCard({ className, request, session, width, height, similarSessions,
                                     <SessionInfoItem
                                         comp={<CountryFlag country={userCountry} height={11} />}
                                         label={countries[userCountry]}
-                                        value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span>}
+                                        value={<span style={{ whiteSpace: 'nowrap' }}>{
+                                            <>
+                                            {userCity && <span className="mr-1">{userCity},</span>}
+                                            {userState && <span className="mr-1">{userState}</span>}
+                                            </>
+                                        }</span>}
                                     />
                                     <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={`v${userBrowserVersion}`} />
                                     <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={userOsVersion} />
