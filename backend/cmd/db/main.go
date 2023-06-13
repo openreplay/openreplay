@@ -26,7 +26,7 @@ func main() {
 
 	// Init database
 	pg := cache.NewPGCache(
-		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpirationTimeoutMs)
+		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpiration)
 	defer pg.Close()
 
 	// Init data saver
