@@ -116,10 +116,11 @@ export default class UserStore {
                         toast.success('User updated successfully');
                     }
                     resolve(response);
-                }).catch(error => {
+                }).catch(async (e) => {
+                    const err = await e.response?.json();
                     this.saving = false;
-                    toast.error('Error saving user');
-                    reject(error);
+                    toast.error(err.errors[0] ? err.errors[0] : 'Error saving user');
+                    reject(e);
                 }).finally(() => {
                     this.saving = false;
                 });
