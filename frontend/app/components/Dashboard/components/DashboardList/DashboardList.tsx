@@ -21,11 +21,9 @@ function DashboardList() {
           <div className="text-center mt-4">
             {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet"}
           </div>
-          <div className="text-sm color-gray-medium font-normal">
-            A Dashboard is a collection of Cards that can be shared across teams.
-          </div>
         </div>
       }
+      subtext="A Dashboard is a collection of Cards that can be shared across teams."
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">

@@ -46,7 +46,7 @@ function UserList(props: Props) {
                 title={
                     <div className="flex flex-col items-center justify-center">
                     <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
-                    <div className="text-center text-gray-600 my-4">No matching results.</div>
+                    <div className="text-center my-4">No matching results.</div>
                     </div>
                 }
                 size="small"

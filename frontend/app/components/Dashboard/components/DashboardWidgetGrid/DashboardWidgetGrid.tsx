@@ -40,7 +40,7 @@ function DashboardWidgetGrid(props: Props) {
         title={
           <div className="bg-white rounded">
             <div className="border-b p-5">
-              <div className="text-2xl font-normal color-gray-darkest">
+              <div className="text-2xl font-normal">
                 There are no cards in this dashboard
               </div>
               <div className="text-base font-normal">

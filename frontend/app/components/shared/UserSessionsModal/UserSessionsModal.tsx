@@ -62,8 +62,8 @@ function UserSessionsModal(props: Props) {
             <NoContent show={data.sessions.length === 0} title={
                 <div>
                     <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
-                    <div className="mt-2" />
-                    <div className="text-center text-gray-600">No recordings found.</div>
+                    <div className="mt-4" />
+                    <div className="text-center">No recordings found.</div>
                 </div>
             }>
                 <div className="border rounded m-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 85px)'}}>

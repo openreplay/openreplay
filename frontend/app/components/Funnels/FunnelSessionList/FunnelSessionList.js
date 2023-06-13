@@ -32,7 +32,7 @@ function FunnelSessionList(props) {
         title={
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-            <div className="mt-6 text-2xl">No recordings found!</div>
+            <div className="mt-4">No recordings found!</div>
           </div>
         }
         subtext="Please try changing your search parameters."

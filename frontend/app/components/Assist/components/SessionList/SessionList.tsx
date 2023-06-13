@@ -39,8 +39,8 @@ function SessionList(props: Props) {
                     title={
                         <div className="flex items-center justify-center flex-col">
                             <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
-                            <div className="mt-2" />
-                            <div className="text-center text-gray-600">No live sessions found.</div>
+                            <div className="mt-4" />
+                            <div className="text-center">No live sessions found.</div>
                         </div>
                     }
                 >

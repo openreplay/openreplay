@@ -39,11 +39,9 @@ function AlertsList({ siteId }: Props) {
           <div className="text-center mt-4">
             {alertsSearch !== '' ? 'No matching results' : "You haven't created any alerts yet"}
           </div>
-          <div className="text-sm color-gray-medium font-normal">
-            Alerts helps your team stay up to date with the activity on your app.
-          </div>
         </div>
       }
+      subtext="Alerts helps your team stay up to date with the activity on your app."
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">

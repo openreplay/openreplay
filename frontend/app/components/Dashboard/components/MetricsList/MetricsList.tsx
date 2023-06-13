@@ -57,11 +57,9 @@ function MetricsList({
           <div className="text-center mt-4">
             {metricsSearch !== '' ? 'No matching results' : "You haven't created any cards yet"}
           </div>
-          <div className="text-sm color-gray-medium font-normal">
-            Create cards to capture key interactions and track KPIs.
-          </div>
         </div>
       }
+      subtext="Create cards to capture key interactions and track KPIs."
     >
       {listView ? (
         <ListView
