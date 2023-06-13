@@ -84,7 +84,7 @@ export const onboarding = (tab = routerOBTabString) => `/onboarding/${ tab }`;
 
 export const sessions = params => queried('/sessions', params);
 export const assist = params => queried('/assist', params);
-export const recordings = params => queried("/recordings", params);
+export const recordings = params => queried("/offline-playback", params);
 export const multiviewIndex = params => queried('/multiview', params);
 export const multiview = (sessionsQuery = ':sessionsquery', hash) => hashed(`/multiview/${sessionsQuery}`, hash);
 export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${ sessionId }`, hash);

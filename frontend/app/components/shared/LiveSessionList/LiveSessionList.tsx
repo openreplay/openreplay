@@ -119,18 +119,17 @@ function LiveSessionList(props: Props) {
             title={
               <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={180} />
-                <div className="mt-2" />
-                <div className="text-center text-gray-600">No live sessions found.</div>
+                <div className="mt-4" />
+                <div className="text-center">No live sessions found.</div>
               </div>
             }
             subtext={
               <div className="text-center flex justify-center items-center flex-col">
                 <span>
-                  Assist is the best way to support you users while they're browsing your site,
-                  {' '}through live replay, co-browsing and video conferencing capabilities. {' '}
+                  Support users with live sessions, co-browsing, and video calls.
                   <a
                     target="_blank"
-                    className="link"
+                    className="link ml-1"
                     href="https://docs.openreplay.com/plugins/assist"
                   >
                     {'Learn More'}

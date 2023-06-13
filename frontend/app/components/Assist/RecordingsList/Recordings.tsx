@@ -19,8 +19,8 @@ function Recordings(props: Props) {
   const { recordingsStore } = useStore();
 
   const recordingsOwner = [
-    { value: '0', label: 'All Recordings' },
-    { value: userId, label: 'My Recordings' }
+    { value: '0', label: 'All Videos' },
+    { value: userId, label: 'My Videos' }
   ];
 
   const onDateChange = (e: any) => {
@@ -31,7 +31,7 @@ function Recordings(props: Props) {
     <div style={{ maxWidth: '1300px', margin: 'auto' }} className='bg-white rounded py-4 border'>
       <div className='flex items-center mb-4 justify-between px-6'>
         <div className='flex items-baseline mr-3'>
-          <PageTitle title='Recordings' />
+          <PageTitle title='Offline Playback' />
         </div>
         <div className='ml-auto flex items-center gap-4'>
           <SelectDateRange period={recordingsStore.period} onChange={onDateChange} right={true} />

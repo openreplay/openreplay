@@ -7,7 +7,6 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  color: $gray-dark;
   /* font-weight: 500; */
   transition: all 0.2s;
   padding: 40px;
@@ -24,13 +23,15 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
+  color: #000;
   /* margin-bottom: 15px; */
 }
 
 .subtext {
-  font-size: 14px;
+  font-size: 16px;
+  color: $gray-dark;
   /* margin-bottom: 20px; */
 }
 

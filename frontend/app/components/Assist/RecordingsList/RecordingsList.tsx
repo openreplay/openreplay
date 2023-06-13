@@ -24,44 +24,42 @@ function RecordingsList() {
     <NoContent
       show={length === 0}
       title={
-        <div className='flex flex-col items-center justify-center'>
+        <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_RECORDINGS} size={180} />
-          <div className='text-center text-gray-600 mt-4'>
-            {recordsSearch !== '' ? 'No matching results' : 'No recordings available yet.'}
+          <div className="text-center mt-4">
+            {recordsSearch !== ''
+              ? 'No matching results'
+              : 'No videos available for offline playback.'}
           </div>
         </div>
       }
       subtext={
-        <div className='text-center flex justify-center items-center flex-col'>
+        <div className="text-center flex justify-center items-center flex-col">
           <span>
-            Record your co-browsing sessions and share them with your team for product feedback or
-            training purposes.
+          Capture and share video recordings of co-browsing sessions with your team for product feedback and training.
           </span>
         </div>
       }
     >
-      <div className='mt-3 border-b'>
+      <div className="mt-3 border-b">
         <Loader loading={recordingsStore.loading}>
-          <div className='grid grid-cols-12 py-2 font-medium px-6'>
-            <div className='col-span-8'>Name</div>
-            <div className='col-span-4'>Recorded by</div>
+          <div className="grid grid-cols-12 py-2 font-medium px-6">
+            <div className="col-span-8">Name</div>
+            <div className="col-span-4">Recorded by</div>
           </div>
 
-          {recordings.map(
-            (record: any) => (
-              <React.Fragment key={record.recordId}>
-                <RecordsListItem record={record} />
-              </React.Fragment>
-            )
-          )}
+          {recordings.map((record: any) => (
+            <React.Fragment key={record.recordId}>
+              <RecordsListItem record={record} />
+            </React.Fragment>
+          ))}
         </Loader>
       </div>
 
-      <div className='w-full flex items-center justify-between pt-4 px-6'>
-        <div className='text-disabled-text'>
-          Showing{' '}
-          <span className='font-semibold'>{Math.min(length, pageSize)}</span>{' '}
-          out of <span className='font-semibold'>{total}</span> Recording
+      <div className="w-full flex items-center justify-between pt-4 px-6">
+        <div className="text-disabled-text">
+          Showing <span className="font-semibold">{Math.min(length, pageSize)}</span> out of{' '}
+          <span className="font-semibold">{total}</span> Recording
         </div>
         <Pagination
           page={page}

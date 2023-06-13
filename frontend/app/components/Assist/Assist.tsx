@@ -37,10 +37,10 @@ function Assist(props: Props) {
             <SideMenuitem
               active={isRecords}
               id="menu-rec"
-              title="Recordings"
-              iconName="record-circle"
+              title="Offline Playback"
+              iconName="file-play"
               onClick={() => redirect(recordings())}
-              disabled={!isEnterprise}
+              // disabled={!isEnterprise}
               tooltipTitle={ENTERPRISE_REQUEIRED}
             />
           </div>

@@ -149,8 +149,8 @@ function SessionList(props: Props) {
         title={
           <div className="flex items-center justify-center flex-col">
             <AnimatedSVG name={NO_CONTENT.icon} size={180} />
-            <div className="mt-2" />
-            <div className="text-center text-gray-600 relative">
+            <div className="mt-4" />
+            <div className="text-center relative">
               {NO_CONTENT.message}
               {noContentType === NoContentType.ToDate ? (
                 <div style={{ position: 'absolute', right: -160, top: -170 }}>
