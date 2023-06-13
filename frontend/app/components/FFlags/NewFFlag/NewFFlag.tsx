@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Toggler, Loader } from 'UI';
+import { Input, SegmentSelection, Toggler, Loader, IconButton, Icon } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
@@ -9,6 +9,7 @@ import { useHistory } from 'react-router';
 import { withSiteId, fflags } from 'App/routes';
 import Description from './Description';
 import Header from './Header';
+import RolloutCondition from './Conditions'
 
 function NewFFlag({ siteId }: { siteId: string }) {
   const { featureFlagsStore } = useStore();
@@ -60,7 +61,7 @@ function NewFFlag({ siteId }: { siteId: string }) {
         <label className={'font-semibold'}>Key</label>
         <Input
           type="text"
-          placeholder={'E.g. new_payment_method'}
+          placeholder={'new_unique_key'}
           value={current.flagKey}
           onChange={(e) => {
             current.setFlagKey(e.target.value.replace(/\s/g, '_'));
@@ -136,12 +137,13 @@ function NewFFlag({ siteId }: { siteId: string }) {
           />
         </div>
 
-        <div className={'mt-4'}>
+        <div className={'mt-4 p-4 rounded bg-gray-lightest'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
           <div className={'text-sm text-disabled-text flex items-center gap-1'}>
             Indicate the users for whom you intend to make this flag available. Keep in mind that
             each set of conditions will be deployed separately from one another.
           </div>
+          <RolloutCondition set={1} />
         </div>
       </div>
     </div>
