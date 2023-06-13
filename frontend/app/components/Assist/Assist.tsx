@@ -40,7 +40,7 @@ function Assist(props: Props) {
               title="Recordings"
               iconName="record-btn"
               onClick={() => redirect(recordings())}
-              disabled={!isEnterprise}
+              // disabled={!isEnterprise}
               tooltipTitle={ENTERPRISE_REQUEIRED}
             />
           </div>
