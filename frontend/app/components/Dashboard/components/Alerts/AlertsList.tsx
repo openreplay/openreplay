@@ -41,7 +41,7 @@ function AlertsList({ siteId }: Props) {
           </div>
         </div>
       }
-      subtext="Alerts helps your team stay up to date with the activity on your app."
+      subtext="Configure alerts to stay informed about app activity with threshold or change-based notifications."
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">

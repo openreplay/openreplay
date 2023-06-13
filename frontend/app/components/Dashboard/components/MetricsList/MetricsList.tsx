@@ -59,7 +59,7 @@ function MetricsList({
           </div>
         </div>
       }
-      subtext="Create cards to capture key interactions and track KPIs."
+      subtext="Utilize cards to capture key interactions and track KPIs effectively."
     >
       {listView ? (
         <ListView

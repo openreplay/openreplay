@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
 import DashboardListItem from './DashboardListItem';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Tooltip } from 'antd';
 
 function DashboardList() {
   const { dashboardStore } = useStore();
@@ -19,11 +20,15 @@ function DashboardList() {
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
           <div className="text-center mt-4">
-            {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet"}
+            {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet."}
           </div>
         </div>
       }
-      subtext="A Dashboard is a collection of Cards that can be shared across teams."
+      subtext={
+        <div>
+          A Dashboard is a collection of <Tooltip title={<div className="text-center">Utilize cards to capture key interactions and track KPIs effectively.</div>} className="text-center"><span className="underline decoration-dotted">Cards</span></Tooltip> that can be shared across teams.
+        </div>
+      }
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">

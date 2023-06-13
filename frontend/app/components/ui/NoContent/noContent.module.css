@@ -10,6 +10,7 @@
   /* font-weight: 500; */
   transition: all 0.2s;
   padding: 40px;
+  user-select: none;
 
   /* &.small {
     & .title {
