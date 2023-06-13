@@ -1,26 +1,23 @@
-DO
-$$
-    DECLARE
-        previous_version CONSTANT text := 'v1.8.1-ee';
-        next_version     CONSTANT text := 'v1.9.0-ee';
-    BEGIN
-        IF (SELECT openreplay_version()) = previous_version THEN
-            raise notice 'valid previous DB version';
-        ELSEIF (SELECT openreplay_version()) = next_version THEN
-            raise notice 'new version detected, nothing to do';
-        ELSE
-            RAISE EXCEPTION 'upgrade to % failed, invalid previous version, expected %, got %', next_version,previous_version,(SELECT openreplay_version());
-        END IF;
-    END ;
-$$
-LANGUAGE plpgsql;
+\set previous_version 'v1.8.1-ee'
+\set next_version 'v1.9.0-ee'
+SELECT openreplay_version()                       AS current_version,
+       openreplay_version() = :'previous_version' AS valid_previous,
+       openreplay_version() = :'next_version'     AS is_next
+\gset
 
+\if :valid_previous
+\echo valid previous DB version :'previous_version', starting DB upgrade to :'next_version'
 BEGIN;
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.9.0-ee'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
+$fn_def$, :'next_version')
+\gexec
+
+--
 
 ALTER TABLE IF EXISTS public.tenants
     ADD COLUMN IF NOT EXISTS last_telemetry bigint NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT),
@@ -104,3 +101,9 @@ WHERE NOT is_predefined
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_session_id_status_code_nn_idx ON events_common.requests (session_id, status_code) WHERE status_code IS NOT NULL;
+
+\elif :is_next
+\echo new version detected :'next_version', nothing to do
+\else
+\warn skipping DB upgrade of :'next_version', expected previous version :'previous_version', found :'current_version'
+\endif
