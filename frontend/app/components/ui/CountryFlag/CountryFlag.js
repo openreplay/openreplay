@@ -33,7 +33,7 @@ const CountryFlag = ({
           </div>
         </div>
       )}
-      {userCity && <span className="mr-1">{userCity},</span>}
+      {userCity && <span className="mx-1">{userCity},</span>}
       {userState && <span className="mr-1">{userState},</span>}
       {knownCountry && label && <div className={cn(stl.label, 'ml-1')}>{countryName}</div>}
     </div>
