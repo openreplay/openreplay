@@ -1,3 +1,4 @@
+import logging
 import math
 import random
 import re
@@ -8,6 +9,7 @@ from urllib.parse import urlparse
 from decouple import config
 
 import schemas
+from chalicelib.utils import smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -264,8 +266,25 @@ def __decimal_limit(value, limit):
     return value / factor
 
 
+VALID_SMTP = None
+SMTP_ERROR = None
+
+
 def has_smtp():
-    return config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0
+    global VALID_SMTP, SMTP_ERROR
+    if SMTP_ERROR is not None:
+        logging.error("!!! SMTP error found, disabling SMTP configuration:")
+        logging.error(SMTP_ERROR)
+
+    if VALID_SMTP is not None:
+        return VALID_SMTP
+
+    if config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0:
+        VALID_SMTP, SMTP_ERROR = smtp.check_connexion()
+        return VALID_SMTP
+    else:
+        logging.info("no SMTP configuration found")
+    return False
 
 
 def old_search_payload_to_flat(values):
