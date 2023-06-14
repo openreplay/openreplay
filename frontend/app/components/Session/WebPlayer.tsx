@@ -66,13 +66,14 @@ function WebPlayer(props: any) {
     }
   }, [session.sessionId]);
 
+  const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {};
+
   React.useEffect(() => {
-    if (session.events.length > 0 || session.errors.length > 0) {
+    if (messagesProcessed && session.events.length > 0 || session.errors.length > 0) {
       contextValue.player?.updateLists?.(session)
     }
-  }, [session.events, session.errors, contextValue.player])
+  }, [session.events, session.errors, contextValue.player, messagesProcessed])
 
-  const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {}
 
   React.useEffect(() => {
     if (noteItem !== undefined) {

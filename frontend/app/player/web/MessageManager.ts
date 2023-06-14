@@ -32,6 +32,7 @@ interface RawList {
 export interface State extends ScreenState {
   skipIntervals: SkipInterval[];
   connType?: string;
+  eventCount: number;
   connBandwidth?: number;
   location?: string;
   tabStates: {
@@ -67,6 +68,7 @@ export default class MessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
     tabStates: {},
+    eventCount: 0,
     skipIntervals: [],
     error: false,
     ready: false,

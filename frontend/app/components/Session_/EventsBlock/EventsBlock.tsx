@@ -53,9 +53,7 @@ function EventsBlock(props: IProps) {
   const filteredLength = filteredEvents?.length || 0;
   const notesWithEvtsLength = notesWithEvents?.length || 0;
   const notesLength = notes.length;
-  const eventListNow = Object.values(tabStates).reduce((acc: any[], tab) => {
-    return acc.concat(tab.eventListNow)
-  }, [])
+  const eventListNow = Object.values(tabStates)[0]?.eventListNow || [];
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {

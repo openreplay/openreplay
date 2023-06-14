@@ -84,7 +84,19 @@ export default class TabSessionManager {
         this.locationEventManager.append(e);
       }
     })
-    this.updateLocalState({ ...this.lists.getFullListsState() });
+    const eventCount = lists?.event?.length || 0
+
+    const currentState = this.state.get()
+    this.state.update({
+      eventCount: currentState.eventCount + eventCount,
+      tabStates: {
+        ...currentState.tabStates,
+        [this.id]: {
+          ...currentState.tabStates[this.id],
+          ...this.lists.getFullListsState(),
+        }
+      }
+    })
   }
 
   updateLocalState(state: Partial<TabState>) {

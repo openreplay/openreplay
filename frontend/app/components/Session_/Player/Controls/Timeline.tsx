@@ -22,7 +22,6 @@ function getTimelinePosition(value: number, scale: number) {
 
 interface IProps {
   issues: Issue[]
-  eventsLength: number
   setTimelineHoverTime: (t: number) => void
   startedAt: number
   tooltipVisible: boolean
@@ -43,18 +42,16 @@ function Timeline(props: IProps) {
     devtoolsLoading,
     domLoading,
     tabStates,
+    eventCount,
   } = store.get()
-  const { issues, eventsLength } = props;
+  const { issues } = props;
   const notes = notesStore.sessionNotes;
 
   const progressRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
   const events = React.useMemo(() => {
-    // console.log(eventsLength, tabStates)
-    return Object.keys(tabStates).length > 0 ? Object.keys(tabStates).reduce((acc, tabId) => {
-      return acc.concat(tabStates[tabId].eventList)
-    }, []) : []
-  }, [eventsLength])
+    return Object.values(tabStates)[0]?.eventList || []
+  }, [eventCount])
 
   const scale = 100 / endTime;
 
@@ -222,7 +219,6 @@ function Timeline(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    eventsLength: state.getIn(['sessions', 'current'])?.notesWithEvents?.length || 0,
     issues: state.getIn(['sessions', 'current']).issues || [],
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
