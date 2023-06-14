@@ -17,7 +17,7 @@ interface Props extends RouteComponentProps {
 function Assist(props: Props) {
   const { history, siteId, isEnterprise } = props;
   const isAssist = history.location.pathname.includes('assist');
-  const isRecords = history.location.pathname.includes('recordings');
+  const isRecords = history.location.pathname.includes('offline-playback');
 
   const redirect = (path: string) => {
     history.push(withSiteId(path, siteId));
