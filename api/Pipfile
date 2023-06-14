@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "==2.31.0"
+urllib3 = "==1.26.16"
+boto3 = "==1.26.148"
+pyjwt = "==2.7.0"
+psycopg2-binary = "==2.9.6"
+elasticsearch = "==8.8.0"
+jira = "==3.5.1"
+fastapi = "==0.96.0"
+uvicorn = {version = "==0.22.0", extras = ["standard"]}
+python-decouple = "==3.8"
+pydantic = {version = "==1.10.8", extras = ["email"]}
+apscheduler = "==3.10.1"
+redis = "==4.5.5"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

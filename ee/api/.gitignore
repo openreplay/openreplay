@@ -142,7 +142,7 @@ celerybeat-schedule
 
 # Environments
 .env
-.venv
+.venv/*
 env/
 venv/
 ENV/
@@ -175,7 +175,6 @@ SUBNETS.json
 chalicelib/.config
 chalicelib/saas
 README/*
-Pipfile
 Pipfile.lock
 
 .local/*

@@ -45,3 +45,43 @@ class SMTPClient:
         if self.server is None:
             return
         self.server.quit()
+
+    def test_configuration(self):
+        # check server connexion
+        try:
+            status = self.server.noop()[0]
+            if not (status == 250):
+                raise Exception(f"SMTP connexion error, status:{status}")
+        except Exception as e:  # smtplib.SMTPServerDisconnected
+            logging.error(
+                f'!! SMTP connexion error to {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)}')
+            logging.error(e)
+            return False, e
+
+        # check authentication
+        try:
+            self.__enter__()
+            self.__exit__()
+        except Exception as e:
+            logging.error(f'!! SMTP authentication error to {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)}')
+            logging.error(e)
+            return False, e
+
+        return True, None
+
+
+def check_connexion():
+    # check SMTP host&port
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(config("EMAIL_CHECK_TIMEOUT", cast=int, default=5))
+    result = sock.connect_ex((config("EMAIL_HOST"), config("EMAIL_PORT", cast=int)))
+    sock.close()
+    if not (result == 0):
+        error = f"""!! SMTP {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)} is unreachable
+f'please make sure the host&port are correct, and the SMTP protocol is authorized on your server."""
+        logging.error(error)
+        sock.close()
+        return False, error
+
+    return SMTPClient().test_configuration()
