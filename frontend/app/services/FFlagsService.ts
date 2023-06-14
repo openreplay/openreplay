@@ -31,37 +31,37 @@ export interface SingleFFlag extends FFlag {
 }
 
 export default class FFlagsService extends BaseService {
-  fetchFlags(): Promise<{ records: FFlag[]; total: number }> {
+  fetchFlags(filters: Record<string, any>): Promise<{ records: FFlag[]; total: number }> {
     return this.client
-      .get('/feature_flags')
+      .post('/feature-flags/search', filters)
       .then((r) => r.json())
       .then((j) => j.data || []);
   }
 
   createFlag(flag: SimpleFlag): Promise<FFlag> {
     return this.client
-      .post('/feature_flags', flag)
+      .post('/feature-flags', flag)
       .then((r) => r.json())
       .then((j) => j.data || {});
   }
 
   updateFlag(flag: FFlag): Promise<FFlag> {
     return this.client
-      .put(`/feature_flags/${flag.featureFlagId}`, flag)
+      .put(`/feature-flags/${flag.featureFlagId}`, flag)
       .then((r) => r.json())
       .then((j) => j.data || {});
   }
 
   deleteFlag(flag: FFlag): Promise<void> {
     return this.client
-      .delete(`/feature_flags/${flag.featureFlagId}`)
+      .delete(`/feature-flags/${flag.featureFlagId}`)
       .then((r) => r.json())
       .then((j) => j.data || {});
   }
 
   getFlag(id: number): Promise<SingleFFlag> {
     return this.client
-      .get(`/feature_flags/${id}`)
+      .get(`/feature-flags/${id}`)
       .then((r) => r.json())
       .then((j) => j.data || {});
   }

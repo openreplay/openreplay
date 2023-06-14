@@ -12,6 +12,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
   React.useEffect(() => {
     void featureFlagsStore.fetchFlags();
   }, []);
+
   return (
     <div
       className={'mb-5 w-full mx-auto bg-white rounded px-4 pb-10 pt-4 widget-wrapper'}

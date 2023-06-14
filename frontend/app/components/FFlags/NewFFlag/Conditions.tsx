@@ -6,7 +6,6 @@ import { nonFlagFilters } from 'Types/filter/newFilter'
 import { observer } from 'mobx-react-lite';
 
 function RolloutCondition({ set, conditions, addCondition, removeCondition, index }) {
-  const [rolloutPercent, setPercent] = React.useState('100');
   const [forceRender, forceRerender] = React.useState(false)
   const onAddFilter = () => {
     conditions.filter.addFilter({});
@@ -28,10 +27,10 @@ function RolloutCondition({ set, conditions, addCondition, removeCondition, inde
   }
 
   const onPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    const value = e.target.value || 0;
     if (value.length > 3) return;
-    if (parseInt(value, 10) > 100) return setPercent("100")
-    setPercent(e.target.value);
+    if (parseInt(value, 10) > 100) return conditions.setRollout(100)
+    conditions.setRollout(parseInt(value, 10))
   }
 
   return (
@@ -69,7 +68,7 @@ function RolloutCondition({ set, conditions, addCondition, removeCondition, inde
         <Input
           type="text"
           width={60}
-          value={rolloutPercent}
+          value={conditions.rolloutPercentage}
           onChange={onPercentChange}
           leadingButton={<div className={'p-2 text-disabled-text'}>%</div>}
         />

@@ -15,6 +15,25 @@ export default class FeatureFlags {
   }
 
   reloadFlags() {
+    const sessionInfo = this.app.session.getInfo()
+    const requestObject = {
+      projectID: sessionInfo.projectID,
+      userID: sessionInfo.userID,
+      metadata: sessionInfo.metadata,
+      referrer: document.referrer,
+      featureFlags: this.flags,
+      // todo: get from backend
+      os: '',
+      osVersion: '',
+      device: '',
+      country: '',
+      state: '',
+      city: '',
+      ua: '',
+      browser: '',
+      browserVersion: '',
+      deviceType: '',
+    }
     return this.flags
   }
 

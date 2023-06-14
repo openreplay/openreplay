@@ -9,7 +9,7 @@ export default class FeatureFlagsStore {
   flags: FeatureFlag[] = [];
   isLoading: boolean = false;
   flagsSearch: string = '';
-  sort = { order: 'desc' };
+  sort = { order: 'DESC', query: '' };
   page: number = 1;
   readonly pageSize: number = 10;
 
@@ -61,8 +61,16 @@ export default class FeatureFlagsStore {
   fetchFlags = async () => {
     this.setLoading(true);
     try {
-      const { records } = await fflagsService.fetchFlags();
-      const flags = records.map((record) => new FeatureFlag(record));
+      const filters = {
+        limit: this.pageSize,
+        page: this.page,
+        order: this.sort.order,
+        query: this.sort.query,
+        // isActive: false,
+        // userId: 3,
+      }
+      const { list } = await fflagsService.fetchFlags(filters);
+      const flags = list.map((record) => new FeatureFlag(record));
       this.setList(flags);
     } catch (e) {
       console.error(e);
@@ -76,7 +84,7 @@ export default class FeatureFlagsStore {
       this.setLoading(true);
       try {
         const result = await fflagsService.createFlag(this.currentFflag.toJS());
-        this.setCurrentFlag(new FeatureFlag(result));
+        this.addFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);
       } finally {
@@ -85,12 +93,13 @@ export default class FeatureFlagsStore {
     }
   };
 
-  updateFlag = async () => {
-    if (this.currentFflag) {
+  updateFlag = async (flag?: FeatureFlag) => {
+    const usedFlag = flag || this.currentFflag;
+    if (usedFlag) {
       this.setLoading(true);
       try {
-        const result = await fflagsService.updateFlag(this.currentFflag.toJS());
-        this.setCurrentFlag(new FeatureFlag(result));
+        const result = await fflagsService.updateFlag(usedFlag.toJS());
+        if (!flag) this.setCurrentFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);
       } finally {

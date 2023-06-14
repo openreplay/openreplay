@@ -4,12 +4,24 @@ import Filter from "App/mstore/types/filter";
 import { flagConditionFilters } from "Types/filter/newFilter";
 
 class Conditions {
+  rolloutPercentage = 100;
   filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
-  observeSwitch = false;
 
   constructor() {
     makeAutoObservable(this)
     this.filter.addFilter(flagConditionFilters[0])
+  }
+
+  setRollout = (value: number) => {
+    this.rolloutPercentage = value
+  }
+
+  toJS() {
+    return {
+      name: this.filter.name,
+      rolloutPercentage: this.rolloutPercentage,
+      filters: this.filter.filters.map(f => f.toJson()),
+    }
   }
 }
 
@@ -22,6 +34,10 @@ const initData = {
   conditions: [new Conditions()],
   description: '',
   featureFlagId: 0,
+  createdAt: 0,
+  updatedAt: 0,
+  createdBy: 0,
+  updatedBy: 0,
 }
 
 export default class FeatureFlag {
@@ -38,7 +54,7 @@ export default class FeatureFlag {
   name: SingleFFlag['name'];
 
   constructor(data: SingleFFlag) {
-    Object.assign(this, initData, data)
+    Object.assign(this, initData, { ...data, isSingleOption: data.flagType === 'single' });
 
     makeAutoObservable(this);
   }
@@ -47,7 +63,7 @@ export default class FeatureFlag {
     return {
       name: this.name,
       flagKey: this.flagKey,
-      conditions: this.conditions,
+      conditions: this.conditions.map(c => c.toJS()),
       createdBy: this.createdBy,
       updatedBy: this.createdBy,
       createdAt: this.createdAt,

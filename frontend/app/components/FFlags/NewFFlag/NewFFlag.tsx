@@ -31,8 +31,9 @@ function NewFFlag({ siteId }: { siteId: string }) {
   };
 
   const onSave = () => {
-    featureFlagsStore.addFlag(current!);
-    history.push(withSiteId(fflags(), siteId));
+    featureFlagsStore.createFlag().then(() => {
+      history.push(withSiteId(fflags(), siteId));
+    });
   };
 
   if (!current) return <Loader loading={true} />;
