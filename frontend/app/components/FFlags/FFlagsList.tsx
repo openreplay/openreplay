@@ -1,16 +1,19 @@
 import React from 'react';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { NoContent, Loader } from 'UI';
+import { Loader, NoContent } from 'UI';
 import FFlagItem from './FFlagItem';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import Select from 'Shared/Select';
+import { Activity } from 'App/mstore/featureFlagsStore';
 
 function FFlagsList({ siteId }: { siteId: string }) {
-  const { featureFlagsStore } = useStore();
+  const { featureFlagsStore, userStore } = useStore();
 
   React.useEffect(() => {
     void featureFlagsStore.fetchFlags();
+    void userStore.fetchUsers();
   }, []);
 
   return (
@@ -39,9 +42,39 @@ function FFlagsList({ siteId }: { siteId: string }) {
           >
             <div>
               <div className={'border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4'}>
-                <div>status</div>
+                <div className={'flex items-center gap-2'}>
+                  Status:
+                  <Select
+                    options={[
+                      { label: 'All', value: '0' },
+                      { label: 'Only active', value: '1' },
+                      { label: 'Only inactive', value: '2' },
+                    ]}
+                    defaultValue={featureFlagsStore.activity}
+                    plain
+                    onChange={
+                    ({ value }) => {
+                      featureFlagsStore.setActivity(value.value);
+                      void featureFlagsStore.fetchFlags();
+                    }}
+                  />
+                </div>
                 <div>All feature flags</div>
-                <div>Newest</div>
+                <div>
+                  <Select
+                    options={[
+                      { label: 'Newest', value: 'DESC' },
+                      { label: 'Oldest', value: 'ASC' },
+                    ]}
+                    defaultValue={featureFlagsStore.sort.order}
+                    plain
+                    onChange={
+                      ({ value }) => {
+                        featureFlagsStore.setSort({ query: '', order: value.value })
+                        void featureFlagsStore.fetchFlags();
+                      }}
+                  />
+                </div>
               </div>
               <div className={'flex items-center font-semibold border-b py-2'}>
                 <div style={{ flex: 1 }}>Key</div>

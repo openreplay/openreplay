@@ -12,8 +12,10 @@ function FFlagsSearch() {
 
   useEffect(() => {
     debounceUpdate = debounce(
-      (value: string) =>
-        featureFlagsStore.setFlagsSearch(value),
+      (value: string) => {
+        featureFlagsStore.setSort({ order: featureFlagsStore.sort.order, query: value })
+        void featureFlagsStore.fetchFlags()
+      },
       250
     );
   }, []);

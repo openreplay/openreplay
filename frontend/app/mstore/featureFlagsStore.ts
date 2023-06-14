@@ -2,6 +2,11 @@ import { makeAutoObservable } from 'mobx';
 import FeatureFlag from './types/FeatureFlag';
 import { fflagsService } from 'App/services';
 
+type All = '0'
+type Active = '1'
+type Inactive = '2'
+export type Activity = All | Active | Inactive
+
 export default class FeatureFlagsStore {
   currentFflag: FeatureFlag | null = null;
   isDescrEditing: boolean = false;
@@ -9,6 +14,7 @@ export default class FeatureFlagsStore {
   flags: FeatureFlag[] = [];
   isLoading: boolean = false;
   flagsSearch: string = '';
+  activity: Activity = '0';
   sort = { order: 'DESC', query: '' };
   page: number = 1;
   readonly pageSize: number = 10;
@@ -58,6 +64,14 @@ export default class FeatureFlagsStore {
     this.isLoading = isLoading;
   };
 
+  setActivity = (activity: Activity) => {
+    this.activity = activity;
+  }
+
+  setSort = (sort: { order: string, query: string }) => {
+    this.sort = sort;
+  }
+
   fetchFlags = async () => {
     this.setLoading(true);
     try {
@@ -66,7 +80,7 @@ export default class FeatureFlagsStore {
         page: this.page,
         order: this.sort.order,
         query: this.sort.query,
-        // isActive: false,
+        isActive: this.activity === '0' ? undefined : this.activity === '1',
         // userId: 3,
       }
       const { list } = await fflagsService.fetchFlags(filters);
