@@ -13,7 +13,7 @@ from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import SAML2_helper
+from chalicelib.utils import SAML2_helper, smtp
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -61,7 +61,7 @@ async def login_user(data: schemas.UserLoginSchema = Body(...)):
             detail=r["errors"][0]
         )
 
-    r["smtp"] = helper.has_smtp()
+    r["smtp"] = smtp.has_smtp()
     content = {
         'jwt': r.pop('jwt'),
         'data': {
@@ -89,7 +89,7 @@ async def get_account(context: schemas.CurrentContext = Depends(OR_context)):
             **r,
             **t,
             **license.get_status(context.tenant_id),
-            "smtp": helper.has_smtp(),
+            "smtp": smtp.has_smtp(),
             "saml2": SAML2_helper.is_saml2_available(),
             # "iceServers": assist.get_ice_servers()
         }

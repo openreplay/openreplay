@@ -2,7 +2,7 @@ from decouple import config
 
 import schemas
 from chalicelib.core import users
-from chalicelib.utils import email_helper, captcha, helper
+from chalicelib.utils import email_helper, captcha, helper, smtp
 
 
 def reset(data: schemas.ForgetPasswordPayloadSchema):
@@ -10,7 +10,7 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         print("error: Invalid captcha.")
         return {"errors": ["Invalid captcha."]}
-    if not helper.has_smtp():
+    if not smtp.has_smtp():
         return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
     a_user = users.get_by_email_only(data.email)
     if a_user is not None:
