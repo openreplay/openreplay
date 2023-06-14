@@ -57,6 +57,7 @@ export default class FeatureFlag {
   isSingleOption: boolean
   featureFlagId: SingleFFlag['featureFlagId']
   name: SingleFFlag['name'];
+  flagType: string;
 
   constructor(data: SingleFFlag) {
     Object.assign(

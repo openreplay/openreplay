@@ -78,10 +78,9 @@ function FFlagsList({ siteId }: { siteId: string }) {
               </div>
               <div className={'flex items-center font-semibold border-b py-2'}>
                 <div style={{ flex: 1 }}>Key</div>
-                <div style={{ flex: 1 }}>Rollout condition</div>
                 <div style={{ flex: 1 }}>Last modified</div>
                 <div style={{ flex: 1 }}>Last modified by</div>
-                <div style={{ flex: 1 }}>Status</div>
+                <div style={{ marginLeft: 'auto', width: 115 }}>Status</div>
               </div>
 
               {featureFlagsStore.flags.map((flag) => (

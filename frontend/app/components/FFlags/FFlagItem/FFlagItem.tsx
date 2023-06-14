@@ -16,31 +16,33 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const flagOwner = flag.updatedBy || flag.createdBy
   const user = userStore.list.length > 0 ? userStore.list.find(u => u.userId === flagOwner)?.name : flagOwner;
   return (
-    <div className={'flex items-center w-full py-2 border-b'}>
-      <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
-        <div className={'flex items-center gap-2'}>
-          <div className={'p-2 bg-gray-lightest'}>
-            <Icon name={flag.isSingleOption ? 'flag-single' : 'fflag-multi'} />
+    <div className={'w-full py-2 border-b'}>
+      <div className={'flex items-center'}>
+        <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
+          <div className={'flex items-center gap-2 link'}>
+            <div className={'p-2 bg-gray-lightest'}>
+              <Icon name={flag.isSingleOption ? 'flag-single' : 'fflag-multi'} />
+            </div>
+            {flag.flagKey}
           </div>
-          {flag.flagKey}
+        </Link>
+        <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
+        <div style={{ flex: 1 }} className={'flex items-center gap-2'}>
+          <Icon name={'person-fill'} />
+          {user}
         </div>
-      </Link>
-      <div style={{ flex: 1 }}>no conditions from api</div>
-      <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
-      <div style={{ flex: 1 }} className={"flex items-center gap-2"}>
-        <Icon name={'person-fill'} />
-        {user}
+        <div style={{ marginLeft: 'auto', width: 115 }}>
+          <Toggler
+            checked={flag.isActive}
+            name={'persist-flag'}
+            label={flag.isActive ? 'Enabled' : 'Disabled'}
+            onChange={toggleActivity}
+          />
+        </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <Toggler
-          checked={flag.isActive}
-          name={'persist-flag'}
-          label={flag.isActive ? 'Enabled' : 'Disabled'}
-          onChange={toggleActivity}
-        />
-      </div>
+      {flag.description ? <div className={'text-disabled-text pt-2'}>{flag.description}</div> : null}
     </div>
-  )
+  );
 }
 
 export default observer(FFlagItem);

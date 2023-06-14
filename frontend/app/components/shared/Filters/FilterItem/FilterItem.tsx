@@ -21,8 +21,6 @@ function FilterItem(props: Props) {
     const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false, excludeFilterKeys = [] } = props;
     const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
     const isSubFilter = filter.type === FilterType.SUB_FILTERS;
-
-    console.log(isFilter, filter, )
     const replaceFilter = (filter: any) => {
         props.onUpdate({
             ...filter,

@@ -56,7 +56,6 @@ export default class Filter {
 
     fromJson(json: any) {
         this.name = json.name
-        console.log(json.filters, 'json.filters')
         this.filters = json.filters.map(i => new FilterItem().fromJson(i))
         this.eventsOrder = json.eventsOrder
         return this
