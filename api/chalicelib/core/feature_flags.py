@@ -28,16 +28,18 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
     constraints = [
         "feature_flags.project_id = %(project_id)s",
         "feature_flags.deleted_at IS NULL",
-        "feature_flags.is_active = %(is_active)s"
     ]
 
     params = {
         "project_id": project_id,
         "user_id": user_id,
         "limit": data.limit,
-        "is_active": data.is_active,
         "offset": (data.page - 1) * data.limit,
     }
+
+    if data.is_active is not None:
+        constraints.append("feature_flags.is_active=%(is_active)s")
+        params["is_active"] = data.is_active
 
     if data.user_id is not None:
         constraints.append("feature_flags.created_by=%(user_id)s")

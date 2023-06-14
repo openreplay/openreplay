@@ -1396,7 +1396,7 @@ class SearchFlagsSchema(_PaginatedSchema):
     user_id: Optional[int] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
     query: Optional[str] = Field(default=None)
-    is_active: bool = Field(default=True)
+    is_active: Optional[bool] = Field(default=None)
 
     class Config:
         alias_generator = attribute_to_camel_case
