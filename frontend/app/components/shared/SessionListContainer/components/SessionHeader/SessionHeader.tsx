@@ -23,6 +23,7 @@ function SessionHeader(props: Props) {
     filter: { startDate, endDate, rangeValue },
     activeTab,
     isEnterprise,
+    listCount,
   } = props;
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
@@ -51,8 +52,12 @@ function SessionHeader(props: Props) {
             <>
               <SessionTags />
               <div className="mr-auto" />
-              <SelectDateRange period={period} onChange={onDateChange} right={true} />
-              <div className="mx-2" />
+              {listCount > 0 && (
+                <>
+                  <SelectDateRange period={period} onChange={onDateChange} right={true} />
+                  <div className="mx-2" />
+                </>
+              )}
             </>
           )}
           <SessionSort />
@@ -72,7 +77,7 @@ function SessionHeader(props: Props) {
 export default connect(
   (state: any) => ({
     filter: state.getIn(['search', 'instance']),
-    listCount: numberWithCommas(state.getIn(['sessions', 'total'])),
+    listCount: state.getIn(['sessions', 'total']),
     activeTab: state.getIn(['search', 'activeTab', 'type']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
   }),
