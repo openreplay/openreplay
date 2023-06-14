@@ -18,18 +18,18 @@ from utils import pg_client
 from psycopg2 import InterfaceError
 from utils.signal_handler import signal_handler
 
-def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE, projectFilter):
+def process_message(msg, codec, sessions, batch, sessions_batch, interesting_sessions, interesting_events, EVENT_TYPE, projectFilter, broken_batchs = 0):
     if msg is None:
         return
     messages = codec.decode_detailed(msg.value())
     try:
         session_id = codec.decode_key(msg.key())
     except Exception as e:
-        print('[WARN] Broken sessionid')
-        print(e)
+        broken_batchs = broken_batchs + 1
+        # print('[WARN] Broken sessionid')
+        # print(e)
         return
     if messages is None:
-        print('-')
         return
     elif not projectFilter.is_valid(session_id):
         # We check using projectFilter if session_id is from the selected projects
@@ -60,7 +60,7 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
                         try:
                             del sessions[sess_id]
                         except KeyError:
-                            print('[INFO] Session already deleted')
+                            ...
                 else:
                     print('[WARN] Session not started received SessionEnd message')
                     del sessions[session_id]
@@ -78,9 +78,9 @@ def process_message(msg, codec, sessions, batch, sessions_batch, interesting_ses
 def attempt_session_insert(sess_batch, db, sessions_table_name, try_=0):
     if sess_batch:
         try:
-            print("inserting sessions...")
+            #print("inserting sessions...")
             insert_batch(db, sess_batch, table=sessions_table_name, level='sessions')
-            print("inserted sessions succesfully")
+            #print("inserted sessions succesfully")
         except TypeError as e:
             print("Type conversion error")
             print(repr(e))
@@ -99,7 +99,7 @@ def attempt_session_insert(sess_batch, db, sessions_table_name, try_=0):
 def attempt_session_update(sess_batch, db, sessions_table_name):
     if sess_batch:
         try:
-            print('updating sessions')
+            #print('updating sessions')
             update_batch(db, sess_batch, table=sessions_table_name)
         except TypeError as e:
             print('Type conversion error')
@@ -117,9 +117,9 @@ def attempt_session_update(sess_batch, db, sessions_table_name):
 def attempt_batch_insert(batch, db, table_name, EVENT_TYPE, try_=0):
     # insert a batch
     try:
-        print("inserting...")
+        #print("inserting...")
         insert_batch(db=db, batch=batch, table=table_name, level=EVENT_TYPE)
-        print("inserted succesfully")
+        #print("inserted succesfully")
     except TypeError as e:
         print("Type conversion error")
         print(repr(e))
@@ -201,12 +201,15 @@ async def main():
 
     c_time = time()
     read_msgs = 0
+    broken_batchs = 0
     while signal_handler.KEEP_PROCESSING:
         msg = consumer.poll(1.0)
-        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, EVENT_TYPE, project_filter)
+        process_message(msg, codec, sessions, batch, sessions_batch, sessions_events_selection, selected_events, EVENT_TYPE, project_filter, broken_batchs)
         read_msgs += 1
         if time() - c_time > upload_rate:
-            print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
+            #print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
+            if broken_batchs > 0:
+                print(f'[WARN] {broken_batchs} broken sessionIds')
             await insertBatch(deepcopy(sessions_batch), deepcopy(batch), db, sessions_table_name, table_name, EVENT_TYPE)
             consumer.commit()
             try:
@@ -232,7 +235,7 @@ async def insertBatch(sessions_batch, batch, db, sessions_table_name, table_name
             updated_sessions.append(session_in_batch)
         else:
             new_sessions.append(session_in_batch)
-    print(f'[DEBUG] Number of new sessions {len(new_sessions)}, number of sessions to update {len(updated_sessions)}')
+    #print(f'[DEBUG] Number of new sessions {len(new_sessions)}, number of sessions to update {len(updated_sessions)}')
     if new_sessions != []:
         attempt_session_insert(new_sessions, db, sessions_table_name)
 
