@@ -38,7 +38,7 @@ function Assist(props: Props) {
               active={isRecords}
               id="menu-rec"
               title="Offline Playback"
-              iconName="file-play"
+              iconName="record-btn"
               onClick={() => redirect(recordings())}
               disabled={!isEnterprise}
               tooltipTitle={ENTERPRISE_REQUEIRED}
