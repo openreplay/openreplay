@@ -8,7 +8,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
-from chalicelib.utils import helper, email_helper
+from chalicelib.utils import helper, email_helper, smtp
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -575,7 +575,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True, user_id=user_id)
-    c["smtp"] = helper.has_smtp()
+    c["smtp"] = smtp.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),

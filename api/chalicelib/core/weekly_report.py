@@ -1,4 +1,4 @@
-from chalicelib.utils import pg_client, helper, email_helper
+from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import get_issue_title
 
@@ -29,7 +29,7 @@ def edit_config(user_id, weekly_report):
 
 
 def cron():
-    if not helper.has_smtp():
+    if not smtp.has_smtp():
         print("!!! No SMTP configuration found, ignoring weekly report")
         return
     _now = TimeUTC.now()

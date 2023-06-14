@@ -9,7 +9,7 @@ import schemas
 from chalicelib.core import notifications, webhook
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import pg_client, helper, email_helper
+from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -157,7 +157,7 @@ def send_by_email(notification, destination):
 
 
 def send_by_email_batch(notifications_list):
-    if not helper.has_smtp():
+    if not smtp.has_smtp():
         logging.info("no SMTP configuration for email notifications")
     if notifications_list is None or len(notifications_list) == 0:
         logging.info("no email notifications")

@@ -12,15 +12,14 @@ psycopg2-binary = "==2.9.6"
 elasticsearch = "==8.8.0"
 jira = "==3.5.1"
 fastapi = "==0.96.0"
+uvicorn = {version = "==0.22.0", extras = ["standard"]}
 python-decouple = "==3.8"
+pydantic = {version = "==1.10.8", extras = ["email"]}
 apscheduler = "==3.10.1"
-python3-saml = "==1.15.0"
+clickhouse-driver = {version = "==0.2.5", extras = ["lz4"]}
 python-multipart = "==0.0.6"
 redis = "==4.5.5"
 azure-storage-blob = "==12.16.0"
-uvicorn = {version = "==0.22.0", extras = ["standard"]}
-pydantic = {version = "==1.10.8", extras = ["email"]}
-clickhouse-driver = {version = "==0.2.5", extras = ["lz4"]}
 
 [dev-packages]
 
