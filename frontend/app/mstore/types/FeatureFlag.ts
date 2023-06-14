@@ -7,9 +7,14 @@ class Conditions {
   rolloutPercentage = 100;
   filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
 
-  constructor() {
+  constructor(data?: Record<string, any>) {
     makeAutoObservable(this)
-    this.filter.addFilter(flagConditionFilters[0])
+    if (data) {
+      this.rolloutPercentage = data.rolloutPercentage
+      this.filter = new Filter().fromJson(data)
+    } else {
+      this.filter.addFilter(flagConditionFilters[0])
+    }
   }
 
   setRollout = (value: number) => {
@@ -31,7 +36,7 @@ const initData = {
   isActive: false,
   isPersist: false,
   isSingleOption: true,
-  conditions: [new Conditions()],
+  conditions: [],
   description: '',
   featureFlagId: 0,
   createdAt: 0,
@@ -54,7 +59,14 @@ export default class FeatureFlag {
   name: SingleFFlag['name'];
 
   constructor(data: SingleFFlag) {
-    Object.assign(this, initData, { ...data, isSingleOption: data.flagType === 'single' });
+    Object.assign(
+      this,
+      initData,
+      {
+        ...data,
+        isSingleOption: data.flagType === 'single',
+        conditions: data.conditions?.map(c => new Conditions(c)) || [new Conditions()],
+      });
 
     makeAutoObservable(this);
   }

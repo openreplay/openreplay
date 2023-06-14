@@ -17,7 +17,7 @@ interface Props {
 }
 function FilterList(props: Props) {
   const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads, supportsEmpty = true, excludeFilterKeys = [] } = props;
-  console.log(filter.filters)
+  console.log(filter)
   const filters = List(filter.filters);
   const eventsOrderSupport = filter.eventsOrderSupport;
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;

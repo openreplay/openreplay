@@ -43,7 +43,7 @@ export default class FeatureFlagsStore {
   };
 
   getFlagById = (id: string) => {
-    return this.flags.find((f) => f.name === id);
+    return this.flags.find((f) => f.featureFlagId === parseInt(id, 10));
   };
 
   setCurrentFlag = (flag: FeatureFlag | null) => {
@@ -123,7 +123,7 @@ export default class FeatureFlagsStore {
   fetchFlag = async (id: FeatureFlag['featureFlagId']) => {
     this.setLoading(true);
     try {
-      const result = await fflagsService.fetchFlag(id);
+      const result = await fflagsService.getFlag(id);
       this.setCurrentFlag(new FeatureFlag(result));
     } catch (e) {
       console.error(e);

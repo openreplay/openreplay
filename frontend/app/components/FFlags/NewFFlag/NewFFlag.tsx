@@ -6,20 +6,28 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
 import { useHistory } from 'react-router';
-import { withSiteId, fflags } from 'App/routes';
+import { withSiteId, fflags, fflag } from 'App/routes';
 import Description from './Description';
 import Header from './Header';
 import RolloutCondition from './Conditions'
 
-function NewFFlag({ siteId }: { siteId: string }) {
+function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
   const { featureFlagsStore } = useStore();
+
+  React.useEffect(() => {
+    if (fflagId) {
+      void featureFlagsStore.fetchFlag(fflagId);
+    } else {
+      featureFlagsStore.initNewFlag();
+    }
+  }, [fflagId]);
+
   const current = featureFlagsStore.currentFflag;
   const { showModal } = useModal();
   const history = useHistory();
 
-  React.useEffect(() => {
-    featureFlagsStore.initNewFlag();
-  }, []);
+  if (!current) return <Loader loading={true} />;
+
 
   const onImplementClick = () => {
     showModal(<HowTo />, { right: true, width: 450 });
@@ -31,12 +39,14 @@ function NewFFlag({ siteId }: { siteId: string }) {
   };
 
   const onSave = () => {
-    featureFlagsStore.createFlag().then(() => {
-      history.push(withSiteId(fflags(), siteId));
-    });
+    if (fflagId) {
+      void featureFlagsStore.updateFlag();
+    } else {
+      featureFlagsStore.createFlag().then(() => {
+        history.push(withSiteId(fflags(), siteId));
+      });
+    }
   };
-
-  if (!current) return <Loader loading={true} />;
 
   const showDescription = Boolean(current.description.length);
   return (
