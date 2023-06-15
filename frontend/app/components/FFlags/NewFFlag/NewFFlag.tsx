@@ -6,10 +6,11 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
 import { useHistory } from 'react-router';
-import { withSiteId, fflags, fflag } from 'App/routes';
+import { withSiteId, fflags } from 'App/routes';
 import Description from './Description';
 import Header from './Header';
 import RolloutCondition from './Conditions'
+import Multivariant from './Multivariant';
 
 function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
   const { featureFlagsStore } = useStore();
@@ -72,10 +73,10 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
         <label className={'font-semibold'}>Key</label>
         <Input
           type="text"
-          placeholder={'new_unique_key'}
+          placeholder={'new-unique-key'}
           value={current.flagKey}
           onChange={(e) => {
-            current.setFlagKey(e.target.value.replace(/\s/g, '_'));
+            current.setFlagKey(e.target.value.replace(/\s/g, '-'));
           }}
         />
         <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
@@ -118,7 +119,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
               <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
               one or more rollout conditions.
             </div>
-          ) : null}
+          ) : <Multivariant />}
         </div>
 
         <div className={'mt-4'}>

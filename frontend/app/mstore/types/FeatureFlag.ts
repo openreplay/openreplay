@@ -45,6 +45,41 @@ const initData = {
   updatedBy: 0,
 }
 
+class Variant {
+  index: number;
+  key: string = '';
+  description: string = '';
+  payload: string = '';
+  rollout: number = 100;
+
+  constructor(index) {
+    makeAutoObservable(this)
+    this.index = index;
+  }
+
+  setIndex = (index: number) => {
+    this.index = index;
+  }
+
+  setKey = (key: string) => {
+    this.key = key.replace(/\s/g, '-');
+  }
+
+  setDescription = (description: string) => {
+    this.description = description;
+  }
+
+  setPayload = (payload: string) => {
+    this.payload = payload;
+  }
+
+  setRollout = (rollout: number) => {
+    if (rollout <= 100) {
+      this.rollout = rollout;
+    }
+  }
+}
+
 export default class FeatureFlag {
   flagKey: SingleFFlag['flagKey']
   conditions: SingleFFlag['conditions']
@@ -58,6 +93,7 @@ export default class FeatureFlag {
   featureFlagId: SingleFFlag['featureFlagId']
   name: SingleFFlag['name'];
   flagType: string;
+  variants: Variant[] = [new Variant(1)];
 
   constructor(data: SingleFFlag) {
     Object.assign(
@@ -70,6 +106,25 @@ export default class FeatureFlag {
       });
 
     makeAutoObservable(this);
+  }
+
+  addVariant = () => {
+    this.variants.push(new Variant(this.variants.length + 1))
+    this.redistributeVariants()
+  }
+
+  removeVariant = (index: number) => {
+    this.variants = this.variants.filter(v => v.index !== index)
+  }
+
+  get isRedDistribution() {
+    console.log(this.variants, Math.floor(this.variants.reduce((acc, v) => acc + v.rollout, 0)/this.variants.length), Math.floor(100 / this.variants.length))
+    return Math.floor(this.variants.reduce((acc, v) => acc + v.rollout, 0)/this.variants.length) !== Math.floor(100 / this.variants.length)
+  }
+
+  redistributeVariants = () => {
+    const newRolloutDistribution = Math.floor(100 / this.variants.length)
+    this.variants.forEach(v => v.setRollout(newRolloutDistribution))
   }
 
   toJS() {
