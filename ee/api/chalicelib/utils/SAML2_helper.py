@@ -76,6 +76,9 @@ def init_saml_auth(req):
 
 
 async def prepare_request(request: Request):
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    print(SAML2)
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
@@ -140,6 +143,3 @@ def get_landing_URL(jwt):
 
 
 environ["hastSAML2"] = str(is_saml2_available())
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-print(SAML2)
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
