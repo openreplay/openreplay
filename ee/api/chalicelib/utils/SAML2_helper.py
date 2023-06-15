@@ -106,7 +106,13 @@ async def prepare_request(request: Request, initial: bool = False):
     path = request.url.path
     site_url = urlparse(config("SITE_URL"))
     host_suffix = ""
+    print("-------------")
+    print(f"site port:{site_url.port}")
+    print(f"req port:{request.url.port}")
+    print(f"initial: {initial}")
+    print("-------------")
     if site_url.port is not None and (initial or request.url.port is None):
+        print(">>>adding suffix")
         host_suffix = f":{site_url.port}"
 
     # add / to /acs
