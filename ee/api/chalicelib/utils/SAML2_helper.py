@@ -89,9 +89,9 @@ async def prepare_request(request: Request):
     # print(request.base_url)
     # print(request.base_url.path)
     # print(request.base_url.port)
-    if request.url.port is None:
-        # request.url.port = 443
-        request.url.__setattr__("port",443)
+    # if request.url.port is None:
+    #     # request.url.port = 443
+    #     request.url.__setattr__("port",443)
     print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
@@ -122,7 +122,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host'],
+        'http_host': request.headers['host']+"443",
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
