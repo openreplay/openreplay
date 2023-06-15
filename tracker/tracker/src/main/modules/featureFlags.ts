@@ -7,7 +7,7 @@ export interface IFeatureFlag {
   payload: string
 }
 
-interface PersistFlagsData {
+export interface PersistFlagsData {
   key: string
   value: string | boolean
 }
@@ -59,7 +59,6 @@ export default class FeatureFlags {
     })
     if (resp.status === 200) {
       const data: { flags: IFeatureFlag[] } = await resp.json()
-      console.log(data)
       return this.handleFlags(data.flags)
     }
   }
@@ -69,9 +68,15 @@ export default class FeatureFlags {
     Object.values(flags).forEach((flag) => {
       if (flag.is_persist) persistFlags.push({ key: flag.key, value: flag.value })
     })
-    this.app.localStorage.setItem(this.storageKey, this.diffPersist(persistFlags).join(','))
+    let str = ''
+    const uniqueFlags = this.diffPersist(persistFlags)
+    uniqueFlags.forEach((flag) => {
+      str += `${JSON.stringify(flag)};`
+    })
+
+    this.app.localStorage.setItem(this.storageKey, str)
     this.flags = flags
-    return this.onFlagsCb(flags)
+    return this.onFlagsCb?.(flags)
   }
 
   clearPersistFlags() {
@@ -81,10 +86,8 @@ export default class FeatureFlags {
   diffPersist(flags: PersistFlagsData[]) {
     const persistFlags = this.app.localStorage.getItem(this.storageKey)
     if (!persistFlags) return flags
-    const persistFlagsArr = persistFlags.split(',')
-    const uniqueFlags = flags.filter(
-      (flag) => persistFlagsArr.findIndex((pf) => pf.includes(flag.key)) === -1,
-    )
-    return [...uniqueFlags, flags]
+    const persistFlagsStrArr = persistFlags.split(';')
+    const persistFlagsArr = persistFlagsStrArr.map((flag) => JSON.parse(flag))
+    return flags.filter((flag) => persistFlagsArr.findIndex((pf) => pf.key === flag.key) === -1)
   }
 }
