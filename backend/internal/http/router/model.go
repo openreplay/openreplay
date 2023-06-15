@@ -33,23 +33,23 @@ type NotStartedRequest struct {
 }
 
 type FeatureFlagsRequest struct {
-	ProjectID          string            `json:"projectID"`
-	UserOS             string            `json:"os"`
-	UserOSVersion      string            `json:"osVersion"`
-	UserDevice         string            `json:"device"`
-	UserCountry        string            `json:"country"`
-	UserState          string            `json:"state"`
-	UserCity           string            `json:"city"`
-	UserAgent          string            `json:"ua"`
-	UserBrowser        string            `json:"browser"`
-	UserBrowserVersion string            `json:"browserVersion"`
-	UserDeviceType     string            `json:"deviceType"`
-	Referrer           string            `json:"referrer"`
-	UserID             string            `json:"userID"`
-	Metadata           map[string]string `json:"metadata"`
-	PersistFlags       map[string]string `json:"persistFlags"`
+	ProjectID          string                 `json:"projectID"`
+	UserOS             string                 `json:"os"`
+	UserOSVersion      string                 `json:"osVersion"`
+	UserDevice         string                 `json:"device"`
+	UserCountry        string                 `json:"country"`
+	UserState          string                 `json:"state"`
+	UserCity           string                 `json:"city"`
+	UserAgent          string                 `json:"ua"`
+	UserBrowser        string                 `json:"browser"`
+	UserBrowserVersion string                 `json:"browserVersion"`
+	UserDeviceType     string                 `json:"deviceType"`
+	Referrer           string                 `json:"referrer"`
+	UserID             string                 `json:"userID"`
+	Metadata           map[string]string      `json:"metadata"`
+	PersistFlags       map[string]interface{} `json:"persistFlags"` // bool or string
 }
 
 type FeatureFlagsResponse struct {
-	Flags []interface{} `json:"flags"` // interface - flag{is_persist, value, payload}
+	Flags []interface{} `json:"flags"` // interface - flag{key, is_persist, value, payload}
 }
