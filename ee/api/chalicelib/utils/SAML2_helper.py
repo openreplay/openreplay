@@ -159,6 +159,3 @@ def get_landing_URL(jwt):
 
 
 environ["hastSAML2"] = str(is_saml2_available())
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-print(SAML2)
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
