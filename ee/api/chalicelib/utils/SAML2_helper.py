@@ -70,6 +70,9 @@ else:
 
 def init_saml_auth(req):
     # auth = OneLogin_Saml2_Auth(req, custom_base_path=environ['SAML_PATH'])
+    print("--------------------")
+    print(dir(req))
+    print("--------------------")
     if idp is None:
         raise Exception("No SAML2 config provided")
     return OneLogin_Saml2_Auth(req, old_settings=SAML2)
