@@ -108,6 +108,7 @@ async def prepare_request(request: Request, initial: bool = False):
     print(f"req port:{request.url.port}")
     print(f"initial: {initial}")
     print("-------------")
+    initial=False
     if site_url.port is not None and (initial or request.url.port is None):
         print(">>>adding suffix")
         host_suffix = f":{site_url.port}"
