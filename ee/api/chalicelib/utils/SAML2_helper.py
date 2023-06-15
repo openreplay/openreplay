@@ -80,19 +80,6 @@ async def prepare_request(request: Request):
     form: FormData = await request.form()
     request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
-    print(dir(request))
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
-    print(request.url)
-    print(request.url.port)
-    print(request.url.path)
-    # print(request.base_url)
-    # print(request.base_url.path)
-    # print(request.base_url.port)
-    # if request.url.port is None:
-    #     # request.url.port = 443
-    #     request.url.__setattr__("port",443)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
         cookie.load(cookie_str)
@@ -113,6 +100,10 @@ async def prepare_request(request: Request):
     if headers.get('x-forwarded-proto') is not None:
         print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
+    site_url = urlparse(config("SITE_URL"))
+    host_suffix = ""
+    if site_url.port is not None and request.url.port is None:
+        host_suffix = f":{site_url.port}"
     path = request.url.path
     # add / to /acs
     if not path.endswith("/"):
@@ -122,7 +113,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host']+"443",
+        'http_host': request.headers['host'] + host_suffix,
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
