@@ -76,9 +76,6 @@ def init_saml_auth(req):
 
 
 async def prepare_request(request: Request):
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    print(SAML2)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
@@ -103,11 +100,6 @@ async def prepare_request(request: Request):
     if headers.get('x-forwarded-proto') is not None:
         print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
-    site_url = urlparse(config("SITE_URL"))
-    # to support custom port without changing IDP config
-    host_suffix = ""
-    if site_url.port is not None and request.url.port is None:
-        host_suffix = f":{site_url.port}"
     path = request.url.path
     # add / to /acs
     if not path.endswith("/"):
@@ -117,7 +109,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host'] + host_suffix,
+        'http_host': request.headers['host'],
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
