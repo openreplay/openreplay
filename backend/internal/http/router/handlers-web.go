@@ -281,3 +281,84 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	ResponseOK(w, startTime, r.URL.Path, bodySize)
 }
+
+func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Check request body
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &FeatureFlagsRequest{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Grab flags and conditions for project
+	projectID, err := strconv.ParseUint(req.ProjectID, 10, 32)
+	if err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	flags, err := e.services.Database.GetFeatureFlags(uint32(projectID))
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Return mock response
+	resp := &FeatureFlagsResponse{
+		Flags: []interface{}{},
+	}
+
+	type ff struct {
+		Key       string      `json:"key"`
+		IsPersist bool        `json:"is_persist"`
+		Value     interface{} `json:"value"`
+		Payload   string      `json:"payload"`
+	}
+
+	randomValue := func(key string, i int) interface{} {
+		switch i % 3 {
+		case 0:
+			return true
+		case 1:
+			return false
+		case 2:
+			return fmt.Sprintf("%s_value", key)
+		}
+		return sessionData.ID
+	}
+
+	for i, flag := range flags {
+		resp.Flags = append(resp.Flags, ff{
+			Key:       flag.FlagKey,
+			IsPersist: flag.IsPersist,
+			Value:     randomValue(flag.FlagKey, i),
+			Payload:   string(bodyBytes),
+		})
+	}
+
+	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
+}

@@ -101,9 +101,10 @@ func (e *Router) init() {
 	e.router.HandleFunc("/", e.root)
 
 	handlers := map[string]func(http.ResponseWriter, *http.Request){
-		"/v1/web/not-started": e.notStartedHandlerWeb,
-		"/v1/web/start":       e.startSessionHandlerWeb,
-		"/v1/web/i":           e.pushMessagesHandlerWeb,
+		"/v1/web/not-started":   e.notStartedHandlerWeb,
+		"/v1/web/start":         e.startSessionHandlerWeb,
+		"/v1/web/i":             e.pushMessagesHandlerWeb,
+		"/v1/web/feature-flags": e.featureFlagsHandlerWeb,
 	}
 	prefix := "/ingest"
 
