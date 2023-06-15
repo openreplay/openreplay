@@ -80,6 +80,9 @@ async def prepare_request(request: Request):
     form: FormData = await request.form()
     request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
+    print(">>>>>>>>>>>>>>>>>>>>>>>>")
+    print(dir(request))
+    print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
         cookie.load(cookie_str)
