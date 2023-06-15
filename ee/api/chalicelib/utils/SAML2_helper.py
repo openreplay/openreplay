@@ -86,9 +86,12 @@ async def prepare_request(request: Request):
     print(request.url)
     print(request.url.port)
     print(request.url.path)
-    print(request.base_url)
-    print(request.base_url.path)
-    print(request.base_url.port)
+    # print(request.base_url)
+    # print(request.base_url.path)
+    # print(request.base_url.port)
+    if request.url.port is None:
+        request.url.port = 443
+        # request.url.__setattr__("port",443)
     print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
