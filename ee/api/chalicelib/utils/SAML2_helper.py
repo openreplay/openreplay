@@ -112,7 +112,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host'],
+        'http_host': request.headers['host']+":443",
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
