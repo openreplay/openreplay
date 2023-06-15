@@ -66,7 +66,7 @@ export default class FeatureFlags {
 
   handleFlags(flags: IFeatureFlag[]) {
     const persistFlags: PersistFlagsData[] = []
-    Object.values(flags).forEach((flag: Record<string, string>) => {
+    Object.values(flags).forEach((flag) => {
       if (flag.is_persist) persistFlags.push({ key: flag.key, value: flag.value })
     })
     this.app.localStorage.setItem(this.storageKey, this.diffPersist(persistFlags).join(','))
@@ -82,7 +82,9 @@ export default class FeatureFlags {
     const persistFlags = this.app.localStorage.getItem(this.storageKey)
     if (!persistFlags) return flags
     const persistFlagsArr = persistFlags.split(',')
-    const uniqueFlags = flags.filter((flag) => !persistFlagsArr.includes(flag))
+    const uniqueFlags = flags.filter(
+      (flag) => persistFlagsArr.findIndex((pf) => pf.includes(flag.key)) === -1,
+    )
     return [...uniqueFlags, flags]
   }
 }
