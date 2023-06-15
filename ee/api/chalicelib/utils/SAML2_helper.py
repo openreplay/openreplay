@@ -76,7 +76,7 @@ def init_saml_auth(req):
     return OneLogin_Saml2_Auth(req, old_settings=SAML2)
 
 
-async def prepare_request(request: Request, initial: bool = False):
+async def prepare_request(request: Request):
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
@@ -103,14 +103,10 @@ async def prepare_request(request: Request, initial: bool = False):
     site_url = urlparse(config("SITE_URL"))
     host_suffix = ""
     print("-------------")
-    print(f"acs:{SAML2['sp']}")
     print(f"site port:{site_url.port}")
     print(f"req port:{request.url.port}")
-    print(f"initial: {initial}")
     print("-------------")
-    initial=False
-    if site_url.port is not None and (initial or request.url.port is None):
-        print(">>>adding suffix")
+    if site_url.port is not None and request.url.port is None:
         host_suffix = f":{site_url.port}"
 
     # add / to /acs

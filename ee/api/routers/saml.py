@@ -17,7 +17,7 @@ from starlette.responses import RedirectResponse
 @public_app.get("/sso/saml2/", tags=["saml2"])
 async def start_sso(request: Request):
     request.path = ''
-    req = await prepare_request(request=request, initial=True)
+    req = await prepare_request(request=request)
     auth = init_saml_auth(req)
     sso_built_url = auth.login()
     return RedirectResponse(url=sso_built_url)
