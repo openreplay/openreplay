@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Toggler, Loader, Button } from 'UI';
+import { Input, SegmentSelection, Toggler, Loader, Button, NoContent } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
@@ -9,10 +9,10 @@ import { useHistory } from 'react-router';
 import { withSiteId, fflags } from 'App/routes';
 import Description from './Description';
 import Header from './Header';
-import RolloutCondition from './Conditions'
+import RolloutCondition from './Conditions';
 import Multivariant from './Multivariant';
 
-function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
+function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();
 
   React.useEffect(() => {
@@ -28,7 +28,6 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
   const history = useHistory();
 
   if (!current) return <Loader loading={true} />;
-
 
   const onImplementClick = () => {
     showModal(<HowTo />, { right: true, width: 450 });
@@ -51,7 +50,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
 
   const showDescription = Boolean(current.description.length);
   return (
-    <div className={'w-full mx-auto'} style={{ maxWidth: 1300 }}>
+    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
@@ -115,11 +114,13 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
           </div>
           {current.isSingleOption ? (
             <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
-              Users will be served{' '}
+              Users will be served
               <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
               one or more rollout conditions.
             </div>
-          ) : <Multivariant />}
+          ) : (
+            <Multivariant />
+          )}
         </div>
 
         <div className={'mt-4'}>
@@ -151,30 +152,51 @@ function NewFFlag({ siteId, fflagId }: { siteId: string, fflagId: string }) {
 
         <div className={'mt-4 p-4 rounded bg-gray-lightest'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
-          <div className={'text-sm text-disabled-text flex items-center gap-1'}>
-            Indicate the users for whom you intend to make this flag available. Keep in mind that
-            each set of conditions will be deployed separately from one another.
-          </div>
-          {current.conditions.map((condition, index) => (
-            <React.Fragment key={index}>
-              <RolloutCondition
-                set={index+1}
-                index={index}
-                conditions={condition}
-                addCondition={current.addCondition}
-                removeCondition={current.removeCondition}
-              />
-              <div className={"my-2 w-full text-center"}>OR</div>
-            </React.Fragment>
-          ))}
-          <div
-            onClick={() => current!.addCondition()}
-            className={"flex items-center justify-center w-full bg-white rounded border mt-2 p-2"}
+          {current.conditions.length === 0 ? null
+            : (
+              <div className={'text-sm text-disabled-text'}>
+                Indicate the users for whom you intend to make this flag available. Keep in mind that
+                each set of conditions will be deployed separately from one another.
+              </div>
+            )
+          }
+          <NoContent
+            show={current.conditions.length === 0}
+            title={'100% of sessions will get this feature flag'}
+            subtext={
+              <div className={"flex flex-col items-center"}>
+                <div className={'text-sm mb-1'}>
+                  Indicate the users for whom you intend to make this flag available.
+                </div>
+                <Button onClick={() => current!.addCondition()} variant={'text-primary'}>
+                  + Create Condition Set
+                </Button>
+              </div>
+            }
           >
-            <Button variant={"text-primary"}>
-              + Create Condition Set
-            </Button>
-          </div>
+            <>
+              {current.conditions.map((condition, index) => (
+                <React.Fragment key={index}>
+                  <RolloutCondition
+                    set={index + 1}
+                    index={index}
+                    conditions={condition}
+                    addCondition={current.addCondition}
+                    removeCondition={current.removeCondition}
+                  />
+                  <div className={'my-2 w-full text-center'}>OR</div>
+                </React.Fragment>
+              ))}
+              <div
+                onClick={() => current!.addCondition()}
+                className={
+                  'flex items-center justify-center w-full bg-white rounded border mt-2 p-2'
+                }
+              >
+                <Button variant={'text-primary'}>+ Create Condition Set</Button>
+              </div>
+            </>
+          </NoContent>
         </div>
       </div>
     </div>

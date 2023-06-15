@@ -102,7 +102,7 @@ export default class FeatureFlag {
       {
         ...data,
         isSingleOption: data?.flagType === 'single' || true,
-        conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
+        conditions: data?.conditions?.map(c => new Conditions(c)) || [],
       });
 
     makeAutoObservable(this);

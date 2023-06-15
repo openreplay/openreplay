@@ -109,7 +109,7 @@ export default class App {
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
-  private readonly options: AppOptions
+  public readonly options: AppOptions
   public readonly networkOptions?: NetworkOptions
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive

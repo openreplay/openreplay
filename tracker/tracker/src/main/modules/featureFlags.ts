@@ -1,8 +1,21 @@
 import App from '../app/index.js'
 
+export interface IFeatureFlag {
+  key: string
+  is_persist: boolean
+  value: string | boolean
+  payload: string
+}
+
+interface PersistFlagsData {
+  key: string
+  value: string | boolean
+}
+
 export default class FeatureFlags {
   flags: Record<string, any>
   storageKey = '__openreplay_flags'
+  onFlagsCb: (flags: Record<string, any>) => void
 
   constructor(private readonly app: App) {}
 
@@ -10,11 +23,11 @@ export default class FeatureFlags {
     return this.flags[flagName] && this.flags[flagName].enabled
   }
 
-  onFlagsLoad(cb: (flags: Record<string, any>) => void) {
-    return cb(this.flags)
+  onFlagsLoad(cb: (flags: IFeatureFlag[]) => void) {
+    return (this.onFlagsCb = cb)
   }
 
-  reloadFlags() {
+  async reloadFlags() {
     const sessionInfo = this.app.session.getInfo()
     const requestObject = {
       projectID: sessionInfo.projectID,
@@ -23,34 +36,49 @@ export default class FeatureFlags {
       referrer: document.referrer,
       featureFlags: this.flags,
       // todo: get from backend
-      os: '',
-      osVersion: '',
-      device: '',
-      country: '',
-      state: '',
-      city: '',
-      ua: '',
-      browser: '',
-      browserVersion: '',
-      deviceType: '',
+      os: 'test',
+      osVersion: 'test',
+      device: 'test',
+      country: 'test',
+      state: 'test',
+      city: 'test',
+      ua: 'test',
+      browser: 'test',
+      browserVersion: 'test',
+      deviceType: 'test',
+      persistFlags: this.app.localStorage.getItem(this.storageKey) || [],
     }
-    return this.flags
+
+    const resp = await fetch(this.app.options.ingestPoint + '/v1/web/feature-flags', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.app.session.getSessionToken() as string}`,
+      },
+      body: JSON.stringify(requestObject),
+    })
+    if (resp.status === 200) {
+      const data: { flags: IFeatureFlag[] } = await resp.json()
+      console.log(data)
+      return this.handleFlags(data.flags)
+    }
   }
 
-  handleFlags(flags: Record<string, any>) {
-    const persistFlags: string[] = []
+  handleFlags(flags: IFeatureFlag[]) {
+    const persistFlags: PersistFlagsData[] = []
     Object.values(flags).forEach((flag: Record<string, string>) => {
-      if (flag.persist) persistFlags.push(flag.name)
+      if (flag.is_persist) persistFlags.push({ key: flag.key, value: flag.value })
     })
     this.app.localStorage.setItem(this.storageKey, this.diffPersist(persistFlags).join(','))
     this.flags = flags
+    return this.onFlagsCb(flags)
   }
 
   clearPersistFlags() {
     this.app.localStorage.removeItem(this.storageKey)
   }
 
-  diffPersist(flags: string[]) {
+  diffPersist(flags: PersistFlagsData[]) {
     const persistFlags = this.app.localStorage.getItem(this.storageKey)
     if (!persistFlags) return flags
     const persistFlagsArr = persistFlags.split(',')
