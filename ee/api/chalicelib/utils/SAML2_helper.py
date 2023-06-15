@@ -78,7 +78,7 @@ def init_saml_auth(req):
     return OneLogin_Saml2_Auth(req, old_settings=SAML2)
 
 
-async def prepare_request(request: Request):
+async def prepare_request(request: Request, initial: bool = False):
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
@@ -104,6 +104,11 @@ async def prepare_request(request: Request):
         print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
     path = request.url.path
+    site_url = urlparse(config("SITE_URL"))
+    host_suffix = ""
+    if site_url.port is not None and (initial or request.url.port is None):
+        host_suffix = f":{site_url.port}"
+
     # add / to /acs
     if not path.endswith("/"):
         path = path + '/'
@@ -112,7 +117,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host']+":443",
+        'http_host': request.headers['host'] + host_suffix,
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
