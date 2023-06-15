@@ -114,6 +114,7 @@ async def prepare_request(request: Request):
     url_data = urlparse('%s://%s' % (proto, headers['host']))
     path = request.url.path
     site_url = urlparse(config("SITE_URL"))
+    # to support custom port without changing IDP config
     host_suffix = ""
     if site_url.port is not None and request.url.port is None:
         host_suffix = f":{site_url.port}"
