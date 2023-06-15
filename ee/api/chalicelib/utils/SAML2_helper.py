@@ -84,6 +84,13 @@ async def prepare_request(request: Request):
     print(">>>>>>>>>>>>>>>>>>>>>>>>")
     print(dir(request))
     print(">>>>>>>>>>>>>>>>>>>>>>>>")
+    print(request.url)
+    print(request.url.port)
+    print(request.url.path)
+    print(request.base_url)
+    print(request.base_url.path)
+    print(request.base_url.port)
+    print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
         cookie.load(cookie_str)
