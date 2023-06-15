@@ -1,3 +1,4 @@
+import logging
 from http import cookies
 from os import environ
 from urllib.parse import urlparse
@@ -63,16 +64,13 @@ if SAML2["idp"] is None:
             }
 
 if idp is None:
-    print("No SAML2 IdP configuration found")
+    logging.info("No SAML2 IdP configuration found")
 else:
     SAML2["idp"] = idp
 
 
 def init_saml_auth(req):
     # auth = OneLogin_Saml2_Auth(req, custom_base_path=environ['SAML_PATH'])
-    print("--------------------")
-    print(dir(req))
-    print("--------------------")
     if idp is None:
         raise Exception("No SAML2 config provided")
     return OneLogin_Saml2_Auth(req, old_settings=SAML2)
@@ -92,21 +90,20 @@ async def prepare_request(request: Request, initial: bool = False):
         for key, morsel in cookie.items():
             extracted_cookies[key] = morsel.value
         if "session" not in extracted_cookies:
-            print("!!! session not found in extracted_cookies")
-            print(extracted_cookies)
+            logging.info("!!! session not found in extracted_cookies")
+            logging.info(extracted_cookies)
         session = extracted_cookies.get("session", {})
     else:
         session = {}
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     headers = request.headers
     proto = headers.get('x-forwarded-proto', 'http')
-    if headers.get('x-forwarded-proto') is not None:
-        print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
     path = request.url.path
     site_url = urlparse(config("SITE_URL"))
     host_suffix = ""
     print("-------------")
+    print(f"acs:{SAML2['sp']}")
     print(f"site port:{site_url.port}")
     print(f"req port:{request.url.port}")
     print(f"initial: {initial}")
