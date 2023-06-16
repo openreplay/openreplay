@@ -13,12 +13,12 @@ function Description({
   showDescription: boolean;
   isDescrEditing: boolean;
   current: FeatureFlag;
-  setEditing: ({ isDescrEditing: boolean }) => void;
+  setEditing: ({ isDescrEditing }: { isDescrEditing: boolean }) => void;
 }) {
   return (
     <>
       <label>
-        <span className={'font-semibold'}>Description </span> (Optional)
+        <span className={'font-semibold'}>Description </span> <span className={"text-disabled-text text-sm"}>(Optional)</span>
       </label>
       {isDescrEditing ? (
         <textarea

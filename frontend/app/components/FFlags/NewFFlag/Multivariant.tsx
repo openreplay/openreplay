@@ -33,42 +33,50 @@ function Multivariant() {
       </div>
       <div>
         {featureFlagsStore.currentFflag!.variants.map((variant, ind) => (
-          <div className={'flex items-center gap-2 my-2'} key={variant.index}>
+          <div className={'flex items-center gap-2 my-2 '} key={variant.index}>
             <div style={{ flex: 1 }}>
               <div className={'p-2 text-center bg-gray-lightest rounded-full w-10 h-10'}>
-                {ind+1}
+                {ind + 1}
               </div>
             </div>
-            <div style={{ flex: 3 }}>
+            <div style={{ flex: 4 }}>
               <Input
                 placeholder={'buy-btn-variant-1'}
                 value={variant.key}
-                onChange={(e) => variant.setKey(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  variant.setKey(e.target.value)
+                }
               />
             </div>
-            <div style={{ flex: 3 }}>
+            <div style={{ flex: 4 }}>
               <Input
                 placeholder={'Very red button'}
                 value={variant.description}
-                onChange={(e) => variant.setDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  variant.setDescription(e.target.value)
+                }
               />
             </div>
-            <div style={{ flex: 3 }}>
+            <div style={{ flex: 4 }}>
               <Input
-                placeholder={"{'buttonColor': 'red'}"}
+                placeholder={"Example: very important button, {'buttonColor': 'red'}"}
                 value={variant.payload}
-                onChange={(e) => variant.setPayload(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  variant.setPayload(e.target.value)
+                }
               />
             </div>
-            <div style={{ flex: 3 }} className={"flex items-center gap-2"}>
+            <div style={{ flex: 4 }} className={'flex items-center gap-2'}>
               <Input
                 className={
-                  featureFlagsStore.currentFflag!.isRedDistribution ? '!border-red !text-red' : ''
+                  featureFlagsStore.currentFflag!.isRedDistribution
+                    ? '!border-red !text-red !w-full'
+                    : '!w-full'
                 }
                 type={'tel'}
                 placeholder={avg}
-                value={variant.rollout}
-                onChange={(e) =>
+                value={variant.rolloutPercentage}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   variant.setRollout(parseInt(e.target.value.replace(/\D/g, ''), 10))
                 }
               />
@@ -80,12 +88,15 @@ function Multivariant() {
                     : 'hover:bg-teal-light'
                 )}
                 onClick={() =>
-                  featureFlagsStore.currentFflag!.variants === 1
+                  featureFlagsStore.currentFflag!.variants.length === 1
                     ? null
                     : featureFlagsStore.currentFflag!.removeVariant(variant.index)
                 }
               >
-                <Icon name={'trash'} color={featureFlagsStore.currentFflag!.variants.length === 1 ? '' : 'main'} />
+                <Icon
+                  name={'trash'}
+                  color={featureFlagsStore.currentFflag!.variants.length === 1 ? '' : 'main'}
+                />
               </div>
             </div>
           </div>

@@ -1,9 +1,8 @@
 import { makeAutoObservable } from "mobx";
 import { SingleFFlag } from 'App/services/FFlagsService';
 import Filter from "App/mstore/types/filter";
-import { flagConditionFilters } from "Types/filter/newFilter";
 
-class Conditions {
+export class Conditions {
   rolloutPercentage = 100;
   filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
 
@@ -12,8 +11,6 @@ class Conditions {
     if (data) {
       this.rolloutPercentage = data.rolloutPercentage
       this.filter = new Filter().fromJson(data)
-    } else {
-      this.filter.addFilter(flagConditionFilters[0])
     }
   }
 
@@ -50,9 +47,9 @@ class Variant {
   key: string = '';
   description: string = '';
   payload: string = '';
-  rollout: number = 100;
+  rolloutPercentage: number = 100;
 
-  constructor(index) {
+  constructor(index: number) {
     makeAutoObservable(this)
     this.index = index;
   }
@@ -75,14 +72,14 @@ class Variant {
 
   setRollout = (rollout: number) => {
     if (rollout <= 100) {
-      this.rollout = rollout;
+      this.rolloutPercentage = rollout;
     }
   }
 }
 
 export default class FeatureFlag {
   flagKey: SingleFFlag['flagKey']
-  conditions: SingleFFlag['conditions']
+  conditions: Conditions[]
   createdBy?: SingleFFlag['createdBy']
   createdAt?: SingleFFlag['createdAt']
   updatedAt?: SingleFFlag['updatedAt']
@@ -102,7 +99,7 @@ export default class FeatureFlag {
       {
         ...data,
         isSingleOption: data?.flagType === 'single' || true,
-        conditions: data?.conditions?.map(c => new Conditions(c)) || [],
+        conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
       });
 
     makeAutoObservable(this);
@@ -118,8 +115,7 @@ export default class FeatureFlag {
   }
 
   get isRedDistribution() {
-    console.log(this.variants, Math.floor(this.variants.reduce((acc, v) => acc + v.rollout, 0)/this.variants.length), Math.floor(100 / this.variants.length))
-    return Math.floor(this.variants.reduce((acc, v) => acc + v.rollout, 0)/this.variants.length) !== Math.floor(100 / this.variants.length)
+    return Math.floor(this.variants.reduce((acc, v) => acc + v.rolloutPercentage, 0)/this.variants.length) !== Math.floor(100 / this.variants.length)
   }
 
   redistributeVariants = () => {
@@ -141,6 +137,7 @@ export default class FeatureFlag {
       isPersist: this.isPersist,
       flagType: this.isSingleOption ? 'single' : 'multi',
       featureFlagId: this.featureFlagId,
+      variants: this.isSingleOption ? undefined : this.variants.map(v => ({ key: v.key, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
     }
   }
 

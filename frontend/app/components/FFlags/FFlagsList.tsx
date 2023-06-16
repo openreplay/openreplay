@@ -6,7 +6,6 @@ import FFlagItem from './FFlagItem';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import Select from 'Shared/Select';
-import { Activity } from 'App/mstore/featureFlagsStore';
 
 function FFlagsList({ siteId }: { siteId: string }) {
   const { featureFlagsStore, userStore } = useStore();
@@ -46,9 +45,9 @@ function FFlagsList({ siteId }: { siteId: string }) {
                   Status:
                   <Select
                     options={[
-                      { label: 'All', value: '0' },
-                      { label: 'Only active', value: '1' },
-                      { label: 'Only inactive', value: '2' },
+                      { label: 'All', value: '0' as const },
+                      { label: 'Only active', value: '1' as const },
+                      { label: 'Only inactive', value: '2' as const },
                     ]}
                     defaultValue={featureFlagsStore.activity}
                     plain

@@ -11,13 +11,14 @@ import Description from './Description';
 import Header from './Header';
 import RolloutCondition from './Conditions';
 import Multivariant from './Multivariant';
+import { Payload } from './Helpers'
 
 function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();
 
   React.useEffect(() => {
     if (fflagId) {
-      void featureFlagsStore.fetchFlag(fflagId);
+      void featureFlagsStore.fetchFlag(parseInt(fflagId, 10));
     } else {
       featureFlagsStore.initNewFlag();
     }
@@ -74,7 +75,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
           type="text"
           placeholder={'new-unique-key'}
           value={current.flagKey}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             current.setFlagKey(e.target.value.replace(/\s/g, '-'));
           }}
         />
@@ -113,11 +114,17 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
             />
           </div>
           {current.isSingleOption ? (
+            <>
             <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
               Users will be served
               <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
               one or more rollout conditions.
             </div>
+           <div>
+             <Payload />
+             <Input placeholder={"Example: very important button, {'buttonColor': 'red'}"} className={'mt-2'} />
+           </div>
+            </>
           ) : (
             <Multivariant />
           )}
@@ -181,7 +188,6 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
                     set={index + 1}
                     index={index}
                     conditions={condition}
-                    addCondition={current.addCondition}
                     removeCondition={current.removeCondition}
                   />
                   <div className={'my-2 w-full text-center'}>OR</div>
