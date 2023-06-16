@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Optional, List, Union, Literal
+from typing import Optional, List, Union, Literal, Any
 
 from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator, validator
+from pydantic.types import Json
 
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -1034,11 +1035,11 @@ class __CardSchema(BaseModel):
 
 class CardSchema(__CardSchema, CardChartSchema):
     view_type: Union[MetricTimeseriesViewType, \
-        MetricTableViewType, MetricOtherViewType] = Field(...)
+                     MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+                     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     is_template: bool = Field(default=False)
 
@@ -1210,7 +1211,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
-        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+                      SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
@@ -1381,6 +1382,17 @@ class GetHeatmapPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class FeatureFlagVariant(BaseModel):
+    variant_id: Optional[int] = Field(default=None)
+    value: str = Field(...)
+    description: Optional[str] = Field(...)
+    payload: Optional[Json[Any]] = Field(default=None)
+    rollout_percentage: Optional[int] = Field(default=0, ge=0, le=100)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
 class FeatureFlagCondition(BaseModel):
     condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
@@ -1409,12 +1421,14 @@ class FeatureFlagType(str, Enum):
 
 class FeatureFlagSchema(BaseModel):
     name: str = Field(...)
+    payload: Optional[Json[Any]] = Field(default=None)
     flag_key: str = Field(...)
     description: Optional[str] = Field(None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
     conditions: List[FeatureFlagCondition] = Field(default=[], min_items=1)
+    variants: List[FeatureFlagVariant] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case
