@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI):
     await pg_client.terminate()
 
 
-app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""),
-              lifespan=lifespan)
+app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),
+              redoc_url=config("redoc_url", default=""), lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
