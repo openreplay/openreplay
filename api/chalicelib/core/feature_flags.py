@@ -96,6 +96,11 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
     if __exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
 
+    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant:
+        if sum([v.rollout_percentage for v in feature_flag_data.variants]) > 100:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
+
     insert_columns = (
         'project_id',
         'name',
@@ -252,6 +257,11 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
     """
     if __exists_by_name(project_id=project_id, flag_key=feature_flag.flag_key, exclude_id=feature_flag_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
+
+    if feature_flag.flag_type == schemas.FeatureFlagType.multi_variant:
+        if sum([v.rollout_percentage for v in feature_flag.variants]) > 100:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
 
     columns = (
         "name",
