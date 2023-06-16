@@ -168,7 +168,8 @@ export default class AssistManager {
       })
 
       socket.on('messages', messages => {
-        jmr.append(messages.data) // as RawMessage[]
+        const data = messages.data || messages
+        jmr.append(data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
