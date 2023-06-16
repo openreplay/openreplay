@@ -102,12 +102,6 @@ async def prepare_request(request: Request):
     path = request.url.path
     site_url = urlparse(config("SITE_URL"))
     host_suffix = ""
-    print("-------------")
-    print(f"request.headers:{request.headers}")
-    print(f"site port:{site_url.port}")
-    print(f"req port:{request.url.port}")
-    print("-------------")
-
     if site_url.port is not None and request.url.port is None:
         host_suffix = f":{site_url.port}"
 
