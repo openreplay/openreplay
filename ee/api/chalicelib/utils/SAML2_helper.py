@@ -1,3 +1,4 @@
+import logging
 from http import cookies
 from os import environ
 from urllib.parse import urlparse
@@ -63,7 +64,7 @@ if SAML2["idp"] is None:
             }
 
 if idp is None:
-    print("No SAML2 IdP configuration found")
+    logging.info("No SAML2 IdP configuration found")
 else:
     SAML2["idp"] = idp
 
@@ -89,18 +90,21 @@ async def prepare_request(request: Request):
         for key, morsel in cookie.items():
             extracted_cookies[key] = morsel.value
         if "session" not in extracted_cookies:
-            print("!!! session not found in extracted_cookies")
-            print(extracted_cookies)
+            logging.info("!!! session not found in extracted_cookies")
+            logging.info(extracted_cookies)
         session = extracted_cookies.get("session", {})
     else:
         session = {}
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     headers = request.headers
     proto = headers.get('x-forwarded-proto', 'http')
-    if headers.get('x-forwarded-proto') is not None:
-        print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
     path = request.url.path
+    site_url = urlparse(config("SITE_URL"))
+    host_suffix = ""
+    if site_url.port is not None and request.url.port is None:
+        host_suffix = f":{site_url.port}"
+
     # add / to /acs
     if not path.endswith("/"):
         path = path + '/'
@@ -109,7 +113,7 @@ async def prepare_request(request: Request):
 
     return {
         'https': 'on' if proto == 'https' else 'off',
-        'http_host': request.headers['host'],
+        'http_host': request.headers['host'] + host_suffix,
         'server_port': url_data.port,
         'script_name': path,
         'get_data': request.args.copy(),
