@@ -210,6 +210,7 @@ async def main():
             #print(f'[INFO] {read_msgs} kafka messages read in {upload_rate} seconds')
             if broken_batchs > 0:
                 print(f'[WARN] {broken_batchs} broken sessionIds')
+                broken_batchs = 0
             await insertBatch(deepcopy(sessions_batch), deepcopy(batch), db, sessions_table_name, table_name, EVENT_TYPE)
             consumer.commit()
             try:

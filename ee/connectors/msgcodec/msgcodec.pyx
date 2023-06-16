@@ -3,6 +3,7 @@
 from messages import *
 #from io cimport BytesIO
 from io import BytesIO
+import copy
 from libc.stdlib cimport abort
 
 cdef extern from "Python.h":
@@ -13,6 +14,7 @@ cdef class PyMsg:
         pass
 
 ctypedef object PyBytesIO
+cdef unsigned long c_message_id
 
 cdef class MessageCodec:
     """
@@ -144,13 +146,14 @@ cdef class MessageCodec:
         return decoded
 
     def decode_detailed(self, bytes b):
+        global c_message_id
         cdef PyBytesIO reader = BytesIO(b)
         cdef list messages_list
         cdef int mode
         try:
             messages_list = [self.handler(reader, 0)]
         except IndexError:
-            print('[WARN] Broken batch')
+            print(f'[WARN] Broken batch')
             return list()
         if isinstance(messages_list[0], BatchMeta):
             # Old BatchMeta
@@ -162,6 +165,7 @@ cdef class MessageCodec:
             else:
                 mode = 1
         else:
+            # print(f'{messages_list[0].__id__}')
             return messages_list
         while True:
             try:
@@ -173,20 +177,26 @@ cdef class MessageCodec:
         return messages_list
 
     def handler(self, PyBytesIO reader, int mode = 0):
+        global c_message_id
         cdef unsigned long message_id = MessageCodec.read_message_id(reader)
+        c_message_id = message_id
         cdef int r_size
-        if mode == 1:
-            # We read the three bytes representing the length of message. It can be used to skip unwanted messages
-            r_size = MessageCodec.read_size(reader)
-            if message_id not in self.msg_selector:
-                reader.read(r_size)
-                return None
-            return MessageCodec.read_head_message(reader, message_id)
-        elif mode == 0:
-            # Old format with no bytes for message length
-            return MessageCodec.read_head_message(reader, message_id)
-        else:
-            raise IOError()
+        try:
+            if mode == 1:
+                # We read the three bytes representing the length of message. It can be used to skip unwanted messages
+                r_size = MessageCodec.read_size(reader)
+                if message_id not in self.msg_selector:
+                    reader.read(r_size)
+                    return None
+                return MessageCodec.read_head_message(reader, message_id)
+            elif mode == 0:
+                # Old format with no bytes for message length
+                return MessageCodec.read_head_message(reader, message_id)
+            else:
+                raise IOError()
+        except Exception as e:
+            print(f'[Error-inside] Broken message id {message_id}')
+            return None
 
     @staticmethod
     def read_head_message(PyBytesIO reader, unsigned long message_id):

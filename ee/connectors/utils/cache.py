@@ -25,7 +25,7 @@ class CachedSessions:
         env:
                 MAX_SESSION_LIFE: cache lifespan of session (default 7200 seconds)"""
         self.session_project = dict()
-        self.max_alive_time = config('MAX_SESSION_LIFE', default=7200, cast=int) # Default 2 hours
+        self.max_alive_time = config('MAX_SESSION_LIFE', default=7800, cast=int) # Default 2 hours
 
     def create(self, sessionid):
         """Saves a new session with status OPEN and set its insertion time"""

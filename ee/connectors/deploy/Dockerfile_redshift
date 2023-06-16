@@ -1,4 +1,4 @@
-FROM public.ecr.aws/p1t3u8a3/connectors/redshift:base
+FROM redshift_connector_base
 
 ENV CLOUD_SERVICE=redshift \
     CONNECTION_STRING=postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME} \
@@ -17,6 +17,7 @@ COPY db db
 COPY sql sql
 COPY handler.py .
 COPY consumer_async.py .
+COPY fill_from_db.py .
 COPY entrypoint.sh .
 
 ENTRYPOINT ./entrypoint.sh
