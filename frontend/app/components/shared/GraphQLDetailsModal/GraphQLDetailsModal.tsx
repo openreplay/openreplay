@@ -40,7 +40,7 @@ function GraphQLDetailsModal(props: Props) {
         </div>
       </div>
 
-      <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
+      <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
         <div>
           <div className="flex justify-between items-start mt-6 mb-2">
             <h5 className="mt-1 mr-1 font-medium">{'Variables'}</h5>

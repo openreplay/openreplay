@@ -152,7 +152,7 @@ export default class FetchDetails extends React.PureComponent {
               onClick={ this.onTabClick }
               border={ true }
             />
-						<div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
+						<div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
 							{ this.renderActiveTab(activeTab) }
 						</div>
 					</div>

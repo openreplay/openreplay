@@ -151,7 +151,7 @@ function FetchTabs({ resource }: Props) {
   return (
     <div>
       <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={true} />
-      <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>{renderActiveTab()}</div>
+      <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>{renderActiveTab()}</div>
     </div>
   );
 }
