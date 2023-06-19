@@ -14,6 +14,7 @@ export interface State {
 }
 
 export default class ScreenRecording {
+  private assistVersion = 1
   onDeny: () => void = () => {}
 	static readonly INITIAL_STATE: Readonly<State> = {
 		recordingState: SessionRecordingStatus.Off,
@@ -23,7 +24,8 @@ export default class ScreenRecording {
 		private socket: Socket,
 		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
-    public readonly uiErrorHandler: { error: (msg: string) => void } | undefined
+    public readonly uiErrorHandler: { error: (msg: string) => void } | undefined,
+    private getAssistVersion: () => number
 	) {
 		socket.on('recording_accepted', () => {
       this.toggleRecording(true)
@@ -35,6 +37,8 @@ export default class ScreenRecording {
     socket.on('recording_busy', () => {
       this.onRecordingBusy()
     })
+
+    this.assistVersion = getAssistVersion()
 	}
 
 	private onRecordingBusy = () => {
@@ -55,7 +59,11 @@ export default class ScreenRecording {
   }
 
   private emitData = (event: string, data?: any) => {
-    this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
+    if (this.assistVersion === 1) {
+      this.socket.emit(event, data)
+    } else {
+      this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
+    }
   }
 
   stopRecording = () => {

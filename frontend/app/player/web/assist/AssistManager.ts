@@ -53,6 +53,7 @@ export function getStatusText(status: ConnectionStatus): string {
 const MAX_RECONNECTION_COUNT = 4;
 
 export default class AssistManager {
+  assistVersion = 1
   static readonly INITIAL_STATE = {
     peerConnectionStatus: ConnectionStatus.Connecting,
     assistStart: 0,
@@ -70,6 +71,8 @@ export default class AssistManager {
     private store: Store<typeof AssistManager.INITIAL_STATE>,
     public readonly uiErrorHandler?: { error: (msg: string) => void }
   ) {}
+
+  public getAssistVersion = () => this.assistVersion
 
   private get borderStyle() {
     const { recordingState, remoteControl } = this.store.get()
@@ -168,7 +171,10 @@ export default class AssistManager {
       })
 
       socket.on('messages', messages => {
-        jmr.append(messages.data) // as RawMessage[]
+        if (messages.data !== undefined) this.assistVersion = 2
+
+        const data = messages.data || messages
+        jmr.append(data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
@@ -188,7 +194,8 @@ export default class AssistManager {
       socket.on('UPDATE_SESSION', (evData) => {
         const { meta = {}, data = {} } = evData
         const { tabId } = meta
-        const { active } = data
+        const usedData = this.assistVersion === 1 ? evData : data
+        const { active } = usedData
         const currentTab = this.store.get().currentTab
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
@@ -197,6 +204,9 @@ export default class AssistManager {
           if (active) {
             this.setStatus(ConnectionStatus.Connected)
           } else {
+            if (tabId === undefined) {
+              this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            }
             if (tabId === currentTab) {
               this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
             }
@@ -222,20 +232,23 @@ export default class AssistManager {
         socket,
         this.config,
         this.peerID,
+        this.getAssistVersion
       )
       this.remoteControl = new RemoteControl(
         this.store,
         socket,
         this.screen,
         this.session.agentInfo,
-        () => this.screen.setBorderStyle(this.borderStyle)
+        () => this.screen.setBorderStyle(this.borderStyle),
+        this.getAssistVersion,
       )
       this.screenRecording = new ScreenRecording(
         this.store,
         socket,
         this.session.agentInfo,
         () => this.screen.setBorderStyle(this.borderStyle),
-        this.uiErrorHandler
+        this.uiErrorHandler,
+        this.getAssistVersion,
       )
 
       document.addEventListener('visibilitychange', this.onVisChange)
