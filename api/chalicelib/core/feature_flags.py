@@ -22,7 +22,7 @@ feature_flag_columns = (
 )
 
 
-def __exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
+def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.feature_flags
@@ -155,7 +155,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
 
 
 def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
-    if __exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
+    if exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
 
 
