@@ -44,7 +44,7 @@ const initData = {
 
 class Variant {
   index: number;
-  key: string = '';
+  value: string = '';
   description: string = '';
   payload: string = '';
   rolloutPercentage: number = 100;
@@ -59,7 +59,7 @@ class Variant {
   }
 
   setKey = (key: string) => {
-    this.key = key.replace(/\s/g, '-');
+    this.value = key.replace(/\s/g, '-');
   }
 
   setDescription = (description: string) => {
@@ -88,9 +88,10 @@ export default class FeatureFlag {
   isPersist: SingleFFlag['isPersist']
   isSingleOption: boolean
   featureFlagId: SingleFFlag['featureFlagId']
+  payload: SingleFFlag['payload']
   name: SingleFFlag['name'];
   flagType: string;
-  variants: Variant[] = [new Variant(1)];
+  variants: Variant[] = [];
 
   constructor(data: SingleFFlag) {
     Object.assign(
@@ -100,9 +101,14 @@ export default class FeatureFlag {
         ...data,
         isSingleOption: data?.flagType === 'single' || true,
         conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
+        variants: data?.flagType === 'multi' ? data?.variants.map((v, i) => new Variant(i)) : [new Variant(1)],
       });
 
     makeAutoObservable(this);
+  }
+
+  setPayload = (payload: string) => {
+    this.payload = payload;
   }
 
   addVariant = () => {
@@ -137,7 +143,7 @@ export default class FeatureFlag {
       isPersist: this.isPersist,
       flagType: this.isSingleOption ? 'single' : 'multi',
       featureFlagId: this.featureFlagId,
-      variants: this.isSingleOption ? undefined : this.variants.map(v => ({ key: v.key, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
+      variants: this.isSingleOption ? undefined : this.variants.map(v => ({ value: v.value, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
     }
   }
 

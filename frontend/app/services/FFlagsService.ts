@@ -14,11 +14,12 @@ export interface SimpleFlag {
   flagType: FFlagType;
   isPersist: boolean;
   conditions: FFlagCondition[];
+  payload?: string;
 }
 
 export interface FFlag extends SimpleFlag {
   featureFlagId: number;
-  isActive: boolea;
+  isActive: boolean;
   createdAt: number;
   updatedAt: number;
   createdBy: number;
@@ -26,8 +27,20 @@ export interface FFlag extends SimpleFlag {
   conditions: never;
 }
 
-export interface SingleFFlag extends FFlag {
-  conditions: FFlagCondition[];
+export interface SingleFFlag extends SimpleFlag {
+  createdAt: number;
+  updatedAt: number;
+  createdBy: number;
+  updatedBy: number;
+  featureFlagId: number;
+  isActive: boolean;
+  variants: {
+    variantId?: number;
+    value: string;
+    description?: string;
+    payload: string;
+    rolloutPercentage: number;
+  }[]
 }
 
 export default class FFlagsService extends BaseService {
