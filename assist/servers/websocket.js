@@ -345,8 +345,8 @@ module.exports = {
                     return
                 }
                 // Back compatibility (add top layer with meta information)
-                if (args[0].meta === undefined) {
-                    args[0] = {meta: {tabId: socket.tabId}, data: args[0]};
+                if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
+                    args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
                 Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
@@ -373,7 +373,7 @@ module.exports = {
                     return
                 }
                 // Back compatibility (add top layer with meta information)
-                if (args[0].meta === undefined && socket.identity === IDENTITIES.session) {
+                if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
                     args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
                 if (socket.identity === IDENTITIES.session) {
@@ -382,7 +382,7 @@ module.exports = {
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
-                    let socketId = await findSessionSocketId(io, socket.roomId, args[0].meta?.tabId);
+                    let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.roomId}`);
                         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
