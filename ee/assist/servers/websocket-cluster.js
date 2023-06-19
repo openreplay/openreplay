@@ -398,11 +398,10 @@ module.exports = {
                 }
                 Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
-                // Update sessionInfo for all sessions (TODO: rewrite this)
+                // Update sessionInfo for all sessions in room
                 const rooms = await getAvailableRooms(io);
                 for (let roomId of rooms.keys()) {
-                    let {projectKey} = extractPeerId(roomId);
-                    if (projectKey === connProjectKey) {
+                    if (roomId === socket.roomId) {
                         const connected_sockets = await io.in(roomId).fetchSockets();
                         for (let item of connected_sockets) {
                             if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
