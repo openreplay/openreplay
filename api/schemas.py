@@ -1421,7 +1421,7 @@ class FeatureFlagType(str, Enum):
 
 class FeatureFlagSchema(BaseModel):
     name: str = Field(...)
-    payload: Optional[Json[Any]] = Field(default=None)
+    payload: Optional[str] = Field(default=None)
     flag_key: str = Field(...)
     description: Optional[str] = Field(None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)

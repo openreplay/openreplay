@@ -173,10 +173,10 @@ def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
     params = {
         "project_id": project_id,
         "created_by": user_id,
-        "payload": json.dumps(feature_flag_data.payload),
         **feature_flag_data.dict(),
         **conditions_data,
-        **variants_data
+        **variants_data,
+        "payload": json.dumps(feature_flag_data.payload)
     }
     return params
 
