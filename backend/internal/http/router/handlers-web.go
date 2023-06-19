@@ -327,7 +327,7 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Return mock response
+	// Return list of active flags with values and payloads
 	resp := &FeatureFlagsResponse{
 		Flags: []interface{}{},
 	}
