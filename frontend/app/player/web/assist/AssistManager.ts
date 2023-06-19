@@ -172,7 +172,8 @@ export default class AssistManager {
 
       socket.on('messages', messages => {
         const isOldVersion = messages.meta.version === 1
-        this.assistVersion = messages.meta.version
+        this.assistVersion = isOldVersion ? 1 : 2
+
         const data = messages.data || messages
         jmr.append(data) // as RawMessage[]
         if (waitingForMessages) {

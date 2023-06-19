@@ -56,7 +56,7 @@ export default class RemoteControl {
   }
 
   private emitData = (event: string, data?: any) => {
-    if (this.getAssistVersion()) {
+    if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data)
     } else {
       this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })

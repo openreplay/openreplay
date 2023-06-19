@@ -237,6 +237,7 @@ export default class Call {
 			console.warn('No tab data to connect to peer')
 		}
 		const peerId = this.getAssistVersion() === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
+		console.log(peerId, this.getAssistVersion())
 		void this._peerConnection(peerId);
 		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}
