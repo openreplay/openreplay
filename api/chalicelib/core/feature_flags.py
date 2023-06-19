@@ -40,29 +40,7 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
     """
     Get all feature flags and their total count.
     """
-    constraints = [
-        "feature_flags.project_id = %(project_id)s",
-        "feature_flags.deleted_at IS NULL",
-    ]
-
-    params = {
-        "project_id": project_id,
-        "user_id": user_id,
-        "limit": data.limit,
-        "offset": (data.page - 1) * data.limit,
-    }
-
-    if data.is_active is not None:
-        constraints.append("feature_flags.is_active=%(is_active)s")
-        params["is_active"] = data.is_active
-
-    if data.user_id is not None:
-        constraints.append("feature_flags.created_by=%(user_id)s")
-
-    if data.query is not None and len(data.query) > 0:
-        constraints.append("key ILIKE %(query)s")
-        params["query"] = helper.values_for_operator(value=data.query,
-                                                     op=schemas.SearchEventOperator._contains)
+    constraints, params = prepare_constraints_params_to_search(data, project_id, user_id)
 
     sql = f"""
         SELECT COUNT(1) OVER () AS count, {", ".join(feature_flag_columns)}
@@ -92,14 +70,32 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
     return {"data": results}
 
 
-def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
-    if __exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=None):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
+def prepare_constraints_params_to_search(data, project_id, user_id):
+    constraints = [
+        "feature_flags.project_id = %(project_id)s",
+        "feature_flags.deleted_at IS NULL",
+    ]
+    params = {
+        "project_id": project_id,
+        "user_id": user_id,
+        "limit": data.limit,
+        "offset": (data.page - 1) * data.limit,
+    }
+    if data.is_active is not None:
+        constraints.append("feature_flags.is_active=%(is_active)s")
+        params["is_active"] = data.is_active
+    if data.user_id is not None:
+        constraints.append("feature_flags.created_by=%(user_id)s")
+    if data.query is not None and len(data.query) > 0:
+        constraints.append("flag_key ILIKE %(query)s")
+        params["query"] = helper.values_for_operator(value=data.query,
+                                                     op=schemas.SearchEventOperator._contains)
+    return constraints, params
 
-    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant:
-        if sum([v.rollout_percentage for v in feature_flag_data.variants]) > 100:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
+
+def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
+    validate_unique_flag_key(feature_flag_data, project_id)
+    validate_multi_variant_flag(feature_flag_data)
 
     insert_columns = (
         'project_id',
@@ -113,31 +109,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         'created_by'
     )
 
-    conditions_data = {}
-    for i, s in enumerate(feature_flag_data.conditions):
-        for k in s.dict().keys():
-            conditions_data[f"{k}_{i}"] = s.__getattribute__(k)
-        conditions_data[f"name_{i}"] = s.name
-        conditions_data[f"rollout_percentage_{i}"] = s.rollout_percentage
-        conditions_data[f"filters_{i}"] = json.dumps(s.filters)
-
-    variants_data = {}
-    for i, v in enumerate(feature_flag_data.variants):
-        for k in v.dict().keys():
-            conditions_data[f"{k}_{i}"] = v.__getattribute__(k)
-        variants_data[f"value_{i}"] = v.value
-        variants_data[f"description_{i}"] = v.description
-        variants_data[f"payload_{i}"] = v.payload
-        variants_data[f"rollout_percentage_{i}"] = v.rollout_percentage
-
-    params = {
-        "project_id": project_id,
-        "created_by": user_id,
-        "payload": json.dumps(feature_flag_data.payload),
-        **feature_flag_data.dict(),
-        **conditions_data
-    }
-
+    params = prepare_params_to_create_flag(feature_flag_data, project_id, user_id)
     conditions_len = len(feature_flag_data.conditions)
     variants_len = len(feature_flag_data.variants)
 
@@ -180,6 +152,56 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
             return None
 
     return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+
+
+def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
+    if __exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
+
+
+def validate_multi_variant_flag(feature_flag_data):
+    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant:
+        if sum([v.rollout_percentage for v in feature_flag_data.variants]) > 100:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
+
+
+def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
+    conditions_data = prepare_conditions_values(feature_flag_data)
+    variants_data = prepare_variants_values(feature_flag_data)
+
+    params = {
+        "project_id": project_id,
+        "created_by": user_id,
+        "payload": json.dumps(feature_flag_data.payload),
+        **feature_flag_data.dict(),
+        **conditions_data,
+        **variants_data
+    }
+    return params
+
+
+def prepare_variants_values(feature_flag_data):
+    variants_data = {}
+    for i, v in enumerate(feature_flag_data.variants):
+        for k in v.dict().keys():
+            variants_data[f"{k}_{i}"] = v.__getattribute__(k)
+        variants_data[f"value_{i}"] = v.value
+        variants_data[f"description_{i}"] = v.description
+        variants_data[f"payload_{i}"] = v.payload
+        variants_data[f"rollout_percentage_{i}"] = v.rollout_percentage
+    return variants_data
+
+
+def prepare_conditions_values(feature_flag_data):
+    conditions_data = {}
+    for i, s in enumerate(feature_flag_data.conditions):
+        for k in s.dict().keys():
+            conditions_data[f"{k}_{i}"] = s.__getattribute__(k)
+        conditions_data[f"name_{i}"] = s.name
+        conditions_data[f"rollout_percentage_{i}"] = s.rollout_percentage
+        conditions_data[f"filters_{i}"] = json.dumps(s.filters)
+    return conditions_data
 
 
 def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
@@ -255,13 +277,8 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
     """
     Update an existing feature flag and return its updated data.
     """
-    if __exists_by_name(project_id=project_id, flag_key=feature_flag.flag_key, exclude_id=feature_flag_id):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-
-    if feature_flag.flag_type == schemas.FeatureFlagType.multi_variant:
-        if sum([v.rollout_percentage for v in feature_flag.variants]) > 100:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
+    validate_unique_flag_key(feature_flag_data=feature_flag, project_id=project_id, exclude_id=feature_flag_id)
+    validate_multi_variant_flag(feature_flag_data=feature_flag)
 
     columns = (
         "name",
