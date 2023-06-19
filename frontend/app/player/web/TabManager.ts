@@ -25,6 +25,7 @@ export interface TabState extends ListsState {
   performanceChartTime: PerformanceChartPoint[]
   cssLoading: boolean
   location: string
+  urlsList: SetPageLocation[]
 }
 
 /**
@@ -39,6 +40,7 @@ export default class TabSessionManager {
     performanceChartTime: [],
     cssLoading: false,
     location: '',
+    urlsList: [],
   }
 
   public locationManager: ListWalker<SetPageLocation> = new ListWalker();
@@ -88,6 +90,7 @@ export default class TabSessionManager {
 
     const currentState = this.state.get()
     this.state.update({
+      // @ts-ignore comes from parent state
       eventCount: currentState.eventCount + eventCount,
       tabStates: {
         ...currentState.tabStates,
@@ -258,6 +261,7 @@ export default class TabSessionManager {
     /* === */
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
+      // @ts-ignore comes from parent state
       this.state.update({ location: lastLocationMsg.url })
     }
     const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);

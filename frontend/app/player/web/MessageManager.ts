@@ -29,6 +29,17 @@ interface RawList {
   exceptions: ILog[];
 }
 
+type TabChangeEvent = {
+  tabId: string;
+  timestamp: number;
+  tabName: string;
+  time: number;
+  toTab: string;
+  fromTab: string;
+  type: string;
+  activeUrl: '';
+};
+
 export interface State extends ScreenState {
   skipIntervals: SkipInterval[];
   connType?: string;
@@ -51,7 +62,7 @@ export interface State extends ScreenState {
   messagesProcessed: boolean;
   currentTab: string;
   tabs: Set<string>;
-  tabChangeEvents: { tabId: string; timestamp: number; tabName: string }[];
+  tabChangeEvents: TabChangeEvent[];
 }
 
 export const visualChanges = [
@@ -93,7 +104,7 @@ export default class MessageManager {
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
-  private tabChangeEvents: Record<string, number>[] = [];
+  private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
 
   constructor(
@@ -132,7 +143,7 @@ export default class MessageManager {
       // if (Object.values(list).some((l) => l.length > 0)) {
       //   this.tabs[tab]!.updateLists(list);
       // }
-    })
+    });
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
@@ -197,7 +208,7 @@ export default class MessageManager {
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
-        if (activeTabs.length !== this.activeTabManager.tabInstances.size) {
+        if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
           this.state.update({ tabs: this.activeTabManager.tabInstances });
         }
       }
@@ -262,10 +273,12 @@ export default class MessageManager {
           this.tabChangeEvents.push({
             tabId: msg.tabId,
             time: msg.time,
+            tabName: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
             timestamp: this.sessionStart + msg.time,
             toTab: mapTabs(this.tabs)[msg.tabId],
             fromTab: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
             type: 'TABCHANGE',
+            activeUrl: '',
           });
           this.activeTabManager.append(msg);
         }
@@ -302,6 +315,7 @@ export default class MessageManager {
       this.updateChangeEvents();
     }
     this.screen.display(!messagesLoading);
+    // @ts-ignore idk
     this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
   };
 
@@ -320,11 +334,11 @@ export default class MessageManager {
   }
 }
 
-function mapTabs(tabs: Record<string, TabState>) {
+function mapTabs(tabs: Record<string, TabSessionManager>) {
   const tabIds = Object.keys(tabs);
-  const tabMap = {};
+  const tabMap: Record<string, string> = {};
   tabIds.forEach((tabId) => {
-    tabMap[tabId] = `Tab ${tabIds.indexOf(tabId)+1}`;
+    tabMap[tabId] = `Tab ${tabIds.indexOf(tabId) + 1}`;
   });
 
   return tabMap;
