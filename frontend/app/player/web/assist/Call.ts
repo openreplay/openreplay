@@ -22,7 +22,6 @@ export interface State {
 }
 
 export default class Call {
-	private assistVersion = 1
 	static readonly INITIAL_STATE: Readonly<State> = {
 		calling: CallingState.NoCall
 	}
@@ -66,7 +65,6 @@ export default class Call {
     socket.on("disconnect", () => {
       this.store.update({ calling: CallingState.NoCall })
     })
-		this.assistVersion = this.getAssistVersion()
 	}
 
 	private getPeer(): Promise<Peer> {
@@ -173,7 +171,7 @@ export default class Call {
 	}
 
 	private emitData = (event: string, data?: any) => {
-		if (this.assistVersion === 1) {
+		if (this.getAssistVersion() === 1) {
 			this.socket?.emit(event, data)
 		} else {
 			this.socket?.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
@@ -238,7 +236,7 @@ export default class Call {
 		if (!this.store.get().currentTab) {
 			console.warn('No tab data to connect to peer')
 		}
-		const peerId = this.assistVersion === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
+		const peerId = this.getAssistVersion() === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
 		void this._peerConnection(peerId);
 		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}

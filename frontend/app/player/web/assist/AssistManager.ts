@@ -171,13 +171,17 @@ export default class AssistManager {
       })
 
       socket.on('messages', messages => {
-        if (messages.data !== undefined) this.assistVersion = 2
-
+        const isOldVersion = messages.meta.version === 1
+        this.assistVersion = messages.meta.version
         const data = messages.data || messages
         jmr.append(data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
+        }
+        if (messages.meta.tabId !== this.store.get().currentTab && isOldVersion) {
+          reader.currentTab = messages.meta.tabId
+          this.store.update({ currentTab: messages.meta.tabId })
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
@@ -194,8 +198,7 @@ export default class AssistManager {
       socket.on('UPDATE_SESSION', (evData) => {
         const { meta = {}, data = {} } = evData
         const { tabId } = meta
-        const usedData = this.assistVersion === 1 ? evData : data
-        const { active } = usedData
+        const { active } = data
         const currentTab = this.store.get().currentTab
         this.clearDisconnectTimeout()
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
@@ -204,9 +207,6 @@ export default class AssistManager {
           if (active) {
             this.setStatus(ConnectionStatus.Connected)
           } else {
-            if (tabId === undefined) {
-              this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
-            }
             if (tabId === currentTab) {
               this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
             }

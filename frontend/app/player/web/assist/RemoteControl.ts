@@ -16,7 +16,6 @@ export interface State {
 }
 
 export default class RemoteControl {
-  private assistVersion = 1
 	static readonly INITIAL_STATE: Readonly<State> = {
 		remoteControl: RemoteControlStatus.Disabled,
 		annotating: false,
@@ -29,7 +28,7 @@ export default class RemoteControl {
 		private screen: Screen,
 		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
-    private getAssistVersion: () => number,
+    private getAssistVersion: () => number
 	){
 		socket.on("control_granted", ({ meta, data }) => {
       this.toggleRemoteControl(data === socket.id)
@@ -49,7 +48,6 @@ export default class RemoteControl {
     socket.on("error", () => {
       this.toggleRemoteControl(false)
     })
-    this.assistVersion = getAssistVersion()
 	}
 
 	private onMouseMove = (e: MouseEvent): void => {
@@ -58,7 +56,7 @@ export default class RemoteControl {
   }
 
   private emitData = (event: string, data?: any) => {
-    if (this.assistVersion === 1) {
+    if (this.getAssistVersion()) {
       this.socket.emit(event, data)
     } else {
       this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
