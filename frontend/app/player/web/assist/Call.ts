@@ -22,6 +22,7 @@ export interface State {
 }
 
 export default class Call {
+	private assistVersion = 1
 	static readonly INITIAL_STATE: Readonly<State> = {
 		calling: CallingState.NoCall
 	}
@@ -65,6 +66,7 @@ export default class Call {
     socket.on("disconnect", () => {
       this.store.update({ calling: CallingState.NoCall })
     })
+		this.assistVersion = this.getAssistVersion()
 	}
 
 	private getPeer(): Promise<Peer> {

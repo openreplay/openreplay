@@ -37,6 +37,8 @@ export default class ScreenRecording {
     socket.on('recording_busy', () => {
       this.onRecordingBusy()
     })
+
+    this.assistVersion = getAssistVersion()
 	}
 
 	private onRecordingBusy = () => {

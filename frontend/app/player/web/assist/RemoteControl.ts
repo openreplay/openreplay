@@ -16,6 +16,7 @@ export interface State {
 }
 
 export default class RemoteControl {
+  private assistVersion = 1
 	static readonly INITIAL_STATE: Readonly<State> = {
 		remoteControl: RemoteControlStatus.Disabled,
 		annotating: false,
@@ -48,6 +49,7 @@ export default class RemoteControl {
     socket.on("error", () => {
       this.toggleRemoteControl(false)
     })
+    this.assistVersion = getAssistVersion()
 	}
 
 	private onMouseMove = (e: MouseEvent): void => {
