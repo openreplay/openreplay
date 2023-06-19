@@ -42,7 +42,7 @@ const initData = {
   updatedBy: 0,
 }
 
-class Variant {
+export class Variant {
   index: number;
   value: string = '';
   description: string = '';

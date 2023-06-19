@@ -34,7 +34,7 @@ export default class Filter {
     addFilter(filter: any) {
         filter.value = [""]
         if (Array.isArray(filter.filters)) {
-            filter.filters = filter.filters.map(i => {
+            filter.filters = filter.filters.map((i: Record<string, any>) => {
                 i.value = [""]
                 return new FilterItem(i)
             })
@@ -47,6 +47,7 @@ export default class Filter {
     }
 
     updateKey(key: string, value: any) {
+        // @ts-ignore fix later
         this[key] = value
     }
 
@@ -56,7 +57,7 @@ export default class Filter {
 
     fromJson(json: any) {
         this.name = json.name
-        this.filters = json.filters.map(i => new FilterItem().fromJson(i))
+        this.filters = json.filters.map((i: Record<string, any>) => new FilterItem().fromJson(i))
         this.eventsOrder = json.eventsOrder
         return this
     }

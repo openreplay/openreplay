@@ -37,7 +37,7 @@ export default class FilterItem {
         });
 
         if (Array.isArray(data.filters)) {
-            data.filters = data.filters.map(function (i) {
+            data.filters = data.filters.map(function (i: Record<string, any>) {
                 return new FilterItem(i);
             });
         }
@@ -46,11 +46,13 @@ export default class FilterItem {
     }
 
     updateKey(key: string, value: any) {
+        // @ts-ignore
         this[key] = value;
     }
 
     merge(data: any) {
         Object.keys(data).forEach((key) => {
+            // @ts-ignore
             this[key] = data[key];
         });
     }
@@ -63,8 +65,10 @@ export default class FilterItem {
             const mainFilter = filtersMap[mainFilterKey];
             const subFilterMap = {};
             mainFilter.filters.forEach((option: any) => {
+                // @ts-ignore
                 subFilterMap[option.key] = option;
             });
+            // @ts-ignore
             _filter = subFilterMap[json.type];
         }
         this.type = _filter.type;
