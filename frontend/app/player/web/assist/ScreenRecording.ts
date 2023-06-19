@@ -59,7 +59,7 @@ export default class ScreenRecording {
   }
 
   private emitData = (event: string, data?: any) => {
-    if (this.assistVersion === 1) {
+    if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data)
     } else {
       this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })

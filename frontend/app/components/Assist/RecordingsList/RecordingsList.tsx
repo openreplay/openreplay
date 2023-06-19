@@ -28,8 +28,8 @@ function RecordingsList() {
           <AnimatedSVG name={ICONS.NO_RECORDINGS} size={180} />
           <div className="text-center mt-4">
             {recordsSearch !== ''
-              ? 'No matching results'
-              : 'No videos available for offline playback.'}
+              ? 'No matching results.'
+              : 'No recordings available.'}
           </div>
         </div>
       }

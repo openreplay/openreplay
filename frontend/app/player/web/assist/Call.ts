@@ -173,7 +173,7 @@ export default class Call {
 	}
 
 	private emitData = (event: string, data?: any) => {
-		if (this.assistVersion === 1) {
+		if (this.getAssistVersion() === 1) {
 			this.socket?.emit(event, data)
 		} else {
 			this.socket?.emit(event, { meta: { tabId: this.store.get().currentTab }, data })
@@ -238,7 +238,8 @@ export default class Call {
 		if (!this.store.get().currentTab) {
 			console.warn('No tab data to connect to peer')
 		}
-		const peerId = this.assistVersion === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
+		const peerId = this.getAssistVersion() === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
+		console.log(peerId, this.getAssistVersion())
 		void this._peerConnection(peerId);
 		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}

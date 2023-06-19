@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "6.0.0-beta.11",
+  "version": "6.0.0",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -21,7 +21,7 @@
     "replace-paths": "replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs' && replace-in-files cjs/* --string='/lib/' --replacement='/'",
     "replace-versions": "npm run replace-pkg-version && npm run replace-req-version",
     "replace-pkg-version": "replace-in-files lib/* cjs/* --string='PACKAGE_VERSION' --replacement=$npm_package_version",
-    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='3.5.14'",
+    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='8.0.0'",
     "prepublishOnly": "npm run build",
     "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",

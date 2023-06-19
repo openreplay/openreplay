@@ -171,13 +171,18 @@ export default class AssistManager {
       })
 
       socket.on('messages', messages => {
-        if (messages.data !== undefined) this.assistVersion = 2
+        const isOldVersion = messages.meta.version === 1
+        this.assistVersion = isOldVersion ? 1 : 2
 
         const data = messages.data || messages
         jmr.append(data) // as RawMessage[]
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
+        }
+        if (messages.meta.tabId !== this.store.get().currentTab && isOldVersion) {
+          reader.currentTab = messages.meta.tabId
+          this.store.update({ currentTab: messages.meta.tabId })
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {

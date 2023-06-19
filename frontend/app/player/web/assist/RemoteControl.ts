@@ -29,7 +29,7 @@ export default class RemoteControl {
 		private screen: Screen,
 		private agentInfo: Object,
 		private onToggle: (active: boolean) => void,
-    private getAssistVersion: () => number,
+    private getAssistVersion: () => number
 	){
 		socket.on("control_granted", ({ meta, data }) => {
       this.toggleRemoteControl(data === socket.id)
@@ -58,7 +58,7 @@ export default class RemoteControl {
   }
 
   private emitData = (event: string, data?: any) => {
-    if (this.assistVersion === 1) {
+    if (this.getAssistVersion() === 1) {
       this.socket.emit(event, data)
     } else {
       this.socket.emit(event, { meta: { tabId: this.store.get().currentTab }, data })

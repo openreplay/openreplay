@@ -216,10 +216,15 @@ const autocomplete = async function (req, res) {
 }
 
 const findSessionSocketId = async (io, roomId, tabId) => {
+    let pickFirstSession = tabId === undefined;
     const connected_sockets = await io.in(roomId).fetchSockets();
     for (let item of connected_sockets) {
-        if (item.handshake.query.identity === IDENTITIES.session && item.tabId === tabId) {
-            return item.id;
+        if (item.handshake.query.identity === IDENTITIES.session) {
+            if (pickFirstSession) {
+                return item.id;
+            } else if (item.tabId === tabId) {
+                return item.id;
+            }
         }
     }
     return null;
@@ -389,8 +394,8 @@ module.exports = {
                     return
                 }
                 // Back compatibility (add top layer with meta information)
-                if (args[0].meta === undefined) {
-                    args[0] = {meta: {tabId: socket.tabId}, data: args[0]};
+                if (args[0].meta === undefined && socket.identity === IDENTITIES.session) {
+                    args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);

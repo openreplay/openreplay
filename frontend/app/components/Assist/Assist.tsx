@@ -17,7 +17,7 @@ interface Props extends RouteComponentProps {
 function Assist(props: Props) {
   const { history, siteId, isEnterprise } = props;
   const isAssist = history.location.pathname.includes('assist');
-  const isRecords = history.location.pathname.includes('offline-playback');
+  const isRecords = history.location.pathname.includes('recordings');
 
   const redirect = (path: string) => {
     history.push(withSiteId(path, siteId));
@@ -37,7 +37,7 @@ function Assist(props: Props) {
             <SideMenuitem
               active={isRecords}
               id="menu-rec"
-              title="Offline Playback"
+              title="Recordings"
               iconName="record-btn"
               onClick={() => redirect(recordings())}
               disabled={!isEnterprise}
