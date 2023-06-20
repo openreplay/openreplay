@@ -114,6 +114,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	ua := e.services.UaParser.ParseFromHTTPRequest(r)
+	if ua == nil {
+		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	geoInfo := e.ExtractGeoData(r)
+
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
@@ -123,11 +131,6 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		ua := e.services.UaParser.ParseFromHTTPRequest(r)
-		if ua == nil {
-			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
-			return
-		}
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
 		if err != nil {
@@ -141,7 +144,6 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			Delay:   startTimeMili - req.Timestamp,
 			ExpTime: expTime.UnixMilli(),
 		}
-		geoInfo := e.ExtractGeoData(r)
 
 		sessionStart := &SessionStart{
 			Timestamp:            getSessionTimestamp(req, startTimeMili),
@@ -179,6 +181,12 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	ResponseWithJSON(w, &StartSessionResponse{
 		Token:                e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:             userUUID,
+		UserOS:               ua.OS,
+		UserDevice:           ua.Device,
+		UserBrowser:          ua.Browser,
+		UserCountry:          geoInfo.Country,
+		UserState:            geoInfo.State,
+		UserCity:             geoInfo.City,
 		SessionID:            strconv.FormatUint(tokenData.ID, 10),
 		ProjectID:            strconv.FormatUint(uint64(p.ProjectID), 10),
 		BeaconSizeLimit:      e.getBeaconSize(tokenData.ID),

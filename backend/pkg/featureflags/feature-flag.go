@@ -122,6 +122,7 @@ func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
 		num, err := strconv.Atoi(arr.Elements[i].String)
 		if err != nil {
 			log.Println(err)
+			slice = append(slice, 0)
 		} else {
 			slice = append(slice, num)
 		}
@@ -140,7 +141,7 @@ func parseFlagConditions(conditions *pgtype.TextArray, rolloutPercentages *pgtyp
 
 		err := json.Unmarshal([]byte(currCond.String), &filters)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("filter unmarshal error: %v", err)
 		}
 		conds = append(conds, &FeatureFlagCondition{
 			Filters:           filters,
@@ -182,18 +183,14 @@ func ParseFeatureFlag(rawFlag *FeatureFlagPG) (*FeatureFlag, error) {
 	// Parse conditions
 	conditions, err := parseFlagConditions(&rawFlag.Filters, &rawFlag.RolloutPercentages)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error: parseFlagConditions: %v", err)
 	}
 	flag.Conditions = conditions
-
-	if flag.FlagType == Single {
-		return flag, nil
-	}
 
 	// Parse variants
 	variants, err := parseFlagVariants(&rawFlag.Values, &rawFlag.Payloads, &rawFlag.VariantRollout)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error: parseFlagVariants: %v", err)
 	}
 	flag.Variants = variants
 	return flag, nil
@@ -249,7 +246,6 @@ func checkCondition(varValue string, exprValues []string, operator FilterOperato
 	return false
 }
 
-// Return true/false for single variant flags, and the variant value for multi variant flags
 func ComputeFlagValue(flag *FeatureFlag, sessInfo *FeatureFlagsRequest) interface{} {
 	for _, cond := range flag.Conditions {
 		conditionValue := true
