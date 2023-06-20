@@ -24,9 +24,11 @@ class TestFeatureFlag:
             ]
         )
         expected_output = {
+            'condition_id_0': None,
             "name_0": "Condition 2",
             "rollout_percentage_0": 75,
             "filters_0": json.dumps([{"key": "value1"}]),
+            'condition_id_1': None,
             "name_1": "Condition 3",
             "rollout_percentage_1": 25,
             "filters_1": json.dumps([{"key": "value2"}])
@@ -143,11 +145,11 @@ class TestFeatureFlag:
             ]
         )
         expected_output = {
-            "value_0": "Variant 1",
-            "description_0": "Description 1",
+            "v_value_0": "Variant 1",
+            "v_description_0": "Description 1",
             # "payload_0": json.dumps({"key": "value1"}),
-            'payload_0': 'null',
-            "rollout_percentage_0": 50
+            'v_payload_0': 'null',
+            "v_rollout_percentage_0": 50
         }
         assert prepare_variants_values(feature_flag_data) == expected_output
 
@@ -170,15 +172,15 @@ class TestFeatureFlag:
             ]
         )
         expected_output = {
-            "value_0": "Variant 1",
-            "description_0": "Description 1",
+            "v_value_0": "Variant 1",
+            "v_description_0": "Description 1",
             # "payload_0": json.dumps({"key": "value1"}),
-            'payload_0': 'null',
-            "rollout_percentage_0": 50,
-            "value_1": "Variant 2",
-            "description_1": "Description 2",
+            'v_payload_0': 'null',
+            "v_rollout_percentage_0": 50,
+            "v_value_1": "Variant 2",
+            "v_description_1": "Description 2",
             # "payload_1": json.dumps({"key": "value2"}),
-            'payload_1': 'null',
-            "rollout_percentage_1": 50
+            'v_payload_1': 'null',
+            "v_rollout_percentage_1": 50
         }
         assert prepare_variants_values(feature_flag_data) == expected_output

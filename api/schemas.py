@@ -1383,7 +1383,7 @@ class GetHeatmapPayloadSchema(BaseModel):
 
 
 class FeatureFlagVariant(BaseModel):
-    # variant_id: Optional[int] = Field(default=None)
+    variant_id: Optional[int] = Field(default=None)
     value: str = Field(...)
     description: Optional[str] = Field(default=None)
     payload: Optional[str] = Field(default=None)
@@ -1394,7 +1394,7 @@ class FeatureFlagVariant(BaseModel):
 
 
 class FeatureFlagCondition(BaseModel):
-    # condition_id: Optional[int] = Field(default=None)
+    condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
     filters: List[dict] = Field(default=[])
