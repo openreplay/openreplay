@@ -93,6 +93,9 @@ def prepare_constraints_params_to_search(data, project_id, user_id):
 
 
 def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
+    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant and len(feature_flag_data.variants) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Variants are required for multi variant flag")
+
     validate_unique_flag_key(feature_flag_data, project_id)
     validate_multi_variant_flag(feature_flag_data)
 
