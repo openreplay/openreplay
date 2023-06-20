@@ -116,7 +116,7 @@ func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
 	for i := range arr.Elements {
 		num, err := strconv.Atoi(arr.Elements[i].String)
 		if err != nil {
-			log.Printf("can't convert string to int: %v, full arr", err)
+			log.Printf("can't convert string to int: %v, full arr struct: %+v", err, *arr)
 			slice = append(slice, 0)
 		} else {
 			slice = append(slice, num)
