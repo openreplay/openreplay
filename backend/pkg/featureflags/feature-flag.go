@@ -14,21 +14,17 @@ import (
 //----------------------------------------------
 
 type FeatureFlagsRequest struct {
-	ProjectID          string                 `json:"projectID"`
-	UserOS             string                 `json:"os"`
-	UserOSVersion      string                 `json:"osVersion"`
-	UserDevice         string                 `json:"device"`
-	UserCountry        string                 `json:"country"`
-	UserState          string                 `json:"state"`
-	UserCity           string                 `json:"city"`
-	UserAgent          string                 `json:"ua"`
-	UserBrowser        string                 `json:"browser"`
-	UserBrowserVersion string                 `json:"browserVersion"`
-	UserDeviceType     string                 `json:"deviceType"`
-	Referrer           string                 `json:"referrer"`
-	UserID             string                 `json:"userID"`
-	Metadata           map[string]string      `json:"metadata"`
-	PersistFlags       map[string]interface{} `json:"persistFlags"` // bool or string
+	ProjectID    string                 `json:"projectID"`
+	UserOS       string                 `json:"os"`
+	UserDevice   string                 `json:"device"`
+	UserCountry  string                 `json:"country"`
+	UserState    string                 `json:"state"`
+	UserCity     string                 `json:"city"`
+	UserBrowser  string                 `json:"browser"`
+	Referrer     string                 `json:"referrer"`
+	UserID       string                 `json:"userID"`
+	Metadata     map[string]string      `json:"metadata"`
+	PersistFlags map[string]interface{} `json:"persistFlags"` // bool or string
 }
 
 type FeatureFlagsResponse struct {
@@ -121,7 +117,7 @@ func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
 	for i := range arr.Elements {
 		num, err := strconv.Atoi(arr.Elements[i].String)
 		if err != nil {
-			log.Println(err)
+			log.Printf("can't convert string to int: %v, full arr", err)
 			slice = append(slice, 0)
 		} else {
 			slice = append(slice, num)
