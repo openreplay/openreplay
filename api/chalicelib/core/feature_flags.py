@@ -188,7 +188,7 @@ def prepare_variants_values(feature_flag_data):
             variants_data[f"{k}_{i}"] = v.__getattribute__(k)
         variants_data[f"value_{i}"] = v.value
         variants_data[f"description_{i}"] = v.description
-        variants_data[f"payload_{i}"] = v.payload
+        variants_data[f"payload_{i}"] = json.dumps(v.payload)
         variants_data[f"rollout_percentage_{i}"] = v.rollout_percentage
     return variants_data
 

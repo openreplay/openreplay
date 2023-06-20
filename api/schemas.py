@@ -1386,7 +1386,7 @@ class FeatureFlagVariant(BaseModel):
     # variant_id: Optional[int] = Field(default=None)
     value: str = Field(...)
     description: Optional[str] = Field(default=None)
-    payload: Optional[Json[Any]] = Field(default=None)
+    payload: Optional[str] = Field(default=None)
     rollout_percentage: Optional[int] = Field(default=0, ge=0, le=100)
 
     class Config:
