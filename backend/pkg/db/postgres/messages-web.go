@@ -4,11 +4,11 @@ import (
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
-	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
 
-func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
+func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *messages.CustomEvent) error {
 	err := conn.InsertCustomEvent(
 		sessionID,
 		uint64(e.Meta().Timestamp),
@@ -22,7 +22,7 @@ func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *Cu
 	return err
 }
 
-func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *UserID) error {
+func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *messages.UserID) error {
 	err := conn.InsertUserID(sessionID, userID.ID)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "USERID", userID.ID)
@@ -30,7 +30,7 @@ func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *Us
 	return err
 }
 
-func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, userAnonymousID *UserAnonymousID) error {
+func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, userAnonymousID *messages.UserAnonymousID) error {
 	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.ID)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "USERANONYMOUSID", userAnonymousID.ID)
@@ -38,7 +38,7 @@ func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, u
 	return err
 }
 
-func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *PageEvent) error {
+func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *messages.PageEvent) error {
 	host, path, query, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	return nil
 }
 
-func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *MouseClick) error {
+func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *messages.MouseClick) error {
 	if e.Label == "" {
 		return nil
 	}
@@ -76,7 +76,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Mou
 	return nil
 }
 
-func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *InputEvent) error {
+func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *messages.InputEvent) error {
 	if e.Label == "" {
 		return nil
 	}
@@ -88,7 +88,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *InputChange) error {
+func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *messages.InputChange) error {
 	if e.Label == "" {
 		return nil
 	}
@@ -117,7 +117,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *typ
 	return nil
 }
 
-func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, savePayload bool, e *NetworkRequest) error {
+func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, savePayload bool, e *messages.NetworkRequest) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Request
@@ -133,7 +133,7 @@ func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, sa
 	return nil
 }
 
-func (conn *Conn) InsertWebGraphQL(sessionID uint64, projectID uint32, savePayload bool, e *GraphQL) error {
+func (conn *Conn) InsertWebGraphQL(sessionID uint64, projectID uint32, savePayload bool, e *messages.GraphQL) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Variables
@@ -157,7 +157,7 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 		referrer, url.DiscardURLQuery(referrer), sessionID)
 }
 
-func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *MouseThrashing) error {
+func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *messages.MouseThrashing) error {
 	issueID := hashid.MouseThrashingID(projectID, sessionID, e.Timestamp)
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
 		log.Printf("insert web issue err: %s", err)

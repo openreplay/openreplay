@@ -6,7 +6,7 @@ import (
 
 func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag, error) {
 	rows, err := conn.c.Query(`
-		SELECT ff.feature_flag_id AS flag_id, ff.flag_key, ff.flag_type, ff.is_persist,
+		SELECT ff.feature_flag_id AS flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload,
 			ARRAY_AGG(fc.rollout_percentage) AS rollout_percentages,
 			ARRAY_AGG(fc.filters) AS filters,
 			ARRAY_AGG(fv.value) AS values,
@@ -27,7 +27,7 @@ func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag
 
 	for rows.Next() {
 		var flag featureflags.FeatureFlagPG
-		if err := rows.Scan(&flag.FlagID, &flag.FlagKey, &flag.FlagType, &flag.IsPersist, &flag.RolloutPercentages,
+		if err := rows.Scan(&flag.FlagID, &flag.FlagKey, &flag.FlagType, &flag.IsPersist, &flag.Payload, &flag.RolloutPercentages,
 			&flag.Filters, &flag.Values, &flag.Payloads, &flag.VariantRollout); err != nil {
 			return nil, err
 		}

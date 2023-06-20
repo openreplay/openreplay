@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"openreplay/backend/pkg/featureflags"
 	"strconv"
 	"time"
 
@@ -287,7 +288,7 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
@@ -308,7 +309,7 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize = len(bodyBytes)
 
 	// Parse request body
-	req := &FeatureFlagsRequest{}
+	req := &featureflags.FeatureFlagsRequest{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
@@ -327,38 +328,13 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Return list of active flags with values and payloads
-	resp := &FeatureFlagsResponse{
-		Flags: []interface{}{},
+	computedFlags, err := featureflags.ComputeFeatureFlags(flags, req)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-
-	type ff struct {
-		Key       string      `json:"key"`
-		IsPersist bool        `json:"is_persist"`
-		Value     interface{} `json:"value"`
-		Payload   string      `json:"payload"`
+	resp := &featureflags.FeatureFlagsResponse{
+		Flags: computedFlags,
 	}
-
-	randomValue := func(key string, i int) interface{} {
-		switch i % 3 {
-		case 0:
-			return true
-		case 1:
-			return false
-		case 2:
-			return fmt.Sprintf("%s_value", key)
-		}
-		return sessionData.ID
-	}
-
-	for i, flag := range flags {
-		resp.Flags = append(resp.Flags, ff{
-			Key:       flag.FlagKey,
-			IsPersist: flag.IsPersist,
-			Value:     randomValue(flag.FlagKey, i),
-			Payload:   string(bodyBytes),
-		})
-	}
-
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
 }

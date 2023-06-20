@@ -31,25 +31,3 @@ type NotStartedRequest struct {
 	TrackerVersion string  `json:"trackerVersion"`
 	DoNotTrack     bool    `json:"DoNotTrack"`
 }
-
-type FeatureFlagsRequest struct {
-	ProjectID          string                 `json:"projectID"`
-	UserOS             string                 `json:"os"`
-	UserOSVersion      string                 `json:"osVersion"`
-	UserDevice         string                 `json:"device"`
-	UserCountry        string                 `json:"country"`
-	UserState          string                 `json:"state"`
-	UserCity           string                 `json:"city"`
-	UserAgent          string                 `json:"ua"`
-	UserBrowser        string                 `json:"browser"`
-	UserBrowserVersion string                 `json:"browserVersion"`
-	UserDeviceType     string                 `json:"deviceType"`
-	Referrer           string                 `json:"referrer"`
-	UserID             string                 `json:"userID"`
-	Metadata           map[string]string      `json:"metadata"`
-	PersistFlags       map[string]interface{} `json:"persistFlags"` // bool or string
-}
-
-type FeatureFlagsResponse struct {
-	Flags []interface{} `json:"flags"` // interface - flag{key, is_persist, value, payload}
-}
