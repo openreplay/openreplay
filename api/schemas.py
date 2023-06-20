@@ -1429,5 +1429,13 @@ class FeatureFlagSchema(BaseModel):
     conditions: List[FeatureFlagCondition] = Field(default=[], min_items=1)
     variants: List[FeatureFlagVariant] = Field(default=[])
 
+    @root_validator()
+    def validate_variants(cls, values):
+        flag_type = values.get('flag_type', FeatureFlagType.single_variant)
+        variants = values.get('variants', [])
+        if flag_type == 'multi' and len(variants) == 0:
+            raise ValueError('Variants should have at least one item for flag_type "multi"')
+        return values
+
     class Config:
         alias_generator = attribute_to_camel_case

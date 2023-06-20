@@ -116,10 +116,12 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
                 VALUES ({", ".join(["%(" + col + ")s" for col in insert_columns])})
                 RETURNING feature_flag_id
         """
+    conditions_query = ""
+    variants_query = ""
 
-    query = f"""
-            WITH inserted_flag AS ({flag_sql}),
-            inserted_conditions AS (
+    if conditions_len > 0:
+        conditions_query = f"""
+        inserted_conditions AS (
                 INSERT INTO feature_flags_conditions(feature_flag_id, name, rollout_percentage, filters)
                 VALUES {",".join([f"(("
                                   f"SELECT feature_flag_id FROM inserted_flag),"
@@ -128,8 +130,12 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
                                   f"%(filters_{i})s::jsonb)"
                                   for i in range(conditions_len)])}
                 RETURNING feature_flag_id
-            ),
-            inserted_variants AS (
+            )
+        """
+
+    if variants_len > 0:
+        variants_query = f""",
+        inserted_variants AS (
                 INSERT INTO feature_flags_variants(feature_flag_id, value, description, rollout_percentage, payload)
                 VALUES {",".join([f"((SELECT feature_flag_id FROM inserted_flag),"
                                   f"%(v_value_{i})s,"
@@ -139,6 +145,12 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
                                   for i in range(variants_len)])}
                 RETURNING feature_flag_id
             )
+        """
+
+    query = f"""
+            WITH inserted_flag AS ({flag_sql}),
+            {conditions_query}
+            {variants_query}
             SELECT feature_flag_id FROM inserted_flag;
         """
 
@@ -183,8 +195,8 @@ def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
 def prepare_variants_values(feature_flag_data):
     variants_data = {}
     for i, v in enumerate(feature_flag_data.variants):
-        # for k in v.dict().keys():
-        #     variants_data[f"{k}_{i}"] = v.__getattribute__(k)
+        for k in v.dict().keys():
+            variants_data[f"v_{k}_{i}"] = v.__getattribute__(k)
         variants_data[f"v_value_{i}"] = v.value
         variants_data[f"v_description_{i}"] = v.description
         variants_data[f"v_payload_{i}"] = json.dumps(v.payload)
