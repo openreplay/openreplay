@@ -182,6 +182,11 @@ func ParseFeatureFlag(rawFlag *FeatureFlagPG) (*FeatureFlag, error) {
 	}
 	flag.Conditions = conditions
 
+	if flag.FlagType == Single {
+		flag.Variants = []*FeatureFlagVariant{}
+		return flag, nil
+	}
+
 	// Parse variants
 	variants, err := parseFlagVariants(&rawFlag.Values, &rawFlag.Payloads, &rawFlag.VariantRollout)
 	if err != nil {
