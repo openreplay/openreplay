@@ -17,10 +17,24 @@ export default class FeatureFlags {
   storageKey = '__openreplay_flags'
   onFlagsCb: (flags: Record<string, any>) => void
 
-  constructor(private readonly app: App) {}
+  constructor(private readonly app: App) {
+    const persistFlags = this.app.localStorage.getItem(this.storageKey)
+    if (persistFlags) {
+      const persistFlagsStrArr = persistFlags.split(';')
+      const persistFlagsArr = persistFlagsStrArr.map((flag) => JSON.parse(flag))
+      const flags: Record<string, any> = {}
+      persistFlagsArr.forEach((flag) => {
+        flags[flag.key] = {
+          value: flag.value,
+          payload: flag.payload,
+        }
+      })
+      this.flags = flags
+    }
+  }
 
   isFlagEnabled(flagName: string): boolean {
-    return this.flags[flagName] && this.flags[flagName].enabled
+    return Boolean(this.flags[flagName])
   }
 
   onFlagsLoad(cb: (flags: IFeatureFlag[]) => void) {
@@ -69,8 +83,8 @@ export default class FeatureFlags {
       if (flag.is_persist) persistFlags.push({ key: flag.key, value: flag.value })
     })
     let str = ''
-    const uniqueFlags = this.diffPersist(persistFlags)
-    uniqueFlags.forEach((flag) => {
+    const uniquePersistFlags = this.diffPersist(persistFlags)
+    uniquePersistFlags.forEach((flag) => {
       str += `${JSON.stringify(flag)};`
     })
 

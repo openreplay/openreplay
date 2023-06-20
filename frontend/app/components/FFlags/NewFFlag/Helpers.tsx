@@ -12,7 +12,7 @@ function Rollout() {
 function Payload() {
   return (
     <div className={'flex items-center gap-2'}>
-      Payload <QuestionMarkHint delay={150} content={"Will be sent as a string"} /> <span className={"text-disabled-text text-sm"}>(Optional)</span>
+      Payload <QuestionMarkHint delay={150} content={"Will be sent as an additional string"} /> <span className={"text-disabled-text text-sm"}>(Optional)</span>
     </div>
   )
 }

@@ -58,7 +58,6 @@ function FFlagsList({ siteId }: { siteId: string }) {
                     }}
                   />
                 </div>
-                <div>All feature flags</div>
                 <div>
                   <Select
                     options={[

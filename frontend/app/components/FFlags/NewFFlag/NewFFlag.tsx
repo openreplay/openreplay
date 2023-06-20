@@ -49,13 +49,14 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
     }
   };
 
+  console.log(current.isSingleOption)
   const showDescription = Boolean(current.description.length);
   return (
     <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
-          { label: 'New Feature Flag' },
+          { label: fflagId ? current.flagKey : 'New Feature Flag' },
         ]}
       />
       <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
@@ -64,8 +65,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
             current={current}
             onCancel={onCancel}
             onSave={onSave}
-            setEditing={featureFlagsStore.setEditing}
-            isTitleEditing={featureFlagsStore.isTitleEditing}
+            isNew={!fflagId}
           />
         </div>
         <div className={'w-full border-b border-light-gray my-2'} />
@@ -104,13 +104,14 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
               name={'feature-type'}
               size={'small'}
               onSelect={(_: any, { value }: any) => {
-                current.setIsSingleOption(Boolean(value));
+                current.setIsSingleOption(value === 'single');
               }}
-              value={{ value: current.isSingleOption ? 1 : 0 }}
+              value={{ value: current.isSingleOption ? 'single' : 'multi' }}
               list={[
-                { name: 'Single Variant (Boolean)', value: 1 },
-                { name: 'Multi-Variant (String)', value: 0 },
+                { name: 'Single Variant (Boolean)', value: 'single' },
+                { name: 'Multi-Variant (String)', value: 'multi' },
               ]}
+
             />
           </div>
           {current.isSingleOption ? (

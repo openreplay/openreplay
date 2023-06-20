@@ -32,7 +32,9 @@ function Multivariant() {
         </div>
       </div>
       <div>
-        {featureFlagsStore.currentFflag!.variants.map((variant, ind) => (
+        {featureFlagsStore.currentFflag!.variants.map((variant, ind) => {
+          console.log(variant, featureFlagsStore.currentFflag)
+          return (
           <div className={'flex items-center gap-2 my-2 '} key={variant.index}>
             <div style={{ flex: 1 }}>
               <div className={'p-2 text-center bg-gray-lightest rounded-full w-10 h-10'}>
@@ -99,8 +101,7 @@ function Multivariant() {
                 />
               </div>
             </div>
-          </div>
-        ))}
+          </div>)})}
       </div>
       <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
         + Add Variant

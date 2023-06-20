@@ -47,21 +47,6 @@ function Header({ history, siteId }: { history: any; siteId: string }) {
             })
           }
         />
-        {/* <Select
-          options={[
-            { label: 'Visibility - All', value: 'all' },
-            { label: 'Visibility - Private', value: 'private' },
-            { label: 'Visibility - Team', value: 'team' },
-          ]}
-          defaultValue={'all'}
-          plain
-          onChange={({ value }) =>
-            dashboardStore.updateKey('filter', {
-              ...dashboardStore.filter,
-              visibility: value.value,
-            })
-          }
-        /> */}
 
         <Select
           options={[

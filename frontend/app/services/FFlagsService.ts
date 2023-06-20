@@ -3,7 +3,7 @@ import BaseService from 'App/services/BaseService';
 type FFlagType = 'single' | 'multi';
 type FFlagCondition = {
   name: string;
-  rollout_percentage: number;
+  rolloutPercentage: number;
   filters: [];
 };
 
@@ -17,6 +17,14 @@ export interface SimpleFlag {
   payload?: string;
 }
 
+type Variant = {
+  variantId?: number;
+  value: string;
+  description?: string;
+  payload: string;
+  rolloutPercentage: number;
+}
+
 export interface FFlag extends SimpleFlag {
   featureFlagId: number;
   isActive: boolean;
@@ -25,6 +33,7 @@ export interface FFlag extends SimpleFlag {
   createdBy: number;
   updatedBy: number;
   conditions: never;
+  variants: Variant[]
 }
 
 export interface SingleFFlag extends SimpleFlag {
@@ -34,17 +43,11 @@ export interface SingleFFlag extends SimpleFlag {
   updatedBy: number;
   featureFlagId: number;
   isActive: boolean;
-  variants: {
-    variantId?: number;
-    value: string;
-    description?: string;
-    payload: string;
-    rolloutPercentage: number;
-  }[]
+  variants: Variant[]
 }
 
 export default class FFlagsService extends BaseService {
-  fetchFlags(filters: Record<string, any>): Promise<{ records: FFlag[]; total: number }> {
+  fetchFlags(filters: Record<string, any>): Promise<{ list: FFlag[]; total: number }> {
     return this.client
       .post('/feature-flags/search', filters)
       .then((r) => r.json())
@@ -65,9 +68,9 @@ export default class FFlagsService extends BaseService {
       .then((j) => j.data || {});
   }
 
-  deleteFlag(flag: FFlag): Promise<void> {
+  deleteFlag(id: number): Promise<void> {
     return this.client
-      .delete(`/feature-flags/${flag.featureFlagId}`)
+      .delete(`/feature-flags/${id}`)
       .then((r) => r.json())
       .then((j) => j.data || {});
   }

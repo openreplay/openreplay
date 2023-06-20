@@ -11,7 +11,21 @@ function HowTo() {
       <div className={'my-2'}>
         <Highlight className={'js'}>
           {
-            `if (openreplay.isFeatureEnabled('my_flag')) {
+            `
+type FeatureFlag = { 
+  key: string; 
+  is_persist: boolean; 
+  value: string | boolean; 
+  payload: string 
+}
+
+tracker.onFlagsLoad((flags: FeatureFlag) => {
+ /* run code */
+})
+            
+// or
+            
+if (openreplay.isFlagEnabled('my_flag')) {
   // run your activation code here
 }`}
         </Highlight>

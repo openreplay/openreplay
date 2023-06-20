@@ -28,7 +28,6 @@ export class Conditions {
 }
 
 const initData = {
-  name: 'New Feature Flag',
   flagKey: '',
   isActive: false,
   isPersist: false,
@@ -49,9 +48,10 @@ export class Variant {
   payload: string = '';
   rolloutPercentage: number = 100;
 
-  constructor(index: number) {
-    makeAutoObservable(this)
+  constructor(index: number, data?: Record<string, any>) {
+    Object.assign(this, data)
     this.index = index;
+    makeAutoObservable(this)
   }
 
   setIndex = (index: number) => {
@@ -89,19 +89,19 @@ export default class FeatureFlag {
   isSingleOption: boolean
   featureFlagId: SingleFFlag['featureFlagId']
   payload: SingleFFlag['payload']
-  name: SingleFFlag['name'];
   flagType: string;
   variants: Variant[] = [];
 
-  constructor(data: SingleFFlag) {
+  constructor(data?: SingleFFlag) {
+    console.log(data)
     Object.assign(
       this,
       initData,
       {
         ...data,
-        isSingleOption: data?.flagType === 'single' || true,
+        isSingleOption: data?.flagType === 'single',
         conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
-        variants: data?.flagType === 'multi' ? data?.variants.map((v, i) => new Variant(i)) : [new Variant(1)],
+        variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [new Variant(1)],
       });
 
     makeAutoObservable(this);
@@ -131,7 +131,6 @@ export default class FeatureFlag {
 
   toJS() {
     return {
-      name: this.name,
       flagKey: this.flagKey,
       conditions: this.conditions.map(c => c.toJS()),
       createdBy: this.createdBy,
@@ -141,7 +140,7 @@ export default class FeatureFlag {
       isActive: this.isActive,
       description: this.description,
       isPersist: this.isPersist,
-      flagType: this.isSingleOption ? 'single' : 'multi',
+      flagType: this.isSingleOption ? 'single' as const : 'multi' as const,
       featureFlagId: this.featureFlagId,
       variants: this.isSingleOption ? undefined : this.variants.map(v => ({ value: v.value, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
     }
@@ -173,9 +172,5 @@ export default class FeatureFlag {
 
   setIsEnabled = (isEnabled: boolean) => {
     this.isActive = isEnabled;
-  }
-
-  setName = (name: string) => {
-    this.name = name;
   }
 }

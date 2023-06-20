@@ -97,6 +97,7 @@ export default class FeatureFlagsStore {
     if (this.currentFflag) {
       this.setLoading(true);
       try {
+        // @ts-ignore
         const result = await fflagsService.createFlag(this.currentFflag.toJS());
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
@@ -112,6 +113,7 @@ export default class FeatureFlagsStore {
     if (usedFlag) {
       this.setLoading(true);
       try {
+        // @ts-ignore
         const result = await fflagsService.updateFlag(usedFlag.toJS());
         if (!flag) this.setCurrentFlag(new FeatureFlag(result));
       } catch (e) {
