@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-//----------------------------------------------
-
 type FeatureFlagsRequest struct {
 	ProjectID    string                 `json:"projectID"`
 	UserOS       string                 `json:"os"`
@@ -28,10 +26,8 @@ type FeatureFlagsRequest struct {
 }
 
 type FeatureFlagsResponse struct {
-	Flags []interface{} `json:"flags"` // interface - flag{key, is_persist, value, payload}
+	Flags []interface{} `json:"flags"`
 }
-
-//----------------------------------------------
 
 type FilterType string
 
@@ -95,22 +91,25 @@ type FeatureFlag struct {
 	Variants   []*FeatureFlagVariant
 }
 
-//------------
-
 type FeatureFlagPG struct {
 	FlagID             uint32
 	FlagKey            string
 	FlagType           string
 	IsPersist          bool
 	Payload            *string
-	RolloutPercentages pgtype.EnumArray // convert to []int
-	Filters            pgtype.TextArray // convert to [][]FeatureFlagFilter
-	Values             pgtype.TextArray // convert to []string
-	Payloads           pgtype.TextArray // convert to []string
-	VariantRollout     pgtype.EnumArray // convert to []int
+	RolloutPercentages pgtype.EnumArray
+	Filters            pgtype.TextArray
+	Values             pgtype.TextArray
+	Payloads           pgtype.TextArray
+	VariantRollout     pgtype.EnumArray
 }
 
-//------------
+type flagInfo struct {
+	Key       string      `json:"key"`
+	IsPersist bool        `json:"is_persist"`
+	Value     interface{} `json:"value"`
+	Payload   string      `json:"payload"`
+}
 
 func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
 	slice := make([]int, 0, len(arr.Elements))
@@ -286,7 +285,7 @@ func ComputeFlagValue(flag *FeatureFlag, sessInfo *FeatureFlagsRequest) interfac
 				return nil
 			}
 			if flag.FlagType == Single {
-				return ff{
+				return flagInfo{
 					Key:       flag.FlagKey,
 					IsPersist: flag.IsPersist,
 					Value:     true,
@@ -299,7 +298,7 @@ func ComputeFlagValue(flag *FeatureFlag, sessInfo *FeatureFlagsRequest) interfac
 			for _, variant := range flag.Variants {
 				curr += variant.RolloutPercentage
 				if randNum >= prev && randNum <= curr {
-					return ff{
+					return flagInfo{
 						Key:       flag.FlagKey,
 						IsPersist: flag.IsPersist,
 						Value:     variant.Value,
@@ -313,20 +312,13 @@ func ComputeFlagValue(flag *FeatureFlag, sessInfo *FeatureFlagsRequest) interfac
 	return nil
 }
 
-type ff struct {
-	Key       string      `json:"key"`
-	IsPersist bool        `json:"is_persist"`
-	Value     interface{} `json:"value"`
-	Payload   string      `json:"payload"`
-}
-
 func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([]interface{}, error) {
 	result := make([]interface{}, 0, len(flags))
 
 	for _, flag := range flags {
 		if val, ok := sessInfo.PersistFlags[flag.FlagKey]; ok && flag.IsPersist {
 			if flag.FlagType == Single {
-				result = append(result, ff{
+				result = append(result, flagInfo{
 					Key:       flag.FlagKey,
 					IsPersist: flag.IsPersist,
 					Value:     val,
@@ -338,7 +330,7 @@ func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([
 				for _, variant := range flag.Variants {
 					if variant.Value == val {
 						found = true
-						result = append(result, ff{
+						result = append(result, flagInfo{
 							Key:       flag.FlagKey,
 							IsPersist: flag.IsPersist,
 							Value:     val,
