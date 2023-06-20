@@ -1420,7 +1420,6 @@ class FeatureFlagType(str, Enum):
 
 
 class FeatureFlagSchema(BaseModel):
-    name: str = Field(...)
     payload: Optional[str] = Field(default=None)
     flag_key: str = Field(...)
     description: Optional[str] = Field(None)

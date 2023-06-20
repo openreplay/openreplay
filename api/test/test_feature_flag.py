@@ -9,7 +9,6 @@ from chalicelib.core.feature_flags import prepare_conditions_values, prepare_var
 class TestFeatureFlag:
     def test_prepare_conditions_values(self):
         feature_flag_data = schemas.FeatureFlagSchema(
-            name="Flag 2",
             flagKey="flag_2",
             conditions=[
                 schemas.FeatureFlagCondition(
@@ -37,7 +36,6 @@ class TestFeatureFlag:
     def test_feature_flag_schema_validation(self):
         try:
             schemas.FeatureFlagSchema(
-                name="Valid Flag",
                 flagKey="valid_flag",
                 conditions=[
                     schemas.FeatureFlagCondition(name="Condition 1", rollout_percentage=50),
@@ -54,10 +52,10 @@ class TestFeatureFlag:
         try:
             schemas.FeatureFlagSchema()
         except ValidationError as e:
-            assert len(e.errors()) == 2
+            assert len(e.errors()) == 1
             for error in e.errors():
                 assert error["type"] == "value_error.missing"
-                assert error["loc"] in [("name",), ("flagKey",)]
+                assert error["loc"] in [("flagKey",)]
         else:
             assert False, "Invalid data should raise ValidationError"
 
@@ -134,7 +132,6 @@ class TestFeatureFlag:
 
     def test_prepare_variants_values_single_variant(self):
         feature_flag_data = schemas.FeatureFlagSchema(
-            name="Flag 1",
             flagKey="flag_1",
             variants=[
                 schemas.FeatureFlagVariant(
@@ -149,14 +146,13 @@ class TestFeatureFlag:
             "value_0": "Variant 1",
             "description_0": "Description 1",
             # "payload_0": json.dumps({"key": "value1"}),
-            'payload_0': None,
+            'payload_0': 'null',
             "rollout_percentage_0": 50
         }
         assert prepare_variants_values(feature_flag_data) == expected_output
 
     def test_prepare_variants_values_multiple_variants(self):
         feature_flag_data = schemas.FeatureFlagSchema(
-            name="Flag 2",
             flagKey="flag_2",
             variants=[
                 schemas.FeatureFlagVariant(
@@ -177,12 +173,12 @@ class TestFeatureFlag:
             "value_0": "Variant 1",
             "description_0": "Description 1",
             # "payload_0": json.dumps({"key": "value1"}),
-            'payload_0': None,
+            'payload_0': 'null',
             "rollout_percentage_0": 50,
             "value_1": "Variant 2",
             "description_1": "Description 2",
             # "payload_1": json.dumps({"key": "value2"}),
-            'payload_1': None,
+            'payload_1': 'null',
             "rollout_percentage_1": 50
         }
         assert prepare_variants_values(feature_flag_data) == expected_output

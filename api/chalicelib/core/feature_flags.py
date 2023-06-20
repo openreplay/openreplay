@@ -8,7 +8,6 @@ import json
 
 feature_flag_columns = (
     "feature_flag_id",
-    "name",
     "payload",
     "flag_key",
     "description",
@@ -99,7 +98,6 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
 
     insert_columns = (
         'project_id',
-        'name',
         'flag_key',
         'description',
         'flag_type',
@@ -122,10 +120,10 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
     query = f"""
             WITH inserted_flag AS ({flag_sql}),
             inserted_conditions AS (
-                INSERT INTO feature_flags_conditions(feature_flag_id, name, rollout_percentage, filters)
+                INSERT INTO feature_flags_conditions(feature_flag_id, rollout_percentage, filters)
                 VALUES {",".join([f"(("
                                   f"SELECT feature_flag_id FROM inserted_flag),"
-                                  f"%(name_{i})s, %(rollout_percentage_{i})s,"
+                                  f"%(rollout_percentage_{i})s,"
                                   f"%(filters_{i})s::jsonb)"
                                   for i in range(conditions_len)])}
                 RETURNING feature_flag_id
@@ -281,7 +279,6 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
     validate_multi_variant_flag(feature_flag_data=feature_flag)
 
     columns = (
-        "name",
         "flag_key",
         "description",
         "flag_type",
