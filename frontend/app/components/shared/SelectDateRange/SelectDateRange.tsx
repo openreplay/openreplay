@@ -74,6 +74,8 @@ function SelectDateRange(props: Props) {
                         className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
                         style={{
                             width: '770px',
+                            fontSize: '14px',
+                            textAlign: 'left',
                         }}
                     >
                         <DateRangePopup timezone={timezone} onApply={onApplyDateRange} onCancel={() => setIsCustom(false)} selectedDateRange={period.range} />
