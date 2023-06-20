@@ -106,7 +106,7 @@ type FeatureFlagPG struct {
 	FlagKey            string
 	FlagType           string
 	IsPersist          bool
-	Payload            string
+	Payload            *string
 	RolloutPercentages pgtype.EnumArray // convert to []int
 	Filters            pgtype.TextArray // convert to [][]FeatureFlagFilter
 	Values             pgtype.TextArray // convert to []string
@@ -151,16 +151,18 @@ func parseFlagConditions(conditions *pgtype.TextArray, rolloutPercentages *pgtyp
 }
 
 func parseFlagVariants(values *pgtype.TextArray, payloads *pgtype.TextArray, variantRollout *pgtype.EnumArray) ([]*FeatureFlagVariant, error) {
+	percents := numArrayToIntSlice(variantRollout)
 	variants := make([]*FeatureFlagVariant, 0, len(values.Elements))
+	if len(values.Elements) != len(payloads.Elements) || len(values.Elements) != len(percents) {
+		return nil, fmt.Errorf("wrong number of variant elements")
+	}
 	for i := range values.Elements {
-		log.Println(i, values.Elements[i].String)
+		variants = append(variants, &FeatureFlagVariant{
+			Value:             values.Elements[i].String,
+			Payload:           payloads.Elements[i].String,
+			RolloutPercentage: percents[i],
+		})
 	}
-	log.Println("payloads", len(payloads.Elements))
-	for i := range payloads.Elements {
-		log.Println(i, payloads.Elements[i].String)
-	}
-	variantRollouts := numArrayToIntSlice(variantRollout)
-	log.Println("variant rollouts: ", variantRollouts)
 	return variants, nil
 }
 
@@ -170,7 +172,12 @@ func ParseFeatureFlag(rawFlag *FeatureFlagPG) (*FeatureFlag, error) {
 		FlagKey:   rawFlag.FlagKey,
 		FlagType:  FlagType(rawFlag.FlagType),
 		IsPersist: rawFlag.IsPersist,
-		Payload:   rawFlag.Payload,
+		Payload: func() string {
+			if rawFlag.Payload != nil {
+				return *rawFlag.Payload
+			}
+			return ""
+		}(),
 	}
 	// Parse conditions
 	conditions, err := parseFlagConditions(&rawFlag.Filters, &rawFlag.RolloutPercentages)
@@ -279,38 +286,50 @@ func ComputeFlagValue(flag *FeatureFlag, sessInfo *FeatureFlagsRequest) interfac
 		// If any condition is true, we can return the flag value
 		if conditionValue {
 			if cond.RolloutPercentage == 0 {
-				return false
+				return nil
 			}
 			rand.Seed(time.Now().UnixNano())
 			randNum := rand.Intn(100)
 			if randNum > cond.RolloutPercentage {
-				return false
+				return nil
 			}
 			if flag.FlagType == Single {
-				return true
+				return ff{
+					Key:       flag.FlagKey,
+					IsPersist: flag.IsPersist,
+					Value:     true,
+					Payload:   flag.Payload,
+				}
 			}
 			// Multi variant flag
 			randNum = rand.Intn(100)
 			prev, curr := 0, 0
 			for _, variant := range flag.Variants {
 				curr += variant.RolloutPercentage
-				if randNum > prev && randNum <= curr {
-
+				if randNum >= prev && randNum <= curr {
+					return ff{
+						Key:       flag.FlagKey,
+						IsPersist: flag.IsPersist,
+						Value:     variant.Value,
+						Payload:   variant.Payload,
+					}
 				}
+				prev = curr
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+type ff struct {
+	Key       string      `json:"key"`
+	IsPersist bool        `json:"is_persist"`
+	Value     interface{} `json:"value"`
+	Payload   string      `json:"payload"`
 }
 
 func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([]interface{}, error) {
 	result := make([]interface{}, 0, len(flags))
-	type ff struct {
-		Key       string      `json:"key"`
-		IsPersist bool        `json:"is_persist"`
-		Value     interface{} `json:"value"`
-		Payload   string      `json:"payload"`
-	}
 
 	for _, flag := range flags {
 		if val, ok := sessInfo.PersistFlags[flag.FlagKey]; ok && flag.IsPersist {
@@ -341,7 +360,7 @@ func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([
 				}
 			}
 		}
-		if computedFlag := ComputeFlagValue(flag, sessInfo); result != nil {
+		if computedFlag := ComputeFlagValue(flag, sessInfo); computedFlag != nil {
 			result = append(result, computedFlag)
 		}
 	}

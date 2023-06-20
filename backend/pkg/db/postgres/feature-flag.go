@@ -6,17 +6,21 @@ import (
 
 func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag, error) {
 	rows, err := conn.c.Query(`
-		SELECT ff.feature_flag_id AS flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload,
-			ARRAY_AGG(fc.rollout_percentage) AS rollout_percentages,
-			ARRAY_AGG(fc.filters) AS filters,
-			ARRAY_AGG(fv.value) AS values,
-			ARRAY_AGG(fv.payload) AS payloads,
-			ARRAY_AGG(fv.rollout_percentage) AS variant_rollout_percentages
-		FROM public.feature_flags ff
-		JOIN public.feature_flags_conditions fc ON ff.feature_flag_id = fc.feature_flag_id
-		LEFT JOIN public.feature_flags_variants fv ON ff.flag_type = 'multi' AND ff.feature_flag_id = fv.feature_flag_id
-		WHERE ff.project_id = $1 AND ff.is_active = TRUE
-		GROUP BY ff.feature_flag_id;
+		SELECT ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.rollout_percentages, ff.filters,
+       		ARRAY_AGG(fv.value) as values,
+       		ARRAY_AGG(fv.payload) as payloads,
+       		ARRAY_AGG(fv.rollout_percentage) AS variants_percentages
+		FROM (
+			SELECT ff.feature_flag_id AS flag_id, ff.flag_key AS flag_key, ff.flag_type, ff.is_persist, ff.payload,
+				ARRAY_AGG(fc.rollout_percentage) AS rollout_percentages,
+				ARRAY_AGG(fc.filters) AS filters
+			FROM public.feature_flags ff
+				  LEFT JOIN public.feature_flags_conditions fc ON ff.feature_flag_id = fc.feature_flag_id
+			WHERE ff.project_id = $1 AND ff.is_active = TRUE
+			GROUP BY ff.feature_flag_id
+		) AS ff
+		LEFT JOIN public.feature_flags_variants fv ON ff.flag_type = 'multi' AND ff.flag_id = fv.feature_flag_id
+		GROUP BY ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.filters, ff.rollout_percentages;
 	`, projectID)
 	if err != nil {
 		return nil, err
