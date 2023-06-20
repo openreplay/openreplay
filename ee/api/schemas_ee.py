@@ -110,6 +110,8 @@ class SessionModel(BaseModel):
     eventsCount: int
     userBrowser: str
     userCountry: str
+    userCity: str
+    userState: str
     userDeviceType: str
     userAnonymousId: Optional[str]
     metadata: dict = Field(default={})
