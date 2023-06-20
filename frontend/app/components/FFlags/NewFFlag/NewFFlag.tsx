@@ -50,7 +50,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   };
 
   console.log(current.isSingleOption)
-  const showDescription = Boolean(current.description.length);
+  const showDescription = Boolean(current.description?.length);
   return (
     <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
       <Breadcrumb
