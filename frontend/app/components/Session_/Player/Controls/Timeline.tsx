@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
 import { connect } from 'react-redux';
-import { Icon } from 'UI'
 import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
@@ -13,12 +12,10 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
 import Issue from "Types/session/issue";
-
-function getTimelinePosition(value: number, scale: number) {
-  const pos = value * scale;
-
-  return pos > 100 ? 99 : pos;
-}
+import EventsList from './EventsList';
+import NotesList from './NotesList';
+import SkipIntervalsList from './SkipIntervalsList'
+import TimelineTracker from "Components/Session_/Player/Controls/TimelineTracker";
 
 interface IProps {
   issues: Issue[]
@@ -30,28 +27,19 @@ interface IProps {
 function Timeline(props: IProps) {
   const { player, store } = useContext(PlayerContext)
   const [wasPlaying, setWasPlaying] = useState(false)
-  const { notesStore, settingsStore } = useStore();
+  const { settingsStore } = useStore();
   const {
     playing,
-    time,
-    skipIntervals,
-    skip,
     skipToIssue,
     ready,
     endTime,
     devtoolsLoading,
     domLoading,
-    tabStates,
-    eventCount,
   } = store.get()
   const { issues } = props;
-  const notes = notesStore.sessionNotes;
 
   const progressRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const events = React.useMemo(() => {
-    return Object.values(tabStates)[0]?.eventList || []
-  }, [eventCount])
 
   const scale = 100 / endTime;
 
@@ -151,42 +139,22 @@ function Timeline(props: IProps) {
           onMouseLeave={hideTimeTooltip}
         >
           <TooltipContainer />
-          <DraggableCircle
-            left={time * scale}
-            onDrop={onDragEnd}
-          />
+          <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
           <CustomDragLayer
             onDrag={onDrag}
             minX={0}
             maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
           />
-          <TimeTracker scale={scale} left={time * scale} />
 
-          {skip ?
-            skipIntervals.map((interval) => (
-              <div
-                key={interval.start}
-                className={stl.skipInterval}
-                style={{
-                  left: `${getTimelinePosition(interval.start, scale)}%`,
-                  width: `${(interval.end - interval.start) * scale}%`,
-                }}
-              />
-            )) : null}
+
           <div className={stl.timeline} ref={timelineRef}>
             {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
           </div>
 
-          {events.map((e) => {
-            if (!e || e.key == undefined) console.log(e)
-            return (
-            <div
-              /*@ts-ignore TODO */
-              key={e.key}
-              className={stl.event}
-              style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
-            />
-          )})}
+          <EventsList scale={scale} />
+          <NotesList scale={scale} />
+          <SkipIntervalsList scale={scale} />
+
           {/* TODO: refactor and make any sense out of this */}
 
           {/*  {issues.map((i: Issue) => (*/}
@@ -196,22 +164,6 @@ function Timeline(props: IProps) {
           {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
           {/*  />*/}
           {/*))}*/}
-          {notes.map((note) => note.timestamp > 0 ? (
-            <div
-              key={note.noteId}
-              style={{
-                position: 'absolute',
-                background: 'white',
-                zIndex: 3,
-                pointerEvents: 'none',
-                height: 10,
-                width: 16,
-                left: `${getTimelinePosition(note.timestamp, scale)}%`,
-              }}
-            >
-              <Icon name="quotes" style={{ width: 16, height: 10 }} color="main" />
-            </div>
-          ) : null)}
         </div>
       </div>
   )

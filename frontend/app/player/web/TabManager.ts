@@ -264,11 +264,12 @@ export default class TabSessionManager {
       // @ts-ignore comes from parent state
       this.state.update({ location: lastLocationMsg.url })
     }
-    const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
-    if (!!lastConnectionInfoMsg) {
-      stateToUpdate.connType = lastConnectionInfoMsg.type;
-      stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
-    }
+    // ConnectionInformation message is not used at this moment
+    // const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
+    // if (!!lastConnectionInfoMsg) {
+    //   stateToUpdate.connType = lastConnectionInfoMsg.type;
+    //   stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
+    // }
     const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
     if (!!lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;

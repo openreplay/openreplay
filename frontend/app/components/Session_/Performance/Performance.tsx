@@ -188,8 +188,8 @@ function Performance({
   const [_data, setData] = React.useState<any[]>([])
 
   const {
-    connType,
-    connBandwidth,
+    // connType,
+    // connBandwidth,
     tabStates,
     currentTab,
   } = store.get();
@@ -236,18 +236,6 @@ function Performance({
               label="Device Heap Size"
               value={formatBytes(userDeviceHeapSize)}
               display={true}
-            />
-            <InfoLine.Point
-              label="Connection Type"
-              value={connType}
-              display={connType != null && connType !== 'unknown'}
-            />
-            <InfoLine.Point
-              label="Connection Speed"
-              value={
-                connBandwidth >= 1000 ? `${connBandwidth / 1000} Mbps` : `${connBandwidth} Kbps`
-              }
-              display={connBandwidth != null}
             />
           </InfoLine>
         </div>
