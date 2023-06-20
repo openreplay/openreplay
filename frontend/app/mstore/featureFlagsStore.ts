@@ -117,7 +117,8 @@ export default class FeatureFlagsStore {
         const result = await fflagsService.updateFlag(usedFlag.toJS());
         if (!flag) this.setCurrentFlag(new FeatureFlag(result));
       } catch (e) {
-        console.error(e);
+        console.error('getting api error', e);
+        throw e.response;
       } finally {
         this.setLoading(false);
       }

@@ -4,13 +4,16 @@ import { Icon, Toggler, Link } from 'UI'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
+import { toast } from 'react-toastify';
 
 function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const { featureFlagsStore, userStore } = useStore();
 
   const toggleActivity = () => {
     flag.setIsEnabled(!flag.isActive);
-    void featureFlagsStore.updateFlag(flag)
+    featureFlagsStore.updateFlag(flag).then(() => {
+      toast.success('Feature flag updated.');
+    })
   }
 
   const flagOwner = flag.updatedBy || flag.createdBy

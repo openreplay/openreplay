@@ -1,6 +1,15 @@
 import type App from './index.js'
 import { generateRandomId } from '../utils.js'
 
+interface UserInfo {
+  userBrowser: string
+  userCity: string
+  userCountry: string
+  userDevice: string
+  userOS: string
+  userState: string
+}
+
 interface SessionInfo {
   sessionID: string | undefined
   metadata: Record<string, string>
@@ -24,6 +33,7 @@ export default class Session {
   private timestamp = 0
   private projectID: string | undefined
   private tabId: string
+  public userInfo: UserInfo
 
   constructor(private readonly app: App, private readonly options: Options) {
     this.createTabId()
@@ -70,6 +80,10 @@ export default class Session {
   setUserID(userID: string) {
     this.userID = userID
     this.handleUpdate({ userID })
+  }
+
+  setUserInfo(userInfo: UserInfo) {
+    this.userInfo = userInfo
   }
 
   private getPageNumber(): number | undefined {

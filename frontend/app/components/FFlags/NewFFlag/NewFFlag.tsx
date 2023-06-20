@@ -12,6 +12,7 @@ import Header from './Header';
 import RolloutCondition from './Conditions';
 import Multivariant from './Multivariant';
 import { Payload } from './Helpers'
+import { toast } from 'react-toastify';
 
 function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();
@@ -28,7 +29,18 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { showModal } = useModal();
   const history = useHistory();
 
-  if (!current) return <Loader loading={true} />;
+  if (featureFlagsStore.isLoading) return <Loader loading={true} />;
+  if (!current) return (
+    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
+      <Breadcrumb
+        items={[
+          { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
+          { label: fflagId },
+        ]}
+      />
+      <NoContent show title={'Feature flag not found'} />
+    </div>
+  )
 
   const onImplementClick = () => {
     showModal(<HowTo />, { right: true, width: 450 });
@@ -39,17 +51,24 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
     history.push(withSiteId(fflags(), siteId));
   };
 
+  const onError = (e: string) => toast.error(`Failed to update flag: ${e}`)
+
   const onSave = () => {
     if (fflagId) {
-      void featureFlagsStore.updateFlag();
+      featureFlagsStore.updateFlag().then(() => {
+        toast.success('Feature flag updated.');
+      })
+        .catch((e) => {
+          e.json().then((body: Record<string, any>) => onError(body.errors.join(',')))
+        })
     } else {
       featureFlagsStore.createFlag().then(() => {
+        toast.success('Feature flag created.');
         history.push(withSiteId(fflags(), siteId));
       });
     }
   };
 
-  console.log(current.isSingleOption)
   const showDescription = Boolean(current.description?.length);
   return (
     <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>

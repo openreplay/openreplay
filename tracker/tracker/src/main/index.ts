@@ -52,6 +52,9 @@ export type Options = Partial<
   autoResetOnWindowOpen?: boolean
   network?: NetworkOptions
   mouse?: MouseHandlerOptions
+  flags?: {
+    onFlagsLoad?: (flags: IFeatureFlag[]) => void
+  }
   // dev only
   __DISABLE_SECURE_MODE?: boolean
 }
@@ -144,6 +147,9 @@ export default class API {
       ;(window as any).__OPENREPLAY__ = this
 
       app.attachStartCallback(() => {
+        if (options.flags?.onFlagsLoad) {
+          this.featureFlags.onFlagsLoad(options.flags.onFlagsLoad)
+        }
         void this.featureFlags.reloadFlags()
       })
       if (options.autoResetOnWindowOpen) {
@@ -215,20 +221,6 @@ export default class API {
     }
     // TODO: check argument type
     return this.app.start(startOpts)
-  }
-
-  isFeatureActive(feature: string): boolean {
-    if (this.app === null) {
-      return false
-    }
-    return this.app.isFeatureActive(feature)
-  }
-
-  getFeatureFlags(): string[] {
-    if (this.app === null) {
-      return []
-    }
-    return this.app.getFeatureFlags()
   }
 
   stop(): string | undefined {

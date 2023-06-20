@@ -83,6 +83,7 @@ export default class FeatureFlag {
   createdBy?: SingleFFlag['createdBy']
   createdAt?: SingleFFlag['createdAt']
   updatedAt?: SingleFFlag['updatedAt']
+  updatedBy?: SingleFFlag['updatedBy']
   isActive: SingleFFlag['isActive']
   description: SingleFFlag['description']
   isPersist: SingleFFlag['isPersist']
@@ -121,7 +122,10 @@ export default class FeatureFlag {
   }
 
   get isRedDistribution() {
-    return Math.floor(this.variants.reduce((acc, v) => acc + v.rolloutPercentage, 0)/this.variants.length) !== Math.floor(100 / this.variants.length)
+    const totalRollout = this.variants.reduce((acc, v) => acc + v.rolloutPercentage, 0)
+
+    return Math.floor(
+      totalRollout/this.variants.length) !== Math.floor(100 / this.variants.length)
   }
 
   redistributeVariants = () => {

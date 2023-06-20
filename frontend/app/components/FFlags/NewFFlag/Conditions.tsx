@@ -49,11 +49,11 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
         <div
           className={cn(
             'p-2 cursor-pointer rounded ml-auto',
-            set === 1 ? 'cursor-not-allowed' : 'hover:bg-teal-light'
+            'hover:bg-teal-light'
           )}
-          onClick={() => (index === 0 ? null : removeCondition(index))}
+          onClick={() => removeCondition(index)}
         >
-          <Icon name={'trash'} color={set === 1 ? '' : 'main'} />
+          <Icon name={'trash'} color={'main'} />
         </div>
       </div>
       <div className={'p-2 border-b'}>

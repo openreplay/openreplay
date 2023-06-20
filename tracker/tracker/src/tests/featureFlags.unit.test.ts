@@ -1,4 +1,4 @@
-import FeatureFlags, { PersistFlagsData } from '../main/modules/FeatureFlags'
+import FeatureFlags, { FetchPersistFlagsData, IFeatureFlag } from '../main/modules/FeatureFlags'
 import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globals'
 
 jest.mock('../main/app/index.js')
@@ -8,18 +8,26 @@ const sessionInfo = {
   userID: 'user1',
   metadata: {},
 }
-
+const userInfo = {
+  userOS: 'test',
+  userDevice: 'test',
+  userCountry: 'test',
+  userState: 'test',
+  userCity: 'test',
+  userBrowser: 'test',
+}
 describe('FeatureFlags', () => {
   // @ts-ignore
   let featureFlags: FeatureFlags
   let appMock = {
-    localStorage: { setItem: jest.fn(), getItem: jest.fn(), removeItem: jest.fn() },
+    sessionStorage: { setItem: jest.fn(), getItem: jest.fn(), removeItem: jest.fn() },
     options: {
       ingestPoint: 'test',
     },
     session: {
       getInfo: () => sessionInfo,
       getSessionToken: () => '123',
+      userInfo: userInfo,
     },
   }
 
@@ -34,10 +42,10 @@ describe('FeatureFlags', () => {
 
   test('should check if a flag is enabled', () => {
     const flagName = 'flag1'
-    featureFlags.flags = {
-      flag1: { enabled: true },
-      flag2: { enabled: false },
-    }
+    featureFlags.flags = [
+      { payload: '', is_persist: false, key: 'flag1', value: '' },
+      { payload: '', is_persist: false, key: 'flag2', value: '' },
+    ]
 
     const result = featureFlags.isFlagEnabled(flagName)
 
@@ -63,19 +71,15 @@ describe('FeatureFlags', () => {
       projectID: sessionInfo.projectID,
       userID: sessionInfo.userID,
       metadata: sessionInfo.metadata,
-      referrer: document.referrer,
+      referrer: '',
       featureFlags: featureFlags.flags,
       os: 'test',
-      osVersion: 'test',
       device: 'test',
       country: 'test',
       state: 'test',
       city: 'test',
-      ua: 'test',
       browser: 'test',
-      browserVersion: 'test',
-      deviceType: 'test',
-      persistFlags: [],
+      persistFlags: {},
     }
     const spyOnHandle = jest.spyOn(featureFlags, 'handleFlags')
     const expectedResponse = { flags }
@@ -105,22 +109,28 @@ describe('FeatureFlags', () => {
   test('should clear persisted flags', () => {
     featureFlags.clearPersistFlags()
 
-    expect(appMock.localStorage.removeItem).toHaveBeenCalledWith(featureFlags.storageKey)
+    expect(appMock.sessionStorage.removeItem).toHaveBeenCalledWith(featureFlags.storageKey)
   })
 
   test('should calculate the diff of persisted flags', () => {
-    const flags: PersistFlagsData[] = [
-      { key: 'flag1', value: true },
-      { key: 'flag2', value: false },
-      { key: 'flag3', value: false },
+    const flags: IFeatureFlag[] = [
+      { key: 'flag1', value: true, payload: '', is_persist: true },
+      { key: 'flag2', value: false, payload: '123', is_persist: true },
+      { key: 'flag3', value: false, payload: '123', is_persist: true },
     ]
+    const existingFlags: IFeatureFlag[] = [
+      { key: 'flag1', value: true, payload: '', is_persist: true },
+      { key: 'flag2', value: false, payload: '123', is_persist: true },
+    ]
+    let str = ''
+    existingFlags.forEach((flag) => {
+      str += `${JSON.stringify(flag)};`
+    })
     // @ts-ignore
-    appMock.localStorage.getItem = jest
-      .fn()
-      .mockReturnValue('{"key":"flag1","value":true};{"key":"flag2","value":true}')
+    appMock.sessionStorage.getItem = jest.fn().mockReturnValue(str)
 
     const result = featureFlags.diffPersist(flags)
 
-    expect(result).toEqual([{ key: 'flag3', value: false }])
+    expect(result).toEqual([flags[2]])
   })
 })

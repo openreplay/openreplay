@@ -557,6 +557,12 @@ export default class App {
           delay, //  derived from token
           sessionID, //  derived from token
           startTimestamp, // real startTS (server time), derived from sessionID
+          userBrowser,
+          userCity,
+          userCountry,
+          userDevice,
+          userOS,
+          userState,
         } = r
         // TODO: insert feature flags here
         if (
@@ -571,6 +577,14 @@ export default class App {
         }
         this.delay = delay
         this.session.setSessionToken(token)
+        this.session.setUserInfo({
+          userBrowser,
+          userCity,
+          userCountry,
+          userDevice,
+          userOS,
+          userState,
+        })
         this.session.assign({
           sessionID,
           timestamp: startTimestamp || timestamp,

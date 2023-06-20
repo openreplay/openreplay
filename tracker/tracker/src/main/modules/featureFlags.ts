@@ -7,60 +7,57 @@ export interface IFeatureFlag {
   payload: string
 }
 
-export interface PersistFlagsData {
+export interface FetchPersistFlagsData {
   key: string
   value: string | boolean
 }
 
 export default class FeatureFlags {
-  flags: Record<string, any>
+  flags: IFeatureFlag[]
   storageKey = '__openreplay_flags'
-  onFlagsCb: (flags: Record<string, any>) => void
+  onFlagsCb: (flags: IFeatureFlag[]) => void
 
   constructor(private readonly app: App) {
-    const persistFlags = this.app.localStorage.getItem(this.storageKey)
+    const persistFlags = this.app.sessionStorage.getItem(this.storageKey)
     if (persistFlags) {
-      const persistFlagsStrArr = persistFlags.split(';')
-      const persistFlagsArr = persistFlagsStrArr.map((flag) => JSON.parse(flag))
-      const flags: Record<string, any> = {}
-      persistFlagsArr.forEach((flag) => {
-        flags[flag.key] = {
-          value: flag.value,
-          payload: flag.payload,
-        }
-      })
-      this.flags = flags
+      const persistFlagsStrArr = persistFlags.split(';').filter(Boolean)
+      this.flags = persistFlagsStrArr.map((flag) => JSON.parse(flag))
     }
   }
 
   isFlagEnabled(flagName: string): boolean {
-    return Boolean(this.flags[flagName])
+    return this.flags.findIndex((flag) => flag.key === flagName) !== -1
   }
 
   onFlagsLoad(cb: (flags: IFeatureFlag[]) => void) {
-    return (this.onFlagsCb = cb)
+    this.onFlagsCb = cb
   }
 
   async reloadFlags() {
+    const persistFlagsStr = this.app.sessionStorage.getItem(this.storageKey)
+    const persistFlags: Record<string, FetchPersistFlagsData> = {}
+    if (persistFlagsStr) {
+      const persistArray = persistFlagsStr.split(';').filter(Boolean)
+      persistArray.forEach((flag) => {
+        const flagObj = JSON.parse(flag)
+        persistFlags[flagObj.key] = { key: flagObj.key, value: flagObj.value }
+      })
+    }
     const sessionInfo = this.app.session.getInfo()
+    const userInfo = this.app.session.userInfo
     const requestObject = {
       projectID: sessionInfo.projectID,
       userID: sessionInfo.userID,
       metadata: sessionInfo.metadata,
       referrer: document.referrer,
-      featureFlags: this.flags,
       // todo: get from backend
-      os: 'test',
-      osVersion: 'test',
-      device: 'test',
-      country: 'test',
-      state: 'test',
-      city: 'test',
-      ua: 'test',
-      browser: 'test',
-      browserVersion: 'test',
-      deviceType: 'test',
-      persistFlags: this.app.localStorage.getItem(this.storageKey) || [],
+      os: userInfo.userOS,
+      device: userInfo.userDevice,
+      country: userInfo.userCountry,
+      state: userInfo.userState,
+      city: userInfo.userCity,
+      browser: userInfo.userBrowser,
+      persistFlags: persistFlags,
     }
 
     const resp = await fetch(this.app.options.ingestPoint + '/v1/web/feature-flags', {
@@ -78,30 +75,32 @@ export default class FeatureFlags {
   }
 
   handleFlags(flags: IFeatureFlag[]) {
-    const persistFlags: PersistFlagsData[] = []
-    Object.values(flags).forEach((flag) => {
-      if (flag.is_persist) persistFlags.push({ key: flag.key, value: flag.value })
+    const persistFlags: IFeatureFlag[] = []
+    flags.forEach((flag) => {
+      if (flag.is_persist) persistFlags.push(flag)
     })
+
     let str = ''
     const uniquePersistFlags = this.diffPersist(persistFlags)
     uniquePersistFlags.forEach((flag) => {
       str += `${JSON.stringify(flag)};`
     })
 
-    this.app.localStorage.setItem(this.storageKey, str)
+    this.app.sessionStorage.setItem(this.storageKey, str)
     this.flags = flags
     return this.onFlagsCb?.(flags)
   }
 
   clearPersistFlags() {
-    this.app.localStorage.removeItem(this.storageKey)
+    this.app.sessionStorage.removeItem(this.storageKey)
   }
 
-  diffPersist(flags: PersistFlagsData[]) {
-    const persistFlags = this.app.localStorage.getItem(this.storageKey)
+  diffPersist(flags: IFeatureFlag[]) {
+    const persistFlags = this.app.sessionStorage.getItem(this.storageKey)
     if (!persistFlags) return flags
-    const persistFlagsStrArr = persistFlags.split(';')
+    const persistFlagsStrArr = persistFlags.split(';').filter(Boolean)
     const persistFlagsArr = persistFlagsStrArr.map((flag) => JSON.parse(flag))
+
     return flags.filter((flag) => persistFlagsArr.findIndex((pf) => pf.key === flag.key) === -1)
   }
 }
