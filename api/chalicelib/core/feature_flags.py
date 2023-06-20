@@ -120,9 +120,10 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
     query = f"""
             WITH inserted_flag AS ({flag_sql}),
             inserted_conditions AS (
-                INSERT INTO feature_flags_conditions(feature_flag_id, rollout_percentage, filters)
+                INSERT INTO feature_flags_conditions(feature_flag_id, name, rollout_percentage, filters)
                 VALUES {",".join([f"(("
                                   f"SELECT feature_flag_id FROM inserted_flag),"
+                                  f"%(name_{i})s,"
                                   f"%(rollout_percentage_{i})s,"
                                   f"%(filters_{i})s::jsonb)"
                                   for i in range(conditions_len)])}
