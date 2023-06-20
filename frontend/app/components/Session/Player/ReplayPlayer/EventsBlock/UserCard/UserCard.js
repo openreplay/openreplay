@@ -74,9 +74,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
                         {userCity && (
                             <span className="mr-1">{userCity},</span>
                         )}
-                        {userState && (
-                            <span className="mr-1">{userState},</span>
-                        )}
                         <span>{countries[userCountry]}</span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
                         <span className="capitalize">

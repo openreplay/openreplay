@@ -1,22 +1,17 @@
 import React from 'react';
 import cn from 'classnames';
-import { countries } from 'App/constants';
 import { Icon } from 'UI';
-import stl from './countryFlag.module.css';
 
 const CountryFlag = ({
   userCity = '',
-  userState = '',
   country = '',
   className = '',
   style = {},
-  label = false,
   width = 22,
   height = 15,
 }) => {
   const knownCountry = !!country && country !== 'UN';
   const countryFlag = knownCountry ? country.toLowerCase() : '';
-  const countryName = knownCountry ? countries[country] : 'Unknown Country';
 
   return (
     <div className="flex items-center" style={style}>
@@ -33,9 +28,7 @@ const CountryFlag = ({
           </div>
         </div>
       )}
-      {userCity && <span className="mx-1">{userCity},</span>}
-      {userState && <span className="mr-1">{userState},</span>}
-      {knownCountry && label && <div className={cn(stl.label, 'ml-1')}>{countryName}</div>}
+      {userCity && <span className="mx-1">{userCity}</span>}
     </div>
   );
 };

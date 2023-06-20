@@ -128,7 +128,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         if row is None:
             return None
 
-    return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+    return get_feature_flag(project_id  =project_id, feature_flag_id=row["feature_flag_id"])
 
 
 def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
