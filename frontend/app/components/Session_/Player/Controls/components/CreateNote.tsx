@@ -11,7 +11,7 @@ import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import { fetchList as fetchTeams } from 'Duck/integrations/teams';
 
 import Select from 'Shared/Select';
-import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
+import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 import { List } from 'immutable';
 
 interface Props {

@@ -4,7 +4,7 @@ import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
+import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 
 interface Props {
   note?: Note;

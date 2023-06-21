@@ -2,22 +2,37 @@ import React from 'react';
 import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import stl from './sideMenuItem.module.css';
+import { IconNames } from 'UI/SVG';
 
 function SideMenuitem({
     iconBg = false,
     iconColor = "gray-dark",
     iconSize = 18,
     className = '', 
-    iconName = null,
+    iconName,
     title,
     active = false,
     disabled = false,
     tooltipTitle = '',
     onClick,
-    deleteHandler = null,
+    deleteHandler,
     leading = null,
     ...props
-  }) {
+  }: {
+    title: string;
+    iconName?: IconNames;
+    iconBg?: boolean;
+    iconColor?: string;
+    iconSize?: number;
+    className?: string;
+    active?: boolean;
+    disabled?: boolean;
+    tooltipTitle?: string;
+    onClick?: () => void;
+    deleteHandler?: () => void;
+    leading?: React.ReactNode;
+    id?: string;
+}) {
   return (
     <Tooltip
       disabled={ !disabled }

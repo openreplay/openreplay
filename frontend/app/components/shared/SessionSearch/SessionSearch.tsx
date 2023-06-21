@@ -72,7 +72,7 @@ function SessionSearch(props: Props) {
     debounceFetch()
   };
 
-  return !metaLoading && (
+  return !metaLoading ? (
     <>
       {hasEvents || hasFilters ? (
         <div className="border bg-white rounded mt-4">
@@ -107,7 +107,7 @@ function SessionSearch(props: Props) {
         <></>
       )}
     </>
-  );
+  ) : null;
 }
 
 export default connect(

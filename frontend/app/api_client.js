@@ -28,6 +28,7 @@ const siteIdRequiredPaths = [
   '/cards',
   '/unprocessed',
   '/notes',
+  '/feature-flags',
   // '/custom_metrics/sessions',
 ];
 

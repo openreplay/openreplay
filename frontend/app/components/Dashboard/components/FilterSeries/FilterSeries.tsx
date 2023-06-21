@@ -51,6 +51,7 @@ function FilterSeries(props: Props) {
     observeChanges()
   }
 
+  console.log(series.filter)
   return (
     <div className="border rounded bg-white">
       <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>

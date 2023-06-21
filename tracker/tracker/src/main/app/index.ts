@@ -109,12 +109,14 @@ export default class App {
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
-  private readonly options: AppOptions
+  public readonly options: AppOptions
   public readonly networkOptions?: NetworkOptions
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
+  private featureFlags: string[] = []
+
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
   private readonly bc: BroadcastChannel = new BroadcastChannel('rick')
@@ -449,6 +451,14 @@ export default class App {
     return this.activityState === ActivityState.Active
   }
 
+  isFeatureActive(feature: string): boolean {
+    return this.featureFlags.includes(feature)
+  }
+
+  getFeatureFlags(): string[] {
+    return this.featureFlags
+  }
+
   resetNextPageSession(flag: boolean) {
     if (flag) {
       this.sessionStorage.setItem(this.options.session_reset_key, 't')
@@ -547,7 +557,14 @@ export default class App {
           delay, //  derived from token
           sessionID, //  derived from token
           startTimestamp, // real startTS (server time), derived from sessionID
+          userBrowser,
+          userCity,
+          userCountry,
+          userDevice,
+          userOS,
+          userState,
         } = r
+        // TODO: insert feature flags here
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
@@ -560,6 +577,14 @@ export default class App {
         }
         this.delay = delay
         this.session.setSessionToken(token)
+        this.session.setUserInfo({
+          userBrowser,
+          userCity,
+          userCountry,
+          userDevice,
+          userOS,
+          userState,
+        })
         this.session.assign({
           sessionID,
           timestamp: startTimestamp || timestamp,

@@ -19,6 +19,7 @@ import RecordingsStore from './recordingsStore'
 import AssistMultiviewStore from './assistMultiviewStore';
 import WeeklyReportStore from './weeklyReportConfigStore'
 import AlertStore from './alertsStore'
+import FeatureFlagsStore from "./featureFlagsStore";
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -37,6 +38,7 @@ export class RootStore {
   assistMultiviewStore: AssistMultiviewStore;
   weeklyReportStore: WeeklyReportStore
   alertsStore: AlertStore
+  featureFlagsStore: FeatureFlagsStore
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -55,6 +57,7 @@ export class RootStore {
     this.assistMultiviewStore = new AssistMultiviewStore();
     this.weeklyReportStore = new WeeklyReportStore();
     this.alertsStore = new AlertStore();
+    this.featureFlagsStore = new FeatureFlagsStore();
   }
 
   initClient() {

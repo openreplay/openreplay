@@ -1,3 +1,4 @@
+import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType'
 import filterOptions, { countries, platformOptions } from 'App/constants';
@@ -55,13 +56,32 @@ export const filters = [
   { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', placeholder: 'Select an issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 ];
 
+export const flagConditionFilters = [
+  { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User OS', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/os' },
+  { key: FilterKey.USER_BROWSER, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User Browser', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/browser' },
+  { key: FilterKey.USER_DEVICE, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User Device', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/device' },
+  { key: FilterKey.REFERRER, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'Referrer', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/arrow-return-right' },
+  { key: FilterKey.USER_COUNTRY, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.USER, label: 'User Country', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
+  { key: FilterKey.USER_CITY, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User City', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
+  { key: FilterKey.USER_STATE, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User State', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
+  { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'isUndefined', operatorOptions: [{ label: 'is undefined', value: 'isUndefined'}, { key: 'isAny', label: 'is any', value: 'isAny' }], icon: 'filters/userid' },
+]
+
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
+export const nonFlagFilters = filters.filter(i => {
+  return flagConditionFilters.findIndex(f => f.key === i.key) === -1
+}).map(i => i.key);
 
 export const clickmapFilter = {
   key: FilterKey.LOCATION,
   type: FilterType.MULTIPLE,
   category: FilterCategory.INTERACTIONS,
-  label: 'Visited URL', placeholder: 'Enter URL or path', operator: filterOptions.pageUrlOperators[0].value, operatorOptions: filterOptions.pageUrlOperators, icon: 'filters/location', isEvent: true }
+  label: 'Visited URL', placeholder: 'Enter URL or path',
+  operator: filterOptions.pageUrlOperators[0].value,
+  operatorOptions: filterOptions.pageUrlOperators,
+  icon: 'filters/location',
+  isEvent: true,
+}
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
@@ -99,6 +119,7 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
 
 export let filtersMap = mapFilters(filters)
 export let liveFiltersMap = mapLiveFilters(filters)
+export let fflagsConditionsMap = mapFilters(flagConditionFilters)
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
@@ -123,6 +144,17 @@ export const addElementToFiltersMap = (
   icon = 'filters/metadata'
 ) => {
   filtersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
+}
+
+export const addElementToFlagConditionsMap = (
+    category = FilterCategory.METADATA,
+    key,
+    type = FilterType.MULTIPLE,
+    operator = 'is',
+    operatorOptions = filterOptions.stringOperators,
+    icon = 'filters/metadata'
+) => {
+  fflagsConditionsMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
 }
 
 export const addElementToLiveFiltersMap = (
@@ -232,6 +264,21 @@ export const generateFilterOptions = (map) => {
   });
   return filterSection;
 }
+
+export const generateFlagConditionOptions = (map) => {
+  const filterSection = {};
+  Object.keys(map).forEach(key => {
+    const filter = map[key];
+    if (filterSection.hasOwnProperty(filter.category)) {
+      filterSection[filter.category].push(filter);
+    } else {
+      filterSection[filter.category] = [filter];
+    }
+  });
+  return filterSection;
+}
+
+
 
 export const generateLiveFilterOptions = (map) => {
   const filterSection = {};

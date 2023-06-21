@@ -9,7 +9,7 @@ import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 import { confirm } from 'UI';
-import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
+import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 
 interface Props {
   note: Note;

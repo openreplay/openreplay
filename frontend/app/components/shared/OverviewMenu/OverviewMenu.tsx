@@ -2,44 +2,81 @@ import React from 'react';
 import { SideMenuitem } from 'UI';
 import { connect } from 'react-redux';
 import { setActiveTab } from 'Duck/search';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { sessions, fflags, withSiteId, notes } from "App/routes";
 
 interface Props {
   setActiveTab: (tab: any) => void;
   activeTab: string;
   isEnterprise: boolean;
 }
-function OverviewMenu(props: Props) {
-  const { activeTab, isEnterprise } = props;
 
+const TabToUrlMap = {
+  all: sessions() as '/sessions',
+  bookmark: sessions() as '/sessions',
+  notes: notes() as '/notes',
+  flags: fflags() as '/feature-flags',
+}
+
+function OverviewMenu(props: Props & RouteComponentProps) {
+  // @ts-ignore
+  const { activeTab, isEnterprise, history, match: { params: { siteId } }, location } = props;
+
+  React.useEffect(() => {
+    const currentLocation = location.pathname;
+    const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) => currentLocation.includes(TabToUrlMap[tab]));
+    if (tab && tab !== activeTab) {
+      props.setActiveTab({ type: tab })
+    }
+  }, [location.pathname])
   return (
-    <div>
+    <div className={"flex flex-col gap-2 w-full"}>
       <div className="w-full">
         <SideMenuitem
           active={activeTab === 'all'}
-          id="menu-manage-alerts"
+          id="menu-sessions"
           title="Sessions"
           iconName="play-circle-bold"
-          onClick={() => props.setActiveTab({ type: 'all' })}
+          onClick={() => {
+            props.setActiveTab({ type: 'all' })
+            !location.pathname.includes(sessions()) && history.push(withSiteId(sessions(), siteId))
+          }}
         />
       </div>
-      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={activeTab === 'bookmark'}
-          id="menu-manage-alerts"
+          id="menu-bookmarks"
           title={`${isEnterprise ? 'Vault' : 'Bookmarks'}`}
           iconName={ isEnterprise ? "safe" : "star" }
-          onClick={() => props.setActiveTab({ type: 'bookmark' })}
+          onClick={() => {
+            props.setActiveTab({ type: 'bookmark' })
+            !location.pathname.includes(sessions()) && history.push(withSiteId(sessions(), siteId))
+          }}
         />
       </div>
-      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={activeTab === 'notes'}
-          id="menu-manage-alerts"
+          id="menu-notes"
           title="Notes"
           iconName="stickies"
-          onClick={() => props.setActiveTab({ type: 'notes' })}
+          onClick={() => {
+            props.setActiveTab({ type: 'notes' })
+            !location.pathname.includes(notes()) && history.push(withSiteId(notes(), siteId))
+          }}
+        />
+      </div>
+      <div className="w-full">
+        <SideMenuitem
+          active={activeTab === 'flags'}
+          id="menu-flags"
+          title="Feature Flags"
+          iconName="toggles"
+          onClick={() => {
+            props.setActiveTab({ type: 'flags' })
+            !location.pathname.includes(fflags()) && history.push(withSiteId(fflags(), siteId))
+          }}
         />
       </div>
     </div>
@@ -49,4 +86,4 @@ function OverviewMenu(props: Props) {
 export default connect((state: any) => ({
     activeTab: state.getIn(['search', 'activeTab', 'type']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-}), { setActiveTab })(OverviewMenu);
+}), { setActiveTab })(withRouter(OverviewMenu));

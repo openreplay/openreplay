@@ -192,7 +192,7 @@ export const reduceThenFetchResource =
     (dispatch, getState) => {
         dispatch(actionCreator(...args));
         const activeTab = getState().getIn(['search', 'activeTab']);
-        if (activeTab.type === 'notes') return;
+        if (['notes', 'flags'].includes(activeTab.type)) return;
         
         const filter = getFilters(getState());
         filter.limit = PER_PAGE;
