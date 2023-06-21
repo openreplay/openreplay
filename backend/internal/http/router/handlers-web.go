@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"openreplay/backend/pkg/featureflags"
 	"strconv"
 	"time"
 
@@ -113,6 +114,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	ua := e.services.UaParser.ParseFromHTTPRequest(r)
+	if ua == nil {
+		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	geoInfo := e.ExtractGeoData(r)
+
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
@@ -122,11 +131,6 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		ua := e.services.UaParser.ParseFromHTTPRequest(r)
-		if ua == nil {
-			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
-			return
-		}
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
 		if err != nil {
@@ -140,7 +144,6 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			Delay:   startTimeMili - req.Timestamp,
 			ExpTime: expTime.UnixMilli(),
 		}
-		geoInfo := e.ExtractGeoData(r)
 
 		sessionStart := &SessionStart{
 			Timestamp:            getSessionTimestamp(req, startTimeMili),
@@ -178,6 +181,12 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	ResponseWithJSON(w, &StartSessionResponse{
 		Token:                e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:             userUUID,
+		UserOS:               ua.OS,
+		UserDevice:           ua.Device,
+		UserBrowser:          ua.Browser,
+		UserCountry:          geoInfo.Country,
+		UserState:            geoInfo.State,
+		UserCity:             geoInfo.City,
 		SessionID:            strconv.FormatUint(tokenData.ID, 10),
 		ProjectID:            strconv.FormatUint(uint64(p.ProjectID), 10),
 		BeaconSizeLimit:      e.getBeaconSize(tokenData.ID),
@@ -280,4 +289,60 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ResponseOK(w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Check request body
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &featureflags.FeatureFlagsRequest{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Grab flags and conditions for project
+	projectID, err := strconv.ParseUint(req.ProjectID, 10, 32)
+	if err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	flags, err := e.services.Database.GetFeatureFlags(uint32(projectID))
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	computedFlags, err := featureflags.ComputeFeatureFlags(flags, req)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	resp := &featureflags.FeatureFlagsResponse{
+		Flags: computedFlags,
+	}
+	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
 }
