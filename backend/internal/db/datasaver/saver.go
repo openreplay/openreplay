@@ -81,26 +81,6 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.pg.InsertWebInputDuration(m)
 	case *MouseThrashing:
 		return s.pg.InsertMouseThrashing(m)
-	case *IOSSessionStart:
-		return s.pg.InsertIOSSessionStart(m)
-	case *IOSSessionEnd:
-		return s.pg.InsertIOSSessionEnd(m)
-	case *IOSUserID:
-		return s.pg.InsertIOSUserID(m)
-	case *IOSUserAnonymousID:
-		return s.pg.InsertIOSUserAnonymousID(m)
-	case *IOSCustomEvent:
-		return s.pg.InsertIOSCustomEvent(m)
-	case *IOSClickEvent:
-		return s.pg.InsertIOSClickEvent(m)
-	case *IOSInputEvent:
-		return s.pg.InsertIOSInputEvent(m)
-	case *IOSNetworkCall:
-		return s.pg.InsertIOSNetworkCall(m)
-	case *IOSScreenEnter:
-		return s.pg.InsertIOSScreenEnter(m)
-	case *IOSCrash:
-		return s.pg.InsertIOSCrash(m)
 	}
 	return nil
 }
