@@ -36,6 +36,7 @@
     "html-to-image": "^1.9.0",
     "html2canvas": "^1.4.1",
     "immutable": "^4.0.0-rc.12",
+    "jest-environment-jsdom": "^29.5.0",
     "jsbi": "^4.1.0",
     "jshint": "^2.11.1",
     "jspdf": "^2.5.1",
