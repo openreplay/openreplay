@@ -49,9 +49,9 @@ export class Variant {
   rolloutPercentage: number = 100;
 
   constructor(index: number, data?: Record<string, any>) {
+    makeAutoObservable(this)
     Object.assign(this, data)
     this.index = index;
-    makeAutoObservable(this)
   }
 
   setIndex = (index: number) => {
@@ -145,7 +145,7 @@ export default class FeatureFlag {
       isPersist: this.isPersist,
       flagType: this.isSingleOption ? 'single' as const : 'multi' as const,
       featureFlagId: this.featureFlagId,
-      variants: this.isSingleOption ? undefined : this.variants.map(v => ({ value: v.value, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
+      variants: this.isSingleOption ? undefined : this.variants?.map(v => ({ value: v.value, description: v.description, payload: v.payload, rolloutPercentage: v.rolloutPercentage })),
     }
   }
 

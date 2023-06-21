@@ -12,7 +12,7 @@ function Header({ current, onCancel, onSave, isNew }: any) {
 
       <div className={'flex items-center gap-2'}>
         <Button variant="text-primary" onClick={onCancel}>
-          {isNew ? "Cancel" : "Back"}
+          Cancel
         </Button>
         <Button variant="primary" onClick={onSave}>
           Save

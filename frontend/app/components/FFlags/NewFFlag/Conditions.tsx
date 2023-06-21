@@ -5,6 +5,7 @@ import FilterList from 'Shared/Filters/FilterList';
 import { nonFlagFilters } from 'Types/filter/newFilter';
 import { observer } from 'mobx-react-lite';
 import { Conditions } from "App/mstore/types/FeatureFlag";
+import FilterSelection from 'Shared/Filters/FilterSelection';
 
 interface Props {
   set: number;
@@ -15,8 +16,8 @@ interface Props {
 
 function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
   const [forceRender, forceRerender] = React.useState(false);
-  const onAddFilter = () => {
-    conditions.filter.addFilter({});
+  const onAddFilter = (filter = {}) => {
+    conditions.filter.addFilter(filter);
     forceRerender(!forceRender);
   };
   const onUpdateFilter = (filterIndex: number, filter: any) => {
@@ -48,7 +49,7 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
         <div className={'p-2 rounded bg-gray-lightest'}>Set {set}</div>
         <div
           className={cn(
-            'p-2 cursor-pointer rounded ml-auto',
+            'p-2 px-4 cursor-pointer rounded ml-auto',
             'hover:bg-teal-light'
           )}
           onClick={() => removeCondition(index)}
@@ -63,14 +64,17 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
             onUpdateFilter={onUpdateFilter}
             onRemoveFilter={onRemoveFilter}
             onChangeEventsOrder={onChangeEventsOrder}
-            supportsEmpty
             hideEventsOrder
             excludeFilterKeys={nonFlagFilters}
           />
         </div>
-        <Button variant={'text-primary'} onClick={() => onAddFilter()}>
-          + Add Condition
-        </Button>
+        <FilterSelection
+          filter={undefined}
+          onFilterClick={onAddFilter}
+          excludeFilterKeys={nonFlagFilters}
+        >
+          <Button variant="text-primary" icon="plus">Add Condition</Button>
+        </FilterSelection>
       </div>
       <div className={'px-4 py-2 flex items-center gap-2'}>
         <span>Rollout to</span>

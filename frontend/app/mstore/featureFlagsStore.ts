@@ -101,6 +101,9 @@ export default class FeatureFlagsStore {
     if (this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
       return 'Variants must include key'
     }
+    if (this.currentFflag?.isRedDistribution) {
+      return 'Variants rollout percentage must add up to 100%'
+    }
     return null;
   }
 
