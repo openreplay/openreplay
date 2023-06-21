@@ -94,13 +94,12 @@ export default class FeatureFlag {
   variants: Variant[] = [];
 
   constructor(data?: SingleFFlag) {
-    console.log(data)
     Object.assign(
       this,
       initData,
       {
         ...data,
-        isSingleOption: data?.flagType === 'single',
+        isSingleOption: data ? data.flagType === 'single' : true,
         conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
         variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [new Variant(1)],
       });

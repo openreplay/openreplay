@@ -81,7 +81,7 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
           onChange={onPercentChange}
           leadingButton={<div className={'p-2 text-disabled-text'}>%</div>}
         />
-        <span>of users</span>
+        <span>of sessions</span>
       </div>
     </div>
   );

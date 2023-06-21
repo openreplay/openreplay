@@ -11,24 +11,24 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
 
   const toggleActivity = () => {
     flag.setIsEnabled(!flag.isActive);
-    featureFlagsStore.updateFlag(flag).then(() => {
+    featureFlagsStore.updateFlag(flag, true).then(() => {
       toast.success('Feature flag updated.');
     })
   }
 
+  const flagIcon = flag.isSingleOption ? 'fflag-single' : 'fflag-multi' as const
   const flagOwner = flag.updatedBy || flag.createdBy
-  const user = userStore.list.length > 0 ? userStore.list.find(u => u.userId === flagOwner)?.name : flagOwner;
+  const user = userStore.list.length > 0 ? userStore.list.find(u => parseInt(u.userId) === flagOwner!)?.name : flagOwner;
   return (
     <div className={'w-full py-2 border-b'}>
       <div className={'flex items-center'}>
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
           <div className={'flex items-center gap-2 link'}>
-            <div className={'p-2 bg-gray-lightest'}>
-              <Icon name={flag.isSingleOption ? 'flag-single' : 'fflag-multi'} />
-            </div>
+            <Icon name={flagIcon} size={32} />
             {flag.flagKey}
           </div>
         </Link>
+        <div style={{ flex: 1 }}>{flag.isSingleOption ? 'Single Option' : 'Multivariant'}</div>
         <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
         <div style={{ flex: 1 }} className={'flex items-center gap-2'}>
           <Icon name={'person-fill'} />

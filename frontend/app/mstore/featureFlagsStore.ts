@@ -93,6 +93,17 @@ export default class FeatureFlagsStore {
     }
   };
 
+  checkFlagForm = () => {
+    if (!this.currentFflag) return 'Feature flag not initialized'
+    if (this.currentFflag.flagKey === '') {
+      return 'Feature flag must have a key'
+    }
+    if (this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
+      return 'Variants must include key'
+    }
+    return null;
+  }
+
   createFlag = async () => {
     if (this.currentFflag) {
       this.setLoading(true);
@@ -102,16 +113,19 @@ export default class FeatureFlagsStore {
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);
+        throw e.response;
       } finally {
         this.setLoading(false);
       }
     }
   };
 
-  updateFlag = async (flag?: FeatureFlag) => {
+  updateFlag = async (flag?: FeatureFlag, skipLoader?: boolean) => {
     const usedFlag = flag || this.currentFflag;
     if (usedFlag) {
-      this.setLoading(true);
+      if (!skipLoader) {
+        this.setLoading(true);
+      }
       try {
         // @ts-ignore
         const result = await fflagsService.updateFlag(usedFlag.toJS());

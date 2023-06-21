@@ -198,6 +198,10 @@ export default class API {
     this.featureFlags.clearPersistFlags()
   }
 
+  reloadFlags() {
+    return this.featureFlags.reloadFlags()
+  }
+
   use<T>(fn: (app: App | null, options?: Options) => T): T {
     return fn(this.app, this.options)
   }

@@ -3,17 +3,32 @@ import { SideMenuitem } from 'UI';
 import { connect } from 'react-redux';
 import { setActiveTab } from 'Duck/search';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { sessions, fflags, withSiteId } from "App/routes";
+import { sessions, fflags, withSiteId, notes } from "App/routes";
 
 interface Props {
   setActiveTab: (tab: any) => void;
   activeTab: string;
   isEnterprise: boolean;
 }
+
+const TabToUrlMap = {
+  all: sessions() as '/sessions',
+  bookmark: sessions() as '/sessions',
+  notes: notes() as '/notes',
+  flags: fflags() as '/feature-flags',
+}
+
 function OverviewMenu(props: Props & RouteComponentProps) {
   // @ts-ignore
   const { activeTab, isEnterprise, history, match: { params: { siteId } }, location } = props;
 
+  React.useEffect(() => {
+    const currentLocation = location.pathname;
+    const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) => currentLocation.includes(TabToUrlMap[tab]));
+    if (tab && tab !== activeTab) {
+      props.setActiveTab({ type: tab })
+    }
+  }, [location.pathname])
   return (
     <div className={"flex flex-col gap-2 w-full"}>
       <div className="w-full">
@@ -48,7 +63,7 @@ function OverviewMenu(props: Props & RouteComponentProps) {
           iconName="stickies"
           onClick={() => {
             props.setActiveTab({ type: 'notes' })
-            !location.pathname.includes(sessions()) && history.push(withSiteId(sessions(), siteId))
+            !location.pathname.includes(notes()) && history.push(withSiteId(notes(), siteId))
           }}
         />
       </div>

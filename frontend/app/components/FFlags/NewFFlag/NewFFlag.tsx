@@ -14,7 +14,7 @@ import Multivariant from './Multivariant';
 import { Payload } from './Helpers'
 import { toast } from 'react-toastify';
 
-function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
+function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const { featureFlagsStore } = useStore();
 
   React.useEffect(() => {
@@ -54,6 +54,8 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const onError = (e: string) => toast.error(`Failed to update flag: ${e}`)
 
   const onSave = () => {
+    const possibleError = featureFlagsStore.checkFlagForm();
+    if (possibleError) return toast.error(possibleError);
     if (fflagId) {
       featureFlagsStore.updateFlag().then(() => {
         toast.success('Feature flag updated.');
@@ -65,7 +67,9 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId: string }) {
       featureFlagsStore.createFlag().then(() => {
         toast.success('Feature flag created.');
         history.push(withSiteId(fflags(), siteId));
-      });
+      }).catch(() => {
+        toast.error('Failed to create flag.');
+      })
     }
   };
 

@@ -9,7 +9,7 @@ import OverviewMenu from 'Shared/OverviewMenu';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
 import { Switch, Route } from 'react-router';
-import { sessions, fflags, withSiteId, newFFlag, fflag } from 'App/routes';
+import { sessions, fflags, withSiteId, newFFlag, fflag, notes } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 
 // @ts-ignore
@@ -17,6 +17,7 @@ interface IProps extends RouteComponentProps {
   match: {
     params: {
       siteId: string;
+      fflagId?: string;
     };
   };
 }
@@ -31,7 +32,7 @@ function Overview({ match: { params } }: IProps) {
       </div>
       <div className={cn('side-menu-margined w-full')}>
         <Switch>
-          <Route exact strict path={withSiteId(sessions(), siteId)}>
+          <Route exact strict path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId)]}>
             <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px' }}>
               <NoSessionsMessage />
               <MainSearchBar />
