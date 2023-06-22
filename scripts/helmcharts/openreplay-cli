@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # vim: set ft=sh:
 
 OR_DIR="/var/lib/openreplay"
