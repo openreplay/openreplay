@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # vim: set ft=sh:
 
 OR_DIR="/var/lib/openreplay"
@@ -54,6 +54,11 @@ function log () {
     info)
       shift
       echo -e "${GREEN}[INFO]" "$@" "${NC}"
+      return
+    ;;
+    warn)
+      shift
+      echo -e "${YELLOW}[WARN]" "$@" "${NC}"
       return
     ;;
     debug)
