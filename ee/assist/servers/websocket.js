@@ -366,10 +366,10 @@ module.exports = {
                     return
                 }
                 // Back compatibility (add top layer with meta information)
-                if (args[0].meta === undefined) {
-                    args[0] = {meta: {tabId: socket.tabId}, data: args[0]};
+                if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
+                    args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
-                Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
+                Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
                 // Update sessionInfo for all sessions in room
                 const rooms = await getAvailableRooms(io);
@@ -378,7 +378,7 @@ module.exports = {
                         const connected_sockets = await io.in(roomId).fetchSockets();
                         for (let item of connected_sockets) {
                             if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-                                Object.assign(item.handshake.query.sessionInfo, args[0].data, {tabId: args[0].meta.tabId});
+                                Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
                             }
                         }
                     }
@@ -394,7 +394,7 @@ module.exports = {
                     return
                 }
                 // Back compatibility (add top layer with meta information)
-                if (args[0].meta === undefined && socket.identity === IDENTITIES.session) {
+                if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
                     args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
                 }
                 if (socket.identity === IDENTITIES.session) {
@@ -402,7 +402,7 @@ module.exports = {
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
-                    let socketId = await findSessionSocketId(io, socket.roomId, args[0].meta.tabId);
+                    let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.roomId}`);
                         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
@@ -412,7 +412,6 @@ module.exports = {
                     }
                 }
             });
-
         });
         console.log("WS server started");
         setInterval(async (io) => {
