@@ -125,6 +125,14 @@ export default class FeatureFlagsStore {
     }
   };
 
+  updateFlagStatus = async (flagId: number, isActive: boolean) => {
+    try {
+      await this.client.updateStatus(flagId, isActive);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   updateFlag = async (flag?: FeatureFlag, skipLoader?: boolean) => {
     const usedFlag = flag || this.currentFflag;
     if (usedFlag) {

@@ -12,7 +12,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const toggleActivity = () => {
     const newValue = !flag.isActive
     flag.setIsEnabled(newValue);
-    featureFlagsStore.updateFlag(flag, true).then(() => {
+    featureFlagsStore.updateFlagStatus(flag.featureFlagId, newValue).then(() => {
       toast.success('Feature flag updated.');
     })
       .catch(() => {

@@ -68,6 +68,13 @@ export default class FFlagsService extends BaseService {
       .then((j) => j.data || {});
   }
 
+  updateStatus(flagId: number, isActive: boolean): Promise<void> {
+    return this.client
+      .post(`/feature-flags/${flagId}/status`, { isActive })
+      .then((r) => r.json())
+      .then((j) => j.data || {});
+  }
+
   deleteFlag(id: number): Promise<void> {
     return this.client
       .delete(`/feature-flags/${id}`)
