@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Icon, TextEllipsis } from 'UI';
 
 const CountryFlag = ({
   userCity = '',
@@ -28,7 +28,14 @@ const CountryFlag = ({
           </div>
         </div>
       )}
-      {userCity && <span className="mx-1">{userCity}</span>}
+      {userCity && (
+        <span className="mx-1">
+          <TextEllipsis
+            text={userCity}
+            maxWidth="150px"
+          />
+        </span>
+      )}
     </div>
   );
 };
