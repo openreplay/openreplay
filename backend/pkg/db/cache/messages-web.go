@@ -1,76 +1,12 @@
 package cache
 
 import (
-	"fmt"
-	"openreplay/backend/internal/http/geoip"
 	. "openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
 
-func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart, geo *geoip.GeoRecord) error {
-	return c.Conn.InsertSessionStart(sessionID, &Session{
-		SessionID:            sessionID,
-		Platform:             "web",
-		Timestamp:            s.Timestamp,
-		ProjectID:            uint32(s.ProjectID),
-		TrackerVersion:       s.TrackerVersion,
-		RevID:                s.RevID,
-		UserUUID:             s.UserUUID,
-		UserOS:               s.UserOS,
-		UserOSVersion:        s.UserOSVersion,
-		UserDevice:           s.UserDevice,
-		UserCountry:          geo.Country,
-		UserState:            geo.State,
-		UserCity:             geo.City,
-		UserAgent:            s.UserAgent,
-		UserBrowser:          s.UserBrowser,
-		UserBrowserVersion:   s.UserBrowserVersion,
-		UserDeviceType:       s.UserDeviceType,
-		UserDeviceMemorySize: s.UserDeviceMemorySize,
-		UserDeviceHeapSize:   s.UserDeviceHeapSize,
-		UserID:               &s.UserID,
-	})
-}
-
 func (c *PGCache) HandleWebSessionStart(s *SessionStart) error {
-	sessionID := s.SessionID()
-	if c.Cache.HasSession(sessionID) {
-		return fmt.Errorf("session %d already in cache", sessionID)
-	}
-	geoInfo := geoip.UnpackGeoRecord(s.UserCountry)
-	newSess := &Session{
-		SessionID:            sessionID,
-		Platform:             "web",
-		Timestamp:            s.Timestamp,
-		ProjectID:            uint32(s.ProjectID),
-		TrackerVersion:       s.TrackerVersion,
-		RevID:                s.RevID,
-		UserUUID:             s.UserUUID,
-		UserOS:               s.UserOS,
-		UserOSVersion:        s.UserOSVersion,
-		UserDevice:           s.UserDevice,
-		UserCountry:          geoInfo.Country,
-		UserState:            geoInfo.State,
-		UserCity:             geoInfo.City,
-		UserAgent:            s.UserAgent,
-		UserBrowser:          s.UserBrowser,
-		UserBrowserVersion:   s.UserBrowserVersion,
-		UserDeviceType:       s.UserDeviceType,
-		UserDeviceMemorySize: s.UserDeviceMemorySize,
-		UserDeviceHeapSize:   s.UserDeviceHeapSize,
-		UserID:               &s.UserID,
-	}
-	c.Cache.SetSession(newSess)
-	if err := c.Conn.HandleSessionStart(sessionID, newSess); err != nil {
-		c.Cache.SetSession(nil)
-		return err
-	}
-	return nil
-}
-
-func (c *PGCache) InsertWebSessionEnd(sessionID uint64, e *SessionEnd) error {
-	_, err := c.InsertSessionEnd(sessionID, e.Timestamp)
-	return err
+	return c.Conn.HandleSessionStart(s)
 }
 
 func (c *PGCache) HandleWebSessionEnd(e *SessionEnd) error {
@@ -94,14 +30,6 @@ func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
 	}
 	session.ErrorsCount += 1
 	return nil
-}
-
-func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error {
-	_, err := c.Cache.GetSession(sessionID)
-	if err != nil {
-		return err
-	}
-	return c.Conn.InsertSessionReferrer(sessionID, referrer)
 }
 
 func (c *PGCache) InsertWebNetworkRequest(e *NetworkRequest) error {

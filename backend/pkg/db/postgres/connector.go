@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/db/sessions"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"openreplay/backend/pkg/db/types"
@@ -14,10 +15,11 @@ type CH interface {
 
 // Conn contains batches, bulks and cache for all sessions
 type Conn struct {
-	c       Pool
-	batches *BatchSet
-	bulks   *BulkSet
-	chConn  CH // hack for autocomplete inserts, TODO: rewrite
+	Sessions sessions.Sessions // TODO: fix it
+	c        Pool
+	batches  *BatchSet
+	bulks    *BulkSet
+	chConn   CH // hack for autocomplete inserts, TODO: rewrite
 }
 
 func (conn *Conn) SetClickHouse(ch CH) {

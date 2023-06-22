@@ -39,7 +39,7 @@ func (c *cacheImpl) GetSession(sessionID uint64) (*Session, error) {
 		}
 		return s.Session, nil
 	}
-	s, err := c.conn.GetSession(sessionID)
+	s, err := // TODO: use sessions module instead of c.conn.GetSession(sessionID)
 	if err == pgx.ErrNoRows {
 		c.sessions[sessionID] = &SessionMeta{nil, time.Now()}
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	sessions2 "openreplay/backend/pkg/db/sessions"
 	"openreplay/backend/pkg/memory"
 	"os"
 	"os/signal"
@@ -33,6 +34,9 @@ func main() {
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpiration)
 	defer pg.Close()
+
+	// TODO: fix
+	sessionsModule := sessions2.New(pg)
 
 	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
@@ -81,11 +85,11 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
 				msg := &messages.SessionEnd{Timestamp: timestamp}
-				currDuration, err := pg.GetSessionDuration(sessionID)
+				currDuration, err := sessionsModule.GetSessionDuration(sessionID)
 				if err != nil {
 					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
 				}
-				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
+				newDuration, err := sessionsModule.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {
 					if strings.Contains(err.Error(), "integer out of range") {
 						// Skip session with broken duration
@@ -102,7 +106,7 @@ func main() {
 				}
 				if cfg.UseEncryption {
 					if key := storage.GenerateEncryptionKey(); key != nil {
-						if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
+						if err := sessionsModule.InsertSessionEncryptionKey(sessionID, key); err != nil {
 							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
 						} else {
 							msg.EncryptionKey = string(key)

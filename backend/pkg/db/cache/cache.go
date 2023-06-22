@@ -19,7 +19,7 @@ type ProjectMeta struct {
 }
 
 type Cache interface {
-	SetSession(sess *types.Session)
+	SetSession(sess *types.Session) // TODO: check why but I never use SetSession(nil)
 	HasSession(sessID uint64) bool
 	GetSession(sessID uint64) (*types.Session, error)
 	GetProject(projectID uint32) (*types.Project, error)

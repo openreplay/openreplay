@@ -11,7 +11,7 @@ import (
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *messages.CustomEvent) error {
 	err := conn.InsertCustomEvent(
 		sessionID,
-		uint64(e.Meta().Timestamp),
+		e.Meta().Timestamp,
 		truncSqIdx(e.Meta().Index),
 		e.Name,
 		e.Payload,
@@ -23,7 +23,7 @@ func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *me
 }
 
 func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *messages.UserID) error {
-	err := conn.InsertUserID(sessionID, userID.ID)
+	err := conn.Sessions.InsertUserID(sessionID, userID.ID)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "USERID", userID.ID)
 	}
@@ -31,7 +31,7 @@ func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *me
 }
 
 func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, userAnonymousID *messages.UserAnonymousID) error {
-	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.ID)
+	err := conn.Sessions.InsertUserAnonymousID(sessionID, userAnonymousID.ID)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "USERANONYMOUSID", userAnonymousID.ID)
 	}
@@ -49,7 +49,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *mess
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
-	if err = conn.InsertReferrer(sessionID, e.Referrer); err != nil {
+	if err = conn.Sessions.InsertReferrer(sessionID, e.Referrer); err != nil {
 		log.Printf("insert session referrer err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands
@@ -146,17 +146,6 @@ func (conn *Conn) InsertWebGraphQL(sessionID uint64, projectID uint32, savePaylo
 	return nil
 }
 
-func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
-	if referrer == "" {
-		return nil
-	}
-	return conn.c.Exec(`
-		UPDATE sessions 
-		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
-		WHERE session_id = $3 AND referrer IS NULL`,
-		referrer, url.DiscardURLQuery(referrer), sessionID)
-}
-
 func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *messages.MouseThrashing) error {
 	issueID := hashid.MouseThrashingID(projectID, sessionID, e.Timestamp)
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
@@ -166,5 +155,71 @@ func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *me
 		log.Printf("insert web issue event err: %s", err)
 	}
 	conn.updateSessionIssues(sessionID, 0, 50)
+	return nil
+}
+
+func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) error {
+	sessionID := p.SessionID()
+	timestamp := (p.TimestampEnd + p.TimestampStart) / 2
+
+	sqlRequest := `
+		INSERT INTO events.performance (
+			session_id, timestamp, message_id,
+			min_fps, avg_fps, max_fps,
+			min_cpu, avg_cpu, max_cpu,
+			min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size,
+			min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size
+		) VALUES (
+			$1, $2, $3,
+			$4, $5, $6,
+			$7, $8, $9,
+			$10, $11, $12,
+			$13, $14, $15
+		)`
+	conn.batchQueue(sessionID, sqlRequest,
+		sessionID, timestamp, timestamp, // ??? TODO: primary key by timestamp+session_id
+		p.MinFPS, p.AvgFPS, p.MaxFPS,
+		p.MinCPU, p.AvgCPU, p.MinCPU,
+		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
+		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
+	)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+8*15)
+	return nil
+}
+
+func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error {
+	sessionID := e.SessionID()
+	host, _, _, err := url.GetURLParts(e.URL)
+	if err != nil {
+		return err
+	}
+	msgType := url.GetResourceType(e.Initiator, e.URL)
+	sqlRequest := `
+		INSERT INTO events.resources (
+			session_id, timestamp, message_id, 
+			type,
+			url, url_host, url_hostpath,
+			success, status, 
+			duration, ttfb, header_size, encoded_body_size, decoded_body_size
+		) VALUES (
+			$1, $2, $3, 
+			$4, 
+			LEFT($5, 8000), LEFT($6, 300), LEFT($7, 2000), 
+			$8, $9, 
+			NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0)
+		)`
+	urlQuery := url.DiscardURLQuery(e.URL)
+	conn.batchQueue(sessionID, sqlRequest,
+		sessionID, e.Timestamp, truncSqIdx(e.MsgID()),
+		msgType,
+		e.URL, host, urlQuery,
+		e.Duration != 0, 0,
+		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
+	)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(msgType)+len(e.URL)+len(host)+len(urlQuery)+8*9+1)
 	return nil
 }

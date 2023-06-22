@@ -2,6 +2,7 @@ package datasaver
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/sessions"
 
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/cache"
@@ -21,6 +22,7 @@ type Saver interface {
 type saverImpl struct {
 	cfg      *db.Config
 	pg       *cache.PGCache
+	sessions sessions.Sessions
 	ch       clickhouse.Connector
 	producer queue.Producer
 }
