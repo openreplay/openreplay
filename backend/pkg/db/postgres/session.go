@@ -8,13 +8,13 @@ import (
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	s := &Session{SessionID: sessionID}
-	var revID, userOSVersion, userBrowserVersion *string
+	var revID, userOSVersion, userBrowserVersion, userState, userCity *string
 	var issueTypes pgtype.EnumArray
 	if err := conn.c.QueryRow(`
 		SELECT platform,
 			duration, project_id, start_ts,
 			user_uuid, user_os, user_os_version, 
-			user_device, user_device_type, user_country,
+			user_device, user_device_type, user_country, user_state, user_city,
 			rev_id, tracker_version,
 			user_id, user_anonymous_id, referrer,
 			pages_count, events_count, errors_count, issue_types,
@@ -28,7 +28,7 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	).Scan(&s.Platform,
 		&s.Duration, &s.ProjectID, &s.Timestamp,
 		&s.UserUUID, &s.UserOS, &userOSVersion,
-		&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
+		&s.UserDevice, &s.UserDeviceType, &s.UserCountry, &userState, &userCity,
 		&revID, &s.TrackerVersion,
 		&s.UserID, &s.UserAnonymousID, &s.Referrer,
 		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, &issueTypes,
@@ -48,6 +48,12 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	}
 	if err := issueTypes.AssignTo(&s.IssueTypes); err != nil {
 		log.Printf("can't scan IssueTypes, err: %s", err)
+	}
+	if userState != nil {
+		s.UserState = *userState
+	}
+	if userCity != nil {
+		s.UserCity = *userCity
 	}
 	return s, nil
 }
