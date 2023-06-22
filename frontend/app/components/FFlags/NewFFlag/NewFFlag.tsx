@@ -110,7 +110,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           in your code.
         </div>
 
-        <div className={'mt-4'}>
+        <div className={'mt-6'}>
           <Description
             current={current}
             isDescrEditing={featureFlagsStore.isDescrEditing}
@@ -119,7 +119,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           />
         </div>
 
-        <div className={'mt-4'}>
+        <div className={'mt-6'}>
           <label className={'font-semibold'}>Feature Type</label>
           <div style={{ width: 340 }}>
             <SegmentSelection
@@ -144,7 +144,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
               <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
               one or more rollout conditions.
             </div>
-           <div>
+           <div className={"mt-6"}>
              <Payload />
              <Input placeholder={"Example: very important button, {'buttonColor': 'red'}"} className={'mt-2'} />
            </div>
@@ -154,7 +154,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           )}
         </div>
 
-        <div className={'mt-4'}>
+        <div className={'mt-6'}>
           <label className={'font-semibold'}>Persist flag across authentication</label>
           <Toggler
             checked={current.isPersist}
@@ -169,7 +169,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           </div>
         </div>
 
-        <div className={'mt-4'}>
+        <div className={'mt-6'}>
           <label className={'font-semibold'}>Enable this feature flag (Status)?</label>
           <Toggler
             checked={current.isActive}
@@ -181,11 +181,11 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           />
         </div>
 
-        <div className={'mt-4 p-4 rounded bg-gray-lightest'}>
+        <div className={'mt-6 p-4 rounded bg-gray-lightest'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
           {current.conditions.length === 0 ? null
             : (
-              <div className={'text-sm text-disabled-text'}>
+              <div className={'text-sm text-disabled-text mb-2'}>
                 Indicate the users for whom you intend to make this flag available. Keep in mind that
                 each set of conditions will be deployed separately from one another.
               </div>

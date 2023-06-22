@@ -3,12 +3,12 @@ import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
 
 describe('AttributeSender', () => {
-  let attributeSender
-  let appMock
+  let attributeSender: AttributeSender
+  let appMock: any
 
   beforeEach(() => {
     appMock = {
-      send: (...args) => args,
+      send: (...args: any[]) => args,
     }
     attributeSender = new AttributeSender(appMock)
   })
@@ -22,6 +22,7 @@ describe('AttributeSender', () => {
     const id = 1
     const name = 'color'
     const value = 'red'
+    // @ts-ignore
     const expectedMessage = [Type.SetNodeAttributeDict, id, 1, 2]
 
     attributeSender.sendSetAttribute(id, name, value)
@@ -39,6 +40,7 @@ describe('AttributeSender', () => {
 
     expect(sendSpy).toHaveBeenCalledWith(
       expect.arrayContaining([
+        // @ts-ignore
         Type.SetNodeAttributeDict,
         id,
         expect.any(Number),
@@ -55,6 +57,7 @@ describe('AttributeSender', () => {
 
     attributeSender.sendSetAttribute(id, name, value)
 
+    // @ts-ignore
     expect(sendSpy).toHaveBeenCalledWith([Type.StringDict, expect.any(Number), name])
   })
 
@@ -70,6 +73,7 @@ describe('AttributeSender', () => {
     // 2 attributes + 1 stringDict name + 1 stringDict value
     expect(sendSpy).toHaveBeenCalledTimes(4)
     expect(sendSpy).toHaveBeenCalledWith(
+      // @ts-ignore
       expect.not.arrayContaining([Type.StringDict, expect.any(Number), name]),
     )
   })
@@ -87,6 +91,7 @@ describe('AttributeSender', () => {
     // (attribute + stringDict name + stringDict value) * 2 = 6
     expect(sendSpy).toHaveBeenCalledTimes(6)
     expect(sendSpy).toHaveBeenCalledWith(
+      // @ts-ignore
       expect.arrayContaining([Type.StringDict, expect.any(Number), name]),
     )
   })

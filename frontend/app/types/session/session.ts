@@ -381,6 +381,7 @@ export default class Session {
 
   addNotes(sessionNotes: Note[]) {
     sessionNotes.forEach((note) => {
+      // @ts-ignore veri dirti
       note.time = note.timestamp
     })
     // @ts-ignore

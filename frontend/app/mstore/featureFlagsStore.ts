@@ -18,9 +18,11 @@ export default class FeatureFlagsStore {
   sort = { order: 'DESC', query: '' };
   page: number = 1;
   readonly pageSize: number = 10;
+  client: typeof fflagsService
 
-  constructor() {
+  constructor(customClient?: typeof fflagsService) {
     makeAutoObservable(this);
+    this.client = customClient ?? fflagsService
   }
 
   setFlagsSearch = (search: string) => {
@@ -83,7 +85,7 @@ export default class FeatureFlagsStore {
         isActive: this.activity === '0' ? undefined : this.activity === '1',
         // userId: 3,
       }
-      const { list } = await fflagsService.fetchFlags(filters);
+      const { list } = await this.client.fetchFlags(filters);
       const flags = list.map((record) => new FeatureFlag(record));
       this.setList(flags);
     } catch (e) {
@@ -98,8 +100,11 @@ export default class FeatureFlagsStore {
     if (this.currentFflag.flagKey === '') {
       return 'Feature flag must have a key'
     }
-    if (this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
-      return 'Variants must include key'
+    if (!this.currentFflag.isSingleOption && this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
+      return 'All variants must include unique key'
+    }
+    if (this.currentFflag?.isRedDistribution) {
+      return 'Variants rollout percentage must add up to 100%'
     }
     return null;
   }
@@ -109,7 +114,7 @@ export default class FeatureFlagsStore {
       this.setLoading(true);
       try {
         // @ts-ignore
-        const result = await fflagsService.createFlag(this.currentFflag.toJS());
+        const result = await this.client.createFlag(this.currentFflag.toJS());
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);
@@ -128,7 +133,7 @@ export default class FeatureFlagsStore {
       }
       try {
         // @ts-ignore
-        const result = await fflagsService.updateFlag(usedFlag.toJS());
+        const result = await this.client.updateFlag(usedFlag.toJS());
         if (!flag) this.setCurrentFlag(new FeatureFlag(result));
       } catch (e) {
         console.error('getting api error', e);
@@ -142,7 +147,7 @@ export default class FeatureFlagsStore {
   deleteFlag = async (id: FeatureFlag['featureFlagId']) => {
     this.setLoading(true);
     try {
-      await fflagsService.deleteFlag(id);
+      await this.client.deleteFlag(id);
       this.removeFromList(id);
     } catch (e) {
       console.error(e);
@@ -154,7 +159,7 @@ export default class FeatureFlagsStore {
   fetchFlag = async (id: FeatureFlag['featureFlagId']) => {
     this.setLoading(true);
     try {
-      const result = await fflagsService.getFlag(id);
+      const result = await this.client.getFlag(id);
       this.setCurrentFlag(new FeatureFlag(result));
     } catch (e) {
       console.error(e);

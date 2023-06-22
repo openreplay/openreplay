@@ -10,10 +10,15 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const { featureFlagsStore, userStore } = useStore();
 
   const toggleActivity = () => {
-    flag.setIsEnabled(!flag.isActive);
+    const newValue = !flag.isActive
+    flag.setIsEnabled(newValue);
     featureFlagsStore.updateFlag(flag, true).then(() => {
       toast.success('Feature flag updated.');
     })
+      .catch(() => {
+        flag.setIsEnabled(!newValue);
+        toast.error('Failed to update flag.')
+      })
   }
 
   const flagIcon = flag.isSingleOption ? 'fflag-single' : 'fflag-multi' as const
