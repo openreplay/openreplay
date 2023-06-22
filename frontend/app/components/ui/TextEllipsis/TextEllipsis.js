@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useRef, useEffect, forwardRef } from 'react';
 import cn from 'classnames';
-import { Tooltip } from 'UI';
+import { Tooltip } from 'antd';
 import styles from './textEllipsis.module.css';
 
 /** calculates text width in pixels
