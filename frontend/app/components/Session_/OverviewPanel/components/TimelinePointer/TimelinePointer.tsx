@@ -1,7 +1,7 @@
 import React from 'react';
 import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import StackEventModal from '../StackEventModal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import FetchDetails from 'Shared/FetchDetailsModal';
@@ -9,6 +9,7 @@ import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { TYPES } from 'App/types/session/event'
 import { types as issueTypes } from 'App/types/session/issue'
+import { Tooltip } from 'antd';
 
 interface Props {
   pointer: any;
@@ -61,8 +62,6 @@ const TimelinePointer = React.memo((props: Props) => {
               : item.name}
           </div>
         }
-        delay={0}
-        placement="top"
       >
         <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
           <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">
@@ -87,8 +86,6 @@ const TimelinePointer = React.memo((props: Props) => {
             <b>{elData.name}</b>
           </div>
         }
-        delay={0}
-        placement="top"
       >
         <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
           <Icon name={elData.icon} color="black" size="16" />
@@ -105,8 +102,6 @@ const TimelinePointer = React.memo((props: Props) => {
             <b>{'Stack Event'}</b>
           </div>
         }
-        delay={0}
-        placement="top"
       >
         <div
           onClick={createEventClickHandler(item, 'EVENT')}
@@ -126,8 +121,6 @@ const TimelinePointer = React.memo((props: Props) => {
             <b>{item.type}</b>
           </div>
         }
-        delay={0}
-        placement="top"
       >
         <div
           onClick={createEventClickHandler(item, EXCEPTIONS)}
@@ -149,8 +142,6 @@ const TimelinePointer = React.memo((props: Props) => {
             <span>{item.message}</span>
           </div>
         }
-        delay={0}
-        placement="top"
       >
         <div onClick={createEventClickHandler(item, 'ERRORS')} className="cursor-pointer">
           <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">

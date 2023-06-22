@@ -40,11 +40,11 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
   const performanceChartData = tabStates[currentTab]?.performanceChartData || []
 
   const fetchPresented = fetchList.length > 0;
-
   const resourceList = resourceListUnmap
     .filter((r: any) => r.isRed || r.isYellow)
     .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
-    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400));
+    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
+    .filter((i: any) => i.type === "fetch");
 
   const resources: any = React.useMemo(() => {
     return {
