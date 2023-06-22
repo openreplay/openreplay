@@ -76,7 +76,7 @@ function CreateNote({
     }
   }, [isVisible]);
 
-  const duration = Duration.fromMillis(time).toFormat('mm:ss');
+  const duration = Duration.fromMillis(time || 0).toFormat('mm:ss');
 
   const cleanUp = () => {
     setCreateNoteTooltip({ isVisible: false, time: 0 });

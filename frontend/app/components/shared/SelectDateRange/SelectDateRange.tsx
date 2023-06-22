@@ -64,7 +64,7 @@ function SelectDateRange(props: Props) {
             {isCustom && (
                 <OutsideClickDetectingDiv
                     onClickOutside={(e: any) => {
-                        if (e.target.parentElement.parentElement.classList.contains('rc-time-picker-panel-select') || e.target.parentElement.parentElement.classList[0].includes('-menu')) {
+                        if (e.target.parentElement.parentElement.classList.contains('rc-time-picker-panel-select') || e.target.parentElement.parentElement.classList[0]?.includes('-menu')) {
                             return false;
                         }
                         setIsCustom(false);
