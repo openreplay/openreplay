@@ -33,10 +33,9 @@ def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, cont
             params)
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
-        result["URL"] = StorageClient.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
-            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        result["URL"] = StorageClient.get_presigned_url_for_sharing(
+            bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
+            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
         )
     return result
 
@@ -104,10 +103,9 @@ def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if result:
-            result["URL"] = StorageClient.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
-                ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+            result["URL"] = StorageClient.get_presigned_url_for_sharing(
+                bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
+                expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
             )
     return result
 
@@ -131,10 +129,9 @@ def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayl
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
             return {"errors": ["record not found"]}
-        result["URL"] = StorageClient.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
-            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        result["URL"] = StorageClient.get_presigned_url_for_sharing(
+            bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
+            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
         )
     return result
 
