@@ -1419,6 +1419,13 @@ class FeatureFlagType(str, Enum):
     multi_variant = "multi"
 
 
+class FeatureFlagStatus(BaseModel):
+    is_active: bool = Field(...)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
     flag_key: str = Field(...)

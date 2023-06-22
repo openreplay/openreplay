@@ -5,6 +5,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from typing import Any, List, Dict, Optional
 from fastapi import HTTPException, status
 import json
+import logging
 
 feature_flag_columns = (
     "feature_flag_id",
@@ -33,6 +34,24 @@ def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) ->
         cur.execute(query=query)
         row = cur.fetchone()
         return row["exists"]
+
+
+def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
+    try:
+        print(f"feature_flag_id: {feature_flag_id}, is_active: {is_active}")
+        with pg_client.PostgresClient() as cur:
+            query = cur.mogrify(f"""UPDATE feature_flags
+                                SET is_active = %(is_active)s, updated_at=NOW()
+                                WHERE feature_flag_id=%(feature_flag_id)s AND project_id=%(project_id)s
+                                RETURNING is_active;""",
+                                {"feature_flag_id": feature_flag_id, "is_active": is_active, "project_id": project_id})
+            cur.execute(query=query)
+
+            return {"is_active": cur.fetchone()["is_active"]}
+    except Exception as e:
+        logging.error(f"Failed to update feature flag status: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Failed to update feature flag status")
 
 
 def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
@@ -94,7 +113,8 @@ def prepare_constraints_params_to_search(data, project_id, user_id):
 
 def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
     if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant and len(feature_flag_data.variants) == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Variants are required for multi variant flag")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Variants are required for multi variant flag")
 
     validate_unique_flag_key(feature_flag_data, project_id)
     validate_multi_variant_flag(feature_flag_data)
@@ -165,7 +185,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         if row is None:
             return None
 
-    return get_feature_flag(project_id  =project_id, feature_flag_id=row["feature_flag_id"])
+    return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
 
 
 def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
