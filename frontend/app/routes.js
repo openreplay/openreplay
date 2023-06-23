@@ -86,6 +86,8 @@ export const sessions = params => queried('/sessions', params);
 export const fflags = params => queried('/feature-flags', params);
 export const newFFlag = () => '/feature-flags/create';
 export const fflag = (id = ':fflagId', hash) => hashed(`/feature-flags/${ id }`, hash);
+export const fflagRead = (id = ':fflagId', hash) => hashed(`/feature-flags/get/${ id }`, hash);
+
 export const notes = params => queried('/notes', params);
 export const bookmarks = params => queried('/bookmarks', params);
 export const assist = params => queried('/assist', params);

@@ -67,6 +67,7 @@ const SESSIONS_PATH = routes.sessions();
 const FFLAGS_PATH = routes.fflags();
 const FFLAG_PATH = routes.fflag();
 const FFLAG_CREATE_PATH = routes.newFFlag();
+const FFLAG_READ_PATH = routes.fflagRead()
 const NOTES_PATH = routes.notes();
 const BOOKMARKS_PATH = routes.bookmarks();
 const ASSIST_PATH = routes.assist();
@@ -235,12 +236,20 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
                             <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
                             <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
-                            <Route exact strict path={withSiteId(SESSIONS_PATH, siteIdList)} component={SessionsOverview} />
-                            <Route exact strict path={withSiteId(FFLAGS_PATH, siteIdList)} component={SessionsOverview} />
-                            <Route exact strict path={withSiteId(FFLAG_PATH, siteIdList)} component={SessionsOverview} />
-                            <Route exact strict path={withSiteId(FFLAG_CREATE_PATH, siteIdList)} component={SessionsOverview} />
-                            <Route exact strict path={withSiteId(NOTES_PATH, siteIdList)} component={SessionsOverview} />
-                            <Route exact strict path={withSiteId(BOOKMARKS_PATH, siteIdList)} component={SessionsOverview} />
+                            <Route
+                                exact
+                                strict
+                                path={[
+                                    withSiteId(SESSIONS_PATH, siteIdList),
+                                    withSiteId(FFLAGS_PATH, siteIdList),
+                                    withSiteId(FFLAG_PATH, siteIdList),
+                                    withSiteId(FFLAG_READ_PATH, siteIdList),
+                                    withSiteId(FFLAG_CREATE_PATH, siteIdList),
+                                    withSiteId(NOTES_PATH, siteIdList),
+                                    withSiteId(BOOKMARKS_PATH, siteIdList),
+                                ]}
+                                component={SessionsOverview}
+                            />
                             <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} render={(props) => <Session {...props} live />} />

@@ -106,9 +106,14 @@ export default class FeatureFlag {
         ...data,
         isSingleOption: data ? data.flagType === 'single' : true,
         conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
-        variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [new Variant(1)],
+        variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [],
       });
 
+    if (this.variants?.length === 0) {
+      this.addVariant()
+      this.addVariant()
+      this.hasChanged = false
+    }
     makeAutoObservable(this);
   }
 

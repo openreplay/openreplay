@@ -1,6 +1,6 @@
-import React from 'react'
-import FeatureFlag from 'App/mstore/types/FeatureFlag'
-import { Icon, Toggler, Link, TextEllipsis } from 'UI'
+import React from 'react';
+import FeatureFlag from 'App/mstore/types/FeatureFlag';
+import { Icon, Toggler, Link, TextEllipsis, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
@@ -10,32 +10,42 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const { featureFlagsStore, userStore } = useStore();
 
   const toggleActivity = () => {
-    const newValue = !flag.isActive
+    const newValue = !flag.isActive;
     flag.setIsEnabled(newValue);
-    featureFlagsStore.updateFlagStatus(flag.featureFlagId, newValue).then(() => {
-      toast.success('Feature flag status has been updated.');
-    })
+    featureFlagsStore
+      .updateFlagStatus(flag.featureFlagId, newValue)
+      .then(() => {
+        toast.success('Feature flag status has been updated.');
+      })
       .catch(() => {
         flag.setIsEnabled(!newValue);
-        toast.error('Something went wrong, please try again.')
-      })
-  }
+        toast.error('Something went wrong, please try again.');
+      });
+  };
 
-  const flagIcon = flag.isSingleOption ? 'fflag-single' : 'fflag-multi' as const
-  const flagOwner = flag.updatedBy || flag.createdBy
-  const user = userStore.list.length > 0 ? userStore.list.find(u => parseInt(u.userId) === flagOwner!)?.name : flagOwner;
+  const flagIcon = flag.isSingleOption ? 'fflag-single' : ('fflag-multi' as const);
+  const flagOwner = flag.updatedBy || flag.createdBy;
+  const user =
+    userStore.list.length > 0
+      ? userStore.list.find((u) => parseInt(u.userId) === flagOwner!)?.name
+      : flagOwner;
   return (
     <div className={'w-full py-2 px-6 border-b hover:bg-active-blue'}>
       <div className={'flex items-center'}>
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
           <div className={'flex items-center gap-2'}>
-            <Icon name={flagIcon} size={32} />
+            <Tooltip delay={150} title={flag.isSingleOption ? 'Single variant' : 'Multivariant'}>
+              <Icon name={flagIcon} size={32} />
+            </Tooltip>
             <div className="flex flex-col gap-1" style={{ width: 300 }}>
               <span className={'link'}>{flag.flagKey}</span>
-              {flag.description
-                ? (
-                    <TextEllipsis hintText={flag.description} text={flag.description} style={{ color: 'rgba(0,0,0, 0.6)'}} />
-                  ) : null}
+              {flag.description ? (
+                <TextEllipsis
+                  hintText={flag.description}
+                  text={flag.description}
+                  style={{ color: 'rgba(0,0,0, 0.6)' }}
+                />
+              ) : null}
             </div>
           </div>
         </Link>

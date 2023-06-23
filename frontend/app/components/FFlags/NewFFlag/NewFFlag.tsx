@@ -23,6 +23,9 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     } else {
       featureFlagsStore.initNewFlag();
     }
+    return () => {
+      featureFlagsStore.setCurrentFlag(null);
+    }
   }, [fflagId]);
 
   const current = featureFlagsStore.currentFflag;
@@ -47,7 +50,6 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   };
 
   const onCancel = () => {
-    featureFlagsStore.setCurrentFlag(null);
     history.push(withSiteId(fflags(), siteId));
   };
 
@@ -90,7 +92,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
       />
       <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
         <div className="flex justify-between items-center">
-          <Header current={current} onCancel={onCancel} onSave={onSave} isNew={!fflagId} />
+          <Header siteId={siteId} current={current} onCancel={onCancel} onSave={onSave} isNew={!fflagId} />
         </div>
         <div className={'w-full border-b border-light-gray my-2'} />
 
