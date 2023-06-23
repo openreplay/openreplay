@@ -393,6 +393,7 @@ do
         CLEANUP_TOOLING=1
       else
         log title "Applying Latest OpenReplay Patches"
+        UPGRADE_OR_ONLY=1
       fi
       upgrade
       clean_tmp_dir
