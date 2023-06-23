@@ -347,23 +347,12 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Grab flags and conditions for project
-	projectID, err := strconv.ParseUint(req.ProjectID, 10, 32)
-	if err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	flags, err := e.services.Database.GetFeatureFlags(uint32(projectID))
+	computedFlags, err := e.services.FeatureFlags.ComputeFlagsForSession(req)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	computedFlags, err := featureflags.ComputeFeatureFlags(flags, req)
-	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 	resp := &featureflags.FeatureFlagsResponse{
 		Flags: computedFlags,
 	}

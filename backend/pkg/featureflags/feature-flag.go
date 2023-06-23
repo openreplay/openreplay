@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgtype"
 	"log"
 	"math/rand"
+	"openreplay/backend/pkg/db/postgres"
 	"strconv"
 	"strings"
 	"time"
@@ -358,8 +359,8 @@ func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([
 
 //---------------------------------//
 
-func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag, error) {
-	rows, err := conn.Pool.Query(`
+func (f *featureFlagsImpl) GetFeatureFlags(projectID uint32) ([]*FeatureFlag, error) {
+	rows, err := f.db.Pool.Query(`
 		SELECT ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.rollout_percentages, ff.filters,
        		ARRAY_AGG(fv.value) as values,
        		ARRAY_AGG(fv.payload) as payloads,
@@ -381,15 +382,15 @@ func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag
 	}
 	defer rows.Close()
 
-	var flags []*featureflags.FeatureFlag
+	var flags []*FeatureFlag
 
 	for rows.Next() {
-		var flag featureflags.FeatureFlagPG
+		var flag FeatureFlagPG
 		if err := rows.Scan(&flag.FlagID, &flag.FlagKey, &flag.FlagType, &flag.IsPersist, &flag.Payload, &flag.RolloutPercentages,
 			&flag.Filters, &flag.Values, &flag.Payloads, &flag.VariantRollout); err != nil {
 			return nil, err
 		}
-		parsedFlag, err := featureflags.ParseFeatureFlag(&flag)
+		parsedFlag, err := ParseFeatureFlag(&flag)
 		if err != nil {
 			return nil, err
 		}
@@ -399,3 +400,31 @@ func (conn *Conn) GetFeatureFlags(projectID uint32) ([]*featureflags.FeatureFlag
 }
 
 //---------------------------------//
+
+type FeatureFlags interface {
+	ComputeFlagsForSession(req *FeatureFlagsRequest) ([]interface{}, error)
+}
+
+type featureFlagsImpl struct {
+	db *postgres.Conn
+}
+
+func New(db *postgres.Conn) FeatureFlags {
+	return &featureFlagsImpl{
+		db: db,
+	}
+}
+
+func (f *featureFlagsImpl) ComputeFlagsForSession(req *FeatureFlagsRequest) ([]interface{}, error) {
+	// Grab flags and conditions for project
+	projectID, err := strconv.ParseUint(req.ProjectID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	flags, err := f.GetFeatureFlags(uint32(projectID))
+	if err != nil {
+		return nil, err
+	}
+	return ComputeFeatureFlags(flags, req)
+}
