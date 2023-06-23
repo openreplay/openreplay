@@ -16,7 +16,7 @@ COPY utils utils
 COPY db db
 COPY sql sql
 COPY handler.py .
-COPY consumer_async.py .
+COPY consumer_pool.py .
 COPY fill_from_db.py .
 COPY entrypoint.sh .
 
