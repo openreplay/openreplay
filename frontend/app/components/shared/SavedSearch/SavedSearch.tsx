@@ -18,7 +18,9 @@ function SavedSearch(props: Props) {
   const { showModal } = useModal();
 
   useEffect(() => {
-    props.fetchListSavedSearch()
+    if (list.size === 0) {
+      props.fetchListSavedSearch()
+    }
   }, [])
 
   return (
