@@ -30,7 +30,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
           <div className={'flex items-center gap-2'}>
             <Icon name={flagIcon} size={32} />
-            <div className="flex flex-col gap-1" style={{ width: 200 }}>
+            <div className="flex flex-col gap-1" style={{ width: 300 }}>
               <span className={'link'}>{flag.flagKey}</span>
               {flag.description
                 ? (
@@ -39,7 +39,6 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
             </div>
           </div>
         </Link>
-        <div style={{ flex: 1 }}>{flag.isSingleOption ? 'Single Variant' : 'Multivariant'}</div>
         <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
         <div style={{ flex: 1 }} className={'flex items-center gap-2 capitalize'}>
           <Icon name={'person-fill'} />

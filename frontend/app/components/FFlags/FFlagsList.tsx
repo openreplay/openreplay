@@ -78,7 +78,6 @@ function FFlagsList({ siteId }: { siteId: string }) {
               </div>
               <div className={'flex items-center font-semibold border-b py-2 px-6'}>
                 <div style={{ flex: 1 }}>Key</div>
-                <div style={{ flex: 1 }}>Type</div>
                 <div style={{ flex: 1 }}>Last modified</div>
                 <div style={{ flex: 1 }}>By</div>
                 <div style={{ marginLeft: 'auto', width: 115 }}>Status</div>
