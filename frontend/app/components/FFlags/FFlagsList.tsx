@@ -1,7 +1,7 @@
 import React from 'react';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { Loader, NoContent } from 'UI';
+import {Loader, NoContent, Pagination} from 'UI';
 import FFlagItem from './FFlagItem';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -17,7 +17,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
 
   return (
     <div
-      className={'mb-5 w-full mx-auto bg-white rounded px-4 pb-10 pt-4 widget-wrapper'}
+      className={'mb-5 w-full mx-auto bg-white rounded pb-10 pt-4 widget-wrapper'}
       style={{ maxWidth: '1300px' }}
     >
       <FFlagsListHeader siteId={siteId} />
@@ -46,13 +46,12 @@ function FFlagsList({ siteId }: { siteId: string }) {
                   <Select
                     options={[
                       { label: 'All', value: '0' as const },
-                      { label: 'Only active', value: '1' as const },
-                      { label: 'Only inactive', value: '2' as const },
+                      { label: 'Enabled', value: '1' as const },
+                      { label: 'Disabled', value: '2' as const },
                     ]}
                     defaultValue={featureFlagsStore.activity}
                     plain
-                    onChange={
-                    ({ value }) => {
+                    onChange={({ value }) => {
                       featureFlagsStore.setActivity(value.value);
                       void featureFlagsStore.fetchFlags();
                     }}
@@ -66,19 +65,18 @@ function FFlagsList({ siteId }: { siteId: string }) {
                     ]}
                     defaultValue={featureFlagsStore.sort.order}
                     plain
-                    onChange={
-                      ({ value }) => {
-                        featureFlagsStore.setSort({ query: '', order: value.value })
-                        void featureFlagsStore.fetchFlags();
-                      }}
+                    onChange={({ value }) => {
+                      featureFlagsStore.setSort({ query: '', order: value.value });
+                      void featureFlagsStore.fetchFlags();
+                    }}
                   />
                 </div>
               </div>
-              <div className={'flex items-center font-semibold border-b py-2'}>
+              <div className={'flex items-center font-semibold border-b py-2 px-6'}>
                 <div style={{ flex: 1 }}>Key</div>
                 <div style={{ flex: 1 }}>Type</div>
                 <div style={{ flex: 1 }}>Last modified</div>
-                <div style={{ flex: 1 }}>Last modified by</div>
+                <div style={{ flex: 1 }}>By</div>
                 <div style={{ marginLeft: 'auto', width: 115 }}>Status</div>
               </div>
 
@@ -87,6 +85,23 @@ function FFlagsList({ siteId }: { siteId: string }) {
                   <FFlagItem flag={flag} />
                 </React.Fragment>
               ))}
+            </div>
+            <div className="w-full flex items-center justify-between pt-4 px-6">
+              <div className="text-disabled-text">
+                {'Showing '}
+                <span className="font-semibold">
+                  {Math.min(featureFlagsStore.total, featureFlagsStore.pageSize)}
+                </span>
+                {' out of '}
+                <span className="font-semibold">{featureFlagsStore.total}</span> Feature Flags
+              </div>
+              <Pagination
+                page={featureFlagsStore.page}
+                totalPages={Math.ceil(featureFlagsStore.total / featureFlagsStore.pageSize)}
+                onPageChange={(page) => featureFlagsStore.setPage(page)}
+                limit={featureFlagsStore.pageSize}
+                debounceRequest={100}
+              />
             </div>
           </NoContent>
         </div>

@@ -25,7 +25,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const flagOwner = flag.updatedBy || flag.createdBy
   const user = userStore.list.length > 0 ? userStore.list.find(u => parseInt(u.userId) === flagOwner!)?.name : flagOwner;
   return (
-    <div className={'w-full py-2 border-b'}>
+    <div className={'w-full py-2 px-6 border-b'}>
       <div className={'flex items-center'}>
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
           <div className={'flex items-center gap-2 link'}>
@@ -33,9 +33,9 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
             {flag.flagKey}
           </div>
         </Link>
-        <div style={{ flex: 1 }}>{flag.isSingleOption ? 'Single Option' : 'Multivariant'}</div>
+        <div style={{ flex: 1 }}>{flag.isSingleOption ? 'Single Variant' : 'Multivariant'}</div>
         <div style={{ flex: 1 }}>{resentOrDate(flag.updatedAt || flag.createdAt)}</div>
-        <div style={{ flex: 1 }} className={'flex items-center gap-2'}>
+        <div style={{ flex: 1 }} className={'flex items-center gap-2 capitalize'}>
           <Icon name={'person-fill'} />
           {user}
         </div>

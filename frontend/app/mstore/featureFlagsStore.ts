@@ -17,6 +17,7 @@ export default class FeatureFlagsStore {
   activity: Activity = '0';
   sort = { order: 'DESC', query: '' };
   page: number = 1;
+  total = 0
   readonly pageSize: number = 10;
   client: typeof fflagsService
 
@@ -31,6 +32,7 @@ export default class FeatureFlagsStore {
 
   setPage = (page: number) => {
     this.page = page;
+    void this.fetchFlags()
   };
 
   setEditing = ({ isDescrEditing = false, isTitleEditing = false }) => {
@@ -85,15 +87,20 @@ export default class FeatureFlagsStore {
         isActive: this.activity === '0' ? undefined : this.activity === '1',
         // userId: 3,
       }
-      const { list } = await this.client.fetchFlags(filters);
+      const { list, total } = await this.client.fetchFlags(filters);
       const flags = list.map((record) => new FeatureFlag(record));
       this.setList(flags);
+      this.setTotal(total)
     } catch (e) {
       console.error(e);
     } finally {
       this.setLoading(false);
     }
   };
+
+  setTotal(total: number) {
+    this.total = total
+  }
 
   checkFlagForm = () => {
     if (!this.currentFflag) return 'Feature flag not initialized'
