@@ -51,23 +51,14 @@ type UnStartedSession struct {
 	UserCity           string
 }
 
-// TODO: found without using anywhere
-func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
+func (s *sessionsImpl) InsertReferrer(sessionID uint64, referrer string) error {
 	if referrer == "" {
 		return nil
 	}
-	return conn.c.Exec(`
-		UPDATE sessions 
-		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
-		WHERE session_id = $3 AND referrer IS NULL`,
-		referrer, url.DiscardURLQuery(referrer), sessionID)
-}
-
-func (s *sessionsImpl) InsertReferrer(sessionID uint64, referrer string) error {
 	baseReferrer := url.DiscardURLQuery(referrer)
 	sqlRequest := `
 		UPDATE sessions SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
-		WHERE session_id = $3`
+		WHERE session_id = $3 AND referrer IS NULL`
 	conn.batchQueue(sessionID, sqlRequest, referrer, baseReferrer, sessionID)
 
 	// Record approximate message size
@@ -259,6 +250,14 @@ func (s *sessionsImpl) Get(sessionID uint64) (*types.Session, error) {
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil, err
 	}
+	// TODO: get projectInfo and use SaveRequestPayloads value
+	// Using in InsertWebNetworkRequest and InsertWebGraphQL methods
+	proj, err := s.projects.GetProjectInfo(sess.ProjectID)
+	if err != nil {
+		log.Printf("can't get project info: %v", err)
+		return nil, err
+	}
+	sess.SaveRequestPayload = proj.SaveRequestPayloads
 	// TODO: add to redis (with 2 hours expiration)
 	// TODO: add to cache
 	return sess, nil

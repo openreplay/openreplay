@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/db/types"
 	"strings"
 
 	"openreplay/backend/pkg/hashid"
@@ -64,22 +65,22 @@ func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index ui
 	return nil
 }
 
-func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
-	issueID := hashid.IssueID(projectID, e)
+func (conn *Conn) InsertIssueEvent(sess *types.Session, e *messages.IssueEvent) error {
+	issueID := hashid.IssueID(sess.ProjectID, e)
 	payload := &e.Payload
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
 
-	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, e.Type, e.ContextString); err != nil {
+	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
-	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
+	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
 		log.Printf("insert web issue event err: %s", err)
 	}
-	conn.updateSessionIssues(sessionID, 0, getIssueScore(e))
+	conn.updateSessionIssues(sess.SessionID, 0, getIssueScore(e))
 	if e.Type == "custom" {
-		if err := conn.bulks.Get("webCustomEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
+		if err := conn.bulks.Get("webCustomEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
 			log.Printf("insert web custom event err: %s", err)
 		}
 	}

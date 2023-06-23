@@ -50,11 +50,15 @@ func (s *saverImpl) Handle(msg Message) {
 }
 
 func (s *saverImpl) handleMessage(msg Message) error {
+	session, err := s.sessions.Get(msg.SessionID())
+	if err != nil {
+		return err
+	}
 	switch m := msg.(type) {
 	case *Metadata:
-		return s.pg.InsertMetadata(m)
+		return s.sessions.InsertMetadata(m)
 	case *IssueEvent:
-		return s.pg.InsertIssueEvent(m)
+		return s.pg.Conn.InsertIssueEvent(session, m)
 	case *CustomIssue:
 		ie := &IssueEvent{
 			Type:          "custom",
@@ -64,35 +68,35 @@ func (s *saverImpl) handleMessage(msg Message) error {
 			Payload:       m.Payload,
 		}
 		ie.SetMeta(m.Meta())
-		return s.pg.InsertIssueEvent(ie)
+		return s.pg.InsertIssueEvent(session, ie)
 	case *SessionStart:
-		return s.pg.HandleWebSessionStart(m)
+		return s.pg.Conn.HandleSessionStart(m)
 	case *SessionEnd:
-		return s.pg.HandleWebSessionEnd(m)
+		return s.pg.Conn.HandleSessionEnd(m.SessionID())
 	case *UserID:
-		return s.pg.InsertWebUserID(m)
+		return s.pg.Conn.InsertWebUserID(session, m)
 	case *UserAnonymousID:
-		return s.pg.InsertWebUserAnonymousID(m)
+		return s.pg.Conn.InsertWebUserAnonymousID(session, m)
 	case *CustomEvent:
-		return s.pg.InsertWebCustomEvent(m)
+		return s.pg.Conn.InsertWebCustomEvent(session, m)
 	case *MouseClick:
-		return s.pg.InsertWebClickEvent(m)
+		return s.pg.Conn.InsertWebClickEvent(session, m)
 	case *InputEvent:
-		return s.pg.InsertWebInputEvent(m)
+		return s.pg.Conn.InsertWebInputEvent(session, m)
 	case *PageEvent:
-		return s.pg.InsertWebPageEvent(m)
+		return s.pg.Conn.InsertWebPageEvent(session, m)
 	case *NetworkRequest:
-		return s.pg.InsertWebNetworkRequest(m)
+		return s.pg.Conn.InsertWebNetworkRequest(session, m)
 	case *GraphQL:
-		return s.pg.InsertWebGraphQL(m)
+		return s.pg.Conn.InsertWebGraphQL(session, m)
 	case *JSException:
-		return s.pg.InsertWebJSException(m)
+		return s.pg.Conn.InsertWebErrorEvent(session, types.WrapJSException(m))
 	case *IntegrationEvent:
-		return s.pg.InsertWebIntegrationEvent(m)
+		return s.pg.Conn.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *InputChange:
-		return s.pg.InsertWebInputDuration(m)
+		return s.pg.Conn.InsertWebInputDuration(session, m)
 	case *MouseThrashing:
-		return s.pg.InsertMouseThrashing(m)
+		return s.pg.Conn.InsertMouseThrashing(session, m)
 	}
 	return nil
 }
