@@ -1,0 +1,13 @@
+FROM amancevice/pandas:2.0.2-alpine
+
+WORKDIR app
+
+COPY requirements-fill.txt .
+RUN apk add --no-cache --virtual .build-deps gcc g++ musl-dev postgresql-dev && \
+	pip install -r requirements-fill.txt --no-cache-dir && \
+	apk --purge del .build-deps
+
+COPY utils utils
+COPY fill_from_db.py .
+COPY entrypoint-fill.sh .
+ENTRYPOINT  ./entrypoint-fill.sh
