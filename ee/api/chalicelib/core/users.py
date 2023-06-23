@@ -61,41 +61,53 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
 def restore_member(tenant_id, user_id, email, invitation_token, admin, name, owner=False, role_id=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
-                    UPDATE public.users
-                    SET name= %(name)s,
-                        role = %(role)s,
-                        deleted_at= NULL,
-                        created_at = timezone('utc'::text, now()),
-                        tenant_id= %(tenant_id)s,
-                        api_key= generate_api_key(20),
-                        role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
-                    WHERE user_id=%(user_id)s
-                    RETURNING user_id                                           AS id,
-                           email,
-                           role,
-                           name,
-                           (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                           (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           created_at,role_id;""",
+                    WITH u AS (UPDATE public.users
+                                    SET name= %(name)s,
+                                        role = %(role)s,
+                                        deleted_at= NULL,
+                                        created_at = timezone('utc'::text, now()),
+                                        tenant_id= %(tenant_id)s,
+                                        api_key= generate_api_key(20),
+                                        role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
+                                WHERE user_id=%(user_id)s
+                                RETURNING 
+                                       tenant_id,
+                                       user_id AS id,
+                                       user_id,
+                                       email,
+                                       role,
+                                       name,
+                                       created_at,role_id),
+                         au AS (UPDATE public.basic_authentication
+                                SET invitation_token = %(invitation_token)s,
+                                    invited_at = timezone('utc'::text, now()),
+                                    change_pwd_expire_at = NULL,
+                                    change_pwd_token = NULL
+                                WHERE user_id=%(user_id)s
+                                RETURNING invitation_token)
+                    SELECT u.id,
+                           u.user_id,
+                           u.email,
+                           u.role,
+                           u.name,
+                           u.created_at,
+                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           au.invitation_token,
+                           u.role_id,
+                           roles.name AS role_name,
+                           roles.permissions,
+                           TRUE AS has_password
+                    FROM au,u LEFT JOIN roles USING(tenant_id) 
+                    WHERE roles.role_id IS NULL OR roles.role_id = (SELECT u.role_id FROM u);""",
                             {"tenant_id": tenant_id, "user_id": user_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
-                             "role_id": role_id})
+                             "role_id": role_id, "invitation_token": invitation_token})
         cur.execute(query)
         result = cur.fetchone()
-        query = cur.mogrify("""\
-                    UPDATE public.basic_authentication
-                    SET invitation_token = %(invitation_token)s,
-                        invited_at = timezone('utc'::text, now()),
-                        change_pwd_expire_at = NULL,
-                        change_pwd_token = NULL
-                    WHERE user_id=%(user_id)s
-                    RETURNING invitation_token;""",
-                            {"user_id": user_id, "invitation_token": invitation_token})
-        cur.execute(query)
-        result["invitation_token"] = cur.fetchone()["invitation_token"]
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
 
         return helper.dict_to_camel_case(result)
