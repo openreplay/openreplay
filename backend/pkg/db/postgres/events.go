@@ -19,7 +19,7 @@ func getAutocompleteType(baseType string, platform string) string {
 
 }
 
-func (conn *Conn) HandleSessionStart(s *messages.SessionStart) error {
+func (conn *Conn) HandleStartEvent(s *messages.SessionStart) error {
 	sessionID := s.SessionID()
 	projectID := uint32(s.ProjectID)
 	platform := "web"
@@ -34,7 +34,7 @@ func (conn *Conn) HandleSessionStart(s *messages.SessionStart) error {
 	return nil
 }
 
-func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
+func (conn *Conn) HandleEndEvent(sessionID uint64) error {
 	sqlRequest := `
 	UPDATE sessions
 		SET issue_types=(SELECT 
@@ -148,7 +148,7 @@ func (conn *Conn) InsertWebInputEvent(sess *types.Session, e *messages.InputEven
 	return nil
 }
 
-func (conn *Conn) InsertWebInputDuration(sess *types.Session, e *messages.InputChange) error {
+func (conn *Conn) InsertInputChangeEvent(sess *types.Session, e *messages.InputChange) error {
 	if e.Label == "" {
 		return nil
 	}

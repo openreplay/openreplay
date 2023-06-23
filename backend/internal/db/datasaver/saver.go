@@ -55,6 +55,10 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return err
 	}
 	switch m := msg.(type) {
+	case *SessionStart:
+		return s.pg.HandleStartEvent(m)
+	case *SessionEnd:
+		return s.pg.HandleEndEvent(m.SessionID())
 	case *Metadata:
 		return s.sessions.InsertMetadata(m)
 	case *IssueEvent:
@@ -69,10 +73,6 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		}
 		ie.SetMeta(m.Meta())
 		return s.pg.InsertIssueEvent(session, ie)
-	case *SessionStart:
-		return s.pg.Conn.HandleSessionStart(m)
-	case *SessionEnd:
-		return s.pg.Conn.HandleSessionEnd(m.SessionID())
 	case *UserID:
 		return s.pg.Conn.InsertWebUserID(session, m)
 	case *UserAnonymousID:
@@ -94,7 +94,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *IntegrationEvent:
 		return s.pg.Conn.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *InputChange:
-		return s.pg.Conn.InsertWebInputDuration(session, m)
+		return s.pg.InsertInputChangeEvent(session, m)
 	case *MouseThrashing:
 		return s.pg.Conn.InsertMouseThrashing(session, m)
 	}
