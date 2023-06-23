@@ -5,7 +5,7 @@ import { Input, SegmentSelection, Toggler, Loader, Button, NoContent } from 'UI'
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
-import { useHistory } from 'react-router';
+import {Prompt, useHistory} from 'react-router';
 import { withSiteId, fflags } from 'App/routes';
 import Description from './Description';
 import Header from './Header';
@@ -76,6 +76,12 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const showDescription = Boolean(current.description?.length);
   return (
     <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
+      <Prompt
+        when={current.hasChanged}
+        message={() => {
+          return 'You have unsaved changes. Are you sure you want to leave?';
+        }}
+      />
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
@@ -84,12 +90,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
       />
       <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
         <div className="flex justify-between items-center">
-          <Header
-            current={current}
-            onCancel={onCancel}
-            onSave={onSave}
-            isNew={!fflagId}
-          />
+          <Header current={current} onCancel={onCancel} onSave={onSave} isNew={!fflagId} />
         </div>
         <div className={'w-full border-b border-light-gray my-2'} />
 
@@ -134,20 +135,22 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                 { name: 'Single Variant (Boolean)', value: 'single' },
                 { name: 'Multi-Variant (String)', value: 'multi' },
               ]}
-
             />
           </div>
           {current.isSingleOption ? (
             <>
-            <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
-              Users will be served
-              <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
-              one or more rollout conditions.
-            </div>
-           <div className={"mt-6"}>
-             <Payload />
-             <Input placeholder={"Example: very important button, {'buttonColor': 'red'}"} className={'mt-2'} />
-           </div>
+              <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
+                Users will be served
+                <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
+                one or more rollout conditions.
+              </div>
+              <div className={'mt-6'}>
+                <Payload />
+                <Input
+                  placeholder={"E.g. very important button, {'buttonColor': 'red'}"}
+                  className={'mt-2'}
+                />
+              </div>
             </>
           ) : (
             <Multivariant />
@@ -183,19 +186,17 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
 
         <div className={'mt-6 p-4 rounded bg-gray-lightest'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
-          {current.conditions.length === 0 ? null
-            : (
-              <div className={'text-sm text-disabled-text mb-2'}>
-                Indicate the users for whom you intend to make this flag available. Keep in mind that
-                each set of conditions will be deployed separately from one another.
-              </div>
-            )
-          }
+          {current.conditions.length === 0 ? null : (
+            <div className={'text-sm text-disabled-text mb-2'}>
+              Indicate the users for whom you intend to make this flag available. Keep in mind that
+              each set of conditions will be deployed separately from one another.
+            </div>
+          )}
           <NoContent
             show={current.conditions.length === 0}
             title={'100% of sessions will get this feature flag'}
             subtext={
-              <div className={"flex flex-col items-center"}>
+              <div className={'flex flex-col items-center'}>
                 <div className={'text-sm mb-1'}>
                   Indicate the users for whom you intend to make this flag available.
                 </div>
@@ -217,14 +218,16 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                   <div className={'my-2 w-full text-center'}>OR</div>
                 </React.Fragment>
               ))}
-              <div
-                onClick={() => current!.addCondition()}
-                className={
-                  'flex items-center justify-center w-full bg-white rounded border mt-2 p-2'
-                }
-              >
-                <Button variant={'text-primary'}>+ Create Condition Set</Button>
-              </div>
+              {current.conditions.length <= 10 ? (
+                <div
+                  onClick={() => current!.addCondition()}
+                  className={
+                    'flex items-center justify-center w-full bg-white rounded border mt-2 p-2'
+                  }
+                >
+                  <Button variant={'text-primary'}>+ Create Condition Set</Button>
+                </div>
+              ) : null}
             </>
           </NoContent>
         </div>

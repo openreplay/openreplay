@@ -13,11 +13,11 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
     const newValue = !flag.isActive
     flag.setIsEnabled(newValue);
     featureFlagsStore.updateFlagStatus(flag.featureFlagId, newValue).then(() => {
-      toast.success('Feature flag updated.');
+      toast.success('Feature flag status has been updated.');
     })
       .catch(() => {
         flag.setIsEnabled(!newValue);
-        toast.error('Failed to update flag.')
+        toast.error('Something went wrong, please try again.')
       })
   }
 
@@ -25,16 +25,16 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const flagOwner = flag.updatedBy || flag.createdBy
   const user = userStore.list.length > 0 ? userStore.list.find(u => parseInt(u.userId) === flagOwner!)?.name : flagOwner;
   return (
-    <div className={'w-full py-2 px-6 border-b'}>
+    <div className={'w-full py-2 px-6 border-b hover:bg-active-blue'}>
       <div className={'flex items-center'}>
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
           <div className={'flex items-center gap-2'}>
             <Icon name={flagIcon} size={32} />
-            <div className="flex flex-col gap-2" style={{ width: 200 }}>
+            <div className="flex flex-col gap-1" style={{ width: 200 }}>
               <span className={'link'}>{flag.flagKey}</span>
               {flag.description
                 ? (
-                    <TextEllipsis hintText={flag.description} text={flag.description} className={'text-disabled-text !no-underline'} />
+                    <TextEllipsis hintText={flag.description} text={flag.description} style={{ color: 'rgba(0,0,0, 0.6)'}} />
                   ) : null}
             </div>
           </div>

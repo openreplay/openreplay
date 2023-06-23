@@ -92,6 +92,11 @@ export default class FeatureFlag {
   payload: SingleFFlag['payload']
   flagType: string;
   variants: Variant[] = [];
+  hasChanged = false
+
+  setHasChanged = (hasChanged: boolean) => {
+    this.hasChanged = hasChanged
+  }
 
   constructor(data?: SingleFFlag) {
     Object.assign(
@@ -109,11 +114,13 @@ export default class FeatureFlag {
 
   setPayload = (payload: string) => {
     this.payload = payload;
+    this.setHasChanged(true)
   }
 
   addVariant = () => {
     this.variants.push(new Variant(this.variants.length + 1))
     this.redistributeVariants()
+    this.setHasChanged(true)
   }
 
   removeVariant = (index: number) => {
@@ -151,6 +158,7 @@ export default class FeatureFlag {
 
   addCondition = () => {
     this.conditions.push(new Conditions())
+    this.setHasChanged(true)
   }
 
   removeCondition = (index: number) => {
@@ -159,21 +167,26 @@ export default class FeatureFlag {
 
   setFlagKey = (flagKey: string) => {
     this.flagKey = flagKey;
+    this.setHasChanged(true)
   }
 
   setDescription = (description: string) => {
     this.description = description;
+    this.setHasChanged(true)
   }
 
   setIsPersist = (isPersist: boolean) => {
     this.isPersist = isPersist;
+    this.setHasChanged(true)
   }
 
   setIsSingleOption = (isSingleOption: boolean) => {
     this.isSingleOption = isSingleOption;
+    this.setHasChanged(true)
   }
 
   setIsEnabled = (isEnabled: boolean) => {
     this.isActive = isEnabled;
+    this.setHasChanged(true)
   }
 }

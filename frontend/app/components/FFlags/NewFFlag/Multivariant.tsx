@@ -57,13 +57,12 @@ function Multivariant() {
         </div>
         <div style={{ flex: 4 }} className={'flex items-center'}>
           <Rollout />
-          <Button
-            variant={'text-primary'}
-            className={'font-normal ml-auto'}
+          <div
+            className={"ml-auto text-blue font-normal cursor-pointer mr-10"}
             onClick={featureFlagsStore.currentFflag!.redistributeVariants}
           >
             Distribute Equally
-          </Button>
+          </div>
         </div>
       </div>
       <div>
@@ -77,7 +76,7 @@ function Multivariant() {
               </div>
               <div style={{ flex: 4 }}>
                 <Input
-                  placeholder={'buy-btn-variant-1'}
+                  placeholder={`buy-btn-variant-${ind+1}`}
                   value={variant.value}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     variant.setKey(e.target.value)
@@ -86,7 +85,7 @@ function Multivariant() {
               </div>
               <div style={{ flex: 4 }}>
                 <Input
-                  placeholder={'Very red button'}
+                  placeholder={'Enter here...'}
                   value={variant.description}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     variant.setDescription(e.target.value)
@@ -95,7 +94,7 @@ function Multivariant() {
               </div>
               <div style={{ flex: 4 }}>
                 <Input
-                  placeholder={"Example: very important button, {'buttonColor': 'red'}"}
+                  placeholder={"E.g. very important button, {'buttonColor': 'red'}"}
                   value={variant.payload}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     variant.setPayload(e.target.value)
@@ -136,12 +135,12 @@ function Multivariant() {
           );
         })}
       </div>
-      <div className={'mt-2 flex justify-between w-full pr-4'}>
+      <div className={'mt-2 flex justify-between w-full'}>
         <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
           + Add Variant
         </Button>
         {featureFlagsStore.currentFflag!.isRedDistribution ? (
-          <div className={'text-red'}>Total distribution is less than 100%</div>
+          <div className={'text-red mr-10'}>Total distribution is less than 100%.</div>
         ) : null}
       </div>
     </div>

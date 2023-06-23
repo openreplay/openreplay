@@ -26,6 +26,8 @@ export default class FeatureFlagsStore {
     this.client = customClient ?? fflagsService
   }
 
+
+
   setFlagsSearch = (search: string) => {
     this.flagsSearch = search;
   };
@@ -122,6 +124,7 @@ export default class FeatureFlagsStore {
       try {
         // @ts-ignore
         const result = await this.client.createFlag(this.currentFflag.toJS());
+        this.currentFflag.setHasChanged(false)
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);
@@ -150,6 +153,7 @@ export default class FeatureFlagsStore {
         // @ts-ignore
         const result = await this.client.updateFlag(usedFlag.toJS());
         if (!flag) this.setCurrentFlag(new FeatureFlag(result));
+        if (!flag) this.currentFflag?.setHasChanged(false)
       } catch (e) {
         console.error('getting api error', e);
         throw e.response;

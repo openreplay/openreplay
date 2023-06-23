@@ -1,7 +1,7 @@
 import React from 'react';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import {Loader, NoContent, Pagination} from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 import FFlagItem from './FFlagItem';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -29,14 +29,18 @@ function FFlagsList({ siteId }: { siteId: string }) {
               <div className={'flex flex-col items-center justify-center'}>
                 <AnimatedSVG name={ICONS.NO_FFLAGS} size={285} />
                 <div className="text-center text-gray-600 mt-4">
-                  You haven't created any feature flags yet.
+                  {featureFlagsStore.sort.query === ''
+                    ? "You haven't created any feature flags yet."
+                    : 'No matching results'}
                 </div>
               </div>
             }
             subtext={
-              <div className="text-center flex justify-center items-center flex-col">
-                Use feature flags to deploy and rollback new functionality with ease.
-              </div>
+              featureFlagsStore.sort.query === '' ? (
+                <div className="text-center flex justify-center items-center flex-col">
+                  Use feature flags to deploy and rollback new functionality with ease.
+                </div>
+              ) : null
             }
           >
             <div>

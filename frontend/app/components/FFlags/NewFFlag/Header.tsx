@@ -7,7 +7,7 @@ function Header({ current, onCancel, onSave, isNew }: any) {
   return (
     <>
       <div>
-        <h1 className={cn('text-2xl')}>{isNew ? 'New Feature Flag' : current.flagKey}</h1>
+        <h1 className={cn('text-2xl')}>{!current.flagKey ? 'New Feature Flag' : current.flagKey}</h1>
       </div>
 
       <div className={'flex items-center gap-2'}>
