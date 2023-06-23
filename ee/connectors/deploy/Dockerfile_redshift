@@ -1,4 +1,4 @@
-FROM redshift_connector_base
+FROM public.ecr.aws/p1t3u8a3/connectors/redshift:base
 
 ENV CLOUD_SERVICE=redshift \
     CONNECTION_STRING=postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME} \
