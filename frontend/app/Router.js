@@ -68,6 +68,7 @@ const FFLAGS_PATH = routes.fflags();
 const FFLAG_PATH = routes.fflag();
 const FFLAG_CREATE_PATH = routes.newFFlag();
 const NOTES_PATH = routes.notes();
+const BOOKMARKS_PATH = routes.bookmarks();
 const ASSIST_PATH = routes.assist();
 const RECORDINGS_PATH = routes.recordings();
 // const ERRORS_PATH = routes.errors();
@@ -239,6 +240,7 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(FFLAG_PATH, siteIdList)} component={SessionsOverview} />
                             <Route exact strict path={withSiteId(FFLAG_CREATE_PATH, siteIdList)} component={SessionsOverview} />
                             <Route exact strict path={withSiteId(NOTES_PATH, siteIdList)} component={SessionsOverview} />
+                            <Route exact strict path={withSiteId(BOOKMARKS_PATH, siteIdList)} component={SessionsOverview} />
                             <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} render={(props) => <Session {...props} live />} />

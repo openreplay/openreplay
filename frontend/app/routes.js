@@ -87,6 +87,7 @@ export const fflags = params => queried('/feature-flags', params);
 export const newFFlag = () => '/feature-flags/create';
 export const fflag = (id = ':fflagId', hash) => hashed(`/feature-flags/${ id }`, hash);
 export const notes = params => queried('/notes', params);
+export const bookmarks = params => queried('/bookmarks', params);
 export const assist = params => queried('/assist', params);
 export const recordings = params => queried("/recordings", params);
 export const multiviewIndex = params => queried('/multiview', params);
@@ -124,6 +125,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     newFFlag(),
     fflag(),
     notes(),
+    bookmarks(),
     fflags(),
     assist(),
     recordings(),
@@ -177,6 +179,7 @@ export function isRoute(route, path){
 const SITE_CHANGE_AVALIABLE_ROUTES = [
   sessions(),
   notes(),
+  bookmarks(),
   fflags(),
   funnels(),
   assist(),

@@ -98,12 +98,13 @@ function SessionList(props: Props) {
     // handle scroll position
     const { scrollY } = props;
     window.scrollTo(0, scrollY);
-    if (total === 0) {
-      setTimeout(() => {
-        props.fetchSessions(null, true);
-      }, 300);
-    }
-    props.fetchMetadata();
+
+    // if (total === 0) {
+    //   setTimeout(() => {
+    //     props.fetchSessions(null, true);
+    //   }, 300);
+    // }
+    // props.fetchMetadata();
 
     return () => {
       props.setScrollPosition(window.scrollY);
