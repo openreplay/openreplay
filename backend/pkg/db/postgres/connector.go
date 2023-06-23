@@ -61,7 +61,7 @@ func (conn *Conn) InsertAutocompleteValue(sessionID uint64, projectID uint32, tp
 	}
 }
 
-func (conn *Conn) batchQueue(sessionID uint64, sql string, args ...interface{}) {
+func (conn *Conn) BatchQueue(sessionID uint64, sql string, args ...interface{}) {
 	conn.batches.batchQueue(sessionID, sql, args...)
 }
 
@@ -78,6 +78,6 @@ func (conn *Conn) Commit() {
 	conn.batches.Commit()
 }
 
-func (conn *Conn) updateBatchSize(sessionID uint64, reqSize int) {
+func (conn *Conn) UpdateBatchSize(sessionID uint64, reqSize int) {
 	conn.batches.updateBatchSize(sessionID, reqSize)
 }

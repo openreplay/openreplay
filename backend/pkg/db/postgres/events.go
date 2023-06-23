@@ -237,7 +237,7 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 			$10, $11, $12,
 			$13, $14, $15
 		)`
-	conn.batchQueue(sessionID, sqlRequest,
+	conn.BatchQueue(sessionID, sqlRequest,
 		sessionID, timestamp, timestamp, // ??? TODO: primary key by timestamp+session_id
 		p.MinFPS, p.AvgFPS, p.MaxFPS,
 		p.MinCPU, p.AvgCPU, p.MinCPU,
@@ -246,7 +246,7 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 	)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+8*15)
+	conn.UpdateBatchSize(sessionID, len(sqlRequest)+8*15)
 	return nil
 }
 
@@ -272,7 +272,7 @@ func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error 
 			NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0)
 		)`
 	urlQuery := url.DiscardURLQuery(e.URL)
-	conn.batchQueue(sessionID, sqlRequest,
+	conn.BatchQueue(sessionID, sqlRequest,
 		sessionID, e.Timestamp, truncSqIdx(e.MsgID()),
 		msgType,
 		e.URL, host, urlQuery,
@@ -281,6 +281,6 @@ func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error 
 	)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(msgType)+len(e.URL)+len(host)+len(urlQuery)+8*9+1)
+	conn.UpdateBatchSize(sessionID, len(sqlRequest)+len(msgType)+len(e.URL)+len(host)+len(urlQuery)+8*9+1)
 	return nil
 }
