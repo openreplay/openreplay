@@ -122,41 +122,44 @@ class ProjectFilter:
 
 def read_from_kafka(pipe: Connection, params: dict):
     global UPLOAD_RATE
-    asyncio.run(pg_client.init())
-    kafka_consumer = init_consumer()
-    project_filter = params['project_filter']
-    while True:
-        to_decode = list()
-        sessionIds = list()
-        start_time = datetime.now().timestamp()
-        broken_batchs = 0
-        n_messages = 0
-        while datetime.now().timestamp() - start_time < UPLOAD_RATE:
-            msg = kafka_consumer.poll(5.0)
-            if msg is None:
-                continue
-            n_messages += 1
-            try:
-                sessionId = codec.decode_key(msg.key())
-            except Exception:
-                broken_batchs += 1
-                continue
-            if project_filter.is_valid(sessionId):
-                to_decode.append(msg.value())
-                sessionIds.append(sessionId)
-        if n_messages != 0:
-            print(
-            f'[INFO] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
-        else:
-            print('[WARN] No messages read')
-        non_valid_updated = project_filter.non_valid_sessions_cache
-        pipe.send((non_valid_updated, sessionIds, to_decode))
-        continue_signal = pipe.recv()
-        if continue_signal == 'CLOSE':
-            break
-        kafka_consumer.commit()
-    close_consumer(kafka_consumer)
-    asyncio.run(pg_client.terminate())
+    try:
+        asyncio.run(pg_client.init())
+        kafka_consumer = init_consumer()
+        project_filter = params['project_filter']
+        while True:
+            to_decode = list()
+            sessionIds = list()
+            start_time = datetime.now().timestamp()
+            broken_batchs = 0
+            n_messages = 0
+            while datetime.now().timestamp() - start_time < UPLOAD_RATE:
+                msg = kafka_consumer.poll(5.0)
+                if msg is None:
+                    continue
+                n_messages += 1
+                try:
+                    sessionId = codec.decode_key(msg.key())
+                except Exception:
+                    broken_batchs += 1
+                    continue
+                if project_filter.is_valid(sessionId):
+                    to_decode.append(msg.value())
+                    sessionIds.append(sessionId)
+            if n_messages != 0:
+                print(
+                f'[INFO] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
+            else:
+                print('[WARN] No messages read')
+            non_valid_updated = project_filter.non_valid_sessions_cache
+            pipe.send((non_valid_updated, sessionIds, to_decode))
+            continue_signal = pipe.recv()
+            if continue_signal == 'CLOSE':
+                break
+            kafka_consumer.commit()
+        close_consumer(kafka_consumer)
+        asyncio.run(pg_client.terminate())
+    except Exception as e:
+        print('[WARN]', repr(e))
 
 
 def into_batch(batch: list[Event | DetailedEvent], session_id: int, n: Session):
@@ -297,6 +300,9 @@ class WorkerPool:
         kafka_reader_process.start()
         while signal_handler.KEEP_PROCESSING:
             # Setup of parameters for workers
+            if not kafka_reader_process.is_alive():
+                kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
+                kafka_reader_process.start()
             decoding_params = [{'flag': 'decoder',
                                 'message': list(),
                                 'memory': dict()} for _ in range(self.n_workers)

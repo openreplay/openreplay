@@ -113,7 +113,7 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         n.user_device_type = message.user_device_type
         n.user_device_memory_size = message.user_device_memory_size
         n.user_device_heap_size = message.user_device_heap_size
-        n.user_country = message.user_country.replace('|', ',')
+        n.user_country = message.user_country.split('|')[0]
         return n
 
     if isinstance(message, SessionEnd):
