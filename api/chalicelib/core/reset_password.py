@@ -12,7 +12,7 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
         return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
     a_users = users.get_by_email_only(data.email)
     if a_users:
-        invitation_link = users.generate_new_invitation(user_id=a_users["id"])
+        invitation_link = users.generate_new_invitation(user_id=a_users["userId"])
         email_helper.send_forgot_password(recipient=data.email, invitation_link=invitation_link)
     else:
         print(f"!!!invalid email address [{data.email}]")
