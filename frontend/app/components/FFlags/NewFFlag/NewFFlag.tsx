@@ -195,11 +195,11 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           )}
           <NoContent
             show={current.conditions.length === 0}
-            title={'100% of sessions will get this feature flag'}
+            title={'The flag will be available for 100% of the user sessions.'}
             subtext={
               <div className={'flex flex-col items-center'}>
                 <div className={'text-sm mb-1'}>
-                  Indicate the users for whom you intend to make this flag available.
+                  Set up condition sets to restrict the rollout.
                 </div>
                 <Button onClick={() => current!.addCondition()} variant={'text-primary'}>
                   + Create Condition Set

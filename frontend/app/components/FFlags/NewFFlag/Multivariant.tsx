@@ -58,7 +58,7 @@ function Multivariant() {
         <div style={{ flex: 4 }} className={'flex items-center'}>
           <Rollout />
           <div
-            className={"ml-auto text-blue font-normal cursor-pointer mr-10"}
+            className={"ml-auto text-main font-normal cursor-pointer mr-10 hover:underline"}
             onClick={featureFlagsStore.currentFflag!.redistributeVariants}
           >
             Distribute Equally
@@ -108,9 +108,10 @@ function Multivariant() {
                   wrapperClassName={'flex-1'}
                   placeholder={avg}
                   value={variant.rolloutPercentage}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    variant.setRollout(parseInt(e.target.value.replace(/\D/g, ''), 10))
-                  }
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    if (e.target.value === '') variant.setRollout(0);
+                    variant.setRollout(parseInt(e.target.value.replace(/\D/g, ''), 10));
+                  }}
                 />
                 <div
                   className={cn(
