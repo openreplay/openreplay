@@ -178,6 +178,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
             checked={current.isActive}
             name={'persist-flag'}
             onChange={() => {
+              !fflagId && !current.isActive ? toast.success("Feature flag will be enabled upon saving it.") : ""
               current.setIsEnabled(!current.isActive);
             }}
             label={current.isActive ? 'Enabled' : 'Disabled'}
