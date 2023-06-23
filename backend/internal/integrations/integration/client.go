@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/integrations"
 	"sync"
 	"time"
 
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/messages"
 )
 
@@ -29,10 +29,10 @@ type requestData struct {
 type client struct {
 	requestData
 	requester
-	integration *postgres.Integration
+	integration *integrations.Integration
 	// TODO: timeout ?
 	mux        sync.Mutex
-	updateChan chan<- postgres.Integration
+	updateChan chan<- integrations.Integration
 	evChan     chan<- *SessionErrorEvent
 	errChan    chan<- error
 }
@@ -45,7 +45,7 @@ type SessionErrorEvent struct {
 
 type ClientMap map[string]*client
 
-func NewClient(i *postgres.Integration, updateChan chan<- postgres.Integration, evChan chan<- *SessionErrorEvent, errChan chan<- error) (*client, error) {
+func NewClient(i *integrations.Integration, updateChan chan<- integrations.Integration, evChan chan<- *SessionErrorEvent, errChan chan<- error) (*client, error) {
 	c := new(client)
 	if err := c.Update(i); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func NewClient(i *postgres.Integration, updateChan chan<- postgres.Integration, 
 }
 
 // from outside
-func (c *client) Update(i *postgres.Integration) error {
+func (c *client) Update(i *integrations.Integration) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	var r requester

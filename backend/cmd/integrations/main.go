@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/integrations"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,7 +33,18 @@ func main() {
 
 	manager := clientManager.NewManager()
 
-	pg.IterateIntegrationsOrdered(func(i *postgres.Integration, err error) {
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	defer producer.Close(15000)
+
+	// TODO: rework with integration manager
+	listener, err := integrations.New(pg, cfg.Postgres.String())
+	if err != nil {
+		log.Printf("Postgres listener error: %v\n", err)
+		log.Fatalf("Postgres listener error")
+	}
+	defer listener.Close()
+
+	listener.IterateIntegrationsOrdered(func(i *integrations.Integration, err error) {
 		if err != nil {
 			log.Printf("Postgres error: %v\n", err)
 			return
@@ -44,16 +56,6 @@ func main() {
 			return
 		}
 	})
-
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	defer producer.Close(15000)
-
-	listener, err := postgres.NewIntegrationsListener(cfg.Postgres.String())
-	if err != nil {
-		log.Printf("Postgres listener error: %v\n", err)
-		log.Fatalf("Postgres listener error")
-	}
-	defer listener.Close()
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -88,7 +90,7 @@ func main() {
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:
 			// log.Printf("Last request integration update: %v || %v\n", i, string(i.RequestData))
-			if err := pg.UpdateIntegrationRequestData(&i); err != nil {
+			if err := listener.UpdateIntegrationRequestData(&i); err != nil {
 				log.Printf("Postgres Update request_data error: %v\n", err)
 			}
 		case err := <-listener.Errors:

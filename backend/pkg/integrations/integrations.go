@@ -1,25 +1,36 @@
 package integrations
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"openreplay/backend/pkg/db/postgres"
 
 	"github.com/jackc/pgx/v4"
 )
 
 type Listener struct {
 	conn         *pgx.Conn
+	db           *postgres.Conn
 	Integrations chan *Integration
 	Errors       chan error
 }
 
-func NewIntegrationsListener(url string) (*Listener, error) {
+type Integration struct {
+	ProjectID   uint32          `json:"project_id"`
+	Provider    string          `json:"provider"`
+	RequestData json.RawMessage `json:"request_data"`
+	Options     json.RawMessage `json:"options"`
+}
+
+func New(db *postgres.Conn, url string) (*Listener, error) {
 	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
 		return nil, err
 	}
 	listener := &Listener{
 		conn:   conn,
+		db:     db,
 		Errors: make(chan error),
 	}
 	listener.Integrations = make(chan *Integration, 50)
@@ -53,16 +64,8 @@ func (listener *Listener) Close() error {
 	return listener.conn.Close(context.Background())
 }
 
-type Integration struct {
-	ProjectID uint32 `json:"project_id"`
-	Provider  string `json:"provider"`
-	//DeletedAt *int64    `json:"deleted_at"`
-	RequestData json.RawMessage `json:"request_data"`
-	Options     json.RawMessage `json:"options"`
-}
-
-func (conn *Conn) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
-	rows, err := conn.Pool.Query(`
+func (listener *Listener) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
+	rows, err := listener.db.Pool.Query(`
 		SELECT project_id, provider, options, request_data
 		FROM integrations
 	`)
@@ -86,8 +89,8 @@ func (conn *Conn) IterateIntegrationsOrdered(iter func(integration *Integration,
 	return nil
 }
 
-func (conn *Conn) UpdateIntegrationRequestData(i *Integration) error {
-	return conn.Pool.Exec(`
+func (listener *Listener) UpdateIntegrationRequestData(i *Integration) error {
+	return listener.db.Pool.Exec(`
 		UPDATE integrations 
 		SET request_data = $1 
 		WHERE project_id=$2 AND provider=$3`,
