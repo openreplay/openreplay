@@ -1,0 +1,13 @@
+chardet==5.1.0
+idna==3.4
+psycopg2-binary==2.9.6
+python-decouple==3.8
+pytz==2022.6
+requests==2.28.1
+SQLAlchemy==1.4.48
+tzlocal==5.0.1
+urllib3==1.26.15
+sqlalchemy-redshift==0.8.14
+redshift-connector==2.0.911
+pandas-redshift==2.0.5
+PyYAML==6.0

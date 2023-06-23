@@ -1,0 +1,23 @@
+# Auto-generated, do not edit
+
+from abc cimport ABC
+
+class Message(ABC):
+    pass
+
+cdef class PyMessage:
+    def __cinit__(self):
+        pass
+
+<% $messages.each do |msg| %>
+cdef class <%= msg.name %>(PyMessage):
+    cdef public int __id__
+    <%= msg.attributes.map { |attr| "cdef public #{attr.type_pyx} #{attr.name.snake_case}"}.join "\n    "
+    %>
+
+    def __init__(self, <%= msg.attributes.map { |attr| "#{attr.type_pyx} #{attr.name.snake_case}" }.join ", " %>):
+        self.__id__ = <%= msg.id %>
+        <%= msg.attributes.map { |attr| "self.#{attr.name.snake_case} = #{attr.name.snake_case}" }.join "\n        "
+        %>
+
+<% end %>

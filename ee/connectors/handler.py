@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from db.models import Event, DetailedEvent, Session
-from msgcodec.messages import *
+from messages import *
 
 
 def handle_normal_message(message: Message) -> Optional[Event]:
@@ -75,7 +75,8 @@ def handle_normal_message(message: Message) -> Optional[Event]:
         return n
 
     if isinstance(message, UserID):
-        n.user_id = message.id
+        if message.id != '':
+            n.user_id = message.id
         return n
 
     if isinstance(message, IssueEvent):
@@ -112,7 +113,7 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         n.user_device_type = message.user_device_type
         n.user_device_memory_size = message.user_device_memory_size
         n.user_device_heap_size = message.user_device_heap_size
-        n.user_country = message.user_country
+        n.user_country = message.user_country.split('|')[0]
         return n
 
     if isinstance(message, SessionEnd):
@@ -185,7 +186,12 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         return n
 
     if isinstance(message, UserID):
-        n.user_id = message.id
+        try:
+            n.user_id = message.id
+        except AttributeError as e:
+            print(f'Session current type: {type(n)}')
+            print(f'Message id: {message.id}')
+            raise e
         return n
 
     if isinstance(message, UserAnonymousID):
