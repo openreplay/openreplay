@@ -41,7 +41,7 @@ cdef class MessageCodec:
         cdef unsigned int s = 0  # the shift (our result is big-ending)
         cdef int i = 0  # n of byte (max 9 for uint64)
         cdef bytes b
-        cdef unsigned int num
+        cdef unsigned long num
 
         while True:
             b = reader.read(1)
