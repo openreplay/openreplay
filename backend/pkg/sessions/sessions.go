@@ -41,10 +41,11 @@ type sessionsImpl struct {
 	projects projects.Projects
 }
 
-func New(db *postgres.Conn) Sessions {
+func New(db *postgres.Conn, proj projects.Projects) Sessions {
 	sessions := &sessionsImpl{
 		db:       db,
 		sessions: make(map[uint64]*SessionMeta),
+		projects: proj,
 	}
 	go sessions.cleaner()
 	return sessions

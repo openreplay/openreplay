@@ -25,9 +25,10 @@ type ServicesBuilder struct {
 }
 
 func New(cfg *http.Config, producer types.Producer, pgconn *postgres.Conn) (*ServicesBuilder, error) {
+	projs := projects.New(pgconn)
 	return &ServicesBuilder{
-		Projects:     projects.New(pgconn),
-		Sessions:     sessions.New(pgconn),
+		Projects:     projs,
+		Sessions:     sessions.New(pgconn, projs),
 		FeatureFlags: featureflags.New(pgconn),
 		Producer:     producer,
 		Tokenizer:    token.NewTokenizer(cfg.TokenSecret),
