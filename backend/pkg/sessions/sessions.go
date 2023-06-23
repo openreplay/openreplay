@@ -8,6 +8,7 @@ import (
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
+	"sync"
 	"time"
 )
 
@@ -26,12 +27,98 @@ type Sessions interface {
 	InsertReferrer(sessionID uint64, referrer string) error
 }
 
-type sessionsImpl struct {
-	db postgres.Pool
+type SessionMeta struct {
+	*types.Session
+	lastUse time.Time
 }
 
-func New(db postgres.Pool) Sessions {
-	return &sessionsImpl{db}
+type sessionsImpl struct {
+	db *postgres.Conn
+	mutex                    sync.RWMutex
+	sessions                 map[uint64]*SessionMeta
+}
+
+//------------------//
+
+var NilSessionInCacheError = errors.New("nil session in error")
+
+func (c *cacheImpl) SetSession(sess *Session) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if meta, ok := c.sessions[sess.SessionID]; ok {
+		meta.Session = sess
+		meta.lastUse = time.Now()
+	} else {
+		c.sessions[sess.SessionID] = &SessionMeta{sess, time.Now()}
+	}
+}
+
+func (c *cacheImpl) HasSession(sessID uint64) bool {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	sess, ok := c.sessions[sessID]
+	return ok && sess.Session != nil
+}
+
+func (c *cacheImpl) GetSession(sessionID uint64) (*Session, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if s, inCache := c.sessions[sessionID]; inCache {
+		if s.Session == nil {
+			return nil, NilSessionInCacheError
+		}
+		return s.Session, nil
+	}
+	s, err := // TODO: use sessions module instead of c.conn.GetSession(sessionID)
+	if err == pgx.ErrNoRows {
+		c.sessions[sessionID] = &SessionMeta{nil, time.Now()}
+	}
+	if err != nil {
+		return nil, err
+	}
+	c.sessions[sessionID] = &SessionMeta{s, time.Now()}
+	return s, nil
+}
+
+
+//------------------//
+
+func New(db *postgres.Conn) Sessions {
+	sessions := &sessionsImpl{
+		db: db,
+		sessions: make(map[uint64]*SessionMeta),
+	}
+	go sessions.cleaner()
+	return sessions
+}
+
+func (c *cacheImpl) cleaner() {
+	cleanTick := time.Tick(time.Minute * 5)
+	for {
+		select {
+		case <-cleanTick:
+			c.clearCache()
+		}
+	}
+}
+
+func (c *cacheImpl) clearCache() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	now := time.Now()
+	cacheSize := len(c.sessions)
+	deleted := 0
+	for id, sess := range c.sessions {
+		if now.Sub(sess.lastUse).Minutes() > 3 {
+			deleted++
+			delete(c.sessions, id)
+		}
+	}
+	log.Printf("cache cleaner: deleted %d/%d sessions", deleted, cacheSize)
 }
 
 type UnStartedSession struct {

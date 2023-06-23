@@ -2,10 +2,8 @@ package postgres
 
 import (
 	"context"
-	"log"
-	"openreplay/backend/pkg/db/sessions"
-
 	"github.com/jackc/pgx/v4/pgxpool"
+	"log"
 	"openreplay/backend/pkg/db/types"
 )
 
@@ -15,11 +13,10 @@ type CH interface {
 
 // Conn contains batches, bulks and cache for all sessions
 type Conn struct {
-	Sessions sessions.Sessions // TODO: fix it
-	c        Pool
-	batches  *BatchSet
-	bulks    *BulkSet
-	chConn   CH // hack for autocomplete inserts, TODO: rewrite
+	Pool    Pool
+	batches *BatchSet
+	bulks   *BulkSet
+	chConn  CH // hack for autocomplete inserts, TODO: rewrite
 }
 
 func (conn *Conn) SetClickHouse(ch CH) {
@@ -32,23 +29,23 @@ func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 		log.Fatalf("pgxpool.Connect err: %s", err)
 	}
 	conn := &Conn{}
-	conn.c, err = NewPool(c)
+	conn.Pool, err = NewPool(c)
 	if err != nil {
 		log.Fatalf("can't create new pool wrapper: %s", err)
 	}
-	conn.bulks = NewBulkSet(conn.c)
-	conn.batches = NewBatchSet(conn.c, queueLimit, sizeLimit)
+	conn.bulks = NewBulkSet(conn.Pool)
+	conn.batches = NewBatchSet(conn.Pool, queueLimit, sizeLimit)
 	return conn
 }
 
 func (conn *Conn) Close() error {
 	conn.bulks.Stop()
 	conn.batches.Stop()
-	conn.c.Close()
+	conn.Pool.Close()
 	return nil
 }
 
-func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {
+func (conn *Conn) InsertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {
 	if len(value) == 0 {
 		return
 	}

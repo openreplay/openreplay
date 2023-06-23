@@ -4,15 +4,16 @@ import (
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
-	"openreplay/backend/pkg/db/cache"
-	"openreplay/backend/pkg/db/sessions"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/flakeid"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/token"
 )
 
 type ServicesBuilder struct {
-	Database  *cache.PGCache
+	Projects  projects.Projects
 	Sessions  sessions.Sessions
 	Producer  types.Producer
 	Flaker    *flakeid.Flaker
@@ -21,10 +22,10 @@ type ServicesBuilder struct {
 	Tokenizer *token.Tokenizer
 }
 
-func New(cfg *http.Config, producer types.Producer, pgconn *cache.PGCache) (*ServicesBuilder, error) {
+func New(cfg *http.Config, producer types.Producer, pgconn *postgres.Conn) (*ServicesBuilder, error) {
 	return &ServicesBuilder{
-		Database:  pgconn,
-		Sessions:  sessions.New(pgconn), // TODO: fix it
+		Projects:  projects.New(pgconn),
+		Sessions:  sessions.New(pgconn),
 		Producer:  producer,
 		Tokenizer: token.NewTokenizer(cfg.TokenSecret),
 		UaParser:  uaparser.NewUAParser(cfg.UAParserFile),

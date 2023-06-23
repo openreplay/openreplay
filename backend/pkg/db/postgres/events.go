@@ -1,12 +1,91 @@
 package postgres
 
 import (
+	"fmt"
 	"log"
+	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
+	"strings"
 )
+
+func getAutocompleteType(baseType string, platform string) string {
+	if platform == "web" {
+		return baseType
+	}
+	return baseType + "_" + strings.ToUpper(platform)
+
+}
+
+func (conn *Conn) HandleSessionStart(s *messages.SessionStart) error {
+	sessionID := s.SessionID()
+	projectID := uint32(s.ProjectID)
+	platform := "web"
+	geoInfo := geoip.UnpackGeoRecord(s.UserCountry)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("USEROS", platform), s.UserOS)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("USERDEVICE", platform), s.UserDevice)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("USERCOUNTRY", platform), geoInfo.Country)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("USERSTATE", platform), geoInfo.State)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("USERCITY", platform), geoInfo.City)
+	conn.InsertAutocompleteValue(sessionID, projectID, getAutocompleteType("REVID", platform), s.RevID)
+	conn.InsertAutocompleteValue(sessionID, projectID, "USERBROWSER", s.UserBrowser)
+	return nil
+}
+
+func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
+	sqlRequest := `
+	UPDATE sessions
+		SET issue_types=(SELECT 
+			CASE WHEN errors_count > 0 THEN
+			  (COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}') || 'js_exception'::issue_type)::issue_type[]
+			ELSE
+				(COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}'))::issue_type[]
+			END
+    	FROM events_common.issues
+		INNER JOIN issues AS ps USING (issue_id)
+		WHERE session_id = $1)
+	WHERE session_id = $1
+	`
+	return conn.Pool.Exec(sqlRequest, sessionID)
+}
+
+func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
+	if err := conn.bulks.Get("requests").Append(sessionID, timestamp, index, url, duration, success); err != nil {
+		return fmt.Errorf("insert request in bulk err: %s", err)
+	}
+	return nil
+}
+
+func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name string, payload string) error {
+	if err := conn.bulks.Get("customEvents").Append(sessionID, timestamp, index, name, payload); err != nil {
+		return fmt.Errorf("insert custom event in bulk err: %s", err)
+	}
+	return nil
+}
+
+func (conn *Conn) InsertIssueEvent(sess *types.Session, e *messages.IssueEvent) error {
+	issueID := hashid.IssueID(sess.ProjectID, e)
+	payload := &e.Payload
+	if *payload == "" || *payload == "{}" {
+		payload = nil
+	}
+
+	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
+		log.Printf("insert web issue err: %s", err)
+	}
+	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
+		log.Printf("insert web issue event err: %s", err)
+	}
+	conn.updateSessionIssues(sess.SessionID, 0, getIssueScore(e))
+	if e.Type == "custom" {
+		if err := conn.bulks.Get("webCustomEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
+			log.Printf("insert web custom event err: %s", err)
+		}
+	}
+	return nil
+}
 
 func (conn *Conn) InsertWebCustomEvent(sess *types.Session, e *messages.CustomEvent) error {
 	err := conn.InsertCustomEvent(
@@ -17,23 +96,7 @@ func (conn *Conn) InsertWebCustomEvent(sess *types.Session, e *messages.CustomEv
 		e.Payload,
 	)
 	if err == nil {
-		conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "CUSTOM", e.Name)
-	}
-	return err
-}
-
-func (conn *Conn) InsertWebUserID(sess *types.Session, userID *messages.UserID) error {
-	err := conn.Sessions.InsertUserID(sess.SessionID, userID.ID)
-	if err == nil {
-		conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "USERID", userID.ID)
-	}
-	return err
-}
-
-func (conn *Conn) InsertWebUserAnonymousID(sess *types.Session, userAnonymousID *messages.UserAnonymousID) error {
-	err := conn.Sessions.InsertUserAnonymousID(sess.SessionID, userAnonymousID.ID)
-	if err == nil {
-		conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "USERANONYMOUSID", userAnonymousID.ID)
+		conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CUSTOM", e.Name)
 	}
 	return err
 }
@@ -49,14 +112,11 @@ func (conn *Conn) InsertWebPageEvent(sess *types.Session, e *messages.PageEvent)
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
-	if err = conn.Sessions.InsertReferrer(sess.SessionID, e.Referrer); err != nil {
-		log.Printf("insert session referrer err: %s", err)
-	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sess.SessionID, 1, 1)
 	// Add new value set to autocomplete bulk
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", url.DiscardURLQuery(path))
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", url.DiscardURLQuery(path))
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	return nil
 }
 
@@ -72,7 +132,7 @@ func (conn *Conn) InsertWebClickEvent(sess *types.Session, e *messages.MouseClic
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sess.SessionID, 1, 0)
 	// Add new value set to autocomplete bulk
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK", e.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK", e.Label)
 	return nil
 }
 
@@ -84,7 +144,7 @@ func (conn *Conn) InsertWebInputEvent(sess *types.Session, e *messages.InputEven
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sess.SessionID, 1, 0)
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
 	return nil
 }
 
@@ -96,7 +156,7 @@ func (conn *Conn) InsertWebInputDuration(sess *types.Session, e *messages.InputC
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sess.SessionID, 1, 0)
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
 	return nil
 }
 
@@ -125,7 +185,7 @@ func (conn *Conn) InsertWebNetworkRequest(sess *types.Session, e *messages.Netwo
 		response = &e.Response
 	}
 	host, path, query, err := url.GetURLParts(e.URL)
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUEST", path)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUEST", path)
 	if err != nil {
 		return err
 	}
@@ -143,7 +203,7 @@ func (conn *Conn) InsertWebGraphQL(sess *types.Session, e *messages.GraphQL) err
 	if err := conn.bulks.Get("webGraphQL").Append(sess.SessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.OperationName, request, response); err != nil {
 		log.Printf("insert web graphQL event err: %s", err)
 	}
-	conn.insertAutocompleteValue(sess.SessionID, sess.ProjectID, "GRAPHQL", e.OperationName)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "GRAPHQL", e.OperationName)
 	return nil
 }
 

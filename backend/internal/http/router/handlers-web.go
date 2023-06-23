@@ -8,9 +8,9 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"openreplay/backend/pkg/db/sessions"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/featureflags"
+	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"time"
 
@@ -104,7 +104,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
+	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			ResponseWithError(w, http.StatusNotFound,

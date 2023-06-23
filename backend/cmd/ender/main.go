@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	sessions2 "openreplay/backend/pkg/db/sessions"
 	"openreplay/backend/pkg/memory"
+	sessions2 "openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
 	"strings"
@@ -13,7 +13,6 @@ import (
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
 	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
@@ -32,12 +31,10 @@ func main() {
 
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpiration)
+	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0)
 	defer pg.Close()
 
-	// TODO: fix
 	sessionsModule := sessions2.New(pg)
-
 	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)

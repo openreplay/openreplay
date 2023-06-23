@@ -10,7 +10,6 @@ import (
 	"openreplay/backend/internal/http/router"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/internal/http/services"
-	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
@@ -32,7 +31,7 @@ func main() {
 	defer producer.Close(15000)
 
 	// Connect to database
-	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpiration)
+	dbConn := postgres.NewConn(cfg.Postgres.String(), 0, 0)
 	defer dbConn.Close()
 
 	// Build all services
