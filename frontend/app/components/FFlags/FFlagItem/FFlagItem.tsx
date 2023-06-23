@@ -1,6 +1,6 @@
 import React from 'react'
 import FeatureFlag from 'App/mstore/types/FeatureFlag'
-import { Icon, Toggler, Link } from 'UI'
+import { Icon, Toggler, Link, TextEllipsis } from 'UI'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
@@ -28,9 +28,15 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
     <div className={'w-full py-2 px-6 border-b'}>
       <div className={'flex items-center'}>
         <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
-          <div className={'flex items-center gap-2 link'}>
+          <div className={'flex items-center gap-2'}>
             <Icon name={flagIcon} size={32} />
-            {flag.flagKey}
+            <div className="flex flex-col gap-2" style={{ width: 200 }}>
+              <span className={'link'}>{flag.flagKey}</span>
+              {flag.description
+                ? (
+                    <TextEllipsis hintText={flag.description} text={flag.description} className={'text-disabled-text !no-underline'} />
+                  ) : null}
+            </div>
           </div>
         </Link>
         <div style={{ flex: 1 }}>{flag.isSingleOption ? 'Single Variant' : 'Multivariant'}</div>
@@ -48,7 +54,6 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
           />
         </div>
       </div>
-      {flag.description ? <div className={'text-disabled-text pt-2'}>{flag.description}</div> : null}
     </div>
   );
 }
