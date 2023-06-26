@@ -3,12 +3,12 @@ package datasaver
 import (
 	"errors"
 	"log"
+	"openreplay/backend/pkg/sessions"
 
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
-	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -29,7 +29,7 @@ func (s *saverImpl) handleExtraMessage(msg Message) error {
 
 	// Get session data
 	var (
-		session *types.Session
+		session *sessions.Session
 		err     error
 	)
 	if msg.TypeID() == MsgSessionEnd {

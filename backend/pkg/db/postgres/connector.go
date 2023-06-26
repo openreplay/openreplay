@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
-	"openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/sessions"
 )
 
 type CH interface {
-	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
+	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
 }
 
 // Conn contains batches, bulks and cache for all sessions
@@ -56,7 +56,7 @@ func (conn *Conn) InsertAutocompleteValue(sessionID uint64, projectID uint32, tp
 		return
 	}
 	// Send autocomplete data to clickhouse
-	if err := conn.chConn.InsertAutocomplete(&types.Session{SessionID: sessionID, ProjectID: projectID}, tp, value); err != nil {
+	if err := conn.chConn.InsertAutocomplete(&sessions.Session{SessionID: sessionID, ProjectID: projectID}, tp, value); err != nil {
 		log.Printf("click house autocomplete err: %s", err)
 	}
 }

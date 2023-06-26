@@ -3,12 +3,12 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 	"os"
 	"strings"
@@ -21,20 +21,20 @@ type Connector interface {
 	Prepare() error
 	Commit() error
 	Stop() error
-	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
-	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
-	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
-	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
-	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
-	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.NetworkRequest, savePayload bool) error
-	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
-	InsertGraphQL(session *types.Session, msg *messages.GraphQL) error
-	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
-	InsertWebInputDuration(session *types.Session, msg *messages.InputChange) error
-	InsertMouseThrashing(session *types.Session, msg *messages.MouseThrashing) error
+	InsertWebSession(session *sessions.Session) error
+	InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error
+	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
+	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
+	InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error
+	InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error
+	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
+	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
+	InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error
+	InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error
+	InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error
+	InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error
+	InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error
+	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
 }
 
 type task struct {
@@ -177,7 +177,7 @@ func (c *connectorImpl) checkError(name string, err error) {
 	}
 }
 
-func (c *connectorImpl) InsertWebInputDuration(session *types.Session, msg *messages.InputChange) error {
+func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -197,7 +197,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *types.Session, msg *mess
 	return nil
 }
 
-func (c *connectorImpl) InsertMouseThrashing(session *types.Session, msg *messages.MouseThrashing) error {
+func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error {
 	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
 	// Insert issue event to batches
 	if err := c.batches["issuesEvents"].Append(
@@ -225,7 +225,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *types.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueEvent) error {
+func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error {
 	issueID := hashid.IssueID(session.ProjectID, msg)
 	// Check issue type before insert to avoid panic from clickhouse lib
 	switch msg.Type {
@@ -259,7 +259,7 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 	return nil
 }
 
-func (c *connectorImpl) InsertWebSession(session *types.Session) error {
+func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
@@ -303,7 +303,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error {
+func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error {
 	msgType := url.GetResourceType(msg.Initiator, msg.URL)
 	resourceType := url.EnsureType(msgType)
 	if resourceType == "" {
@@ -329,7 +329,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	return nil
 }
 
-func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error {
+func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -356,7 +356,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	return nil
 }
 
-func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error {
+func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -375,7 +375,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error {
+func (c *connectorImpl) InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -395,7 +395,7 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error {
+func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error {
 	keys, values := make([]string, 0, len(msg.Tags)), make([]*string, 0, len(msg.Tags))
 	for k, v := range msg.Tags {
 		keys = append(keys, k)
@@ -427,7 +427,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *types.E
 	return nil
 }
 
-func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error {
+func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
 	var timestamp uint64 = (msg.TimestampStart + msg.TimestampEnd) / 2
 	if err := c.batches["performance"].Append(
 		session.SessionID,
@@ -455,7 +455,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	return nil
 }
 
-func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgValue string) error {
+func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error {
 	if len(msgValue) == 0 {
 		return nil
 	}
@@ -470,7 +470,7 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 	return nil
 }
 
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.NetworkRequest, savePayload bool) error {
+func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -500,7 +500,7 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Netw
 	return nil
 }
 
-func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.CustomEvent) error {
+func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -516,7 +516,7 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	return nil
 }
 
-func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQL) error {
+func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),

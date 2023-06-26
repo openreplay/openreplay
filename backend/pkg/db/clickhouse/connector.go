@@ -3,22 +3,23 @@ package clickhouse
 import (
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/sessions"
 )
 
 type Connector interface {
 	Prepare() error
 	Commit() error
 	Stop() error
-	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
-	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
-	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
-	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
-	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
-	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.NetworkRequest, savePayload bool) error
-	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
-	InsertGraphQL(session *types.Session, msg *messages.GraphQL) error
-	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
+	InsertWebSession(session *sessions.Session) error
+	InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error
+	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
+	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
+	InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error
+	InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error
+	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
+	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
+	InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error
+	InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error
+	InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error
+	InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error
 }

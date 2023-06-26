@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/sessions"
 	"strconv"
@@ -167,7 +166,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Save sessionStart to db
-		if err := e.services.Sessions.Add(&types.Session{
+		if err := e.services.Sessions.Add(&sessions.Session{
 			SessionID:            sessionID,
 			Platform:             "web",
 			Timestamp:            sessionStart.Timestamp,
