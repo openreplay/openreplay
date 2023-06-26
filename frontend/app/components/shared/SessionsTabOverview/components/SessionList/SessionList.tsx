@@ -99,11 +99,11 @@ function SessionList(props: Props) {
     const { scrollY } = props;
     window.scrollTo(0, scrollY);
 
-    // if (total === 0) {
-    //   setTimeout(() => {
-    //     props.fetchSessions(null, true);
-    //   }, 300);
-    // }
+    if (total === 0 && !loading) {
+      setTimeout(() => {
+        props.fetchSessions(null, true);
+      }, 300);
+    }
     // props.fetchMetadata();
 
     return () => {
