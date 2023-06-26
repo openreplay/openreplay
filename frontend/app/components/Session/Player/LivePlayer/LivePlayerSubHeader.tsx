@@ -2,11 +2,11 @@ import React from 'react';
 import { Icon, Tooltip } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import Tab from 'Components/Session/Player/SharedComponents/Tab';
+import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 
 function SubHeader() {
   const { store } = React.useContext(PlayerContext);
-  const { currentTab, tabs = new Set('back-compat'), location: currentLocation = 'loading...' } = store.get();
+  const { location: currentLocation = 'loading...' } = store.get();
 
   const location = currentLocation.length > 70
         ? `${currentLocation.slice(0, 70)}...`
@@ -15,11 +15,7 @@ function SubHeader() {
   return (
     <>
       <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
-        {Array.from(tabs).map((tab, i) => (
-          <React.Fragment key={tab}>
-            <Tab i={i} tab={tab} currentTab={tabs.length === 1 ? tab : currentTab} />
-          </React.Fragment>
-        ))}
+        <SessionTabs />
       </div>
       {location && (
         <div className={'w-full bg-white border-b border-gray-light'}>
