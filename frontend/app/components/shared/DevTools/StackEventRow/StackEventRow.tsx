@@ -11,9 +11,10 @@ interface Props {
   isActive?: boolean;
   onClick?: any;
 }
+
 function StackEventRow(props: Props) {
   const { event, onJump, style, isActive } = props;
-  let message = event.payload[0] || '';
+  let message: any = Array.isArray(event.payload) ? event.payload[0] : event.payload;
   message = typeof message === 'string' ? message : JSON.stringify(message);
 
   const iconProps: any = React.useMemo(() => {
@@ -21,7 +22,7 @@ function StackEventRow(props: Props) {
     return {
       name: `integrations/${source}`,
       size: 18,
-      marginRight: source === OPENREPLAY ? 11 : 10,
+      marginRight: source === OPENREPLAY ? 11 : 10
     };
   }, [event]);
 
@@ -33,14 +34,14 @@ function StackEventRow(props: Props) {
       className={cn(
         'group flex items-center py-2 px-4 border-b cursor-pointer relative',
         'hover:bg-active-blue',
-        { 'bg-teal-light': isActive }
+        { 'bg-teal-light': isActive, 'error color-red': event.isRed }
       )}
     >
       <div className={cn('mr-auto flex items-start')}>
         <Icon {...iconProps} />
         <div>
-          <div className="capitalize font-medium mb-1">{event.name}</div>
-          <div className="code-font text-xs">{message}</div>
+          <div className='capitalize font-medium mb-1'>{event.name}</div>
+          <div className='code-font text-xs'>{message}</div>
         </div>
       </div>
       <JumpButton onClick={onJump} />

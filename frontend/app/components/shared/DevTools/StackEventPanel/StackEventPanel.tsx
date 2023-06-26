@@ -11,84 +11,83 @@ import StackEventRow from 'Shared/DevTools/StackEventRow';
 
 import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
-const TAB_KEYS = [ ALL, ...typeList] as const
-const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }))
+const TAB_KEYS = [ALL, ...typeList] as const;
+const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 
 function StackEventPanel() {
-  const { player, store } = React.useContext(PlayerContext)
-  const jump = (t: number) => player.jump(t)
-  const { currentTab, tabStates } = store.get()
+  const { player, store } = React.useContext(PlayerContext);
+  const jump = (t: number) => player.jump(t);
+  const { currentTab, tabStates } = store.get();
+
+  const { stackList: list = [], stackListNow: listNow = [] } = tabStates[currentTab];
 
   const {
-    stackList: list = [],
-    stackListNow: listNow = [],
-  } = tabStates[currentTab]
-
-  const {
-    sessionStore: { devTools },
+    sessionStore: { devTools }
   } = useStore();
   const { showModal } = useModal();
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false) // TODO:embed that into useModal
-  const filter = devTools[INDEX_KEY].filter
-  const activeTab = devTools[INDEX_KEY].activeTab
-  const activeIndex = devTools[INDEX_KEY].index
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false); // TODO:embed that into useModal
+  const filter = devTools[INDEX_KEY].filter;
+  const activeTab = devTools[INDEX_KEY].activeTab;
+  const activeIndex = devTools[INDEX_KEY].index;
 
-  let filteredList = useRegExListFilterMemo(list, it => it.name, filter)  
-  filteredList = useTabListFilterMemo(filteredList, it => it.source, ALL, activeTab)
+  let filteredList = useRegExListFilterMemo(list, it => it.name, filter);
+  filteredList = useTabListFilterMemo(filteredList, it => it.source, ALL, activeTab);
 
-  const onTabClick = (activeTab: typeof TAB_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
-  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
-  const tabs = useMemo(() => 
-    TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)), 
-    [ list.length ],
-  )
+  const onTabClick = (activeTab: typeof TAB_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value });
+  const tabs = useMemo(() =>
+      TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)),
+    [list.length]
+  );
 
   const [
     timeoutStartAutoscroll,
-    stopAutoscroll,
+    stopAutoscroll
   ] = useAutoscroll(
     filteredList,
     getLastItemTime(listNow),
     activeIndex,
     index => devTools.update(INDEX_KEY, { index })
-  )
-  const onMouseEnter = stopAutoscroll
+  );
+  const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
-    if (isDetailsModalActive) { return }
-    timeoutStartAutoscroll()
-  }
+    if (isDetailsModalActive) {
+      return;
+    }
+    timeoutStartAutoscroll();
+  };
 
-  const cache = useCellMeasurerCache()
+  const cache = useCellMeasurerCache();
 
   const showDetails = (item: any) => {
-    setIsDetailsModalActive(true)
+    setIsDetailsModalActive(true);
     showModal(
-      <StackEventModal event={item} />, 
-      { 
+      <StackEventModal event={item} />,
+      {
         right: true,
         width: 500,
         onClose: () => {
-          setIsDetailsModalActive(false)
-          timeoutStartAutoscroll()
-        } 
+          setIsDetailsModalActive(false);
+          timeoutStartAutoscroll();
+        }
       }
-    )
-    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) })
-    stopAutoscroll()
-  }
+    );
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+    stopAutoscroll();
+  };
 
-  const _list = React.useRef()
+  const _list = React.useRef();
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
-      _list.current.scrollToRow(activeIndex)
+      _list.current.scrollToRow(activeIndex);
     }
-  }, [ activeIndex ])
+  }, [activeIndex]);
 
 
   const _rowRenderer = ({ index, key, parent, style }: any) => {
@@ -104,7 +103,7 @@ function StackEventPanel() {
             key={item.key}
             event={item}
             onJump={() => {
-              stopAutoscroll()
+              stopAutoscroll();
               devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
               jump(item.time);
             }}
@@ -113,7 +112,7 @@ function StackEventPanel() {
         )}
       </CellMeasurer>
     );
-  }
+  };
 
   return (
     <BottomBlock
@@ -122,29 +121,29 @@ function StackEventPanel() {
       onMouseLeave={onMouseLeave}
     >
       <BottomBlock.Header>
-        <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">Stack Events</span>
+        <div className='flex items-center'>
+          <span className='font-semibold color-gray-medium mr-4'>Stack Events</span>
           <Tabs tabs={tabs} active={activeTab} onClick={onTabClick} border={false} />
         </div>
         <Input
-          className="input-small h-8"
-          placeholder="Filter by keyword"
-          icon="search"
-          name="filter"
+          className='input-small h-8'
+          placeholder='Filter by keyword'
+          icon='search'
+          name='filter'
           height={28}
           onChange={onFilterChange}
           value={filter}
         />
       </BottomBlock.Header>
-      <BottomBlock.Content className="overflow-y-auto">
+      <BottomBlock.Content className='overflow-y-auto'>
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className='capitalize flex items-center mt-16'>
+              <Icon name='info-circle' className='mr-2' size='18' />
               No Data
             </div>
           }
-          size="small"
+          size='small'
           show={filteredList.length === 0}
         >
           <AutoSizer>
@@ -158,7 +157,7 @@ function StackEventPanel() {
                 rowRenderer={_rowRenderer}
                 width={width}
                 height={height}
-                scrollToAlignment="center"
+                scrollToAlignment='center'
               />
             )}
           </AutoSizer>
@@ -168,4 +167,4 @@ function StackEventPanel() {
   );
 }
 
-export default observer(StackEventPanel)
+export default observer(StackEventPanel);
