@@ -14,18 +14,9 @@ import { getInitials } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import cn from 'classnames';
 import { useModal } from 'App/components/Modal';
-import userDrawer from 'HOCs/userDrawer';
 import { Drawer } from 'antd';
 import CaptureRate from 'Shared/SessionSettings/components/CaptureRate';
-import captureRate from 'Shared/SessionSettings/components/CaptureRate';
 
-
-const CaptureRateModal = ({ onClose }: any) => {
-
-  return (
-    <div>test</div>
-  );
-};
 
 type Project = {
   id: number;
@@ -44,7 +35,6 @@ const Sites = ({
                  init
                }: PropsFromRedux) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { showDrawer } = userDrawer();
   const [showCaptureRate, setShowCaptureRate] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
@@ -160,9 +150,10 @@ const Sites = ({
         </div>
       </div>
 
-      <Drawer open={showCaptureRate && !!activeProject} onClose={() => setShowCaptureRate(!showCaptureRate)} title='Capture Rate'
+      <Drawer open={showCaptureRate && !!activeProject} onClose={() => setShowCaptureRate(!showCaptureRate)}
+              title='Capture Rate'
               closable={false} destroyOnClose>
-        { activeProject && <CaptureRate projectId={activeProject.id} /> }
+        {activeProject && <CaptureRate projectId={activeProject.id} />}
       </Drawer>
     </Loader>
   );
