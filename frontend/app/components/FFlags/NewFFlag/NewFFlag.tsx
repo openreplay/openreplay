@@ -149,7 +149,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
               <div className={'mt-6'}>
                 <Payload />
                 <Input
-                  placeholder={"E.g. very important button, {'buttonColor': 'red'}"}
+                  placeholder={"E.g. red button, {'buttonColor': 'red'}"}
                   className={'mt-2'}
                 />
               </div>
@@ -199,7 +199,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
             show={current.conditions.length === 0}
             title={'The flag will be available for 100% of the user sessions.'}
             subtext={
-              <div className={'flex flex-col items-center'}>
+              <div className={'flex flex-col items-center'} style={{ fontSize: 14 }}>
                 <div className={'text-sm mb-1'}>
                   Set up condition sets to restrict the rollout.
                 </div>

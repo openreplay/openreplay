@@ -94,7 +94,7 @@ function Multivariant() {
               </div>
               <div style={{ flex: 4 }}>
                 <Input
-                  placeholder={"E.g. very important button, {'buttonColor': 'red'}"}
+                  placeholder={"E.g. red button, {'buttonColor': 'red'}"}
                   value={variant.payload}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     variant.setPayload(e.target.value)
