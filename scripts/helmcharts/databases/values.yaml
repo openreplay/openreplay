@@ -134,9 +134,9 @@ kafka:
   fullnameOverride: kafka
   enabled: false
   replicaCount: 2
-  Persistence:
+  persistence:
     enabled: true
-    size: 200Gi
+    size: 100Gi
   # resources:
   #   limit:
   #     memory: 4Gi
