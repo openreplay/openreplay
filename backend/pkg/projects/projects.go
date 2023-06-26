@@ -2,18 +2,17 @@ package projects
 
 import (
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/db/types"
 	"sync"
 	"time"
 )
 
 type Projects interface {
-	GetProject(projectID uint32) (*types.Project, error)
-	GetProjectByKey(projectKey string) (*types.Project, error)
+	GetProject(projectID uint32) (*Project, error)
+	GetProjectByKey(projectKey string) (*Project, error)
 }
 
 type ProjectMeta struct {
-	*types.Project
+	*Project
 	expirationTime time.Time
 }
 
@@ -30,7 +29,7 @@ func New(db *postgres.Conn) Projects {
 
 //---------------------------------------------
 
-func (c *projectsImpl) GetProjectByKey(projectKey string) (*types.Project, error) {
+func (c *projectsImpl) GetProjectByKey(projectKey string) (*Project, error) {
 	pmInterface, found := c.projectsByKeys.Load(projectKey)
 	if found {
 		if pm, ok := pmInterface.(*ProjectMeta); ok {
@@ -49,7 +48,7 @@ func (c *projectsImpl) GetProjectByKey(projectKey string) (*types.Project, error
 	return p, nil
 }
 
-func (c *projectsImpl) GetProject(projectID uint32) (*types.Project, error) {
+func (c *projectsImpl) GetProject(projectID uint32) (*Project, error) {
 	if c.projects[projectID] != nil &&
 		time.Now().Before(c.projects[projectID].expirationTime) {
 		return c.projects[projectID].Project, nil
@@ -65,8 +64,8 @@ func (c *projectsImpl) GetProject(projectID uint32) (*types.Project, error) {
 
 //---------------------------------------------
 
-func (c *projectsImpl) getProjectByKey(projectKey string) (*types.Project, error) {
-	p := &types.Project{ProjectKey: projectKey}
+func (c *projectsImpl) getProjectByKey(projectKey string) (*Project, error) {
+	p := &Project{ProjectKey: projectKey}
 	if err := c.db.Pool.QueryRow(`
 		SELECT max_session_duration, sample_rate, project_id, beacon_size
 		FROM projects
@@ -80,8 +79,8 @@ func (c *projectsImpl) getProjectByKey(projectKey string) (*types.Project, error
 }
 
 // TODO: logical separation of metadata
-func (c *projectsImpl) getProject(projectID uint32) (*types.Project, error) {
-	p := &types.Project{ProjectID: projectID}
+func (c *projectsImpl) getProject(projectID uint32) (*Project, error) {
+	p := &Project{ProjectID: projectID}
 	if err := c.db.Pool.QueryRow(`
 		SELECT project_key, max_session_duration, save_request_payloads,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
