@@ -2,48 +2,54 @@ package sessions
 
 import (
 	"log"
+	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
-	"sync"
 	"time"
 )
-
-// Data flow: [in-memory cache] -- { [redis (optional)] -- [postgres] }
 
 type Sessions interface {
 	Add(session *Session) error
 	AddUnStarted(session *UnStartedSession) error
 	Get(sessionID uint64) (*Session, error)
-	InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error)
-	GetSessionDuration(sessionID uint64) (uint64, error)
-	InsertSessionEncryptionKey(sessionID uint64, key []byte) error
-	InsertUserID(sessionID uint64, userID string) error
-	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
-	InsertMetadata(metadata *messages.Metadata) error
-	InsertReferrer(sessionID uint64, referrer string) error
+	GetDuration(sessionID uint64) (uint64, error)
+	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
+	UpdateEncryptionKey(sessionID uint64, key []byte) error
+	UpdateUserID(sessionID uint64, userID string) error
+	UpdateAnonymousID(sessionID uint64, userAnonymousID string) error
+	UpdateReferrer(sessionID uint64, referrer string) error
+	UpdateMetadata(metadata *messages.Metadata) error
 }
 
 type sessionsImpl struct {
 	db       *postgres.Conn
-	mutex    sync.RWMutex
-	sessions map[uint64]*SessionMeta
 	projects projects.Projects
+	cache    cache.Cache
 }
 
 func New(db *postgres.Conn, proj projects.Projects) Sessions {
 	sessions := &sessionsImpl{
 		db:       db,
-		sessions: make(map[uint64]*SessionMeta),
 		projects: proj,
+		cache:    cache.New(time.Minute*5, time.Minute*3),
 	}
-	go sessions.cleaner()
 	return sessions
 }
 
 func (s *sessionsImpl) Add(session *Session) error {
-	return s.addSession(session)
+	err := s.addSession(session)
+	if err != nil {
+		return err
+	}
+	proj, err := s.projects.GetProject(session.ProjectID)
+	if err != nil {
+		return err
+	}
+	session.SaveRequestPayload = proj.SaveRequestPayloads
+	s.cache.Set(session.SessionID, session)
+	return nil
 }
 
 func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
@@ -51,19 +57,44 @@ func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
 }
 
 func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
-	sess, err := s.GetSession(sessionID)
+	if sess, ok := s.cache.Get(sessionID); ok {
+		return sess.(*Session), nil
+	}
+	session, err := s.getSession(sessionID)
 	if err != nil {
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil, err
 	}
-	return sess, nil
+	proj, err := s.projects.GetProject(session.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	session.SaveRequestPayload = proj.SaveRequestPayloads
+	s.cache.Set(session.SessionID, session)
+	return session, nil
 }
 
-func (s *sessionsImpl) InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
+func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
+	return s.getSessionDuration(sessionID)
+}
+
+func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
+	return s.insertSessionEnd(sessionID, timestamp)
+}
+
+func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
+	return s.insertSessionEncryptionKey(sessionID, key)
+}
+
+func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
+	return s.insertUserID(sessionID, userID)
+}
+
+func (s *sessionsImpl) UpdateAnonymousID(sessionID uint64, userAnonymousID string) error {
 	return s.insertMetadata(sessionID, 1, userAnonymousID)
 }
 
-func (s *sessionsImpl) InsertReferrer(sessionID uint64, referrer string) error {
+func (s *sessionsImpl) UpdateReferrer(sessionID uint64, referrer string) error {
 	if referrer == "" {
 		return nil
 	}
@@ -71,23 +102,7 @@ func (s *sessionsImpl) InsertReferrer(sessionID uint64, referrer string) error {
 	return s.insertReferrer(sessionID, referrer, baseReferrer)
 }
 
-func (s *sessionsImpl) InsertUserID(sessionID uint64, userID string) error {
-	return s.insertUserID(sessionID, userID)
-}
-
-func (s *sessionsImpl) InsertSessionEncryptionKey(sessionID uint64, key []byte) error {
-	return s.insertSessionEncryptionKey(sessionID, key)
-}
-
-func (s *sessionsImpl) GetSessionDuration(sessionID uint64) (uint64, error) {
-	return s.getSessionDuration(sessionID)
-}
-
-func (s *sessionsImpl) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
-	return s.insertSessionEnd(sessionID, timestamp)
-}
-
-func (s *sessionsImpl) InsertMetadata(metadata *messages.Metadata) error {
+func (s *sessionsImpl) UpdateMetadata(metadata *messages.Metadata) error {
 	sessionID := metadata.SessionID()
 	session, err := s.Get(sessionID)
 	if err != nil {

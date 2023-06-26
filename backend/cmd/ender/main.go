@@ -83,11 +83,11 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
 				msg := &messages.SessionEnd{Timestamp: timestamp}
-				currDuration, err := sessionsModule.GetSessionDuration(sessionID)
+				currDuration, err := sessionsModule.GetDuration(sessionID)
 				if err != nil {
 					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
 				}
-				newDuration, err := sessionsModule.InsertSessionEnd(sessionID, msg.Timestamp)
+				newDuration, err := sessionsModule.UpdateDuration(sessionID, msg.Timestamp)
 				if err != nil {
 					if strings.Contains(err.Error(), "integer out of range") {
 						// Skip session with broken duration
@@ -104,7 +104,7 @@ func main() {
 				}
 				if cfg.UseEncryption {
 					if key := storage.GenerateEncryptionKey(); key != nil {
-						if err := sessionsModule.InsertSessionEncryptionKey(sessionID, key); err != nil {
+						if err := sessionsModule.UpdateEncryptionKey(sessionID, key); err != nil {
 							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
 						} else {
 							msg.EncryptionKey = string(key)
