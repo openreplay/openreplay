@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { resentOrDate } from 'App/date';
 import { toast } from 'react-toastify';
+import { fflagRead } from "App/routes";
 
 function FFlagItem({ flag }: { flag: FeatureFlag }) {
   const { featureFlagsStore, userStore } = useStore();
@@ -32,7 +33,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
   return (
     <div className={'w-full py-2 px-6 border-b hover:bg-active-blue'}>
       <div className={'flex items-center'}>
-        <Link style={{ flex: 1 }} to={`feature-flags/${flag.featureFlagId}`}>
+        <Link style={{ flex: 1 }} to={fflagRead(flag.featureFlagId.toString())}>
           <div className={'flex items-center gap-2'}>
             <Tooltip delay={150} title={flag.isSingleOption ? 'Single variant' : 'Multivariant'}>
               <Icon name={flagIcon} size={32} />

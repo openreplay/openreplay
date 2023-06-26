@@ -202,6 +202,14 @@ export default class API {
     return this.featureFlags.reloadFlags()
   }
 
+  getFeatureFlag(flagName: string): IFeatureFlag | undefined {
+    return this.featureFlags.getFeatureFlag(flagName)
+  }
+
+  getAllFeatureFlags() {
+    return this.featureFlags.flags
+  }
+
   use<T>(fn: (app: App | null, options?: Options) => T): T {
     return fn(this.app, this.options)
   }

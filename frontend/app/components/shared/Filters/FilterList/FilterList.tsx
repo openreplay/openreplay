@@ -13,6 +13,7 @@ interface Props {
   observeChanges?: () => void;
   saveRequestPayloads?: boolean;
   supportsEmpty?: boolean
+  readonly?: boolean;
   excludeFilterKeys?: Array<string>
 }
 function FilterList(props: Props) {
@@ -84,6 +85,7 @@ function FilterList(props: Props) {
                 saveRequestPayloads={saveRequestPayloads}
                 disableDelete={cannotDeleteFilter}
                 excludeFilterKeys={excludeFilterKeys}
+                readonly={props.readonly}
               />
             ) : null
           )}
@@ -99,6 +101,7 @@ function FilterList(props: Props) {
             !filter.isEvent ? (
               <FilterItem
                 key={filterIndex}
+                readonly={props.readonly}
                 isFilter={true}
                 filterIndex={filterIndex}
                 filter={filter}

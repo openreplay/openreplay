@@ -25,6 +25,10 @@ export default class FeatureFlags {
     }
   }
 
+  getFeatureFlag(flagName: string): IFeatureFlag | undefined {
+    return this.flags.find((flag) => flag.key === flagName)
+  }
+
   isFlagEnabled(flagName: string): boolean {
     return this.flags.findIndex((flag) => flag.key === flagName) !== -1
   }

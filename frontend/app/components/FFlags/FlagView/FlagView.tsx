@@ -100,10 +100,12 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
             <React.Fragment key={index}>
               <RolloutCondition
                 set={index + 1}
+                readonly
                 index={index}
                 conditions={condition}
                 removeCondition={current.removeCondition}
               />
+              <div className={'mt-2'} />
             </React.Fragment>
           ))}
         </div>

@@ -12,9 +12,10 @@ interface Props {
   conditions: Conditions;
   removeCondition: (ind: number) => void;
   index: number
+  readonly?: boolean;
 }
 
-function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
+function RolloutCondition({ set, conditions, removeCondition, index, readonly }: Props) {
   const [forceRender, forceRerender] = React.useState(false);
   const onAddFilter = (filter = {}) => {
     conditions.filter.addFilter(filter);
@@ -47,17 +48,16 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
       <div className={'flex items-center border-b px-4 py-2 gap-2'}>
         <div>Condition</div>
         <div className={'p-2 rounded bg-gray-lightest'}>Set {set}</div>
-        <div
-          className={cn(
-            'p-2 px-4 cursor-pointer rounded ml-auto',
-            'hover:bg-teal-light'
-          )}
-          onClick={() => removeCondition(index)}
-        >
-          <Icon name={'trash'} color={'main'} />
-        </div>
+        {readonly ? null : (
+          <div
+            className={cn('p-2 px-4 cursor-pointer rounded ml-auto', 'hover:bg-teal-light')}
+            onClick={() => removeCondition(index)}
+          >
+            <Icon name={'trash'} color={'main'} />
+          </div>
+        )}
       </div>
-      <div className={'p-2 border-b'}>
+      <div className={readonly ? 'p-2' : 'p-2 border-b'}>
         <div className={conditions.filter.filters.length > 0 ? 'p-2 border-b mb-2' : ''}>
           <FilterList
             filter={conditions.filter}
@@ -66,25 +66,38 @@ function RolloutCondition({ set, conditions, removeCondition, index }: Props) {
             onChangeEventsOrder={onChangeEventsOrder}
             hideEventsOrder
             excludeFilterKeys={nonFlagFilters}
+            readonly
           />
+          {readonly && !conditions.filter?.filters?.length ? (
+            <div className={'p-2'}>No conditions</div>
+          ) : null}
         </div>
-        <FilterSelection
-          filter={undefined}
-          onFilterClick={onAddFilter}
-          excludeFilterKeys={nonFlagFilters}
-        >
-          <Button variant="text-primary" icon="plus">Add Condition</Button>
-        </FilterSelection>
+        {readonly ? null : (
+          <FilterSelection
+            filter={undefined}
+            onFilterClick={onAddFilter}
+            excludeFilterKeys={nonFlagFilters}
+          >
+            <Button variant="text-primary" icon="plus">
+              Add Condition
+            </Button>
+          </FilterSelection>
+        )}
       </div>
       <div className={'px-4 py-2 flex items-center gap-2'}>
         <span>Rollout to</span>
-        <Input
-          type="text"
-          width={60}
-          value={conditions.rolloutPercentage}
-          onChange={onPercentChange}
-          leadingButton={<div className={'p-2 text-disabled-text'}>%</div>}
-        />
+        {readonly ? (
+          <div>{conditions.rolloutPercentage}%</div>
+        ) : (
+          <Input
+            type="text"
+            width={60}
+            value={conditions.rolloutPercentage}
+            onChange={onPercentChange}
+            leadingButton={<div className={'p-2 text-disabled-text'}>%</div>}
+          />
+        )}
+
         <span>of sessions</span>
       </div>
     </div>
