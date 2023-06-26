@@ -41,6 +41,7 @@ elif EVENT_TYPE == 'detailed':
     events_messages = [1, 4, 21, 22, 25, 27, 31, 32, 39, 48, 59, 64, 69, 78, 125, 126]
 allowed_messages = list(set(session_messages + events_messages))
 codec = MessageCodec(allowed_messages)
+max_kafka_read = config('MAX_KAFKA_READ', default=60000, cast=int)
 
 
 def init_consumer():
@@ -103,12 +104,33 @@ class ProjectFilter:
         elif sessionId in self.non_valid_sessions_cache.keys():
             return False
         else:
-            projetId = project_from_session(sessionId)
-            if projetId not in self.project_filter:
+            projectId = project_from_session(sessionId)
+            if projectId not in self.project_filter:
                 self.non_valid_sessions_cache[sessionId] = int(datetime.now().timestamp())
                 return False
             else:
                 return True
+
+    def are_valid(self, sessionIds):
+        if len(self.project_filter) == 0:
+            return sessionIds
+        to_validate = list()
+        valid_sessions = list()
+        for sessionId in sessionIds:
+            if sessionId in self.sessions_lifespan.session_project.keys():
+                valid_sessions.append(sessionId)
+            elif sessionId in self.non_valid_sessions_cache.keys():
+                continue
+            else:
+                to_validate.append(sessionId)
+        projects_session = project_from_sessions(list(set(to_validate)))
+        current_datetime = int(datetime.now().timestamp())
+        for projectId, sessionId in projects_session:
+            if projectId not in self.project_filter:
+                self.non_valid_sessions_cache[sessionId] = current_datetime
+            else:
+                valid_sessions.append(sessionId)
+        return valid_sessions
 
     def handle_clean(self):
         if len(self.project_filter) == 0:
@@ -121,45 +143,54 @@ class ProjectFilter:
 
 
 def read_from_kafka(pipe: Connection, params: dict):
-    global UPLOAD_RATE
-    try:
-        asyncio.run(pg_client.init())
-        kafka_consumer = init_consumer()
-        project_filter = params['project_filter']
-        while True:
-            to_decode = list()
-            sessionIds = list()
-            start_time = datetime.now().timestamp()
-            broken_batchs = 0
-            n_messages = 0
-            while datetime.now().timestamp() - start_time < UPLOAD_RATE:
-                msg = kafka_consumer.poll(5.0)
-                if msg is None:
-                    continue
-                n_messages += 1
-                try:
-                    sessionId = codec.decode_key(msg.key())
-                except Exception:
-                    broken_batchs += 1
-                    continue
-                if project_filter.is_valid(sessionId):
-                    to_decode.append(msg.value())
-                    sessionIds.append(sessionId)
-            if n_messages != 0:
-                print(
-                f'[INFO] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
-            else:
-                print('[WARN] No messages read')
-            non_valid_updated = project_filter.non_valid_sessions_cache
-            pipe.send((non_valid_updated, sessionIds, to_decode))
-            continue_signal = pipe.recv()
-            if continue_signal == 'CLOSE':
-                break
-            kafka_consumer.commit()
-        close_consumer(kafka_consumer)
-        asyncio.run(pg_client.terminate())
-    except Exception as e:
-        print('[WARN]', repr(e))
+    global UPLOAD_RATE, max_kafka_read
+    # try:
+    asyncio.run(pg_client.init())
+    kafka_consumer = init_consumer()
+    project_filter = params['project_filter']
+    capture_messages = list()
+    capture_sessions = list()
+    while True:
+        to_decode = list()
+        sessionIds = list()
+        start_time = datetime.now().timestamp()
+        broken_batchs = 0
+        n_messages = 0
+        while datetime.now().timestamp() - start_time < UPLOAD_RATE and max_kafka_read > n_messages:
+            msg = kafka_consumer.poll(5.0)
+            if msg is None:
+                continue
+            n_messages += 1
+            try:
+                sessionId = codec.decode_key(msg.key())
+            except Exception:
+                broken_batchs += 1
+                continue
+            # capture_sessions.append(sessionId)
+            # capture_messages.append(msg.value())
+            if project_filter.is_valid(sessionId):
+                to_decode.append(msg.value())
+                sessionIds.append(sessionId)
+        # valid_sessions = project_filter.are_valid(list(set(capture_sessions)))
+        # for i in range(len(capture_sessions)):
+        #     if capture_sessions[i] in valid_sessions:
+        #         sessionIds.append(capture_sessions[i])
+        #         to_decode.append(capture_messages[i])
+        if n_messages != 0:
+            print(
+            f'[INFO] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
+        else:
+            print('[WARN] No messages read')
+        non_valid_updated = project_filter.non_valid_sessions_cache
+        pipe.send((non_valid_updated, sessionIds, to_decode))
+        continue_signal = pipe.recv()
+        if continue_signal == 'CLOSE':
+            break
+        kafka_consumer.commit()
+    close_consumer(kafka_consumer)
+    asyncio.run(pg_client.terminate())
+    # except Exception as e:
+    #     print('[WARN]', repr(e))
 
 
 def into_batch(batch: list[Event | DetailedEvent], session_id: int, n: Session):
@@ -182,6 +213,32 @@ def project_from_session(sessionId: int):
         print(f'[WARN] sessionid {sessionId} not found in sessions table')
         return None
     return res['project_id']
+
+
+def project_from_sessions(sessionIds: list[int]):
+    """Search projectId of requested sessionId in PG table sessions"""
+    while sessionIds:
+        sessIds = sessionIds[-1000:]
+        response = list()
+        try:
+            with pg_client.PostgresClient() as conn:
+                conn.execute(
+                    "SELECT session_id, project_id FROM sessions WHERE session_id IN ({sessionIds})".format(
+                                 sessionIds=','.join([str(sessId) for sessId in sessIds])
+                    )
+                )
+                res = conn.fetchall()
+        except Exception as e:
+            print('[project_from_sessions]', repr(e))
+            raise e
+        if res is None:
+            print(f'[WARN] sessionids {",".join([str(sessId) for sessId in sessIds])} not found in sessions table')
+        else:
+            response += res
+        sessionIds = sessionIds[:-1000]
+    if not response:
+        return []
+    return [(e['project_id'], e['session_id']) for e in res]
 
 
 def decode_message(params: dict):
