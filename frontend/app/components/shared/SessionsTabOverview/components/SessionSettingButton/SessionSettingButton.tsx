@@ -13,7 +13,7 @@ function SessionSettingButton(props: any) {
     return (
         <div className="cursor-pointer ml-4" onClick={handleClick}>
             <Tooltip title="Session Settings">
-                <Button icon="sliders" variant="text" />
+                <Button icon="sliders" variant="text" id="btn-session-settings" />
             </Tooltip>
         </div>
     );
