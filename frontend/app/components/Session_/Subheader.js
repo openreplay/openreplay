@@ -12,7 +12,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
-import Tab from 'Components/Session/Player/SharedComponents/Tab';
+import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs'
 
 const localhostWarn = (project) => project + '_localhost_warn';
 
@@ -21,7 +21,7 @@ function SubHeader(props) {
     const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1';
     const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
     const { player, store } = React.useContext(PlayerContext);
-    const { width, height, endTime, location: currentLocation = 'loading...', tabs = new Set('back-compat'), currentTab } = store.get();
+    const { width, height, endTime, location: currentLocation = 'loading...', } = store.get();
 
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;
@@ -101,16 +101,7 @@ function SubHeader(props) {
                         </div>
                     </div>
                 ) : null}
-                {Array.from(tabs).map((tab, i) => (
-                    <React.Fragment key={tab}>
-                        <Tab
-                            i={i}
-                            tab={tab}
-                            currentTab={tabs.length === 1 ? tab : currentTab}
-                            changeTab={(changeTo) => player.changeTab(changeTo)}
-                        />
-                    </React.Fragment>
-                ))}
+                <SessionTabs />
                 <div
                     className="ml-auto text-sm flex items-center color-gray-medium gap-2"
                     style={{ width: 'max-content' }}
