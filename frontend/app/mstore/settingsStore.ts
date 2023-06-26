@@ -22,9 +22,9 @@ export default class SettingsStore {
     });
   }
 
-  saveCaptureRate(data: any) {
+  saveCaptureRate(projectId: number, data: any) {
     return sessionService
-      .saveCaptureRate(data)
+      .saveCaptureRate(projectId, data)
       .then((data) => data.json())
       .then(({ data }) => {
         this.sessionSettings.merge({
@@ -38,10 +38,10 @@ export default class SettingsStore {
       });
   }
 
-  fetchCaptureRate(): Promise<any> {
+  fetchCaptureRate(projectId: number): Promise<any> {
     this.loadingCaptureRate = true;
     return sessionService
-      .fetchCaptureRate()
+      .fetchCaptureRate(projectId)
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,

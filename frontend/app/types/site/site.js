@@ -23,6 +23,7 @@ export default Record({
   projectKey: undefined,
   trackerVersion: undefined,
   saveRequestPayloads: false,
+  sampleRate: 0,
 }, {
   idKey: 'id',
   methods: {

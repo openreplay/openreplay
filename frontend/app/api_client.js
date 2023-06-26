@@ -15,7 +15,6 @@ const siteIdRequiredPaths = [
   '/assignments',
   '/integration/sources',
   '/issue_types',
-  '/sample_rate',
   '/saved_search',
   '/rehydrations',
   '/sourcemaps',

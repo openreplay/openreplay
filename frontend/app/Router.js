@@ -10,6 +10,7 @@ import Header from 'Components/Header/Header';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { withStore } from 'App/mstore';
 
+
 import APIClient from './api_client';
 import * as routes from './routes';
 import { OB_DEFAULT_TAB, isRoute } from 'App/routes';
@@ -19,6 +20,7 @@ import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
 import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import SupportCallout from 'Shared/SupportCallout';
+// import { DrawerWrapper } from 'HOCs/userDrawer';
 
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
@@ -185,6 +187,7 @@ class Router extends React.Component {
             <ModalProvider>
                 <Loader loading={loading} className="flex-1">
                     <Notification />
+                    {/*<DrawerWrapper />*/}
                     {!hideHeader && <Header key="header" />}
                     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
                         <Switch key="content">
