@@ -53,6 +53,16 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.pg.InsertMetadata(m)
 	case *IssueEvent:
 		return s.pg.InsertIssueEvent(m)
+	case *CustomIssue:
+		ie := &IssueEvent{
+			Type:          "custom",
+			Timestamp:     m.Timestamp,
+			MessageID:     m.Index,
+			ContextString: m.Name,
+			Payload:       m.Payload,
+		}
+		ie.SetMeta(m.Meta())
+		return s.pg.InsertIssueEvent(ie)
 	case *SessionStart:
 		return s.pg.HandleWebSessionStart(m)
 	case *SessionEnd:
