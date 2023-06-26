@@ -69,7 +69,7 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       created_at, sessions_last_check_at {extra_projection}
+                                       created_at, sessions_last_check_at, sample_rate {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""",
