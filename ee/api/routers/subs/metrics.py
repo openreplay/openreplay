@@ -14,18 +14,18 @@ public_app, app, app_apikey = get_routers([OR_scope(Permissions.metrics)])
 
 @app.post('/{projectId}/dashboards', tags=["dashboard"])
 @app.put('/{projectId}/dashboards', tags=["dashboard"])
-async def create_dashboards(projectId: int, data: schemas.CreateDashboardSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+def create_dashboards(projectId: int, data: schemas.CreateDashboardSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.create_dashboard(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.get('/{projectId}/dashboards', tags=["dashboard"])
-async def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.get_dashboards(project_id=projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-async def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = dashboards.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)
     if data is None:
         return {"errors": ["dashboard not found"]}
@@ -34,60 +34,60 @@ async def get_dashboard(projectId: int, dashboardId: int, context: schemas.Curre
 
 @app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-async def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditDashboardSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
+def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditDashboardSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.update_dashboard(project_id=projectId, user_id=context.user_id,
                                                 dashboard_id=dashboardId, data=data)}
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-async def delete_dashboard(projectId: int, dashboardId: int, _=Body(None),
-                           context: schemas.CurrentContext = Depends(OR_context)):
+def delete_dashboard(projectId: int, dashboardId: int, _=Body(None),
+                     context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.delete_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)
 
 
 @app.get('/{projectId}/dashboards/{dashboardId}/pin', tags=["dashboard"])
-async def pin_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def pin_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.pin_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/cards', tags=["cards"])
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
-async def add_card_to_dashboard(projectId: int, dashboardId: int,
-                                data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
-                                context: schemas.CurrentContext = Depends(OR_context)):
+def add_card_to_dashboard(projectId: int, dashboardId: int,
+                          data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+                          context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                           data=data)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
-async def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
-                                             data: schemas_ee.CardSchema = Body(...),
-                                             context: schemas.CurrentContext = Depends(OR_context)):
+def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
+                                       data: schemas_ee.CardSchema = Body(...),
+                                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
                                                         dashboard_id=dashboardId, data=data)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
-async def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId: int,
-                                     data: schemas.UpdateWidgetPayloadSchema = Body(...),
-                                     context: schemas.CurrentContext = Depends(OR_context)):
+def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId: int,
+                               data: schemas.UpdateWidgetPayloadSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.update_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                     widget_id=widgetId, data=data)
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
-async def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int, _=Body(None),
-                                       context: schemas.CurrentContext = Depends(OR_context)):
+def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int, _=Body(None),
+                                 context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.remove_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                     widget_id=widgetId)
 
 
 # @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}/chart', tags=["dashboard"])
-# async def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
+# def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
 #                      data: schemas.CardChartSchema = Body(...),
 #                      context: schemas.CurrentContext = Depends(OR_context)):
 #     data = dashboards.make_chart_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
@@ -102,16 +102,16 @@ async def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetI
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-async def try_card(projectId: int, data: schemas_ee.CardSchema = Body(...),
-                   context: schemas.CurrentContext = Depends(OR_context)):
+def try_card(projectId: int, data: schemas_ee.CardSchema = Body(...),
+             context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-async def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
 
@@ -119,8 +119,8 @@ async def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = B
 @app.post('/{projectId}/cards/try/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
-async def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchema = Body(...),
-                                 context: schemas.CurrentContext = Depends(OR_context)):
+def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.series) == 0:
         return {"data": []}
     data.series[0].filter.startDate = data.startTimestamp
@@ -132,7 +132,7 @@ async def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchem
 @app.get('/{projectId}/cards', tags=["cards"])
 @app.get('/{projectId}/metrics', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
-async def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
 
 
@@ -141,23 +141,23 @@ async def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR
 @app.put('/{projectId}/metrics', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
-async def create_card(projectId: int, data: schemas_ee.CardSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
+def create_card(projectId: int, data: schemas_ee.CardSchema = Body(...),
+                context: schemas.CurrentContext = Depends(OR_context)):
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.post('/{projectId}/cards/search', tags=["cards"])
 @app.post('/{projectId}/metrics/search', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/search', tags=["customMetrics"])
-async def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
+def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
+                 context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.search_all(project_id=projectId, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards/{metric_id}', tags=["cards"])
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-async def get_card(projectId: int, metric_id: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
+def get_card(projectId: int, metric_id: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if not isinstance(metric_id, int):
         return {"errors": ["invalid card_id"]}
     data = custom_metrics.get_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
@@ -167,7 +167,7 @@ async def get_card(projectId: int, metric_id: Union[int, str], context: schemas.
 
 
 # @app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
-# async def sign_thumbnail_for_upload(projectId: int, metric_id: Union[int, str],
+# def sign_thumbnail_for_upload(projectId: int, metric_id: Union[int, str],
 #                               context: schemas.CurrentContext = Depends(OR_context)):
 #     if not isinstance(metric_id, int):
 #         return {"errors": ["invalid card_id"]}
@@ -177,9 +177,9 @@ async def get_card(projectId: int, metric_id: Union[int, str], context: schemas.
 @app.post('/{projectId}/cards/{metric_id}/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
-async def get_card_sessions(projectId: int, metric_id: int,
-                            data: schemas.CardSessionsSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_sessions(projectId: int, metric_id: int,
+                      data: schemas.CardSessionsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
@@ -189,9 +189,9 @@ async def get_card_sessions(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
-async def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
-                                 data: schemas.CardSessionsSchema = Body(...),
-                                 context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
+                           data: schemas.CardSessionsSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
     if not isinstance(metric_id, int):
         return {"errors": [f"invalid card_id: {metric_id}"]}
 
@@ -205,9 +205,9 @@ async def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
 @app.post('/{projectId}/cards/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues/{issueId}/sessions', tags=["customMetrics"])
-async def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
-                                           data: schemas.CardSessionsSchema = Body(...),
-                                           context: schemas.CurrentContext = Depends(OR_context)):
+def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
+                                     data: schemas.CardSessionsSchema = Body(...),
+                                     context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_sessions_by_issue(project_id=projectId, user_id=context.user_id,
                                                        metric_id=metric_id, issue_id=issueId, data=data)
     if data is None:
@@ -218,9 +218,9 @@ async def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issue
 @app.post('/{projectId}/cards/{metric_id}/errors', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/errors', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/errors', tags=["customMetrics"])
-async def get_custom_metric_errors_list(projectId: int, metric_id: int,
-                                        data: schemas.CardSessionsSchema = Body(...),
-                                        context: schemas.CurrentContext = Depends(OR_context)):
+def get_custom_metric_errors_list(projectId: int, metric_id: int,
+                                  data: schemas.CardSessionsSchema = Body(...),
+                                  context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                           data=data)
     if data is None:
@@ -231,8 +231,8 @@ async def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
 @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-async def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
+                   context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
     return {"data": data}
@@ -243,8 +243,8 @@ async def get_card_chart(projectId: int, metric_id: int, request: Request, data:
 @app.put('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-async def update_custom_metric(projectId: int, metric_id: int, data: schemas_ee.UpdateCardSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
+def update_custom_metric(projectId: int, metric_id: int, data: schemas_ee.UpdateCardSchema = Body(...),
+                         context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
@@ -256,9 +256,9 @@ async def update_custom_metric(projectId: int, metric_id: int, data: schemas_ee.
 @app.put('/{projectId}/metrics/{metric_id}/status', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
-async def update_custom_metric_state(projectId: int, metric_id: int,
-                                     data: schemas.UpdateCustomMetricsStatusSchema = Body(...),
-                                     context: schemas.CurrentContext = Depends(OR_context)):
+def update_custom_metric_state(projectId: int, metric_id: int,
+                               data: schemas.UpdateCustomMetricsStatusSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": custom_metrics.change_state(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                             status=data.active)}
@@ -267,6 +267,6 @@ async def update_custom_metric_state(projectId: int, metric_id: int,
 @app.delete('/{projectId}/cards/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-async def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
-                               context: schemas.CurrentContext = Depends(OR_context)):
+def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
+                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}

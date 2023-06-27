@@ -14,7 +14,7 @@ public_app, app, app_apikey = get_routers()
 
 
 @app.get('/client/roles', tags=["client", "roles"])
-async def get_roles(context: schemas_ee.CurrentContext = Depends(OR_context)):
+def get_roles(context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {
         'data': roles.get_roles(tenant_id=context.tenant_id)
     }
@@ -22,8 +22,8 @@ async def get_roles(context: schemas_ee.CurrentContext = Depends(OR_context)):
 
 @app.post('/client/roles', tags=["client", "roles"])
 @app.put('/client/roles', tags=["client", "roles"])
-async def add_role(data: schemas_ee.RolePayloadSchema = Body(...),
-                   context: schemas_ee.CurrentContext = Depends(OR_context)):
+def add_role(data: schemas_ee.RolePayloadSchema = Body(...),
+             context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = roles.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
     if "errors" in data:
         return data
@@ -35,8 +35,8 @@ async def add_role(data: schemas_ee.RolePayloadSchema = Body(...),
 
 @app.post('/client/roles/{roleId}', tags=["client", "roles"])
 @app.put('/client/roles/{roleId}', tags=["client", "roles"])
-async def edit_role(roleId: int, data: schemas_ee.RolePayloadSchema = Body(...),
-                    context: schemas_ee.CurrentContext = Depends(OR_context)):
+def edit_role(roleId: int, data: schemas_ee.RolePayloadSchema = Body(...),
+              context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = roles.update(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId, data=data)
     if "errors" in data:
         return data
@@ -47,7 +47,7 @@ async def edit_role(roleId: int, data: schemas_ee.RolePayloadSchema = Body(...),
 
 
 @app.delete('/client/roles/{roleId}', tags=["client", "roles"])
-async def delete_role(roleId: int, _=Body(None), context: schemas_ee.CurrentContext = Depends(OR_context)):
+def delete_role(roleId: int, _=Body(None), context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = roles.delete(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId)
     if "errors" in data:
         return data
@@ -58,53 +58,53 @@ async def delete_role(roleId: int, _=Body(None), context: schemas_ee.CurrentCont
 
 @app.get('/config/assist/credentials', tags=["assist"])
 @app.get('/assist/credentials', tags=["assist"])
-async def get_assist_credentials():
+def get_assist_credentials():
     return {"data": assist_helper.get_full_config()}
 
 
 @app.post('/trails', tags=["traces", "trails"])
-async def get_trails(data: schemas_ee.TrailSearchPayloadSchema = Body(...),
-                     context: schemas_ee.CurrentContext = Depends(OR_context)):
+def get_trails(data: schemas_ee.TrailSearchPayloadSchema = Body(...),
+               context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {
         'data': traces.get_all(tenant_id=context.tenant_id, data=data)
     }
 
 
 @app.post('/trails/actions', tags=["traces", "trails"])
-async def get_available_trail_actions(context: schemas_ee.CurrentContext = Depends(OR_context)):
+def get_available_trail_actions(context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
 
 
 @app.put('/{projectId}/assist/save', tags=["assist"])
-async def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordPayloadSchema = Body(...),
-                                 context: schemas_ee.CurrentContext = Depends(OR_context)):
+def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordPayloadSchema = Body(...),
+                           context: schemas_ee.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
     return {"data": assist_records.presign_record(project_id=projectId, data=data, context=context)}
 
 
 @app.put('/{projectId}/assist/save/done', tags=["assist"])
-async def save_record_after_upload(projectId: int, data: schemas_ee.AssistRecordSavePayloadSchema = Body(...),
-                                   context: schemas_ee.CurrentContext = Depends(OR_context)):
+def save_record_after_upload(projectId: int, data: schemas_ee.AssistRecordSavePayloadSchema = Body(...),
+                             context: schemas_ee.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
     return {"data": {"URL": assist_records.save_record(project_id=projectId, data=data, context=context)}}
 
 
 @app.post('/{projectId}/assist/records', tags=["assist"])
-async def search_records(projectId: int, data: schemas_ee.AssistRecordSearchPayloadSchema = Body(...),
-                         context: schemas_ee.CurrentContext = Depends(OR_context)):
+def search_records(projectId: int, data: schemas_ee.AssistRecordSearchPayloadSchema = Body(...),
+                   context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.search_records(project_id=projectId, data=data, context=context)}
 
 
 @app.get('/{projectId}/assist/records/{recordId}', tags=["assist"])
-async def get_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+def get_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.get_record(project_id=projectId, record_id=recordId, context=context)}
 
 
 @app.post('/{projectId}/assist/records/{recordId}', tags=["assist"])
-async def update_record(projectId: int, recordId: int, data: schemas_ee.AssistRecordUpdatePayloadSchema = Body(...),
-                        context: schemas_ee.CurrentContext = Depends(OR_context)):
+def update_record(projectId: int, recordId: int, data: schemas_ee.AssistRecordUpdatePayloadSchema = Body(...),
+                  context: schemas_ee.CurrentContext = Depends(OR_context)):
     result = assist_records.update_record(project_id=projectId, record_id=recordId, data=data, context=context)
     if "errors" in result:
         return result
@@ -112,8 +112,8 @@ async def update_record(projectId: int, recordId: int, data: schemas_ee.AssistRe
 
 
 @app.delete('/{projectId}/assist/records/{recordId}', tags=["assist"])
-async def delete_record(projectId: int, recordId: int, _=Body(None),
-                        context: schemas_ee.CurrentContext = Depends(OR_context)):
+def delete_record(projectId: int, recordId: int, _=Body(None),
+                  context: schemas_ee.CurrentContext = Depends(OR_context)):
     result = assist_records.delete_record(project_id=projectId, record_id=recordId, context=context)
     if "errors" in result:
         return result
@@ -121,8 +121,8 @@ async def delete_record(projectId: int, recordId: int, _=Body(None),
 
 
 @app.post('/{projectId}/signals', tags=['signals'])
-async def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...),
-                            context: schemas_ee.CurrentContext = Depends(OR_context)):
+def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...),
+                      context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
 
     if "errors" in data:
@@ -132,6 +132,6 @@ async def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Bod
 
 @app.post('/{projectId}/dashboard/insights', tags=["insights"])
 @app.post('/{projectId}/dashboard/insights', tags=["insights"])
-async def sessions_search(projectId: int, data: schemas_ee.GetInsightsSchema = Body(...),
-                          context: schemas_ee.CurrentContext = Depends(OR_context)):
+def sessions_search(projectId: int, data: schemas_ee.GetInsightsSchema = Body(...),
+                    context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId)}
