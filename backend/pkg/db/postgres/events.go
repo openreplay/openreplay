@@ -3,13 +3,14 @@ package postgres
 import (
 	"fmt"
 	"log"
+	"strings"
+
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
-	"strings"
 )
 
 func getAutocompleteType(baseType string, platform string) string {

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"strings"
 	"time"
 
@@ -77,7 +78,7 @@ func NewBatchesTask(size int) *batchesTask {
 }
 
 type BatchSet struct {
-	c               Pool
+	c               pool.Pool
 	batches         map[uint64]*SessionBatch
 	batchQueueLimit int
 	batchSizeLimit  int
@@ -87,7 +88,7 @@ type BatchSet struct {
 	finished        chan struct{}
 }
 
-func NewBatchSet(c Pool, queueLimit, sizeLimit int) *BatchSet {
+func NewBatchSet(c pool.Pool, queueLimit, sizeLimit int) *BatchSet {
 	bs := &BatchSet{
 		c:               c,
 		batches:         make(map[uint64]*SessionBatch),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/sessions"
 )
 
@@ -13,7 +14,7 @@ type CH interface {
 
 // Conn contains batches, bulks and cache for all sessions
 type Conn struct {
-	Pool    Pool
+	Pool    pool.Pool
 	batches *BatchSet
 	bulks   *BulkSet
 	chConn  CH // hack for autocomplete inserts, TODO: rewrite
@@ -29,7 +30,7 @@ func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 		log.Fatalf("pgxpool.Connect err: %s", err)
 	}
 	conn := &Conn{}
-	conn.Pool, err = NewPool(c)
+	conn.Pool, err = pool.NewPool(c)
 	if err != nil {
 		log.Fatalf("can't create new pool wrapper: %s", err)
 	}

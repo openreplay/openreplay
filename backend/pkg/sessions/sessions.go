@@ -2,10 +2,10 @@ package sessions
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"time"
 
 	"openreplay/backend/pkg/cache"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
 )
@@ -24,12 +24,12 @@ type Sessions interface {
 }
 
 type sessionsImpl struct {
-	db       postgres.Pool
+	db       pool.Pool
 	projects projects.Projects
 	cache    cache.Cache
 }
 
-func New(db postgres.Pool, proj projects.Projects) Sessions {
+func New(db pool.Pool, proj projects.Projects) Sessions {
 	sessions := &sessionsImpl{
 		db:       db,
 		projects: proj,

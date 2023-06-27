@@ -2,7 +2,7 @@ package projects
 
 import (
 	"openreplay/backend/pkg/cache"
-	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"time"
 )
 
@@ -12,12 +12,12 @@ type Projects interface {
 }
 
 type projectsImpl struct {
-	db             postgres.Pool
+	db             pool.Pool
 	projectsByID   cache.Cache
 	projectsByKeys cache.Cache
 }
 
-func New(db postgres.Pool) Projects {
+func New(db pool.Pool) Projects {
 	return &projectsImpl{
 		db:           db,
 		projectsByID: cache.New(time.Minute*5, time.Minute*10),

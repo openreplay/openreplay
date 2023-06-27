@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"time"
+
+	"openreplay/backend/pkg/metrics/database"
 )
 
 const (
@@ -21,7 +23,7 @@ type Bulk interface {
 }
 
 type bulkImpl struct {
-	conn      Pool
+	conn      pool.Pool
 	table     string
 	columns   string
 	template  string
@@ -78,7 +80,7 @@ func (b *bulkImpl) send() error {
 	return nil
 }
 
-func NewBulk(conn Pool, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
+func NewBulk(conn pool.Pool, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("db conn is empty")

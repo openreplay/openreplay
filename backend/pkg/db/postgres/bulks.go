@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 )
 
 type bulksTask struct {
@@ -13,7 +14,7 @@ func NewBulksTask() *bulksTask {
 }
 
 type BulkSet struct {
-	c                 Pool
+	c                 pool.Pool
 	autocompletes     Bulk
 	requests          Bulk
 	customEvents      Bulk
@@ -34,7 +35,7 @@ type BulkSet struct {
 	finished          chan struct{}
 }
 
-func NewBulkSet(c Pool) *BulkSet {
+func NewBulkSet(c pool.Pool) *BulkSet {
 	bs := &BulkSet{
 		c:          c,
 		workerTask: make(chan *bulksTask, 1),
