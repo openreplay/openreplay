@@ -35,7 +35,7 @@ func main() {
 	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0)
 	defer pg.Close()
 
-	sessionsModule := sessions2.New(pg, projects.New(pg))
+	sessionsModule := sessions2.New(pg.Pool, projects.New(pg.Pool))
 	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)

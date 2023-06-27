@@ -12,12 +12,12 @@ type Projects interface {
 }
 
 type projectsImpl struct {
-	db             *postgres.Conn
+	db             postgres.Pool
 	projectsByID   cache.Cache
 	projectsByKeys cache.Cache
 }
 
-func New(db *postgres.Conn) Projects {
+func New(db postgres.Pool) Projects {
 	return &projectsImpl{
 		db:           db,
 		projectsByID: cache.New(time.Minute*5, time.Minute*10),

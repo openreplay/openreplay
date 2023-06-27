@@ -7,7 +7,7 @@ import (
 )
 
 func (s *sessionsImpl) addSession(sess *Session) error {
-	return s.db.Pool.Exec(`
+	return s.db.Exec(`
 		INSERT INTO sessions (
 			session_id, project_id, start_ts,
 			user_uuid, user_device, user_device_type, user_country,
@@ -38,11 +38,40 @@ func (s *sessionsImpl) addSession(sess *Session) error {
 	)
 }
 
+func (s *sessionsImpl) addUnStarted(sess *UnStartedSession) error {
+	return s.db.Exec(`
+		INSERT INTO unstarted_sessions (
+			project_id, 
+			tracker_version, do_not_track, 
+			platform, user_agent, 
+			user_os, user_os_version, 
+			user_browser, user_browser_version,
+			user_device, user_device_type, 
+			user_country, user_state, user_city
+		) VALUES (
+			(SELECT project_id FROM projects WHERE project_key = $1), 
+			$2, $3,
+			$4, $5, 
+			$6, $7, 
+			$8, $9,
+			$10, $11,
+			$12, NULLIF($13, ''), NULLIF($14, '')
+		)`,
+		sess.ProjectKey,
+		sess.TrackerVersion, sess.DoNotTrack,
+		sess.Platform, sess.UserAgent,
+		sess.UserOS, sess.UserOSVersion,
+		sess.UserBrowser, sess.UserBrowserVersion,
+		sess.UserDevice, sess.UserDeviceType,
+		sess.UserCountry, sess.UserState, sess.UserCity,
+	)
+}
+
 func (s *sessionsImpl) getSession(sessionID uint64) (*Session, error) {
 	sess := &Session{SessionID: sessionID}
 	var revID, userOSVersion, userBrowserVersion, userState, userCity *string
 	var issueTypes pgtype.EnumArray
-	if err := s.db.Pool.QueryRow(`
+	if err := s.db.QueryRow(`
 		SELECT platform,
 			duration, project_id, start_ts,
 			user_uuid, user_os, user_os_version, 
@@ -90,82 +119,9 @@ func (s *sessionsImpl) getSession(sessionID uint64) (*Session, error) {
 	return sess, nil
 }
 
-func (s *sessionsImpl) addUnStarted(sess *UnStartedSession) error {
-	return s.db.Pool.Exec(`
-		INSERT INTO unstarted_sessions (
-			project_id, 
-			tracker_version, do_not_track, 
-			platform, user_agent, 
-			user_os, user_os_version, 
-			user_browser, user_browser_version,
-			user_device, user_device_type, 
-			user_country, user_state, user_city
-		) VALUES (
-			(SELECT project_id FROM projects WHERE project_key = $1), 
-			$2, $3,
-			$4, $5, 
-			$6, $7, 
-			$8, $9,
-			$10, $11,
-			$12, NULLIF($13, ''), NULLIF($14, '')
-		)`,
-		sess.ProjectKey,
-		sess.TrackerVersion, sess.DoNotTrack,
-		sess.Platform, sess.UserAgent,
-		sess.UserOS, sess.UserOSVersion,
-		sess.UserBrowser, sess.UserBrowserVersion,
-		sess.UserDevice, sess.UserDeviceType,
-		sess.UserCountry, sess.UserState, sess.UserCity,
-	)
-}
-
-func (s *sessionsImpl) insertReferrer(sessionID uint64, referrer, baseReferrer string) error {
-	sqlRequest := `
-		UPDATE sessions SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
-		WHERE session_id = $3 AND referrer IS NULL`
-	s.db.BatchQueue(sessionID, sqlRequest, referrer, baseReferrer, sessionID)
-
-	// Record approximate message size
-	s.db.UpdateBatchSize(sessionID, len(sqlRequest)+len(referrer)+len(baseReferrer)+8)
-	return nil
-}
-
-func (s *sessionsImpl) insertMetadata(sessionID uint64, keyNo uint, value string) error {
-	sqlRequest := `
-		UPDATE sessions SET  metadata_%v = LEFT($1, 8000)
-		WHERE session_id = $2`
-	return s.db.Pool.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
-}
-
-func (s *sessionsImpl) insertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
-	sqlRequest := `
-		UPDATE sessions SET  user_anonymous_id = $1
-		WHERE session_id = $2`
-	s.db.BatchQueue(sessionID, sqlRequest, userAnonymousID, sessionID)
-
-	// Record approximate message size
-	s.db.UpdateBatchSize(sessionID, len(sqlRequest)+len(userAnonymousID)+8)
-	return nil
-}
-
-func (s *sessionsImpl) insertUserID(sessionID uint64, userID string) error {
-	sqlRequest := `
-		UPDATE sessions SET  user_id = LEFT($1, 8000)
-		WHERE session_id = $2`
-	s.db.BatchQueue(sessionID, sqlRequest, userID, sessionID)
-
-	// Record approximate message size
-	s.db.UpdateBatchSize(sessionID, len(sqlRequest)+len(userID)+8)
-	return nil
-}
-
-func (s *sessionsImpl) insertSessionEncryptionKey(sessionID uint64, key []byte) error {
-	return s.db.Pool.Exec(`UPDATE sessions SET file_key = $2 WHERE session_id = $1`, sessionID, string(key))
-}
-
 func (s *sessionsImpl) getSessionDuration(sessionID uint64) (uint64, error) {
 	var dur uint64
-	if err := s.db.Pool.QueryRow("SELECT COALESCE( duration, 0 ) FROM sessions WHERE session_id=$1", sessionID).Scan(&dur); err != nil {
+	if err := s.db.QueryRow("SELECT COALESCE( duration, 0 ) FROM sessions WHERE session_id=$1", sessionID).Scan(&dur); err != nil {
 		return 0, err
 	}
 	return dur, nil
@@ -173,7 +129,7 @@ func (s *sessionsImpl) getSessionDuration(sessionID uint64) (uint64, error) {
 
 func (s *sessionsImpl) insertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
 	var dur uint64
-	if err := s.db.Pool.QueryRow(`
+	if err := s.db.QueryRow(`
 		UPDATE sessions SET duration=$2 - start_ts
 		WHERE session_id=$1
 		RETURNING duration
@@ -183,4 +139,44 @@ func (s *sessionsImpl) insertSessionEnd(sessionID uint64, timestamp uint64) (uin
 		return 0, err
 	}
 	return dur, nil
+}
+
+func (s *sessionsImpl) insertSessionEncryptionKey(sessionID uint64, key []byte) error {
+	sqlRequest := `
+		UPDATE sessions 
+		SET file_key = $2 
+		WHERE session_id = $1`
+	return s.db.Exec(sqlRequest, sessionID, string(key))
+}
+
+func (s *sessionsImpl) insertUserID(sessionID uint64, userID string) error {
+	sqlRequest := `
+		UPDATE sessions 
+		SET user_id = LEFT($1, 8000) 
+		WHERE session_id = $2`
+	return s.db.Exec(sqlRequest, userID, sessionID)
+}
+
+func (s *sessionsImpl) insertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
+	sqlRequest := `
+		UPDATE sessions 
+		SET user_anonymous_id = LEFT($1, 8000) 
+		WHERE session_id = $2`
+	return s.db.Exec(sqlRequest, userAnonymousID, sessionID)
+}
+
+func (s *sessionsImpl) insertReferrer(sessionID uint64, referrer, baseReferrer string) error {
+	sqlRequest := `
+		UPDATE sessions 
+		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000) 
+		WHERE session_id = $3 AND referrer IS NULL`
+	return s.db.Exec(sqlRequest, referrer, baseReferrer, sessionID)
+}
+
+func (s *sessionsImpl) insertMetadata(sessionID uint64, keyNo uint, value string) error {
+	sqlRequest := `
+		UPDATE sessions 
+		SET metadata_%v = LEFT($1, 8000) 
+		WHERE session_id = $2`
+	return s.db.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 }

@@ -1,50 +1,47 @@
 package sessions
 
 type Session struct {
-	SessionID      uint64
-	Timestamp      uint64
-	ProjectID      uint32
-	TrackerVersion string
-	RevID          string
-	UserUUID       string
-	UserOS         string
-	UserOSVersion  string
-	UserDevice     string
-	UserCountry    string
-	UserState      string
-	UserCity       string
-	Referrer       *string
-
-	Duration    *uint64
-	PagesCount  int
-	EventsCount int
-	ErrorsCount int
-	IssueTypes  []string
-	IssueScore  int
-
-	UserID          *string
-	UserAnonymousID *string
-	Metadata1       *string
-	Metadata2       *string
-	Metadata3       *string
-	Metadata4       *string
-	Metadata5       *string
-	Metadata6       *string
-	Metadata7       *string
-	Metadata8       *string
-	Metadata9       *string
-	Metadata10      *string
-
-	Platform string
-	// Only-web properties
+	SessionID            uint64
+	Timestamp            uint64
+	ProjectID            uint32
+	TrackerVersion       string
+	RevID                string
+	UserUUID             string
+	UserOS               string
+	UserOSVersion        string
+	UserDevice           string
+	UserCountry          string
+	UserState            string
+	UserCity             string
+	Referrer             *string
+	ReferrerBase         *string
+	Duration             *uint64
+	PagesCount           int
+	EventsCount          int
+	ErrorsCount          int
+	IssueTypes           []string
+	IssueScore           int
+	UserID               *string
+	UserAnonymousID      *string
+	Metadata1            *string
+	Metadata2            *string
+	Metadata3            *string
+	Metadata4            *string
+	Metadata5            *string
+	Metadata6            *string
+	Metadata7            *string
+	Metadata8            *string
+	Metadata9            *string
+	Metadata10           *string
+	Platform             string
 	UserAgent            string
 	UserBrowser          string
 	UserBrowserVersion   string
 	UserDeviceType       string
 	UserDeviceMemorySize uint64
 	UserDeviceHeapSize   uint64
-	//
-	SaveRequestPayload bool
+	SaveRequestPayload   bool
+	EncryptionKey        string
 }
 
 func (s *Session) SetMetadata(keyNo uint, value string) {

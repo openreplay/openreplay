@@ -2,12 +2,12 @@ package sessions
 
 import (
 	"log"
+	"time"
+
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
-	"time"
 )
 
 type Sessions interface {
@@ -20,16 +20,16 @@ type Sessions interface {
 	UpdateUserID(sessionID uint64, userID string) error
 	UpdateAnonymousID(sessionID uint64, userAnonymousID string) error
 	UpdateReferrer(sessionID uint64, referrer string) error
-	UpdateMetadata(metadata *messages.Metadata) error
+	UpdateMetadata(sessionID uint64, key, value string) error
 }
 
 type sessionsImpl struct {
-	db       *postgres.Conn
+	db       postgres.Pool
 	projects projects.Projects
 	cache    cache.Cache
 }
 
-func New(db *postgres.Conn, proj projects.Projects) Sessions {
+func New(db postgres.Pool, proj projects.Projects) Sessions {
 	sessions := &sessionsImpl{
 		db:       db,
 		projects: proj,
@@ -38,7 +38,11 @@ func New(db *postgres.Conn, proj projects.Projects) Sessions {
 	return sessions
 }
 
+// Add usage: /start endpoint in http service
 func (s *sessionsImpl) Add(session *Session) error {
+	if cachedSession, ok := s.cache.GetAndRefresh(session.SessionID); ok {
+		log.Printf("[!] Session %d already exists in cache, new: %+v, cached: %+v", session.SessionID, session, cachedSession)
+	}
 	err := s.addSession(session)
 	if err != nil {
 		return err
@@ -52,14 +56,12 @@ func (s *sessionsImpl) Add(session *Session) error {
 	return nil
 }
 
+// AddUnStarted usage: /not-started endpoint in http service
 func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
 	return s.addUnStarted(sess)
 }
 
-func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
-	if sess, ok := s.cache.GetAndRefresh(sessionID); ok {
-		return sess.(*Session), nil
-	}
+func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	session, err := s.getSession(sessionID)
 	if err != nil {
 		log.Printf("Failed to get session from postgres: %v", err)
@@ -70,40 +72,147 @@ func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
 		return nil, err
 	}
 	session.SaveRequestPayload = proj.SaveRequestPayloads
+	return session, nil
+}
+
+// Get usage: db message processor + connectors in feature
+func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
+	if sess, ok := s.cache.GetAndRefresh(sessionID); ok {
+		return sess.(*Session), nil
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		return nil, err
+	}
 	s.cache.Set(session.SessionID, session)
 	return session, nil
 }
 
+// GetDuration usage: in ender to check current and new duration to avoid duplicates
 func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
-	return s.getSessionDuration(sessionID)
+	sess, ok := s.cache.GetAndRefresh(sessionID)
+	if ok {
+		session := sess.(*Session)
+		if session.Duration != nil {
+			return *session.Duration, nil
+		} else {
+			return 0, nil
+		}
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		return 0, err
+	}
+	s.cache.Set(session.SessionID, session)
+	return *session.Duration, nil
 }
 
+// UpdateDuration usage: in ender to update session duration
 func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
-	return s.insertSessionEnd(sessionID, timestamp)
+	newDuration, err := s.insertSessionEnd(sessionID, timestamp)
+	if err != nil {
+		return 0, err
+	}
+	rawSession, ok := s.cache.GetAndRefresh(sessionID)
+	if !ok {
+		rawSession, err = s.getFromDB(sessionID)
+		if err != nil {
+			return 0, err
+		}
+	}
+	session := rawSession.(*Session)
+	session.Duration = &newDuration
+	s.cache.Set(session.SessionID, session)
+	return newDuration, nil
 }
 
+// UpdateEncryptionKey usage: in ender to update session encryption key if encryption is enabled
 func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
-	return s.insertSessionEncryptionKey(sessionID, key)
+	if err := s.insertSessionEncryptionKey(sessionID, key); err != nil {
+		return err
+	}
+	if sess, ok := s.cache.Get(sessionID); ok {
+		session := sess.(*Session)
+		session.EncryptionKey = string(key)
+		s.cache.Set(sessionID, session)
+		return nil
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		log.Printf("Failed to get session from postgres: %v", err)
+		return nil
+	}
+	s.cache.Set(session.SessionID, session)
+	return nil
 }
 
+// UpdateUserID usage: in db handler
 func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
-	return s.insertUserID(sessionID, userID)
+	if err := s.insertUserID(sessionID, userID); err != nil {
+		return err
+	}
+	if sess, ok := s.cache.Get(sessionID); ok {
+		session := sess.(*Session)
+		session.UserID = &userID
+		s.cache.Set(sessionID, session)
+		return nil
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		log.Printf("Failed to get session from postgres: %v", err)
+		return nil
+	}
+	s.cache.Set(session.SessionID, session)
+	return nil
 }
 
+// UpdateAnonymousID usage: in db handler
 func (s *sessionsImpl) UpdateAnonymousID(sessionID uint64, userAnonymousID string) error {
-	return s.insertMetadata(sessionID, 1, userAnonymousID)
+	if err := s.insertUserAnonymousID(sessionID, userAnonymousID); err != nil {
+		return err
+	}
+	if sess, ok := s.cache.Get(sessionID); ok {
+		session := sess.(*Session)
+		session.UserAnonymousID = &userAnonymousID
+		s.cache.Set(sessionID, session)
+		return nil
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		log.Printf("Failed to get session from postgres: %v", err)
+		return nil
+	}
+	s.cache.Set(session.SessionID, session)
+	return nil
 }
 
+// UpdateReferrer usage: in db handler on each page event
 func (s *sessionsImpl) UpdateReferrer(sessionID uint64, referrer string) error {
 	if referrer == "" {
 		return nil
 	}
 	baseReferrer := url.DiscardURLQuery(referrer)
-	return s.insertReferrer(sessionID, referrer, baseReferrer)
+	if err := s.insertReferrer(sessionID, referrer, baseReferrer); err != nil {
+		return err
+	}
+	if sess, ok := s.cache.Get(sessionID); ok {
+		session := sess.(*Session)
+		session.Referrer = &referrer
+		session.ReferrerBase = &baseReferrer
+		s.cache.Set(sessionID, session)
+		return nil
+	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		log.Printf("Failed to get session from postgres: %v", err)
+		return nil
+	}
+	s.cache.Set(session.SessionID, session)
+	return nil
 }
 
-func (s *sessionsImpl) UpdateMetadata(metadata *messages.Metadata) error {
-	sessionID := metadata.SessionID()
+// UpdateMetadata usage: in db handler on each metadata event
+func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error {
 	session, err := s.Get(sessionID)
 	if err != nil {
 		return err
@@ -113,21 +222,14 @@ func (s *sessionsImpl) UpdateMetadata(metadata *messages.Metadata) error {
 		return err
 	}
 
-	keyNo := project.GetMetadataNo(metadata.Key)
-
+	keyNo := project.GetMetadataNo(key)
 	if keyNo == 0 {
-		// TODO: insert project metadata
 		return nil
 	}
-	if err := s.insertMetadata(sessionID, keyNo, metadata.Value); err != nil {
-		// Try to insert metadata after one minute
-		time.AfterFunc(time.Minute, func() {
-			if err := s.insertMetadata(sessionID, keyNo, metadata.Value); err != nil {
-				log.Printf("metadata retry err: %s", err)
-			}
-		})
+	if err := s.insertMetadata(sessionID, keyNo, value); err != nil {
 		return err
 	}
-	session.SetMetadata(keyNo, metadata.Value)
+	session.SetMetadata(keyNo, value)
+	s.cache.Set(sessionID, session)
 	return nil
 }

@@ -60,7 +60,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *SessionEnd:
 		return s.pg.HandleEndEvent(m.SessionID())
 	case *Metadata:
-		return s.sessions.InsertMetadata(m)
+		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
 		return s.pg.Conn.InsertIssueEvent(session, m)
 	case *CustomIssue:
