@@ -4,7 +4,7 @@ import (
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
-	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/projects"
@@ -24,11 +24,11 @@ type ServicesBuilder struct {
 	Tokenizer    *token.Tokenizer
 }
 
-func New(cfg *http.Config, producer types.Producer, pgconn *postgres.Conn) (*ServicesBuilder, error) {
-	projs := projects.New(pgconn.Pool)
+func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool) (*ServicesBuilder, error) {
+	projs := projects.New(pgconn)
 	return &ServicesBuilder{
 		Projects:     projs,
-		Sessions:     sessions.New(pgconn.Pool, projs),
+		Sessions:     sessions.New(pgconn, projs),
 		FeatureFlags: featureflags.New(pgconn),
 		Producer:     producer,
 		Tokenizer:    token.NewTokenizer(cfg.TokenSecret),

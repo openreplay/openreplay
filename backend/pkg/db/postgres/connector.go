@@ -1,8 +1,6 @@
 package postgres
 
 import (
-	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/sessions"
@@ -24,19 +22,15 @@ func (conn *Conn) SetClickHouse(ch CH) {
 	conn.chConn = ch
 }
 
-func NewConn(url string, queueLimit, sizeLimit int) *Conn {
-	c, err := pgxpool.Connect(context.Background(), url)
-	if err != nil {
-		log.Fatalf("pgxpool.Connect err: %s", err)
+func NewConn(pool pool.Pool, queueLimit, sizeLimit int) *Conn {
+	if pool == nil {
+		log.Fatalf("pool is nil")
 	}
-	conn := &Conn{}
-	conn.Pool, err = pool.NewPool(c)
-	if err != nil {
-		log.Fatalf("can't create new pool wrapper: %s", err)
+	return &Conn{
+		Pool:    pool,
+		bulks:   NewBulkSet(pool),
+		batches: NewBatchSet(pool, queueLimit, sizeLimit),
 	}
-	conn.bulks = NewBulkSet(conn.Pool)
-	conn.batches = NewBatchSet(conn.Pool, queueLimit, sizeLimit)
-	return conn
 }
 
 func (conn *Conn) Close() error {

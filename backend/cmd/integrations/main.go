@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/integrations"
 	"os"
 	"os/signal"
@@ -10,7 +11,6 @@ import (
 
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/internal/integrations/clientManager"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
@@ -26,8 +26,13 @@ func main() {
 
 	cfg := config.New()
 
-	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0)
-	defer pg.Close()
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 
@@ -37,7 +42,7 @@ func main() {
 	defer producer.Close(15000)
 
 	// TODO: rework with integration manager
-	listener, err := integrations.New(pg, cfg.Postgres.String())
+	listener, err := integrations.New(pgConn, cfg.Postgres.String())
 	if err != nil {
 		log.Printf("Postgres listener error: %v\n", err)
 		log.Fatalf("Postgres listener error")
@@ -69,7 +74,7 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			listener.Close()
-			pg.Close()
+			pgConn.Close()
 			os.Exit(0)
 		case <-tick:
 			log.Printf("Requesting all...\n")
@@ -96,7 +101,7 @@ func main() {
 		case err := <-listener.Errors:
 			log.Printf("Postgres listen error: %v\n", err)
 			listener.Close()
-			pg.Close()
+			pgConn.Close()
 			os.Exit(0)
 		case iPointer := <-listener.Integrations:
 			log.Printf("Integration update: %v\n", *iPointer)

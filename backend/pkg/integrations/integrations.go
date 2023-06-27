@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
 
 	"github.com/jackc/pgx/v4"
 )
 
 type Listener struct {
 	conn         *pgx.Conn
-	db           *postgres.Conn
+	db           pool.Pool
 	Integrations chan *Integration
 	Errors       chan error
 }
@@ -23,7 +23,7 @@ type Integration struct {
 	Options     json.RawMessage `json:"options"`
 }
 
-func New(db *postgres.Conn, url string) (*Listener, error) {
+func New(db pool.Pool, url string) (*Listener, error) {
 	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (listener *Listener) Close() error {
 }
 
 func (listener *Listener) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
-	rows, err := listener.db.Pool.Query(`
+	rows, err := listener.db.Query(`
 		SELECT project_id, provider, options, request_data
 		FROM integrations
 	`)
@@ -90,7 +90,7 @@ func (listener *Listener) IterateIntegrationsOrdered(iter func(integration *Inte
 }
 
 func (listener *Listener) UpdateIntegrationRequestData(i *Integration) error {
-	return listener.db.Pool.Exec(`
+	return listener.db.Exec(`
 		UPDATE integrations 
 		SET request_data = $1 
 		WHERE project_id=$2 AND provider=$3`,

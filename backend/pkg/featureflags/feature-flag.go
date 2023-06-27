@@ -3,13 +3,15 @@ package featureflags
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgtype"
 	"log"
 	"math/rand"
-	"openreplay/backend/pkg/db/postgres"
 	"strconv"
 	"strings"
 	"time"
+
+	"openreplay/backend/pkg/db/postgres/pool"
+
+	"github.com/jackc/pgtype"
 )
 
 type FeatureFlagsRequest struct {
@@ -360,7 +362,7 @@ func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([
 //---------------------------------//
 
 func (f *featureFlagsImpl) GetFeatureFlags(projectID uint32) ([]*FeatureFlag, error) {
-	rows, err := f.db.Pool.Query(`
+	rows, err := f.db.Query(`
 		SELECT ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.rollout_percentages, ff.filters,
        		ARRAY_AGG(fv.value) as values,
        		ARRAY_AGG(fv.payload) as payloads,
@@ -406,10 +408,10 @@ type FeatureFlags interface {
 }
 
 type featureFlagsImpl struct {
-	db *postgres.Conn
+	db pool.Pool
 }
 
-func New(db *postgres.Conn) FeatureFlags {
+func New(db pool.Pool) FeatureFlags {
 	return &featureFlagsImpl{
 		db: db,
 	}

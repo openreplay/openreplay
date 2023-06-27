@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/sessions"
@@ -9,7 +11,6 @@ import (
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
@@ -25,12 +26,20 @@ func main() {
 
 	cfg := config.New()
 
-	// Init database
-	pg := postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit)
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
+
+	// Init events module
+	pg := postgres.NewConn(pgConn, cfg.BatchQueueLimit, cfg.BatchSizeLimit)
 	defer pg.Close()
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessions.New(pg.Pool, projects.New(pg.Pool)))
+	saver := datasaver.New(cfg, pg, sessions.New(pgConn, projects.New(pgConn)))
 
 	// Message filter
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
