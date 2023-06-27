@@ -1,45 +1,48 @@
 import React from 'react';
-import { Icon, PageTitle, Button, Link, Toggler } from 'UI';
+import { PageTitle, Button, Link, Toggler } from 'UI';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
+import AddCardModal from 'Components/Dashboard/components/AddCardModal';
+import { useModal } from 'Components/Modal';
 
-function MetricViewHeader() {
+function MetricViewHeader({ siteId }: { siteId: string }) {
   const { metricStore } = useStore();
   const filter = metricStore.filter;
+  const { showModal } = useModal();
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6">
-        <div className="flex items-baseline mr-3">
-          <PageTitle title="Cards" className="" />
+      <div className='flex items-center justify-between px-6'>
+        <div className='flex items-baseline mr-3'>
+          <PageTitle title='Cards' className='' />
         </div>
-        <div className="ml-auto flex items-center">
-          <Link to={'/metrics/create'}>
-            <Button variant="primary">New Card</Button>
-          </Link>
-          <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
+        <div className='ml-auto flex items-center'>
+          <Button variant='primary'
+                  onClick={() => showModal(<AddCardModal siteId={siteId} />, { right: true })}
+          >New Card</Button>
+          <div className='ml-4 w-1/4' style={{ minWidth: 300 }}>
             <MetricsSearch />
           </div>
         </div>
       </div>
-      
-      <div className="border-y px-6 py-1 mt-2 flex items-center w-full justify-between">
-        <div className="items-center flex gap-4">
+
+      <div className='border-y px-6 py-1 mt-2 flex items-center w-full justify-between'>
+        <div className='items-center flex gap-4'>
           <Toggler
-            label="My Cards"
+            label='My Cards'
             checked={filter.showMine}
-            name="test"
-            className="font-medium mr-2"
+            name='test'
+            className='font-medium mr-2'
             onChange={() =>
               metricStore.updateKey('filter', { ...filter, showMine: !filter.showMine })
             }
           />
           <Select
             options={[{ label: 'All Types', value: 'all' }, ...DROPDOWN_OPTIONS]}
-            name="type"
+            name='type'
             defaultValue={filter.type}
             onChange={({ value }) =>
               metricStore.updateKey('filter', { ...filter, type: value.value })
@@ -56,19 +59,19 @@ function MetricViewHeader() {
           />
         </div>
 
-        <div className="flex items-center">
+        <div className='flex items-center'>
           <ListViewToggler />
 
           <Select
             options={[
               { label: 'Newest', value: 'desc' },
-              { label: 'Oldest', value: 'asc' },
+              { label: 'Oldest', value: 'asc' }
             ]}
-            name="sort"
+            name='sort'
             defaultValue={metricStore.sort.by}
             onChange={({ value }) => metricStore.updateKey('sort', { by: value.value })}
             plain={true}
-            className="ml-4"
+            className='ml-4'
           />
         </div>
       </div>
@@ -83,13 +86,13 @@ function DashboardDropdown({ onChange, plain = false }: { plain?: boolean; onCha
   const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
     key: i.id,
     label: i.name,
-    value: i.dashboardId,
+    value: i.dashboardId
   }));
 
   return (
     <Select
       isSearchable={true}
-      placeholder="Filter by Dashboard"
+      placeholder='Filter by Dashboard'
       plain={plain}
       options={dashboardOptions}
       value={metricStore.filter.dashboard}
@@ -103,16 +106,16 @@ function ListViewToggler({}) {
   const { metricStore } = useStore();
   const listView = useObserver(() => metricStore.listView);
   return (
-    <div className="flex items-center">
+    <div className='flex items-center'>
       <Button
-        icon="list-alt"
+        icon='list-alt'
         variant={listView ? 'text-primary' : 'text'}
         onClick={() => metricStore.updateKey('listView', true)}
       >
         List
       </Button>
       <Button
-        icon="grid"
+        icon='grid'
         variant={!listView ? 'text-primary' : 'text'}
         onClick={() => metricStore.updateKey('listView', false)}
       >

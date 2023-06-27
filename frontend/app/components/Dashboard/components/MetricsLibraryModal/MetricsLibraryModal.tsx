@@ -7,7 +7,7 @@ import { observer } from 'mobx-react-lite';
 import FooterContent from './FooterContent';
 
 interface Props {
-  dashboardId: number;
+  dashboardId?: number;
   siteId: string;
 }
 function MetricsLibraryModal(props: Props) {
