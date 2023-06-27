@@ -1,5 +1,4 @@
 import type App from '../app/index.js'
-import { hasTag } from '../app/guards.js'
 import { IN_BROWSER } from '../utils.js'
 import { ConsoleLog } from '../app/messages.gen.js'
 
@@ -104,6 +103,7 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   )
+
   if (!Array.isArray(options.consoleMethods) || options.consoleMethods.length === 0) {
     return
   }
@@ -119,21 +119,27 @@ export default function (app: App, opts: Partial<Options>): void {
   app.attachStartCallback(reset)
   app.ticker.attach(reset, 33, false)
 
-  const patchConsole = (console: Console) =>
+  const patchConsole = (console: Console) => {
+    const handler = {
+      apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
+        target.apply(console, argumentsList)
+        if (n++ > options.consoleThrottling) {
+          return
+        }
+        sendConsoleLog(target.name, argumentsList)
+      },
+    }
+
     options.consoleMethods!.forEach((method) => {
       if (consoleMethods.indexOf(method) === -1) {
         app.debug.error(`OpenReplay: unsupported console method "${method}"`)
         return
       }
       const fn = (console as any)[method]
-      ;(console as any)[method] = function (...args: unknown[]): void {
-        fn.apply(this, args)
-        if (n++ > options.consoleThrottling) {
-          return
-        }
-        sendConsoleLog(method, args)
-      }
+      ;(console as any)[method] = new Proxy(fn, handler)
     })
+  }
+
   const patchContext = app.safe((context: typeof globalThis) => patchConsole(context.console))
 
   patchContext(window)

@@ -147,7 +147,7 @@ export default class API {
 
       app.attachStartCallback(() => {
         if (options.flags?.onFlagsLoad) {
-          this.featureFlags.onFlagsLoad(options.flags.onFlagsLoad)
+          this.onFlagsLoad(options.flags.onFlagsLoad)
         }
         void this.featureFlags.reloadFlags()
       })
