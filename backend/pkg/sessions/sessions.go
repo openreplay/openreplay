@@ -96,6 +96,15 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 		if session.Duration != nil {
 			return *session.Duration, nil
 		} else {
+			dur, err := s.getSessionDuration(sessionID)
+			if err != nil {
+				return 0, err
+			}
+			if dur != 0 {
+				session.Duration = &dur
+				s.cache.Set(session.SessionID, session)
+				return dur, nil
+			}
 			return 0, nil
 		}
 	}
