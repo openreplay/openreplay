@@ -9,7 +9,7 @@ type WindowFetch = typeof window.fetch
 type XHRRequestBody = Parameters<XMLHttpRequest['send']>[0]
 
 interface RequestData {
-  body: Record<string, any> | string | null
+  body: string | null
   headers: Record<string, string>
 }
 
@@ -192,6 +192,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
               status: r.status,
               request: {
                 headers: reqHs,
+                // @ts-ignore
                 body: init.body || null,
               },
               response: {
@@ -275,6 +276,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
             status: xhr.status,
             request: {
               headers: reqHs,
+              // @ts-ignore
               body: reqBody || null,
             },
             response: {

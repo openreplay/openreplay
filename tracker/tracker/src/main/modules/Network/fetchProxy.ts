@@ -6,7 +6,7 @@
  * in not-so-hacky way
  * */
 import NetworkMessage, { RequestState } from './networkMessage.js'
-import { formatByteSize, genFormattedBody, genResponseByType, getURL } from './utils.js'
+import { formatByteSize, genStringBody, getStringResponseByType, getURL } from './utils.js'
 import { RequestResponseData } from './types.js'
 import { NetworkRequest } from '../../../common/messages.gen.js'
 
@@ -36,7 +36,7 @@ export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T>
           this.item.responseType = <any>key.toLowerCase()
           // @ts-ignore
           return value.apply(target).then((resp: any) => {
-            this.item.response = genResponseByType(this.item.responseType, resp)
+            this.item.response = getStringResponseByType(this.item.responseType, resp)
             return resp
           })
         }
@@ -93,7 +93,10 @@ export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T>
             this.item.responseSize = readerReceivedValue.length
             this.item.responseSizeText = formatByteSize(this.item.responseSize)
             if (result.done) {
-              this.item.response = genResponseByType(this.item.responseType, readerReceivedValue)
+              this.item.response = getStringResponseByType(
+                this.item.responseType,
+                readerReceivedValue,
+              )
             }
             return result
           },
@@ -105,7 +108,7 @@ export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T>
         this.item.statusText = 'Cancel'
         this.item.endTime = performance.now()
         this.item.duration = this.item.endTime - (this.item.startTime || this.item.endTime)
-        this.item.response = genResponseByType(this.item.responseType, readerReceivedValue)
+        this.item.response = getStringResponseByType(this.item.responseType, readerReceivedValue)
         return _cancel.apply(reader, args)
       }
       return reader
@@ -198,7 +201,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
 
     // save POST data
     if (init?.body) {
-      item.requestData = genFormattedBody(init.body)
+      item.requestData = genStringBody(init.body)
     }
   }
 
@@ -231,7 +234,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
             item.responseSize =
               typeof responseValue === 'string' ? responseValue.length : responseValue.byteLength
             item.responseSizeText = formatByteSize(item.responseSize)
-            item.response = genResponseByType(item.responseType, responseValue)
+            item.response = getStringResponseByType(item.responseType, responseValue)
 
             this.sendMessage(item.getMessage())
           },

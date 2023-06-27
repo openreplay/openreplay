@@ -3,11 +3,11 @@ export interface RequestResponseData {
   readonly method: string
   url: string
   request: {
-    body: Record<string, any> | string | null
+    body: string | null
     headers: Record<string, string>
   }
   response: {
-    body: Record<string, any> | string | null
+    body: string | null
     headers: Record<string, string>
   }
 }

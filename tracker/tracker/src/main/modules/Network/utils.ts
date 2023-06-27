@@ -1,21 +1,23 @@
-export const genResponseByType = (responseType: XMLHttpRequest['responseType'], response: any) => {
-  let ret = ''
+export const genResponseByType = (
+  responseType: XMLHttpRequest['responseType'],
+  response: any,
+): string | Record<string, any> => {
+  let result = ''
   switch (responseType) {
     case '':
     case 'text':
     case 'json':
-      // try to parse JSON
       if (typeof response == 'string') {
         try {
-          ret = JSON.parse(response)
+          result = JSON.parse(response)
         } catch (e) {
           // not a JSON string
-          ret = response.slice(0, 10000)
+          result = response.slice(0, 10000)
         }
       } else if (isPureObject(response) || Array.isArray(response)) {
-        ret = JSON.stringify(response)
+        result = JSON.stringify(response)
       } else if (typeof response !== 'undefined') {
-        ret = Object.prototype.toString.call(response)
+        result = Object.prototype.toString.call(response)
       }
       break
 
@@ -24,11 +26,81 @@ export const genResponseByType = (responseType: XMLHttpRequest['responseType'], 
     case 'arraybuffer':
     default:
       if (typeof response !== 'undefined') {
-        ret = Object.prototype.toString.call(response)
+        result = Object.prototype.toString.call(response)
       }
       break
   }
-  return ret
+  return result
+}
+
+export const getStringResponseByType = (
+  responseType: XMLHttpRequest['responseType'],
+  response: any,
+) => {
+  let result = ''
+  switch (responseType) {
+    case '':
+    case 'text':
+    case 'json':
+      if (typeof response == 'string') {
+        result = response
+      } else if (isPureObject(response) || Array.isArray(response)) {
+        result = JSON.stringify(response)
+      } else if (typeof response !== 'undefined') {
+        result = Object.prototype.toString.call(response)
+      }
+      break
+    case 'blob':
+    case 'document':
+    case 'arraybuffer':
+    default:
+      if (typeof response !== 'undefined') {
+        result = Object.prototype.toString.call(response)
+      }
+      break
+  }
+  return result
+}
+
+export const genStringBody = (body?: BodyInit) => {
+  if (!body) {
+    return null
+  }
+  let result: string
+
+  if (typeof body === 'string') {
+    if (body[0] === '{' || body[0] === '[') {
+      result = body
+    }
+    // 'a=1&b=2' => try to parse as query
+    const arr = body.split('&')
+    if (arr.length === 1) {
+      // not a query, parse as original string
+      result = body
+    } else {
+      // 'a=1&b=2&c' => parse as query
+      result = arr.join(',')
+    }
+  } else if (isIterable(body)) {
+    // FormData or URLSearchParams or Array
+    const arr = []
+    for (const [key, value] of <FormData | URLSearchParams>body) {
+      arr.push(`${key}=${typeof value === 'string' ? value : '[object Object]'}`)
+    }
+    result = arr.join(',')
+  } else if (
+    body instanceof Blob ||
+    body instanceof ReadableStream ||
+    body instanceof ArrayBuffer
+  ) {
+    result = 'byte data'
+  } else if (isPureObject(body)) {
+    // overriding ArrayBufferView which is not convertable to string
+    result = <any>body
+  } else {
+    result = `can't parse body ${typeof body}`
+  }
+  return result
 }
 
 export const genGetDataByUrl = (url: string, getData: Record<string, any> = {}) => {
@@ -62,7 +134,7 @@ export const genFormattedBody = (body?: BodyInit) => {
 
   if (typeof body === 'string') {
     try {
-      // '{a:1}' => try to parse as json
+      // '{a:1}' =>
       result = JSON.parse(body)
     } catch (e) {
       // 'a=1&b=2' => try to parse as query

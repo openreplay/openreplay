@@ -39,7 +39,7 @@ export default class NetworkMessage {
   endTime = 0
   duration = 0
   getData: { [key: string]: string } = {}
-  requestData: { [key: string]: string } | string | null = null
+  requestData: string | null = null
 
   constructor(
     private readonly ignoredHeaders: boolean | string[] = [],
@@ -49,7 +49,10 @@ export default class NetworkMessage {
 
   getMessage() {
     const { reqHs, resHs } = this.writeHeaders()
-    const request = { headers: reqHs, body: this.requestData }
+    const request = {
+      headers: reqHs,
+      body: this.method === 'GET' ? JSON.stringify(this.getData) : this.requestData,
+    }
     const response = { headers: resHs, body: this.response }
 
     const messageInfo = this.sanitize({

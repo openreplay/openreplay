@@ -7,7 +7,7 @@
  * */
 
 import NetworkMessage, { RequestState } from './networkMessage.js'
-import { genResponseByType, genGetDataByUrl, formatByteSize, genFormattedBody } from './utils.js'
+import { genGetDataByUrl, formatByteSize, genStringBody, getStringResponseByType } from './utils.js'
 import { RequestResponseData } from './types.js'
 import { NetworkRequest } from '../../../common/messages.gen.js'
 
@@ -77,7 +77,9 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     this.item.endTime = performance.now()
     this.item.duration = this.item.endTime - this.item.startTime
     this.updateItemByReadyState()
-    this.item.response = genResponseByType(this.item.responseType, this.item.response)
+    setTimeout(() => {
+      this.item.response = getStringResponseByType(this.item.responseType, this.item.response)
+    }, 0)
 
     if (this.XMLReq.readyState === RequestState.DONE) {
       this.sendMessage(this.item.getMessage())
@@ -115,7 +117,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     const targetFunction = Reflect.get(target, 'send')
     return (...args: any[]) => {
       const data: XMLHttpRequestBodyInit = args[0]
-      this.item.requestData = genFormattedBody(data)
+      this.item.requestData = genStringBody(data)
       return targetFunction.apply(target, args)
     }
   }
