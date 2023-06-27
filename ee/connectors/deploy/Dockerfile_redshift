@@ -19,5 +19,5 @@ COPY handler.py .
 COPY consumer_pool.py .
 COPY fill_from_db.py .
 COPY entrypoint.sh .
-
+ENV replace_interval=300
 ENTRYPOINT ./entrypoint.sh

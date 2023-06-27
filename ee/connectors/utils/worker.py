@@ -96,7 +96,7 @@ class ProjectFilter:
         self.sessions_lifespan = CachedSessions()
         self.non_valid_sessions_cache = dict()
 
-    def is_valid(self, sessionId):
+    def is_valid(self, sessionId: int):
         if len(self.project_filter) == 0:
             return True
         elif sessionId in self.sessions_lifespan.session_project.keys():
@@ -111,19 +111,21 @@ class ProjectFilter:
             else:
                 return True
 
-    def are_valid(self, sessionIds):
+    def already_checked(self, sessionId):
+        if len(self.project_filter) == 0:
+            return True, True
+        elif sessionId in self.sessions_lifespan.session_project.keys():
+            return True, True
+        elif sessionId in self.non_valid_sessions_cache.keys():
+            return True, False
+        else:
+            return False, None
+
+    def are_valid(self, sessionIds: list[int]):
+        valid_sessions = list()
         if len(self.project_filter) == 0:
             return sessionIds
-        to_validate = list()
-        valid_sessions = list()
-        for sessionId in sessionIds:
-            if sessionId in self.sessions_lifespan.session_project.keys():
-                valid_sessions.append(sessionId)
-            elif sessionId in self.non_valid_sessions_cache.keys():
-                continue
-            else:
-                to_validate.append(sessionId)
-        projects_session = project_from_sessions(list(set(to_validate)))
+        projects_session = project_from_sessions(list(set(sessionIds)))
         current_datetime = int(datetime.now().timestamp())
         for projectId, sessionId in projects_session:
             if projectId not in self.project_filter:
@@ -157,7 +159,10 @@ def read_from_kafka(pipe: Connection, params: dict):
         broken_batchs = 0
         n_messages = 0
         while datetime.now().timestamp() - start_time < UPLOAD_RATE and max_kafka_read > n_messages:
-            msg = kafka_consumer.poll(5.0)
+            try:
+                msg = kafka_consumer.poll(5.0)
+            except Exception as e:
+                print(e)
             if msg is None:
                 continue
             n_messages += 1
@@ -166,29 +171,40 @@ def read_from_kafka(pipe: Connection, params: dict):
             except Exception:
                 broken_batchs += 1
                 continue
-            # capture_sessions.append(sessionId)
-            # capture_messages.append(msg.value())
-            if project_filter.is_valid(sessionId):
+            checked, is_valid = project_filter.already_checked(sessionId)
+            if not checked:
+                capture_sessions.append(sessionId)
+                capture_messages.append(msg.value())
+            elif is_valid:
                 to_decode.append(msg.value())
                 sessionIds.append(sessionId)
-        # valid_sessions = project_filter.are_valid(list(set(capture_sessions)))
-        # for i in range(len(capture_sessions)):
-        #     if capture_sessions[i] in valid_sessions:
-        #         sessionIds.append(capture_sessions[i])
-        #         to_decode.append(capture_messages[i])
+            # if project_filter.is_valid(sessionId):
+            #     to_decode.append(msg.value())
+            #     sessionIds.append(sessionId)
+        valid_sessions = project_filter.are_valid(list(set(capture_sessions)))
+        while capture_sessions:
+            sessId = capture_sessions.pop()
+            msg = capture_messages.pop()
+            if sessId in valid_sessions:
+                sessionIds.append(sessId)
+                to_decode.append(msg)
         if n_messages != 0:
             print(
-            f'[INFO] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
+            f'[INFO-bg] Found {broken_batchs} broken batch over {n_messages} read messages ({100 * broken_batchs / n_messages:.2f}%)')
         else:
-            print('[WARN] No messages read')
+            print('[WARN-bg] No messages read')
         non_valid_updated = project_filter.non_valid_sessions_cache
         pipe.send((non_valid_updated, sessionIds, to_decode))
         continue_signal = pipe.recv()
         if continue_signal == 'CLOSE':
+            print('[SHUTDOWN-reader] Reader shutting down')
             break
         kafka_consumer.commit()
+    print('[INFO] Closing consumer')
     close_consumer(kafka_consumer)
+    print('[INFO] Closing pg connection')
     asyncio.run(pg_client.terminate())
+    print('[INFO] Successfully closed reader task')
     # except Exception as e:
     #     print('[WARN]', repr(e))
 
@@ -358,6 +374,8 @@ class WorkerPool:
         while signal_handler.KEEP_PROCESSING:
             # Setup of parameters for workers
             if not kafka_reader_process.is_alive():
+                print('[INFO] Restarting reader task')
+                del kafka_reader_process
                 kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
                 kafka_reader_process.start()
             decoding_params = [{'flag': 'decoder',
@@ -390,14 +408,15 @@ class WorkerPool:
                     raise e
             events_batch, sessions_insert_batch, sessions_update_batch, session_ids, messages = self._pool_response_handler(
                 pool_results=results)
-
             insertBatch(events_batch, sessions_insert_batch, sessions_update_batch, database_api, sessions_table_name,
                         table_name, EVENT_TYPE)
             self.save_snapshot(database_api)
             main_conn.send('CONTINUE')
+        print('[INFO] Sending close signal')
         main_conn.send('CLOSE')
         self.terminate()
         kafka_reader_process.terminate()
+        print('[SHUTDOWN] Process terminated')
 
     def load_checkpoint(self, database_api):
         file = database_api.load_binary(name='checkpoint')
@@ -406,7 +425,7 @@ class WorkerPool:
         if 'version' not in checkpoint.keys():
             sessions_cache_list = checkpoint['cache']
             reload_default_time = datetime.now().timestamp()
-            self.project_filter_class.non_valid_sessions_cache = {sessId: reload_default_time for sessId, value in
+            self.project_filter_class.non_valid_sessions_cache = {int(sessId): reload_default_time for sessId, value in
                                                                   sessions_cache_list.items() if not value[1]}
             self.project_filter_class.sessions_lifespan.session_project = checkpoint['cached_sessions']
         elif checkpoint['version'] == 'v1.0':
