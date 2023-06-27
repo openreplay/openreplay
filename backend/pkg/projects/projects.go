@@ -11,11 +11,6 @@ type Projects interface {
 	GetProjectByKey(projectKey string) (*Project, error)
 }
 
-type ProjectMeta struct {
-	*Project
-	expirationTime time.Time
-}
-
 type projectsImpl struct {
 	db             *postgres.Conn
 	projectsByID   cache.Cache

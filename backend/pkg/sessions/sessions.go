@@ -57,7 +57,7 @@ func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
 }
 
 func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
-	if sess, ok := s.cache.Get(sessionID); ok {
+	if sess, ok := s.cache.GetAndRefresh(sessionID); ok {
 		return sess.(*Session), nil
 	}
 	session, err := s.getSession(sessionID)

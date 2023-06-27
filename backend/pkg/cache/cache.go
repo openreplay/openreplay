@@ -8,6 +8,7 @@ import (
 type Cache interface {
 	Set(key, value interface{})
 	Get(key interface{}) (interface{}, bool)
+	GetAndRefresh(key interface{}) (interface{}, bool)
 }
 
 type item struct {
@@ -51,6 +52,15 @@ func (c *cacheImpl) Set(key, value interface{}) {
 }
 
 func (c *cacheImpl) Get(key interface{}) (interface{}, bool) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if v, ok := c.items[key]; ok {
+		return v.data, ok
+	}
+	return nil, false
+}
+
+func (c *cacheImpl) GetAndRefresh(key interface{}) (interface{}, bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	v, ok := c.items[key]
