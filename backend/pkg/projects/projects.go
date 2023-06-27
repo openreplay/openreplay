@@ -19,8 +19,9 @@ type projectsImpl struct {
 
 func New(db pool.Pool) Projects {
 	return &projectsImpl{
-		db:           db,
-		projectsByID: cache.New(time.Minute*5, time.Minute*10),
+		db:             db,
+		projectsByID:   cache.New(time.Minute*5, time.Minute*10),
+		projectsByKeys: cache.New(time.Minute*5, time.Minute*10),
 	}
 }
 
