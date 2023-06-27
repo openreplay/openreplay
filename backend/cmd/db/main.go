@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"openreplay/backend/pkg/memory"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessions"
 
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
@@ -28,7 +30,7 @@ func main() {
 	defer pg.Close()
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg)
+	saver := datasaver.New(cfg, pg, sessions.New(pg.Pool, projects.New(pg.Pool)))
 
 	// Message filter
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,

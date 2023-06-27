@@ -27,8 +27,12 @@ type saverImpl struct {
 	producer queue.Producer
 }
 
-func New(cfg *db.Config, pg *cache.PGCache) Saver {
-	s := &saverImpl{cfg: cfg, pg: pg}
+func New(cfg *db.Config, pg *postgres.Conn, session sessions.Sessions) Saver {
+	s := &saverImpl{
+		cfg:      cfg,
+		pg:       pg,
+		sessions: session,
+	}
 	s.init()
 	return s
 }
