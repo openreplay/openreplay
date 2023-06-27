@@ -1,5 +1,5 @@
 import { storiesOf } from '@storybook/react';
-import SideMenuitem from './SideMenuitem';
+import SideMenuItem from './SideMenuItem';
 import { Avatar, ErrorItem, ErrorFrame, ErrorDetails, TimelinePointer } from 'UI';
 import Error from 'Types/session/error';
 import ErrorStackModel from 'Types/session/errorStack';
@@ -65,10 +65,10 @@ const errors = [
 
 storiesOf('UI Components', module)
   .add('SideMenuItem', () => (
-    <SideMenuitem title="Menu Label" />
+    <SideMenuItem title="Menu Label" />
   ))
   .add('SideMenuItem active', () => (
-    <SideMenuitem title="Menu Label" active />
+    <SideMenuItem title="Menu Label" active />
   ))
   .add('Avatar', () => (
     <Avatar />

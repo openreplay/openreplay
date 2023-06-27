@@ -59,6 +59,7 @@ export const forgotPassword = () => '/reset-password';
 export const CLIENT_TABS = {
   INTEGRATIONS: 'integrations',
   PROFILE: 'account',
+  SESSIONS_LISTING: 'sessions-listing',
   MANAGE_USERS: 'team',
   MANAGE_ROLES: 'roles',
   SITES: 'projects',
