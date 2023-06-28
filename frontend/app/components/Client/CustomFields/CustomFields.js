@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent, Icon, Tooltip } from 'UI';
+import { Button, Loader, NoContent, Icon, Tooltip, Divider } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
 import styles from './customFields.module.css';
@@ -102,13 +102,16 @@ function CustomFields(props) {
                         {fields
                             .filter((i) => i.index)
                             .map((field) => (
-                                <ListItem
-                                    disabled={deletingItem && deletingItem === field.index}
-                                    key={field._key}
-                                    field={field}
-                                    onEdit={init}
-                                    // onDelete={ () => removeMetadata(field) }
-                                />
+                                <>
+                                    <ListItem
+                                      disabled={deletingItem && deletingItem === field.index}
+                                      key={field._key}
+                                      field={field}
+                                      onEdit={init}
+                                      // onDelete={ () => removeMetadata(field) }
+                                    />
+                                    <Divider className="m-0" />
+                                </>
                             ))}
                     </div>
                 </NoContent>
