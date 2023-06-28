@@ -2,15 +2,14 @@ package datasaver
 
 import (
 	"log"
-	"openreplay/backend/pkg/db/sessions"
 
 	"openreplay/backend/internal/config/db"
-	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 	queue "openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 )
 
 type Saver interface {
@@ -21,7 +20,7 @@ type Saver interface {
 
 type saverImpl struct {
 	cfg      *db.Config
-	pg       *cache.PGCache
+	pg       *postgres.Conn
 	sessions sessions.Sessions
 	ch       clickhouse.Connector
 	producer queue.Producer
@@ -66,7 +65,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *Metadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
-		return s.pg.Conn.InsertIssueEvent(session, m)
+		return s.pg.InsertIssueEvent(session, m)
 	case *CustomIssue:
 		ie := &IssueEvent{
 			Type:          "custom",
@@ -78,29 +77,37 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		ie.SetMeta(m.Meta())
 		return s.pg.InsertIssueEvent(session, ie)
 	case *UserID:
-		return s.pg.Conn.InsertWebUserID(session, m)
+		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID", m.ID)
+		return nil
 	case *UserAnonymousID:
-		return s.pg.Conn.InsertWebUserAnonymousID(session, m)
+		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID", m.ID)
+		return nil
 	case *CustomEvent:
-		return s.pg.Conn.InsertWebCustomEvent(session, m)
+		return s.pg.InsertWebCustomEvent(session, m)
 	case *MouseClick:
-		return s.pg.Conn.InsertWebClickEvent(session, m)
+		return s.pg.InsertWebClickEvent(session, m)
 	case *InputEvent:
-		return s.pg.Conn.InsertWebInputEvent(session, m)
+		return s.pg.InsertWebInputEvent(session, m)
 	case *PageEvent:
-		return s.pg.Conn.InsertWebPageEvent(session, m)
+		return s.pg.InsertWebPageEvent(session, m)
 	case *NetworkRequest:
-		return s.pg.Conn.InsertWebNetworkRequest(session, m)
+		return s.pg.InsertWebNetworkRequest(session, m)
 	case *GraphQL:
-		return s.pg.Conn.InsertWebGraphQL(session, m)
+		return s.pg.InsertWebGraphQL(session, m)
 	case *JSException:
-		return s.pg.Conn.InsertWebErrorEvent(session, types.WrapJSException(m))
+		return s.pg.InsertWebErrorEvent(session, types.WrapJSException(m))
 	case *IntegrationEvent:
-		return s.pg.Conn.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
+		return s.pg.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *InputChange:
 		return s.pg.InsertInputChangeEvent(session, m)
 	case *MouseThrashing:
-		return s.pg.Conn.InsertMouseThrashing(session, m)
+		return s.pg.InsertMouseThrashing(session, m)
 	}
 	return nil
 }
