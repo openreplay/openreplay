@@ -139,17 +139,11 @@ export const genFormattedBody = (body?: BodyInit) => {
     } catch (e) {
       // 'a=1&b=2' => try to parse as query
       const arr = body.split('&')
-      if (arr.length === 1) {
-        // not a query, parse as original string
-        result = body
-      } else {
-        // 'a=1&b=2&c' => parse as query
-        result = {}
-        // eslint-disable-next-line
-        for (let q of arr) {
-          const kv = q.split('=')
-          result[kv[0]] = kv[1] === undefined ? 'undefined' : kv[1]
-        }
+      result = {}
+      // eslint-disable-next-line
+      for (let q of arr) {
+        const kv = q.split('=')
+        result[kv[0]] = kv[1] === undefined ? 'undefined' : kv[1]
       }
     }
   } else if (isIterable(body)) {

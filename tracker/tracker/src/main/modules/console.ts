@@ -112,7 +112,7 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(ConsoleLog(level, printf(args))),
   )
 
-  let n: number
+  let n = 0
   const reset = (): void => {
     n = 0
   }
@@ -123,10 +123,12 @@ export default function (app: App, opts: Partial<Options>): void {
     const handler = {
       apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
         target.apply(console, argumentsList)
-        if (n++ > options.consoleThrottling) {
+        n = n + 1
+        if (n > options.consoleThrottling) {
           return
+        } else {
+          sendConsoleLog(target.name, argumentsList)
         }
-        sendConsoleLog(target.name, argumentsList)
       },
     }
 
