@@ -42,6 +42,6 @@ module.exports = {
   },
   plugins: [],
   corePlugins: {
-    preflight: false
+    // preflight: false // TODO check for the conflicts with antd
   }
 };
