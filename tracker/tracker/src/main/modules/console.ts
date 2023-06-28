@@ -119,10 +119,10 @@ export default function (app: App, opts: Partial<Options>): void {
   app.attachStartCallback(reset)
   app.ticker.attach(reset, 33, false)
 
-  const patchConsole = (console: Console) => {
+  const patchConsole = (console: Console, ctx: typeof globalThis) => {
     const handler = {
       apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
-        target.apply(console, argumentsList)
+        Reflect.apply(target, ctx, argumentsList)
         n = n + 1
         if (n > options.consoleThrottling) {
           return
@@ -137,12 +137,15 @@ export default function (app: App, opts: Partial<Options>): void {
         app.debug.error(`OpenReplay: unsupported console method "${method}"`)
         return
       }
-      const fn = (console as any)[method]
+      const fn = (ctx.console as any)[method]
+      // is there any way to preserve the original console trace?
       ;(console as any)[method] = new Proxy(fn, handler)
     })
   }
 
-  const patchContext = app.safe((context: typeof globalThis) => patchConsole(context.console))
+  const patchContext = app.safe((context: typeof globalThis) =>
+    patchConsole(context.console, context),
+  )
 
   patchContext(window)
   app.observer.attachContextCallback(patchContext)
