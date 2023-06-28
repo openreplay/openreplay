@@ -9,6 +9,11 @@ type producerImpl struct {
 	client *Client
 }
 
+func (c *producerImpl) Close(timeout int) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewProducer(client *Client) types.Producer {
 	return &producerImpl{
 		client: client,
