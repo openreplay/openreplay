@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent, Icon } from 'UI';
+import { Button, Loader, NoContent, Icon, Divider } from 'UI';
 import WebhookForm from './WebhookForm';
 import ListItem from './ListItem';
 import styles from './webhooks.module.css';
@@ -68,7 +68,10 @@ function Webhooks() {
                 >
                     <div className="cursor-pointer">
                         {customWebhooks.map((webhook) => (
-                            <ListItem key={webhook.webhookId} webhook={webhook} onEdit={() => init(webhook)} />
+                            <>
+                              <ListItem key={webhook.webhookId} webhook={webhook} onEdit={() => init(webhook)} />
+                              <Divider className="m-0" />
+                            </>
                         ))}
                     </div>
                 </NoContent>
