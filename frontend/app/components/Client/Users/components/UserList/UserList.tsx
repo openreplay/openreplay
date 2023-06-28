@@ -3,7 +3,7 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import UserListItem from '../UserListItem';
 import { sliceListPerPage, getRE } from 'App/utils';
-import { Pagination, NoContent, Loader } from 'UI';
+import { Pagination, NoContent, Loader, Divider } from 'UI';
 import { useModal } from 'App/components/Modal';
 import UserForm from '../UserForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -61,7 +61,7 @@ function UserList(props: Props) {
                     </div>
 
                     {sliceListPerPage(list, userStore.page - 1, userStore.pageSize).map((user: any) => (
-                        <div key={user.id} className="">
+                        <>
                             <UserListItem
                                 user={user}
                                 editHandler={() => editHandler(user)}
@@ -76,7 +76,8 @@ function UserList(props: Props) {
                                 isEnterprise={isEnterprise}
                                 isOnboarding={isOnboarding}
                             />
-                        </div>
+                            <Divider className="m-0" />
+                        </>
                     ))}
                 </div>
 
