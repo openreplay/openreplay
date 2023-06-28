@@ -21,7 +21,7 @@ const ListItem = ({ alert, onClear, loading }: any) => {
       />
     
       <div>
-        <h2 className="mb-2 flex items-center">
+        <h2 className="mb-2 flex items-center text-base font-normal">
           {alert.title}          
         </h2>
         <div className="mb-2 text-sm text-justify break-all">{alert.description}</div>
