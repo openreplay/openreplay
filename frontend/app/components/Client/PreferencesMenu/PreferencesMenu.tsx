@@ -38,7 +38,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }: Props) {
   const menuItems = React.useMemo(() => {
     return [
       { title: 'Account', iconName: 'user-circle', tab: CLIENT_TABS.PROFILE },
-      { title: 'Sessions Listing', iconName: 'user-circle', tab: CLIENT_TABS.SESSIONS_LISTING },
+      { title: 'Sessions Listing', iconName: 'play', tab: CLIENT_TABS.SESSIONS_LISTING },
       { title: 'Integrations', iconName: 'puzzle-piece', tab: CLIENT_TABS.INTEGRATIONS },
       { title: 'Metadata', iconName: 'tags', tab: CLIENT_TABS.CUSTOM_FIELDS },
       { title: 'Webhooks', iconName: 'anchor', tab: CLIENT_TABS.WEBHOOKS },

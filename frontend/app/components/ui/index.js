@@ -57,3 +57,5 @@ export { default as Form } from './Form';
 export { default as Modal } from './Modal';
 export { default as Message } from './Message';
 export { default as Popover } from './Popover';
+export { default as Switch } from './Switch';
+export { default as Divider } from './Divider';

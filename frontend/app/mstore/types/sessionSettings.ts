@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import moment from 'moment';
-import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER } from 'App/constants/storageKeys';
+import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
 
 export type Timezone = {
     label: string;
@@ -69,6 +69,8 @@ export default class SessionSettings {
     durationFilter: any = JSON.parse(localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter));
     captureRate: string = '0';
     captureAll: boolean = false;
+    mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) === 'true';
+
 
     constructor() {
         // compatibility fix for old timezone storage

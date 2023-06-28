@@ -1,10 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { PageTitle } from 'UI';
+import { PageTitle, Divider } from 'UI';
 import ListingVisibility from 'Shared/SessionSettings/components/ListingVisibility';
 import DefaultPlaying from 'Shared/SessionSettings/components/DefaultPlaying';
 import DefaultTimezone from 'Shared/SessionSettings/components/DefaultTimezone';
 import withPageTitle from 'HOCs/withPageTitle';
+import MouseTrailSettings from 'Shared/SessionSettings/components/MouseTrailSettings';
+
 
 type Props = {}
 
@@ -20,22 +22,27 @@ function SessionsListingSettings(props: Props) {
     <div className='p-5'>
       <PageTitle title={<div>Sessions Listings</div>} />
 
-      <div className='flex flex-col gap-6 mt-4'>
+      <div className='flex flex-col mt-4'>
         <div className='max-w-lg'>
           <ListingVisibility />
         </div>
 
-        <div className='border-b' />
+        <Divider />
 
 
         <div>
           <DefaultPlaying />
         </div>
-        <div className='border-b' />
+        <Divider />
 
 
         <div>
           <DefaultTimezone />
+        </div>
+        <Divider />
+
+        <div>
+          <MouseTrailSettings />
         </div>
 
       </div>

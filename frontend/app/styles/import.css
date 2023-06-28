@@ -6,6 +6,7 @@
 @import 'react-tippy/dist/tippy.css';
 @import 'react-daterange-picker.css';
 @import 'rc-time-picker.css';
+@import 'antd/dist/reset.css';
 
 @tailwind base;
 @tailwind components;
