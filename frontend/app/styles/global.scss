@@ -22,3 +22,7 @@ input.no-focus:focus {
     @apply inline-block;
   }
 }
+
+.border-b {
+    border-bottom: 1px solid #eee;
+}

@@ -15,6 +15,7 @@ import cn from 'classnames';
 import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';
 import Roles from './Roles';
+import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
 @withRouter
 export default class Client extends React.PureComponent {
@@ -29,6 +30,7 @@ export default class Client extends React.PureComponent {
   renderActiveTab = () => (
     <Switch>
       <Route exact strict path={clientRoute(CLIENT_TABS.PROFILE)} component={ProfileSettings} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)} component={SessionsListingSettings} />
       <Route exact strict path={clientRoute(CLIENT_TABS.INTEGRATIONS)} component={Integrations} />
       <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_USERS)} component={UserView} />
       <Route exact strict path={clientRoute(CLIENT_TABS.SITES)} component={Sites} />
