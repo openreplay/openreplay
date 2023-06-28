@@ -8,7 +8,7 @@ import {
   TextLink,
   NoContent,
   Pagination,
-  PageTitle
+  PageTitle, Divider
 } from 'UI';
 import {
   init,
@@ -48,7 +48,7 @@ const Sites = ({
   const [showCaptureRate, setShowCaptureRate] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize: number = 10;
 
   const isAdmin = user.admin || user.superAdmin;
   const filteredSites = sites.filter((site: { name: string }) =>
@@ -173,7 +173,10 @@ const Sites = ({
             </div>
             {sliceListPerPage(filteredSites, page - 1, pageSize).map(
               (project: Project) => (
-                <ProjectItem project={project} />
+                <>
+                  <ProjectItem project={project} />
+                  <Divider className='m-0' />
+                </>
               )
             )}
 
