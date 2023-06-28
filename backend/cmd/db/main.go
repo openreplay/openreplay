@@ -39,7 +39,7 @@ func main() {
 	defer pg.Close()
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessions.New(pgConn, projects.New(pgConn)))
+	saver := datasaver.New(cfg, pg, sessions.New(pgConn, projects.New(pgConn, nil)))
 
 	// Message filter
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,

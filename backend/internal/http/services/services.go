@@ -25,7 +25,7 @@ type ServicesBuilder struct {
 }
 
 func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool) (*ServicesBuilder, error) {
-	projs := projects.New(pgconn)
+	projs := projects.New(pgconn, nil)
 	return &ServicesBuilder{
 		Projects:     projs,
 		Sessions:     sessions.New(pgconn, projs),
