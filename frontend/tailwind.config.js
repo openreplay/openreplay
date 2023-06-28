@@ -41,7 +41,5 @@ module.exports = {
     visibility: ['responsive', 'hover', 'focus', 'group-hover']
   },
   plugins: [],
-  corePlugins: {
-    // preflight: false // TODO check for the conflicts with antd
-  }
+  corePlugins: {}
 };

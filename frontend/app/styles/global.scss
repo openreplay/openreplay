@@ -22,15 +22,3 @@ input.no-focus:focus {
     @apply inline-block;
   }
 }
-
-.border-b {
-    border-bottom: 1px solid #eee;
-}
-
-button,
-[type='button'],
-[type='reset'],
-[type='submit'] {
-  background-color: unset;
-  -webkit-appearance: button;
-}
