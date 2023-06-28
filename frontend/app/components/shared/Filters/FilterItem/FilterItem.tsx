@@ -59,7 +59,6 @@ function FilterItem(props: Props) {
     });
   };
 
-  console.log('FilterItem', toJS(filter))
   return (
     <div className="flex items-center hover:bg-active-blue -mx-5 px-5">
       <div className="flex items-start w-full">

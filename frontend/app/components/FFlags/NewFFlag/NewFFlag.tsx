@@ -6,7 +6,7 @@ import Breadcrumb from 'Shared/Breadcrumb';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
 import {Prompt, useHistory} from 'react-router';
-import { withSiteId, fflags } from 'App/routes';
+import {withSiteId, fflags, fflagRead} from 'App/routes';
 import Description from './Description';
 import Header from './Header';
 import RolloutCondition from './Conditions';
@@ -61,6 +61,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     if (fflagId) {
       featureFlagsStore.updateFlag().then(() => {
         toast.success('Feature flag updated.');
+        history.push(withSiteId(fflagRead(fflagId), siteId));
       })
         .catch((e) => {
           e.json().then((body: Record<string, any>) => onError(body.errors.join(',')))

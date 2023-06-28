@@ -90,7 +90,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
               ))}
             </div>
             <div className="w-full flex items-center justify-between pt-4 px-6">
-              <div className="text-disabled-text">
+              <div>
                 {'Showing '}
                 <span className="font-semibold">
                   {Math.min(featureFlagsStore.total, featureFlagsStore.pageSize)}

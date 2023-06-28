@@ -44,7 +44,7 @@ function FFlagItem({ flag }: { flag: FeatureFlag }) {
                 <TextEllipsis
                   hintText={flag.description}
                   text={flag.description}
-                  style={{ color: 'rgba(0,0,0, 0.6)' }}
+                  style={{ color: 'rgba(0,0,0, 0.6)', fontSize: 12 }}
                 />
               ) : null}
             </div>

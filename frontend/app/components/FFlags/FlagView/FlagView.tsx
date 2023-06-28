@@ -58,7 +58,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
 
       <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
         <div className={'flex items-center gap-2'}>
-          <div className={'text-xl font-semibold'}>{current.flagKey}</div>
+          <div className={'text-2xl'}>{current.flagKey}</div>
           <Button
             className={'ml-auto'}
             variant={'text-primary'}
@@ -72,7 +72,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
           </Button>
           <ItemMenu bold items={menuItems} />
         </div>
-        <div className={'text-disabled-text border-b'}>
+        <div className={'border-b'} style={{ color: 'rgba(0,0,0, 0.6)' }}>
           {current.description || 'There is no description for this feature flag.'}
         </div>
 
@@ -90,7 +90,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
           <div>
             {current.isPersist
               ? 'This flag maintains its state through successive authentication events.'
-              : 'This flag is not persistent.'}
+              : 'This flag is not persistent across authentication events.'}
           </div>
         </div>
       {current.conditions.length > 0 ? (

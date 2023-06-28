@@ -57,8 +57,8 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
           </div>
         )}
       </div>
-      <div className={readonly ? 'p-2' : 'p-2 border-b'}>
-        <div className={conditions.filter.filters.length > 0 ? 'p-2 border-b mb-2' : ''}>
+      <div className={'p-2'}>
+        <div className={conditions.filter.filters.length > 0 ? 'p-2 mb-2' : ''}>
           <FilterList
             filter={conditions.filter}
             onUpdateFilter={onUpdateFilter}
@@ -66,7 +66,7 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
             onChangeEventsOrder={onChangeEventsOrder}
             hideEventsOrder
             excludeFilterKeys={nonFlagFilters}
-            readonly
+            readonly={readonly}
           />
           {readonly && !conditions.filter?.filters?.length ? (
             <div className={'p-2'}>No conditions</div>
@@ -84,10 +84,10 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
           </FilterSelection>
         )}
       </div>
-      <div className={'px-4 py-2 flex items-center gap-2'}>
+      <div className={'px-4 py-2 flex items-center gap-2 border-t'}>
         <span>Rollout to</span>
         {readonly ? (
-          <div>{conditions.rolloutPercentage}%</div>
+          <div className={'font-semibold'}>{conditions.rolloutPercentage}%</div>
         ) : (
           <Input
             type="text"

@@ -1,3 +1,8 @@
+# 8.1.0
+
+- Console and network are now using proxy objects to capture calls (opt in for network)
+- Added feature flags module and methods
+
 # 8.0.0
 
 - **[breaking]** support for multi-tab sessions
