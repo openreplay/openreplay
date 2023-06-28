@@ -14,13 +14,13 @@ export default class SettingsService {
     this.client = client || new APIClient();
   }
 
-  saveCaptureRate(data: any) {
-    return this.client.post('/sample_rate', data);
+  saveCaptureRate(projectId: number, data: any) {
+    return this.client.post(`/${projectId}/sample_rate`, data);
   }
 
-  fetchCaptureRate() {
+  fetchCaptureRate(projectId: number) {
     return this.client
-      .get('/sample_rate')
+      .get(`/${projectId}/sample_rate`)
       .then((response) => response.json())
       .then((response) => response.data || 0);
   }

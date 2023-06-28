@@ -1,16 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { Form, Input, Button, Icon } from 'UI';
 import { save, edit, update, fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import styles from './siteForm.module.css';
 import { confirm } from 'UI';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { withStore } from 'App/mstore';
 import { toast } from 'react-toastify';
+
+type OwnProps = {
+  onClose: (arg: any) => void;
+  mstore: any;
+  canDelete: boolean;
+};
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
+type Props = PropsFromRedux & RouteComponentProps & OwnProps;
 
 const NewSiteForm = ({
   site,
@@ -29,7 +39,7 @@ const NewSiteForm = ({
   mstore,
   activeSiteId,
   canDelete,
-}) => {
+}: Props) => {
   const [existsError, setExistsError] = useState(false);
 
   useEffect(() => {
@@ -38,11 +48,11 @@ const NewSiteForm = ({
     }
   }, []);
 
-  const onSubmit = (e) => {
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     if (site.exists()) {
-      update(site, site.id).then((response) => {
+      update(site, site.id).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           if (!pathname.includes('onboarding')) {
@@ -54,7 +64,7 @@ const NewSiteForm = ({
         }
       });
     } else {
-      save(site).then((response) => {
+      save(site).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           clearSearch();
@@ -78,13 +88,13 @@ const NewSiteForm = ({
       remove(site.id).then(() => {
         onClose(null);
         if (site.id === activeSiteId) {
-          setSiteId(null)
+          setSiteId(null);
         }
       });
     }
   };
 
-  const handleEdit = ({ target: { name, value } }) => {
+  const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
     setExistsError(false);
     edit({ [name]: value });
   };
@@ -128,7 +138,7 @@ const NewSiteForm = ({
   );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: any) => ({
   activeSiteId: state.getIn(['site', 'active', 'id']),
   site: state.getIn(['site', 'instance']),
   siteList: state.getIn(['site', 'list']),
@@ -136,7 +146,7 @@ const mapStateToProps = (state) => ({
   canDelete: state.getIn(['site', 'list']).size > 1,
 });
 
-export default connect(mapStateToProps, {
+const connector = connect(mapStateToProps, {
   save,
   remove,
   edit,
@@ -146,4 +156,6 @@ export default connect(mapStateToProps, {
   setSiteId,
   clearSearch,
   clearSearchLive,
-})(withRouter(withStore(NewSiteForm)));
+});
+
+export default connector(withRouter(withStore(NewSiteForm)));

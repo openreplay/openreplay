@@ -5,89 +5,96 @@ import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 
-function CaptureRate({ isAdmin = false }) {
-    const { settingsStore } = useStore();
-    const [changed, setChanged] = useState(false);
-    const [sessionSettings] = useState(settingsStore.sessionSettings);
-    const [loading] = useState(settingsStore.loadingCaptureRate);
+type Props = {
+  isAdmin: boolean;
+  projectId: number;
+}
 
-    const captureRate = sessionSettings.captureRate;
-    const setCaptureRate = sessionSettings.changeCaptureRate;
-    const captureAll = sessionSettings.captureAll;
-    const setCaptureAll = sessionSettings.changeCaptureAll;
+function CaptureRate(props: Props) {
+  const { isAdmin, projectId } = props;
+  const { settingsStore } = useStore();
+  const [changed, setChanged] = useState(false);
+  const [sessionSettings] = useState(settingsStore.sessionSettings);
+  const loading = settingsStore.loadingCaptureRate;
 
-    useEffect(() => {
-        settingsStore.fetchCaptureRate();
-    }, []);
+  const captureRate = sessionSettings.captureRate;
+  const setCaptureRate = sessionSettings.changeCaptureRate;
+  const captureAll = sessionSettings.captureAll;
+  const setCaptureAll = sessionSettings.changeCaptureAll;
 
-    const changeCaptureRate = (input: string) => {
-        setChanged(true);
-        setCaptureRate(input);
-    };
+  useEffect(() => {
+    settingsStore.fetchCaptureRate(projectId);
+  }, [projectId]);
 
-    const toggleRate = () => {
-        const newValue = !captureAll;
-        setChanged(true);
-        if (newValue === true) {
-            const updateObj = {
-                rate: '100',
-                captureAll: true,
-            };
-            settingsStore.saveCaptureRate(updateObj);
-        } else {
-            setCaptureAll(newValue);
-        }
-    };
+  const changeCaptureRate = (input: string) => {
+    setChanged(true);
+    setCaptureRate(input);
+  };
 
-    return (
-        <Loader loading={loading}>
-            <h3 className="text-lg">Capture Rate</h3>
-            <div className="my-1">The percentage of session you want to capture</div>
-            <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
-                <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
-                    <Toggler checked={captureAll} name="test" onChange={toggleRate} />
-                    <span className="ml-2" style={{ color: captureAll ? '#000000' : '#999' }}>
+  const toggleRate = () => {
+    const newValue = !captureAll;
+    setChanged(true);
+    if (newValue) {
+      const updateObj = {
+        rate: '100',
+        captureAll: true
+      };
+      settingsStore.saveCaptureRate(projectId, updateObj);
+    } else {
+      setCaptureAll(newValue);
+    }
+  };
+
+  return (
+    <Loader loading={loading}>
+      {/*<h3 className='text-lg'>Capture Rate</h3>*/}
+      <div className='my-1'>The percentage of session you want to capture</div>
+      <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
+        <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
+          <Toggler checked={captureAll} name='test' onChange={toggleRate} />
+          <span className='ml-2' style={{ color: captureAll ? '#000000' : '#999' }}>
                         100%
                     </span>
-                </div>
-            </Tooltip>
-            {!captureAll && (
-                <div className="flex items-center">
-                    <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
-                        <div className={cn("relative", { 'disabled' : !isAdmin })}>
-                            <Input
-                                type="number"
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => changeCaptureRate(e.target.value)}
-                                value={captureRate.toString()}
-                                style={{ height: '38px', width: '100px' }}
-                                disabled={captureAll}
-                                min={0}
-                                max={100}
-                            />
-                            <Icon className="absolute right-0 mr-6 top-0 bottom-0 m-auto" name="percent" color="gray-medium" size="18" />
-                        </div>
-                    </Tooltip>
-                    <span className="mx-3">of the sessions</span>
-                    <Button
-                        disabled={!changed}
-                        variant="outline"
-                        onClick={() =>
-                            settingsStore
-                                .saveCaptureRate({
-                                    rate: captureRate,
-                                    captureAll,
-                                })
-                                .finally(() => setChanged(false))
-                        }
-                    >
-                        Update
-                    </Button>
-                </div>
-            )}
-        </Loader>
-    );
+        </div>
+      </Tooltip>
+      {!captureAll && (
+        <div className='flex items-center'>
+          <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
+            <div className={cn('relative', { 'disabled': !isAdmin })}>
+              <Input
+                type='number'
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => changeCaptureRate(e.target.value)}
+                value={captureRate.toString()}
+                style={{ height: '38px', width: '100px' }}
+                disabled={captureAll}
+                min={0}
+                max={100}
+              />
+              <Icon className='absolute right-0 mr-6 top-0 bottom-0 m-auto' name='percent' color='gray-medium'
+                    size='18' />
+            </div>
+          </Tooltip>
+          <span className='mx-3'>of the sessions</span>
+          <Button
+            disabled={!changed}
+            variant='outline'
+            onClick={() =>
+              settingsStore
+                .saveCaptureRate(projectId, {
+                  rate: captureRate,
+                  captureAll
+                })
+                .finally(() => setChanged(false))
+            }
+          >
+            Update
+          </Button>
+        </div>
+      )}
+    </Loader>
+  );
 }
 
 export default connect((state: any) => ({
-    isAdmin: state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin']),
+  isAdmin: state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin'])
 }))(observer(CaptureRate));
