@@ -98,20 +98,15 @@ func WrapGraphQL(m *messages.GraphQL, projID uint32) *GraphQLFTS {
 	}
 }
 
-func (s *saverImpl) sendToFTS(msg messages.Message) {
+func (s *saverImpl) sendToFTS(msg messages.Message, projID uint32) {
 	// Skip, if FTS is disabled
 	if s.producer == nil {
 		return
 	}
 	var (
-		projID uint32
-		event  []byte
-		err    error
+		event []byte
+		err   error
 	)
-
-	if sess, err := s.pg.Cache.GetSession(msg.SessionID()); err == nil {
-		projID = sess.ProjectID
-	}
 
 	switch m := msg.(type) {
 	// Common
