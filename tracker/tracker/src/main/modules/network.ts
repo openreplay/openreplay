@@ -3,42 +3,13 @@ import { NetworkRequest } from '../app/messages.gen.js'
 import { getTimeOrigin } from '../utils.js'
 import type { AxiosInstance } from './axiosSpy.js'
 import axiosSpy from './axiosSpy.js'
+import setProxy from './Network/index.js'
 
 type WindowFetch = typeof window.fetch
 type XHRRequestBody = Parameters<XMLHttpRequest['send']>[0]
-type FetchRequestBody = RequestInit['body']
-
-// Request:
-// declare const enum BodyType {
-//   Blob = "Blob",
-//   ArrayBuffer = "ArrayBuffer",
-//   TypedArray = "TypedArray",
-//   DataView = "DataView",
-//   FormData = "FormData",
-//   URLSearchParams = "URLSearchParams",
-//   Document = "Document", // XHR only
-//   ReadableStream = "ReadableStream", // Fetch only
-//   Literal = "literal",
-//   Unknown = "unk",
-// }
-// XHRResponse body: ArrayBuffer, a Blob, a Document, a JavaScript Object, or a string
-
-// TODO: extract maximum of useful information from any type of Request/Response bodies
-// function objectifyBody(body: any): RequestBody {
-//   if (body instanceof Blob) {
-//     return {
-//       body: `<Blob type: ${body.type}>; size: ${body.size}`,
-//       bodyType: BodyType.Blob,
-//     }
-//   }
-//   return {
-//     body,
-//     bodyType: BodyType.Literal,
-//   }
-// }
 
 interface RequestData {
-  body: XHRRequestBody | FetchRequestBody
+  body: string | null
   headers: Record<string, string>
 }
 
@@ -74,7 +45,7 @@ function strMethod(method?: string) {
   return typeof method === 'string' ? method.toUpperCase() : 'GET'
 }
 
-type Sanitizer = (data: RequestResponseData) => RequestResponseData | null
+type Sanitizer = (data: RequestResponseData) => RequestResponseData
 
 export interface Options {
   sessionTokenHeader: string | boolean
@@ -84,6 +55,7 @@ export interface Options {
   captureInIframes: boolean
   sanitizer?: Sanitizer
   axiosInstances?: Array<AxiosInstance>
+  useProxy?: boolean
 }
 
 export default function (app: App, opts: Partial<Options> = {}) {
@@ -95,9 +67,16 @@ export default function (app: App, opts: Partial<Options> = {}) {
       sessionTokenHeader: false,
       captureInIframes: true,
       axiosInstances: undefined,
+      useProxy: false,
     },
     opts,
   )
+
+  if (options.useProxy === false) {
+    app.debug.warn(
+      'Network module is migrating to proxy api, to gradually migrate and test it set useProxy to true',
+    )
+  }
 
   const ignoreHeaders = options.ignoreHeaders
   const isHIgnored = Array.isArray(ignoreHeaders)
@@ -118,13 +97,14 @@ export default function (app: App, opts: Partial<Options> = {}) {
 
   function sanitize(reqResInfo: RequestResponseData) {
     if (!options.capturePayload) {
+      // @ts-ignore
       delete reqResInfo.request.body
       delete reqResInfo.response.body
     }
     if (options.sanitizer) {
       const resBody = reqResInfo.response.body
       if (typeof resBody === 'string') {
-        // Parse response in order to have handy view in sanitisation function
+        // Parse response in order to have handy view in sanitization function
         try {
           reqResInfo.response.body = JSON.parse(resBody)
         } catch {}
@@ -147,6 +127,17 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   const patchWindow = (context: typeof globalThis) => {
+    /* ====== modern way ====== */
+    if (options.useProxy) {
+      return setProxy(
+        context,
+        options.ignoreHeaders,
+        setSessionTokenHeader,
+        sanitize,
+        (message) => app.send(message),
+        (url) => app.isServiceURL(url),
+      )
+    }
     /* ====== Fetch ====== */
     const origFetch = context.fetch.bind(context) as WindowFetch
 
@@ -207,7 +198,8 @@ export default function (app: App, opts: Partial<Options> = {}) {
               status: r.status,
               request: {
                 headers: reqHs,
-                body: init.body,
+                // @ts-ignore
+                body: init.body || null,
               },
               response: {
                 headers: resHs,
@@ -277,7 +269,8 @@ export default function (app: App, opts: Partial<Options> = {}) {
             status: xhr.status,
             request: {
               headers: reqHs,
-              body: reqBody,
+              // @ts-ignore
+              body: reqBody || null,
             },
             response: {
               headers: headerMap,

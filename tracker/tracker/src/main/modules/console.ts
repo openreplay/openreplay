@@ -1,5 +1,4 @@
 import type App from '../app/index.js'
-import { hasTag } from '../app/guards.js'
 import { IN_BROWSER } from '../utils.js'
 import { ConsoleLog } from '../app/messages.gen.js'
 
@@ -104,6 +103,7 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   )
+
   if (!Array.isArray(options.consoleMethods) || options.consoleMethods.length === 0) {
     return
   }
@@ -112,29 +112,40 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(ConsoleLog(level, printf(args))),
   )
 
-  let n: number
+  let n = 0
   const reset = (): void => {
     n = 0
   }
   app.attachStartCallback(reset)
   app.ticker.attach(reset, 33, false)
 
-  const patchConsole = (console: Console) =>
+  const patchConsole = (console: Console, ctx: typeof globalThis) => {
+    const handler = {
+      apply: function (target: Console['log'], thisArg: typeof this, argumentsList: unknown[]) {
+        Reflect.apply(target, ctx, argumentsList)
+        n = n + 1
+        if (n > options.consoleThrottling) {
+          return
+        } else {
+          sendConsoleLog(target.name, argumentsList)
+        }
+      },
+    }
+
     options.consoleMethods!.forEach((method) => {
       if (consoleMethods.indexOf(method) === -1) {
         app.debug.error(`OpenReplay: unsupported console method "${method}"`)
         return
       }
-      const fn = (console as any)[method]
-      ;(console as any)[method] = function (...args: unknown[]): void {
-        fn.apply(this, args)
-        if (n++ > options.consoleThrottling) {
-          return
-        }
-        sendConsoleLog(method, args)
-      }
+      const fn = (ctx.console as any)[method]
+      // is there any way to preserve the original console trace?
+      ;(console as any)[method] = new Proxy(fn, handler)
     })
-  const patchContext = app.safe((context: typeof globalThis) => patchConsole(context.console))
+  }
+
+  const patchContext = app.safe((context: typeof globalThis) =>
+    patchConsole(context.console, context),
+  )
 
   patchContext(window)
   app.observer.attachContextCallback(patchContext)
