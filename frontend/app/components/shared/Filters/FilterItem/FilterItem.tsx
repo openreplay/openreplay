@@ -60,7 +60,7 @@ function FilterItem(props: Props) {
   };
 
   return (
-    <div className="flex items-center hover:bg-active-blue -mx-5 px-5">
+    <div className="flex items-center hover:bg-active-blue -mx-5 px-5 h-10">
       <div className="flex items-start w-full">
         {!isFilter && (
           <div
@@ -103,13 +103,13 @@ function FilterItem(props: Props) {
               <>
                 {props.readonly ? (
                   <div
-                    className={'px-2 py-1 bg-gray-lightest'}
+                    className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip'}
                   >
                     {filter.value.map((val: string) => {
                       return filter.options && filter.options.length
                         ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label
                         : val
-                    })}
+                    }).join(', ')}
                   </div>
                 ) : (
                   <FilterValue filter={filter} onUpdate={props.onUpdate}/>
