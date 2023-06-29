@@ -1,7 +1,7 @@
 # 8.1.0
 
-- Console and network are now using proxy objects to capture calls (opt in for network)
-- Added feature flags module and methods
+- Console and network are now using proxy objects to capture calls (opt in for network), use ` { network: { useProxy: true } }` to enable it
+- Force disable Multitab feature for old browsers (2016 and older + safari 14)
 
 # 8.0.0
 
