@@ -215,16 +215,19 @@ export default function (app: App, opts: Partial<Options>): void {
         }
 
         const onInput = () => {
-          if (nodeHesitationTime === 0) {
+          if (nodeHesitationTime === 0 && nodeFocusTime !== 0) {
             nodeHesitationTime = now() - nodeFocusTime
           }
         }
 
         const onChange = () => {
-          inputTime = now() - nodeFocusTime
+          if (nodeFocusTime !== 0) {
+            inputTime = now() - nodeFocusTime
+          }
           sendInputChange(id, node, nodeHesitationTime, inputTime)
           nodeHesitationTime = 0
           inputTime = 0
+          nodeFocusTime = 0
         }
         app.nodes.attachNodeListener(node, 'focus', onFocus)
         app.nodes.attachNodeListener(node, 'input', onInput)
