@@ -1,4 +1,6 @@
-# 8.1.0
+# 8.1.1
+
+[collective patch]
 
 - Console and network are now using proxy objects to capture calls (opt in for network), use ` { network: { useProxy: true } }` to enable it
 - Force disable Multitab feature for old browsers (2016 and older + safari 14)
