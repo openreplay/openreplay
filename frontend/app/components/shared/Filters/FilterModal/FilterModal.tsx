@@ -93,7 +93,7 @@ function FilterModal(props: Props) {
       >
         {matchingCategories.map((key) => {
           return (
-            <div className="mb-6 flex flex-col gap-2" key={key}>
+            <div className="mb-6 flex flex-col gap-2 break-inside-avoid" key={key}>
               <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">
                 {key}
               </div>
