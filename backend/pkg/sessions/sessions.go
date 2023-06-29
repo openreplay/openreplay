@@ -15,6 +15,7 @@ type Sessions interface {
 	Add(session *Session) error
 	AddUnStarted(session *UnStartedSession) error
 	Get(sessionID uint64) (*Session, error)
+	GetUpdated(sessionID uint64) (*Session, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
@@ -84,6 +85,15 @@ func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
 	if sess, ok := s.sessions.GetAndRefresh(sessionID); ok {
 		return sess.(*Session), nil
 	}
+	session, err := s.getFromDB(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	s.sessions.Set(session.SessionID, session)
+	return session, nil
+}
+
+func (s *sessionsImpl) GetUpdated(sessionID uint64) (*Session, error) {
 	session, err := s.getFromDB(sessionID)
 	if err != nil {
 		return nil, err
