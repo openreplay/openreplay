@@ -154,6 +154,12 @@ func (conn *Conn) InsertInputChangeEvent(sess *sessions.Session, e *messages.Inp
 	if e.Label == "" {
 		return nil
 	}
+	if e.HesitationTime > 2147483647 {
+		e.HesitationTime = 0
+	}
+	if e.InputDuration > 2147483647 {
+		e.InputDuration = 0
+	}
 	if err := conn.bulks.Get("webInputDurations").Append(sess.SessionID, truncSqIdx(e.ID), e.Timestamp, e.Label, e.HesitationTime, e.InputDuration); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
