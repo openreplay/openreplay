@@ -60,6 +60,8 @@ function UserList(props: Props) {
                         <div className="col-span-2"></div>
                     </div>
 
+                    <Divider className="m-0" />
+
                     {sliceListPerPage(list, userStore.page - 1, userStore.pageSize).map((user: any) => (
                         <>
                             <UserListItem

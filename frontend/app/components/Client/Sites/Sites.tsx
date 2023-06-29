@@ -91,7 +91,7 @@ const Sites = ({
   const ProjectItem = ({ project }: { project: Project }) => (
     <div
       key={project.id}
-      className='grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-t px-5 py-3'
+      className='grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center px-5 py-3'
     >
       <div className='col-span-4'>
         <div className='flex items-center'>
@@ -171,6 +171,8 @@ const Sites = ({
               <div className='col-span-2'>Capture Rate</div>
               <div className='col-span-3'></div>
             </div>
+            <Divider className='m-0' />
+            
             {sliceListPerPage(filteredSites, page - 1, pageSize).map(
               (project: Project) => (
                 <>
