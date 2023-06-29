@@ -50,7 +50,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   };
 
   const onCancel = () => {
-    history.push(withSiteId(fflags(), siteId));
+    history.goBack()
   };
 
   const onError = (e: string) => toast.error(`Failed to update flag: ${e}`)

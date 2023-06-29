@@ -6,6 +6,7 @@ import { nonFlagFilters } from 'Types/filter/newFilter';
 import { observer } from 'mobx-react-lite';
 import { Conditions } from "App/mstore/types/FeatureFlag";
 import FilterSelection from 'Shared/Filters/FilterSelection';
+import { toast } from 'react-toastify';
 
 interface Props {
   set: number;
@@ -17,7 +18,10 @@ interface Props {
 
 function RolloutCondition({ set, conditions, removeCondition, index, readonly }: Props) {
   const [forceRender, forceRerender] = React.useState(false);
-  const onAddFilter = (filter = {}) => {
+  const onAddFilter = (filter: Record<string, any> = {}) => {
+    if (conditions.filter.filters.findIndex(f => f.key === filter.key) !== -1) {
+      return toast.error('Filter already exists')
+    }
     conditions.filter.addFilter(filter);
     forceRerender(!forceRender);
   };

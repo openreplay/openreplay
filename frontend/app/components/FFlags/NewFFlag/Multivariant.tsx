@@ -58,7 +58,7 @@ function Multivariant() {
         <div style={{ flex: 4 }} className={'flex items-center'}>
           <Rollout />
           <div
-            className={"ml-auto text-main font-normal cursor-pointer mr-10 hover:underline"}
+            className={'ml-auto text-main font-normal cursor-pointer mr-10 hover:underline'}
             onClick={featureFlagsStore.currentFflag!.redistributeVariants}
           >
             Distribute Equally
@@ -76,7 +76,7 @@ function Multivariant() {
               </div>
               <div style={{ flex: 4 }}>
                 <Input
-                  placeholder={`buy-btn-variant-${ind+1}`}
+                  placeholder={`buy-btn-variant-${ind + 1}`}
                   value={variant.value}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     variant.setKey(e.target.value)
@@ -137,9 +137,11 @@ function Multivariant() {
         })}
       </div>
       <div className={'mt-2 flex justify-between w-full'}>
-        <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
-          + Add Variant
-        </Button>
+        {featureFlagsStore.currentFflag!.variants.length <= 10 ? (
+          <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
+            + Add Variant
+          </Button>
+        ) : null}
         {featureFlagsStore.currentFflag!.isRedDistribution ? (
           <div className={'text-red mr-10'}>Total distribution is less than 100%.</div>
         ) : null}
