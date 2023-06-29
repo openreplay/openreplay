@@ -115,7 +115,6 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
-  private featureFlags: string[] = []
 
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
@@ -451,14 +450,6 @@ export default class App {
     return this.activityState === ActivityState.Active
   }
 
-  isFeatureActive(feature: string): boolean {
-    return this.featureFlags.includes(feature)
-  }
-
-  getFeatureFlags(): string[] {
-    return this.featureFlags
-  }
-
   resetNextPageSession(flag: boolean) {
     if (flag) {
       this.sessionStorage.setItem(this.options.session_reset_key, 't')
@@ -564,7 +555,6 @@ export default class App {
           userOS,
           userState,
         } = r
-        // TODO: insert feature flags here
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||

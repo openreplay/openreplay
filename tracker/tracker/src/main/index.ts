@@ -1,3 +1,4 @@
+import './app/polyfills.js' // bc polyfill
 import App, { DEFAULT_INGEST_POINT } from './app/index.js'
 export { default as App } from './app/index.js'
 
@@ -28,7 +29,6 @@ import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
-
 import type { Options as AppOptions } from './app/index.js'
 import type { Options as ConsoleOptions } from './modules/console.js'
 import type { Options as ExceptionOptions } from './modules/exception.js'
