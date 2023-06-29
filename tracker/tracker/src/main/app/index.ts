@@ -118,7 +118,7 @@ export default class App {
 
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
-  private readonly bc: BroadcastChannel = new BroadcastChannel('rick')
+  private readonly bc: BroadcastChannel | null = null
   public attributeSender: AttributeSender
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
@@ -148,6 +148,10 @@ export default class App {
       },
       options,
     )
+
+    if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
+      this.bc = new BroadcastChannel('rick')
+    }
 
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
@@ -229,24 +233,26 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    if (!this.session.getSessionToken() && !this.options.forceSingleTab) {
+    if (!this.session.getSessionToken() && this.bc) {
       this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
     }
 
-    this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
-      if (ev.data.source === thisTab) return
-      if (ev.data.line === 'never-gonna-let-you-down') {
-        const sessionToken = ev.data.token
-        this.session.setSessionToken(sessionToken)
-      }
-      if (ev.data.line === 'never-gonna-give-you-up') {
-        const token = this.session.getSessionToken()
-        if (token) {
-          this.bc.postMessage({
-            line: 'never-gonna-let-you-down',
-            token,
-            source: thisTab,
-          })
+    if (this.bc) {
+      this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+        if (ev.data.source === thisTab) return
+        if (ev.data.line === 'never-gonna-let-you-down') {
+          const sessionToken = ev.data.token
+          this.session.setSessionToken(sessionToken)
+        }
+        if (ev.data.line === 'never-gonna-give-you-up') {
+          const token = this.session.getSessionToken()
+          if (token && this.bc) {
+            this.bc.postMessage({
+              line: 'never-gonna-let-you-down',
+              token,
+              source: thisTab,
+            })
+          }
         }
       }
     }
