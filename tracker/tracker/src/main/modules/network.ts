@@ -67,10 +67,16 @@ export default function (app: App, opts: Partial<Options> = {}) {
       sessionTokenHeader: false,
       captureInIframes: true,
       axiosInstances: undefined,
-      useProxy: true,
+      useProxy: false,
     },
     opts,
   )
+
+  if (options.useProxy === false) {
+    app.debug.warn(
+      'Network module is migrating to proxy api, to gradually migrate and test it set useProxy to true',
+    )
+  }
 
   const ignoreHeaders = options.ignoreHeaders
   const isHIgnored = Array.isArray(ignoreHeaders)
@@ -204,19 +210,6 @@ export default function (app: App, opts: Partial<Options> = {}) {
               return
             }
 
-            console.log(
-              'original',
-              NetworkRequest(
-                'fetch',
-                method,
-                String(reqResInfo.url),
-                stringify(reqResInfo.request),
-                stringify(reqResInfo.response),
-                r.status,
-                startTime + getTimeOrigin(),
-                duration,
-              ),
-            )
             app.send(
               NetworkRequest(
                 'fetch',
