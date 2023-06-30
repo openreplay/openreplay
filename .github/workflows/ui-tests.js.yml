@@ -75,7 +75,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
-          key: ${{ runner.OS }}-build-${{ 'frontend/yarn.lock') }}
+          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
