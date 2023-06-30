@@ -38,14 +38,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/yarn.lock') }}
           restore-keys: |
-            test_tracker_build{{ runner.OS }}-build-
-            test_tracker_build{{ runner.OS }}-
+            test_tracker_build-{{ runner.OS }}-build-
+            test_tracker_build-{{ runner.OS }}-
       - name: Setup Testing packages
         run: |
           cd tracker/tracker
-          npm i -g yarn
           yarn
       - name: Build tracker inst
         run: |
@@ -56,21 +55,27 @@ jobs:
           cd tracker/tracker-testing-playground
           echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
           echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
+      - name: Cache testing UI node modules
+        uses: actions/cache@v3
+        with:
+          path: tracker/tracker-testing-playground/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
       - name: Setup Testing packages
         run: |
           cd tracker/tracker-testing-playground
           yarn
-      - name: Wait for Testing Frontend
+      - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
-          yarn start &> ui.log &
-          npx wait-on http://localhost:3000
-          cd ../../frontend
+          yarn start &> ui.log && cd ../../frontend
       - name: Cache node modules
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.OS }}-build-${{ 'frontend/yarn.lock') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
@@ -95,7 +100,6 @@ jobs:
           echo "TRACKER_VERSION = '4.0.0'" >> .env
           echo "COMMIT_HASH = 'dev'" >> .env
           echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
-
       - name: Setup packages
         run: |
           cd frontend
@@ -110,6 +114,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ui
           name: ui
+      - name: Wait for Testing Frontend
+        run: |
+          npx wait-on http://localhost:3000
       - name: Run Frontend
         run: |
           cd frontend
