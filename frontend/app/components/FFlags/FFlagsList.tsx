@@ -1,3 +1,4 @@
+import {numberWithCommas} from "App/utils";
 import React from 'react';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -91,12 +92,9 @@ function FFlagsList({ siteId }: { siteId: string }) {
             </div>
             <div className="w-full flex items-center justify-between pt-4 px-6">
               <div>
-                {'Showing '}
-                <span className="font-semibold">
-                  {Math.min(featureFlagsStore.total, featureFlagsStore.pageSize)}
-                </span>
-                {' out of '}
-                <span className="font-semibold">{featureFlagsStore.total}</span> Feature Flags
+                Showing <span className="font-medium">{(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + 1}</span> to{' '}
+                <span className="font-medium">{(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + featureFlagsStore.flags.length}</span> of{' '}
+                <span className="font-medium">{numberWithCommas(featureFlagsStore.total)}</span> Feature Flags.
               </div>
               <Pagination
                 page={featureFlagsStore.page}

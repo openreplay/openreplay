@@ -60,7 +60,7 @@ function FilterItem(props: Props) {
   };
 
   return (
-    <div className="flex items-center hover:bg-active-blue -mx-5 px-5 h-10">
+    <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
       <div className="flex items-start w-full">
         {!isFilter && (
           <div
@@ -107,7 +107,7 @@ function FilterItem(props: Props) {
                   >
                     {filter.value.map((val: string) => {
                       return filter.options && filter.options.length
-                        ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label
+                        ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label ?? val
                         : val
                     }).join(', ')}
                   </div>

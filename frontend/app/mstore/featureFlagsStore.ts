@@ -112,7 +112,7 @@ export default class FeatureFlagsStore {
     if (!this.currentFflag.isSingleOption && this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
       return 'All variants must include unique key'
     }
-    if (this.currentFflag?.isRedDistribution) {
+    if (!this.currentFflag?.isSingleOption && this.currentFflag?.isRedDistribution) {
       return 'Variants rollout percentage must add up to 100%'
     }
     return null;

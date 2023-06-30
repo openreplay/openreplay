@@ -137,7 +137,7 @@ function Multivariant() {
         })}
       </div>
       <div className={'mt-2 flex justify-between w-full'}>
-        {featureFlagsStore.currentFflag!.variants.length <= 10 ? (
+        {featureFlagsStore.currentFflag!.variants.length < 10 ? (
           <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
             + Add Variant
           </Button>

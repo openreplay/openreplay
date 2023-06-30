@@ -187,6 +187,9 @@ export default class FeatureFlag {
 
   setIsSingleOption = (isSingleOption: boolean) => {
     this.isSingleOption = isSingleOption;
+    if (isSingleOption) {
+      this.variants = []
+    }
     this.setHasChanged(true)
   }
 

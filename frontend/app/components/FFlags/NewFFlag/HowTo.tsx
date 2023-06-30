@@ -1,7 +1,7 @@
-import React from 'react'
+import React from 'react';
 // @ts-ignore
-import Highlight from 'react-highlight'
-import { PageTitle } from 'UI'
+import Highlight from 'react-highlight';
+import { PageTitle } from 'UI';
 
 function HowTo() {
   return (
@@ -10,16 +10,16 @@ function HowTo() {
 
       <div className={'my-2'}>
         <Highlight className={'js'}>
-          {
-            `
-type FeatureFlag = { 
-  key: string; 
-  is_persist: boolean; 
-  value: string | boolean; 
-  payload: string 
+          {`
+// can be imported from @openreplay/tracker
+interface IFeatureFlag {
+  key: string
+  is_persist: boolean
+  value: string | boolean
+  payload: string
 }
 
-tracker.onFlagsLoad((flags: FeatureFlag) => {
+tracker.onFlagsLoad((flags: IFeatureFlag[]) => {
  /* run code */
 })
             
@@ -27,12 +27,21 @@ tracker.onFlagsLoad((flags: FeatureFlag) => {
             
 if (openreplay.isFlagEnabled('my_flag')) {
   // run your activation code here
-}`}
+}
+
+// or 
+// returns FeatureFlag if exists
+tracker.getFeatureFlag('my_flag') 
+
+// reload flags from server 
+// (in case if any user data changed during the session)
+tracker.reloadFlags() 
+`}
         </Highlight>
       </div>
       <a className={'link'}>Documentation</a>
     </div>
-  )
+  );
 }
 
 export default HowTo;
