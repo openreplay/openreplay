@@ -233,9 +233,9 @@ def project_from_session(sessionId: int):
 
 def project_from_sessions(sessionIds: list[int]):
     """Search projectId of requested sessionId in PG table sessions"""
+    response = list()
     while sessionIds:
         sessIds = sessionIds[-1000:]
-        response = list()
         try:
             with pg_client.PostgresClient() as conn:
                 conn.execute(
@@ -254,7 +254,7 @@ def project_from_sessions(sessionIds: list[int]):
         sessionIds = sessionIds[:-1000]
     if not response:
         return []
-    return [(e['project_id'], e['session_id']) for e in res]
+    return [(e['project_id'], e['session_id']) for e in response]
 
 
 def decode_message(params: dict):
