@@ -842,6 +842,11 @@ async def delete_msteams_integration(webhookId: int, _=Body(None),
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
+@app.get('/{project_id}/check-recording-status', tags=["sessions"])
+async def check_recording_status(project_id: int):
+    return {"data": sessions.check_recording_status(project_id=project_id)}
+
+
 @public_app.get('/', tags=["health"])
 async def health_check():
     return {}
