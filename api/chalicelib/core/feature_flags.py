@@ -64,7 +64,7 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
         SELECT COUNT(1) OVER () AS count, {", ".join(feature_flag_columns)}
         FROM feature_flags
         WHERE {" AND ".join(constraints)}
-        ORDER BY created_at {data.order.value}
+        ORDER BY updated_at {data.order.value}
         LIMIT %(limit)s OFFSET %(offset)s;
     """
 
