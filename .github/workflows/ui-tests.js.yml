@@ -70,7 +70,7 @@ jobs:
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
-          yarn start &> ui.log && cd ../../frontend
+          yarn start &> ui.log &
       - name: Cache node modules
         uses: actions/cache@v3
         with:
