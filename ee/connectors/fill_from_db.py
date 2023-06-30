@@ -44,7 +44,7 @@ async def main():
     try:
         res = pdredshift.redshift_to_pandas(query.format(table=table, limit=limit))
     except Exception as e:
-        print(repr(e))
+        print('[FILL Exception]',repr(e))
         res = list()
     if res is None:
         return
@@ -75,11 +75,10 @@ async def main():
     base_query += f"\nEND WHERE sessionid IN ({','.join(all_ids)})"
     if len(all_ids) == 0:
         return
-    print(base_query[:200])
     try:
         pdredshift.exec_commit(base_query)
     except Exception as e:
-        print(repr(e))
+        print('[FILL Exception]',repr(e))
     print(f'[FILL-INFO] {time()-t} - for {len(sessionids)} elements')
 
 

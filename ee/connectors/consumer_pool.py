@@ -15,7 +15,7 @@ def main():
     try:
         w_pool.load_checkpoint(database_api)
     except Exception as e:
-        print('[WARN] Checkpoint not found')
+        print('[WORKER WARN] Checkpoint not found')
         print(repr(e))
     # ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
     # consumer_settings = {
@@ -29,7 +29,7 @@ def main():
     # consumer = Consumer(consumer_settings)
 
     # consumer.subscribe(config("TOPICS", default="saas-raw").split(','))
-    print("[INFO] Kafka consumer subscribed")
+    print("[WORKER INFO] Kafka consumer subscribed")
 
     # w_pool.run_workers(kafka_consumer=consumer, database_api=database_api)
     w_pool.run_workers(database_api=database_api)
