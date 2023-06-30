@@ -27,24 +27,27 @@ class CachedSessions:
         self.session_project = dict()
         self.max_alive_time = config('MAX_SESSION_LIFE', default=7800, cast=int) # Default 2 hours
 
-    def create(self, sessionid):
+    def create(self, sessionid: int):
         """Saves a new session with status OPEN and set its insertion time"""
-        self.session_project[sessionid] = (time(), 'OPEN')
+        _sessionid = str(sessionid)
+        self.session_project[_sessionid] = (time(), 'OPEN')
 
-    def add(self, sessionid):
+    def add(self, sessionid: int):
         """Handle the creation of a cached session or update its status if already in cache"""
-        if sessionid in self.session_project.keys():
-            if self.session_project[sessionid][1] == 'CLOSE':
-                tmp = self.session_project[sessionid]
-                self.session_project[sessionid] = (tmp[0], 'UPDATE')
+        _sessionid = str(sessionid)
+        if _sessionid in self.session_project.keys():
+            if self.session_project[_sessionid][1] == 'CLOSE':
+                tmp = self.session_project[_sessionid]
+                self.session_project[_sessionid] = (tmp[0], 'UPDATE')
         else:
             self.create(sessionid)
 
-    def close(self, sessionid):
+    def close(self, sessionid: int):
         """Sets status of session to closed session (received sessionend message)"""
-        tmp = self.session_project[sessionid]
+        _sessionid = str(sessionid)
+        tmp = self.session_project[_sessionid]
         old_status = tmp[1]
-        self.session_project[sessionid] = (tmp[0], 'CLOSE')
+        self.session_project[_sessionid] = (tmp[0], 'CLOSE')
         return old_status
 
     def clear_sessions(self):
@@ -53,9 +56,9 @@ class CachedSessions:
         current_time = time()
         for sessionid, values in self.session_project.items():
             if current_time - values[0] > self.max_alive_time:
-                to_clean_list.append(sessionid)
+                to_clean_list.append(int(sessionid))
         for sessionid in to_clean_list:
-            del self.session_project[sessionid]
+            del self.session_project[str(sessionid)]
         return to_clean_list
 
 
