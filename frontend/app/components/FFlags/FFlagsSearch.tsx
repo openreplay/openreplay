@@ -21,8 +21,8 @@ function FFlagsSearch() {
   }, []);
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(value);
-    debounceUpdate(value);
+    setQuery(value.replace(/\s/g, '-'));
+    debounceUpdate(value.replace(/\s/g, '-'));
   };
 
   return (
