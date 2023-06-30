@@ -22,6 +22,38 @@ function FFlagsList({ siteId }: { siteId: string }) {
       style={{ maxWidth: '1300px' }}
     >
       <FFlagsListHeader siteId={siteId} />
+      <div className={'border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4'}>
+        <div className={'flex items-center gap-2'}>
+          Status:
+          <Select
+            options={[
+              { label: 'All', value: '0' as const },
+              { label: 'Enabled', value: '1' as const },
+              { label: 'Disabled', value: '2' as const },
+            ]}
+            defaultValue={featureFlagsStore.activity}
+            plain
+            onChange={({ value }) => {
+              featureFlagsStore.setActivity(value.value);
+              void featureFlagsStore.fetchFlags();
+            }}
+          />
+        </div>
+        <div>
+          <Select
+            options={[
+              { label: 'Newest', value: 'DESC' },
+              { label: 'Oldest', value: 'ASC' },
+            ]}
+            defaultValue={featureFlagsStore.sort.order}
+            plain
+            onChange={({ value }) => {
+              featureFlagsStore.setSort({ query: '', order: value.value });
+              void featureFlagsStore.fetchFlags();
+            }}
+          />
+        </div>
+      </div>
       <Loader loading={featureFlagsStore.isLoading}>
         <div className="w-full h-full">
           <NoContent
@@ -45,38 +77,6 @@ function FFlagsList({ siteId }: { siteId: string }) {
             }
           >
             <div>
-              <div className={'border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4'}>
-                <div className={'flex items-center gap-2'}>
-                  Status:
-                  <Select
-                    options={[
-                      { label: 'All', value: '0' as const },
-                      { label: 'Enabled', value: '1' as const },
-                      { label: 'Disabled', value: '2' as const },
-                    ]}
-                    defaultValue={featureFlagsStore.activity}
-                    plain
-                    onChange={({ value }) => {
-                      featureFlagsStore.setActivity(value.value);
-                      void featureFlagsStore.fetchFlags();
-                    }}
-                  />
-                </div>
-                <div>
-                  <Select
-                    options={[
-                      { label: 'Newest', value: 'DESC' },
-                      { label: 'Oldest', value: 'ASC' },
-                    ]}
-                    defaultValue={featureFlagsStore.sort.order}
-                    plain
-                    onChange={({ value }) => {
-                      featureFlagsStore.setSort({ query: '', order: value.value });
-                      void featureFlagsStore.fetchFlags();
-                    }}
-                  />
-                </div>
-              </div>
               <div className={'flex items-center font-semibold border-b py-2 px-6'}>
                 <div style={{ flex: 1 }}>Key</div>
                 <div style={{ flex: 1 }}>Last modified</div>
