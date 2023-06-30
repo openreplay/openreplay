@@ -122,9 +122,8 @@ export default class FeatureFlagsStore {
     if (this.currentFflag) {
       this.setLoading(true);
       try {
-        // @ts-ignore
-        const result = await this.client.createFlag(this.currentFflag.toJS());
         this.currentFflag.setHasChanged(false)
+        const result = await this.client.createFlag(this.currentFflag.toJS());
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
         console.error(e);

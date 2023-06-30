@@ -4,11 +4,10 @@ type FFlagType = 'single' | 'multi';
 type FFlagCondition = {
   name: string;
   rolloutPercentage: number;
-  filters: [];
+  filters: any[];
 };
 
 export interface SimpleFlag {
-  name: string;
   flagKey: string;
   description: string;
   flagType: FFlagType;

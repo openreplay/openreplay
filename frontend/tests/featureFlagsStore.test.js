@@ -23,6 +23,9 @@ jest.mock('App/mstore/types/FeatureFlag', () => {
         constructor(data) {
             Object.assign(this, data);
         }
+        setHasChanged() {
+            return jest.fn(() => this)
+        }
 
         toJS() {
             return jest.fn(() => this)
@@ -48,7 +51,7 @@ describe('FeatureFlagsStore', () => {
         const mockFlag = { featureFlagId: 3 };
         mockFflagsService.createFlag.mockResolvedValueOnce(mockFlag);
         const store = new FeatureFlagsStore(mockFflagsService);
-        store.currentFflag = new FeatureFlag();
+        store.setCurrentFlag(new FeatureFlag())
 
         await store.createFlag();
 

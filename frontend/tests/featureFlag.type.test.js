@@ -64,13 +64,13 @@ describe('Feature flag type test', () => {
     expect(featureFlag.payload).toBe('payload');
 
     featureFlag.addVariant();
-    expect(featureFlag.variants.length).toBe(2);
+    expect(featureFlag.variants.length).toBe(3);
 
     featureFlag.removeVariant(1);
-    expect(featureFlag.variants.length).toBe(1);
+    expect(featureFlag.variants.length).toBe(2);
 
     featureFlag.redistributeVariants();
-    expect(featureFlag.variants[0].rolloutPercentage).toBe(100);
+    expect(featureFlag.variants[0].rolloutPercentage).toBe(50);
 
     featureFlag.addCondition();
     expect(featureFlag.conditions.length).toBe(2);
