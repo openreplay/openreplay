@@ -8,7 +8,7 @@ let debounceUpdate: any = () => {};
 
 function FFlagsSearch() {
   const { featureFlagsStore } = useStore();
-  const [query, setQuery] = useState(featureFlagsStore.flagsSearch);
+  const [query, setQuery] = useState(featureFlagsStore.sort.query);
 
   useEffect(() => {
     debounceUpdate = debounce(
