@@ -77,6 +77,7 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
           ) : null}
         </div>
         {readonly ? null : (
+          <div className={'px-2'}>
           <FilterSelection
             filter={undefined}
             onFilterClick={onAddFilter}
@@ -86,6 +87,7 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
               Add Condition
             </Button>
           </FilterSelection>
+          </div>
         )}
       </div>
       <div className={'px-4 py-2 flex items-center gap-2 border-t'}>
