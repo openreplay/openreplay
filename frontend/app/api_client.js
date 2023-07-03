@@ -28,7 +28,7 @@ const siteIdRequiredPaths = [
   '/unprocessed',
   '/notes',
   '/feature-flags',
-  // '/custom_metrics/sessions',
+  '/check-recording-status'
 ];
 
 const noStoringFetchPathStarts = [

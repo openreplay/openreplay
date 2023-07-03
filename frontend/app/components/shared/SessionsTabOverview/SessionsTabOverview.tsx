@@ -2,31 +2,42 @@ import React from 'react';
 import SessionList from './components/SessionList';
 import SessionHeader from './components/SessionHeader';
 import NotesList from './components/Notes/NoteList';
-import { connect } from 'react-redux';
+import { connect, DefaultRootState } from 'react-redux';
 import LatestSessionsMessage from './components/LatestSessionsMessage';
+import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
 
 function SessionsTabOverview({
-  activeTab,
-  members,
-}: {
+                               activeTab,
+                               members,
+                               sites,
+                               siteId
+                             }: {
   activeTab: string;
   members: object[];
+  sites: object[];
+  siteId: string;
 }) {
+  const activeSite: any = sites.find((s: any) => s.id === siteId);
+  const hasNoRecordings = !activeSite || !activeSite.recorded;
+
   return (
-    <div className="widget-wrapper">
+    <div className='widget-wrapper'>
       <SessionHeader />
-      <div className="border-b" />
+      <div className='border-b' />
       <LatestSessionsMessage />
-      {activeTab !== 'notes' ? <SessionList /> : <NotesList members={members} />}
+      {activeTab !== 'notes' ? <SessionList /> :
+        <NotesList members={members} />}
     </div>
   );
 }
 
 export default connect(
-    (state) => ({
+  (state: any) => ({
     // @ts-ignore
     activeTab: state.getIn(['search', 'activeTab', 'type']),
     // @ts-ignore
     members: state.getIn(['members', 'list']),
-  }),
+    siteId: state.getIn(['site', 'siteId']),
+    sites: state.getIn(['site', 'list'])
+  })
 )(SessionsTabOverview);

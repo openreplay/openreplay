@@ -78,4 +78,12 @@ export default class SettingsService {
       .then(j => j.data || [])
       .catch(Promise.reject)
   }
+
+  getRecordingStatus(): Promise<any> {
+    return this.client
+      .get('/check-recording-status')
+      .then(r => r.json())
+      .then(j => j.data || {})
+      .catch(Promise.reject)
+  }
 }
