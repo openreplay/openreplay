@@ -6,7 +6,7 @@ import (
 	"openreplay/backend/pkg/messages"
 )
 
-func getIssueScore(issueEvent *messages.IssueEvent) int {
+func GetIssueScore(issueEvent *messages.IssueEvent) int {
 	switch issueEvent.Type {
 	case "crash", "dead_click", "memory", "cpu":
 		return 1000

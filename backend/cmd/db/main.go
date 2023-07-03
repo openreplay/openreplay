@@ -35,11 +35,12 @@ func main() {
 	defer pgConn.Close()
 
 	// Init events module
-	pg := postgres.NewConn(pgConn, cfg.BatchQueueLimit, cfg.BatchSizeLimit)
+	pg := postgres.NewConn(pgConn)
 	defer pg.Close()
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessions.New(pgConn, projects.New(pgConn, nil)))
+	sessManager := sessions.New(pgConn, projects.New(pgConn, nil), nil)
+	saver := datasaver.New(cfg, pg, sessManager)
 
 	// Message filter
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
@@ -71,7 +72,7 @@ func main() {
 	}
 
 	// Run service and wait for TERM signal
-	service := db.New(cfg, consumer, saver, memoryManager)
+	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
 	log.Printf("Db service started\n")
 	terminator.Wait(service)
 }

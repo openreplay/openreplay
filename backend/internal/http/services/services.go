@@ -28,7 +28,7 @@ func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool) (*Services
 	projs := projects.New(pgconn, nil)
 	return &ServicesBuilder{
 		Projects:     projs,
-		Sessions:     sessions.New(pgconn, projs),
+		Sessions:     sessions.New(pgconn, projs, nil),
 		FeatureFlags: featureflags.New(pgconn),
 		Producer:     producer,
 		Tokenizer:    token.NewTokenizer(cfg.TokenSecret),

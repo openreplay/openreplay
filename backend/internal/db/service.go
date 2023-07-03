@@ -3,6 +3,7 @@ package db
 import (
 	"log"
 	"openreplay/backend/pkg/memory"
+	"openreplay/backend/pkg/sessions"
 	"time"
 
 	"openreplay/backend/internal/config/db"
@@ -16,23 +17,28 @@ type dbImpl struct {
 	consumer types.Consumer
 	saver    datasaver.Saver
 	mm       memory.Manager
+	sessions sessions.Sessions
 }
 
-func New(cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, mm memory.Manager) service.Interface {
+func New(cfg *db.Config, consumer types.Consumer, saver datasaver.Saver, mm memory.Manager, sessions sessions.Sessions) service.Interface {
 	s := &dbImpl{
 		cfg:      cfg,
 		consumer: consumer,
 		saver:    saver,
 		mm:       mm,
+		sessions: sessions,
 	}
 	go s.run()
 	return s
 }
 
 func (d *dbImpl) run() {
+	sessionsCommitTick := time.Tick(time.Second * 3)
 	commitTick := time.Tick(d.cfg.CommitBatchTimeout)
 	for {
 		select {
+		case <-sessionsCommitTick:
+			d.sessions.Commit()
 		case <-commitTick:
 			d.commit()
 		case msg := <-d.consumer.Rebalanced():

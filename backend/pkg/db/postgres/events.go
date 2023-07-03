@@ -80,7 +80,6 @@ func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEven
 	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
 		log.Printf("insert web issue event err: %s", err)
 	}
-	conn.updateSessionIssues(sess.SessionID, 0, getIssueScore(e))
 	if e.Type == "custom" {
 		if err := conn.bulks.Get("webCustomEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
 			log.Printf("insert web custom event err: %s", err)
@@ -114,8 +113,6 @@ func (conn *Conn) InsertWebPageEvent(sess *sessions.Session, e *messages.PageEve
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
-	// Accumulate session updates and exec inside batch with another sql commands
-	conn.updateSessionEvents(sess.SessionID, 1, 1)
 	// Add new value set to autocomplete bulk
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", url.DiscardURLQuery(path))
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
@@ -131,8 +128,6 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 	if err := conn.bulks.Get("webClickEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
-	// Accumulate session updates and exec inside batch with another sql commands
-	conn.updateSessionEvents(sess.SessionID, 1, 0)
 	// Add new value set to autocomplete bulk
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK", e.Label)
 	return nil
@@ -145,7 +140,6 @@ func (conn *Conn) InsertWebInputEvent(sess *sessions.Session, e *messages.InputE
 	if err := conn.bulks.Get("webInputEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
-	conn.updateSessionEvents(sess.SessionID, 1, 0)
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
 	return nil
 }
@@ -163,7 +157,6 @@ func (conn *Conn) InsertInputChangeEvent(sess *sessions.Session, e *messages.Inp
 	if err := conn.bulks.Get("webInputDurations").Append(sess.SessionID, truncSqIdx(e.ID), e.Timestamp, e.Label, e.HesitationTime, e.InputDuration); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
-	conn.updateSessionEvents(sess.SessionID, 1, 0)
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
 	return nil
 }
@@ -176,8 +169,6 @@ func (conn *Conn) InsertWebErrorEvent(sess *sessions.Session, e *types.ErrorEven
 	if err := conn.bulks.Get("webErrorEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID); err != nil {
 		log.Printf("insert web error event err: %s", err)
 	}
-	sess.ErrorsCount += 1 // TODO: why here?
-	conn.updateSessionIssues(sess.SessionID, 1, 1000)
 	for key, value := range e.Tags {
 		if err := conn.bulks.Get("webErrorTags").Append(sess.SessionID, truncSqIdx(e.MessageID), errorID, key, value); err != nil {
 			log.Printf("insert web error token err: %s", err)
@@ -223,7 +214,6 @@ func (conn *Conn) InsertMouseThrashing(sess *sessions.Session, e *messages.Mouse
 	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
 		log.Printf("insert web issue event err: %s", err)
 	}
-	conn.updateSessionIssues(sess.SessionID, 0, 50)
 	return nil
 }
 
@@ -252,9 +242,6 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
 		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
 	)
-
-	// Record approximate message size
-	conn.UpdateBatchSize(sessionID, len(sqlRequest)+8*15)
 	return nil
 }
 
@@ -287,8 +274,5 @@ func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error 
 		e.Duration != 0, 0,
 		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
 	)
-
-	// Record approximate message size
-	conn.UpdateBatchSize(sessionID, len(sqlRequest)+len(msgType)+len(e.URL)+len(host)+len(urlQuery)+8*9+1)
 	return nil
 }

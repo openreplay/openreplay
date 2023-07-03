@@ -40,7 +40,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	sessionsModule := sessions2.New(pgConn, projects.New(pgConn, nil))
+	sessionsModule := sessions2.New(pgConn, projects.New(pgConn, nil), nil)
 	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
