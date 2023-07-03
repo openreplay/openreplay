@@ -100,16 +100,19 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertWebClickEvent(session, m); err != nil {
 			return err
 		}
+		log.Printf("MouseClick event, sessID: %v, msg: %v", session.SessionID, m)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *InputEvent:
 		if err = s.pg.InsertWebInputEvent(session, m); err != nil {
 			return err
 		}
+		log.Printf("InputEvent event, sessID: %v, msg: %v", session.SessionID, m)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *PageEvent:
 		if err = s.pg.InsertWebPageEvent(session, m); err != nil {
 			return err
 		}
+		log.Printf("PageEvent event, sessID: %v, msg: %v", session.SessionID, m)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *NetworkRequest:
 		return s.pg.InsertWebNetworkRequest(session, m)
@@ -126,6 +129,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertInputChangeEvent(session, m); err != nil {
 			return err
 		}
+		log.Printf("InputChange event, sessID: %v, msg: %v", session.SessionID, m)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *MouseThrashing:
 		if err = s.pg.InsertMouseThrashing(session, m); err != nil {
