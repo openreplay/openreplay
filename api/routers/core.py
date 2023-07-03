@@ -844,6 +844,23 @@ async def delete_msteams_integration(webhookId: int, _=Body(None),
 
 @app.get('/{project_id}/check-recording-status', tags=["sessions"])
 async def check_recording_status(project_id: int):
+    """
+    Check the recording status and sessions count for a given project ID.
+
+    Args:
+        project_id (int): The ID of the project to check.
+
+    Returns:
+        dict: A dictionary containing the recording status and sessions count.
+              The dictionary has the following structure:
+              {
+                  "recording_status": int,   # The recording status:
+                                            # 0 - No sessions
+                                            # 1 - Processing
+                                            # 2 - Ready
+                  "sessions_count": int      # The total count of sessions
+              }
+    """
     return {"data": sessions.check_recording_status(project_id=project_id)}
 
 

@@ -1109,7 +1109,7 @@ def session_exists(project_id, session_id):
     return row is not None
 
 
-def check_recording_status(project_id: int) -> bool:
+def check_recording_status(project_id: int) -> dict:
     query = f"""
         WITH project_sessions AS (
             SELECT * FROM public.sessions WHERE project_id = %(project_id)s
@@ -1124,7 +1124,9 @@ def check_recording_status(project_id: int) -> bool:
                      (SELECT COUNT(*) FROM sessions_with_duration) = 0 THEN 1
                 WHEN (SELECT COUNT(*) FROM project_sessions) > 0 AND 
                      (SELECT COUNT(*) FROM sessions_with_duration) > 0 THEN 2
-                END AS recording_status;
+            END AS recording_status,
+            COUNT(*) AS sessions_count
+        FROM project_sessions;
     """
 
     with pg_client.PostgresClient() as cur:
@@ -1132,5 +1134,9 @@ def check_recording_status(project_id: int) -> bool:
         cur.execute(query)
         row = cur.fetchone()
 
-    return row["recording_status"]
+    return {
+        "recording_status": row["recording_status"],
+        "sessions_count": row["sessions_count"]
+    }
+
 
