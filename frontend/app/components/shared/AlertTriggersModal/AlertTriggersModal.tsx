@@ -58,7 +58,7 @@ function AlertTriggersModal(props: Props) {
                                 <AnimatedSVG name={ICONS.EMPTY_STATE} size="100" />
                             </div>
                         }
-                        subtext="There are no alerts to show."
+                        subtext="There are no alerts to show"
                         show={ !loading && list.length === 0 }
                         size="small"
                     >

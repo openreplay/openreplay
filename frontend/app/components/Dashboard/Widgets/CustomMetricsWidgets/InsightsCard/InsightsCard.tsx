@@ -61,7 +61,7 @@ function InsightsCard({ data }: any) {
       title={
         <div className="flex items-center">
           <Icon name="info-circle" className="mr-2" size="18" />
-          No data for selected period.
+          No data for selected period
         </div>
       }
       show={data.issues && data.issues.length === 0}

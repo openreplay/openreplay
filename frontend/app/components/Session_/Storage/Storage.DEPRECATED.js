@@ -265,7 +265,7 @@ export default class Storage extends React.PureComponent {
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
           <NoContent
-            title="Nothing to display yet."
+            title="Nothing to display yet"
             subtext={
               !hintIsHidden ? (
                 <>

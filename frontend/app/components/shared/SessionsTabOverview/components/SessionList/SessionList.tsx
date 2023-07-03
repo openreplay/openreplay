@@ -90,13 +90,13 @@ function SessionList(props: Props) {
       setNoContentType(NoContentType.Bookmarked);
       return {
         icon: ICONS.NO_BOOKMARKS,
-        message: 'No sessions bookmarked.'
+        message: 'No sessions bookmarked'
       };
     } else if (isVault) {
       setNoContentType(NoContentType.Vaulted);
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
-        message: 'No sessions found in vault.'
+        message: 'No sessions found in vault'
       };
     }
     setNoContentType(NoContentType.ToDate);

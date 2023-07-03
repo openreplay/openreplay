@@ -75,7 +75,7 @@ function Roles(props: Props) {
                         </div>
                     </div>
 
-                    <NoContent title="No roles are available." size="small" show={false}>
+                    <NoContent title="No roles are available" size="small" show={false}>
                         <div className={''}>
                             <div className={cn('flex items-start py-3 border-b px-5 pr-20 font-medium')}>
                                 <div className="" style={{ width: '20%' }}>

@@ -20,7 +20,7 @@ function DashboardList() {
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
           <div className="text-center mt-4">
-            {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet."}
+            {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet"}
           </div>
         </div>
       }

@@ -45,7 +45,7 @@ export default class FetchDetails extends React.PureComponent {
             title={
 				<div className="flex flex-col items-center justify-center">
 					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-					<div className="mt-4">Body is Empty.</div>
+					<div className="mt-4">Body is Empty</div>
 				</div>
 			}
             size="small"
@@ -69,7 +69,7 @@ export default class FetchDetails extends React.PureComponent {
             title={
 				<div className="flex flex-col items-center justify-center">
 					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-					<div className="mt-4">Body is Empty.</div>
+					<div className="mt-4">Body is Empty</div>
 				</div>
 			}
             size="small"

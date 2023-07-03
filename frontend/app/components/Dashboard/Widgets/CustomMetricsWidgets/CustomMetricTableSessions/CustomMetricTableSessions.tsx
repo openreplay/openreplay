@@ -29,7 +29,7 @@ function CustomMetricTableSessions(props: Props) {
           <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
           <div className="mt-4" />
           <div className="text-center">
-            No relevant sessions found for the selected time period.
+            No relevant sessions found for the selected time period
           </div>
         </div>
       }

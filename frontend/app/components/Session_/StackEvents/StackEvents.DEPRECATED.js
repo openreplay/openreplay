@@ -121,7 +121,7 @@ export default class StackEvents extends React.PureComponent {
           </BottomBlock.Header>
           <BottomBlock.Content>
             <NoContent
-              title="Nothing to display yet."
+              title="Nothing to display yet"
               subtext={
                 !hintIsHidden ? (
                   <>

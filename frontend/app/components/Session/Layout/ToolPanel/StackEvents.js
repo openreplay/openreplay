@@ -37,7 +37,7 @@ function StackEvents({
       </PanelLayout.Header>
       <PanelLayout.Body>
         <NoContent
-          title="Nothing to display yet."
+          title="Nothing to display yet"
           subtext={ !hintIsHidden
             ?
               <>

@@ -63,7 +63,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
                 <AnimatedSVG name={ICONS.NO_FFLAGS} size={285} />
                 <div className="text-center text-gray-600 mt-4">
                   {featureFlagsStore.sort.query === ''
-                    ? "You haven't created any feature flags yet."
+                    ? "You haven't created any feature flags yet"
                     : 'No matching results'}
                 </div>
               </div>
