@@ -66,7 +66,7 @@ async def main():
     for i in range(len(df)):
         user = df.iloc[i].name
         if user == '' or user == 'None' or user == 'NULL':
-            continue
+            user = 'NN'
         aux = [str(sess) for sess in df.iloc[i].session_id]
         all_ids += aux
         if len(aux) == 0:
@@ -83,7 +83,7 @@ async def main():
 
 
 cron_jobs = [
-    {"func": main, "trigger": IntervalTrigger(seconds=config('REPLACE_INTERVAL_USERID', default=60)), "misfire_grace_time": 60, "max_instances": 1},
+    {"func": main, "trigger": IntervalTrigger(seconds=config('REPLACE_INTERVAL_USERID', default=60, cast=int)), "misfire_grace_time": 60, "max_instances": 1},
 ]
 
 
