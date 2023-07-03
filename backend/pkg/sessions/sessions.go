@@ -21,7 +21,6 @@ type Sessions interface {
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
-	// Batched updates
 	UpdateUserID(sessionID uint64, userID string) error
 	UpdateAnonymousID(sessionID uint64, userAnonymousID string) error
 	UpdateReferrer(sessionID uint64, referrer string) error
@@ -337,8 +336,6 @@ func (s *sessionsImpl) Commit() {
 	for _, upd := range s.updates {
 		if str, args := upd.request(); str != "" {
 			b.Queue(str, args...)
-			// TEST
-			log.Printf("Session update: %v, %v \n", str, args)
 		}
 	}
 	// Record batch size
@@ -370,7 +367,7 @@ func (s *sessionsImpl) Commit() {
 		}
 	} else {
 		if l > 0 {
-			log.Printf("successfully committed %d session updates as a batch", len(s.updates))
+			log.Printf("successfully committed %d sessions updates as a batch", len(s.updates))
 		}
 	}
 	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
