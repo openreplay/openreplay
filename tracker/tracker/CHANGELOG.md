@@ -1,3 +1,8 @@
+# 9.0.0
+
+- Introduced Feature flags api
+- Fixed input durations recorded on programmable autofill
+
 # 8.1.1
 
 [collective patch]
