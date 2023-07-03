@@ -83,7 +83,7 @@ async def main():
 
 
 cron_jobs = [
-    {"func": main, "trigger": IntervalTrigger(seconds=15), "misfire_grace_time": 60, "max_instances": 1},
+    {"func": main, "trigger": IntervalTrigger(seconds=config('REPLACE_INTERVAL_USERID', default=60)), "misfire_grace_time": 60, "max_instances": 1},
 ]
 
 
