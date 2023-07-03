@@ -40,7 +40,7 @@ pdredshift.connect_to_redshift(dbname=cluster_info['DBNAME'],
 async def main():
     limit = config('FILL_QUERY_LIMIT', default=100, cast=int)
     t = time()
-    query = "SELECT sessionid FROM {table} WHERE user_id = 'NULL' LIMIT {limit}"
+    query = "SELECT sessionid FROM {table} WHERE user_id = 'NULL' ORDER BY session_start_timestamp ASC LIMIT {limit}"
     try:
         res = pdredshift.redshift_to_pandas(query.format(table=table, limit=limit))
     except Exception as e:
