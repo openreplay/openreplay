@@ -104,7 +104,7 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-message 21, 'NetworkRequest', :replayer => :devtools do
+message 21, 'NetworkRequestDeprecated', :replayer => :devtools do
   string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
   string 'Method'
   string 'URL'
@@ -444,6 +444,18 @@ end
 message 82, 'PartitionedMessage', :replayer => false do
   uint 'PartNo'
   uint 'PartTotal'
+end
+
+message 83, 'NetworkRequest', :replayer => :devtools do
+  string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
+  string 'Method'
+  string 'URL'
+  string 'Request'
+  string 'Response'
+  uint 'Status'
+  uint 'Timestamp'
+  uint 'Duration'
+  uint 'TransferredBodySize'
 end
 
 # 90-111 reserved iOS

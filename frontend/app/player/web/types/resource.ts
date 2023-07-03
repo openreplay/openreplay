@@ -3,6 +3,7 @@ import type { ResourceTiming, NetworkRequest, Fetch } from '../messages'
 export const enum ResourceType {
   XHR = 'xhr',
   FETCH = 'fetch',
+  BEACON = 'beacon',
   SCRIPT = 'script',
   CSS = 'css',
   IMG = 'img',
@@ -21,6 +22,8 @@ function getResourceType(initiator: string, url: string): ResourceType {
   case "xmlhttprequest":
   case "fetch":
       return ResourceType.FETCH
+  case "beacon":
+    return ResourceType.BEACON
   case "img":
     return ResourceType.IMG
   default:
@@ -104,7 +107,7 @@ export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch, sessS
   return Resource({
     ...msg,
     // @ts-ignore
-    type: msg?.type === "xhr" ? ResourceType.XHR : ResourceType.FETCH,
+    type: msg?.type ? msg?.type : ResourceType.XHR,
     success: msg.status < 400,
     status: String(msg.status),
     time: Math.max(0, msg.timestamp - sessStart),
