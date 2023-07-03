@@ -11,13 +11,13 @@ export const enum ResourceType {
   OTHER = 'other',
 }
 
-function getURLExtention(url: string): string {
+export function getURLExtention(url: string): string {
   const pts = url.split("?")[0].split(".")
   return pts[pts.length-1] || ""
 }
 
 // maybe move this thing to the tracker
-function getResourceType(initiator: string, url: string): ResourceType {
+export function getResourceType(initiator: string, url: string): ResourceType {
   switch (initiator) {
   case "xmlhttprequest":
   case "fetch":
@@ -51,7 +51,7 @@ function getResourceType(initiator: string, url: string): ResourceType {
   }
 }
 
-function getResourceName(url: string) {
+export function getResourceName(url: string) {
   return url
     .split('/')
     .filter((s) => s !== '')
@@ -111,7 +111,7 @@ export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch, sessS
     success: msg.status < 400,
     status: String(msg.status),
     time: Math.max(0, msg.timestamp - sessStart),
-    decodedBodySize: 'transferredBodySize' in msg ? msg.transferredBodySize : null
+    decodedBodySize: 'transferredBodySize' in msg ? msg.transferredBodySize : undefined
   })
 }
 
