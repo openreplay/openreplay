@@ -337,6 +337,8 @@ func (s *sessionsImpl) Commit() {
 	for _, upd := range s.updates {
 		if str, args := upd.request(); str != "" {
 			b.Queue(str, args...)
+			// TEST
+			log.Printf("Session update: %v, %v \n", str, args)
 		}
 	}
 	// Record batch size
@@ -367,7 +369,9 @@ func (s *sessionsImpl) Commit() {
 			}
 		}
 	} else {
-		log.Printf("successfully committed %d session updates as a batch", len(s.updates))
+		if l > 0 {
+			log.Printf("successfully committed %d session updates as a batch", len(s.updates))
+		}
 	}
 	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
 	s.updates = make(map[uint64]*sessionUpdates)
