@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
+
+var EmptyLabel = errors.New("empty label")
 
 func getAutocompleteType(baseType string, platform string) string {
 	if platform == "web" {
@@ -135,7 +138,7 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 
 func (conn *Conn) InsertWebInputEvent(sess *sessions.Session, e *messages.InputEvent) error {
 	if e.Label == "" {
-		return nil
+		return EmptyLabel
 	}
 	if err := conn.bulks.Get("webInputEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
