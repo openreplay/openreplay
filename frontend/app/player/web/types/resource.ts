@@ -111,6 +111,7 @@ export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch, sessS
     success: msg.status < 400,
     status: String(msg.status),
     time: Math.max(0, msg.timestamp - sessStart),
+    decodedBodySize: 'transferredBodySize' in msg ? msg.transferredBodySize : undefined
   })
 }
 
