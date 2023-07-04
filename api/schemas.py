@@ -1393,11 +1393,18 @@ class FeatureFlagVariant(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class FeatureFlagConditionFilterSchema(BaseModel):
+    is_event: bool = Field(False, const=False)
+    type: FilterType = Field(...)
+    value: List[str] = Field(default=[], min_items=1)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
+
+
 class FeatureFlagCondition(BaseModel):
     condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
-    filters: List[dict] = Field(default=[])
+    filters: List[FeatureFlagConditionFilterSchema] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case

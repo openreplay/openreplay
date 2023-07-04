@@ -38,7 +38,6 @@ def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) ->
 
 def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
     try:
-        print(f"feature_flag_id: {feature_flag_id}, is_active: {is_active}")
         with pg_client.PostgresClient() as cur:
             query = cur.mogrify(f"""UPDATE feature_flags
                                 SET is_active = %(is_active)s, updated_at=NOW()
@@ -234,7 +233,7 @@ def prepare_conditions_values(feature_flag_data):
             conditions_data[f"{k}_{i}"] = s.__getattribute__(k)
         conditions_data[f"name_{i}"] = s.name
         conditions_data[f"rollout_percentage_{i}"] = s.rollout_percentage
-        conditions_data[f"filters_{i}"] = json.dumps(s.filters)
+        conditions_data[f"filters_{i}"] = json.dumps([filter_.dict() for filter_ in s.filters])
     return conditions_data
 
 
