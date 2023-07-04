@@ -23,6 +23,12 @@ input.no-focus:focus {
   }
 }
 
-.border-b {
-    border-bottom: 1px solid #eee;
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button; /* 1 */
+  background-color: none; /* 2 */
+  background-image: none; /* 2 */
 }
