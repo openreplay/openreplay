@@ -53,6 +53,7 @@ func (d *dbImpl) run() {
 				log.Printf("saver.Close error: %s", err)
 			}
 			d.consumer.Close()
+			d.finished <- struct{}{}
 		default:
 			if !d.mm.HasFreeMemory() {
 				continue
