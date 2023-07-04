@@ -4,6 +4,7 @@ import (
 	"log"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/sessions"
@@ -39,7 +40,12 @@ func main() {
 	defer pg.Close()
 
 	// Init data saver
-	sessManager := sessions.New(pgConn, projects.New(pgConn, nil), nil)
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s, cache is disabled", err)
+	}
+	projManager := projects.New(pgConn, redisClient)
+	sessManager := sessions.New(pgConn, projManager, redisClient)
 	saver := datasaver.New(cfg, pg, sessManager)
 
 	// Message filter

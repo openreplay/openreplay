@@ -8,11 +8,11 @@ import (
 )
 
 type Client struct {
-	Cfg   *config.Config
+	Cfg   *config.Redis
 	Redis *redis.Client
 }
 
-func New(cfg *config.Config) (*Client, error) {
+func New(cfg *config.Redis) (*Client, error) {
 	if cfg == nil {
 		return nil, errors.New("redis config is nil")
 	}
