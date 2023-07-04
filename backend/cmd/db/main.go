@@ -75,4 +75,5 @@ func main() {
 	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
 	log.Printf("Db service started\n")
 	terminator.Wait(service)
+	log.Printf("Db service stopped\n")
 }

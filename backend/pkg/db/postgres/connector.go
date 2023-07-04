@@ -37,7 +37,6 @@ func NewConn(pool pool.Pool) *Conn {
 func (conn *Conn) Close() error {
 	conn.bulks.Stop()
 	conn.batches.Stop()
-	conn.Pool.Close()
 	return nil
 }
 
