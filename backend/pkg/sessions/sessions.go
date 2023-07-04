@@ -1,8 +1,9 @@
 package sessions
 
 import (
+	"errors"
+	"github.com/jackc/pgx/v4"
 	"log"
-	"openreplay/backend/pkg/db/postgres/batch"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/metrics/database"
@@ -50,11 +51,19 @@ func New(db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
 	return sessions
 }
 
+func (s *sessionsImpl) updateCache(session *Session) {
+	s.sessions.Set(session.SessionID, session)
+	if err := s.cache.Set(session); err != nil {
+		log.Printf("Failed to cache session in redis: %v", err)
+	}
+}
+
 // Add usage: /start endpoint in http service
 func (s *sessionsImpl) Add(session *Session) error {
-	if cachedSession, ok := s.sessions.GetAndRefresh(session.SessionID); ok {
+	if cachedSession, ok := s.sessions.Get(session.SessionID); ok {
 		log.Printf("[!] Session %d already exists in cache, new: %+v, cached: %+v", session.SessionID, session, cachedSession)
 	}
+
 	err := s.addSession(session)
 	if err != nil {
 		return err
@@ -64,7 +73,8 @@ func (s *sessionsImpl) Add(session *Session) error {
 		return err
 	}
 	session.SaveRequestPayload = proj.SaveRequestPayloads
-	s.sessions.Set(session.SessionID, session)
+
+	s.updateCache(session)
 	return nil
 }
 
@@ -89,14 +99,23 @@ func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 
 // Get usage: db message processor + connectors in feature
 func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
-	if sess, ok := s.sessions.GetAndRefresh(sessionID); ok {
+	// Check in-memory cache
+	if sess, ok := s.sessions.Get(sessionID); ok {
 		return sess.(*Session), nil
 	}
+
+	// Check redis cache and update in-memory cache
+	if sess, err := s.cache.Get(sessionID); err == nil {
+		s.sessions.Set(sessionID, sess)
+		return sess, nil
+	}
+
+	// Get from postgres and update in-memory and redis caches
 	session, err := s.getFromDB(sessionID)
 	if err != nil {
 		return nil, err
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return session, nil
 }
 
@@ -105,13 +124,13 @@ func (s *sessionsImpl) GetUpdated(sessionID uint64) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return session, nil
 }
 
 // GetDuration usage: in ender to check current and new duration to avoid duplicates
 func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
-	sess, ok := s.sessions.GetAndRefresh(sessionID)
+	sess, ok := s.sessions.Get(sessionID)
 	if ok {
 		session := sess.(*Session)
 		if session.Duration != nil {
@@ -123,7 +142,7 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 			}
 			if dur != 0 {
 				session.Duration = &dur
-				s.sessions.Set(session.SessionID, session)
+				s.updateCache(session)
 				return dur, nil
 			}
 			return 0, nil
@@ -133,7 +152,7 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	if session.Duration == nil {
 		return 0, nil
 	}
@@ -146,7 +165,7 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 	if err != nil {
 		return 0, err
 	}
-	rawSession, ok := s.sessions.GetAndRefresh(sessionID)
+	rawSession, ok := s.sessions.Get(sessionID)
 	if !ok {
 		rawSession, err = s.getFromDB(sessionID)
 		if err != nil {
@@ -155,7 +174,7 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 	}
 	session := rawSession.(*Session)
 	session.Duration = &newDuration
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return newDuration, nil
 }
 
@@ -167,7 +186,7 @@ func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
 	if sess, ok := s.sessions.Get(sessionID); ok {
 		session := sess.(*Session)
 		session.EncryptionKey = string(key)
-		s.sessions.Set(sessionID, session)
+		s.updateCache(session)
 		return nil
 	}
 	session, err := s.getFromDB(sessionID)
@@ -175,7 +194,7 @@ func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return nil
 }
 
@@ -195,7 +214,7 @@ func (s *sessionsImpl) _updateUserID(sessionID uint64, userID string) error {
 	if sess, ok := s.sessions.Get(sessionID); ok {
 		session := sess.(*Session)
 		session.UserID = &userID
-		s.sessions.Set(sessionID, session)
+		s.updateCache(session)
 		return nil
 	}
 	session, err := s.getFromDB(sessionID)
@@ -203,7 +222,7 @@ func (s *sessionsImpl) _updateUserID(sessionID uint64, userID string) error {
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return nil
 }
 
@@ -223,7 +242,7 @@ func (s *sessionsImpl) _updateAnonymousID(sessionID uint64, userAnonymousID stri
 	if sess, ok := s.sessions.Get(sessionID); ok {
 		session := sess.(*Session)
 		session.UserAnonymousID = &userAnonymousID
-		s.sessions.Set(sessionID, session)
+		s.updateCache(session)
 		return nil
 	}
 	session, err := s.getFromDB(sessionID)
@@ -231,7 +250,7 @@ func (s *sessionsImpl) _updateAnonymousID(sessionID uint64, userAnonymousID stri
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return nil
 }
 
@@ -257,7 +276,7 @@ func (s *sessionsImpl) _updateReferrer(sessionID uint64, referrer string) error 
 		session := sess.(*Session)
 		session.Referrer = &referrer
 		session.ReferrerBase = &baseReferrer
-		s.sessions.Set(sessionID, session)
+		s.updateCache(session)
 		return nil
 	}
 	session, err := s.getFromDB(sessionID)
@@ -265,7 +284,7 @@ func (s *sessionsImpl) _updateReferrer(sessionID uint64, referrer string) error 
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil
 	}
-	s.sessions.Set(session.SessionID, session)
+	s.updateCache(session)
 	return nil
 }
 
@@ -311,7 +330,7 @@ func (s *sessionsImpl) _updateMetadata(sessionID uint64, key, value string) erro
 		return err
 	}
 	session.SetMetadata(keyNo, value)
-	s.sessions.Set(sessionID, session)
+	s.updateCache(session)
 	return nil
 }
 
@@ -332,7 +351,7 @@ func (s *sessionsImpl) UpdateIssuesStats(sessionID uint64, errors, issueScore in
 }
 
 func (s *sessionsImpl) Commit() {
-	b := batch.NewSessionBatch()
+	b := &pgx.Batch{}
 	for _, upd := range s.updates {
 		if str, args := upd.request(); str != "" {
 			b.Queue(str, args...)
@@ -344,7 +363,7 @@ func (s *sessionsImpl) Commit() {
 	start := time.Now()
 
 	// Send batch to db and execute
-	br := s.db.SendBatch(b.Batch)
+	br := s.db.SendBatch(b)
 	l := b.Len()
 	failed := false
 	for i := 0; i < l; i++ {
@@ -365,11 +384,12 @@ func (s *sessionsImpl) Commit() {
 				}
 			}
 		}
-	} else {
-		if l > 0 {
-			log.Printf("successfully committed %d sessions updates as a batch", len(s.updates))
-		}
 	}
 	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
+	for sessID := range s.updates {
+		if err := s.cache.Delete(sessID); err != nil && !errors.Is(err, ErrDisabledCache) {
+			log.Printf("Error in cache.Delete(): %v \n", err)
+		}
+	}
 	s.updates = make(map[uint64]*sessionUpdates)
 }

@@ -43,12 +43,8 @@ func (c *projectsImpl) GetProject(projectID uint32) (*Project, error) {
 		return nil, err
 	}
 	c.projectsByID.Set(projectID, p)
-	if err := c.cache.Set(p); err != nil {
-		if errors.Is(err, ErrDisabledCache) {
-			//log.Printf("Failed to cache project: %v. Should ignore it in production", err)
-		} else {
-			log.Printf("Failed to cache project: %v", err)
-		}
+	if err = c.cache.Set(p); err != nil && !errors.Is(err, ErrDisabledCache) {
+		log.Printf("Failed to cache project: %v", err)
 	}
 	return p, nil
 }
@@ -65,12 +61,8 @@ func (c *projectsImpl) GetProjectByKey(projectKey string) (*Project, error) {
 		return nil, err
 	}
 	c.projectsByKeys.Set(projectKey, p)
-	if err := c.cache.Set(p); err != nil {
-		if errors.Is(err, ErrDisabledCache) {
-			//log.Printf("Failed to cache project: %v. Should ignore it in production", err)
-		} else {
-			log.Printf("Failed to cache project: %v", err)
-		}
+	if err := c.cache.Set(p); err != nil && !errors.Is(err, ErrDisabledCache) {
+		log.Printf("Failed to cache project: %v", err)
 	}
 	return p, nil
 }
