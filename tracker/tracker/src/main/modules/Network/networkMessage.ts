@@ -72,6 +72,7 @@ export default class NetworkMessage {
       messageInfo.status,
       this.startTime + getTimeOrigin(),
       this.duration,
+      this.responseSize,
     )
   }
 
