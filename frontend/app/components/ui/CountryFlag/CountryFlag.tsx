@@ -12,6 +12,7 @@ interface CountryFlagProps {
   style?: CSSProperties;
   width?: number;
   height?: number;
+  showLabel?: boolean;
 }
 
 
@@ -22,7 +23,8 @@ const CountryFlag: FC<CountryFlagProps> = ({
                                              className = '',
                                              style = {},
                                              width = 22,
-                                             height = 15
+                                             height = 15,
+                                             showLabel = false,
                                            }) => {
   const knownCountry = !!country && country !== 'UN';
   const countryFlag = knownCountry ? country.toLowerCase() : '';
@@ -54,14 +56,14 @@ const CountryFlag: FC<CountryFlagProps> = ({
       {knownCountry ? (
         <Tooltip title={fullGeoInfo} mouseEnterDelay={0.5}>
           <div
-            className={cn(`flag flag-${countryFlag}`, className)}
+            className={cn(`flag flag-${countryFlag} flex-shrink-0`, className)}
             style={{ width: `${width}px`, height: `${height}px` }}
           />
         </Tooltip>
       ) : (
         renderUnknownCountry
       )}
-      {renderGeoInfo}
+      {showLabel && renderGeoInfo}
     </div>
   );
 };
