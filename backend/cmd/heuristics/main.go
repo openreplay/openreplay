@@ -60,4 +60,5 @@ func main() {
 	service := heuristics.New(cfg, producer, consumer, eventBuilder, memoryManager)
 	log.Printf("Heuristics service started\n")
 	terminator.Wait(service)
+	log.Printf("Heuristics service stopped\n")
 }

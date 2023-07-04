@@ -20,6 +20,8 @@ type heuristicsImpl struct {
 	consumer types.Consumer
 	events   builders.EventBuilder
 	mm       memory.Manager
+	done     chan struct{}
+	finished chan struct{}
 }
 
 func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager) service.Interface {
@@ -29,6 +31,8 @@ func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.
 		consumer: c,
 		events:   e,
 		mm:       mm,
+		done:     make(chan struct{}),
+		finished: make(chan struct{}),
 	}
 	go s.run()
 	return s
@@ -49,6 +53,19 @@ func (h *heuristicsImpl) run() {
 			h.consumer.Commit()
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
+		case <-h.done:
+			// Stop event builder and flush all events
+			log.Println("stopping heuristics service")
+			h.events.Stop()
+			for evt := range h.events.Events() {
+				if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
+					log.Printf("can't send new event to queue: %s", err)
+				}
+			}
+			h.producer.Close(h.cfg.ProducerTimeout)
+			h.consumer.Commit()
+			h.consumer.Close()
+			h.finished <- struct{}{}
 		default:
 			if !h.mm.HasFreeMemory() {
 				continue
@@ -61,17 +78,8 @@ func (h *heuristicsImpl) run() {
 }
 
 func (h *heuristicsImpl) Stop() {
-	// Stop event builder and flush all events
-	log.Println("stopping heuristics service")
-	h.events.Stop()
-	for evt := range h.events.Events() {
-		if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
-			log.Printf("can't send new event to queue: %s", err)
-		}
-	}
-	h.producer.Close(h.cfg.ProducerTimeout)
-	h.consumer.Commit()
-	h.consumer.Close()
+	h.done <- struct{}{}
+	<-h.finished
 }
 
 func messageTypeName(msg messages.Message) string {
