@@ -30,7 +30,7 @@ func (i *inMemoryCacheImpl) Get(sessionID uint64) (*Session, error) {
 	if err == nil {
 		return session, nil
 	}
-	if !errors.Is(err, ErrDisabledCache) {
+	if !errors.Is(err, ErrDisabledCache) && err.Error() != "redis: nil" {
 		log.Printf("Failed to get session from cache: %v", err)
 	}
 	return nil, ErrSessionNotFound
