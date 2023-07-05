@@ -40,7 +40,7 @@ function SubHeader(props) {
             : currentLocation;
 
     const showReportModal = () => {
-        const { tabStates } = store.get();
+        const { tabStates, currentTab } = store.get();
         const resourceList = tabStates[currentTab]?.resourceList || [];
         const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
         const eventsList = tabStates[currentTab]?.eventList || [];
