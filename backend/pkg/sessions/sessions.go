@@ -34,16 +34,12 @@ type sessionsImpl struct {
 }
 
 func New(db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
-	sessions := &sessionsImpl{
-		cache:    NewInMemoryCache(),
+	return &sessionsImpl{
+		cache:    NewInMemoryCache(NewCache(redis)),
 		storage:  NewStorage(db),
 		updates:  NewSessionUpdates(db),
 		projects: proj,
 	}
-	if redis != nil {
-		sessions.cache = NewCache(redis)
-	}
-	return sessions
 }
 
 // Add usage: /start endpoint in http service

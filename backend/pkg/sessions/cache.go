@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"errors"
+	"log"
 	"openreplay/backend/pkg/cache"
 	"time"
 )
@@ -10,23 +11,34 @@ var ErrSessionNotFound = errors.New("session not found")
 
 type inMemoryCacheImpl struct {
 	sessions cache.Cache
+	redis    Cache
 }
 
 func (i *inMemoryCacheImpl) Set(session *Session) error {
 	i.sessions.Set(session.SessionID, session)
+	if err := i.redis.Set(session); err != nil && !errors.Is(err, ErrDisabledCache) {
+		log.Printf("Failed to cache session: %v", err)
+	}
 	return nil
 }
 
 func (i *inMemoryCacheImpl) Get(sessionID uint64) (*Session, error) {
-	session, ok := i.sessions.Get(sessionID)
-	if !ok {
-		return nil, ErrSessionNotFound
+	if session, ok := i.sessions.Get(sessionID); ok {
+		return session.(*Session), nil
 	}
-	return session.(*Session), nil
+	session, err := i.redis.Get(sessionID)
+	if err == nil {
+		return session, nil
+	}
+	if !errors.Is(err, ErrDisabledCache) {
+		log.Printf("Failed to get session from cache: %v", err)
+	}
+	return nil, ErrSessionNotFound
 }
 
-func NewInMemoryCache() Cache {
+func NewInMemoryCache(redisCache Cache) Cache {
 	return &inMemoryCacheImpl{
-		sessions: cache.New(time.Minute*5, time.Minute*3),
+		sessions: cache.New(time.Minute*3, time.Minute*5),
+		redis:    redisCache,
 	}
 }

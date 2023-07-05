@@ -16,6 +16,9 @@ func New(cfg *config.Redis) (*Client, error) {
 	if cfg == nil {
 		return nil, errors.New("redis config is nil")
 	}
+	if !cfg.UseRedisCache {
+		return nil, errors.New("redis cache is disabled")
+	}
 	if cfg.ConnectionURL == "" {
 		return nil, errors.New("redis connection url is empty")
 	}

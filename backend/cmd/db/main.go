@@ -39,10 +39,13 @@ func main() {
 	pg := postgres.NewConn(pgConn)
 	defer pg.Close()
 
+	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
-		log.Printf("can't init redis connection: %s, cache is disabled", err)
+		log.Printf("can't init redis connection: %s", err)
 	}
+	defer redisClient.Close()
+
 	projManager := projects.New(pgConn, redisClient)
 	sessManager := sessions.New(pgConn, projManager, redisClient)
 

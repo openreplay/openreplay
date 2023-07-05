@@ -8,4 +8,5 @@ type Redis struct {
 	ReadCount         int64         `env:"REDIS_STREAMS_READ_COUNT,default=1"`
 	ReadBlockDuration time.Duration `env:"REDIS_STREAMS_READ_BLOCK_DURATION,default=200ms"`
 	CloseTimeout      time.Duration `env:"REDIS_STREAMS_CLOSE_TIMEOUT,default=5s"`
+	UseRedisCache     bool          `env:"REDIS_CACHE_ENABLED,default=true"` // TODO: disable by default
 }
