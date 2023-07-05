@@ -39,13 +39,14 @@ func main() {
 	pg := postgres.NewConn(pgConn)
 	defer pg.Close()
 
-	// Init data saver
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
 		log.Printf("can't init redis connection: %s, cache is disabled", err)
 	}
 	projManager := projects.New(pgConn, redisClient)
 	sessManager := sessions.New(pgConn, projManager, redisClient)
+
+	// Init data saver
 	saver := datasaver.New(cfg, pg, sessManager)
 
 	// Message filter

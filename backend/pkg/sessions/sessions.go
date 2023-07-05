@@ -50,9 +50,6 @@ func New(db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
 func (s *sessionsImpl) Add(session *Session) error {
 	if cachedSession, err := s.cache.Get(session.SessionID); err == nil {
 		log.Printf("[!] Session %d already exists in cache, new: %+v, cached: %+v", session.SessionID, session, cachedSession)
-	} else {
-		// TODO: delete this log after testing
-		log.Printf("get session from cache failed: %v", err)
 	}
 	err := s.storage.Add(session)
 	if err != nil {

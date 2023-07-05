@@ -31,7 +31,6 @@ func New(cfg *config.Redis) (*Client, error) {
 	if _, err := client.Ping().Result(); err != nil {
 		return nil, err
 	}
-	// TODO: init client values
 	return &Client{
 		Cfg:   cfg,
 		Redis: client,

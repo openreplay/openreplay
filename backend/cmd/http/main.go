@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,8 +39,13 @@ func main() {
 	}
 	defer pgConn.Close()
 
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s, cache is disabled", err)
+	}
+
 	// Build all services
-	services, err := services.New(cfg, producer, pgConn)
+	services, err := services.New(cfg, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatalf("failed while creating services: %s", err)
 	}
