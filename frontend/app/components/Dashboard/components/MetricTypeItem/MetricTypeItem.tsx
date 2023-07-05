@@ -16,29 +16,36 @@ export interface MetricType {
 interface Props {
   metric: MetricType;
   onClick?: any;
+  isList?: boolean;
 }
 
 function MetricTypeItem(props: Props) {
   const {
     metric: { title, icon, description, slug, disabled },
-    onClick = () => {},
+    onClick = () => {
+    },
+    isList = false
   } = props;
   return (
     <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED} delay={0}>
       <div
         className={cn(
-          'rounded color-gray-darkest flex items-start border border-transparent p-4 hover:bg-active-blue cursor-pointer group hover-color-teal',
-          { 'opacity-30 pointer-events-none': disabled }
+          'rounded color-gray-darkest flex border border-transparent p-4 hover:bg-active-blue cursor-pointer group gap-4',
+          {
+            'opacity-30 pointer-events-none': disabled,
+            'flex-col items-center gap-4 text-center': !isList,
+            'items-start': isList
+          }
         )}
         onClick={onClick}
       >
-        <div className="pr-4 pt-1">
+        <div className=''>
           {/* @ts-ignore */}
-          <Icon name={icon} size="20" color="gray-dark" />
+          <Icon name={icon} size='40' color='gray-dark' />
         </div>
-        <div className="flex flex-col items-start text-left">
-          <div className="text-base">{title}</div>
-          <div className="text-sm color-gray-medium font-normal">{description}</div>
+        <div className={cn('flex flex-col text-left', { 'items-center text-center': !isList })}>
+          <div className='text-base'>{title}</div>
+          <div className='text-sm color-gray-medium font-normal'>{description}</div>
         </div>
       </div>
     </Tooltip>

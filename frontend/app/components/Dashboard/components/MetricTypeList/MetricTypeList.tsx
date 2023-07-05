@@ -13,10 +13,11 @@ interface Props extends RouteComponentProps {
   dashboardId?: number;
   siteId: string;
   isEnterprise: boolean;
+  isList?: boolean;
 }
 
 function MetricTypeList(props: Props) {
-  const { dashboardId, siteId, history, isEnterprise } = props;
+  const { dashboardId, siteId, history, isEnterprise, isList = false } = props;
   const { metricStore } = useStore();
   const { showModal, hideModal } = useModal();
 
@@ -25,6 +26,7 @@ function MetricTypeList(props: Props) {
       const disabled = metric.slug === INSIGHTS && !isEnterprise;
       return {
         ...metric,
+        icon: `db-icons/icn-card-${metric.slug}`,
         disabled: metric.slug === INSIGHTS && !isEnterprise,
         tooltipTitle: disabled ? ENTERPRISE_REQUEIRED : ''
       };
@@ -59,7 +61,7 @@ function MetricTypeList(props: Props) {
   return (
     <>
       {list.map((metric: MetricType) => (
-        <MetricTypeItem metric={metric} onClick={() => onClick(metric)} />
+        <MetricTypeItem metric={metric} onClick={() => onClick(metric)} isList={isList} />
       ))}
     </>
   );
