@@ -4,9 +4,33 @@ import (
 	"fmt"
 	"github.com/jackc/pgtype"
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
 )
 
-func (s *sessionsImpl) addSession(sess *Session) error {
+type Storage interface {
+	Add(sess *Session) error
+	AddUnStarted(sess *UnStartedSession) error
+	Get(sessionID uint64) (*Session, error)
+	GetDuration(sessionID uint64) (uint64, error)
+	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
+	InsertEncryptionKey(sessionID uint64, key []byte) error
+	InsertUserID(sessionID uint64, userID string) error
+	InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error
+	InsertReferrer(sessionID uint64, referrer, baseReferrer string) error
+	InsertMetadata(sessionID uint64, keyNo uint, value string) error
+}
+
+type storageImpl struct {
+	db pool.Pool
+}
+
+func NewStorage(db pool.Pool) Storage {
+	return &storageImpl{
+		db: db,
+	}
+}
+
+func (s *storageImpl) Add(sess *Session) error {
 	return s.db.Exec(`
 		INSERT INTO sessions (
 			session_id, project_id, start_ts,
@@ -38,7 +62,7 @@ func (s *sessionsImpl) addSession(sess *Session) error {
 	)
 }
 
-func (s *sessionsImpl) addUnStarted(sess *UnStartedSession) error {
+func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
 	return s.db.Exec(`
 		INSERT INTO unstarted_sessions (
 			project_id, 
@@ -67,7 +91,7 @@ func (s *sessionsImpl) addUnStarted(sess *UnStartedSession) error {
 	)
 }
 
-func (s *sessionsImpl) getSession(sessionID uint64) (*Session, error) {
+func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	sess := &Session{SessionID: sessionID}
 	var revID, userOSVersion, userBrowserVersion, userState, userCity *string
 	var issueTypes pgtype.EnumArray
@@ -119,7 +143,7 @@ func (s *sessionsImpl) getSession(sessionID uint64) (*Session, error) {
 	return sess, nil
 }
 
-func (s *sessionsImpl) getSessionDuration(sessionID uint64) (uint64, error) {
+func (s *storageImpl) GetDuration(sessionID uint64) (uint64, error) {
 	var dur uint64
 	if err := s.db.QueryRow("SELECT COALESCE( duration, 0 ) FROM sessions WHERE session_id=$1", sessionID).Scan(&dur); err != nil {
 		return 0, err
@@ -127,7 +151,7 @@ func (s *sessionsImpl) getSessionDuration(sessionID uint64) (uint64, error) {
 	return dur, nil
 }
 
-func (s *sessionsImpl) insertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
+func (s *storageImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
 	var dur uint64
 	if err := s.db.QueryRow(`
 		UPDATE sessions SET duration=$2 - start_ts
@@ -141,7 +165,7 @@ func (s *sessionsImpl) insertSessionEnd(sessionID uint64, timestamp uint64) (uin
 	return dur, nil
 }
 
-func (s *sessionsImpl) insertSessionEncryptionKey(sessionID uint64, key []byte) error {
+func (s *storageImpl) InsertEncryptionKey(sessionID uint64, key []byte) error {
 	sqlRequest := `
 		UPDATE sessions 
 		SET file_key = $2 
@@ -149,7 +173,7 @@ func (s *sessionsImpl) insertSessionEncryptionKey(sessionID uint64, key []byte) 
 	return s.db.Exec(sqlRequest, sessionID, string(key))
 }
 
-func (s *sessionsImpl) insertUserID(sessionID uint64, userID string) error {
+func (s *storageImpl) InsertUserID(sessionID uint64, userID string) error {
 	sqlRequest := `
 		UPDATE sessions 
 		SET user_id = LEFT($1, 8000) 
@@ -157,7 +181,7 @@ func (s *sessionsImpl) insertUserID(sessionID uint64, userID string) error {
 	return s.db.Exec(sqlRequest, userID, sessionID)
 }
 
-func (s *sessionsImpl) insertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
+func (s *storageImpl) InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
 	sqlRequest := `
 		UPDATE sessions 
 		SET user_anonymous_id = LEFT($1, 8000) 
@@ -165,7 +189,7 @@ func (s *sessionsImpl) insertUserAnonymousID(sessionID uint64, userAnonymousID s
 	return s.db.Exec(sqlRequest, userAnonymousID, sessionID)
 }
 
-func (s *sessionsImpl) insertReferrer(sessionID uint64, referrer, baseReferrer string) error {
+func (s *storageImpl) InsertReferrer(sessionID uint64, referrer, baseReferrer string) error {
 	sqlRequest := `
 		UPDATE sessions 
 		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000) 
@@ -173,7 +197,7 @@ func (s *sessionsImpl) insertReferrer(sessionID uint64, referrer, baseReferrer s
 	return s.db.Exec(sqlRequest, referrer, baseReferrer, sessionID)
 }
 
-func (s *sessionsImpl) insertMetadata(sessionID uint64, keyNo uint, value string) error {
+func (s *storageImpl) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
 	sqlRequest := `
 		UPDATE sessions 
 		SET metadata_%v = LEFT($1, 8000) 

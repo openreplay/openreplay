@@ -2,9 +2,119 @@ package sessions
 
 import (
 	"fmt"
+	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"time"
+
+	"github.com/jackc/pgx/v4"
+
+	"openreplay/backend/pkg/metrics/database"
 )
 
-type sessionUpdates struct {
+type Updates interface {
+	AddUserID(sessionID uint64, userID string)
+	AddAnonID(sessionID uint64, userID string)
+	SetReferrer(sessionID uint64, referrer, baseReferrer string)
+	SetMetadata(sessionID uint64, keyNo uint, value string)
+	AddEvents(sessionID uint64, pages, events int)
+	AddIssues(sessionID uint64, errors, issues int)
+	Commit()
+}
+
+type updatesImpl struct {
+	db      pool.Pool
+	updates map[uint64]*sessionUpdate
+}
+
+func NewSessionUpdates(db pool.Pool) Updates {
+	return &updatesImpl{
+		db:      db,
+		updates: make(map[uint64]*sessionUpdate),
+	}
+}
+
+func (u *updatesImpl) AddUserID(sessionID uint64, userID string) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].setUserID(userID)
+}
+
+func (u *updatesImpl) AddAnonID(sessionID uint64, userID string) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].setUserID(userID)
+}
+
+func (u *updatesImpl) SetReferrer(sessionID uint64, referrer, baseReferrer string) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].setReferrer(referrer, baseReferrer)
+}
+
+func (u *updatesImpl) SetMetadata(sessionID uint64, keyNo uint, value string) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].setMetadata(keyNo, value)
+}
+
+func (u *updatesImpl) AddEvents(sessionID uint64, pages, events int) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].addEvents(pages, events)
+}
+
+func (u *updatesImpl) AddIssues(sessionID uint64, errors, issues int) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].addIssues(errors, issues)
+}
+
+func (u *updatesImpl) Commit() {
+	b := &pgx.Batch{}
+	for _, upd := range u.updates {
+		if str, args := upd.request(); str != "" {
+			b.Queue(str, args...)
+		}
+	}
+	// Record batch size
+	database.RecordBatchElements(float64(b.Len()))
+
+	start := time.Now()
+
+	// Send batch to db and execute
+	br := u.db.SendBatch(b)
+	l := b.Len()
+	failed := false
+	for i := 0; i < l; i++ {
+		if _, err := br.Exec(); err != nil {
+			log.Printf("Error in PG batch.Exec(): %v \n", err)
+			failed = true
+			break
+		}
+	}
+	if err := br.Close(); err != nil {
+		log.Printf("Error in PG batch.Close(): %v \n", err)
+	}
+	if failed {
+		for _, upd := range u.updates {
+			if str, args := upd.request(); str != "" {
+				if err := u.db.Exec(str, args...); err != nil {
+					log.Printf("Error in PG Exec(): %v \n", err)
+				}
+			}
+		}
+	}
+	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
+	u.updates = make(map[uint64]*sessionUpdate)
+}
+
+type sessionUpdate struct {
 	sessionID    uint64
 	userID       *string
 	anonID       *string
@@ -17,8 +127,8 @@ type sessionUpdates struct {
 	issues       int
 }
 
-func NewSessionUpdates(sessionID uint64) *sessionUpdates {
-	return &sessionUpdates{
+func NewSessionUpdate(sessionID uint64) *sessionUpdate {
+	return &sessionUpdate{
 		sessionID: sessionID,
 		pages:     0,
 		events:    0,
@@ -28,34 +138,34 @@ func NewSessionUpdates(sessionID uint64) *sessionUpdates {
 	}
 }
 
-func (su *sessionUpdates) setUserID(userID string) {
+func (su *sessionUpdate) setUserID(userID string) {
 	su.userID = &userID
 }
 
-func (su *sessionUpdates) setAnonID(anonID string) {
+func (su *sessionUpdate) setAnonID(anonID string) {
 	su.anonID = &anonID
 }
 
-func (su *sessionUpdates) setReferrer(referrer, baseReferrer string) {
+func (su *sessionUpdate) setReferrer(referrer, baseReferrer string) {
 	su.referrer = &referrer
 	su.baseReferrer = &baseReferrer
 }
 
-func (su *sessionUpdates) setMetadata(keyNo uint, value string) {
+func (su *sessionUpdate) setMetadata(keyNo uint, value string) {
 	su.metadata[keyNo] = value
 }
 
-func (su *sessionUpdates) addEvents(pages, events int) {
+func (su *sessionUpdate) addEvents(pages, events int) {
 	su.pages += pages
 	su.events += events
 }
 
-func (su *sessionUpdates) addIssues(errors, issues int) {
+func (su *sessionUpdate) addIssues(errors, issues int) {
 	su.errors += errors
 	su.issues += issues
 }
 
-func (su *sessionUpdates) request() (string, []interface{}) {
+func (su *sessionUpdate) request() (string, []interface{}) {
 	sqlReq := "UPDATE sessions SET"
 	sqlArgs := make([]interface{}, 0)
 	varsCounter := 0

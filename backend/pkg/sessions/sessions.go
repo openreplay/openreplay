@@ -1,13 +1,10 @@
 package sessions
 
 import (
-	"github.com/jackc/pgx/v4"
 	"log"
+
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/metrics/database"
-	"time"
-
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
 )
@@ -30,18 +27,18 @@ type Sessions interface {
 }
 
 type sessionsImpl struct {
-	db       pool.Pool         // pg connection
-	cache    Cache             // in-memory or redis cache
-	projects projects.Projects // projects module
-	updates  map[uint64]*sessionUpdates
+	cache    Cache
+	storage  Storage
+	updates  Updates
+	projects projects.Projects
 }
 
 func New(db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
 	sessions := &sessionsImpl{
-		db:       db,
 		cache:    NewInMemoryCache(),
+		storage:  NewStorage(db),
+		updates:  NewSessionUpdates(db),
 		projects: proj,
-		updates:  make(map[uint64]*sessionUpdates),
 	}
 	if redis != nil {
 		sessions.cache = NewCache(redis)
@@ -54,7 +51,7 @@ func (s *sessionsImpl) Add(session *Session) error {
 	if cachedSession, err := s.cache.Get(session.SessionID); err != nil {
 		log.Printf("[!] Session %d already exists in cache, new: %+v, cached: %+v", session.SessionID, session, cachedSession)
 	}
-	err := s.addSession(session)
+	err := s.storage.Add(session)
 	if err != nil {
 		return err
 	}
@@ -71,11 +68,11 @@ func (s *sessionsImpl) Add(session *Session) error {
 
 // AddUnStarted usage: /not-started endpoint in http service
 func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
-	return s.addUnStarted(sess)
+	return s.storage.AddUnStarted(sess)
 }
 
 func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
-	session, err := s.getSession(sessionID)
+	session, err := s.storage.Get(sessionID)
 	if err != nil {
 		log.Printf("Failed to get session from postgres: %v", err)
 		return nil, err
@@ -138,7 +135,7 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 
 // UpdateDuration usage: in ender to update session duration
 func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error) {
-	newDuration, err := s.insertSessionEnd(sessionID, timestamp)
+	newDuration, err := s.storage.UpdateDuration(sessionID, timestamp)
 	if err != nil {
 		return 0, err
 	}
@@ -159,7 +156,7 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 
 // UpdateEncryptionKey usage: in ender to update session encryption key if encryption is enabled
 func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
-	if err := s.insertSessionEncryptionKey(sessionID, key); err != nil {
+	if err := s.storage.InsertEncryptionKey(sessionID, key); err != nil {
 		return err
 	}
 	if session, err := s.cache.Get(sessionID); err != nil {
@@ -182,15 +179,12 @@ func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
 
 // UpdateUserID usage: in db handler
 func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].setUserID(userID)
+	s.updates.AddUserID(sessionID, userID)
 	return nil
 }
 
 func (s *sessionsImpl) _updateUserID(sessionID uint64, userID string) error {
-	if err := s.insertUserID(sessionID, userID); err != nil {
+	if err := s.storage.InsertUserID(sessionID, userID); err != nil {
 		return err
 	}
 	if session, err := s.cache.Get(sessionID); err != nil {
@@ -213,15 +207,12 @@ func (s *sessionsImpl) _updateUserID(sessionID uint64, userID string) error {
 
 // UpdateAnonymousID usage: in db handler
 func (s *sessionsImpl) UpdateAnonymousID(sessionID uint64, userAnonymousID string) error {
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].setAnonID(userAnonymousID)
+	s.updates.AddUserID(sessionID, userAnonymousID)
 	return nil
 }
 
 func (s *sessionsImpl) _updateAnonymousID(sessionID uint64, userAnonymousID string) error {
-	if err := s.insertUserAnonymousID(sessionID, userAnonymousID); err != nil {
+	if err := s.storage.InsertUserAnonymousID(sessionID, userAnonymousID); err != nil {
 		return err
 	}
 	if session, err := s.cache.Get(sessionID); err != nil {
@@ -248,16 +239,13 @@ func (s *sessionsImpl) UpdateReferrer(sessionID uint64, referrer string) error {
 		return nil
 	}
 	baseReferrer := url.DiscardURLQuery(referrer)
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].setReferrer(referrer, baseReferrer)
+	s.updates.SetReferrer(sessionID, referrer, baseReferrer)
 	return nil
 }
 
 func (s *sessionsImpl) _updateReferrer(sessionID uint64, referrer string) error {
 	baseReferrer := url.DiscardURLQuery(referrer)
-	if err := s.insertReferrer(sessionID, referrer, baseReferrer); err != nil {
+	if err := s.storage.InsertReferrer(sessionID, referrer, baseReferrer); err != nil {
 		return err
 	}
 	if session, err := s.cache.Get(sessionID); err != nil {
@@ -295,10 +283,7 @@ func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error
 		return nil
 	}
 
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].setMetadata(keyNo, value)
+	s.updates.SetMetadata(sessionID, keyNo, value)
 	return nil
 }
 
@@ -317,7 +302,7 @@ func (s *sessionsImpl) _updateMetadata(sessionID uint64, key, value string) erro
 		return nil
 	}
 
-	if err := s.insertMetadata(sessionID, keyNo, value); err != nil {
+	if err := s.storage.InsertMetadata(sessionID, keyNo, value); err != nil {
 		return err
 	}
 	session.SetMetadata(keyNo, value)
@@ -328,56 +313,15 @@ func (s *sessionsImpl) _updateMetadata(sessionID uint64, key, value string) erro
 }
 
 func (s *sessionsImpl) UpdateEventsStats(sessionID uint64, events, pages int) error {
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].addEvents(pages, events)
+	s.updates.AddEvents(sessionID, events, pages)
 	return nil
 }
 
 func (s *sessionsImpl) UpdateIssuesStats(sessionID uint64, errors, issueScore int) error {
-	if _, ok := s.updates[sessionID]; !ok {
-		s.updates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	s.updates[sessionID].addIssues(errors, issueScore)
+	s.updates.AddIssues(sessionID, errors, issueScore)
 	return nil
 }
 
 func (s *sessionsImpl) Commit() {
-	b := &pgx.Batch{}
-	for _, upd := range s.updates {
-		if str, args := upd.request(); str != "" {
-			b.Queue(str, args...)
-		}
-	}
-	// Record batch size
-	database.RecordBatchElements(float64(b.Len()))
-
-	start := time.Now()
-
-	// Send batch to db and execute
-	br := s.db.SendBatch(b)
-	l := b.Len()
-	failed := false
-	for i := 0; i < l; i++ {
-		if _, err := br.Exec(); err != nil {
-			log.Printf("Error in PG batch.Exec(): %v \n", err)
-			failed = true
-			break
-		}
-	}
-	if err := br.Close(); err != nil {
-		log.Printf("Error in PG batch.Close(): %v \n", err)
-	}
-	if failed {
-		for _, upd := range s.updates {
-			if str, args := upd.request(); str != "" {
-				if err := s.db.Exec(str, args...); err != nil {
-					log.Printf("Error in PG Exec(): %v \n", err)
-				}
-			}
-		}
-	}
-	database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
-	s.updates = make(map[uint64]*sessionUpdates)
+	s.updates.Commit()
 }
