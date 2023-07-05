@@ -394,8 +394,6 @@ class WorkerPool:
 
             # Hand tasks to workers
             async_results = list()
-            # for params in kafka_task_params:
-            #     async_results.append(self.pool.apply_async(work_assigner, args=[params]))
             for params in decoding_params:
                 if params['message']:
                     async_results.append(self.pool.apply_async(work_assigner, args=[params]))

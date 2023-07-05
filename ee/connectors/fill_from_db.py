@@ -5,7 +5,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from utils import pg_client
 from decouple import config, Choices
 import asyncio
-from time import time
+from time import time, sleep
 
 
 DATABASE = config('CLOUD_SERVICE')
@@ -29,23 +29,61 @@ else:
     for _d in ci:
         k,v = _d.split('=')
         cluster_info[k]=v
-pdredshift.connect_to_redshift(dbname=cluster_info['DBNAME'],
+
+class RDSHFT:
+    def __init__(self):
+        self.pdredshift = pdredshift
+        self.pdredshift.connect_to_redshift(dbname=cluster_info['DBNAME'],
                                     host=cluster_info['HOST'],
                                     port=cluster_info['PORT'],
                                     user=cluster_info['USER'],
                                     password=cluster_info['PASSWORD'],
                                     sslmode=sslmode)
 
+    def restart(self):
+        self.close()
+        self.__init__()
+
+    def redshift_to_pandas(self, query):
+        return self.pdredshift.redshift_to_pandas(query)
+
+    def exec_commit(self, base_query):
+        try:
+            self.pdredshift.exec_commit(base_query)
+        except Exception as e:
+            print('[FILL Exception]', repr(e))
+            self.pdredshift.connect.rollback()
+            raise
+
+    def close(self):
+        self.pdredshift.close_up_shop()
+
+
+api = RDSHFT()
+
+
+def try_method(f, params, on_exeption=None, _try=0):
+    try:
+        res = f(params)
+        return res
+    except Exception as e:
+        if _try > 3:
+            if on_exeption is None:
+                return
+            on_exeption.close()
+        else:
+            print('[FILL Exception]', repr(e), 'retrying..')
+            sleep(1)
+            return try_method(f=f, params=params, on_exeption=on_exeption, _try=_try+1)
+    return
+
+
 
 async def main():
     limit = config('FILL_QUERY_LIMIT', default=100, cast=int)
     t = time()
     query = "SELECT sessionid FROM {table} WHERE user_id = 'NULL' ORDER BY session_start_timestamp ASC LIMIT {limit}"
-    try:
-        res = pdredshift.redshift_to_pandas(query.format(table=table, limit=limit))
-    except Exception as e:
-        print('[FILL Exception RDSHFT]',repr(e), 'while get user_id=NULL')
-        res = list()
+    res = api.redshift_to_pandas(query.format(table=table, limit=limit))
     if res is None:
         return
     elif len(res) == 0:
@@ -75,10 +113,7 @@ async def main():
     base_query += f"\nEND WHERE sessionid IN ({','.join(all_ids)})"
     if len(all_ids) == 0:
         return
-    try:
-        pdredshift.exec_commit(base_query)
-    except Exception as e:
-        print('[FILL Exception RDSHFT]',repr(e), 'while replacing')
+    api.exec_commit(base_query)
     print(f'[FILL-INFO] {time()-t} - for {len(sessionids)} elements')
 
 
