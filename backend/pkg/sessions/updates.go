@@ -16,7 +16,7 @@ type Updates interface {
 	AddAnonID(sessionID uint64, userID string)
 	SetReferrer(sessionID uint64, referrer, baseReferrer string)
 	SetMetadata(sessionID uint64, keyNo uint, value string)
-	AddEvents(sessionID uint64, pages, events int)
+	AddEvents(sessionID uint64, events, pages int)
 	AddIssues(sessionID uint64, errors, issues int)
 	Commit()
 }
@@ -61,11 +61,11 @@ func (u *updatesImpl) SetMetadata(sessionID uint64, keyNo uint, value string) {
 	u.updates[sessionID].setMetadata(keyNo, value)
 }
 
-func (u *updatesImpl) AddEvents(sessionID uint64, pages, events int) {
+func (u *updatesImpl) AddEvents(sessionID uint64, events, pages int) {
 	if u.updates[sessionID] == nil {
 		u.updates[sessionID] = NewSessionUpdate(sessionID)
 	}
-	u.updates[sessionID].addEvents(pages, events)
+	u.updates[sessionID].addEvents(events, pages)
 }
 
 func (u *updatesImpl) AddIssues(sessionID uint64, errors, issues int) {
@@ -155,9 +155,9 @@ func (su *sessionUpdate) setMetadata(keyNo uint, value string) {
 	su.metadata[keyNo] = value
 }
 
-func (su *sessionUpdate) addEvents(pages, events int) {
-	su.pages += pages
+func (su *sessionUpdate) addEvents(events, pages int) {
 	su.events += events
+	su.pages += pages
 }
 
 func (su *sessionUpdate) addIssues(errors, issues int) {
