@@ -49,8 +49,8 @@ export type Options = Partial<
   sessionToken?: string
   respectDoNotTrack?: boolean
   autoResetOnWindowOpen?: boolean
-  network?: NetworkOptions
-  mouse?: MouseHandlerOptions
+  network?: Partial<NetworkOptions>
+  mouse?: Partial<MouseHandlerOptions>
   flags?: {
     onFlagsLoad?: (flags: IFeatureFlag[]) => void
   }
