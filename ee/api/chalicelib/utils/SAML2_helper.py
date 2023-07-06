@@ -70,36 +70,16 @@ else:
 
 
 def init_saml_auth(req):
-    # auth = OneLogin_Saml2_Auth(req, custom_base_path=environ['SAML_PATH'])
-    print("--------------------")
-    print(dir(req))
-    print("--------------------")
     if idp is None:
         raise Exception("No SAML2 config provided")
     return OneLogin_Saml2_Auth(req, old_settings=SAML2)
 
 
 async def prepare_request(request: Request):
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    print(SAML2)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
-    print(dir(request))
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
-    print(request.url)
-    print(request.url.port)
-    print(request.url.path)
-    # print(request.base_url)
-    # print(request.base_url.path)
-    # print(request.base_url.port)
-    if request.url.port is None:
-        # request.url.port = 443
-        request.url.__setattr__("port",443)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
         cookie.load(cookie_str)

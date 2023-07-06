@@ -32,8 +32,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                              VALUES ((SELECT user_id FROM u), %(invitation_token)s, timezone('utc'::text, now()))
                              RETURNING invitation_token
                             )
-                    SELECT u.user_id                                              AS id,
-                           u.user_id,
+                    SELECT u.user_id,
                            u.email,
                            u.role,
                            u.name,
@@ -44,7 +43,6 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            au.invitation_token,
                            u.role_id,
                            roles.name AS role_name,
-                           roles.permissions,
                            TRUE AS has_password
                     FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id =  (SELECT u.role_id FROM u);""",
                             {"tenant_id": tenant_id, "email": email,
@@ -62,24 +60,23 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH u AS (UPDATE public.users
-                                    SET name= %(name)s,
-                                        role = %(role)s,
-                                        deleted_at= NULL,
-                                        created_at = timezone('utc'::text, now()),
-                                        tenant_id= %(tenant_id)s,
-                                        api_key= generate_api_key(20),
-                                        role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
-                                WHERE user_id=%(user_id)s
-                                RETURNING 
-                                       tenant_id,
-                                       user_id AS id,
-                                       user_id,
-                                       email,
-                                       role,
-                                       name,
-                                       created_at,role_id),
+                               SET name= %(name)s,
+                                   role = %(role)s,
+                                   deleted_at= NULL,
+                                   created_at = timezone('utc'::text, now()),
+                                   tenant_id= %(tenant_id)s,
+                                   api_key= generate_api_key(20),
+                                   role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                           (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                           (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
+                               WHERE user_id=%(user_id)s
+                               RETURNING 
+                                   tenant_id,
+                                   user_id,
+                                   email,
+                                   role,
+                                   name,
+                                   created_at,role_id),
                          au AS (UPDATE public.basic_authentication
                                 SET invitation_token = %(invitation_token)s,
                                     invited_at = timezone('utc'::text, now()),
@@ -87,8 +84,7 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                                     change_pwd_token = NULL
                                 WHERE user_id=%(user_id)s
                                 RETURNING invitation_token)
-                    SELECT u.id,
-                           u.user_id,
+                    SELECT u.user_id,
                            u.email,
                            u.role,
                            u.name,
@@ -99,7 +95,6 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                            au.invitation_token,
                            u.role_id,
                            roles.name AS role_name,
-                           roles.permissions,
                            TRUE AS has_password
                     FROM au,u LEFT JOIN roles USING(tenant_id) 
                     WHERE roles.role_id IS NULL OR roles.role_id = (SELECT u.role_id FROM u);""",
@@ -173,7 +168,7 @@ def update(tenant_id, user_id, changes, output=True):
                             WHERE users.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s
                               AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id AS id,
+                            RETURNING users.user_id,
                                 users.email,
                                 users.role,
                                 users.name,
@@ -418,30 +413,6 @@ def get_by_email_only(email):
     return helper.dict_to_camel_case(r)
 
 
-def get_by_email_reset(email, reset_token):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT 
-                        users.user_id AS id,
-                        users.tenant_id,
-                        users.email, 
-                        users.role, 
-                        users.name,
-                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                    WHERE
-                     users.email = %(email)s
-                     AND basic_authentication.token =%(token)s                   
-                     AND users.deleted_at IS NULL""",
-                {"email": email, "token": reset_token})
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
-
-
 def get_member(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -680,7 +651,7 @@ def change_jwt_iat(user_id):
         return cur.fetchone().get("jwt_iat")
 
 
-def authenticate(email, password, for_change_password=False):
+def authenticate(email, password, for_change_password=False) -> dict | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 

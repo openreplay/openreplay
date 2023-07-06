@@ -20,7 +20,7 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
         if config("enforce_SSO", cast=bool, default=False) and not a_user["superAdmin"] and helper.is_saml2_available():
             return {"errors": ["Please use your SSO to login, enforced by admin"]}
         # ----------
-        invitation_link = users.generate_new_invitation(user_id=a_user["id"])
+        invitation_link = users.generate_new_invitation(user_id=a_user["userId"])
         email_helper.send_forgot_password(recipient=data.email, invitation_link=invitation_link)
     else:
         print(f"!!!invalid email address [{data.email}]")

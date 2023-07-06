@@ -29,7 +29,6 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
                              RETURNING invitation_token
                             )
                     SELECT u.user_id,
-                           u.user_id                                              AS id,
                            u.email,
                            u.role,
                            u.name,
@@ -52,6 +51,13 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
 def restore_member(user_id, email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
+                    WITH ua AS (UPDATE public.basic_authentication
+                                SET invitation_token = %(invitation_token)s,
+                                    invited_at = timezone('utc'::text, now()),
+                                    change_pwd_expire_at = NULL,
+                                    change_pwd_token = NULL
+                                WHERE user_id=%(user_id)s
+                                RETURNING invitation_token)
                     UPDATE public.users
                     SET name= %(name)s,
                         role = %(role)s,
@@ -59,32 +65,24 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
                         created_at = timezone('utc'::text, now()),
                         api_key= generate_api_key(20)
                     WHERE user_id=%(user_id)s
-                    RETURNING user_id                                           AS id,
+                    RETURNING 
+                           user_id,
                            email,
                            role,
                            name,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           created_at;""",
+                           created_at,
+                           (SELECT invitation_token FROM ua) AS invitation_token;""",
                             {"user_id": user_id, "email": email,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name})
+                             "role": "owner" if owner else "admin" if admin else "member",
+                             "name": name, "invitation_token": invitation_token})
         cur.execute(query)
         result = cur.fetchone()
-        query = cur.mogrify("""\
-                    UPDATE public.basic_authentication
-                    SET invitation_token = %(invitation_token)s,
-                        invited_at = timezone('utc'::text, now()),
-                        change_pwd_expire_at = NULL,
-                        change_pwd_token = NULL
-                    WHERE user_id=%(user_id)s
-                    RETURNING invitation_token;""",
-                            {"user_id": user_id, "invitation_token": invitation_token})
         cur.execute(query)
-        result["invitation_token"] = cur.fetchone()["invitation_token"]
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
-
-        return helper.dict_to_camel_case(result)
+    return helper.dict_to_camel_case(result)
 
 
 def generate_new_invitation(user_id):
@@ -141,7 +139,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.basic_authentication
                             WHERE users.user_id = %(user_id)s
                               AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id AS id,
+                            RETURNING users.user_id,
                                 users.email,
                                 users.role,
                                 users.name,
@@ -158,7 +156,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.users AS users
                             WHERE basic_authentication.user_id = %(user_id)s
                               AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id AS id,
+                            RETURNING users.user_id,
                                 users.email,
                                 users.role,
                                 users.name,
@@ -328,7 +326,7 @@ def get_by_email_only(email):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         1 AS tenant_id,
                         users.email, 
                         users.role, 
@@ -342,30 +340,6 @@ def get_by_email_only(email):
                      AND users.deleted_at IS NULL
                     LIMIT 1;""",
                 {"email": email})
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
-
-
-def get_by_email_reset(email, reset_token):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT 
-                        users.user_id AS id,
-                        1 AS tenant_id,
-                        users.email, 
-                        users.role, 
-                        users.name,
-                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                    WHERE
-                     users.email = %(email)s
-                     AND basic_authentication.token =%(token)s                   
-                     AND users.deleted_at IS NULL""",
-                {"email": email, "token": reset_token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
@@ -568,8 +542,12 @@ def get_by_invitation_token(token, pass_token=None):
 def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(
-                f"SELECT user_id AS id,jwt_iat, changed_at FROM public.users INNER JOIN public.basic_authentication USING(user_id) WHERE user_id = %(userId)s AND deleted_at IS NULL LIMIT 1;",
+            cur.mogrify(f"""SELECT user_id,jwt_iat, changed_at 
+                            FROM public.users 
+                                INNER JOIN public.basic_authentication USING(user_id) 
+                            WHERE user_id = %(userId)s 
+                                AND deleted_at IS NULL 
+                            LIMIT 1;""",
                 {"userId": user_id})
         )
         r = cur.fetchone()
@@ -584,17 +562,16 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
 
 def change_jwt_iat(user_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""UPDATE public.users
-                       SET jwt_iat = timezone('utc'::text, now())
-                       WHERE user_id = %(user_id)s 
-                       RETURNING jwt_iat;""",
+        query = cur.mogrify(f"""UPDATE public.users
+                                SET jwt_iat = timezone('utc'::text, now())
+                                WHERE user_id = %(user_id)s 
+                                RETURNING jwt_iat;""",
             {"user_id": user_id})
         cur.execute(query)
         return cur.fetchone().get("jwt_iat")
 
 
-def authenticate(email, password, for_change_password=False):
+def authenticate(email, password, for_change_password=False) -> dict | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
