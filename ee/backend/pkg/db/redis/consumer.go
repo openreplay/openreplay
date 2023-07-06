@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis"
 	"log"
 	"net"
+	redis2 "openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 	"sort"
@@ -20,7 +21,7 @@ type idsInfo struct {
 type streamPendingIDsMap map[string]*idsInfo
 
 type consumerImpl struct {
-	client     *Client
+	client     *redis2.Client
 	group      string
 	streams    []string
 	idsPending streamPendingIDsMap
@@ -44,7 +45,7 @@ func (c *consumerImpl) Close() {
 	panic("implement me")
 }
 
-func NewConsumer(client *Client, group string, streams []string) types.Consumer {
+func NewConsumer(client *redis2.Client, group string, streams []string) types.Consumer {
 	idsPending := make(streamPendingIDsMap)
 	streamsCount := len(streams)
 	for i := 0; i < streamsCount; i++ {

@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type Cache interface {
+	Set(session *Session) error
+	Get(sessionID uint64) (*Session, error)
+}
+
 var ErrSessionNotFound = errors.New("session not found")
 
 type inMemoryCacheImpl struct {

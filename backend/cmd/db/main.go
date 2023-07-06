@@ -2,20 +2,19 @@ package main
 
 import (
 	"log"
+	config "openreplay/backend/internal/config/db"
+	"openreplay/backend/internal/db"
+	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/memory"
-	"openreplay/backend/pkg/projects"
-	"openreplay/backend/pkg/sessions"
-
-	config "openreplay/backend/internal/config/db"
-	"openreplay/backend/internal/db"
-	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/terminator"
 )
 
