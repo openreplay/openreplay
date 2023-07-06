@@ -47,6 +47,13 @@ CREATE TABLE IF NOT EXISTS public.feature_flags_conditions
     filters            jsonb   NOT NULL DEFAULT '[]'::jsonb
 );
 
+CREATE TABLE IF NOT EXISTS public.sessions_feature_flags
+(
+    session_id      bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    feature_flag_id integer NOT NULL REFERENCES feature_flags (feature_flag_id) ON DELETE CASCADE,
+    condition_id    integer NULL REFERENCES feature_flags_conditions (condition_id) ON DELETE SET NULL
+);
+
 UPDATE public.roles
 SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{FEATURE_FLAGS}') AS e)
 where not permissions @> '{FEATURE_FLAGS}';
