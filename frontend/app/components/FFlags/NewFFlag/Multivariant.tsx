@@ -78,9 +78,10 @@ function Multivariant() {
                 <Input
                   placeholder={`buy-btn-variant-${ind + 1}`}
                   value={variant.value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    if (e.target.value?.length > 25) return;
                     variant.setKey(e.target.value)
-                  }
+                  }}
                 />
               </div>
               <div style={{ flex: 4 }}>

@@ -103,6 +103,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           placeholder={'new-unique-key'}
           value={current.flagKey}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.value?.length > 60) return;
             current.setFlagKey(e.target.value.replace(/\s/g, '-'));
           }}
         />
