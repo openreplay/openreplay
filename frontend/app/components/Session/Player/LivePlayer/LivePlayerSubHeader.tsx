@@ -8,9 +8,8 @@ function SubHeader() {
   const { store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
 
-  const location = currentLocation.length > 70
-        ? `${currentLocation.slice(0, 70)}...`
-        : currentLocation;
+  const location =
+    currentLocation.length > 70 ? `${currentLocation.slice(0, 70)}...` : currentLocation;
 
   return (
     <>

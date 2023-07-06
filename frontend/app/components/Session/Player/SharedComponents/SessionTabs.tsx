@@ -1,11 +1,12 @@
 import React from 'react';
+import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Tab from './Tab';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { useModal } from 'Components/Modal';
 
 interface Props {
-  tabs: { tab: string, idx: number}[];
+  tabs: { tab: string; idx: number }[];
   currentTab: string;
   changeTab: (tab: string) => void;
   hideModal: () => void;
@@ -38,13 +39,18 @@ function SessionTabs() {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
   const { tabs = new Set('back-compat'), currentTab } = store.get();
+
   const tabsArr = Array.from(tabs).map((tab, idx) => ({ tab, idx }));
   const shouldTruncate = tabsArr.length > 10;
   const actualTabs = shouldTruncate ? tabsArr.slice(0, 10) : tabsArr;
 
-  const shownTabs = actualTabs.findIndex(el => el.tab === currentTab) !== -1
-    ? actualTabs
-    : actualTabs.concat({ tab: currentTab, idx: tabsArr.findIndex(tEl => tEl.tab === currentTab) });
+  const shownTabs =
+    actualTabs.findIndex((el) => el.tab === currentTab) !== -1
+      ? actualTabs
+      : actualTabs.concat({
+          tab: currentTab,
+          idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
+        });
   const changeTab = (tab: string) => {
     player.changeTab(tab);
   };
@@ -89,4 +95,4 @@ function SessionTabs() {
   );
 }
 
-export default SessionTabs;
+export default observer(SessionTabs);
