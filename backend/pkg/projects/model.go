@@ -1,4 +1,4 @@
-package types
+package projects
 
 import "log"
 

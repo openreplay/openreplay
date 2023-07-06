@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,8 +12,6 @@ import (
 	"openreplay/backend/internal/http/router"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/internal/http/services"
-	"openreplay/backend/pkg/db/cache"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	httpMetrics "openreplay/backend/pkg/metrics/http"
@@ -31,12 +31,23 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	// Connect to database
-	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpiration)
-	defer dbConn.Close()
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
+
+	// Init redis connection
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
 
 	// Build all services
-	services, err := services.New(cfg, producer, dbConn)
+	services, err := services.New(cfg, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatalf("failed while creating services: %s", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"openreplay/backend/pkg/featureflags"
+	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"time"
 
@@ -102,7 +103,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
+	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			ResponseWithError(w, http.StatusNotFound,
@@ -165,7 +166,28 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Save sessionStart to db
-		if err := e.services.Database.InsertWebSessionStart(sessionID, sessionStart, geoInfo); err != nil {
+		if err := e.services.Sessions.Add(&sessions.Session{
+			SessionID:            sessionID,
+			Platform:             "web",
+			Timestamp:            sessionStart.Timestamp,
+			ProjectID:            uint32(sessionStart.ProjectID),
+			TrackerVersion:       sessionStart.TrackerVersion,
+			RevID:                sessionStart.RevID,
+			UserUUID:             sessionStart.UserUUID,
+			UserOS:               sessionStart.UserOS,
+			UserOSVersion:        sessionStart.UserOSVersion,
+			UserDevice:           sessionStart.UserDevice,
+			UserCountry:          geoInfo.Country,
+			UserState:            geoInfo.State,
+			UserCity:             geoInfo.City,
+			UserAgent:            sessionStart.UserAgent,
+			UserBrowser:          sessionStart.UserBrowser,
+			UserBrowserVersion:   sessionStart.UserBrowserVersion,
+			UserDeviceType:       sessionStart.UserDeviceType,
+			UserDeviceMemorySize: sessionStart.UserDeviceMemorySize,
+			UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
+			UserID:               &sessionStart.UserID,
+		}); err != nil {
 			log.Printf("can't insert session start: %s", err)
 		}
 
@@ -268,7 +290,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	geoInfo := e.ExtractGeoData(r)
-	err = e.services.Database.InsertUnstartedSession(postgres.UnstartedSession{
+	err = e.services.Sessions.AddUnStarted(&sessions.UnStartedSession{
 		ProjectKey:         *req.ProjectKey,
 		TrackerVersion:     req.TrackerVersion,
 		DoNotTrack:         req.DoNotTrack,
@@ -324,23 +346,12 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Grab flags and conditions for project
-	projectID, err := strconv.ParseUint(req.ProjectID, 10, 32)
-	if err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	flags, err := e.services.Database.GetFeatureFlags(uint32(projectID))
+	computedFlags, err := e.services.FeatureFlags.ComputeFlagsForSession(req)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	computedFlags, err := featureflags.ComputeFeatureFlags(flags, req)
-	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 	resp := &featureflags.FeatureFlagsResponse{
 		Flags: computedFlags,
 	}

@@ -1,15 +1,16 @@
 package datasaver
 
 import (
+	"errors"
 	"log"
 
 	"openreplay/backend/internal/config/db"
-	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 	queue "openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 )
 
 type Saver interface {
@@ -20,13 +21,18 @@ type Saver interface {
 
 type saverImpl struct {
 	cfg      *db.Config
-	pg       *cache.PGCache
+	pg       *postgres.Conn
+	sessions sessions.Sessions
 	ch       clickhouse.Connector
 	producer queue.Producer
 }
 
-func New(cfg *db.Config, pg *cache.PGCache) Saver {
-	s := &saverImpl{cfg: cfg, pg: pg}
+func New(cfg *db.Config, pg *postgres.Conn, session sessions.Sessions) Saver {
+	s := &saverImpl{
+		cfg:      cfg,
+		pg:       pg,
+		sessions: session,
+	}
 	s.init()
 	return s
 }
@@ -48,11 +54,22 @@ func (s *saverImpl) Handle(msg Message) {
 }
 
 func (s *saverImpl) handleMessage(msg Message) error {
+	session, err := s.sessions.Get(msg.SessionID())
+	if err != nil {
+		return err
+	}
 	switch m := msg.(type) {
+	case *SessionStart:
+		return s.pg.HandleStartEvent(m)
+	case *SessionEnd:
+		return s.pg.HandleEndEvent(m.SessionID())
 	case *Metadata:
-		return s.pg.InsertMetadata(m)
+		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
-		return s.pg.InsertIssueEvent(m)
+		if err = s.pg.InsertIssueEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m))
 	case *CustomIssue:
 		ie := &IssueEvent{
 			Type:          "custom",
@@ -62,35 +79,63 @@ func (s *saverImpl) handleMessage(msg Message) error {
 			Payload:       m.Payload,
 		}
 		ie.SetMeta(m.Meta())
-		return s.pg.InsertIssueEvent(ie)
-	case *SessionStart:
-		return s.pg.HandleWebSessionStart(m)
-	case *SessionEnd:
-		return s.pg.HandleWebSessionEnd(m)
+		if err = s.pg.InsertIssueEvent(session, ie); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(ie))
 	case *UserID:
-		return s.pg.InsertWebUserID(m)
+		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID", m.ID)
+		return nil
 	case *UserAnonymousID:
-		return s.pg.InsertWebUserAnonymousID(m)
+		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID", m.ID)
+		return nil
 	case *CustomEvent:
-		return s.pg.InsertWebCustomEvent(m)
+		return s.pg.InsertWebCustomEvent(session, m)
 	case *MouseClick:
-		return s.pg.InsertWebClickEvent(m)
+		if err = s.pg.InsertWebClickEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *InputEvent:
-		return s.pg.InsertWebInputEvent(m)
+		if err = s.pg.InsertWebInputEvent(session, m); err != nil {
+			if errors.Is(err, postgres.EmptyLabel) {
+				return nil
+			}
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *PageEvent:
-		return s.pg.InsertWebPageEvent(m)
+		if err = s.pg.InsertWebPageEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *NetworkRequest:
-		return s.pg.InsertWebNetworkRequest(m)
+		return s.pg.InsertWebNetworkRequest(session, m)
 	case *GraphQL:
-		return s.pg.InsertWebGraphQL(m)
+		return s.pg.InsertWebGraphQL(session, m)
 	case *JSException:
-		return s.pg.InsertWebJSException(m)
+		if err = s.pg.InsertWebErrorEvent(session, types.WrapJSException(m)); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, 1000)
 	case *IntegrationEvent:
-		return s.pg.InsertWebIntegrationEvent(m)
+		return s.pg.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *InputChange:
-		return s.pg.InsertWebInputDuration(m)
+		if err = s.pg.InsertInputChangeEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *MouseThrashing:
-		return s.pg.InsertMouseThrashing(m)
+		if err = s.pg.InsertMouseThrashing(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, 50)
 	}
 	return nil
 }

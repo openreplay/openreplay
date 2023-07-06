@@ -5,19 +5,6 @@ import (
 	"openreplay/backend/pkg/metrics/common"
 )
 
-var dbBatchSize = prometheus.NewHistogram(
-	prometheus.HistogramOpts{
-		Namespace: "db",
-		Name:      "batch_size_bytes",
-		Help:      "A histogram displaying the batch size in bytes.",
-		Buckets:   common.DefaultSizeBuckets,
-	},
-)
-
-func RecordBatchSize(size float64) {
-	dbBatchSize.Observe(size)
-}
-
 var dbBatchElements = prometheus.NewHistogram(
 	prometheus.HistogramOpts{
 		Namespace: "db",
@@ -115,7 +102,6 @@ func IncreaseTotalRequests(method, table string) {
 
 func List() []prometheus.Collector {
 	return []prometheus.Collector{
-		dbBatchSize,
 		dbBatchElements,
 		dbBatchInsertDuration,
 		dbBulkSize,

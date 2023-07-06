@@ -1,8 +1,9 @@
-package postgres
+package pool
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -72,9 +73,13 @@ func (p *poolImpl) Close() {
 	p.conn.Close()
 }
 
-func NewPool(conn *pgxpool.Pool) (Pool, error) {
-	if conn == nil {
-		return nil, errors.New("conn is empty")
+func New(url string) (Pool, error) {
+	if url == "" {
+		return nil, errors.New("pg connection url is empty")
+	}
+	conn, err := pgxpool.Connect(context.Background(), url)
+	if err != nil {
+		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
 	return &poolImpl{
 		conn: conn,

@@ -2,29 +2,28 @@ package clientManager
 
 import (
 	"openreplay/backend/internal/integrations/integration"
+	"openreplay/backend/pkg/integrations"
 	"strconv"
-
-	"openreplay/backend/pkg/db/postgres"
 )
 
 type manager struct {
 	clientMap          integration.ClientMap
 	Events             chan *integration.SessionErrorEvent
 	Errors             chan error
-	RequestDataUpdates chan postgres.Integration // not pointer because it could change in other thread
+	RequestDataUpdates chan integrations.Integration // not pointer because it could change in other thread
 }
 
 func NewManager() *manager {
 	return &manager{
 		clientMap:          make(integration.ClientMap),
-		RequestDataUpdates: make(chan postgres.Integration, 100),
+		RequestDataUpdates: make(chan integrations.Integration, 100),
 		Events:             make(chan *integration.SessionErrorEvent, 100),
 		Errors:             make(chan error, 100),
 	}
 
 }
 
-func (m *manager) Update(i *postgres.Integration) error {
+func (m *manager) Update(i *integrations.Integration) error {
 	key := strconv.Itoa(int(i.ProjectID)) + i.Provider
 	if i.Options == nil {
 		delete(m.clientMap, key)

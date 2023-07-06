@@ -1,12 +1,8 @@
-package postgres
+package projects
 
-import (
-	. "openreplay/backend/pkg/db/types"
-)
-
-func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
+func (c *projectsImpl) getProjectByKey(projectKey string) (*Project, error) {
 	p := &Project{ProjectKey: projectKey}
-	if err := conn.c.QueryRow(`
+	if err := c.db.QueryRow(`
 		SELECT max_session_duration, sample_rate, project_id, beacon_size
 		FROM projects
 		WHERE project_key=$1 AND active = true
@@ -18,10 +14,9 @@ func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
 	return p, nil
 }
 
-// TODO: logical separation of metadata
-func (conn *Conn) GetProject(projectID uint32) (*Project, error) {
+func (c *projectsImpl) getProject(projectID uint32) (*Project, error) {
 	p := &Project{ProjectID: projectID}
-	if err := conn.c.QueryRow(`
+	if err := c.db.QueryRow(`
 		SELECT project_key, max_session_duration, save_request_payloads,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10

@@ -4,6 +4,7 @@ import (
 	"log"
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/heuristics"
+	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/web"
@@ -12,7 +13,6 @@ import (
 	"openreplay/backend/pkg/metrics"
 	heuristicsMetrics "openreplay/backend/pkg/metrics/heuristics"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/terminator"
 )
 
@@ -37,7 +37,7 @@ func main() {
 		}
 	}
 
-	eventBuilder := sessions.NewBuilderMap(handlersFabric)
+	eventBuilder := builders.NewBuilderMap(handlersFabric)
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewConsumer(
 		cfg.GroupHeuristics,
@@ -60,4 +60,5 @@ func main() {
 	service := heuristics.New(cfg, producer, consumer, eventBuilder, memoryManager)
 	log.Printf("Heuristics service started\n")
 	terminator.Wait(service)
+	log.Printf("Heuristics service stopped\n")
 }

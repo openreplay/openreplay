@@ -2,7 +2,11 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/memory"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
 	"strings"
@@ -12,8 +16,6 @@ import (
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
 	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/db/cache"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -31,10 +33,25 @@ func main() {
 
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpiration)
-	defer pg.Close()
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
 
-	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	// Init redis connection
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
+
+	projManager := projects.New(pgConn, redisClient)
+	sessManager := sessions.New(pgConn, projManager, redisClient)
+
+	sessionEndGenerator, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
@@ -45,7 +62,7 @@ func main() {
 		cfg.GroupEnder,
 		[]string{cfg.TopicRawWeb},
 		messages.NewEnderMessageIterator(
-			func(msg messages.Message) { sessions.UpdateSession(msg) },
+			func(msg messages.Message) { sessionEndGenerator.UpdateSession(msg) },
 			[]int{messages.MsgTimestamp},
 			false),
 		false,
@@ -79,13 +96,13 @@ func main() {
 			duplicatedSessionEnds := make(map[uint64]uint64)
 
 			// Find ended sessions and send notification to other services
-			sessions.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
+			sessionEndGenerator.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
 				msg := &messages.SessionEnd{Timestamp: timestamp}
-				currDuration, err := pg.GetSessionDuration(sessionID)
+				currDuration, err := sessManager.GetDuration(sessionID)
 				if err != nil {
 					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
 				}
-				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
+				newDuration, err := sessManager.UpdateDuration(sessionID, msg.Timestamp)
 				if err != nil {
 					if strings.Contains(err.Error(), "integer out of range") {
 						// Skip session with broken duration
@@ -102,7 +119,7 @@ func main() {
 				}
 				if cfg.UseEncryption {
 					if key := storage.GenerateEncryptionKey(); key != nil {
-						if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
+						if err := sessManager.UpdateEncryptionKey(sessionID, key); err != nil {
 							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
 						} else {
 							msg.EncryptionKey = string(key)

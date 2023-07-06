@@ -2,17 +2,19 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/memory"
-
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
-	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/terminator"
 )
 
@@ -24,13 +26,30 @@ func main() {
 
 	cfg := config.New()
 
-	// Init database
-	pg := cache.NewPGCache(
-		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpiration)
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
+
+	// Init events module
+	pg := postgres.NewConn(pgConn)
 	defer pg.Close()
 
+	// Init redis connection
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
+
+	projManager := projects.New(pgConn, redisClient)
+	sessManager := sessions.New(pgConn, projManager, redisClient)
+
 	// Init data saver
-	saver := datasaver.New(cfg, pg)
+	saver := datasaver.New(cfg, pg, sessManager)
 
 	// Message filter
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
@@ -62,7 +81,8 @@ func main() {
 	}
 
 	// Run service and wait for TERM signal
-	service := db.New(cfg, consumer, saver, memoryManager)
+	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
 	log.Printf("Db service started\n")
 	terminator.Wait(service)
+	log.Printf("Db service stopped\n")
 }
