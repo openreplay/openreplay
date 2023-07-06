@@ -112,12 +112,12 @@ const Sites = ({
         />
       </div>
       <div className='col-span-2'>
-        <span
-          className='link'
+        <Button
+          variant='text-primary'
           onClick={() => captureRateClickHandler(project)}
         >
           {project.sampleRate}%
-        </span>
+        </Button>
       </div>
       <div className='col-span-3 justify-self-end flex items-center'>
         <div className='mr-4'>
