@@ -51,7 +51,7 @@ function SideMenuItem({
         className={cn(
           className,
           stl.menuItem,
-          'flex items-center py-2 justify-between shrink-0',
+          'flex items-center py-2 justify-between shrink-0 cursor-pointer',
           { [stl.active]: active, [stl.disabled]: disabled }
         )}
         onClick={handleClick}
