@@ -297,7 +297,9 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
         """
 
         with pg_client.PostgresClient() as cur:
-            params = [(feature_flag_id, c.name, c.rollout_percentage, json.dumps(c.filters)) for c in conditions]
+            params = [
+                (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.dict() for filter_ in c.filters]))
+                for c in conditions]
             query = cur.mogrify(sql, params)
             cur.execute(query)
             rows = cur.fetchall()
