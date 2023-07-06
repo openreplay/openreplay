@@ -2,9 +2,11 @@ package redis
 
 import (
 	"errors"
-	"github.com/go-redis/redis"
-	config "openreplay/backend/internal/config/redis"
 	"strings"
+
+	"github.com/go-redis/redis"
+
+	config "openreplay/backend/internal/config/redis"
 )
 
 type Client struct {

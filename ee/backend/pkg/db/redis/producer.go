@@ -1,21 +1,22 @@
 package redis
 
 import (
+	"log"
+
 	"github.com/go-redis/redis"
-	redis2 "openreplay/backend/pkg/db/redis"
+
 	"openreplay/backend/pkg/queue/types"
 )
 
 type producerImpl struct {
-	client *redis2.Client
+	client *Client
 }
 
 func (c *producerImpl) Close(timeout int) {
-	//TODO implement me
-	panic("implement me")
+	log.Printf("Redis producer close")
 }
 
-func NewProducer(client *redis2.Client) types.Producer {
+func NewProducer(client *Client) types.Producer {
 	return &producerImpl{
 		client: client,
 	}

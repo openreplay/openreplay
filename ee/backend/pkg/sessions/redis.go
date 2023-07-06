@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/sessions"
 	"time"
+
+	"openreplay/backend/pkg/db/redis"
 )
 
 type cacheImpl struct {
 	db *redis.Client
 }
 
-func (c *cacheImpl) Set(session *sessions.Session) error {
+func (c *cacheImpl) Set(session *Session) error {
 	if c.db == nil {
 		return ErrDisabledCache
 	}
@@ -33,7 +33,7 @@ func (c *cacheImpl) Set(session *sessions.Session) error {
 	return nil
 }
 
-func (c *cacheImpl) Get(sessionID uint64) (*sessions.Session, error) {
+func (c *cacheImpl) Get(sessionID uint64) (*Session, error) {
 	if c.db == nil {
 		return nil, ErrDisabledCache
 	}
@@ -44,7 +44,7 @@ func (c *cacheImpl) Get(sessionID uint64) (*sessions.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	session := &sessions.Session{}
+	session := &Session{}
 	if err = json.Unmarshal([]byte(result), session); err != nil {
 		return nil, err
 	}
@@ -53,6 +53,6 @@ func (c *cacheImpl) Get(sessionID uint64) (*sessions.Session, error) {
 
 var ErrDisabledCache = errors.New("cache is disabled")
 
-func NewCache(db *redis.Client) sessions.Cache {
+func NewCache(db *redis.Client) Cache {
 	return &cacheImpl{db: db}
 }
