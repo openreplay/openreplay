@@ -2,7 +2,7 @@
   border-radius: 3px;
   border: solid thin transparent;
   color: $gray-dark;
-  cursor: pointer;
+  cursor: pointer !important;
 
   &:hover {
     & .iconLabel {
