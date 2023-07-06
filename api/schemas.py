@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator, valida
 from pydantic.types import Json
 
 from chalicelib.utils.TimeUTC import TimeUTC
+import re
 
 
 def attribute_to_camel_case(snake_str):
@@ -1435,7 +1436,7 @@ class FeatureFlagStatus(BaseModel):
 
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
-    flag_key: str = Field(...)
+    flag_key: str = Field(..., regex=r'^[a-zA-Z0-9\-]+$')
     description: Optional[str] = Field(None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
