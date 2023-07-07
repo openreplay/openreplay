@@ -35,7 +35,7 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
   );
 }
 
-function SessionTabs() {
+function SessionTabs({ isLive }: { isLive?: boolean }) {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
   const { tabs = new Set('back-compat'), currentTab } = store.get();
@@ -52,6 +52,7 @@ function SessionTabs() {
           idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
         });
   const changeTab = (tab: string) => {
+    if (isLive) return;
     player.changeTab(tab);
   };
 
@@ -72,6 +73,7 @@ function SessionTabs() {
             tab={tab.tab}
             currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
             changeTab={changeTab}
+            isLive={isLive}
           />
         </React.Fragment>
       ))}

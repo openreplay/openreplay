@@ -14,7 +14,7 @@ function SubHeader() {
   return (
     <>
       <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
-        <SessionTabs />
+        <SessionTabs isLive />
       </div>
       {location && (
         <div className={'w-full bg-white border-b border-gray-light'}>
