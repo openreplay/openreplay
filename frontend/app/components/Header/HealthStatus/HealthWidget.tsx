@@ -71,8 +71,8 @@ function HealthWidget({
 
         <div className={'w-full'}>
           <div className={'font-semibold'}>Captured in total</div>
-          <div>Sessions: {healthResponse.details?.numberOfEventCaptured.toLocaleString()}</div>
-          <div>Events: {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}</div>
+          <div>Sessions: {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}</div>
+          <div>Events: {healthResponse.details?.numberOfEventCaptured.toLocaleString()}</div>
         </div>
         <div className={'w-full'}>
           {!isError && !healthOk ? (
