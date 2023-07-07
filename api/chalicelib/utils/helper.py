@@ -1,4 +1,3 @@
-import logging
 import math
 import random
 import re
@@ -9,7 +8,6 @@ from urllib.parse import urlparse
 from decouple import config
 
 import schemas
-from chalicelib.utils import smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -319,3 +317,19 @@ def obfuscate(text, keep_last: int = 4):
     if len(text) <= keep_last:
         return "*" * len(text)
     return "*" * (len(text) - keep_last) + text[-keep_last:]
+
+
+def cast_session_id_to_string(data):
+    if not isinstance(data, dict) and not isinstance(data, list):
+        return data
+    if isinstance(data, list):
+        for i, item in enumerate(data):
+            data[i] = cast_session_id_to_string(item)
+    elif isinstance(data, dict):
+        keys = data.keys()
+        if "sessionId" in keys:
+            data["sessionId"] = str(data["sessionId"])
+        else:
+            for key in keys:
+                data[key] = cast_session_id_to_string(data[key])
+    return data
