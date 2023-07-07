@@ -82,6 +82,7 @@ type AppOptions = {
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
+  disableStringDict?: boolean
 
   // @deprecated
   onStart?: StartCallback
@@ -144,6 +145,7 @@ export default class App {
         __debug_report_edp: null,
         localStorage: null,
         sessionStorage: null,
+        disableStringDict: false,
         forceSingleTab: false,
       },
       options,
@@ -164,7 +166,7 @@ export default class App {
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
     this.session = new Session(this, this.options)
-    this.attributeSender = new AttributeSender(this)
+    this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID

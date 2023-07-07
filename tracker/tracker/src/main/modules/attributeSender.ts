@@ -1,4 +1,4 @@
-import { SetNodeAttributeDict, Type } from '../../common/messages.gen.js'
+import { SetNodeAttributeDict, SetNodeAttribute, Type } from '../../common/messages.gen.js'
 import App from '../app/index.js'
 
 export class StringDictionary {
@@ -18,9 +18,13 @@ export class StringDictionary {
 export default class AttributeSender {
   private dict = new StringDictionary()
 
-  constructor(private readonly app: App) {}
+  constructor(private readonly app: App, private readonly isDictDisabled: boolean) {}
 
   public sendSetAttribute(id: number, name: string, value: string) {
+    if (this.isDictDisabled) {
+      const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
+      this.app.send(msg)
+    }
     const message: SetNodeAttributeDict = [
       Type.SetNodeAttributeDict,
       id,

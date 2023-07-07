@@ -1,5 +1,6 @@
 # 9.0.0
 
+- Option to disable string dictionary
 - Introduced Feature flags api
 - Fixed input durations recorded on programmable autofill
 
