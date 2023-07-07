@@ -452,7 +452,7 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         """
 
         with pg_client.PostgresClient() as cur:
-            params = [(feature_flag_id, v.value, v.description, v.payload, v.rollout_percentage) for v in variants]
+            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
             query = cur.mogrify(sql, params)
             cur.execute(query)
             rows = cur.fetchall()
