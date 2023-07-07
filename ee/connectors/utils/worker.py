@@ -308,6 +308,10 @@ class WorkerPool:
         self.pointer = 0
         self.n_workers = n_workers
         self.project_filter_class = ProjectFilter(project_filter)
+        self.sessions_update_batch = dict()
+        self.sessions_insert_batch = dict()
+        self.events_batch = list()
+        self.n_of_loops = config('LOOPS_BEFORE_UPLOAD', default=4, cast=int)
 
     def get_worker(self, session_id: int) -> int:
         if session_id in self.assigned_worker.keys():
@@ -319,9 +323,6 @@ class WorkerPool:
         return worker_id
 
     def _pool_response_handler(self, pool_results):
-        events_batch = list()
-        sessions_update_batch = list()
-        sessions_insert_batch = list()
         count = 0
         for js_response in pool_results:
             flag = js_response.pop('flag')
@@ -329,19 +330,21 @@ class WorkerPool:
                 worker_events, worker_memory, end_sessions = js_response['value']
                 if worker_memory is None:
                     continue
-                events_batch += worker_events
+                self.events_batch += worker_events
                 for session_id in worker_memory.keys():
                     self.sessions[session_id] = dict_to_session(worker_memory[session_id])
                     self.project_filter_class.sessions_lifespan.add(session_id)
                 for session_id in end_sessions:
                     if self.sessions[session_id].session_start_timestamp:
                         old_status = self.project_filter_class.sessions_lifespan.close(session_id)
-                        if old_status == 'UPDATE':
-                            sessions_update_batch.append(deepcopy(self.sessions[session_id]))
+                        if (old_status == 'UPDATE' or old_status == 'CLOSE') and session_id not in self.sessions_insert_batch.keys():
+                            self.sessions_update_batch[session_id] = deepcopy(self.sessions[session_id])
+                        elif (old_status == 'UPDATE' or old_status == 'CLOSE') and session_id in self.sessions_insert_batch.keys():
+                            self.sessions_insert_batch[session_id] = deepcopy(self.sessions[session_id])
                         elif old_status == 'OPEN':
-                            sessions_insert_batch.append(deepcopy(self.sessions[session_id]))
+                            self.sessions_insert_batch[session_id] = deepcopy(self.sessions[session_id])
                         else:
-                            print('[WORKER-WARN] Closed session should not be closed again')
+                            print(f'[WORKER Exception] Unknown session status: {old_status}')
             elif flag == 'reader':
                 count += 1
                 if count > 1:
@@ -360,7 +363,7 @@ class WorkerPool:
                 del self.assigned_worker[sess_id]
             except KeyError:
                 ...
-        return events_batch, sessions_insert_batch, sessions_update_batch, session_ids, messages
+        return session_ids, messages
 
     def run_workers(self, database_api):
         global sessions_table_name, table_name, EVENT_TYPE
@@ -371,7 +374,9 @@ class WorkerPool:
                               'project_filter': self.project_filter_class}
         kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
         kafka_reader_process.start()
+        current_loop_number = 0
         while signal_handler.KEEP_PROCESSING:
+            current_loop_number = (current_loop_number + 1) % self.n_of_loops
             # Setup of parameters for workers
             if not kafka_reader_process.is_alive():
                 print('[WORKER-INFO] Restarting reader task')
@@ -394,8 +399,6 @@ class WorkerPool:
 
             # Hand tasks to workers
             async_results = list()
-            # for params in kafka_task_params:
-            #     async_results.append(self.pool.apply_async(work_assigner, args=[params]))
             for params in decoding_params:
                 if params['message']:
                     async_results.append(self.pool.apply_async(work_assigner, args=[params]))
@@ -406,10 +409,14 @@ class WorkerPool:
                 except TimeoutError as e:
                     print('[WORKER-TimeoutError] Decoding of messages is taking longer than expected')
                     raise e
-            events_batch, sessions_insert_batch, sessions_update_batch, session_ids, messages = self._pool_response_handler(
+            session_ids, messages = self._pool_response_handler(
                 pool_results=results)
-            insertBatch(events_batch, sessions_insert_batch, sessions_update_batch, database_api, sessions_table_name,
-                        table_name, EVENT_TYPE)
+            if current_loop_number == 0:
+                insertBatch(self.events_batch, self.sessions_insert_batch.values(), self.sessions_update_batch.values(),
+                            database_api, sessions_table_name, table_name, EVENT_TYPE)
+                self.sessions_update_batch = dict()
+                self.sessions_insert_batch = dict()
+                self.events_batch = list()
             self.save_snapshot(database_api)
             main_conn.send('CONTINUE')
         print('[WORKER-INFO] Sending close signal')
@@ -432,7 +439,21 @@ class WorkerPool:
             for sessionId, session_dict in checkpoint['sessions']:
                 self.sessions[sessionId] = dict_to_session(session_dict)
             self.project_filter_class.sessions_lifespan.session_project = checkpoint['cached_sessions']
-
+        elif checkpoint['version'] == 'v1.1':
+            for sessionId, session_dict in checkpoint['sessions']:
+                self.sessions[sessionId] = dict_to_session(session_dict)
+            self.project_filter_class.sessions_lifespan.session_project = checkpoint['cached_sessions']
+            for sessionId in checkpoint['sessions_update_batch']:
+                try:
+                    self.sessions_update_batch[sessionId] = self.sessions[sessionId]
+                except Exception:
+                    continue
+            for sessionId in checkpoint['sessions_insert_batch']:
+                try:
+                    self.sessions_insert_batch[sessionId] = self.sessions[sessionId]
+                except Exception:
+                    continue
+            self.events_batch = [dict_to_event(event) for event in checkpoint['events_batch']]
         else:
             raise Exception('Error in version of snapshot')
 
@@ -446,8 +467,11 @@ class WorkerPool:
         for sessionId, session in self.sessions.items():
             session_snapshot.append([sessionId, session_to_dict(session)])
         checkpoint = {
-            'version': 'v1.0',
+            'version': 'v1.1',
             'sessions': session_snapshot,
             'cached_sessions': self.project_filter_class.sessions_lifespan.session_project,
+            'sessions_update_batch': list(self.sessions_update_batch.keys()),
+            'sessions_insert_batch': list(self.sessions_insert_batch.keys()),
+            'events_batch': [event_to_dict(event) for event in self.events_batch]
         }
         database_api.save_binary(binary_data=json.dumps(checkpoint).encode('utf-8'), name='checkpoint')
