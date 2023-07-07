@@ -5,8 +5,7 @@ import { Toggler, Loader, Button, NoContent, ItemMenu } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useHistory } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
-// import RolloutCondition from './Conditions';
-// import { Payload } from './Helpers';
+import Multivariant from "Components/FFlags/NewFFlag/Multivariant";
 import { toast } from 'react-toastify';
 import RolloutCondition from "Components/FFlags/NewFFlag/Conditions";
 
@@ -93,6 +92,9 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
               : 'This flag is not persistent across authentication events.'}
           </div>
         </div>
+        {!current.isSingleOption ? (
+          <Multivariant readonly />
+        ) : null}
       {current.conditions.length > 0 ? (
         <div className="mt-6 p-4 rounded bg-gray-lightest">
           <label className={'font-semibold'}>Rollout Conditions</label>
