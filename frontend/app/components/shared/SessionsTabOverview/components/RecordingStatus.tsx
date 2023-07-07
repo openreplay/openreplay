@@ -25,8 +25,9 @@ function RecordingStatus(props: Props) {
           <div className='mr-2'>
             <Icon name='check-circle' size={20} color='tealx' />
           </div>
-          <div>There are {data.count} ongoing session(s). <br />Once they're complete they'll show up here within a few
-            minutes.
+          <div>
+            {data.count} ongoing session{data.count !== 1 && 's'}.
+            <br />Completed sessions will appear here within a few minutes.
           </div>
         </div>
       </div>
