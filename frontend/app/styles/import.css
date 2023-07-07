@@ -7,6 +7,7 @@
 @import 'react-daterange-picker.css';
 @import 'rc-time-picker.css';
 @import 'antd/dist/reset.css';
+@import 'tailwind-preflight.css';
 
 @tailwind base;
 @tailwind components;

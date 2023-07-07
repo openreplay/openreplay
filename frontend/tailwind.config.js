@@ -41,5 +41,7 @@ module.exports = {
     visibility: ['responsive', 'hover', 'focus', 'group-hover']
   },
   plugins: [],
-  corePlugins: {}
+  corePlugins: {
+    preflight: false
+  }
 };
