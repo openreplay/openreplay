@@ -149,8 +149,13 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
               <div className={'mt-6'}>
                 <Payload />
                 <Input
+                  value={current.payload ?? ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    current.setPayload(e.target.value);
+                  }}
                   placeholder={"E.g. red button, {'buttonColor': 'red'}"}
                   className={'mt-2'}
+
                 />
               </div>
             </>

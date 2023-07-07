@@ -104,6 +104,7 @@ export default class FeatureFlag {
       initData,
       {
         ...data,
+        payload: data?.payload === null ? '' : data?.payload,
         isSingleOption: data ? data.flagType === 'single' : true,
         conditions: data?.conditions?.map(c => new Conditions(c)) || [new Conditions()],
         variants: data?.flagType === 'multi' ? data?.variants?.map((v, i) => new Variant(i, v)) : [],
@@ -154,6 +155,7 @@ export default class FeatureFlag {
       updatedAt: this.updatedAt,
       isActive: this.isActive,
       description: this.description,
+      payload: this.payload,
       isPersist: this.isPersist,
       flagType: this.isSingleOption ? 'single' as const : 'multi' as const,
       featureFlagId: this.featureFlagId,
