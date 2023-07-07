@@ -439,7 +439,13 @@ class WorkerPool:
             for sessionId, session_dict in checkpoint['sessions']:
                 self.sessions[sessionId] = dict_to_session(session_dict)
             self.project_filter_class.sessions_lifespan.session_project = checkpoint['cached_sessions']
-
+        elif checkpoint['version'] == 'v1.1':
+            for sessionId, session_dict in checkpoint['sessions']:
+                self.sessions[sessionId] = dict_to_session(session_dict)
+            self.project_filter_class.sessions_lifespan.session_project = checkpoint['cached_sessions']
+            self.sessions_update_batch = checkpoint['sessions_update_batch']
+            self.sessions_insert_batch = checkpoint['sessions_insert_batch']
+            self.events_batch = [dict_to_event(event) for event in checkpoint['events_batch']]
         else:
             raise Exception('Error in version of snapshot')
 
@@ -453,8 +459,11 @@ class WorkerPool:
         for sessionId, session in self.sessions.items():
             session_snapshot.append([sessionId, session_to_dict(session)])
         checkpoint = {
-            'version': 'v1.0',
+            'version': 'v1.1',
             'sessions': session_snapshot,
             'cached_sessions': self.project_filter_class.sessions_lifespan.session_project,
+            'sessions_update_batch': self.sessions_update_batch,
+            'sessions_insert_batch': self.sessions_insert_batch,
+            'events_batch': [event_to_dict(event) for event in self.events_batch]
         }
         database_api.save_binary(binary_data=json.dumps(checkpoint).encode('utf-8'), name='checkpoint')
