@@ -211,6 +211,7 @@ def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
         **variants_data,
         "payload": json.dumps(feature_flag_data.payload)
     }
+
     return params
 
 
@@ -321,6 +322,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
         "flag_type",
         "is_persist",
         "is_active",
+        "payload",
         "updated_by",
     )
 
@@ -329,6 +331,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
         "feature_flag_id": feature_flag_id,
         "project_id": project_id,
         **feature_flag.dict(),
+        "payload": json.dumps(feature_flag.payload),
     }
 
     sql = f"""
