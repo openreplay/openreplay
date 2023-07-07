@@ -6,6 +6,7 @@ from utils import pg_client
 from decouple import config, Choices
 import asyncio
 from time import time, sleep
+import logging
 
 
 DATABASE = config('CLOUD_SERVICE')
@@ -28,7 +29,7 @@ else:
     cluster_info = dict()
     for _d in ci:
         k,v = _d.split('=')
-        cluster_info[k]=v
+        cluster_info[k] = v
 
 class RDSHFT:
     def __init__(self):
@@ -51,7 +52,7 @@ class RDSHFT:
         try:
             self.pdredshift.exec_commit(base_query)
         except Exception as e:
-            print('[FILL Exception]', repr(e))
+            logging.warning('[FILL Exception]', repr(e))
             self.pdredshift.connect.rollback()
             raise
 
@@ -72,7 +73,7 @@ def try_method(f, params, on_exeption=None, _try=0):
                 return
             on_exeption.close()
         else:
-            print('[FILL Exception]', repr(e), 'retrying..')
+            logging.warning('[FILL Exception]', repr(e), 'retrying..')
             sleep(1)
             return try_method(f=f, params=params, on_exeption=on_exeption, _try=_try+1)
     return
@@ -85,36 +86,41 @@ async def main():
     query = "SELECT sessionid FROM {table} WHERE user_id = 'NULL' ORDER BY session_start_timestamp ASC LIMIT {limit}"
     res = api.redshift_to_pandas(query.format(table=table, limit=limit))
     if res is None:
+        logging.info('[FILL INFO] response is None')
         return
     elif len(res) == 0:
+        logging.info('[FILL INFO] zero length response')
         return
+    # logging.info(f'[FILL INFO] {len(res)} length response')
     sessionids = list(map(lambda k: str(k), res['sessionid']))
 
     with pg_client.PostgresClient() as conn:
         conn.execute('SELECT session_id, user_id FROM sessions WHERE session_id IN ({session_id_list})'.format(
-            session_id_list = ','.join(sessionids))
+            session_id_list=','.join(sessionids))
         )
         pg_res = conn.fetchall()
+    logging.info(f'response from pg, length {len(pg_res)}')
     df = pd.DataFrame(pg_res)
-    df.dropna(inplace=True)
+    df.fillna('NN', inplace=True)
     df = df.groupby('user_id').agg({'session_id': lambda x: list(x)})
     base_query = "UPDATE {table} SET user_id = CASE".format(table=table)
     template = "\nWHEN sessionid IN ({session_ids}) THEN '{user_id}'"
     all_ids = list()
+    # logging.info(f'[FILL INFO] {pg_res[:5]}')
     for i in range(len(df)):
         user = df.iloc[i].name
-        if user == '' or user == 'None' or user == 'NULL':
-            user = 'NN'
-        aux = [str(sess) for sess in df.iloc[i].session_id]
+        aux = [str(sess) for sess in df.iloc[i].session_id if sess != 'NN']
         all_ids += aux
         if len(aux) == 0:
             continue
         base_query += template.format(user_id=user, session_ids=','.join(aux))
     base_query += f"\nEND WHERE sessionid IN ({','.join(all_ids)})"
     if len(all_ids) == 0:
+        logging.info('[FILL INFO] No ids obtained')
         return
+    # logging.info(f'[FILL INFO] {base_query}')
     api.exec_commit(base_query)
-    print(f'[FILL-INFO] {time()-t} - for {len(sessionids)} elements')
+    logging.info(f'[FILL-INFO] {time()-t} - for {len(sessionids)} elements')
 
 
 cron_jobs = [
