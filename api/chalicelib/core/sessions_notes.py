@@ -66,7 +66,7 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
             conditions.append("sessions_notes.user_id = %(user_id)s")
         else:
             conditions.append("(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public)")
-        query = cur.mogrify(f"""SELECT sessions_notes.*,sessions_notes.session_id::text AS session_id, users.name AS user_name
+        query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE {" AND ".join(conditions)}
                                 ORDER BY created_at {data.order.value}
@@ -85,7 +85,7 @@ def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNote
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
                             VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
-                            RETURNING *,session_id::text AS session_id,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
+                            RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
                             {"user_id": user_id, "project_id": project_id, "session_id": session_id, **data.dict()})
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
