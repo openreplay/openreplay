@@ -11,6 +11,7 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 import schemas_ee
+from chalicelib.utils import helper
 from chalicelib.core import traces
 
 
@@ -37,7 +38,12 @@ class ORRoute(APIRoute):
             if isinstance(response, JSONResponse):
                 response: JSONResponse = response
                 body = json.loads(response.body.decode('utf8'))
-                if response.status_code == 200 and body is not None and body.get("errors") is not None:
+                body = helper.cast_session_id_to_string(body)
+                response = JSONResponse(content=body, status_code=response.status_code, headers=response.headers,
+                                        media_type=response.media_type, background=response.background)
+                if response.status_code == 200 \
+                        and body is not None and isinstance(body, dict) \
+                        and body.get("errors") is not None:
                     if "not found" in body["errors"][0]:
                         response.status_code = status.HTTP_404_NOT_FOUND
                     else:
