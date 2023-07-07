@@ -53,8 +53,6 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     history.goBack()
   };
 
-  const onError = (e: string) => toast.error(`Failed to update flag: ${e}`)
-
   const onSave = () => {
     const possibleError = featureFlagsStore.checkFlagForm();
     if (possibleError) return toast.error(possibleError);
@@ -63,8 +61,8 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
         toast.success('Feature flag updated.');
         history.push(withSiteId(fflagRead(fflagId), siteId));
       })
-        .catch((e) => {
-          e.json().then((body: Record<string, any>) => onError(body.errors.join(',')))
+        .catch(() => {
+          toast.error(`Failed to update flag, check your data and try again.`)
         })
     } else {
       featureFlagsStore.createFlag().then(() => {
