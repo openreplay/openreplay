@@ -128,6 +128,7 @@ export default class AssistManager {
   private socket: Socket | null = null
   private disconnectTimeout: ReturnType<typeof setTimeout> | undefined
   private inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+  private inactiveTabs: string[] = []
   private clearDisconnectTimeout() {
     this.disconnectTimeout && clearTimeout(this.disconnectTimeout)
     this.disconnectTimeout = undefined
@@ -180,9 +181,12 @@ export default class AssistManager {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
         }
-        if (messages.meta.tabId !== this.store.get().currentTab && isOldVersion) {
-          reader.currentTab = messages.meta.tabId
-          this.store.update({ currentTab: messages.meta.tabId })
+        if (messages.meta.tabId !== this.store.get().currentTab) {
+          this.clearDisconnectTimeout()
+          if (isOldVersion) {
+            reader.currentTab = messages.meta.tabId
+            this.store.update({ currentTab: messages.meta.tabId })
+          }
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
@@ -208,12 +212,19 @@ export default class AssistManager {
           this.clearInactiveTimeout()
           if (active) {
             this.setStatus(ConnectionStatus.Connected)
+            this.inactiveTabs = this.inactiveTabs.filter(t => t !== tabId)
           } else {
-            if (tabId === undefined) {
-              this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            if (!this.inactiveTabs.includes(tabId)) {
+              this.inactiveTabs.push(tabId)
             }
-            if (tabId === currentTab) {
-              this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            if (tabId === undefined || tabId === currentTab) {
+              this.inactiveTimeout = setTimeout(() => {
+                // @ts-ignore
+                const tabs = this.store.get().tabs
+                if (this.inactiveTabs.length === tabs.size) {
+                  this.setStatus(ConnectionStatus.Inactive)
+                }
+              }, 10000)
             }
           }
         }
