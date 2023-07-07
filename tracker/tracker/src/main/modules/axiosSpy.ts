@@ -172,7 +172,7 @@ export default function (
 
   function captureNetworkError(error: Record<string, any>) {
     app.debug.log('Openreplay: capturing API request error', error)
-    if (isAxiosError(error)) {
+    if (isAxiosError(error) && Boolean(error.response)) {
       captureResponseData(error.response as AxiosResponse)
     } else if (error instanceof Error) {
       app.send(getExceptionMessage(error, []))
