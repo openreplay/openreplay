@@ -74,7 +74,7 @@ def try_method(f, params, on_exeption=None, _try=0):
                 return
             on_exeption.restart()
         else:
-            logging.warning('[FILL Exception]', repr(e), 'retrying..')
+            logging.info('[FILL Exception]', repr(e), 'retrying..')
             sleep(1)
             return try_method(f=f, params=params, on_exeption=on_exeption, _try=_try+1)
     return None
