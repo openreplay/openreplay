@@ -139,6 +139,7 @@ export default class FeatureFlagsStore {
       await this.client.updateStatus(flagId, isActive);
     } catch (e) {
       console.error(e);
+      throw e
     }
   }
 
