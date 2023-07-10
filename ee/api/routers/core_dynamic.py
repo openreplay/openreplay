@@ -393,8 +393,7 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
          dependencies=[OR_scope(Permissions.session_replay)])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas_ee.CurrentContext = Depends(OR_context)):
-    return {
-        "data": sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)}
+    return sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"],
