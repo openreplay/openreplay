@@ -550,3 +550,11 @@ def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.Fea
             dependencies=[OR_scope(Permissions.feature_flags)])
 def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
     return feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
+
+
+@app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"],
+          dependencies=[OR_scope(Permissions.feature_flags)])
+async def update_feature_flag_status(project_id: int, feature_flag_id: int,
+                                     data: schemas.FeatureFlagStatus = Body(...)):
+    return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
+                                                             is_active=data.is_active)}
