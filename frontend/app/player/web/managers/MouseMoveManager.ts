@@ -4,10 +4,12 @@ import { HOVER_CLASSNAME } from '../messages/rewriter/constants'
 import ListWalker from '../../common/ListWalker'
 import MouseTrail from '../addons/MouseTrail'
 import styles from './trail.module.css'
+import { MOUSE_TRAIL } from "App/constants/storageKeys";
 
 export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = []
-  private mouseTrail: MouseTrail
+  private mouseTrail: MouseTrail | undefined
+  private removeMouseTrail = false
 
 	constructor(private screen: Screen) {
     super()
@@ -15,13 +17,16 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     canvas.id = 'openreplay-mouse-trail'
     canvas.className = styles.canvas
 
-    this.mouseTrail = new MouseTrail(canvas)
+    this.removeMouseTrail = localStorage.getItem(MOUSE_TRAIL) === 'false'
+    if (!this.removeMouseTrail) {
+      this.mouseTrail = new MouseTrail(canvas)
+    }
 
     this.screen.overlay.appendChild(canvas)
-    this.mouseTrail.createContext()
+    this.mouseTrail?.createContext()
 
     const updateSize = (w: number, h: number) => {
-      return this.mouseTrail.resizeCanvas(w, h)
+      return this.mouseTrail?.resizeCanvas(w, h)
     }
 
     this.screen.setOnUpdate(updateSize)
@@ -54,7 +59,7 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
       this.screen.cursor.move(lastMouseMove)
       //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might influence performance though
       this.updateHover()
-      this.mouseTrail.leaveTrail(lastMouseMove.x, lastMouseMove.y)
+      this.mouseTrail?.leaveTrail(lastMouseMove.x, lastMouseMove.y)
     }
 	}
 }

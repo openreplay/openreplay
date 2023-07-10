@@ -1,13 +1,13 @@
 # 9.0.0
 
-- Option to disable string dictionary `{disableStringDict: true` in Tracker constructor
+- Option to disable string dictionary `{disableStringDict: true}` in Tracker constructor
 - Introduced Feature flags api
 - Fixed input durations recorded on programmable autofill
 - change InputMode from enum to const Object
 
 # 8.1.2
 
-- option to disable string dictionary `{disableStringDict: true` in Tracker constructor
+- option to disable string dictionary `{disableStringDict: true}` in Tracker constructor
 
 # 8.1.1
 
@@ -22,7 +22,7 @@
 
 # 7.0.4
 
-- option to disable string dictionary `{disableStringDict: true` in Tracker constructor
+- option to disable string dictionary `{disableStringDict: true}` in Tracker constructor
 
 # 7.0.3
 
