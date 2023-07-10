@@ -82,16 +82,18 @@ export function getInputLabel(node: TextFieldElement): string {
   return normSpaces(label).slice(0, 100)
 }
 
-export declare const enum InputMode {
-  Plain = 0,
-  Obscured = 1,
-  Hidden = 2,
-}
+export const InputMode = {
+  Plain: 0,
+  Obscured: 1,
+  Hidden: 2,
+} as const
+
+export type InputModeT = (typeof InputMode)[keyof typeof InputMode]
 
 export interface Options {
   obscureInputNumbers: boolean
   obscureInputEmails: boolean
-  defaultInputMode: InputMode
+  defaultInputMode: InputModeT
   obscureInputDates: boolean
 }
 
@@ -108,7 +110,7 @@ export default function (app: App, opts: Partial<Options>): void {
 
   function getInputValue(id: number, node: TextFieldElement | HTMLSelectElement) {
     let value = node.value
-    let inputMode: InputMode = options.defaultInputMode
+    let inputMode: InputModeT = options.defaultInputMode
 
     if (node.type === 'password' || app.sanitizer.isHidden(id)) {
       inputMode = InputMode.Hidden
