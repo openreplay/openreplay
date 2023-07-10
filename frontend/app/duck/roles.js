@@ -18,6 +18,7 @@ const initialState = Map({
     { text: 'Dashboard', value: 'METRICS' },
     { text: 'Assist (Live)', value: 'ASSIST_LIVE' },
     { text: 'Assist (Call)', value: 'ASSIST_CALL' },
+    { text: 'Feature Flags', value: 'FEATURE_FLAGS' }
   ]),
 });
 

@@ -1,5 +1,7 @@
-import {numberWithCommas} from "App/utils";
 import React from 'react';
+import { numberWithCommas } from 'App/utils';
+import withPageTitle from 'HOCs/withPageTitle';
+import withPermissions from 'HOCs/withPermissions';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Loader, NoContent, Pagination } from 'UI';
@@ -92,9 +94,17 @@ function FFlagsList({ siteId }: { siteId: string }) {
             </div>
             <div className="w-full flex items-center justify-between pt-4 px-6">
               <div>
-                Showing <span className="font-medium">{(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + 1}</span> to{' '}
-                <span className="font-medium">{(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + featureFlagsStore.flags.length}</span> of{' '}
-                <span className="font-medium">{numberWithCommas(featureFlagsStore.total)}</span> Feature Flags.
+                Showing{' '}
+                <span className="font-medium">
+                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-medium">
+                  {(featureFlagsStore.page - 1) * featureFlagsStore.pageSize +
+                    featureFlagsStore.flags.length}
+                </span>{' '}
+                of <span className="font-medium">{numberWithCommas(featureFlagsStore.total)}</span>{' '}
+                Feature Flags.
               </div>
               <Pagination
                 page={featureFlagsStore.page}
@@ -111,4 +121,6 @@ function FFlagsList({ siteId }: { siteId: string }) {
   );
 }
 
-export default observer(FFlagsList);
+export default withPageTitle('Feature Flags')(
+  withPermissions(['FEATURE_FLAGS'])(observer(FFlagsList))
+);
