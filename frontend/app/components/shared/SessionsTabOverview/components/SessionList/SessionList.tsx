@@ -118,7 +118,7 @@ function SessionList(props: Props) {
 
 
   useEffect(() => {
-    if (!hasNoRecordings) {
+    if (!hasNoRecordings || !activeSite) {
       return;
     }
 
@@ -129,7 +129,7 @@ function SessionList(props: Props) {
     }, STATUS_FREQUENCY);
 
     return () => clearInterval(sessionStatusTimeOut);
-  }, [hasNoRecordings]);
+  }, [hasNoRecordings, activeSite]);
 
 
   useEffect(() => {
@@ -137,12 +137,12 @@ function SessionList(props: Props) {
       return;
     }
 
-    if (statusData.status === 2) { // recording && processed
+    if (statusData.status === 2 && activeSite) { // recording && processed
       props.updateProjectRecordingStatus(activeSite.id, true);
       props.fetchSessions(null, true);
       clearInterval(sessionStatusTimeOut);
     }
-  }, [statusData]);
+  }, [statusData, activeSite]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -206,7 +206,7 @@ function SessionList(props: Props) {
 
   return (
     <Loader loading={loading}>
-      {hasNoRecordings && statusData.status >= 1 ? <RecordingStatus data={statusData} /> : (
+      {hasNoRecordings && statusData.status == 1 ? <RecordingStatus data={statusData} /> : (
         <>
           <NoContent
             title={
