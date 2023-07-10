@@ -662,6 +662,10 @@ export default class App {
     }
   }
 
+  forceFlushBatch() {
+    this.worker?.postMessage('forceFlushBatch')
+  }
+
   getTabId() {
     return this.session.getTabId()
   }

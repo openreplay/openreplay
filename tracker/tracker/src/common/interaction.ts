@@ -28,6 +28,7 @@ export type ToWorkerData =
   | Array<Message>
   | { type: 'compressed'; batch: Uint8Array }
   | { type: 'uncompressed'; batch: Uint8Array }
+  | 'forceFlushBatch'
 
 type Failure = {
   type: 'failure'

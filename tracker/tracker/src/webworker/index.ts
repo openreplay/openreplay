@@ -86,6 +86,10 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     reset()
     return (workerStatus = WorkerStatus.Stopped)
   }
+  if (data === 'forceFlushBatch') {
+    finalize()
+    return
+  }
 
   if (Array.isArray(data)) {
     if (writer !== null) {

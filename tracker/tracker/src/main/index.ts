@@ -242,6 +242,13 @@ export default class API {
     return this.app.session.getSessionHash()
   }
 
+  forceFlushBatch() {
+    if (this.app === null) {
+      return
+    }
+    this.app.forceFlushBatch()
+  }
+
   getSessionToken(): string | null | undefined {
     if (this.app === null) {
       return null
