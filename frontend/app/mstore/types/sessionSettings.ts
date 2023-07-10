@@ -80,6 +80,9 @@ export default class SessionSettings {
 
         this.timezoneFix(defaultTimezone);
         this.timezone = JSON.parse(localStorage.getItem(TIMEZONE)) || defaultTimezone;
+        if (localStorage.getItem(MOUSE_TRAIL) === null) {
+            localStorage.setItem(MOUSE_TRAIL, 'true');
+        }
         makeAutoObservable(this);
     }
 
