@@ -46,7 +46,8 @@ class RDSHFT:
         self.__init__()
 
     def redshift_to_pandas(self, query):
-        return self.pdredshift.redshift_to_pandas(query)
+        value = try_method(self.pdredshift.redshift_to_pandas, query, on_exeption=self)
+        return value
 
     def exec_commit(self, base_query):
         try:
@@ -71,12 +72,12 @@ def try_method(f, params, on_exeption=None, _try=0):
         if _try > 3:
             if on_exeption is None:
                 return
-            on_exeption.close()
+            on_exeption.restart()
         else:
             logging.warning('[FILL Exception]', repr(e), 'retrying..')
             sleep(1)
             return try_method(f=f, params=params, on_exeption=on_exeption, _try=_try+1)
-    return
+    return None
 
 
 
