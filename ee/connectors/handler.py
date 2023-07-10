@@ -187,7 +187,8 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
 
     if isinstance(message, UserID):
         try:
-            n.user_id = message.id
+            if message.id != '':
+                n.user_id = message.id
         except AttributeError as e:
             print(f'Session current type: {type(n)}')
             print(f'Message id: {message.id}')
@@ -346,7 +347,8 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
 
 
     if isinstance(message, UserID):
-        n.userid_id = message.id
+        if message.id != '':
+            n.userid_id = message.id
         return n
 
     if isinstance(message, UserAnonymousID):
