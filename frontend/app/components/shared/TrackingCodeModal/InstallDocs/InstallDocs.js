@@ -54,7 +54,7 @@ function InstallDocs({ site }) {
           </div>  
         </div>
       </div>
-      <div className="mt-6">See <a href="https://docs.openreplay.com/installation/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for the list of available options.</div>
+      <div className="mt-6">See <a href="https://docs.openreplay.com/en/sdk/" className="color-teal underline" target="_blank">Documentation</a> for the list of available options.</div>
     </div>
   )
 }

@@ -21,7 +21,7 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href="https://docs.openreplay.com/en/installation/javascript-sdk/" target="_blank">
+        <a href="https://docs.openreplay.com/en/sdk/" target="_blank">
           <Button variant="text-primary" icon="question-circle" className="ml-2">
             See Documentation
           </Button>
