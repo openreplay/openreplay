@@ -40,7 +40,7 @@ export default class TenantKey extends React.PureComponent {
                   role="button"
                   onClick={ this.copyHandler }
                 >
-                  { copied ? 'copied' : 'copy' }
+                  { copied ? 'Copied' : 'Copy' }
                 </Button>
               }
             />
