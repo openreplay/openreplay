@@ -69,7 +69,7 @@ export default class SessionSettings {
     durationFilter: any = JSON.parse(localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter));
     captureRate: string = '0';
     captureAll: boolean = false;
-    mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) === 'true';
+    mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
 
 
     constructor() {
