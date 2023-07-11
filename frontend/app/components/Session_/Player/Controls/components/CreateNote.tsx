@@ -124,9 +124,7 @@ function CreateNote({
       .then((r) => {
         onSuccess(r!.noteId as unknown as string);
         toast.success('Note added');
-        notesStore.fetchSessionNotes(sessionId).then(() => {
-          addNote(r as Note);
-        });
+        void notesStore.fetchSessionNotes(sessionId)
       })
       .catch((e) => {
         toast.error('Error adding note');
