@@ -1111,21 +1111,18 @@ def session_exists(project_id, session_id):
 
 def check_recording_status(project_id: int) -> dict:
     query = f"""
-        WITH project_sessions AS (
-            SELECT * FROM public.sessions WHERE project_id = %(project_id)s
-        ),
-        sessions_with_duration AS (
-            SELECT * FROM project_sessions WHERE duration IS NOT NULL
-        )
-        SELECT
-            CASE
-                WHEN (SELECT COUNT(*) FROM project_sessions) = 0 THEN 0
-                WHEN (SELECT COUNT(*) FROM project_sessions) > 0 AND 
-                     (SELECT COUNT(*) FROM sessions_with_duration) = 0 THEN 1
-                WHEN (SELECT COUNT(*) FROM project_sessions) > 0 AND 
-                     (SELECT COUNT(*) FROM sessions_with_duration) > 0 THEN 2
-            END AS recording_status,
-            COUNT(*) AS sessions_count
+        WITH project_sessions AS (SELECT COUNT(1)                                      AS full_count,
+                                 COUNT(1) FILTER ( WHERE duration IS NOT NULL) AS nn_duration_count
+                          FROM public.sessions
+                          WHERE project_id = %(project_id)s
+                            AND start_ts >= (extract(EPOCH FROM now() - INTERVAL '1 day')) * 1000
+                            AND start_ts <= (extract(EPOCH FROM now() + INTERVAL '1 day')) * 1000)
+        SELECT CASE
+                   WHEN full_count = 0 THEN 0
+                   WHEN nn_duration_count = 0 THEN 1
+                   ELSE 2
+                   END    AS recording_status,
+               full_count AS sessions_count
         FROM project_sessions;
     """
 
@@ -1135,8 +1132,6 @@ def check_recording_status(project_id: int) -> dict:
         row = cur.fetchone()
 
     return {
-        "recording_status": row["recording_status"],
-        "sessions_count": row["sessions_count"]
+        "recordingStatus": row["recording_status"],
+        "sessionsCount": row["sessions_count"]
     }
-
-
