@@ -307,7 +307,7 @@ def fix_missing_redshift():
     try:
         res = database_api.pdredshift.redshift_to_pandas(query.format(table=table, limit=limit))
     except Exception as e:
-        logging.error(f'[ERROR] Error while executing query {repr(e)}')
+        # logging.error(f'[ERROR] Error while selecting query. {repr(e)}')
         database_api.close()
         return
     if res is None:
@@ -321,11 +321,16 @@ def fix_missing_redshift():
     # logging.info(f'[FILL INFO] {len(res)} length response')
     sessionids = list(map(lambda k: str(k), res['sessionid']))
     asyncio.run(pg_client.init())
-    with pg_client.PostgresClient() as conn:
-        conn.execute('SELECT session_id, user_id FROM sessions WHERE session_id IN ({session_id_list})'.format(
-            session_id_list=','.join(sessionids))
-        )
-        pg_res = conn.fetchall()
+    try:
+        with pg_client.PostgresClient() as conn:
+            conn.execute('SELECT session_id, user_id FROM sessions WHERE session_id IN ({session_id_list})'.format(
+                session_id_list=','.join(sessionids))
+            )
+            pg_res = conn.fetchall()
+    except Exception as e:
+        #logging.error(f'[ERROR] Error while selecting from pg: {repr(e)}')
+        asyncio.run(pg_client.terminate())
+        return
     logging.info(f'response from pg, length {len(pg_res)}')
     df = pd.DataFrame(pg_res)
     df.fillna('NN', inplace=True)
@@ -351,7 +356,7 @@ def fix_missing_redshift():
     try:
         database_api.pdredshift.exec_commit(base_query)
     except Exception as e:
-        logging.error(f'[ERROR] Error while executing query {repr(e)}')
+        logging.error(f'[ERROR] Error while executing query. {repr(e)}')
         database_api.close()
         asyncio.run(pg_client.terminate())
         return

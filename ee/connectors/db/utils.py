@@ -215,11 +215,11 @@ def get_df_from_batch(batch, level):
         try:
             if df[x].dtype == "string" or current_types[x] == "string":
                 df[x] = df[x].fillna('NULL')
-                df[x] = df[x].str.slice(0, 255)
+                df[x] = df[x].str.slice(0, 8000)
                 df[x] = df[x].str.replace("|", "")
         except TypeError as e:
             print(repr(e))
             if df[x].dtype == 'str':
-                df[x] = df[x].str.slice(0, 255)
+                df[x] = df[x].str.slice(0, 8000)
                 df[x] = df[x].str.replace("|", "")
     return df
