@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.feature_flags
     project_id      integer                     NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
     flag_key        text                        NOT NULL,
     description     text                                 DEFAULT NULL,
-    payload         text                                 DEFAULT NULL,
+    payload         jsonb                                DEFAULT NULL,
     flag_type       text                        NOT NULL,
     is_persist      boolean                     NOT NULL DEFAULT FALSE,
     is_active       boolean                     NOT NULL DEFAULT FALSE,
