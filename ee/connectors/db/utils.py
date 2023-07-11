@@ -219,7 +219,7 @@ def get_df_from_batch(batch, level):
                 df[x] = df[x].str.replace("|", "")
         except TypeError as e:
             print(repr(e))
-            if df[x].dtype == 'str':
+            if df[x].dtype == 'str' and x != 'user_id':
                 df[x] = df[x].str.slice(0, 255)
                 df[x] = df[x].str.replace("|", "")
     return df
