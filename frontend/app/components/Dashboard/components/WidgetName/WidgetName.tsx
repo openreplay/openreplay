@@ -61,6 +61,7 @@ function WidgetName(props: Props) {
           onChange={write}
           onBlur={() => onBlur()}
           onFocus={() => setEditing(true)}
+          maxLength={80}
         />
       ) : (
         // @ts-ignore
