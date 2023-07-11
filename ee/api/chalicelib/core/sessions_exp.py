@@ -1438,3 +1438,32 @@ def session_exists(project_id, session_id):
                            {"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None
+
+
+# TODO: support this for CH
+def check_recording_status(project_id: int) -> dict:
+    query = f"""
+        WITH project_sessions AS (SELECT COUNT(1)                                      AS full_count,
+                                 COUNT(1) FILTER ( WHERE duration IS NOT NULL) AS nn_duration_count
+                          FROM public.sessions
+                          WHERE project_id = %(project_id)s
+                            AND start_ts >= (extract(EPOCH FROM now() - INTERVAL '1 day')) * 1000
+                            AND start_ts <= (extract(EPOCH FROM now() + INTERVAL '1 day')) * 1000)
+        SELECT CASE
+                   WHEN full_count = 0 THEN 0
+                   WHEN nn_duration_count = 0 THEN 1
+                   ELSE 2
+                   END    AS recording_status,
+               full_count AS sessions_count
+        FROM project_sessions;
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(query, {"project_id": project_id})
+        cur.execute(query)
+        row = cur.fetchone()
+
+    return {
+        "recordingStatus": row["recording_status"],
+        "sessionsCount": row["sessions_count"]
+    }
