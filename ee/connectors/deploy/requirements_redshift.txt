@@ -13,3 +13,4 @@ sqlalchemy-redshift==0.8.14
 redshift-connector==2.0.911
 pandas-redshift==2.0.5
 PyYAML==6.0
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
