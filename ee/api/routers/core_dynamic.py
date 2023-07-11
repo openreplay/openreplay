@@ -541,8 +541,7 @@ def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...
 def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
-                                             user_id=context.user_id,
-                                             feature_flag=data)
+                                             user_id=context.user_id, feature_flag=data)
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
@@ -553,7 +552,7 @@ def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
 
 @app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"],
           dependencies=[OR_scope(Permissions.feature_flags)])
-async def update_feature_flag_status(project_id: int, feature_flag_id: int,
-                                     data: schemas.FeatureFlagStatus = Body(...)):
+def update_feature_flag_status(project_id: int, feature_flag_id: int,
+                               data: schemas.FeatureFlagStatus = Body(...)):
     return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
                                                              is_active=data.is_active)}
