@@ -357,7 +357,7 @@ def fix_missing_redshift():
         database_api.pdredshift.exec_commit(base_query)
     except Exception as e:
         logging.error(f'[ERROR] Error while executing query. {repr(e)}')
-        logging.info(f'[ERROR INFO] query: {base_query}')
+        logging.error(f'[ERROR INFO] query: {base_query}')
         database_api.close()
         asyncio.run(pg_client.terminate())
         return
