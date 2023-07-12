@@ -93,7 +93,10 @@ export default class MFileReader extends RawMessageReader {
         this.startTime = rMsg.timestamp
       }
       this.currentTime = rMsg.timestamp - this.startTime
-      return this.readNext()
+      return {
+        tp: 9999,
+        time: this.currentTime,
+      }
     }
 
     const index = this.noIndexes ? 0 : this.getLastMessageID()
