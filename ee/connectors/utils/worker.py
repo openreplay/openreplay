@@ -340,7 +340,7 @@ def fix_missing_redshift():
     all_ids = list()
     # logging.info(f'[FILL INFO] {pg_res[:5]}')
     for i in range(len(df)):
-        user = df.iloc[i].name
+        user = df.iloc[i].name.replace("'", "''")
         aux = [str(sess) for sess in df.iloc[i].session_id if sess != 'NN']
         all_ids += aux
         if len(aux) == 0:
