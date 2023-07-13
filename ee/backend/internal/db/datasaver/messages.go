@@ -63,7 +63,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
-			project, err := mi.pg.GetProject(session.ProjectID)
+			project, err := mi.pg.Cache.GetProject(session.ProjectID)
 			if err != nil {
 				log.Printf("can't get project: %s", err)
 			} else {
