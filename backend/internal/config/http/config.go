@@ -10,6 +10,7 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
+	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	HTTPHost          string        `env:"HTTP_HOST,default="`
 	HTTPPort          string        `env:"HTTP_PORT,required"`
 	HTTPTimeout       time.Duration `env:"HTTP_TIMEOUT,default=60s"`

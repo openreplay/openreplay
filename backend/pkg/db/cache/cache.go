@@ -35,12 +35,12 @@ type cacheImpl struct {
 	projectExpirationTimeout time.Duration
 }
 
-func NewCache(conn *postgres.Conn, projectExpirationTimeoutMs int64) Cache {
+func NewCache(conn *postgres.Conn, projectExpiration time.Duration) Cache {
 	newCache := &cacheImpl{
 		conn:                     conn,
 		sessions:                 make(map[uint64]*SessionMeta),
 		projects:                 make(map[uint32]*ProjectMeta),
-		projectExpirationTimeout: time.Duration(1000 * projectExpirationTimeoutMs),
+		projectExpirationTimeout: projectExpiration,
 	}
 	go newCache.cleaner()
 	return newCache
