@@ -583,7 +583,7 @@ export function updateNote(note) {
     }
 }
 
-export function setSessionPath(path) {
+export function setSessionPath(path: any) {
     return {
         type: SET_SESSION_PATH,
         path,

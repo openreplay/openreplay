@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
-import { hasSiteId, siteChangeAvaliable } from 'App/routes';
+import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { Icon } from 'UI';
 import { pushNewSite } from 'Duck/user';
 import { init } from 'Duck/site';
@@ -63,8 +63,8 @@ export default class SiteDropdown extends React.PureComponent {
     } = this.props;
     const isAdmin = account.admin || account.superAdmin;
     const activeSite = sites.find((s) => s.id == siteId);
-    const disabled = !siteChangeAvaliable(pathname);
-    const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
+    const disabled = !siteChangeAvailable(pathname);
+    const showCurrent = hasSiteId(pathname) || siteChangeAvailable(pathname);
 
     return (
       <div style={{ width: '180px'}}>

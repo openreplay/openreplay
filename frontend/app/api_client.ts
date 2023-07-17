@@ -1,7 +1,7 @@
 import store from 'App/store';
 import { queried } from './routes';
 
-const siteIdRequiredPaths = [
+const siteIdRequiredPaths: string[] = [
   '/dashboard',
   '/sessions',
   '/events',
@@ -31,14 +31,13 @@ const siteIdRequiredPaths = [
   '/check-recording-status'
 ];
 
-const noStoringFetchPathStarts = [
+const noStoringFetchPathStarts: string[] = [
   '/account/password',
   '/password',
   '/login'
 ];
 
-// null?
-export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
+export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
   const keys = Array.isArray(obj)
     ? new Array(obj.length).fill().map((_, i) => i)
     : Object.keys(obj);
@@ -47,32 +46,34 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
     const value = obj[key];
     if (typeof value === 'object' && value !== null) {
       retObj[key] = clean(value);
-    } else if (!forbidenValues.includes(value)) {
+    } else if (!forbiddenValues.includes(value)) {
       retObj[key] = value;
     }
   });
 
   return retObj;
-}
-
+};
 
 export default class APIClient {
+  private init: RequestInit;
+  private siteId: string | undefined;
+
   constructor() {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    const siteId = store.getState().getIn([ 'site', 'siteId' ]);
+    const siteId = store.getState().getIn(['site', 'siteId']);
     this.init = {
-      headers: {
+      headers: new Headers({
         Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      })
     };
     if (jwt !== null) {
-      this.init.headers.Authorization = `Bearer ${ jwt }`;
+      (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
     this.siteId = siteId;
   }
 
-  fetch(path, params, options = { clean: true }) {
+  fetch(path: string, params?: any, options: { clean?: boolean } = { clean: true }): Promise<Response> {
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);
@@ -82,9 +83,9 @@ export default class APIClient {
       delete this.init.body;
     }
 
-
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
+
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
@@ -92,34 +93,34 @@ export default class APIClient {
       !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
-      edp = `${ edp }/${ this.siteId }`
+      edp = `${edp}/${this.siteId}`;
     }
     return fetch(edp + path, this.init)
-        .then((response) => {
-          if (response.ok) {
-            return response
-          } else {
-            return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
-          }
-        })
+      .then((response) => {
+        if (response.ok) {
+          return response;
+        } else {
+          return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
+        }
+      });
   }
 
-  get(path, params, options) {
+  get(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'GET';
     return this.fetch(queried(path, params, options));
   }
 
-  post(path, params, options) {
+  post(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'POST';
     return this.fetch(path, params);
   }
 
-  put(path, params, options) {
+  put(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'PUT';
     return this.fetch(path, params);
   }
 
-  delete(path, params, options) {
+  delete(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'DELETE';
     return this.fetch(path, params);
   }
