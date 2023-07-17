@@ -138,7 +138,7 @@ class CreateEditWebhookSchema(BaseModel):
     webhookId: Optional[int] = Field(None)
     endpoint: str = Field(...)
     authHeader: Optional[str] = Field(None)
-    name: Optional[str] = Field(...)
+    name: Optional[str] = Field(..., max_length=100)
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
