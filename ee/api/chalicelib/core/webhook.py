@@ -83,6 +83,8 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
                         {"tenant_id": tenant_id, "id": webhook_id, **changes})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
+        if w is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"webhook not found.")
         w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
         if replace_none:
             for k in w.keys():
