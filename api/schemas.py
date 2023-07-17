@@ -138,7 +138,7 @@ class CreateEditWebhookSchema(BaseModel):
     webhookId: Optional[int] = Field(None)
     endpoint: str = Field(...)
     authHeader: Optional[str] = Field(None)
-    name: Optional[str] = Field(...)
+    name: Optional[str] = Field(..., max_length=100)
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
@@ -1036,11 +1036,11 @@ class __CardSchema(BaseModel):
 
 class CardSchema(__CardSchema, CardChartSchema):
     view_type: Union[MetricTimeseriesViewType, \
-                     MetricTableViewType, MetricOtherViewType] = Field(...)
+        MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-                     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     is_template: bool = Field(default=False)
 
@@ -1212,7 +1212,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
-                      SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
