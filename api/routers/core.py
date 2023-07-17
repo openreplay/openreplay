@@ -733,7 +733,7 @@ def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
 def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
+    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @app.get('/client/members', tags=["client"])
