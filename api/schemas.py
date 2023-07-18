@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Optional, List, Union, Literal, Any
 
-from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator, validator
+from pydantic import field_validator, model_validator, ConfigDict, BaseModel, Field, EmailStr, HttpUrl, root_validator, \
+    validator
 from pydantic.types import Json
 
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -28,15 +29,13 @@ class _Grecaptcha(BaseModel):
 class UserLoginSchema(_Grecaptcha):
     email: EmailStr = Field(...)
     password: str = Field(...)
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(...)
     organizationName: str = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class EditAccountSchema(BaseModel):
@@ -44,36 +43,32 @@ class EditAccountSchema(BaseModel):
     tenantName: Optional[str] = Field(None)
     opt_out: Optional[bool] = Field(None)
 
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
-    _transform_tenantName = validator('tenantName', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _transform_tenantName = field_validator('tenantName', mode='before')(remove_whitespace)
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
     email: EmailStr = Field(...)
 
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class EditUserPasswordSchema(BaseModel):
     old_password: str = Field(...)
     new_password: str = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class UpdateTenantSchema(BaseModel):
     name: Optional[str] = Field(None)
     opt_out: Optional[bool] = Field(None)
     tenant_name: Optional[str] = Field(None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class CurrentAPIContext(BaseModel):
@@ -84,14 +79,14 @@ class CurrentContext(CurrentAPIContext):
     user_id: int = Field(...)
     email: EmailStr = Field(...)
 
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class AddCollaborationSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
-    _transform_url = validator('url', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _transform_url = field_validator('url', mode='before')(remove_whitespace)
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
@@ -107,7 +102,7 @@ class _TimedSchema(BaseModel):
     startTimestamp: int = Field(default=None)
     endTimestamp: int = Field(default=None)
 
-    @root_validator
+    @model_validator(mode='after')
     def time_validator(cls, values):
         if values.get("startTimestamp") is not None and values.get("endTimestamp") is not None:
             assert values.get("startTimestamp") < values.get("endTimestamp"), \
@@ -129,7 +124,8 @@ class JiraSchema(GithubSchema):
     username: str = Field(...)
     url: HttpUrl = Field(...)
 
-    @validator('url')
+    @field_validator('url')
+    @classmethod
     def transform_url(cls, v: HttpUrl):
         return HttpUrl.build(scheme=v.scheme.lower(), host=v.host.lower())
 
@@ -138,8 +134,8 @@ class CreateEditWebhookSchema(BaseModel):
     webhookId: Optional[int] = Field(None)
     endpoint: str = Field(...)
     authHeader: Optional[str] = Field(None)
-    name: Optional[str] = Field(..., max_length=100)
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
+    name: Optional[str] = Field(None, max_length=100)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class CreateMemberSchema(BaseModel):
@@ -148,8 +144,8 @@ class CreateMemberSchema(BaseModel):
     email: EmailStr = Field(...)
     admin: bool = Field(False)
 
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_email = field_validator('email', mode='before')(transform_email)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class EditMemberSchema(BaseModel):
@@ -169,10 +165,8 @@ class AssignmentSchema(BaseModel):
     description: str = Field(...)
     title: str = Field(...)
     issue_type: str = Field(...)
-    _transform_title = validator('title', pre=True, allow_reuse=True)(remove_whitespace)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    _transform_title = field_validator('title', mode='before')(remove_whitespace)
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CommentAssignmentSchema(BaseModel):
@@ -197,9 +191,7 @@ class SampleRateSchema(BaseModel):
 
 class WeeklyReportConfigSchema(BaseModel):
     weekly_report: bool = Field(True)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class DatadogSchema(BaseModel):
@@ -260,7 +252,7 @@ class SumologicSchema(BaseModel):
 class MetadataBasicSchema(BaseModel):
     index: Optional[int] = Field(None)
     key: str = Field(...)
-    _transform_key = validator('key', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
 class MetadataListSchema(BaseModel):
@@ -336,7 +328,7 @@ class AlertSchema(BaseModel):
     query: _AlertQuerySchema = Field(...)
     series_id: Optional[int] = Field(None)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform_alert(cls, values):
         values["seriesId"] = None
         if isinstance(values["query"]["left"], int):
@@ -345,14 +337,13 @@ class AlertSchema(BaseModel):
 
         return values
 
-    @root_validator
+    @model_validator(mode='after')
     def alert_validator(cls, values):
         if values.get("query") is not None and values["query"].left == AlertColumn.custom:
             assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
@@ -487,7 +478,7 @@ class MetricFormatType(str, Enum):
 class __MixedSearchFilter(BaseModel):
     is_event: bool = Field(...)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def remove_duplicate_values(cls, values):
         if values.get("value") is not None:
             if len(values["value"]) > 0 \
@@ -496,8 +487,7 @@ class __MixedSearchFilter(BaseModel):
             values["value"] = list(set(values["value"]))
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class HttpMethod(str, Enum):
@@ -545,7 +535,7 @@ class IssueFilterSchema(BaseModel):
 
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
-    is_event: bool = Field(default=True, const=True)
+    is_event: Literal[True] = True
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
@@ -553,7 +543,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     sourceOperator: Optional[MathOperator] = Field(default=None)
     filters: Optional[List[Union[RequestGraphqlFilterSchema, IssueFilterSchema]]] = Field(default=None)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform(cls, values):
         if values.get("type") is None:
             return values
@@ -583,7 +573,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
         }.get(values["type"], values["type"])
         return values
 
-    @root_validator
+    @model_validator(mode='after')
     def event_validator(cls, values):
         if isinstance(values.get("type"), PerformanceEventType):
             if values.get("type") == PerformanceEventType.fetch_failed:
@@ -658,7 +648,7 @@ def transform_old_FilterType(cls, values):
 
 
 class SessionSearchFilterSchema(__MixedSearchFilter):
-    is_event: bool = Field(False, const=False)
+    is_event: Literal[False]
     # TODO: remove this if there nothing broken from the UI
     # value: Union[Optional[Union[IssueType, PlatformType, int, str]],
     # Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
@@ -668,9 +658,9 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
     filters: List[IssueFilterSchema] = Field(default=[])
 
-    transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
+    transform = model_validator(mode='before')(transform_old_FilterType)
 
-    @root_validator
+    @model_validator(mode='after')
     def filter_validator(cls, values):
         if values.get("type") == FilterType.metadata:
             assert values.get("source") is not None and len(values["source"]) > 0, \
@@ -714,7 +704,7 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
     group_by_user: bool = Field(default=False)
     bookmarked: bool = Field(default=False)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform_order(cls, values):
         if values.get("sort") is None:
             values["sort"] = "startTs"
@@ -725,15 +715,14 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
             values["order"] = values["order"].upper()
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FlatSessionsSearch(BaseModel):
     events: Optional[List[_SessionSearchEventSchema]] = Field([])
     filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def flat_to_original(cls, values):
         # in case the old search body was passed
         if len(values.get("events", [])) > 0:
@@ -770,35 +759,32 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
-    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
-    group_by_user: Optional[bool] = Field(default=False, const=True)
+    events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
+    group_by_user: Literal[False] = False
     rangeValue: Optional[str] = Field(None)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def enforce_default_values(cls, values):
         values["eventsOrder"] = SearchEventOrder._then
         values["groupByUser"] = False
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FunnelSchema(BaseModel):
     name: str = Field(...)
     filter: FunnelSearchPayloadSchema = Field([])
     is_public: bool = Field(default=False)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
-    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
-    group_by_user: Optional[bool] = Field(default=False, const=True)
+    events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
+    group_by_user: Literal[False] = False
     rangeValue: Optional[str] = Field(None)
 
 
@@ -840,7 +826,7 @@ class ProductAnalyticsFilter(BaseModel):
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     value: List[Union[ProductAnalyticsEventType | str]] = Field(...)
 
-    @root_validator
+    @model_validator(mode='after')
     def validator(cls, values):
         if values.get("type") == ProductAnalyticsFilterType.event_type:
             assert values.get("value") is not None and len(values["value"]) > 0, \
@@ -857,9 +843,7 @@ class PathAnalysisSchema(_TimedSchema):
     density: int = Field(7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class AssistSearchPayloadSchema(BaseModel):
@@ -881,7 +865,7 @@ class CardSeriesFilterSchema(SearchErrorsSchema):
     endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
-    group_by_user: Optional[bool] = Field(default=False, const=True)
+    group_by_user: Literal[False] = False
 
 
 class CardSeriesSchema(BaseModel):
@@ -889,9 +873,7 @@ class CardSeriesSchema(BaseModel):
     name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
     filter: Optional[Union[CardSeriesFilterSchema | PathAnalysisSchema]] = Field(default=None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class MetricTimeseriesViewType(str, Enum):
@@ -1008,9 +990,7 @@ class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
     series: List[CardSeriesSchema] = Field(default=[])
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CardChartSchema(CardSessionsSchema):
@@ -1018,20 +998,18 @@ class CardChartSchema(CardSessionsSchema):
 
 
 class CardConfigSchema(BaseModel):
-    col: Optional[int] = Field(...)
+    col: Optional[int] = Field(None)
     row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
 class __CardSchema(BaseModel):
-    name: Optional[str] = Field(...)
+    name: Optional[str] = Field(None)
     is_public: bool = Field(default=True)
     default_config: CardConfigSchema = Field(..., alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CardSchema(__CardSchema, CardChartSchema):
@@ -1045,7 +1023,7 @@ class CardSchema(__CardSchema, CardChartSchema):
     is_template: bool = Field(default=False)
 
     # This is used to handle wrong values sent by the UI
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform(cls, values):
         values["isTemplate"] = values.get("metricType") in [MetricType.errors, MetricType.performance,
                                                             MetricType.resources, MetricType.web_vital]
@@ -1068,12 +1046,12 @@ class CardSchema(__CardSchema, CardChartSchema):
 
         return values
 
-    @root_validator
+    @model_validator(mode='after')
     def restrictions(cls, values):
         assert values.get("metric_type") != MetricType.insights, f"metricType:{MetricType.insights} not supported yet"
         return values
 
-    @root_validator
+    @model_validator(mode='after')
     def validator(cls, values):
         if values.get("metric_type") == MetricType.timeseries:
             assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
@@ -1126,15 +1104,12 @@ class CardSchema(__CardSchema, CardChartSchema):
 
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CardUpdateSeriesSchema(CardSeriesSchema):
     series_id: Optional[int] = Field(None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class UpdateCardSchema(CardSchema):
@@ -1155,9 +1130,7 @@ class CreateDashboardSchema(BaseModel):
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default=[])
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class EditDashboardSchema(CreateDashboardSchema):
@@ -1167,16 +1140,12 @@ class EditDashboardSchema(CreateDashboardSchema):
 
 class UpdateWidgetPayloadSchema(BaseModel):
     config: dict = Field(default={})
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
     metric_id: int = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class TemplatePredefinedUnits(str, Enum):
@@ -1214,9 +1183,9 @@ class LiveSessionSearchFilterSchema(BaseModel):
     operator: Literal[SearchEventOperator._is, \
         SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
-    transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
+    transform = model_validator(mode='before')(transform_old_FilterType)
 
-    @root_validator
+    @model_validator(mode='after')
     def validator(cls, values):
         if values.get("type") is not None and values["type"] == LiveFilterType.metadata:
             assert values.get("source") is not None, "source should not be null for METADATA type"
@@ -1229,7 +1198,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     sort: Union[LiveFilterType, str] = Field(default="TIMESTAMP")
     order: SortOrderType = Field(default=SortOrderType.desc)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform(cls, values):
         if values.get("order") is not None:
             values["order"] = values["order"].upper()
@@ -1248,8 +1217,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 values["sort"] = "TIMESTAMP"
         return values
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class IntegrationType(str, Enum):
@@ -1274,9 +1242,7 @@ class SearchNoteSchema(_PaginatedSchema):
     tags: Optional[List[str]] = Field(default=[])
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SessionNoteSchema(BaseModel):
@@ -1284,9 +1250,7 @@ class SessionNoteSchema(BaseModel):
     tag: Optional[str] = Field(default=None)
     timestamp: int = Field(default=-1)
     is_public: bool = Field(default=False)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SessionUpdateNoteSchema(SessionNoteSchema):
@@ -1294,7 +1258,7 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
     timestamp: Optional[int] = Field(default=None, ge=-1)
     is_public: Optional[bool] = Field(default=None)
 
-    @root_validator
+    @model_validator(mode='after')
     def validator(cls, values):
         assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
         c = 0
@@ -1318,9 +1282,7 @@ class SearchCardsSchema(_PaginatedSchema):
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
     query: Optional[str] = Field(default=None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class _ClickMapSearchEventRaw(_SessionSearchEventRaw):
@@ -1331,7 +1293,7 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
     events: Optional[List[_ClickMapSearchEventRaw]] = Field([])
     filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field([])
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform(cls, values):
         for f in values.get("filters", []):
             if f.get("type") == FilterType.duration:
@@ -1341,7 +1303,7 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
                                   "operator": SearchEventOperator._is, "filters": []})
         return values
 
-    @root_validator()
+    @model_validator(mode='after')
     def flat_to_original(cls, values):
         if len(values["events"]) > 0:
             return values
@@ -1378,9 +1340,7 @@ class GetHeatmapPayloadSchema(BaseModel):
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagVariant(BaseModel):
@@ -1389,15 +1349,13 @@ class FeatureFlagVariant(BaseModel):
     description: Optional[str] = Field(default=None)
     payload: Optional[str] = Field(default=None)
     rollout_percentage: Optional[int] = Field(default=0, ge=0, le=100)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagConditionFilterSchema(BaseModel):
-    is_event: bool = Field(False, const=False)
+    is_event: Literal[False]
     type: FilterType = Field(...)
-    value: List[str] = Field(default=[], min_items=1)
+    value: List[str] = Field(default=[], min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
@@ -1406,9 +1364,7 @@ class FeatureFlagCondition(BaseModel):
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
     filters: List[FeatureFlagConditionFilterSchema] = Field(default=[])
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SearchFlagsSchema(_PaginatedSchema):
@@ -1417,9 +1373,7 @@ class SearchFlagsSchema(_PaginatedSchema):
     order: SortOrderType = Field(default=SortOrderType.desc)
     query: Optional[str] = Field(default=None)
     is_active: Optional[bool] = Field(default=None)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagType(str, Enum):
@@ -1429,9 +1383,7 @@ class FeatureFlagType(str, Enum):
 
 class FeatureFlagStatus(BaseModel):
     is_active: bool = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class ModuleStatus(BaseModel):
@@ -1445,13 +1397,11 @@ class ModuleStatus(BaseModel):
 
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
-    flag_key: str = Field(..., regex=r'^[a-zA-Z0-9\-]+$')
+    flag_key: str = Field(..., pattern=r'^[a-zA-Z0-9\-]+$')
     description: Optional[str] = Field(None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[])
+    conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
