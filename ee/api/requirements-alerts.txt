@@ -1,6 +1,6 @@
 requests==2.31.0
-urllib3==1.26.16
-boto3==1.28.2
+urllib3==2.0.3
+boto3==1.28.4
 pyjwt==2.7.0
 psycopg2-binary==2.9.6
 elasticsearch==8.8.2
@@ -9,12 +9,12 @@ jira==3.5.2
 
 
 fastapi==0.100.0
-uvicorn[standard]==0.22.0
+uvicorn[standard]==0.23.1
 python-decouple==3.8
 pydantic[email]==1.10.8
 apscheduler==3.10.1
 
 clickhouse-driver==0.2.6
 clickhouse-driver[lz4]==0.2.6
-python-multipart==0.0.5
+python-multipart==0.0.6
 azure-storage-blob==12.16.0
