@@ -5,20 +5,19 @@ name = "pypi"
 
 [packages]
 requests = "==2.31.0"
-urllib3 = "==1.26.16"
-boto3 = "==1.26.148"
+boto3 = "==1.28.4"
 pyjwt = "==2.7.0"
 psycopg2-binary = "==2.9.6"
-elasticsearch = "==8.8.0"
-jira = "==3.5.1"
-fastapi = "==0.96.0"
-uvicorn = {version = "==0.22.0", extras = ["standard"]}
+elasticsearch = "==8.8.2"
+jira = "==3.5.2"
+fastapi = "==0.100.0"
+uvicorn = {version = "==0.23.1", extras = ["standard"]}
+gunicorn = "==21.0.1"
 python-decouple = "==3.8"
 pydantic = {version = "==1.10.8", extras = ["email"]}
 apscheduler = "==3.10.1"
-clickhouse-driver = {version = "==0.2.5", extras = ["lz4"]}
-python-multipart = "==0.0.6"
-redis = "==4.5.5"
+clickhouse-driver = {version = "==0.2.6", extras = ["lz4"]}
+redis = "==4.6.0"
 azure-storage-blob = "==12.16.0"
 
 [dev-packages]
