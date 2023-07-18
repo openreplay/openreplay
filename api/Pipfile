@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 requests = "==2.31.0"
-urllib3 = "==2.0.3"
 boto3 = "==1.28.4"
 pyjwt = "==2.7.0"
 psycopg2-binary = "==2.9.6"
@@ -15,9 +14,8 @@ fastapi = "==0.100.0"
 python-decouple = "==3.8"
 apscheduler = "==3.10.1"
 redis = "==4.6.0"
-bump-pydantic = "*"
 uvicorn = {version = "==0.23.1", extras = ["standard"]}
-pydantic = {version = "==1.10.8", extras = ["email"]}
+pydantic = {version = "==2.0.3", extras = ["email"]}
 
 [dev-packages]
 
