@@ -7,6 +7,8 @@ import (
 	"log"
 
 	"openreplay/backend/internal/config/connector"
+
+	_ "github.com/lib/pq"
 )
 
 type Redshift struct {
@@ -49,12 +51,11 @@ func (r *Redshift) Copy(tableName, fileName, delimiter string, creds, gzip bool)
 		gzipSQL = "GZIP"
 	}
 
-	// s3://rdshftbucket/connector/connector_events-00006d75-1b6d-411e-baa9-34e7c5281b78.csv
 	bucketName := "rdshftbucket"
 	filePath := fmt.Sprintf("s3://%s/%s", bucketName, fileName)
 
 	copySQL := fmt.Sprintf(`COPY "%s" FROM '%s' WITH %s TIMEFORMAT 'auto' DATEFORMAT 'auto' TRUNCATECOLUMNS 
-		STATUPDATE ON %s DELIMITER AS '%s' REMOVEQUOTES ESCAPE TRIMBLANKS EMPTYASNULL ACCEPTANYDATE`,
+		STATUPDATE ON %s DELIMITER AS '%s' IGNOREHEADER 1 REMOVEQUOTES ESCAPE TRIMBLANKS EMPTYASNULL ACCEPTANYDATE`,
 		tableName, filePath, gzipSQL, credentials, delimiter)
 	log.Printf("Running command: %s", copySQL)
 

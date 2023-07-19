@@ -15,7 +15,7 @@ type Config struct {
 	GroupConnector     string        `env:"GROUP_REDSHIFT_CONNECTOR,default=saas-redshift-connector"`
 	TopicRawWeb        string        `env:"TOPIC_RAW_WEB,required"`
 	TopicAnalytics     string        `env:"TOPIC_ANALYTICS,required"`
-	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
+	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=5s"`
 	UseProfiler        bool          `env:"PROFILER_ENABLED,default=false"`
 }
 

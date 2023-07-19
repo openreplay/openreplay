@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"log"
+	"strconv"
 	"time"
 
 	config "openreplay/backend/internal/config/connector"
@@ -75,45 +76,53 @@ func mapToString(m map[string]string) string {
 // Empty number -> empty string
 // Delimiter -> "|"
 
+func QUOTES(s string) string {
+	return strconv.Quote(s)
+}
+
 func handleEventN(msg messages.Message) map[string]string {
 	event := make(map[string]string)
-	event["sessionid"] = fmt.Sprintf("%d", msg.SessionID())
-	event["received_at"] = fmt.Sprintf("%d", uint64(time.Now().UnixMilli()))
-	event["batch_order_number"] = fmt.Sprintf("%d", 0)
 
 	switch m := msg.(type) {
 	case *messages.ConsoleLog:
-		event["consolelog_level"] = m.Level
-		event["consolelog_value"] = m.Value
+		event["consolelog_level"] = QUOTES(m.Level)
+		event["consolelog_value"] = QUOTES(m.Value)
 	case *messages.CustomEvent:
-		event["customevent_name"] = m.Name
-		event["customevent_payload"] = m.Payload
+		event["customevent_name"] = QUOTES(m.Name)
+		event["customevent_payload"] = QUOTES(m.Payload)
 	case *messages.JSException:
-		event["jsexception_name"] = m.Name
-		event["jsexception_message"] = m.Message
-		event["jsexception_payload"] = m.Payload
-		event["jsexception_metadata"] = m.Metadata
+		event["jsexception_name"] = QUOTES(m.Name)
+		event["jsexception_message"] = QUOTES(m.Message)
+		event["jsexception_payload"] = QUOTES(m.Payload)
+		event["jsexception_metadata"] = QUOTES(m.Metadata)
 	case *messages.NetworkRequest:
-		event["networkrequest_type"] = m.Type
-		event["networkrequest_method"] = m.Method
-		event["networkrequest_url"] = m.URL
-		event["networkrequest_request"] = m.Request
-		event["networkrequest_response"] = m.Response
+		event["networkrequest_type"] = QUOTES(m.Type)
+		event["networkrequest_method"] = QUOTES(m.Method)
+		event["networkrequest_url"] = QUOTES(m.URL)
+		event["networkrequest_request"] = QUOTES(m.Request)
+		event["networkrequest_response"] = QUOTES(m.Response)
 		event["networkrequest_status"] = fmt.Sprintf("%d", m.Status)
 		event["networkrequest_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		event["networkrequest_duration"] = fmt.Sprintf("%d", m.Duration)
 	case *messages.IssueEvent:
 		event["issueevent_message_id"] = fmt.Sprintf("%d", m.MessageID)
 		event["issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["issueevent_type"] = m.Type
-		event["issueevent_context_string"] = m.ContextString
-		event["issueevent_context"] = m.Context
-		event["issueevent_payload"] = m.Payload
-		event["issueevent_url"] = m.URL
+		event["issueevent_type"] = QUOTES(m.Type)
+		event["issueevent_context_string"] = QUOTES(m.ContextString)
+		event["issueevent_context"] = QUOTES(m.Context)
+		event["issueevent_payload"] = QUOTES(m.Payload)
+		event["issueevent_url"] = QUOTES(m.URL)
 	case *messages.CustomIssue:
-		event["customissue_name"] = m.Name
-		event["customissue_payload"] = m.Payload
+		event["customissue_name"] = QUOTES(m.Name)
+		event["customissue_payload"] = QUOTES(m.Payload)
 	}
+
+	if len(event) == 0 {
+		return nil
+	}
+	event["sessionid"] = fmt.Sprintf("%d", msg.SessionID())
+	event["received_at"] = fmt.Sprintf("%d", uint64(time.Now().UnixMilli()))
+	event["batch_order_number"] = fmt.Sprintf("%d", 0)
 	return event
 }
 
@@ -689,6 +698,9 @@ func (s *Saver) handleDetailedEvent(msg messages.Message) *DetailedEvent {
 
 func (s *Saver) Handle(msg messages.Message) {
 	newEvent := handleEventN(msg)
+	if newEvent == nil {
+		return
+	}
 	if s.batch == nil {
 		s.batch = make([]map[string]string, 0, 2)
 	}
@@ -740,6 +752,7 @@ func (s *Saver) Commit() {
 	fileName := fmt.Sprintf("test_connector/connector_events-%s.csv", uuid.New().String())
 	// Create csv file
 	buf := eventsToBuffer(s.batch)
+	s.batch = nil
 
 	reader := bytes.NewReader(buf.Bytes())
 	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
