@@ -26,6 +26,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | gorilla/websocket | BSD2 | Go |
 | radix | MIT | Go |
 | api | BSD3 | Go |
+| urllib3 | MIT | Python |
 | boto3 | Apache2 | Python |
 | requests | Apache2 | Python |
 | pyjwt | MIT | Python |

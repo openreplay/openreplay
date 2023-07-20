@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated
 from typing import Optional, List, Union, Literal
 
 from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
@@ -111,7 +111,6 @@ class EditUserPasswordSchema(BaseModel):
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
-    platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
@@ -149,7 +148,7 @@ class _TimedSchema(BaseModel):
     endTimestamp: int = Field(default=None)
 
     @model_validator(mode='before')
-    def transform_time(cls, values):
+    def transform(cls, values):
         if values.get("startTimestamp") is None and values.get("startDate") is not None:
             values["startTimestamp"] = values["startDate"]
         if values.get("endTimestamp") is None and values.get("endDate") is not None:
@@ -157,14 +156,10 @@ class _TimedSchema(BaseModel):
         return values
 
     @model_validator(mode='after')
-    def __time_validator(cls, values):
-        if values.startTimestamp is not None:
-            assert 0 <= values.startTimestamp, "startTimestamp must be greater or equal to 0"
-        if values.endTimestamp is not None:
-            assert 0 <= values.endTimestamp, "endTimestamp must be greater or equal to 0"
+    def time_validator(cls, values):
         if values.startTimestamp is not None and values.endTimestamp is not None:
-            assert values.startTimestamp <= values.endTimestamp, \
-                "endTimestamp must be greater or equal to startTimestamp"
+            assert values.startTimestamp < values.endTimestamp, \
+                "endTimestamp must be greater than startTimestamp"
         return values
 
 
@@ -459,13 +454,12 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
-    click_ios = "tapIos"
+    click_ios = "clickIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
     custom_ios = "customIos"
     request_ios = "requestIos"
     error_ios = "errorIos"
-    swipe_ios = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
@@ -742,6 +736,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     @model_validator(mode="after")
     def split_filters_events(cls, values):
         # in case the old search body was passed
+        if len(values.events) > 0:
+            return values
         n_filters = []
         n_events = []
         for v in values.filters:
@@ -795,7 +791,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 #     group_by_user: Literal[False] = False
 #
 #     @model_validator(mode="before")
-#     def __enforce_default_values(cls, values):
+#     def enforce_default_values(cls, values):
 #         values["eventsOrder"] = SearchEventOrder._then
 #         values["groupByUser"] = False
 #         return values
@@ -838,85 +834,41 @@ class SearchErrorsSchema(SessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
-class ProductAnalyticsSelectedEventType(str, Enum):
+class ProductAnalyticsFilterType(str, Enum):
+    event_type = 'eventType'
+    start_point = 'startPoint'
+    user_id = FilterType.user_id.value
+
+
+class ProductAnalyticsEventType(str, Enum):
     click = EventType.click.value
     input = EventType.input.value
     location = EventType.location.value
     custom_event = EventType.custom.value
 
 
-class ProductAnalyticsFilterType(str, Enum):
-    start_point = 'startPoint'
-    end_point = 'endPoint'
-    exclude = 'exclude'
-
-
-class PathAnalysisSubFilterSchema(BaseModel):
-    is_event: Literal[True] = True
-    value: List[str] = Field(...)
-    type: ProductAnalyticsSelectedEventType = Field(...)
-    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
-
-    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
-
-
 class ProductAnalyticsFilter(BaseModel):
-    # The filters attribute will help with startPoint/endPoint/exclude
-    filters: Optional[List[PathAnalysisSubFilterSchema]] = Field(default=[])
-    type: Union[ProductAnalyticsFilterType, FilterType]
-    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
-    # TODO: support session metadat filters
-    value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
+    type: ProductAnalyticsFilterType = Field(...)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
+    value: List[Union[ProductAnalyticsEventType, str]] = Field(...)
 
-    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+    @model_validator(mode='after')
+    def validator(cls, values):
+        if values.type == ProductAnalyticsFilterType.event_type:
+            assert values.value is not None and len(values.value) > 0, \
+                f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
+            assert isinstance(values.value[0], ProductAnalyticsEventType), \
+                f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
 
-    # @model_validator(mode='after')
-    # def __validator(cls, values):
-    #     if values.type == ProductAnalyticsFilterType.event_type:
-    #         assert values.value is not None and len(values.value) > 0, \
-    #             f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
-    #         assert ProductAnalyticsEventType.has_value(values.value[0]), \
-    #             f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
-    #
-    #     return values
+        return values
 
 
-class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
-    # startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
-    # endTimestamp: int = Field(default=TimeUTC.now())
+class PathAnalysisSchema(_TimedSchema):
+    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
+    endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
-
-    @model_validator(mode='after')
-    def __validator(cls, values):
-        filters = []
-        for f in values.filters:
-            if ProductAnalyticsFilterType.has_value(f.type) and (f.filters is None or len(f.filters) == 0):
-                continue
-            filters.append(f)
-        values.filters = filters
-
-        # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
-        # start-point's value and end-point's value should not be excluded
-        s_e_detected = 0
-        s_e_values = {}
-        exclude_values = {}
-        for f in values.filters:
-            if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
-                s_e_detected += 1
-                for s in f.filters:
-                    s_e_values[s.type] = s_e_values.get(s.type, []) + s.value
-            elif f.type in ProductAnalyticsFilterType.exclude:
-                for s in f.filters:
-                    exclude_values[s.type] = exclude_values.get(s.type, []) + s.value
-
-        assert s_e_detected <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
-        for t in exclude_values:
-            for v in t:
-                assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
-
-        return values
 
 
 # class AssistSearchPayloadSchema(BaseModel):
@@ -1036,8 +988,8 @@ class MetricOfTable(str, Enum):
     user_browser = FilterType.user_browser.value
     user_device = FilterType.user_device.value
     user_country = FilterType.user_country.value
-    # user_city = FilterType.user_city.value
-    # user_state = FilterType.user_state.value
+    user_city = FilterType.user_city.value
+    user_state = FilterType.user_state.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
     visited_url = "location"
@@ -1049,57 +1001,19 @@ class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
 
 
-class MetricOfFunnels(str, Enum):
-    session_count = MetricOfTimeseries.session_count.value
-
-
 class MetricOfClickMap(str, Enum):
     click_map_url = "clickMapUrl"
-
-
-class MetricOfPathAnalysis(str, Enum):
-    session_count = MetricOfTimeseries.session_count.value
 
 
 # class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
 class CardSessionsSchema(SessionsSearchPayloadSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(defautl=TimeUTC.now())
-    density: int = Field(default=7, ge=1, le=200)
     series: List[CardSeriesSchema] = Field(default=[])
 
-    # Used mainly for PathAnalysis, and could be used by other cards
-    hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
 
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        if values.get("startTimestamp") is None:
-            values["startTimestamp"] = TimeUTC.now(-7)
-
-        if values.get("endTimestamp") is None:
-            values["endTimestamp"] = TimeUTC.now()
-
-        for s in values.get("series", []):
-            if s.get("filter") is not None:
-                s["filter"]["startTimestamp"] = values["startTimestamp"]
-                s["filter"]["endTimestamp"] = values["endTimestamp"]
-
-        return values
-
-    @model_validator(mode="after")
-    def __enforce_default_after(cls, values):
-        for s in values.series:
-            if s.filter is not None:
-                s.filter.limit = values.limit
-                s.filter.page = values.page
-
-        return values
-
-
-#
-#
-# class CardChartSchema(CardSessionsSchema):
-#     density: int = Field(default=7)
+class CardChartSchema(CardSessionsSchema):
+    density: int = Field(default=7)
 
 
 class CardConfigSchema(BaseModel):
@@ -1109,21 +1023,19 @@ class CardConfigSchema(BaseModel):
 
 
 # class CardSchema(CardChartSchema):
-class __CardSchema(CardSessionsSchema):
+class __CardSchema(CardChartSchema):
     name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
     default_config: CardConfigSchema = Field(..., alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
 
-    # view_type: Union[MetricTimeseriesViewType, \
-    #     MetricTableViewType, MetricOtherViewType] = Field(...)
-    view_type: Any
+    view_type: Union[MetricTimeseriesViewType, \
+        MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
-    # metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-    #     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-    #     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
-    metric_of: Any
+    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
 
     @computed_field
@@ -1132,242 +1044,141 @@ class __CardSchema(CardSessionsSchema):
         return self.metric_type in [MetricType.errors, MetricType.performance,
                                     MetricType.resources, MetricType.web_vital]
 
-    # TODO: finish the reset of these conditions
+    # This is used to handle wrong values sent by the UI
+    @model_validator(mode="before")
+    def transform(cls, values):
+        if values.get("metricType") == MetricType.timeseries \
+                or values.get("metricType") == MetricType.table \
+                and values.get("metricOf") != MetricOfTable.issues:
+            values["metricValue"] = []
+
+        if values.get("metricType") in [MetricType.funnel, MetricType.pathAnalysis] and \
+                values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = [values["series"][0]]
+        elif values.get("metricType") not in [MetricType.table,
+                                              MetricType.timeseries,
+                                              MetricType.insights,
+                                              MetricType.click_map,
+                                              MetricType.funnel,
+                                              MetricType.pathAnalysis] \
+                and values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = []
+
+        return values
+
     # @model_validator(mode='after')
-    # def __validator(cls, values):
-    #     if values.metric_type == MetricType.click_map:
-    #         # assert isinstance(values.metric_of, MetricOfClickMap), \
-    #         #     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
-    #         for s in values.series:
-    #             for f in s.filter.events:
-    #                 assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
+    # def validator(cls, values):
+    #     if values.metric_type == MetricType.table:
+    #         assert isinstance(values.view_type, MetricTableViewType), \
+    #             f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
+    #         assert isinstance(values.metric_of, MetricOfTable), \
+    #             f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
+    #         if values.metric_of in (MetricOfTable.sessions, MetricOfTable.errors):
+    #             assert values.view_type == MetricTableViewType.table, \
+    #                 f"viewType must be '{MetricTableViewType.table}' for metricOf:{values.metric_of}"
+    #         if values.metric_of != MetricOfTable.issues:
+    #             assert values.metric_value is None or len(values.metric_value) == 0, \
+    #                 f"metricValue is only available for metricOf:{MetricOfTable.issues}"
+    #     else:
+    #         if values.metric_type == MetricType.errors:
+    #             assert isinstance(values.metric_of, MetricOfErrors), \
+    #                 f"metricOf must be of type {MetricOfErrors} for metricType:{MetricType.errors}"
+    #         elif values.metric_type == MetricType.performance:
+    #             assert isinstance(values.metric_of, MetricOfPerformance), \
+    #                 f"metricOf must be of type {MetricOfPerformance} for metricType:{MetricType.performance}"
+    #         elif values.metric_type == MetricType.resources:
+    #             assert isinstance(values.get("metric_of"), MetricOfResources), \
+    #                 f"metricOf must be of type {MetricOfResources} for metricType:{MetricType.resources}"
+    #         elif values.metric_type == MetricType.web_vital:
+    #             assert isinstance(values.metric_of, MetricOfWebVitals), \
+    #                 f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
+    #         elif values.metric_type == MetricType.click_map:
+    #             # assert isinstance(values.metric_of, MetricOfClickMap), \
+    #             #     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
+    #             if MetricOfClickMap.has_value(values.metric_of):
+    #                 values.metric_of = MetricOfClickMap(values.metric_of)
+    #             else:
+    #                 raise ValueError(
+    #                     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}")
+    #             # Allow only LOCATION events for clickMap
+    #             for s in values.series:
+    #                 for f in s.filter.events:
+    #                     assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
+    #
+    #         # assert isinstance(values.view_type, MetricOtherViewType), \
+    #         #     f"viewType must be 'chart|list' for metricOf:{values.metric_of}"
+    #         if MetricOtherViewType.has_value(values.view_type):
+    #             values.view_type = MetricOtherViewType(values.view_type)
+    #         else:
+    #             raise ValueError(f"viewType must be 'chart|list' for metricOf:{values.metric_of}")
+    #
     #     return values
 
 
 class CardTimeSeries(__CardSchema):
     metric_type: Literal[MetricType.timeseries]
     metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
-    view_type: MetricTimeseriesViewType
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["metricValue"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfTimeseries(values.metric_of)
-        return values
 
 
 class CardTable(__CardSchema):
     metric_type: Literal[MetricType.table]
     metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
-    view_type: MetricTableViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.issues:
-            values["metricValue"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfTable(values.metric_of)
-        return values
 
 
 class CardFunnel(__CardSchema):
     metric_type: Literal[MetricType.funnel]
-    metric_of: MetricOfFunnels = Field(default=MetricOfFunnels.session_count)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["metricOf"] = MetricOfFunnels.session_count
-        values["viewType"] = MetricOtherViewType.other_chart
-        if values.get("series") is not None and len(values["series"]) > 0:
-            values["series"] = [values["series"][0]]
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfTimeseries(values.metric_of)
-        return values
+    metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
 
 
 class CardErrors(__CardSchema):
     metric_type: Literal[MetricType.errors]
     metric_of: MetricOfErrors = Field(default=MetricOfErrors.impacted_sessions_by_js_errors)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfErrors(values.metric_of)
-        return values
 
 
 class CardPerformance(__CardSchema):
     metric_type: Literal[MetricType.performance]
     metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.cpu)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfPerformance(values.metric_of)
-        return values
 
 
 class CardResources(__CardSchema):
     metric_type: Literal[MetricType.resources]
     metric_of: MetricOfResources = Field(default=MetricOfResources.missing_resources)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfResources(values.metric_of)
-        return values
 
 
 class CardWebVital(__CardSchema):
     metric_type: Literal[MetricType.web_vital]
     metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.avg_cpu)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfWebVitals(values.metric_of)
-        return values
 
 
 class CardClickMap(__CardSchema):
     metric_type: Literal[MetricType.click_map]
     metric_of: MetricOfClickMap = Field(default=MetricOfClickMap.click_map_url)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOfClickMap(values.metric_of)
-        return values
-
-
-class MetricOfInsights(str, Enum):
-    issue_categories = "issueCategories"
 
 
 class CardInsights(__CardSchema):
     metric_type: Literal[MetricType.insights]
-    metric_of: MetricOfInsights = Field(default=MetricOfInsights.issue_categories)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["view_type"] = MetricOtherViewType.list_chart
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        values.metric_of = MetricOtherViewType(values.metric_of)
-        return values
+    metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
 
     @model_validator(mode='after')
     def restrictions(cls, values):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
-# class CardPathAnalysisSchema(BaseModel):
-class CardPathAnalysisSchema(CardSessionsSchema):
-    filter: PathAnalysisSchema = Field(...)
-    density: int = Field(default=4, ge=2, le=10)
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
-            values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
-                                                  endTimestamp=values["endTimestamp"],
-                                                  density=values["density"])
-        return values
+# CardSchema = TypeAdapter(Annotated[Union[CardTimeSeries, CardTable], \
+#     Field(discriminator='metric_type')])
+CardSchema = ORUnion(Union[
+                         CardTimeSeries, CardTable, CardFunnel,
+                         CardErrors, CardPerformance, CardResources,
+                         CardClickMap, CardInsights],
+                     discriminator='metric_type')
 
 
-class CardPathAnalysis(__CardSchema):
-    metric_type: Literal[MetricType.pathAnalysis]
-    metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
-    view_type: MetricOtherViewType = Field(...)
-    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
-    density: int = Field(default=4, ge=2, le=10)
-
-    # TODO: testing
-    series: List[CardPathAnalysisSchema] = Field(default=[])
-
-    @model_validator(mode="before")
-    def __enforce_default(cls, values):
-        values["viewType"] = MetricOtherViewType.other_chart.value
-        if values.get("series") is not None and len(values["series"]) > 0:
-            values["series"] = [values["series"][0]]
-        return values
-
-    @model_validator(mode="after")
-    def __enforce_metric_value(cls, values):
-        metric_value = []
-        for s in values.series:
-            for f in s.filter.filters:
-                if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
-                    for ff in f.filters:
-                        metric_value.append(ff.type)
-
-        if len(metric_value) > 0:
-            metric_value = remove_duplicate_values(metric_value)
-            values.metric_value = metric_value
-
-        return values
-
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        # values.metric_of = MetricOfClickMap(values.metric_of)
-        return values
-
-
-# Union of cards-schemas that doesn't change between FOSS and EE
-__cards_union_base = Union[
-    CardTimeSeries, CardTable, CardFunnel,
-    CardErrors, CardPerformance, CardResources,
-    CardWebVital, CardClickMap,
-    CardPathAnalysis]
-CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
-
-
-# class UpdateCustomMetricsStatusSchema(BaseModel):
-class UpdateCardStatusSchema(BaseModel):
+class UpdateCustomMetricsStatusSchema(BaseModel):
     active: bool = Field(...)
 
 
 class SavedSearchSchema(BaseModel):
     name: str = Field(...)
-    is_public: bool = Field(default=False)
     filter: SessionsSearchPayloadSchema = Field([])
 
 
@@ -1430,7 +1241,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
-    def __validator(cls, values):
+    def validator(cls, values):
         if values.type is not None and values.type == LiveFilterType.metadata:
             assert values.source is not None, "source should not be null for METADATA type"
             assert len(values.source) > 0, "source should not be empty for METADATA type"
@@ -1443,7 +1254,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     order: SortOrderType = Field(default=SortOrderType.desc)
 
     @model_validator(mode="before")
-    def __transform(cls, values):
+    def transform(cls, values):
         if values.get("order") is not None:
             values["order"] = values["order"].upper()
         if values.get("filters") is not None:
@@ -1499,7 +1310,7 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
     is_public: Optional[bool] = Field(default=None)
 
     @model_validator(mode='after')
-    def __validator(cls, values):
+    def validator(cls, values):
         assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
         c = 0
         for v in values.values():
@@ -1528,13 +1339,12 @@ class _ClickMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.location] = Field(...)
 
 
-# class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
-class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
-    events: Optional[List[_ClickMapSearchEventRaw]] = Field(default=[])
-    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field(default=[])
+class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
+    events: Optional[List[_ClickMapSearchEventRaw]] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field([])
 
     @model_validator(mode="before")
-    def __transform(cls, values):
+    def transform(cls, values):
         for f in values.get("filters", []):
             if f.get("type") == FilterType.duration:
                 return values
@@ -1543,42 +1353,32 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
                                   "operator": SearchEventOperator._is, "filters": []})
         return values
 
-    # @model_validator(mode='after')
-    # def flat_to_original(cls, values):
-    #     if len(values.events) > 0:
-    #         return values
-    #     n_filters = []
-    #     n_events = []
-    #     for v in values.filters:
-    #         if isinstance(v, _ClickMapSearchEventRaw):
-    #             n_events.append(v)
-    #         else:
-    #             n_filters.append(v)
-    #     values.events = n_events
-    #     values.filters = n_filters
-    #     return values
-
-
-class IssueFilterType(str, Enum):
-    _selector = "CLICK_SELECTOR"
-
-
-class IssueAdvancedFilter(BaseModel):
-    type: IssueFilterType = Field(default=IssueFilterType._selector)
-    value: List[str] = Field(default=[])
-    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
+    @model_validator(mode='after')
+    def flat_to_original(cls, values):
+        if len(values.events) > 0:
+            return values
+        n_filters = []
+        n_events = []
+        for v in values.filters:
+            if isinstance(v, _ClickMapSearchEventRaw):
+                n_events.append(v)
+            else:
+                n_filters.append(v)
+        values.events = n_events
+        values.filters = n_filters
+        return values
 
 
 class ClickMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
-    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
-    filters: List[IssueAdvancedFilter] = Field(default=[])
 
 
 class GetHeatmapPayloadSchema(_TimedSchema):
-    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-30))
+    # TODO: transform these if they are used by the UI
+    # startDate: int = Field(default=TimeUTC.now(delta_days=-30))
+    # endDate: int = Field(default=TimeUTC.now())
     url: str = Field(...)
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
@@ -1640,5 +1440,5 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[])
+    conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])

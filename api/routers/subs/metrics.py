@@ -30,8 +30,8 @@ def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentCont
     return {"data": data}
 
 
-# @app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-@app.put('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
+@app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
+# @app.put('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
 def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditDashboardSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.update_dashboard(project_id=projectId, user_id=context.user_id,
@@ -141,7 +141,7 @@ def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 # @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
 def create_card(projectId: int, data: schemas.CardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.create_card(project_id=projectId, user_id=context.user_id, data=data)
+    return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.post('/{projectId}/cards/search', tags=["cards"])
@@ -233,7 +233,7 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
 # @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardSessionsSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
@@ -247,7 +247,7 @@ def get_card_chart(projectId: int, metric_id: int, request: Request, data: schem
 # @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.CardSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.update_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
@@ -259,7 +259,7 @@ def update_custom_metric(projectId: int, metric_id: int, data: schemas.CardSchem
 # @app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
 # @app.put('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
 def update_custom_metric_state(projectId: int, metric_id: int,
-                               data: schemas.UpdateCardStatusSchema = Body(...),
+                               data: schemas.UpdateCustomMetricsStatusSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": custom_metrics.change_state(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
@@ -271,4 +271,4 @@ def update_custom_metric_state(projectId: int, metric_id: int,
 # @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.delete_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+    return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}

@@ -1,6 +1,5 @@
 from typing import Union
 
-from decouple import config
 from fastapi import Depends, Body
 
 import schemas
@@ -17,6 +16,20 @@ from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
+
+
+@app.post('/{projectId}/sessions/search', tags=["sessions"])
+def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+                    context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
+    return {'data': data}
+
+
+@app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
+    return {'data': data}
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
@@ -675,8 +688,8 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
 
 @app.get('/boarding', tags=['boarding'])
 def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
-    if config("LOCAL_DEV", cast=bool, default=False):
-        return {"data": ""}
+    return
+    # TODO: remove this
     return {"data": boarding.get_state(tenant_id=context.tenant_id)}
 
 
