@@ -1,6 +1,8 @@
 from chalicelib.core import log_tools
 import requests
 
+from schemas import schemas
+
 IN_TY = "bugsnag"
 
 
@@ -60,14 +62,14 @@ def delete(tenant_id, project_id):
     return log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
-def add_edit(tenant_id, project_id, data):
+def add_edit(tenant_id, project_id, data:schemas.IntegrationBugsnagSchema ):
     s = get(project_id)
     if s is not None:
         return update(tenant_id=tenant_id, project_id=project_id,
-                      changes={"authorizationToken": data["authorizationToken"],
-                               "bugsnagProjectId": data["bugsnagProjectId"]})
+                      changes={"authorizationToken": data.authorization_token,
+                               "bugsnagProjectId": data.bugsnag_project_id})
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   authorization_token=data["authorizationToken"],
-                   bugsnag_project_id=data["bugsnagProjectId"])
+                   authorization_token=data.authorization_token,
+                   bugsnag_project_id=data.bugsnag_project_id)

@@ -36,7 +36,7 @@ COALESCE((SELECT TRUE
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     if data.bookmarked:
-        data.startDate, data.endDate = sessions_favorite.get_start_end_timestamp(project_id, user_id)
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
@@ -69,7 +69,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
             else:
-                data.order = data.order.value
+                data.order = data.order
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
                 g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
@@ -104,7 +104,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
             else:
-                data.order = data.order.value
+                data.order = data.order
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -164,7 +164,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
                    metric_of: schemas.MetricOfTable, metric_value: List):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
+    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
     if metric_of == schemas.MetricOfTable.visited_url:
@@ -267,7 +267,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         return sessions
 
 
-def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
+def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
                                                                             schemas.EventType.graphql] \
                 or event.type in [schemas.PerformanceEventType.location_dom_complete,
@@ -284,7 +284,7 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
 def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                        project_id, user_id, extra_event=None):
     ss_constraints = []
-    full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
+    full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
     extra_constraints = [
         "s.project_id = %(project_id)s",
@@ -516,22 +516,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     ss_constraints.append(
                         sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                                             value_key=f_k))
-                    # search sessions with click_rage on a specific selector
-                    if len(f.filters) > 0 and schemas.IssueType.click_rage in f.value:
-                        for j, sf in enumerate(f.filters):
-                            if sf.operator == schemas.IssueFilterOperator._on_selector:
-                                f_k = f"f_value{i}_{j}"
-                                full_args = {**full_args, **sh.multi_values(sf.value, value_key=f_k)}
-                                extra_constraints += ["mc.timestamp>=%(startDate)s",
-                                                      "mc.timestamp<=%(endDate)s",
-                                                      "mis.type='click_rage'",
-                                                      sh.multi_conditions(f"mc.selector=%({f_k})s",
-                                                                          sf.value, is_not=is_not,
-                                                                          value_key=f_k)]
-
-                            extra_from += """INNER JOIN events.clicks AS mc USING(session_id)
-                                                                     INNER JOIN events_common.issues USING (session_id,timestamp)
-                                                                     INNER JOIN public.issues AS mis USING (issue_id)\n"""
 
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
@@ -582,11 +566,11 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_where.append(f"event_{event_index - 1}.timestamp <= main.timestamp")
             e_k = f"e_value{i}"
             s_k = e_k + "_source"
-            if event.type != schemas.PerformanceEventType.time_between_events:
-                event.value = helper.values_for_operator(value=event.value, op=event.operator)
-                full_args = {**full_args,
-                             **sh.multi_values(event.value, value_key=e_k),
-                             **sh.multi_values(event.source, value_key=s_k)}
+
+            event.value = helper.values_for_operator(value=event.value, op=event.operator)
+            full_args = {**full_args,
+                         **sh.multi_values(event.value, value_key=e_k),
+                         **sh.multi_values(event.source, value_key=s_k)}
 
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{events.EventType.CLICK.table} AS main "
@@ -741,44 +725,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
                                    sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
                                                        event.source, value_key=e_k))
-            elif event_type == schemas.PerformanceEventType.time_between_events:
-                event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
-                if not isinstance(event.value[0].value, list):
-                    event.value[0].value = [event.value[0].value]
-                if not isinstance(event.value[1].value, list):
-                    event.value[1].value = [event.value[1].value]
-                event.value[0].value = helper.values_for_operator(value=event.value[0].value,
-                                                                  op=event.value[0].operator)
-                event.value[1].value = helper.values_for_operator(value=event.value[1].value,
-                                                                  op=event.value[0].operator)
-                e_k1 = e_k + "_e1"
-                e_k2 = e_k + "_e2"
-                full_args = {**full_args,
-                             **sh.multi_values(event.value[0].value, value_key=e_k1),
-                             **sh.multi_values(event.value[1].value, value_key=e_k2)}
-                s_op = sh.get_sql_operator(event.value[0].operator)
-                event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
-                if event_index > 0 and not or_events:
-                    event_where.append("main2.session_id=event_0.session_id")
-                is_any = sh.isAny_opreator(event.value[0].operator)
-                if not is_any:
-                    event_where.append(
-                        sh.multi_conditions(
-                            f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
-                            event.value[0].value, value_key=e_k1))
-                s_op = sh.get_sql_operator(event.value[1].operator)
-                is_any = sh.isAny_opreator(event.value[1].operator)
-                if not is_any:
-                    event_where.append(
-                        sh.multi_conditions(
-                            f"main2.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
-                            event.value[1].value, value_key=e_k2))
-
-                e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
-                event_where.append(
-                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator.value} %({e_k})s",
-                                        event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
@@ -905,9 +851,9 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     else:
         data.events = []
     # ---------------------------------------------------------------------------
-    if data.startDate is not None:
+    if data.startTimestamp is not None:
         extra_constraints.append("s.start_ts >= %(startDate)s")
-    if data.endDate is not None:
+    if data.endTimestamp is not None:
         extra_constraints.append("s.start_ts <= %(endDate)s")
     # if data.platform is not None:
     #     if data.platform == schemas.PlatformType.mobile:

@@ -122,20 +122,22 @@ def exists_by_name(name: str, exclude_id: Optional[int], webhook_type: str = sch
     return row["exists"]
 
 
-def add_edit(tenant_id, data, replace_none=None):
-    if "name" in data and len(data["name"]) > 0 \
-            and exists_by_name(name=data["name"], exclude_id=data.get("webhookId")):
+def add_edit(tenant_id, data: schemas.WebhookSchema, replace_none=None):
+    if len(data.name) > 0 \
+            and exists_by_name(name=data.name, exclude_id=data.webhook_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-    if data.get("webhookId") is not None:
-        return update(tenant_id=tenant_id, webhook_id=data["webhookId"],
-                      changes={"endpoint": data["endpoint"],
-                               "authHeader": None if "authHeader" not in data else data["authHeader"],
-                               "name": data["name"] if "name" in data else ""}, replace_none=replace_none)
+    if data.webhook_id is not None:
+        return update(tenant_id=tenant_id, webhook_id=data.webhook_id,
+                      changes={"endpoint": data.endpoint,
+                               "authHeader": data.auth_header,
+                               "name": data.name},
+                      replace_none=replace_none)
     else:
         return add(tenant_id=tenant_id,
-                   endpoint=data["endpoint"],
-                   auth_header=None if "authHeader" not in data else data["authHeader"],
-                   name=data["name"] if "name" in data else "", replace_none=replace_none)
+                   endpoint=data.endpoint,
+                   auth_header=data.auth_header,
+                   name=data.name,
+                   replace_none=replace_none)
 
 
 def delete(tenant_id, webhook_id):

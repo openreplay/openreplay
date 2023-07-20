@@ -1,73 +1,117 @@
-from enum import Enum
-from typing import Optional, List, Union, Literal, Any
+from typing import Annotated
+from typing import Optional, List, Union, Literal
 
-from pydantic import field_validator, model_validator, ConfigDict, BaseModel, Field, EmailStr, HttpUrl, root_validator, \
-    validator
-from pydantic.types import Json
+from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
+from pydantic import field_validator, model_validator, computed_field
 
 from chalicelib.utils.TimeUTC import TimeUTC
-import re
+from .overrides import BaseModel, Enum
+from .overrides import transform_email, remove_whitespace, remove_duplicate_values, \
+    single_to_list, ORUnion
 
 
-def attribute_to_camel_case(snake_str):
-    components = snake_str.split("_")
-    return components[0] + ''.join(x.title() for x in components[1:])
+# def transform_old_FilterType(cls, values):
+def transform_old_filter_type(cls, values):
+    if values.get("type") is None:
+        return values
+    values["type"] = {
+        # filters
+        "USEROS": FilterType.user_os.value,
+        "USERBROWSER": FilterType.user_browser.value,
+        "USERDEVICE": FilterType.user_device.value,
+        "USERCOUNTRY": FilterType.user_country.value,
+        "USERID": FilterType.user_id.value,
+        "USERANONYMOUSID": FilterType.user_anonymous_id.value,
+        "REFERRER": FilterType.referrer.value,
+        "REVID": FilterType.rev_id.value,
+        "USEROS_IOS": FilterType.user_os_ios.value,
+        "USERDEVICE_IOS": FilterType.user_device_ios.value,
+        "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
+        "USERID_IOS": FilterType.user_id_ios.value,
+        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
+        "REVID_IOS": FilterType.rev_id_ios.value,
+        "DURATION": FilterType.duration.value,
+        "PLATFORM": FilterType.platform.value,
+        "METADATA": FilterType.metadata.value,
+        "ISSUE": FilterType.issue.value,
+        "EVENTS_COUNT": FilterType.events_count.value,
+        "UTM_SOURCE": FilterType.utm_source.value,
+        "UTM_MEDIUM": FilterType.utm_medium.value,
+        "UTM_CAMPAIGN": FilterType.utm_campaign.value,
+        # events:
+        "CLICK": EventType.click.value,
+        "INPUT": EventType.input.value,
+        "LOCATION": EventType.location.value,
+        "CUSTOM": EventType.custom.value,
+        "REQUEST": EventType.request.value,
+        "FETCH": EventType.request_details.value,
+        "GRAPHQL": EventType.graphql.value,
+        "STATEACTION": EventType.state_action.value,
+        "ERROR": EventType.error.value,
+        "CLICK_IOS": EventType.click_ios.value,
+        "INPUT_IOS": EventType.input_ios.value,
+        "VIEW_IOS": EventType.view_ios.value,
+        "CUSTOM_IOS": EventType.custom_ios.value,
+        "REQUEST_IOS": EventType.request_ios.value,
+        "ERROR_IOS": EventType.error_ios.value,
+        "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
+        "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
+        "TTFB": PerformanceEventType.location_ttfb.value,
+        "AVG_CPU_LOAD": PerformanceEventType.location_avg_cpu_load.value,
+        "AVG_MEMORY_USAGE": PerformanceEventType.location_avg_memory_usage.value,
+        "FETCH_FAILED": PerformanceEventType.fetch_failed.value,
+    }.get(values["type"], values["type"])
+    return values
 
 
-def transform_email(email: str) -> str:
-    return email.lower().strip() if isinstance(email, str) else email
+class _GRecaptcha(BaseModel):
+    g_recaptcha_response: Optional[str] = Field(default=None, alias='g-recaptcha-response')
 
 
-def remove_whitespace(value: str) -> str:
-    return " ".join(value.split()) if isinstance(value, str) else value
-
-
-class _Grecaptcha(BaseModel):
-    g_recaptcha_response: Optional[str] = Field(None, alias='g-recaptcha-response')
-
-
-class UserLoginSchema(_Grecaptcha):
+class UserLoginSchema(_GRecaptcha):
     email: EmailStr = Field(...)
-    password: str = Field(...)
+    password: SecretStr = Field(...)
+
     _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(...)
-    organizationName: str = Field(...)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+    fullname: str = Field(..., le=0)
+    organizationName: str = Field(..., le=0)
+
+    _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
+    _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
 
 
 class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(None)
-    tenantName: Optional[str] = Field(None)
-    opt_out: Optional[bool] = Field(None)
+    name: Optional[str] = Field(default=None)
+    tenantName: Optional[str] = Field(default=None)
+    opt_out: Optional[bool] = Field(default=None)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
     _transform_tenantName = field_validator('tenantName', mode='before')(remove_whitespace)
 
 
-class ForgetPasswordPayloadSchema(_Grecaptcha):
+class ForgetPasswordPayloadSchema(_GRecaptcha):
     email: EmailStr = Field(...)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class EditUserPasswordSchema(BaseModel):
-    old_password: str = Field(...)
-    new_password: str = Field(...)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+    old_password: SecretStr = Field(...)
+    new_password: SecretStr = Field(...)
 
 
-class UpdateTenantSchema(BaseModel):
-    name: Optional[str] = Field(None)
-    opt_out: Optional[bool] = Field(None)
-    tenant_name: Optional[str] = Field(None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+# class UpdateTenantSchema(BaseModel):
+#     name: Optional[str] = Field(default=None)
+#     opt_out: Optional[bool] = Field(default=None)
+#     tenant_name: Optional[str] = Field(default=None)
 
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
+
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
@@ -85,42 +129,55 @@ class CurrentContext(CurrentAPIContext):
 class AddCollaborationSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
+
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
     _transform_url = field_validator('url', mode='before')(remove_whitespace)
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
-    name: Optional[str] = Field(None)
+    name: Optional[str] = Field(default=None)
 
 
-class CreateNotificationSchema(BaseModel):
-    token: str = Field(...)
-    notifications: List = Field(...)
+# class CreateNotificationSchema(BaseModel):
+#     token: str = Field(...)
+#     notifications: List = Field(...)
 
 
 class _TimedSchema(BaseModel):
     startTimestamp: int = Field(default=None)
     endTimestamp: int = Field(default=None)
 
+    @model_validator(mode='before')
+    def transform(cls, values):
+        if values.get("startTimestamp") is None and values.get("startDate") is not None:
+            values["startTimestamp"] = values["startDate"]
+        if values.get("endTimestamp") is None and values.get("endDate") is not None:
+            values["endTimestamp"] = values["endDate"]
+        return values
+
     @model_validator(mode='after')
     def time_validator(cls, values):
-        if values.get("startTimestamp") is not None and values.get("endTimestamp") is not None:
-            assert values.get("startTimestamp") < values.get("endTimestamp"), \
+        if values.startTimestamp is not None and values.endTimestamp is not None:
+            assert values.startTimestamp < values.endTimestamp, \
                 "endTimestamp must be greater than startTimestamp"
         return values
 
 
 class NotificationsViewSchema(_TimedSchema):
-    ids: Optional[List] = Field(default=[])
+    ids: List[int] = Field(default=[])
     startTimestamp: Optional[int] = Field(default=None)
     endTimestamp: Optional[int] = Field(default=None)
 
 
-class GithubSchema(BaseModel):
+class IssueTrackingIntegration(BaseModel):
     token: str = Field(...)
 
 
-class JiraSchema(GithubSchema):
+class IssueTrackingGithubSchema(IssueTrackingIntegration):
+    pass
+
+
+class IssueTrackingJiraSchema(IssueTrackingIntegration):
     username: str = Field(...)
     url: HttpUrl = Field(...)
 
@@ -130,19 +187,20 @@ class JiraSchema(GithubSchema):
         return HttpUrl.build(scheme=v.scheme.lower(), host=v.host.lower())
 
 
-class CreateEditWebhookSchema(BaseModel):
-    webhookId: Optional[int] = Field(None)
-    endpoint: str = Field(...)
-    authHeader: Optional[str] = Field(None)
-    name: Optional[str] = Field(None, max_length=100)
+class WebhookSchema(BaseModel):
+    webhook_id: Optional[int] = Field(default=None)
+    endpoint: AnyHttpUrl = Field(...)
+    auth_header: Optional[str] = Field(default=None)
+    name: str = Field(default="", max_length=100)
+
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class CreateMemberSchema(BaseModel):
-    userId: Optional[int] = Field(None)
+    user_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     email: EmailStr = Field(...)
-    admin: bool = Field(False)
+    admin: bool = Field(default=False)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
@@ -151,13 +209,16 @@ class CreateMemberSchema(BaseModel):
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
-    admin: bool = Field(False)
+    admin: bool = Field(default=False)
+
+    _transform_email = field_validator('email', mode='before')(transform_email)
+    _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
     invitation: str = Field(...)
     passphrase: str = Field(..., alias="pass")
-    password: str = Field(...)
+    password: SecretStr = Field(...)
 
 
 class AssignmentSchema(BaseModel):
@@ -165,8 +226,8 @@ class AssignmentSchema(BaseModel):
     description: str = Field(...)
     title: str = Field(...)
     issue_type: str = Field(...)
+
     _transform_title = field_validator('title', mode='before')(remove_whitespace)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CommentAssignmentSchema(BaseModel):
@@ -174,7 +235,7 @@ class CommentAssignmentSchema(BaseModel):
 
 
 class IntegrationNotificationSchema(BaseModel):
-    comment: Optional[str] = Field(None)
+    comment: Optional[str] = Field(default=None)
 
 
 class GdprSchema(BaseModel):
@@ -185,78 +246,107 @@ class GdprSchema(BaseModel):
 
 
 class SampleRateSchema(BaseModel):
-    rate: int = Field(...)
-    captureAll: bool = Field(False)
+    rate: int = Field(..., ge=0, le=100)
+    capture_all: bool = Field(default=False)
 
 
 class WeeklyReportConfigSchema(BaseModel):
-    weekly_report: bool = Field(True)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+    weekly_report: bool = Field(default=True)
 
 
-class DatadogSchema(BaseModel):
-    apiKey: str = Field(...)
-    applicationKey: str = Field(...)
+class IntegrationBase(BaseModel):
+    pass
 
 
-class StackdriverSchema(BaseModel):
-    serviceAccountCredentials: str = Field(...)
-    logName: str = Field(...)
+class IntegrationSentrySchema(IntegrationBase):
+    project_slug: str = Field(...)
+    organization_slug: str = Field(...)
+    token: str = Field(...)
 
 
-class NewrelicSchema(BaseModel):
-    applicationId: str = Field(...)
-    xQueryKey: str = Field(...)
+class IntegrationDatadogSchema(IntegrationBase):
+    api_key: str = Field(...)
+    application_key: str = Field(...)
+
+
+class IntegartionStackdriverSchema(IntegrationBase):
+    service_account_credentials: str = Field(...)
+    log_name: str = Field(...)
+
+
+class IntegrationNewrelicSchema(IntegrationBase):
+    application_id: str = Field(...)
+    x_query_key: str = Field(...)
     region: str = Field(...)
 
 
-class RollbarSchema(BaseModel):
-    accessToken: str = Field(...)
+class IntegrationRollbarSchema(IntegrationBase):
+    access_token: str = Field(...)
 
 
-class BugsnagBasicSchema(BaseModel):
-    authorizationToken: str = Field(...)
+class IntegrationBugsnagBasicSchema(IntegrationBase):
+    authorization_token: str = Field(...)
 
 
-class BugsnagSchema(BugsnagBasicSchema):
-    bugsnagProjectId: str = Field(...)
+class IntegrationBugsnagSchema(IntegrationBugsnagBasicSchema):
+    bugsnag_project_id: str = Field(...)
 
 
-class CloudwatchBasicSchema(BaseModel):
-    awsAccessKeyId: str = Field(...)
-    awsSecretAccessKey: str = Field(...)
+class IntegrationCloudwatchBasicSchema(IntegrationBase):
+    aws_access_key_id: str = Field(...)
+    aws_secret_access_key: str = Field(...)
     region: str = Field(...)
 
 
-class CloudwatchSchema(CloudwatchBasicSchema):
-    logGroupName: str = Field(...)
+class IntegrationCloudwatchSchema(IntegrationCloudwatchBasicSchema):
+    log_group_name: str = Field(...)
 
 
-class ElasticsearchBasicSchema(BaseModel):
+class IntegrationElasticsearchTestSchema(IntegrationBase):
     host: str = Field(...)
     port: int = Field(...)
-    apiKeyId: str = Field(...)
-    apiKey: str = Field(...)
+    api_key_id: str = Field(...)
+    api_key: str = Field(...)
 
 
-class ElasticsearchSchema(ElasticsearchBasicSchema):
+class IntegrationElasticsearchSchema(IntegrationElasticsearchTestSchema):
     indexes: str = Field(...)
 
 
-class SumologicSchema(BaseModel):
-    accessId: str = Field(...)
-    accessKey: str = Field(...)
+class IntegrationSumologicSchema(IntegrationBase):
+    access_id: str = Field(...)
+    access_key: str = Field(...)
     region: str = Field(...)
 
 
-class MetadataBasicSchema(BaseModel):
-    index: Optional[int] = Field(None)
+class MetadataSchema(BaseModel):
+    index: Optional[int] = Field(default=None)
     key: str = Field(...)
+
     _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
-class MetadataListSchema(BaseModel):
-    list: List[MetadataBasicSchema] = Field(...)
+# class MetadataListSchema(BaseModel):
+#     list: List[MetadataSchema] = Field(...)
+
+
+class EmailPayloadSchema(BaseModel):
+    auth: str = Field(...)
+    email: EmailStr = Field(...)
+    link: str = Field(...)
+    message: str = Field(...)
+
+    _transform_email = field_validator('email', mode='before')(transform_email)
+
+
+class MemberInvitationPayloadSchema(BaseModel):
+    auth: str = Field(...)
+    email: EmailStr = Field(...)
+    invitation_link: str = Field(...)
+    client_id: str = Field(...)
+    sender_name: str = Field(...)
+
+    _transform_email = field_validator('email', mode='before')(transform_email)
 
 
 class _AlertMessageSchema(BaseModel):
@@ -272,9 +362,9 @@ class AlertDetectionType(str, Enum):
 class _AlertOptionSchema(BaseModel):
     message: List[_AlertMessageSchema] = Field([])
     currentPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(...)
-    previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
-    lastNotification: Optional[int] = Field(None)
-    renotifyInterval: Optional[int] = Field(720)
+    previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(default=15)
+    lastNotification: Optional[int] = Field(default=None)
+    renotifyInterval: Optional[int] = Field(default=720)
 
 
 class AlertColumn(str, Enum):
@@ -323,27 +413,19 @@ class AlertSchema(BaseModel):
     name: str = Field(...)
     detection_method: AlertDetectionMethod = Field(...)
     change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
-    description: Optional[str] = Field(None)
+    description: Optional[str] = Field(default=None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
-    series_id: Optional[int] = Field(None)
+    series_id: Optional[int] = Field(default=None, doc_hidden=True)
 
-    @model_validator(mode="before")
+    @model_validator(mode="after")
     def transform_alert(cls, values):
-        values["seriesId"] = None
-        if isinstance(values["query"]["left"], int):
-            values["seriesId"] = values["query"]["left"]
-            values["query"]["left"] = AlertColumn.custom
+        values.series_id = None
+        if isinstance(values.query.left, int):
+            values.series_id = values.query.left
+            values.query.left = AlertColumn.custom
 
         return values
-
-    @model_validator(mode='after')
-    def alert_validator(cls, values):
-        if values.get("query") is not None and values["query"].left == AlertColumn.custom:
-            assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
-        return values
-
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
@@ -383,7 +465,6 @@ class EventType(str, Enum):
 class PerformanceEventType(str, Enum):
     location_dom_complete = "domComplete"
     location_largest_contentful_paint_time = "largestContentfulPaintTime"
-    time_between_events = "timeBetweenEvents"
     location_ttfb = "ttfb"
     location_avg_cpu_load = "avgCpuLoad"
     location_avg_memory_usage = "avgMemoryUsage"
@@ -436,11 +517,6 @@ class SearchEventOperator(str, Enum):
 
 class ClickEventExtraOperator(str, Enum):
     _on_selector = "onSelector"
-    _on_text = "onText"
-
-
-class IssueFilterOperator(str, Enum):
-    _on_selector = ClickEventExtraOperator._on_selector.value
 
 
 class PlatformType(str, Enum):
@@ -475,21 +551,6 @@ class MetricFormatType(str, Enum):
     session_count = 'sessionCount'
 
 
-class __MixedSearchFilter(BaseModel):
-    is_event: bool = Field(...)
-
-    @model_validator(mode="before")
-    def remove_duplicate_values(cls, values):
-        if values.get("value") is not None:
-            if len(values["value"]) > 0 \
-                    and (isinstance(values["value"][0], int) or isinstance(values["value"][0], dict)):
-                return values
-            values["value"] = list(set(values["value"]))
-        return values
-
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
-
-
 class HttpMethod(str, Enum):
     _get = 'GET'
     _head = 'HEAD'
@@ -518,168 +579,108 @@ class GraphqlFilterType(str, Enum):
     _response_body = "graphqlResponseBody"  # GRAPHQL_RESPONSE_BODY
 
 
-class IssueFilterType(str, Enum):
-    _selector = "CLICK_SELECTOR"
-
-
 class RequestGraphqlFilterSchema(BaseModel):
     type: Union[FetchFilterType, GraphqlFilterType] = Field(...)
     value: List[Union[int, str]] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
-class IssueFilterSchema(BaseModel):
-    type: IssueFilterType = Field(...)
-    value: List[str] = Field(...)
-    operator: IssueFilterOperator = Field(...)
-
-
-class _SessionSearchEventRaw(__MixedSearchFilter):
+# class SessionSearchEventRaw(BaseModel):
+class SessionSearchEventSchema2(BaseModel):
+    # is_event: bool = Field(default=True, const=True)
     is_event: Literal[True] = True
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
-    filters: Optional[List[Union[RequestGraphqlFilterSchema, IssueFilterSchema]]] = Field(default=None)
+    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default=[])
 
-    @model_validator(mode="before")
-    def transform(cls, values):
-        if values.get("type") is None:
-            return values
-        values["type"] = {
-            "CLICK": EventType.click.value,
-            "INPUT": EventType.input.value,
-            "LOCATION": EventType.location.value,
-            "CUSTOM": EventType.custom.value,
-            "REQUEST": EventType.request.value,
-            "FETCH": EventType.request_details.value,
-            "GRAPHQL": EventType.graphql.value,
-            "STATEACTION": EventType.state_action.value,
-            "ERROR": EventType.error.value,
-            "CLICK_IOS": EventType.click_ios.value,
-            "INPUT_IOS": EventType.input_ios.value,
-            "VIEW_IOS": EventType.view_ios.value,
-            "CUSTOM_IOS": EventType.custom_ios.value,
-            "REQUEST_IOS": EventType.request_ios.value,
-            "ERROR_IOS": EventType.error_ios.value,
-            "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
-            "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
-            "TIME_BETWEEN_EVENTS": PerformanceEventType.time_between_events.value,
-            "TTFB": PerformanceEventType.location_ttfb.value,
-            "AVG_CPU_LOAD": PerformanceEventType.location_avg_cpu_load.value,
-            "AVG_MEMORY_USAGE": PerformanceEventType.location_avg_memory_usage.value,
-            "FETCH_FAILED": PerformanceEventType.fetch_failed.value,
-        }.get(values["type"], values["type"])
-        return values
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+    _single_to_list_values = field_validator('value', mode='before')(single_to_list)
+    _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
     def event_validator(cls, values):
-        if isinstance(values.get("type"), PerformanceEventType):
-            if values.get("type") == PerformanceEventType.fetch_failed:
+        if isinstance(values.type, PerformanceEventType):
+            if values.type == PerformanceEventType.fetch_failed:
                 return values
             # assert values.get("source") is not None, "source should not be null for PerformanceEventType"
             # assert isinstance(values["source"], list) and len(values["source"]) > 0, \
             #     "source should not be empty for PerformanceEventType"
-            assert values.get("sourceOperator") is not None, \
+            assert values.sourceOperator is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
-            if values["type"] == PerformanceEventType.time_between_events:
-                assert values["sourceOperator"] != MathOperator._equal, \
-                    f"{MathOperator._equal} is not allowed for duration of {PerformanceEventType.time_between_events}"
-                assert len(values.get("value", [])) == 2, \
-                    f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
-                assert isinstance(values["value"][0], _SessionSearchEventRaw) \
-                       and isinstance(values["value"][1], _SessionSearchEventRaw), \
-                    f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
-                assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
-                    f"source of type int is required for {PerformanceEventType.time_between_events}"
-            else:
-                assert "source" in values, f"source is required for {values.get('type')}"
-                assert isinstance(values["source"], list), f"source of type list is required for {values.get('type')}"
-                for c in values["source"]:
-                    assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
-        elif values.get("type") == EventType.error and values.get("source") is None:
-            values["source"] = [ErrorSource.js_exception]
-        elif values.get("type") == EventType.request_details:
-            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+            assert "source" in values, f"source is required for {values.type}"
+            assert isinstance(values.source, list), f"source of type list is required for {values.type}"
+            for c in values["source"]:
+                assert isinstance(c, int), f"source value should be of type int for {values.type}"
+        elif values.type == EventType.error and values.source is None:
+            values.source = [ErrorSource.js_exception]
+        elif values.type == EventType.request_details:
+            assert isinstance(values.filters, List) and len(values.filters) > 0, \
                 f"filters should be defined for {EventType.request_details}"
-        elif values.get("type") == EventType.graphql:
-            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+        elif values.type == EventType.graphql:
+            assert isinstance(values.filters, List) and len(values.filters) > 0, \
                 f"filters should be defined for {EventType.graphql}"
 
-        if isinstance(values.get("operator"), ClickEventExtraOperator):
-            assert values.get("type") == EventType.click, \
-                f"operator:{values['operator']} is only available for event-type: {EventType.click}"
+        if isinstance(values.operator, ClickEventExtraOperator):
+            assert values.type == EventType.click, \
+                f"operator:{values.operator} is only available for event-type: {EventType.click}"
         return values
 
 
-class _SessionSearchEventSchema(_SessionSearchEventRaw):
-    value: Union[List[Union[_SessionSearchEventRaw, str]], str] = Field(...)
-
-
-def transform_old_FilterType(cls, values):
-    if values.get("type") is None:
-        return values
-    values["type"] = {
-        "USEROS": FilterType.user_os.value,
-        "USERBROWSER": FilterType.user_browser.value,
-        "USERDEVICE": FilterType.user_device.value,
-        "USERCOUNTRY": FilterType.user_country.value,
-        "USERID": FilterType.user_id.value,
-        "USERANONYMOUSID": FilterType.user_anonymous_id.value,
-        "REFERRER": FilterType.referrer.value,
-        "REVID": FilterType.rev_id.value,
-        "USEROS_IOS": FilterType.user_os_ios.value,
-        "USERDEVICE_IOS": FilterType.user_device_ios.value,
-        "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
-        "USERID_IOS": FilterType.user_id_ios.value,
-        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
-        "REVID_IOS": FilterType.rev_id_ios.value,
-        "DURATION": FilterType.duration.value,
-        "PLATFORM": FilterType.platform.value,
-        "METADATA": FilterType.metadata.value,
-        "ISSUE": FilterType.issue.value,
-        "EVENTS_COUNT": FilterType.events_count.value,
-        "UTM_SOURCE": FilterType.utm_source.value,
-        "UTM_MEDIUM": FilterType.utm_medium.value,
-        "UTM_CAMPAIGN": FilterType.utm_campaign.value
-    }.get(values["type"], values["type"])
-    return values
-
-
-class SessionSearchFilterSchema(__MixedSearchFilter):
-    is_event: Literal[False]
-    # TODO: remove this if there nothing broken from the UI
-    # value: Union[Optional[Union[IssueType, PlatformType, int, str]],
-    # Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+# class _SessionSearchEventSchema(SessionSearchEventRaw):
+#     value: Union[List[Union[SessionSearchEventRaw, str]], str] = Field(...)
+class SessionSearchFilterSchema(BaseModel):
+    # class SessionSearchFilterSchema(ORBaseModel):
+    # is_event: bool = Field(False, const=False)
+    is_event: Literal[False] = False
     value: List[Union[IssueType, PlatformType, int, str]] = Field(default=[])
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
-    filters: List[IssueFilterSchema] = Field(default=[])
 
-    transform = model_validator(mode='before')(transform_old_FilterType)
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+    _transform = model_validator(mode='before')(transform_old_filter_type)
+    _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
     @model_validator(mode='after')
     def filter_validator(cls, values):
-        if values.get("type") == FilterType.metadata:
-            assert values.get("source") is not None and len(values["source"]) > 0, \
+        if values.type == FilterType.metadata:
+            assert values.source is not None and len(values.source) > 0, \
                 "must specify a valid 'source' for metadata filter"
-        elif values.get("type") == FilterType.issue:
-            for v in values.get("value"):
-                assert isinstance(v, IssueType), f"value should be of type IssueType for {values.get('type')} filter"
-        elif values.get("type") == FilterType.platform:
-            for v in values.get("value"):
-                assert isinstance(v, PlatformType), \
-                    f"value should be of type PlatformType for {values.get('type')} filter"
-        elif values.get("type") == FilterType.events_count:
-            assert isinstance(values.get("operator"), MathOperator), \
-                f"operator should be of type MathOperator for {values.get('type')} filter"
-            for v in values.get("value"):
-                assert isinstance(v, int), f"value should be of type int for {values.get('type')} filter"
+        elif values.type == FilterType.issue:
+            for v in values.value:
+                # assert isinstance(v, IssueType), f"value should be of type IssueType for {values.type} filter"
+                if IssueType.has_value(v):
+                    v = IssueType(v)
+                else:
+                    raise ValueError(f"value should be of type IssueType for {values.type} filter")
+        elif values.type == FilterType.platform:
+            for v in values.value:
+                # assert isinstance(v, PlatformType), f"value should be of type PlatformType for {values.type} filter"
+                if PlatformType.has_value(v):
+                    v = PlatformType(v)
+                else:
+                    raise ValueError(f"value should be of type PlatformType for {values.type} filter")
+        elif values.type == FilterType.events_count:
+            # assert isinstance(values.operator, MathOperator), \
+            #     f"operator should be of type MathOperator for {values.type} filter"
+            if values.operator in MathOperator.has_value(values.operator):
+                values.operator = MathOperator(values.operator)
+            else:
+                raise ValueError(f"operator should be of type MathOperator for {values.type} filter")
+
+            for v in values.value:
+                assert isinstance(v, int), f"value should be of type int for {values.type} filter"
         else:
-            assert isinstance(values.get("operator"), SearchEventOperator), \
-                f"operator should be of type SearchEventOperator for {values.get('type')} filter"
+            # assert isinstance(values.operator, SearchEventOperator), \
+            #     f"operator should be of type SearchEventOperator for {values.type} filter"
+            if SearchEventOperator.has_value(values.operator):
+                values.operator = SearchEventOperator(values.operator)
+            else:
+                raise ValueError(f"operator should be of type SearchEventOperator for {values.type} filter")
+
         return values
 
 
@@ -693,11 +694,14 @@ class SortOrderType(str, Enum):
     desc = "DESC"
 
 
-class SessionsSearchPayloadSchema(_PaginatedSchema):
-    events: List[_SessionSearchEventSchema] = Field([])
-    filters: List[SessionSearchFilterSchema] = Field([])
-    startDate: int = Field(None)
-    endDate: int = Field(None)
+# this type is created to allow mixing events&filters and specifying a discriminator
+GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2], \
+    Field(discriminator='is_event')]
+
+
+class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
+    events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
+    filters: List[GroupedFilterType] = Field(default=[])
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.desc)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
@@ -715,15 +719,8 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
             values["order"] = values["order"].upper()
         return values
 
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
-
-
-class FlatSessionsSearch(BaseModel):
-    events: Optional[List[_SessionSearchEventSchema]] = Field([])
-    filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
-
     @model_validator(mode="before")
-    def flat_to_original(cls, values):
+    def add_missing_attributes(cls, values):
         # in case the old search body was passed
         if len(values.get("events", [])) > 0:
             for v in values["events"]:
@@ -731,62 +728,90 @@ class FlatSessionsSearch(BaseModel):
             for v in values.get("filters", []):
                 v["isEvent"] = False
         else:
-            n_filters = []
-            n_events = []
             for v in values.get("filters", []):
-                if v.get("isEvent"):
-                    n_events.append(v)
-                else:
+                if v.get("isEvent") is None:
                     v["isEvent"] = False
-                    n_filters.append(v)
-            values["events"] = n_events
-            values["filters"] = n_filters
+        return values
+
+    @model_validator(mode="after")
+    def split_filters_events(cls, values):
+        # in case the old search body was passed
+        if len(values.events) > 0:
+            return values
+        n_filters = []
+        n_events = []
+        for v in values.filters:
+            if v.is_event:
+                n_events.append(v)
+            else:
+                n_filters.append(v)
+        values.events = n_events
+        values.filters = n_filters
         return values
 
 
-class FlatSessionsSearchPayloadSchema(FlatSessionsSearch, SessionsSearchPayloadSchema):
-    pass
+# class FlatSessionsSearch(BaseModel):
+#     events: Optional[List[_SessionSearchEventSchema]] = Field([])
+#     filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
+#
+#     @root_validator(pre=True)
+#     def flat_to_original(cls, values):
+#         # in case the old search body was passed
+#         if len(values.get("events", [])) > 0:
+#             for v in values["events"]:
+#                 v["isEvent"] = True
+#             for v in values.get("filters", []):
+#                 v["isEvent"] = False
+#         else:
+#             n_filters = []
+#             n_events = []
+#             for v in values.get("filters", []):
+#                 if v.get("isEvent"):
+#                     n_events.append(v)
+#                 else:
+#                     v["isEvent"] = False
+#                     n_filters.append(v)
+#             values["events"] = n_events
+#             values["filters"] = n_filters
+#         return values
 
 
-class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
-    # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
-    sort: Optional[str] = Field(default=None)
-    order: Optional[str] = Field(default=None)
+# class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
+#     # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
+#     sort: Optional[str] = Field(default=None)
+#     order: Optional[str] = Field(default=None)
+
+#
+# # class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
+# class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+#     range_value: Optional[str] = Field(default=None)
+#     sort: Optional[str] = Field(default=None)
+#     order: Optional[str] = Field(default=None)
+#     events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
+#     group_by_user: Literal[False] = False
+#
+#     @model_validator(mode="before")
+#     def enforce_default_values(cls, values):
+#         values["eventsOrder"] = SearchEventOrder._then
+#         values["groupByUser"] = False
+#         return values
 
 
-class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
-    # class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
-    range_value: Optional[str] = Field(None)
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
-    events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
-    group_by_user: Literal[False] = False
-    rangeValue: Optional[str] = Field(None)
-
-    @model_validator(mode="before")
-    def enforce_default_values(cls, values):
-        values["eventsOrder"] = SearchEventOrder._then
-        values["groupByUser"] = False
-        return values
-
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+#
+# class FunnelSchema(BaseModel):
+#     name: str = Field(...)
+#     filter: FunnelSearchPayloadSchema = Field([])
 
 
-class FunnelSchema(BaseModel):
-    name: str = Field(...)
-    filter: FunnelSearchPayloadSchema = Field([])
-    is_public: bool = Field(default=False)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
-
-
-class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
-    # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
-    events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
-    group_by_user: Literal[False] = False
-    rangeValue: Optional[str] = Field(None)
-
+#
+# # class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
+# class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
+#     sort: Optional[str] = Field(None)
+#     order: Optional[str] = Field(None)
+#     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
+#     group_by_user: Optional[bool] = Field(default=False, const=True)
+#     rangeValue: Optional[str] = Field(None)
+#
 
 class ErrorStatus(str, Enum):
     all = 'all'
@@ -801,9 +826,10 @@ class ErrorSort(str, Enum):
     sessions_count = 'sessions'
 
 
-class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
+# class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
+class SearchErrorsSchema(SessionsSearchPayloadSchema):
     sort: ErrorSort = Field(default=ErrorSort.occurrence)
-    density: Optional[int] = Field(7)
+    density: Optional[int] = Field(default=7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
     query: Optional[str] = Field(default=None)
 
@@ -824,36 +850,29 @@ class ProductAnalyticsEventType(str, Enum):
 class ProductAnalyticsFilter(BaseModel):
     type: ProductAnalyticsFilterType = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
-    value: List[Union[ProductAnalyticsEventType | str]] = Field(...)
+    value: List[Union[ProductAnalyticsEventType, str]] = Field(...)
 
     @model_validator(mode='after')
     def validator(cls, values):
-        if values.get("type") == ProductAnalyticsFilterType.event_type:
-            assert values.get("value") is not None and len(values["value"]) > 0, \
+        if values.type == ProductAnalyticsFilterType.event_type:
+            assert values.value is not None and len(values.value) > 0, \
                 f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
-            assert isinstance(values["value"][0], ProductAnalyticsEventType), \
+            assert isinstance(values.value[0], ProductAnalyticsEventType), \
                 f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
 
         return values
 
 
 class PathAnalysisSchema(_TimedSchema):
-    startTimestamp: int = Field(TimeUTC.now(delta_days=-1))
-    endTimestamp: int = Field(TimeUTC.now())
-    density: int = Field(7)
+    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
+    endTimestamp: int = Field(default=TimeUTC.now())
+    density: int = Field(default=7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
-class AssistSearchPayloadSchema(BaseModel):
-    filters: List[dict] = Field([])
-
-
-class SentrySchema(BaseModel):
-    projectSlug: str = Field(...)
-    organizationSlug: str = Field(...)
-    token: str = Field(...)
+# class AssistSearchPayloadSchema(BaseModel):
+#     filters: List[dict] = Field([])
 
 
 class MobileSignPayloadSchema(BaseModel):
@@ -861,19 +880,19 @@ class MobileSignPayloadSchema(BaseModel):
 
 
 class CardSeriesFilterSchema(SearchErrorsSchema):
-    startDate: Optional[int] = Field(default=None)
-    endDate: Optional[int] = Field(default=None)
+    # TODO: transform these if they are used by the UI
+    # startDate: Optional[int] = Field(default=None)
+    # endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
     group_by_user: Literal[False] = False
 
 
 class CardSeriesSchema(BaseModel):
-    series_id: Optional[int] = Field(None)
-    name: Optional[str] = Field(None)
-    index: Optional[int] = Field(None)
-    filter: Optional[Union[CardSeriesFilterSchema | PathAnalysisSchema]] = Field(default=None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+    series_id: Optional[int] = Field(default=None)
+    name: Optional[str] = Field(default=None)
+    index: Optional[int] = Field(default=None)
+    filter: Optional[CardSeriesFilterSchema] = Field(default=None)
 
 
 class MetricTimeseriesViewType(str, Enum):
@@ -986,33 +1005,31 @@ class MetricOfClickMap(str, Enum):
     click_map_url = "clickMapUrl"
 
 
-class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
-    startTimestamp: int = Field(TimeUTC.now(-7))
-    endTimestamp: int = Field(TimeUTC.now())
+# class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
+class CardSessionsSchema(SessionsSearchPayloadSchema):
+    startTimestamp: int = Field(default=TimeUTC.now(-7))
+    endTimestamp: int = Field(defautl=TimeUTC.now())
     series: List[CardSeriesSchema] = Field(default=[])
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class CardChartSchema(CardSessionsSchema):
-    density: int = Field(7)
+    density: int = Field(default=7)
 
 
 class CardConfigSchema(BaseModel):
-    col: Optional[int] = Field(None)
+    col: Optional[int] = Field(default=None)
     row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
-class __CardSchema(BaseModel):
-    name: Optional[str] = Field(None)
+# class CardSchema(CardChartSchema):
+class __CardSchema(CardChartSchema):
+    name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
     default_config: CardConfigSchema = Field(..., alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
-
-class CardSchema(__CardSchema, CardChartSchema):
     view_type: Union[MetricTimeseriesViewType, \
         MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
@@ -1020,13 +1037,16 @@ class CardSchema(__CardSchema, CardChartSchema):
         MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
         MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
-    is_template: bool = Field(default=False)
+
+    @computed_field
+    @property
+    def is_template(self) -> bool:
+        return self.metric_type in [MetricType.errors, MetricType.performance,
+                                    MetricType.resources, MetricType.web_vital]
 
     # This is used to handle wrong values sent by the UI
     @model_validator(mode="before")
     def transform(cls, values):
-        values["isTemplate"] = values.get("metricType") in [MetricType.errors, MetricType.performance,
-                                                            MetricType.resources, MetricType.web_vital]
         if values.get("metricType") == MetricType.timeseries \
                 or values.get("metricType") == MetricType.table \
                 and values.get("metricOf") != MetricOfTable.issues:
@@ -1046,82 +1066,120 @@ class CardSchema(__CardSchema, CardChartSchema):
 
         return values
 
+    # @model_validator(mode='after')
+    # def validator(cls, values):
+    #     if values.metric_type == MetricType.table:
+    #         assert isinstance(values.view_type, MetricTableViewType), \
+    #             f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
+    #         assert isinstance(values.metric_of, MetricOfTable), \
+    #             f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
+    #         if values.metric_of in (MetricOfTable.sessions, MetricOfTable.errors):
+    #             assert values.view_type == MetricTableViewType.table, \
+    #                 f"viewType must be '{MetricTableViewType.table}' for metricOf:{values.metric_of}"
+    #         if values.metric_of != MetricOfTable.issues:
+    #             assert values.metric_value is None or len(values.metric_value) == 0, \
+    #                 f"metricValue is only available for metricOf:{MetricOfTable.issues}"
+    #     else:
+    #         if values.metric_type == MetricType.errors:
+    #             assert isinstance(values.metric_of, MetricOfErrors), \
+    #                 f"metricOf must be of type {MetricOfErrors} for metricType:{MetricType.errors}"
+    #         elif values.metric_type == MetricType.performance:
+    #             assert isinstance(values.metric_of, MetricOfPerformance), \
+    #                 f"metricOf must be of type {MetricOfPerformance} for metricType:{MetricType.performance}"
+    #         elif values.metric_type == MetricType.resources:
+    #             assert isinstance(values.get("metric_of"), MetricOfResources), \
+    #                 f"metricOf must be of type {MetricOfResources} for metricType:{MetricType.resources}"
+    #         elif values.metric_type == MetricType.web_vital:
+    #             assert isinstance(values.metric_of, MetricOfWebVitals), \
+    #                 f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
+    #         elif values.metric_type == MetricType.click_map:
+    #             # assert isinstance(values.metric_of, MetricOfClickMap), \
+    #             #     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
+    #             if MetricOfClickMap.has_value(values.metric_of):
+    #                 values.metric_of = MetricOfClickMap(values.metric_of)
+    #             else:
+    #                 raise ValueError(
+    #                     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}")
+    #             # Allow only LOCATION events for clickMap
+    #             for s in values.series:
+    #                 for f in s.filter.events:
+    #                     assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
+    #
+    #         # assert isinstance(values.view_type, MetricOtherViewType), \
+    #         #     f"viewType must be 'chart|list' for metricOf:{values.metric_of}"
+    #         if MetricOtherViewType.has_value(values.view_type):
+    #             values.view_type = MetricOtherViewType(values.view_type)
+    #         else:
+    #             raise ValueError(f"viewType must be 'chart|list' for metricOf:{values.metric_of}")
+    #
+    #     return values
+
+
+class CardTimeSeries(__CardSchema):
+    metric_type: Literal[MetricType.timeseries]
+    metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
+
+
+class CardTable(__CardSchema):
+    metric_type: Literal[MetricType.table]
+    metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
+
+
+class CardFunnel(__CardSchema):
+    metric_type: Literal[MetricType.funnel]
+    metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
+
+
+class CardErrors(__CardSchema):
+    metric_type: Literal[MetricType.errors]
+    metric_of: MetricOfErrors = Field(default=MetricOfErrors.impacted_sessions_by_js_errors)
+
+
+class CardPerformance(__CardSchema):
+    metric_type: Literal[MetricType.performance]
+    metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.cpu)
+
+
+class CardResources(__CardSchema):
+    metric_type: Literal[MetricType.resources]
+    metric_of: MetricOfResources = Field(default=MetricOfResources.missing_resources)
+
+
+class CardWebVital(__CardSchema):
+    metric_type: Literal[MetricType.web_vital]
+    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.avg_cpu)
+
+
+class CardClickMap(__CardSchema):
+    metric_type: Literal[MetricType.click_map]
+    metric_of: MetricOfClickMap = Field(default=MetricOfClickMap.click_map_url)
+
+
+class CardInsights(__CardSchema):
+    metric_type: Literal[MetricType.insights]
+    metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
+
     @model_validator(mode='after')
     def restrictions(cls, values):
-        assert values.get("metric_type") != MetricType.insights, f"metricType:{MetricType.insights} not supported yet"
-        return values
-
-    @model_validator(mode='after')
-    def validator(cls, values):
-        if values.get("metric_type") == MetricType.timeseries:
-            assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
-                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
-            assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
-                f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.timeseries}"
-        elif values.get("metric_type") == MetricType.table:
-            assert isinstance(values.get("view_type"), MetricTableViewType), \
-                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
-            assert isinstance(values.get("metric_of"), MetricOfTable), \
-                f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
-            if values.get("metric_of") in (MetricOfTable.sessions, MetricOfTable.errors):
-                assert values.get("view_type") == MetricTableViewType.table, \
-                    f"viewType must be '{MetricTableViewType.table}' for metricOf:{values['metric_of']}"
-            if values.get("metric_of") != MetricOfTable.issues:
-                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
-                    f"metricValue is only available for metricOf:{MetricOfTable.issues}"
-        elif values.get("metric_type") == MetricType.funnel:
-            pass
-            # allow UI sot send empty series for funnel
-            # assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
-            # ignore this for now, let the UI send whatever he wants for metric_of
-            # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
-            #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
-        elif values.get("metric_type") == MetricType.pathAnalysis:
-            pass
-        else:
-            if values.get("metric_type") == MetricType.errors:
-                assert isinstance(values.get("metric_of"), MetricOfErrors), \
-                    f"metricOf must be of type {MetricOfErrors} for metricType:{MetricType.errors}"
-            elif values.get("metric_type") == MetricType.performance:
-                assert isinstance(values.get("metric_of"), MetricOfPerformance), \
-                    f"metricOf must be of type {MetricOfPerformance} for metricType:{MetricType.performance}"
-            elif values.get("metric_type") == MetricType.resources:
-                assert isinstance(values.get("metric_of"), MetricOfResources), \
-                    f"metricOf must be of type {MetricOfResources} for metricType:{MetricType.resources}"
-            elif values.get("metric_type") == MetricType.web_vital:
-                assert isinstance(values.get("metric_of"), MetricOfWebVitals), \
-                    f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
-            elif values.get("metric_type") == MetricType.click_map:
-                assert isinstance(values.get("metric_of"), MetricOfClickMap), \
-                    f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
-                # Allow only LOCATION events for clickMap
-                for s in values.get("series", []):
-                    for f in s.filter.events:
-                        assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
-
-            assert isinstance(values.get("view_type"), MetricOtherViewType), \
-                f"viewType must be 'chart|list' for metricOf:{values.get('metric_of')}"
-
-        return values
-
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
+        raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
-class CardUpdateSeriesSchema(CardSeriesSchema):
-    series_id: Optional[int] = Field(None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
-
-
-class UpdateCardSchema(CardSchema):
-    series: List[CardUpdateSeriesSchema] = Field(...)
+# CardSchema = TypeAdapter(Annotated[Union[CardTimeSeries, CardTable], \
+#     Field(discriminator='metric_type')])
+CardSchema = ORUnion(Union[
+                         CardTimeSeries, CardTable, CardFunnel,
+                         CardErrors, CardPerformance, CardResources,
+                         CardClickMap, CardInsights],
+                     discriminator='metric_type')
 
 
 class UpdateCustomMetricsStatusSchema(BaseModel):
     active: bool = Field(...)
 
 
-class SavedSearchSchema(FunnelSchema):
-    filter: FlatSessionsSearchPayloadSchema = Field([])
+class SavedSearchSchema(BaseModel):
+    name: str = Field(...)
+    filter: SessionsSearchPayloadSchema = Field([])
 
 
 class CreateDashboardSchema(BaseModel):
@@ -1130,7 +1188,6 @@ class CreateDashboardSchema(BaseModel):
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default=[])
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class EditDashboardSchema(CreateDashboardSchema):
@@ -1140,12 +1197,10 @@ class EditDashboardSchema(CreateDashboardSchema):
 
 class UpdateWidgetPayloadSchema(BaseModel):
     config: dict = Field(default={})
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
     metric_id: int = Field(...)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class TemplatePredefinedUnits(str, Enum):
@@ -1183,13 +1238,13 @@ class LiveSessionSearchFilterSchema(BaseModel):
     operator: Literal[SearchEventOperator._is, \
         SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
-    transform = model_validator(mode='before')(transform_old_FilterType)
+    transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
     def validator(cls, values):
-        if values.get("type") is not None and values["type"] == LiveFilterType.metadata:
-            assert values.get("source") is not None, "source should not be null for METADATA type"
-            assert len(values.get("source")) > 0, "source should not be empty for METADATA type"
+        if values.type is not None and values.type == LiveFilterType.metadata:
+            assert values.source is not None, "source should not be null for METADATA type"
+            assert len(values.source) > 0, "source should not be empty for METADATA type"
         return values
 
 
@@ -1217,8 +1272,6 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 values["sort"] = "TIMESTAMP"
         return values
 
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
-
 
 class IntegrationType(str, Enum):
     github = "GITHUB"
@@ -1242,7 +1295,6 @@ class SearchNoteSchema(_PaginatedSchema):
     tags: Optional[List[str]] = Field(default=[])
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SessionNoteSchema(BaseModel):
@@ -1250,7 +1302,6 @@ class SessionNoteSchema(BaseModel):
     tag: Optional[str] = Field(default=None)
     timestamp: int = Field(default=-1)
     is_public: bool = Field(default=False)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SessionUpdateNoteSchema(SessionNoteSchema):
@@ -1282,10 +1333,9 @@ class SearchCardsSchema(_PaginatedSchema):
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
     query: Optional[str] = Field(default=None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
-class _ClickMapSearchEventRaw(_SessionSearchEventRaw):
+class _ClickMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.location] = Field(...)
 
 
@@ -1305,42 +1355,34 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
 
     @model_validator(mode='after')
     def flat_to_original(cls, values):
-        if len(values["events"]) > 0:
+        if len(values.events) > 0:
             return values
         n_filters = []
         n_events = []
-        for v in values.get("filters", []):
+        for v in values.filters:
             if isinstance(v, _ClickMapSearchEventRaw):
                 n_events.append(v)
             else:
                 n_filters.append(v)
-        values["events"] = n_events
-        values["filters"] = n_filters
+        values.events = n_events
+        values.filters = n_filters
         return values
-
-
-class IssueAdvancedFilter(BaseModel):
-    type: IssueFilterType = Field(default=IssueFilterType._selector)
-    value: List[str] = Field(default=[])
-    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
 
 
 class ClickMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
-    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
-    filters: List[IssueAdvancedFilter] = Field(default=[])
 
 
-class GetHeatmapPayloadSchema(BaseModel):
-    startDate: int = Field(TimeUTC.now(delta_days=-30))
-    endDate: int = Field(TimeUTC.now())
+class GetHeatmapPayloadSchema(_TimedSchema):
+    # TODO: transform these if they are used by the UI
+    # startDate: int = Field(default=TimeUTC.now(delta_days=-30))
+    # endDate: int = Field(default=TimeUTC.now())
     url: str = Field(...)
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagVariant(BaseModel):
@@ -1349,11 +1391,10 @@ class FeatureFlagVariant(BaseModel):
     description: Optional[str] = Field(default=None)
     payload: Optional[str] = Field(default=None)
     rollout_percentage: Optional[int] = Field(default=0, ge=0, le=100)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagConditionFilterSchema(BaseModel):
-    is_event: Literal[False]
+    is_event: Literal[False] = False
     type: FilterType = Field(...)
     value: List[str] = Field(default=[], min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
@@ -1364,7 +1405,6 @@ class FeatureFlagCondition(BaseModel):
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
     filters: List[FeatureFlagConditionFilterSchema] = Field(default=[])
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class SearchFlagsSchema(_PaginatedSchema):
@@ -1373,7 +1413,6 @@ class SearchFlagsSchema(_PaginatedSchema):
     order: SortOrderType = Field(default=SortOrderType.desc)
     query: Optional[str] = Field(default=None)
     is_active: Optional[bool] = Field(default=None)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagType(str, Enum):
@@ -1383,16 +1422,14 @@ class FeatureFlagType(str, Enum):
 
 class FeatureFlagStatus(BaseModel):
     is_active: bool = Field(...)
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
 
 
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
     flag_key: str = Field(..., pattern=r'^[a-zA-Z0-9\-]+$')
-    description: Optional[str] = Field(None)
+    description: Optional[str] = Field(default=None)
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
     conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])
-    model_config = ConfigDict(alias_generator=attribute_to_camel_case)
