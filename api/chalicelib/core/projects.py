@@ -200,14 +200,14 @@ def get_gdpr(project_id):
         return row
 
 
-def edit_gdpr(project_id, gdpr):
+def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
                                SET gdpr = gdpr|| %(gdpr)s
                                WHERE project_id = %(project_id)s 
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
-                            {"project_id": project_id, "gdpr": json.dumps(gdpr)})
+                            {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump_json())})
         cur.execute(query=query)
         row = cur.fetchone()
         if not row:
@@ -252,15 +252,9 @@ def get_capture_status(project_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_capture_status(project_id, changes):
-    if "rate" not in changes and "captureAll" not in changes:
-        return {"errors": ["please provide 'rate' and/or 'captureAll' attributes to update."]}
-    if int(changes["rate"]) < 0 or int(changes["rate"]) > 100:
-        return {"errors": ["'rate' must be between 0..100."]}
-    sample_rate = 0
-    if "rate" in changes:
-        sample_rate = int(changes["rate"])
-    if changes.get("captureAll"):
+def update_capture_status(project_id, changes:schemas.SampleRateSchema):
+    sample_rate = changes.rate
+    if changes.capture_all:
         sample_rate = 100
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects

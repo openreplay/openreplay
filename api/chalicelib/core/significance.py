@@ -564,7 +564,14 @@ def get_top_insights(filter_d, project_id):
             "dropDueToIssues": 0
 
         }]
-        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+        # original
+        # counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+        #                                   project_id=project_id, user_id=None, count_only=True)
+        # first change
+        # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
+        #                                   project_id=project_id, user_id=None, count_only=True)
+        # last change
+        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.parse_obj(filter_d),
                                           project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]

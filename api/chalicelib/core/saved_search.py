@@ -43,7 +43,6 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
-        # r["filter"]["startDate"], r["filter"]["endDate"] = TimeUTC.get_start_end_from_range(r["filter"]["rangeValue"])
         return r
 
 

@@ -62,7 +62,7 @@ def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, u
             print("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION -----------")
             print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.json())
+            print(data.model_dump_json())
             print("--------------------")
             raise err
 

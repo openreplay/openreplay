@@ -8,6 +8,8 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/healthz', tags=["health-check"])
 def get_global_health_status():
+    # TODO: remove this
+    return
     return {"data": health.get_health()}
 
 

@@ -72,16 +72,15 @@ class GitHubIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data):
+    def add_edit(self, data: schemas.IssueTrackingGithubSchema):
         s = self.get()
         if s is not None:
             return self.update(
                 changes={
-                    "token": data["token"] \
-                        if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
-                        else s["token"]
+                    "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
+                        else s.token
                 },
                 obfuscate=True
             )
         else:
-            return self.add(token=data["token"], obfuscate=True)
+            return self.add(token=data.token, obfuscate=True)

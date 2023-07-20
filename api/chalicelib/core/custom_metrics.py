@@ -16,16 +16,16 @@ PIE_CHART_GROUP = 5
 def __try_live(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
         if data.view_type == schemas.MetricTimeseriesViewType.progress:
             r = {"count": results[-1]}
-            diff = s.filter.endDate - s.filter.startDate
-            s.filter.endDate = s.filter.startDate
-            s.filter.startDate = s.filter.endDate - diff
+            diff = s.filter.endTimestamp - s.filter.startTimestamp
+            s.filter.endTimestamp = s.filter.startTimestamp
+            s.filter.startTimestamp = s.filter.endTimestamp - diff
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
@@ -56,8 +56,8 @@ def __get_funnel_chart(project_id, data: schemas.CardSchema):
             "stages": [],
             "totalDropDueToIssues": 0
         }
-    data.series[0].filter.startDate = data.startTimestamp
-    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
@@ -72,8 +72,8 @@ def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
             "total": 0,
             "errors": []
         }
-    data.series[0].filter.startDate = data.startTimestamp
-    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
     data.series[0].filter.page = data.page
     data.series[0].filter.limit = data.limit
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
@@ -91,8 +91,8 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
             "total": 0,
             "sessions": []
         }
-    data.series[0].filter.startDate = data.startTimestamp
-    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
     data.series[0].filter.page = data.page
     data.series[0].filter.limit = data.limit
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
@@ -109,10 +109,11 @@ def __is_click_map(data: schemas.CardSchema):
 def __get_click_map_chart(project_id, user_id, data: schemas.CardSchema, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
-    data.series[0].filter.startDate = data.startTimestamp
-    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
-                                           data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()),
+                                           data=schemas.FlatClickMapSessionsSearch(
+                                               **data.series[0].filter.model_dump()),
                                            include_mobs=include_mobs)
 
 
@@ -132,6 +133,8 @@ def __is_path_analysis(data: schemas.CardSchema):
 
 
 def merged_live(project_id, data: schemas.CardSchema, user_id=None):
+    print("------")
+    print(type(data))
     if data.is_template:
         return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.dict())
     elif __is_funnel_chart(data):
@@ -141,6 +144,7 @@ def merged_live(project_id, data: schemas.CardSchema, user_id=None):
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_click_map(data):
+        print(data)
         return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
     elif __is_path_analysis(data):
         return __get_path_analysis_chart(project_id=project_id, data=data)
@@ -189,6 +193,13 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
+    # print("--------------------")
+    # print(raw_metric)
+    # print("-")
+    # print(data)
+    # print("--------------------")
+    # raw_metric["startTimestamp"] = data.startTimestamp
+    # raw_metric["endTimestamp"] = data.endTimestamp
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
@@ -198,8 +209,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     # if __is_click_map(metric) and raw_metric.get("data") is not None:
     #     is_click_map = True
     for s in metric.series:
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
         # if is_click_map:
@@ -221,8 +232,8 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessions
     if metric is None:
         return None
     for s in metric.series:
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
         return {"seriesId": s.series_id, "seriesName": s.name,
@@ -238,8 +249,8 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
     if metric is None:
         return None
     for s in metric.series:
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
         return {"seriesId": s.series_id, "seriesName": s.name,
@@ -251,8 +262,8 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     if data.series is None:
         return results
     for s in data.series:
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
         if len(data.filters) > 0:
@@ -307,7 +318,7 @@ def create(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
+def update(metric_id, user_id, project_id, data: schemas.CardSchema):
     metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -562,8 +573,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
     if metric is None:
         return None
     for s in metric.series:
-        s.filter.startDate = data.startTimestamp
-        s.filter.endDate = data.endTimestamp
+        s.filter.startTimestamp = data.startTimestamp
+        s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
         issues_list = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})

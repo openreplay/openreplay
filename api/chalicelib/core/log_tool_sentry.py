@@ -1,5 +1,6 @@
 import requests
 from chalicelib.core import log_tools
+from schemas import schemas
 
 IN_TY = "sentry"
 
@@ -35,18 +36,19 @@ def delete(tenant_id, project_id):
     return log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
-def add_edit(tenant_id, project_id, data):
+def add_edit(tenant_id, project_id, data: schemas.IntegrationSentrySchema):
     s = get(project_id)
     if s is not None:
         return update(tenant_id=tenant_id, project_id=project_id,
-                      changes={"projectSlug": data["projectSlug"],
-                               "organizationSlug": data["organizationSlug"],
-                               "token": data["token"]})
+                      changes={"projectSlug": data.project_slug,
+                               "organizationSlug": data.organization_slug,
+                               "token": data.token})
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   project_slug=data["projectSlug"],
-                   organization_slug=data["organizationSlug"], token=data["token"])
+                   project_slug=data.project_slug,
+                   organization_slug=data.organization_slug,
+                   token=data.token)
 
 
 def proxy_get(tenant_id, project_id, event_id):
