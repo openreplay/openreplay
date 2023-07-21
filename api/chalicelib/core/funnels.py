@@ -41,7 +41,7 @@ def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilte
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         return {"stages": [], "totalDropDueToIssues": 0}
-    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
+    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
     insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
         # TODO: check if this correct
@@ -64,5 +64,5 @@ def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchem
 
     return {
         "issues": helper.dict_to_camel_case(
-            significance.get_issues_list(filter_d=data.dict(), project_id=project_id, first_stage=1,
+            significance.get_issues_list(filter_d=data, project_id=project_id, first_stage=1,
                                          last_stage=len(data.events)))}
