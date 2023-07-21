@@ -129,7 +129,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
             print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.json())
+            print(data.model_dump_json())
             print("--------------------")
             raise err
         if errors_only or ids_only:
@@ -204,7 +204,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 print("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
                 print(main_query.decode('UTF-8'))
                 print("--------- PAYLOAD -----------")
-                print(data.json())
+                print(data.model_dump_json())
                 print("--------------------")
                 raise err
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
@@ -1084,5 +1084,3 @@ def check_recording_status(project_id: int) -> dict:
         "recording_status": row["recording_status"],
         "sessions_count": row["sessions_count"]
     }
-
-
