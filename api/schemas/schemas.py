@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 from typing import Optional, List, Union, Literal
 
 from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
@@ -158,8 +158,8 @@ class _TimedSchema(BaseModel):
     @model_validator(mode='after')
     def time_validator(cls, values):
         if values.startTimestamp is not None and values.endTimestamp is not None:
-            assert values.startTimestamp < values.endTimestamp, \
-                "endTimestamp must be greater than startTimestamp"
+            assert values.startTimestamp <= values.endTimestamp, \
+                "endTimestamp must be greater or equal to startTimestamp"
         return values
 
 
@@ -1030,12 +1030,14 @@ class __CardSchema(CardChartSchema):
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
 
-    view_type: Union[MetricTimeseriesViewType, \
-        MetricTableViewType, MetricOtherViewType] = Field(...)
+    # view_type: Union[MetricTimeseriesViewType, \
+    #     MetricTableViewType, MetricOtherViewType] = Field(...)
+    view_type: Any
     metric_type: MetricType = Field(...)
-    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+    # metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
+    #     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+    #     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+    metric_of: Any
     metric_value: List[IssueType] = Field(default=[])
 
     @computed_field
@@ -1044,28 +1046,28 @@ class __CardSchema(CardChartSchema):
         return self.metric_type in [MetricType.errors, MetricType.performance,
                                     MetricType.resources, MetricType.web_vital]
 
-    # This is used to handle wrong values sent by the UI
-    @model_validator(mode="before")
-    def transform(cls, values):
-        if values.get("metricType") == MetricType.timeseries \
-                or values.get("metricType") == MetricType.table \
-                and values.get("metricOf") != MetricOfTable.issues:
-            values["metricValue"] = []
-
-        if values.get("metricType") in [MetricType.funnel, MetricType.pathAnalysis] and \
-                values.get("series") is not None and len(values["series"]) > 0:
-            values["series"] = [values["series"][0]]
-        elif values.get("metricType") not in [MetricType.table,
-                                              MetricType.timeseries,
-                                              MetricType.insights,
-                                              MetricType.click_map,
-                                              MetricType.funnel,
-                                              MetricType.pathAnalysis] \
-                and values.get("series") is not None and len(values["series"]) > 0:
-            values["series"] = []
-
-        return values
-
+    # # This is used to handle wrong values sent by the UI
+    # @model_validator(mode="before")
+    # def transform(cls, values):
+    #     if values.get("metricType") == MetricType.timeseries \
+    #             or values.get("metricType") == MetricType.table \
+    #             and values.get("metricOf") != MetricOfTable.issues:
+    #         values["metricValue"] = []
+    #
+    #     if values.get("metricType") in [MetricType.funnel, MetricType.pathAnalysis] and \
+    #             values.get("series") is not None and len(values["series"]) > 0:
+    #         values["series"] = [values["series"][0]]
+    #     elif values.get("metricType") not in [MetricType.table,
+    #                                           MetricType.timeseries,
+    #                                           MetricType.insights,
+    #                                           MetricType.click_map,
+    #                                           MetricType.funnel,
+    #                                           MetricType.pathAnalysis] \
+    #             and values.get("series") is not None and len(values["series"]) > 0:
+    #         values["series"] = []
+    #
+    #     return values
+    # TODO: finish the reset of these conditions
     # @model_validator(mode='after')
     # def validator(cls, values):
     #     if values.metric_type == MetricType.table:
@@ -1118,50 +1120,172 @@ class __CardSchema(CardChartSchema):
 class CardTimeSeries(__CardSchema):
     metric_type: Literal[MetricType.timeseries]
     metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
+    view_type: MetricTimeseriesViewType
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        values["metricValue"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfTimeseries(values.metric_of)
+        return values
 
 
 class CardTable(__CardSchema):
     metric_type: Literal[MetricType.table]
     metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
+    view_type: MetricTableViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.issues:
+            values["metricValue"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfTable(values.metric_of)
+        return values
 
 
 class CardFunnel(__CardSchema):
     metric_type: Literal[MetricType.funnel]
     metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        if values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = [values["series"][0]]
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfTimeseries(values.metric_of)
+        return values
 
 
 class CardErrors(__CardSchema):
     metric_type: Literal[MetricType.errors]
     metric_of: MetricOfErrors = Field(default=MetricOfErrors.impacted_sessions_by_js_errors)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        values["series"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfErrors(values.metric_of)
+        return values
 
 
 class CardPerformance(__CardSchema):
     metric_type: Literal[MetricType.performance]
     metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.cpu)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        values["series"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfPerformance(values.metric_of)
+        return values
 
 
 class CardResources(__CardSchema):
     metric_type: Literal[MetricType.resources]
     metric_of: MetricOfResources = Field(default=MetricOfResources.missing_resources)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        values["series"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfResources(values.metric_of)
+        return values
 
 
 class CardWebVital(__CardSchema):
     metric_type: Literal[MetricType.web_vital]
     metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.avg_cpu)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        values["series"] = []
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfWebVitals(values.metric_of)
+        return values
 
 
 class CardClickMap(__CardSchema):
     metric_type: Literal[MetricType.click_map]
     metric_of: MetricOfClickMap = Field(default=MetricOfClickMap.click_map_url)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfClickMap(values.metric_of)
+        return values
 
 
 class CardInsights(__CardSchema):
     metric_type: Literal[MetricType.insights]
     metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        values.metric_of = MetricOfClickMap(values.metric_of)
+        return values
 
     @model_validator(mode='after')
     def restrictions(cls, values):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
+
+
+class CardPathAnalysis(__CardSchema):
+    metric_type: Literal[MetricType.pathAnalysis]
+
+    # TODO: what to put here?
+    # metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
+    view_type: MetricOtherViewType = Field(...)
+
+    @model_validator(mode="before")
+    def enforce_default(cls, values):
+        if values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = [values["series"][0]]
+        return values
+
+    @model_validator(mode="after")
+    def transform(cls, values):
+        # values.metric_of = MetricOfClickMap(values.metric_of)
+        return values
+
+    @model_validator(mode='after')
+    def restrictions(cls, values):
+        raise ValueError(f"metricType:{MetricType.pathAnalysis} not supported yet.")
 
 
 # CardSchema = TypeAdapter(Annotated[Union[CardTimeSeries, CardTable], \
@@ -1169,7 +1293,8 @@ class CardInsights(__CardSchema):
 CardSchema = ORUnion(Union[
                          CardTimeSeries, CardTable, CardFunnel,
                          CardErrors, CardPerformance, CardResources,
-                         CardClickMap, CardInsights],
+                         CardWebVital, CardClickMap, CardInsights,
+                         CardPathAnalysis],
                      discriminator='metric_type')
 
 
