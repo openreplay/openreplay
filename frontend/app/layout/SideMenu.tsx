@@ -1,10 +1,10 @@
-import React, { FC } from 'react';
-import { Menu, Divider, Typography } from 'antd';
+import React from 'react';
+import { Divider, Menu, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
-import { client, CLIENT_DEFAULT_TAB, withSiteId } from 'App/routes';
+import { client, CLIENT_DEFAULT_TAB, CLIENT_TABS, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { categories, preferences } from './data';
+import { categories, MENU, preferences, PREFERENCES_MENU } from './data';
 
 const { Text } = Typography;
 
@@ -19,68 +19,59 @@ function SideMenu(props: RouteComponentProps<Props>) {
   const { siteId } = props;
   const isPreferencesActive = props.location.pathname.includes('/client/');
 
-  const isMenuItemActive = (key: string) => {
-    const { pathname } = props.location;
-    switch (key) {
-      case 'sessions':
-        return pathname.startsWith(withSiteId(routes.sessions(), siteId));
-      case 'bookmarks':
-        return pathname.startsWith(withSiteId(routes.bookmarks(), siteId));
-      case 'notes':
-        return pathname.startsWith(withSiteId(routes.notes(), siteId));
-      case 'live-sessions':
-        return pathname.startsWith(withSiteId(routes.assist(), siteId));
-      case 'recordings':
-        return pathname.startsWith(withSiteId(routes.recordings(), siteId));
-      case 'dashboards':
-        return pathname.startsWith(withSiteId(routes.dashboard(), siteId));
-      case 'alerts':
-        return pathname.startsWith(withSiteId(routes.alerts(), siteId));
-      case 'feature-flags':
-        return pathname.startsWith(withSiteId(routes.fflags(), siteId));
-      default:
-        return false;
+  const menuRoutes: any = {
+    exit: () => props.history.push(withSiteId(routes.sessions(), siteId)),
+    [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
+    [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
+    [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
+    [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
+    [MENU.RECORDINGS]: () => withSiteId(routes.recordings(), siteId),
+    [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
+    [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
+    [MENU.ALERTS]: () => withSiteId(routes.alerts(), siteId),
+    [MENU.FEATURE_FLAGS]: () => withSiteId(routes.fflags(), siteId),
+    [MENU.PREFERENCES]: () => client(CLIENT_DEFAULT_TAB),
+    [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
+    [PREFERENCES_MENU.SESSION_LISTING]: () => client(CLIENT_TABS.SESSIONS_LISTING),
+    [PREFERENCES_MENU.INTEGRATIONS]: () => client(CLIENT_TABS.INTEGRATIONS),
+    [PREFERENCES_MENU.METADATA]: () => client(CLIENT_TABS.CUSTOM_FIELDS),
+    [PREFERENCES_MENU.WEBHOOKS]: () => client(CLIENT_TABS.WEBHOOKS),
+    [PREFERENCES_MENU.PROJECTS]: () => client(CLIENT_TABS.SITES),
+    [PREFERENCES_MENU.ROLES_ACCESS]: () => client(CLIENT_TABS.MANAGE_ROLES),
+    [PREFERENCES_MENU.AUDIT]: () => client(CLIENT_TABS.AUDIT),
+    [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
+    [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
+    [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
+  };
+
+  const handleClick = (item: any) => {
+    const handler = menuRoutes[item.key];
+    if (handler) {
+      const route = handler();
+      pushTo(route);
     }
   };
+
+  const isMenuItemActive = (key: string) => {
+    const { pathname } = props.location;
+    const activeRoute = menuRoutes[key];
+    if (activeRoute) {
+      const route = activeRoute();
+      return pathname.startsWith(route);
+    }
+    return false;
+  };
+
 
   const pushTo = (path: string) => {
     props.history.push(path);
   };
 
-  const clickHandler = (item: any) => {
-    if (item.key === 'exit') return props.history.push(withSiteId(routes.sessions(), siteId));
-    switch (item.key) {
-      case 'sessions':
-        pushTo(withSiteId(routes.sessions(), siteId));
-        break;
-      case 'bookmarks':
-        pushTo(withSiteId(routes.bookmarks(), siteId));
-        break;
-      case 'notes':
-        pushTo(withSiteId(routes.notes(), siteId));
-        break;
-      case 'live-sessions':
-        pushTo(withSiteId(routes.assist(), siteId));
-        break;
-      case 'recordings':
-        pushTo(withSiteId(routes.recordings(), siteId));
-        break;
-      case 'dashboards':
-        pushTo(withSiteId(routes.dashboard(), siteId));
-        break;
-      case 'alerts':
-        pushTo(withSiteId(routes.alerts(), siteId));
-        break;
-      case 'feature-flags':
-        pushTo(withSiteId(routes.fflags(), siteId));
-        break;
-      case 'preferences':
-        pushTo(client(CLIENT_DEFAULT_TAB));
-        break;
-    }
-  };
+
+
+
   return (
-    <Menu defaultSelectedKeys={['1']} mode='inline' onClick={clickHandler}
+    <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
           style={{ backgroundColor: '#f6f6f6', border: 'none' }}>
       {isPreferencesActive && <Menu.Item key='exit' icon={<SVG name='arrow-bar-left' />}>
         <Text className='ml-2'>Exit</Text>
@@ -92,13 +83,13 @@ function SideMenu(props: RouteComponentProps<Props>) {
                           title={<Text className='uppercase text-sm' type='secondary'>{category.title}</Text>}>
             {category.items.map((item) => item.children ? (
               <Menu.SubMenu key={item.key} title={<Text className='ml-2'>{item.label}</Text>}
-                            icon={<SVG name={item.icon} />}>
+                            icon={<SVG name={item.icon} size={16} />}>
                 {item.children.map((child) => <Menu.Item key={child.key}>{child.label}</Menu.Item>)}
               </Menu.SubMenu>
             ) : (
-              <Menu.Item key={item.key} icon={<SVG name={item.icon} />}
+              <Menu.Item key={item.key} icon={<SVG name={item.icon} size={16} />}
                          style={{ color: '#333' }}
-                         className={isMenuItemActive(item.key) ? 'ant-menu-item-selected' : ''}>
+                         className={isMenuItemActive(item.key) ? 'ant-menu-item-selected bg-active-blue color-teal' : ''}>
                 <Text className='ml-2'>{item.label}</Text>
               </Menu.Item>
             ))}

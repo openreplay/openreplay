@@ -67,7 +67,8 @@ export const CLIENT_TABS = {
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
   NOTIFICATIONS: 'notifications',
-  AUDIT: 'audit'
+  AUDIT: 'audit',
+  BILLING: 'billing',
 };
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${Object.values(CLIENT_TABS).join('|')})`;
