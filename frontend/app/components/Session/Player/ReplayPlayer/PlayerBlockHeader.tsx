@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -16,6 +17,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from './playerBlockHeader.module.css';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
+import { IFRAME } from 'App/constants/storageKeys';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -42,8 +44,8 @@ function PlayerBlockHeader(props: any) {
   } = props;
 
   React.useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    setHideBack(queryParams.has('iframe') && queryParams.get('iframe') === 'true');
+    const iframe = localStorage.getItem(IFRAME) || false;
+    setHideBack(!!iframe && iframe === 'true');
 
     if (metaList.size === 0) fetchMetadata();
   }, []);
@@ -90,7 +92,7 @@ function PlayerBlockHeader(props: any) {
         <UserCard className="" width={width} height={height} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
-          {live && (
+          {live && !hideBack && (
             <>
               <div className={cn(stl.liveSwitchButton, 'pr-4')}>
                 <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>
