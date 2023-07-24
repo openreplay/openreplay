@@ -19,12 +19,13 @@ import { ModalProvider } from 'Components/Modal';
 import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import SupportCallout from 'Shared/SupportCallout';
 import PublicRoutes from 'App/PublicRoutes';
+import Layout from 'App/layout/Layout';
 
 const SessionPure = lazy(() => import('Components/Session/Session'));
 const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
 const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
 const ClientPure = lazy(() => import('Components/Client/Client'));
-const AssistPure = lazy(() => import('Components/Assist'));
+const AssistPure = lazy(() => import('Components/Assist/AssistRouter'));
 const SessionsOverviewPure = lazy(() => import('Components/Overview'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
@@ -82,7 +83,7 @@ const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
 interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connector> {
   isLoggedIn: boolean;
   jwt: string;
-  siteId: number;
+  // siteId: number;
   sites: Map<string, any>;
   loading: boolean;
   changePassword: boolean;
@@ -92,6 +93,11 @@ interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connect
   fetchTenants: () => any;
   setSessionPath: (path: any) => any;
   fetchSiteList: (siteId: number) => any;
+  match: {
+    params: {
+      siteId: string;
+    }
+  };
   mstore: any;
 }
 
@@ -110,8 +116,13 @@ const Router: React.FC<RouterProps> = (props) => {
     fetchTenants,
     setSessionPath,
     fetchSiteList,
-    history
+    history,
+    match: { params: { siteId: siteIdFromPath } }
   } = props;
+
+  useEffect(() => {
+    console.log('siteId from router', siteId);
+  }, [siteId]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -182,89 +193,91 @@ const Router: React.FC<RouterProps> = (props) => {
   const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
 
   return isLoggedIn ? (
-      <ModalProvider>
-        <Loader loading={loading} className='flex-1'>
-          <Notification />
-          {!hideHeader && <Header key='header' />}
-          <Suspense fallback={<Loader loading={true} className='flex-1' />}>
-            <Switch key='content'>
-              <Route path={CLIENT_PATH} component={Client} />
-              <Route path={withSiteId(ONBOARDING_PATH, siteIdList)} component={Onboarding} />
-              <Route
-                path='/integrations/'
-                render={({ location }) => {
-                  const client = new APIClient(jwt);
-                  switch (location.pathname) {
-                    case '/integrations/slack':
-                      client.post('integrations/slack/add', {
-                        code: location.search.split('=')[1],
-                        state: props.tenantId
-                      });
-                      break;
-                    case '/integrations/msteams':
-                      client.post('integrations/msteams/add', {
-                        code: location.search.split('=')[1],
-                        state: props.tenantId
-                      });
-                      break;
-                  }
-                  return <Redirect to={CLIENT_PATH} />;
-                }}
-              />
-              {redirectToOnboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
+      <Layout hideHeader={hideHeader} siteId={siteId}>
+        <ModalProvider>
+          <Loader loading={loading} className='flex-1'>
+            <Notification />
 
-              {/* DASHBOARD and Metrics */}
-              <Route exact strict path={[
-                withSiteId(ALERTS_PATH, siteIdList),
-                withSiteId(ALERT_EDIT_PATH, siteIdList),
-                withSiteId(ALERT_CREATE_PATH, siteIdList),
-                withSiteId(METRICS_PATH, siteIdList),
-                withSiteId(METRICS_DETAILS, siteIdList),
-                withSiteId(METRICS_DETAILS_SUB, siteIdList),
-                withSiteId(DASHBOARD_PATH, siteIdList),
-                withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
-                withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-                withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
-              ]} component={Dashboard} />
+            <Suspense fallback={<Loader loading={true} className='flex-1' />}>
+              <Switch key='content'>
+                <Route path={CLIENT_PATH} component={Client} />
+                <Route path={withSiteId(ONBOARDING_PATH, siteIdList)} component={Onboarding} />
+                <Route
+                  path='/integrations/'
+                  render={({ location }) => {
+                    const client = new APIClient(jwt);
+                    switch (location.pathname) {
+                      case '/integrations/slack':
+                        client.post('integrations/slack/add', {
+                          code: location.search.split('=')[1],
+                          state: props.tenantId
+                        });
+                        break;
+                      case '/integrations/msteams':
+                        client.post('integrations/msteams/add', {
+                          code: location.search.split('=')[1],
+                          state: props.tenantId
+                        });
+                        break;
+                    }
+                    return <Redirect to={CLIENT_PATH} />;
+                  }}
+                />
+                {redirectToOnboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
 
-              <Route exact path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)} component={Multiview} />
-              <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
-              <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
-              <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
-              <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
-              <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
-              <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
-              <Route
-                exact
-                strict
-                path={[
-                  withSiteId(SESSIONS_PATH, siteIdList),
-                  withSiteId(FFLAGS_PATH, siteIdList),
-                  withSiteId(FFLAG_PATH, siteIdList),
-                  withSiteId(FFLAG_READ_PATH, siteIdList),
-                  withSiteId(FFLAG_CREATE_PATH, siteIdList),
-                  withSiteId(NOTES_PATH, siteIdList),
-                  withSiteId(BOOKMARKS_PATH, siteIdList)
-                ]}
-                component={SessionsOverview}
-              />
-              <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
-              <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
-              <Route
-                exact
-                strict
-                path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                render={(props) => <Session {...props} live />}
-              />
-              {Object.entries(routes.redirects).map(([fr, to]) => (
-                <Redirect key={fr} exact strict from={fr} to={to} />
-              ))}
-              <Redirect to={withSiteId(SESSIONS_PATH, siteId)} />
-            </Switch>
-          </Suspense>
-        </Loader>
-        {!isEnterprise && !isPlayer && <SupportCallout />}
-      </ModalProvider>
+                {/* DASHBOARD and Metrics */}
+                <Route exact strict path={[
+                  withSiteId(ALERTS_PATH, siteIdList),
+                  withSiteId(ALERT_EDIT_PATH, siteIdList),
+                  withSiteId(ALERT_CREATE_PATH, siteIdList),
+                  withSiteId(METRICS_PATH, siteIdList),
+                  withSiteId(METRICS_DETAILS, siteIdList),
+                  withSiteId(METRICS_DETAILS_SUB, siteIdList),
+                  withSiteId(DASHBOARD_PATH, siteIdList),
+                  withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
+                  withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
+                  withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
+                ]} component={Dashboard} />
+
+                <Route exact path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)} component={Multiview} />
+                <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
+                <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
+                <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
+                <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
+                <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
+                <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
+                <Route
+                  exact
+                  strict
+                  path={[
+                    withSiteId(SESSIONS_PATH, siteIdList),
+                    withSiteId(FFLAGS_PATH, siteIdList),
+                    withSiteId(FFLAG_PATH, siteIdList),
+                    withSiteId(FFLAG_READ_PATH, siteIdList),
+                    withSiteId(FFLAG_CREATE_PATH, siteIdList),
+                    withSiteId(NOTES_PATH, siteIdList),
+                    withSiteId(BOOKMARKS_PATH, siteIdList)
+                  ]}
+                  component={SessionsOverview}
+                />
+                <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
+                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
+                <Route
+                  exact
+                  strict
+                  path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
+                  render={(props) => <Session {...props} live />}
+                />
+                {Object.entries(routes.redirects).map(([fr, to]) => (
+                  <Redirect key={fr} exact strict from={fr} to={to} />
+                ))}
+                <Redirect to={withSiteId(SESSIONS_PATH, siteId)} />
+              </Switch>
+            </Suspense>
+          </Loader>
+          {!isEnterprise && !isPlayer && <SupportCallout />}
+        </ModalProvider>
+      </Layout>
     ) :
     <PublicRoutes />;
 };

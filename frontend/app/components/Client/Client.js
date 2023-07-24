@@ -50,16 +50,16 @@ export default class Client extends React.PureComponent {
       },
     } = this.props;
     return (
-      <div className={cn('page-margin container-90 flex relative')}>
-          <div className={styles.tabMenu}>
-            <PreferencesMenu activeTab={activeTab} />
-          </div>
-          <div className={cn('side-menu-margined w-full')}>
+      // <div className={cn('page-margin container-90 flex relative')}>
+      //     <div className={styles.tabMenu}>
+      //       <PreferencesMenu activeTab={activeTab} />
+      //     </div>
+      //     <div className={cn('side-menu-margined w-full')}>
             <div className="bg-white w-full rounded-lg mx-auto mb-8 border" style={{ maxWidth: '1300px'}}>
               {activeTab && this.renderActiveTab()}
             </div>
-          </div>
-      </div>
+      //     </div>
+      // </div>
     );
   }
 }

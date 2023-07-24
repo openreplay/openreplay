@@ -48,7 +48,6 @@ const initialState = Map({
 });
 
 const reducer = (state = initialState, action = {}) => {
-  console.log('action', action);
   switch (action.type) {
     case EDIT_GDPR:
       return state.mergeIn(['instance', 'gdpr'], action.gdpr);

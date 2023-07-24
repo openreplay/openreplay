@@ -1,17 +1,17 @@
-import React from 'react'
-import { Icon } from "UI";
-import ServiceCategory from "Components/Header/HealthStatus/ServiceCategory";
-import cn from 'classnames'
-import { IServiceStats } from './HealthStatus'
+import React from 'react';
+import { Icon } from 'UI';
+import ServiceCategory from 'Components/Header/HealthStatus/ServiceCategory';
+import cn from 'classnames';
+import { IServiceStats } from './HealthStatus';
 
 function HealthWidget({
-  healthResponse,
-  getHealth,
-  isLoading,
-  lastAsked,
-  setShowModal,
-  isError,
-}: {
+                        healthResponse,
+                        getHealth,
+                        isLoading,
+                        lastAsked,
+                        setShowModal,
+                        isError
+                      }: {
   healthResponse: { overallHealth: boolean; healthMap: Record<string, IServiceStats>, details: Record<string, any> };
   getHealth: Function;
   isLoading: boolean;
@@ -35,16 +35,16 @@ function HealthWidget({
 
   const problematicServices = Object.values(healthResponse?.healthMap || {}).filter(
     (service: Record<string, any>) => !service.healthOk
-  )
+  );
 
   return (
     <div
-      style={{ width: 220, right: '-30%', height: '110%' }}
-      className={'absolute group invisible group-hover:visible'}
+      // style={{ width: 220, right: '-30%', height: '110%' }}
+      // className={'absolute group'}
     >
       <div
         className={
-          'w-full flex flex-col border border-light-gray gap-2 rounded items-center p-4 bg-white'
+          'w-full flex flex-col gap-2 items-center'
         }
       >
         <div
@@ -100,4 +100,4 @@ function HealthWidget({
   );
 }
 
-export default HealthWidget
+export default HealthWidget;

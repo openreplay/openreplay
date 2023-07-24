@@ -38,8 +38,8 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   };
   return (
     <div
-      style={{ width: '160px', marginTop: '34px' }}
-      className={cn(className, 'rounded absolute -right-4 top-0 bg-white border p-2 text-left')}
+      // style={{ width: '160px', marginTop: '34px' }}
+      // className={cn(className, 'rounded absolute -right-4 top-0 bg-white border p-2 text-left')}
     >
       <MenuItem onClick={() => navigateTo('sessions-listing')} label='Sessions Listing' icon='folder2' />
       <MenuItem onClick={() => navigateTo('integrations')} label='Integrations' icon='puzzle' />
