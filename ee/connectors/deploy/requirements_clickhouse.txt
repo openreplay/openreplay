@@ -1,4 +1,4 @@
-certifi==2022.09.24
+certifi==2023.7.22
 chardet==5.1.0
 clickhouse-driver==0.2.6
 clickhouse-sqlalchemy==0.2.4
