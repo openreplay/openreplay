@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 requests = "==2.31.0"
-boto3 = "==1.28.4"
-pyjwt = "==2.7.0"
+boto3 = "==1.28.11"
+pyjwt = "==2.8.0"
 psycopg2-binary = "==2.9.6"
 elasticsearch = "==8.8.2"
 jira = "==3.5.2"
@@ -16,7 +16,7 @@ apscheduler = "==3.10.1"
 redis = "==4.6.0"
 urllib3 = "==1.26.16"
 uvicorn = {version = "==0.23.1", extras = ["standard"]}
-pydantic = {version = "==2.0.3", extras = ["email"]}
+pydantic = {version = "==2.1.1", extras = ["email"]}
 
 [dev-packages]
 

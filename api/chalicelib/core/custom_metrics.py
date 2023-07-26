@@ -19,8 +19,6 @@ PIE_CHART_GROUP = 5
 def __try_live(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
-        s.filter.startTimestamp = data.startTimestamp
-        s.filter.endTimestamp = data.endTimestamp
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
@@ -33,8 +31,6 @@ def __try_live(project_id, data: schemas.CardSchema):
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
-            # r["countProgress"] = ((r["count"] - r["previousCount"]) / r["previousCount"]) * 100 \
-            #     if r["previousCount"] > 0 else 0
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
@@ -59,8 +55,6 @@ def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int =
             "stages": [],
             "totalDropDueToIssues": 0
         }
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
@@ -75,10 +69,6 @@ def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
             "total": 0,
             "errors": []
         }
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
-    data.series[0].filter.page = data.page
-    data.series[0].filter.limit = data.limit
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
@@ -94,10 +84,6 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
             "total": 0,
             "sessions": []
         }
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
-    data.series[0].filter.page = data.page
-    data.series[0].filter.limit = data.limit
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
@@ -112,8 +98,6 @@ def __is_click_map(data: schemas.CardSchema):
 def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
@@ -125,10 +109,9 @@ def __get_path_analysis_chart(project_id, data: schemas.CardSchema):
         data.series.append(schemas.CardSeriesSchema())
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
+
     return product_analytics.path_analysis(project_id=project_id,
-                                           data=schemas.PathAnalysisSchema(**data.series[0].filter.dict()))
+                                           data=schemas.PathAnalysisSchema(**data.series[0].filter.model_dump()))
 
 
 def __is_path_analysis(data: schemas.CardSchema):
@@ -252,7 +235,7 @@ def merged_live(project_id, data: schemas.CardSchema, user_id=None):
 
 
 def __merge_metric_with_data(metric: schemas.CardSchema,
-                             data: schemas.CardChartSchema) -> schemas.CardSchema:
+                             data: schemas.CardSessionsSchema) -> schemas.CardSchema:
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
     # TODO: try to refactor this
@@ -264,14 +247,14 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
                 s.filter.filters += data.filters
             if len(data.events) > 0:
                 s.filter.events += data.events
-    metric.limit = data.limit
-    metric.page = data.page
-    metric.startTimestamp = data.startTimestamp
-    metric.endTimestamp = data.endTimestamp
+    # metric.limit = data.limit
+    # metric.page = data.page
+    # metric.startTimestamp = data.startTimestamp
+    # metric.endTimestamp = data.endTimestamp
     return metric
 
 
-def make_chart(project_id, user_id, data: schemas.CardChartSchema, metric: schemas.CardSchema):
+def make_chart(project_id, user_id, data: schemas.CardSessionsSchema, metric: schemas.CardSchema):
     if metric is None:
         return None
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -293,10 +276,10 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     # if __is_click_map(metric) and raw_metric.get("data") is not None:
     #     is_click_map = True
     for s in metric.series:
-        s.filter.startTimestamp = data.startTimestamp
-        s.filter.endTimestamp = data.endTimestamp
-        s.filter.limit = data.limit
-        s.filter.page = data.page
+        # s.filter.startTimestamp = data.startTimestamp
+        # s.filter.endTimestamp = data.endTimestamp
+        # s.filter.limit = data.limit
+        # s.filter.page = data.page
         # if is_click_map:
         #     results.append(
         #         {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
@@ -316,10 +299,6 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessions
     if metric is None:
         return None
     for s in metric.series:
-        s.filter.startTimestamp = data.startTimestamp
-        s.filter.endTimestamp = data.endTimestamp
-        s.filter.limit = data.limit
-        s.filter.page = data.page
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
@@ -333,10 +312,6 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
     if metric is None:
         return None
     for s in metric.series:
-        s.filter.startTimestamp = data.startTimestamp
-        s.filter.endTimestamp = data.endTimestamp
-        s.filter.limit = data.limit
-        s.filter.page = data.page
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
@@ -346,10 +321,6 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     if data.series is None:
         return results
     for s in data.series:
-        s.filter.startTimestamp = data.startTimestamp
-        s.filter.endTimestamp = data.endTimestamp
-        s.filter.limit = data.limit
-        s.filter.page = data.page
         if len(data.filters) > 0:
             s.filter.filters += data.filters
         if len(data.events) > 0:
@@ -370,13 +341,13 @@ def create(project_id, user_id, data: schemas.CardSchema, dashboard=False):
                 session_data = json.dumps(session_data)
         _data = {"session_data": session_data}
         for i, s in enumerate(data.series):
-            for k in s.dict().keys():
+            for k in s.model_dump().keys():
                 _data[f"{k}_{i}"] = s.__getattribute__(k)
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
-        params["default_config"] = json.dumps(data.default_config.dict())
+        params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
+        params["default_config"] = json.dumps(data.default_config.model_dump())
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
                             metric_format, default_config, thumbnail, data)
@@ -415,7 +386,7 @@ def update(metric_id, user_id, project_id, data: schemas.CardSchema):
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
               "metric_type": data.metric_type, "metric_of": data.metric_of,
               "metric_value": data.metric_value, "metric_format": data.metric_format,
-              "config": json.dumps(data.default_config.dict()), "thumbnail": data.thumbnail}
+              "config": json.dumps(data.default_config.model_dump()), "thumbnail": data.thumbnail}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.index is None:
@@ -426,7 +397,7 @@ def update(metric_id, user_id, project_id, data: schemas.CardSchema):
         else:
             u_series.append({"i": i, "s": s})
             u_series_ids.append(s.series_id)
-        ns = s.dict()
+        ns = s.model_dump()
         for k in ns.keys():
             if k == "filter":
                 ns[k] = json.dumps(ns[k])
@@ -684,7 +655,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
+def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
