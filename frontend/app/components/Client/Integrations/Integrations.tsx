@@ -251,7 +251,7 @@ const integrations = [
         component: <SumoLogicForm />
       },
       {
-        title: 'Stackdriver',
+        title: 'Google Cloud',
         subtitle: 'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
         slug: 'stackdriver',
         icon: 'integrations/google-cloud',

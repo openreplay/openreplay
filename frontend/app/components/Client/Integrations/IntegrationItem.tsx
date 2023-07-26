@@ -15,14 +15,17 @@ const IntegrationItem = (props: Props) => {
   const { integration, integrated, hide = false } = props;
   return hide ? <></> : (
     <div
-      className={cn('flex flex-col border p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue')}
+      className={cn('flex flex-col border rounded-lg p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue')}
       onClick={(e) => props.onClick(e)}
       style={{ height: '126px' }}
     >
       <div className='flex gap-3'>
-        {integration.icon.length ?
-          <img className='h-10 w-10' src={'/assets/' + integration.icon + '.svg'} alt='integration' /> :
-          (<span style={{ fontSize: '3rem', lineHeight: '3rem' }}>{integration.header}</span>)}
+        {/*{integration.icon.length ?*/}
+        {/*  <img className='h-10 w-10' src={'/assets/' + integration.icon + '.svg'} alt='integration' /> :*/}
+        {/*  (<span style={{ fontSize: '3rem', lineHeight: '3rem' }}>{integration.header}</span>)}*/}
+        <div className="shrink-0">
+          <img className='h-10 w-10' src={'/assets/' + integration.icon + '.svg'} alt='integration' />
+        </div>
         <div className='flex flex-col'>
           <h4 className='text-lg'>{integration.title}</h4>
           <p className='text-sm color-gray-medium m-0 p-0 h-3'>{integration.subtitle && integration.subtitle}</p>
