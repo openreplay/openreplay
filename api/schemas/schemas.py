@@ -793,7 +793,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 #     group_by_user: Literal[False] = False
 #
 #     @model_validator(mode="before")
-#     def enforce_default_values(cls, values):
+#     def __enforce_default_values(cls, values):
 #         values["eventsOrder"] = SearchEventOrder._then
 #         values["groupByUser"] = False
 #         return values
@@ -1015,23 +1015,38 @@ class MetricOfClickMap(str, Enum):
 class CardSessionsSchema(SessionsSearchPayloadSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(defautl=TimeUTC.now())
+    density: Optional[int] = Field(default=7)
     series: List[CardSeriesSchema] = Field(default=[])
 
     @model_validator(mode="before")
-    def __transform(cls, values):
-        if values.get("startTimestamp") is None or values.get("endTimestamp") is None:
-            return values
+    def __enforce_default(cls, values):
+        if values.get("startTimestamp") is None:
+            values["startTimestamp"] = TimeUTC.now(-7)
+
+        if values.get("endTimestamp") is None:
+            values["endTimestamp"] = TimeUTC.now()
+
         for s in values.get("series", []):
             if s.get("filter") is not None:
-                if s["filter"].get("startTimestamp") is None:
-                    s["filter"]["startTimestamp"] = values["startTimestamp"]
-                if s["filter"].get("endTimestamp") is None:
-                    s["filter"]["endTimestamp"] = values["endTimestamp"]
+                s["filter"]["startTimestamp"] = values["startTimestamp"]
+                s["filter"]["endTimestamp"] = values["endTimestamp"]
+
+        return values
+
+    @model_validator(mode="after")
+    def __enforce_default_after(cls, values):
+        for s in values.series:
+            if s.filter is not None:
+                s.filter.limit = values.limit
+                s.filter.page = values.page
+
         return values
 
 
-class CardChartSchema(CardSessionsSchema):
-    density: int = Field(default=7)
+#
+#
+# class CardChartSchema(CardSessionsSchema):
+#     density: int = Field(default=7)
 
 
 class CardConfigSchema(BaseModel):
@@ -1041,7 +1056,7 @@ class CardConfigSchema(BaseModel):
 
 
 # class CardSchema(CardChartSchema):
-class __CardSchema(CardChartSchema):
+class __CardSchema(CardSessionsSchema):
     name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
     default_config: CardConfigSchema = Field(..., alias="config")
@@ -1082,7 +1097,7 @@ class CardTimeSeries(__CardSchema):
     view_type: MetricTimeseriesViewType
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["metricValue"] = []
         return values
 
@@ -1098,7 +1113,7 @@ class CardTable(__CardSchema):
     view_type: MetricTableViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.issues:
             values["metricValue"] = []
         return values
@@ -1115,7 +1130,7 @@ class CardFunnel(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["metricOf"] = MetricOfFunnels.session_count
         values["viewType"] = MetricOtherViewType.other_chart
         if values.get("series") is not None and len(values["series"]) > 0:
@@ -1134,7 +1149,7 @@ class CardErrors(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["series"] = []
         return values
 
@@ -1150,7 +1165,7 @@ class CardPerformance(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["series"] = []
         return values
 
@@ -1166,7 +1181,7 @@ class CardResources(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["series"] = []
         return values
 
@@ -1182,7 +1197,7 @@ class CardWebVital(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         values["series"] = []
         return values
 
@@ -1198,7 +1213,7 @@ class CardClickMap(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         return values
 
     @model_validator(mode="after")
@@ -1213,7 +1228,7 @@ class CardInsights(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         return values
 
     @model_validator(mode="after")
@@ -1234,7 +1249,7 @@ class CardPathAnalysis(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def enforce_default(cls, values):
+    def __enforce_default(cls, values):
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
@@ -1266,6 +1281,7 @@ class UpdateCardStatusSchema(BaseModel):
 
 class SavedSearchSchema(BaseModel):
     name: str = Field(...)
+    is_public: bool = Field(default=False)
     filter: SessionsSearchPayloadSchema = Field([])
 
 
