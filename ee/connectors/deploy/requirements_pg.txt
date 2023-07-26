@@ -1,4 +1,4 @@
-certifi==2022.09.24
+certifi==2023.7.22
 chardet==5.1.0
 idna==3.4
 confluent-kafka==2.1.1
