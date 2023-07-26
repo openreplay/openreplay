@@ -13,6 +13,9 @@ from chalicelib.utils.storage import StorageClient
 PIE_CHART_GROUP = 5
 
 
+# TODO: refactor this to split
+#  timeseries /
+#  table of errors / table of issues / table of browsers / table of devices / table of countries / table of URLs
 def __try_live(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
@@ -50,7 +53,7 @@ def __is_funnel_chart(data: schemas.CardSchema):
     return data.metric_type == schemas.MetricType.funnel
 
 
-def __get_funnel_chart(project_id, data: schemas.CardSchema):
+def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
     if len(data.series) == 0:
         return {
             "stages": [],
@@ -106,13 +109,13 @@ def __is_click_map(data: schemas.CardSchema):
     return data.metric_type == schemas.MetricType.click_map
 
 
-def __get_click_map_chart(project_id, user_id, data: schemas.CardSchema, include_mobs: bool = True):
+def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
-                                           data=schemas.FlatClickMapSessionsSearch(
+                                           data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
                                            include_mobs=include_mobs)
 
@@ -132,28 +135,115 @@ def __is_path_analysis(data: schemas.CardSchema):
     return data.metric_type == schemas.MetricType.pathAnalysis
 
 
-def merged_live(project_id, data: schemas.CardSchema, user_id=None):
-    print("------")
-    print(type(data))
-    if data.is_template:
-        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.dict())
-    elif __is_funnel_chart(data):
-        return __get_funnel_chart(project_id=project_id, data=data)
-    elif __is_errors_list(data):
-        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_sessions_list(data):
-        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_click_map(data):
-        print(data)
-        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
-    elif __is_path_analysis(data):
-        return __get_path_analysis_chart(project_id=project_id, data=data)
-    elif len(data.series) == 0:
-        return []
+def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
     series_charts = __try_live(project_id=project_id, data=data)
-    if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
+    if data.view_type == schemas.MetricTimeseriesViewType.progress:
         return series_charts
     results = [{}] * len(series_charts[0])
+    for i in range(len(results)):
+        for j, series_chart in enumerate(series_charts):
+            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+                          data.series[j].name if data.series[j].name else j + 1: series_chart[i]["count"]}
+    return results
+
+
+def empty(**args):
+    raise Exception("not supported")
+
+
+def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
+    series_charts = __try_live(project_id=project_id, data=data)
+    return series_charts
+
+
+def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
+    return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+
+
+def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
+    return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+
+
+def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __try_live(project_id=project_id, data=data)
+
+
+def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __try_live(project_id=project_id, data=data)
+
+
+def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __try_live(project_id=project_id, data=data)
+
+
+def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __try_live(project_id=project_id, data=data)
+
+
+def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __try_live(project_id=project_id, data=data)
+
+
+def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
+    supported = {
+        schemas.MetricOfTable.sessions: __get_table_of_sessions,
+        schemas.MetricOfTable.errors: __get_table_of_errors,
+        schemas.MetricOfTable.user_id: __get_table_of_user_ids,
+        schemas.MetricOfTable.issues: __get_table_of_issues,
+        schemas.MetricOfTable.user_browser: __get_table_of_browsers,
+        schemas.MetricOfTable.user_device: __get_table_of_devises,
+        schemas.MetricOfTable.user_country: __get_table_of_countries,
+        schemas.MetricOfTable.visited_url: __get_table_of_urls,
+    }
+    return supported.get(data.metric_of, empty)(project_id=project_id, data=data, user_id=user_id)
+
+
+def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
+    if data.is_template:
+        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.model_dump())
+
+    supported = {
+        schemas.MetricType.timeseries: __get_timeseries_chart,
+        schemas.MetricType.table: __get_table_chart,
+        schemas.MetricType.click_map: __get_click_map_chart,
+        schemas.MetricType.funnel: __get_funnel_chart,
+        schemas.MetricType.insights: empty,
+        schemas.MetricType.pathAnalysis: empty
+    }
+    return supported.get(data.metric_type, empty)(project_id=project_id, data=data, user_id=user_id)
+
+
+def merged_live(project_id, data: schemas.CardSchema, user_id=None):
+    return get_chart(project_id=project_id, data=data, user_id=user_id)
+    print("---1")
+    if data.is_template:
+        print("---2")
+        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.model_dump())
+    elif __is_funnel_chart(data):
+        print("---3")
+        return __get_funnel_chart(project_id=project_id, data=data)
+    elif __is_errors_list(data):
+        print("---4")
+        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_sessions_list(data):
+        print("---5")
+        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_click_map(data):
+        print("---6")
+        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
+    elif __is_path_analysis(data):
+        print("---7")
+        return __get_path_analysis_chart(project_id=project_id, data=data)
+    elif len(data.series) == 0:
+        print("---8")
+        return []
+    series_charts = __try_live(project_id=project_id, data=data)
+    print("---9")
+    if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
+        print("---10")
+        return series_charts
+    results = [{}] * len(series_charts[0])
+    print("---11")
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
             results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
@@ -165,8 +255,9 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
                              data: schemas.CardChartSchema) -> schemas.CardSchema:
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
-    metric: schemas.CardSchema = schemas.CardSchema(
-        **{**data.dict(by_alias=True), **metric.dict(by_alias=True)})
+    # TODO: try to refactor this
+    metric: schemas.CardSchema = schemas.CardSchema(**{**data.model_dump(by_alias=True),
+                                                       **metric.model_dump(by_alias=True)})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
             if len(data.filters) > 0:
@@ -193,13 +284,6 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
-    # print("--------------------")
-    # print(raw_metric)
-    # print("-")
-    # print(data)
-    # print("--------------------")
-    # raw_metric["startTimestamp"] = data.startTimestamp
-    # raw_metric["endTimestamp"] = data.endTimestamp
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
@@ -604,9 +688,11 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+    raw_metric["startTimestamp"] = data.startTimestamp
+    raw_metric["endTimestamp"] = data.endTimestamp
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
     if metric.is_template:
-        return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
+        return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.model_dump())
     elif __is_click_map(metric):
         if raw_metric["data"]:
             keys = sessions_mobs. \
@@ -626,53 +712,52 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     return make_chart(project_id=project_id, user_id=user_id, data=data, metric=metric)
 
 
-PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
-              schemas.MetricOfWebVitals.avg_image_load_time: metrics.get_application_activity_avg_image_load_time,
-              schemas.MetricOfWebVitals.avg_page_load_time: metrics.get_application_activity_avg_page_load_time,
-              schemas.MetricOfWebVitals.avg_request_load_time: metrics.get_application_activity_avg_request_load_time,
-              schemas.MetricOfWebVitals.avg_dom_content_load_start: metrics.get_page_metrics_avg_dom_content_load_start,
-              schemas.MetricOfWebVitals.avg_first_contentful_pixel: metrics.get_page_metrics_avg_first_contentful_pixel,
-              schemas.MetricOfWebVitals.avg_visited_pages: metrics.get_user_activity_avg_visited_pages,
-              schemas.MetricOfWebVitals.avg_session_duration: metrics.get_user_activity_avg_session_duration,
-              schemas.MetricOfWebVitals.avg_pages_dom_buildtime: metrics.get_pages_dom_build_time,
-              schemas.MetricOfWebVitals.avg_pages_response_time: metrics.get_pages_response_time,
-              schemas.MetricOfWebVitals.avg_response_time: metrics.get_top_metrics_avg_response_time,
-              schemas.MetricOfWebVitals.avg_first_paint: metrics.get_top_metrics_avg_first_paint,
-              schemas.MetricOfWebVitals.avg_dom_content_loaded: metrics.get_top_metrics_avg_dom_content_loaded,
-              schemas.MetricOfWebVitals.avg_till_first_byte: metrics.get_top_metrics_avg_till_first_bit,
-              schemas.MetricOfWebVitals.avg_time_to_interactive: metrics.get_top_metrics_avg_time_to_interactive,
-              schemas.MetricOfWebVitals.count_requests: metrics.get_top_metrics_count_requests,
-              schemas.MetricOfWebVitals.avg_time_to_render: metrics.get_time_to_render,
-              schemas.MetricOfWebVitals.avg_used_js_heap_size: metrics.get_memory_consumption,
-              schemas.MetricOfWebVitals.avg_cpu: metrics.get_avg_cpu,
-              schemas.MetricOfWebVitals.avg_fps: metrics.get_avg_fps,
-              schemas.MetricOfErrors.impacted_sessions_by_js_errors: metrics.get_impacted_sessions_by_js_errors,
-              schemas.MetricOfErrors.domains_errors_4xx: metrics.get_domains_errors_4xx,
-              schemas.MetricOfErrors.domains_errors_5xx: metrics.get_domains_errors_5xx,
-              schemas.MetricOfErrors.errors_per_domains: metrics.get_errors_per_domains,
-              schemas.MetricOfErrors.calls_errors: metrics.get_calls_errors,
-              schemas.MetricOfErrors.errors_per_type: metrics.get_errors_per_type,
-              schemas.MetricOfErrors.resources_by_party: metrics.get_resources_by_party,
-              schemas.MetricOfPerformance.speed_location: metrics.get_speed_index_location,
-              schemas.MetricOfPerformance.slowest_domains: metrics.get_slowest_domains,
-              schemas.MetricOfPerformance.sessions_per_browser: metrics.get_sessions_per_browser,
-              schemas.MetricOfPerformance.time_to_render: metrics.get_time_to_render,
-              schemas.MetricOfPerformance.impacted_sessions_by_slow_pages: metrics.get_impacted_sessions_by_slow_pages,
-              schemas.MetricOfPerformance.memory_consumption: metrics.get_memory_consumption,
-              schemas.MetricOfPerformance.cpu: metrics.get_avg_cpu,
-              schemas.MetricOfPerformance.fps: metrics.get_avg_fps,
-              schemas.MetricOfPerformance.crashes: metrics.get_crashes,
-              schemas.MetricOfPerformance.resources_vs_visually_complete: metrics.get_resources_vs_visually_complete,
-              schemas.MetricOfPerformance.pages_dom_buildtime: metrics.get_pages_dom_build_time,
-              schemas.MetricOfPerformance.pages_response_time: metrics.get_pages_response_time,
-              schemas.MetricOfPerformance.pages_response_time_distribution: metrics.get_pages_response_time_distribution,
-              schemas.MetricOfResources.missing_resources: metrics.get_missing_resources_trend,
-              schemas.MetricOfResources.slowest_resources: metrics.get_slowest_resources,
-              schemas.MetricOfResources.resources_loading_time: metrics.get_resources_loading_time,
-              schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
-              schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
-
-
 def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
         schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
-    return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
+    supported = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
+                 schemas.MetricOfWebVitals.avg_image_load_time: metrics.get_application_activity_avg_image_load_time,
+                 schemas.MetricOfWebVitals.avg_page_load_time: metrics.get_application_activity_avg_page_load_time,
+                 schemas.MetricOfWebVitals.avg_request_load_time: metrics.get_application_activity_avg_request_load_time,
+                 schemas.MetricOfWebVitals.avg_dom_content_load_start: metrics.get_page_metrics_avg_dom_content_load_start,
+                 schemas.MetricOfWebVitals.avg_first_contentful_pixel: metrics.get_page_metrics_avg_first_contentful_pixel,
+                 schemas.MetricOfWebVitals.avg_visited_pages: metrics.get_user_activity_avg_visited_pages,
+                 schemas.MetricOfWebVitals.avg_session_duration: metrics.get_user_activity_avg_session_duration,
+                 schemas.MetricOfWebVitals.avg_pages_dom_buildtime: metrics.get_pages_dom_build_time,
+                 schemas.MetricOfWebVitals.avg_pages_response_time: metrics.get_pages_response_time,
+                 schemas.MetricOfWebVitals.avg_response_time: metrics.get_top_metrics_avg_response_time,
+                 schemas.MetricOfWebVitals.avg_first_paint: metrics.get_top_metrics_avg_first_paint,
+                 schemas.MetricOfWebVitals.avg_dom_content_loaded: metrics.get_top_metrics_avg_dom_content_loaded,
+                 schemas.MetricOfWebVitals.avg_till_first_byte: metrics.get_top_metrics_avg_till_first_bit,
+                 schemas.MetricOfWebVitals.avg_time_to_interactive: metrics.get_top_metrics_avg_time_to_interactive,
+                 schemas.MetricOfWebVitals.count_requests: metrics.get_top_metrics_count_requests,
+                 schemas.MetricOfWebVitals.avg_time_to_render: metrics.get_time_to_render,
+                 schemas.MetricOfWebVitals.avg_used_js_heap_size: metrics.get_memory_consumption,
+                 schemas.MetricOfWebVitals.avg_cpu: metrics.get_avg_cpu,
+                 schemas.MetricOfWebVitals.avg_fps: metrics.get_avg_fps,
+                 schemas.MetricOfErrors.impacted_sessions_by_js_errors: metrics.get_impacted_sessions_by_js_errors,
+                 schemas.MetricOfErrors.domains_errors_4xx: metrics.get_domains_errors_4xx,
+                 schemas.MetricOfErrors.domains_errors_5xx: metrics.get_domains_errors_5xx,
+                 schemas.MetricOfErrors.errors_per_domains: metrics.get_errors_per_domains,
+                 schemas.MetricOfErrors.calls_errors: metrics.get_calls_errors,
+                 schemas.MetricOfErrors.errors_per_type: metrics.get_errors_per_type,
+                 schemas.MetricOfErrors.resources_by_party: metrics.get_resources_by_party,
+                 schemas.MetricOfPerformance.speed_location: metrics.get_speed_index_location,
+                 schemas.MetricOfPerformance.slowest_domains: metrics.get_slowest_domains,
+                 schemas.MetricOfPerformance.sessions_per_browser: metrics.get_sessions_per_browser,
+                 schemas.MetricOfPerformance.time_to_render: metrics.get_time_to_render,
+                 schemas.MetricOfPerformance.impacted_sessions_by_slow_pages: metrics.get_impacted_sessions_by_slow_pages,
+                 schemas.MetricOfPerformance.memory_consumption: metrics.get_memory_consumption,
+                 schemas.MetricOfPerformance.cpu: metrics.get_avg_cpu,
+                 schemas.MetricOfPerformance.fps: metrics.get_avg_fps,
+                 schemas.MetricOfPerformance.crashes: metrics.get_crashes,
+                 schemas.MetricOfPerformance.resources_vs_visually_complete: metrics.get_resources_vs_visually_complete,
+                 schemas.MetricOfPerformance.pages_dom_buildtime: metrics.get_pages_dom_build_time,
+                 schemas.MetricOfPerformance.pages_response_time: metrics.get_pages_response_time,
+                 schemas.MetricOfPerformance.pages_response_time_distribution: metrics.get_pages_response_time_distribution,
+                 schemas.MetricOfResources.missing_resources: metrics.get_missing_resources_trend,
+                 schemas.MetricOfResources.slowest_resources: metrics.get_slowest_resources,
+                 schemas.MetricOfResources.resources_loading_time: metrics.get_resources_loading_time,
+                 schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
+                 schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
+
+    return supported.get(key, lambda *args: None)(project_id=project_id, **data)
