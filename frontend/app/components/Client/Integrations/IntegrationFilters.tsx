@@ -2,24 +2,13 @@ import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
 
-
-// const FILTERS = [
-//   { key: 'all', name: 'All', icon: 'play' },
-//   { key: 'issue-reporting', name: 'Issue Reporting', icon: 'play' },
-//   { key: 'backend-logging', name: 'Backend Logging', icon: 'play' },
-//   { key: 'stack-tracing', name: 'Stack Tracing', icon: 'play' },
-//   { key: 'state-management', name: 'State Management', icon: 'play' },
-//   { key: 'collaboration', name: 'Collaboration', icon: 'play' },
-//   { key: 'plugins', name: 'Plugins', icon: 'play' }
-// ];
-
 interface Props {
   onChange: any;
   activeItem: string;
   filters: any;
 }
 
-const allItem = { key: 'all', title: 'All', icon: 'play' };
+const allItem = { key: 'all', title: 'All' };
 
 function FilterButton(props: { activeItem: string, item: any, onClick: () => any }) {
   return <div

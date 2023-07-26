@@ -98,7 +98,7 @@ function Integrations(props: Props) {
   const filters = integrations.map((cat: any) => ({
     key: cat.key,
     title: cat.title,
-    icon: cat.icon,
+    icon: cat.icon
   }));
 
 
@@ -107,7 +107,7 @@ function Integrations(props: Props) {
       <div className='mb-4 p-5 bg-white rounded-lg border'>
         {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
 
-        <IntegrationFilters onChange={onChange} activeItem={activeFilter} filters={filters}/>
+        <IntegrationFilters onChange={onChange} activeItem={activeFilter} filters={filters} />
       </div>
 
       <div className='mb-4' />
@@ -152,11 +152,11 @@ const integrations = [
     key: 'issue-reporting',
     description: 'Seamlessly report issues or share issues with your team right from OpenReplay.',
     isProject: false,
-    icon: 'integrations/issue-reporting',
+    icon: 'exclamation-triangle',
     integrations: [
       {
         title: 'Jira',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Jira with OpenReplay to enable the creation of a new ticket directly from a session.',
         slug: 'jira',
         category: 'Errors',
         icon: 'integrations/jira',
@@ -164,7 +164,7 @@ const integrations = [
       },
       {
         title: 'Github',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate GitHub with OpenReplay to enable the direct creation of a new issue from a session.',
         slug: 'github',
         category: 'Errors',
         icon: 'integrations/github',
@@ -172,7 +172,7 @@ const integrations = [
       },
       {
         title: 'Slack',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
         slug: 'slack',
         category: 'Errors',
         icon: 'integrations/slack',
@@ -194,6 +194,7 @@ const integrations = [
     title: 'Backend Logging',
     key: 'backend-logging',
     isProject: true,
+    icon: 'terminal',
     description:
       'Sync your backend errors with sessions replays and see what happened front-to-back.',
     docs: () => (
@@ -207,59 +208,65 @@ const integrations = [
       </DocCard>
     ),
     integrations: [
-      { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
+      {
+        title: 'Sentry',
+        subtitle: 'Integrate Sentry with session replays to seamlessly observe backend errors.',
+        slug: 'sentry',
+        icon: 'integrations/sentry',
+        component: <SentryForm />
+      },
       {
         title: 'Bugsnag',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
         slug: 'bugsnag',
         icon: 'integrations/bugsnag',
         component: <BugsnagForm />
       },
       {
         title: 'Rollbar',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Rollbar with session replays to seamlessly observe backend errors.',
         slug: 'rollbar',
         icon: 'integrations/rollbar',
         component: <RollbarForm />
       },
       {
         title: 'Elasticsearch',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
         slug: 'elasticsearch',
         icon: 'integrations/elasticsearch',
         component: <ElasticsearchForm />
       },
       {
         title: 'Datadog',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting.',
         slug: 'datadog',
         icon: 'integrations/datadog',
         component: <DatadogForm />
       },
       {
         title: 'Sumo Logic',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
         slug: 'sumologic',
         icon: 'integrations/sumologic',
         component: <SumoLogicForm />
       },
       {
         title: 'Stackdriver',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
         slug: 'stackdriver',
         icon: 'integrations/google-cloud',
         component: <StackdriverForm />
       },
       {
         title: 'CloudWatch',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate CloudWatch to see backend logs and errors alongside session replay.',
         slug: 'cloudwatch',
         icon: 'integrations/aws',
         component: <CloudwatchForm />
       },
       {
         title: 'Newrelic',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate NewRelic with session replays to seamlessly observe backend errors.',
         slug: 'newrelic',
         icon: 'integrations/newrelic',
         component: <NewrelicForm />
@@ -270,6 +277,7 @@ const integrations = [
     title: 'Collaboration',
     key: 'collaboration',
     isProject: false,
+    icon: 'file-code',
     description: 'Share your sessions with your team and collaborate on issues.',
     integrations: []
   },
@@ -277,6 +285,7 @@ const integrations = [
     title: 'State Management',
     key: 'state-management',
     isProject: true,
+    icon: 'layers-half',
     description: 'Sync your Redux or VueX store with sessions replays and see what happened front-to-back.',
     integrations: []
   },
@@ -284,6 +293,7 @@ const integrations = [
     title: 'Plugins',
     key: 'plugins',
     isProject: true,
+    icon: 'chat-left-text',
     docs: () => (
       <DocCard
         title='What are plugins?'
