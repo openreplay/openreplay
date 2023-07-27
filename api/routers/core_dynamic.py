@@ -502,7 +502,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.Fea
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-async def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
+def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
     return {"data": feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
 
 

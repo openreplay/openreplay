@@ -461,10 +461,10 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
-    if data.startDate is None:
-        data.startDate = TimeUTC.now(-30)
-    if data.endDate is None:
-        data.endDate = TimeUTC.now(1)
+    if data.startTimestamp is None:
+        data.startTimestamp = TimeUTC.now(-30)
+    if data.endTimestamp is None:
+        data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
         statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
@@ -473,18 +473,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        step_size = __get_step_size(data.startDate, data.endDate, data.density, factor=1)
+        step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
-        order = schemas.SortOrderType.desc.value
+        order = schemas.SortOrderType.desc
         if data.order is not None:
-            order = data.order.value
+            order = data.order
         extra_join = ""
 
         params = {
-            "startDate": data.startDate,
-            "endDate": data.endDate,
+            "startDate": data.startTimestamp,
+            "endDate": data.endTimestamp,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}

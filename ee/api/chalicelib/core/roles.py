@@ -1,8 +1,7 @@
 from typing import Optional
 
 from fastapi import HTTPException, status
-
-import schemas_ee
+import schemas
 from chalicelib.core import users, projects
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -22,7 +21,7 @@ def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bo
     return row["exists"]
 
 
-def update(tenant_id, user_id, role_id, data: schemas_ee.RolePayloadSchema):
+def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
@@ -57,7 +56,7 @@ def update(tenant_id, user_id, role_id, data: schemas_ee.RolePayloadSchema):
                                RETURNING *, COALESCE((SELECT ARRAY_AGG(project_id)
                                                       FROM roles_projects 
                                                       WHERE roles_projects.role_id=%(role_id)s),'{}') AS projects;""",
-                            {"tenant_id": tenant_id, "role_id": role_id, **data.dict()})
+                            {"tenant_id": tenant_id, "role_id": role_id, **data.model_dump()})
         cur.execute(query=query)
         row = cur.fetchone()
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
@@ -80,7 +79,7 @@ def update(tenant_id, user_id, role_id, data: schemas_ee.RolePayloadSchema):
     return helper.dict_to_camel_case(row)
 
 
-def create(tenant_id, user_id, data: schemas_ee.RolePayloadSchema):
+def create(tenant_id, user_id, data: schemas.RolePayloadSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:

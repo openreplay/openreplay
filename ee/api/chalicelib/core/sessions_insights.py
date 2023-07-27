@@ -1,7 +1,7 @@
 from typing import Optional
 
 import schemas
-import schemas_ee
+import schemas
 from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 
@@ -161,7 +161,7 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': schemas_ee.InsightCategories.network, 'name': n,
+        data_ = {'category': schemas.InsightCategories.network, 'name': n,
                  'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
@@ -266,7 +266,7 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': schemas_ee.InsightCategories.errors, 'name': n,
+        data_ = {'category': schemas.InsightCategories.errors, 'name': n,
                  'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
@@ -346,7 +346,7 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
 
     output = list()
     if cpu_oldvalue is not None or cpu_newvalue is not None:
-        output.append({'category': schemas_ee.InsightCategories.resources,
+        output.append({'category': schemas.InsightCategories.resources,
                        'name': 'cpu',
                        'value': cpu_newvalue,
                        'oldValue': cpu_oldvalue,
@@ -354,7 +354,7 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
                                    cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
                        'isNew': True if cpu_newvalue is not None and cpu_oldvalue is None else False})
     if mem_oldvalue is not None or mem_newvalue is not None:
-        output.append({'category': schemas_ee.InsightCategories.resources,
+        output.append({'category': schemas.InsightCategories.resources,
                        'name': 'memory',
                        'value': mem_newvalue,
                        'oldValue': mem_oldvalue,
@@ -434,7 +434,7 @@ def query_click_rage_by_period(project_id, start_time, end_time,
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': schemas_ee.InsightCategories.rage, 'name': n,
+        data_ = {'category': schemas.InsightCategories.rage, 'name': n,
                  'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
@@ -453,26 +453,26 @@ def query_click_rage_by_period(project_id, start_time, end_time,
     return results
 
 
-def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
+def fetch_selected(project_id, data: schemas.GetInsightsSchema):
     output = list()
     if data.metricValue is None or len(data.metricValue) == 0:
         data.metricValue = []
-        for v in schemas_ee.InsightCategories:
+        for v in schemas.InsightCategories:
             data.metricValue.append(v)
     filters = None
     if len(data.series) > 0:
         filters = data.series[0].filter
 
-    if schemas_ee.InsightCategories.errors in data.metricValue:
+    if schemas.InsightCategories.errors in data.metricValue:
         output += query_most_errors_by_period(project_id=project_id, start_time=data.startTimestamp,
                                               end_time=data.endTimestamp, filters=filters)
-    if schemas_ee.InsightCategories.network in data.metricValue:
+    if schemas.InsightCategories.network in data.metricValue:
         output += query_requests_by_period(project_id=project_id, start_time=data.startTimestamp,
                                            end_time=data.endTimestamp, filters=filters)
-    if schemas_ee.InsightCategories.rage in data.metricValue:
+    if schemas.InsightCategories.rage in data.metricValue:
         output += query_click_rage_by_period(project_id=project_id, start_time=data.startTimestamp,
                                              end_time=data.endTimestamp, filters=filters)
-    if schemas_ee.InsightCategories.resources in data.metricValue:
+    if schemas.InsightCategories.resources in data.metricValue:
         output += query_cpu_memory_by_period(project_id=project_id, start_time=data.startTimestamp,
                                              end_time=data.endTimestamp, filters=filters)
     return output
