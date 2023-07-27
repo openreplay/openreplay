@@ -35,6 +35,9 @@ module.exports = {
         'border-main': `0 0 0 1px ${colors['main']}`,
         'border-gray': '0 0 0 1px #999'
       },
+      button: {
+        'background-color': 'red'
+      }
     }
   },
   variants: {
@@ -42,6 +45,6 @@ module.exports = {
   },
   plugins: [],
   corePlugins: {
-    preflight: false
+    // preflight: false
   }
 };

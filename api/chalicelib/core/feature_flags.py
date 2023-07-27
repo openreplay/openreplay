@@ -156,7 +156,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         """
 
     if variants_len > 0:
-        variants_query = f""",
+        variants_query = f"""{conditions_len > 0 and "," or ""}
         inserted_variants AS (
                 INSERT INTO feature_flags_variants(feature_flag_id, value, description, rollout_percentage, payload)
                 VALUES {",".join([f"((SELECT feature_flag_id FROM inserted_flag),"

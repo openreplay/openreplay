@@ -11,6 +11,7 @@ import { withRequest } from 'HOCs';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
+import { IFRAME } from 'App/constants/storageKeys';
 
 function UserCard({ className, request, session, width, height, similarSessions, loading }) {
     const { settingsStore } = useStore();
@@ -125,9 +126,10 @@ export default withRequest({
 
 // inner component
 function UserName({ name, userId, hash }) {
+    const hasIframe = localStorage.getItem(IFRAME) === 'true';
     const { showModal } = useModal();
     const onClick = () => {
         showModal(<UserSessionsModal userId={userId} hash={hash} name={name} />, { right: true, width: 700 });
     };
-    return <div onClick={userId ? onClick : () => {}}>{name}</div>;
+    return <div onClick={userId && !hasIframe ? onClick : () => {}}>{name}</div>;
 }
