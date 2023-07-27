@@ -106,6 +106,7 @@ export default class MessageManager {
   public readonly tabs: Record<string, TabSessionManager> = {};
   private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
+  private currentReplayTab = '';
 
   constructor(
     private readonly session: Record<string, any>,
@@ -203,8 +204,10 @@ export default class MessageManager {
 
       if (tabId) {
         if (this.activeTab !== tabId) {
+          this.screen.cursor.toggle(true)
           this.state.update({ currentTab: tabId });
           this.activeTab = tabId;
+          this.currentReplayTab = tabId;
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
@@ -237,6 +240,7 @@ export default class MessageManager {
   }
 
   public changeTab(tabId: string) {
+    this.screen.cursor.toggle(this.currentReplayTab === tabId)
     this.activeTab = tabId;
     this.state.update({ currentTab: tabId });
     this.tabs[tabId].clean();
