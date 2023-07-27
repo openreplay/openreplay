@@ -4,21 +4,24 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+urllib3 = "==1.26.16"
 requests = "==2.31.0"
-boto3 = "==1.28.4"
-pyjwt = "==2.7.0"
+boto3 = "==1.28.12"
+pyjwt = "==2.8.0"
 psycopg2-binary = "==2.9.6"
 elasticsearch = "==8.8.2"
 jira = "==3.5.2"
 fastapi = "==0.100.0"
 uvicorn = {version = "==0.23.1", extras = ["standard"]}
-gunicorn = "==21.0.1"
+gunicorn = "==21.2.0"
 python-decouple = "==3.8"
-pydantic = {version = "==1.10.8", extras = ["email"]}
+pydantic = {version = "==2.1.1", extras = ["email"]}
 apscheduler = "==3.10.1"
 clickhouse-driver = {version = "==0.2.6", extras = ["lz4"]}
+python3-saml = "==1.15.0"
+python-multipart = "==0.0.6"
 redis = "==4.6.0"
-azure-storage-blob = "==12.16.0"
+azure-storage-blob = "==12.17.0"
 
 [dev-packages]
 

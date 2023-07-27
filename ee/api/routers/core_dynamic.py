@@ -18,7 +18,7 @@ from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_scope
 from routers.base import get_routers
-from schemas import Permissions, ServicePermissions
+from schemas import Permissions
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
@@ -205,7 +205,7 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 # for backward compatibility
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.session_replay)])
 def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                 context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -224,24 +224,8 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
     }
 
 
-@app.post('/{projectId}/sessions/search', tags=["sessions"],
-          dependencies=[OR_scope(Permissions.session_replay)])
-def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
-    return {'data': data}
-
-
-@app.post('/{projectId}/sessions/search/ids', tags=["sessions"],
-          dependencies=[OR_scope(Permissions.session_replay)])
-def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
-    return {'data': data}
-
-
 @app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.session_replay)])
 def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -261,7 +245,7 @@ def get_session_events(projectId: int, sessionId: Union[int, str], background_ta
 
 
 @app.get('/{projectId}/sessions/{sessionId}/events', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.session_replay)])
 def get_session_events(projectId: int, sessionId: Union[int, str],
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -329,8 +313,7 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
         return {"errors": ["undefined action"]}
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, ServicePermissions.assist_live)])
+@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"], dependencies=[OR_scope(Permissions.assist_live)])
 def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
@@ -346,8 +329,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay,
-                                ServicePermissions.assist_live, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay)])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
@@ -369,9 +351,7 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools,
-                                ServicePermissions.assist_live, ServicePermissions.session_replay,
-                                ServicePermissions.dev_tools)])
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}

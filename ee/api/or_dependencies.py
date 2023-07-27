@@ -56,19 +56,10 @@ class ORRoute(APIRoute):
 
 
 def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
-    s_p = 0
     for scope in security_scopes.scopes:
-        if isinstance(scope, schemas.ServicePermissions):
-            s_p += 1
-        if context.service_account and not isinstance(scope, schemas.ServicePermissions) \
-                or not context.service_account and not isinstance(scope, schemas.Permissions):
-            continue
         if scope not in context.permissions:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Not enough permissions")
-    if context.service_account and s_p == 0:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Not enough permissions (service account)")
 
 
 def OR_scope(*scopes):

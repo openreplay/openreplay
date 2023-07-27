@@ -141,7 +141,7 @@ def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 # @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
 def create_card(projectId: int, data: schemas.CardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
+    return custom_metrics.create_card(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.post('/{projectId}/cards/search', tags=["cards"])
@@ -247,7 +247,7 @@ def get_card_chart(projectId: int, metric_id: int, request: Request, data: schem
 # @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.CardSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    data = custom_metrics.update_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
@@ -271,4 +271,4 @@ def update_custom_metric_state(projectId: int, metric_id: int,
 # @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+    return {"data": custom_metrics.delete_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}

@@ -318,7 +318,7 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
 
 def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
-    if data.series is None:
+    if len(data.series) == 0:
         return results
     for s in data.series:
         if len(data.filters) > 0:
@@ -331,7 +331,7 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     return results
 
 
-def create(project_id, user_id, data: schemas.CardSchema, dashboard=False):
+def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
         if __is_click_map(data):
@@ -373,7 +373,7 @@ def create(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update(metric_id, user_id, project_id, data: schemas.CardSchema):
+def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -519,7 +519,7 @@ def get_all(project_id, user_id):
     return result
 
 
-def delete(project_id, metric_id, user_id):
+def delete_card(project_id, metric_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
