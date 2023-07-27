@@ -17,6 +17,58 @@ def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
+def get_user_settings(user_id):
+    #     read user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        settings
+                    FROM public.users 
+                    WHERE users.deleted_at IS NULL 
+                        AND users.user_id=%(user_id)s
+                    LIMIT 1""",
+                {"user_id": user_id})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_user_module(user_id, module):
+    # example data = {"settings": {"modules": ['ASSIST', 'METADATA']}
+    #     update user settings from users.settings:jsonb column only update settings.modules
+    #   if module property is not exists, it will be created
+    #  if module property exists, it will be updated, modify here and call update_user_settings
+    # module is a single element to be added or removed
+    settings = get_user_settings(user_id)["settings"]
+    if settings is None:
+        settings = {}
+
+    if settings.get("modules") is None:
+        settings["modules"] = []
+
+    if module in settings["modules"]:
+        settings["modules"].remove(module)
+    else:
+        settings["modules"].append(module)
+
+    return update_user_settings(user_id, settings)
+
+
+def update_user_settings(user_id, settings):
+    #     update user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""UPDATE public.users
+                    SET settings = %(settings)s
+                    WHERE users.user_id = %(user_id)s
+                            AND deleted_at IS NULL
+                    RETURNING settings;""",
+                {"user_id": user_id, "settings": settings})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
 def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
@@ -230,7 +282,8 @@ def get(user_id, tenant_id):
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        TRUE AS has_password
+                        TRUE AS has_password,
+                        settings
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
                      users.user_id = %(userId)s
@@ -548,7 +601,7 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                             WHERE user_id = %(userId)s 
                                 AND deleted_at IS NULL 
                             LIMIT 1;""",
-                {"userId": user_id})
+                        {"userId": user_id})
         )
         r = cur.fetchone()
     return r is not None \
@@ -566,7 +619,7 @@ def change_jwt_iat(user_id):
                                 SET jwt_iat = timezone('utc'::text, now())
                                 WHERE user_id = %(user_id)s 
                                 RETURNING jwt_iat;""",
-            {"user_id": user_id})
+                            {"user_id": user_id})
         cur.execute(query)
         return cur.fetchone().get("jwt_iat")
 

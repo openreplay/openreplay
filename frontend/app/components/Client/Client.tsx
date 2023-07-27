@@ -16,6 +16,7 @@ import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';
 import Roles from './Roles';
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
+import Modules from 'Components/Client/Modules';
 
 @withRouter
 export default class Client extends React.PureComponent {
@@ -39,6 +40,7 @@ export default class Client extends React.PureComponent {
       <Route exact strict path={clientRoute(CLIENT_TABS.NOTIFICATIONS)} component={Notifications} />
       <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_ROLES)} component={Roles} />
       <Route exact strict path={clientRoute(CLIENT_TABS.AUDIT)} component={AuditView} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.MODULES)} component={Modules} />
       <Redirect to={clientRoute(CLIENT_TABS.PROFILE)} />
     </Switch>
   );
@@ -46,20 +48,13 @@ export default class Client extends React.PureComponent {
   render() {
     const {
       match: {
-        params: { activeTab },
-      },
+        params: { activeTab }
+      }
     } = this.props;
     return (
-      // <div className={cn('page-margin container-90 flex relative')}>
-      //     <div className={styles.tabMenu}>
-      //       <PreferencesMenu activeTab={activeTab} />
-      //     </div>
-      //     <div className={cn('side-menu-margined w-full')}>
-            <div className="bg-white w-full rounded-lg mx-auto mb-8 border" style={{ maxWidth: '1300px'}}>
-              {activeTab && this.renderActiveTab()}
-            </div>
-      //     </div>
-      // </div>
+      <div className='w-full mx-auto mb-8' style={{ maxWidth: '1300px' }}>
+        {activeTab && this.renderActiveTab()}
+      </div>
     );
   }
 }

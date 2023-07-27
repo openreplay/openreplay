@@ -42,6 +42,7 @@ function SideMenu(props: RouteComponentProps<Props>) {
     [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
+    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
   };
 
   const handleClick = (item: any) => {

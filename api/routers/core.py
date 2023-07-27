@@ -655,6 +655,12 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
     }
 
 
+@app.post('/users/modules', tags=['users'])
+def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
+                       data: schemas.FeatureFlagStatus = Body(...)):
+    return users.update_user_module(context.user_id, data)
+
+
 @app.get('/notifications', tags=['notifications'])
 def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
