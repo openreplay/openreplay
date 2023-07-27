@@ -2,7 +2,7 @@ import ast
 from typing import List, Union
 
 import schemas
-import schemas_ee
+import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 
@@ -246,7 +246,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     else:
         for i in range(len(sessions)):
             sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
-            sessions[i] = schemas_ee.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
+            sessions[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
 
     # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
     #     sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
@@ -260,12 +260,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
                    metric_of: schemas.MetricOfTable, metric_value: List):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
+    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density))
     extra_event = None
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
-                            FROM {exp_ch_helper.get_main_events_table(data.startDate)} AS ev
+                            FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
                               AND ev.project_id = %(project_id)s
@@ -300,7 +300,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             # print("--------------------")
             sessions = cur.execute(main_query)
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                sessions = metrics.__complete_missing_steps(start_time=data.startDate, end_time=data.endDate,
+                sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
                                                             density=density, neutral={"count": 0}, rows=sessions)
             else:
                 sessions = sessions[0]["count"] if len(sessions) > 0 else 0
@@ -362,7 +362,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         return sessions
 
 
-def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
+def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
                                                                             schemas.EventType.graphql] \
                 or event.type in [schemas.PerformanceEventType.location_dom_complete,
@@ -402,11 +402,11 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                           project_id, user_id, extra_event=None):
     ss_constraints = []
-    full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
+    full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
 
-    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startDate)
-    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startDate)
+    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startTimestamp)
+    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startTimestamp)
 
     full_args["MAIN_EVENTS_TABLE"] = MAIN_EVENTS_TABLE
     full_args["MAIN_SESSIONS_TABLE"] = MAIN_SESSIONS_TABLE
@@ -1224,9 +1224,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     else:
         data.events = []
     # ---------------------------------------------------------------------------
-    if data.startDate is not None:
+    if data.startTimestamp is not None:
         extra_constraints.append("s.datetime >= toDateTime(%(startDate)s/1000)")
-    if data.endDate is not None:
+    if data.endTimestamp is not None:
         extra_constraints.append("s.datetime <= toDateTime(%(endDate)s/1000)")
     # if data.platform is not None:
     #     if data.platform == schemas.PlatformType.mobile:

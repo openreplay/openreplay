@@ -82,7 +82,6 @@ rm -rf ./db_changes.sql
 rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
-rm -rf ./schemas.py
 rm -rf ./routers/subs/v1_api.py
 #exp rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/performance_event.py
@@ -91,3 +90,5 @@ rm -rf ./app_alerts.py
 rm -rf ./build_alerts.sh
 rm -rf ./run-dev.sh
 rm -rf ./run-alerts-dev.sh
+rm -rf ./schemas/overrides.py
+rm -rf ./schemas/schemas.py

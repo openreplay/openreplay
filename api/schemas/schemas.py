@@ -1222,18 +1222,23 @@ class CardClickMap(__CardSchema):
         return values
 
 
+class MetricOfInsights(str, Enum):
+    issue_categories = "issueCategories"
+
+
 class CardInsights(__CardSchema):
     metric_type: Literal[MetricType.insights]
-    metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
+    metric_of: MetricOfInsights = Field(default=MetricOfInsights.issue_categories)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
+        values["view_type"] = MetricOtherViewType.list_chart
         return values
 
     @model_validator(mode="after")
     def __transform(cls, values):
-        values.metric_of = MetricOfClickMap(values.metric_of)
+        values.metric_of = MetricOtherViewType(values.metric_of)
         return values
 
     @model_validator(mode='after')
@@ -1264,14 +1269,13 @@ class CardPathAnalysis(__CardSchema):
         raise ValueError(f"metricType:{MetricType.pathAnalysis} not supported yet.")
 
 
-# CardSchema = TypeAdapter(Annotated[Union[CardTimeSeries, CardTable], \
-#     Field(discriminator='metric_type')])
-CardSchema = ORUnion(Union[
-                         CardTimeSeries, CardTable, CardFunnel,
-                         CardErrors, CardPerformance, CardResources,
-                         CardWebVital, CardClickMap, CardInsights,
-                         CardPathAnalysis],
-                     discriminator='metric_type')
+# Union of cards-schemas that doesn't change between FOSS and EE
+__cards_union_base = Union[
+    CardTimeSeries, CardTable, CardFunnel,
+    CardErrors, CardPerformance, CardResources,
+    CardWebVital, CardClickMap,
+    CardPathAnalysis]
+CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
 
 
 # class UpdateCustomMetricsStatusSchema(BaseModel):

@@ -6,7 +6,6 @@ from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
-import schemas_ee
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
     errors_favorite, sessions_notes, click_maps, sessions_replay, signup, feature_flags
 from chalicelib.core import sessions_viewed
@@ -18,9 +17,11 @@ from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_scope
-from routers import saml
 from routers.base import get_routers
-from schemas_ee import Permissions
+from schemas import Permissions
+
+if config("ENABLE_SSO", cast=bool, default=True):
+    from routers import saml
 
 public_app, app, app_apikey = get_routers()
 
@@ -132,9 +133,9 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
 
 
 @app.post('/client/members', tags=["client"])
-def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),
+def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
+    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
                                background_tasks=background_tasks)
 
 
@@ -172,7 +173,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 
 
 @app.put('/client/members/{memberId}', tags=["client"])
-def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
+def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                              user_id_to_update=memberId)
@@ -314,7 +315,7 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"], dependencies=[OR_scope(Permissions.assist_live)])
 def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
-                     context: schemas_ee.CurrentContext = Depends(OR_context)):
+                     context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
         data = sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
@@ -380,7 +381,7 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"],
          dependencies=[OR_scope(Permissions.session_replay)])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
-                                 context: schemas_ee.CurrentContext = Depends(OR_context)):
+                                 context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
 
 
@@ -499,7 +500,7 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
 
 
 @app.post('/{projectId}/click_maps/search', tags=["click maps"], dependencies=[OR_scope(Permissions.session_replay)])
-def click_map_search(projectId: int, data: schemas.FlatClickMapSessionsSearch = Body(...),
+def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 

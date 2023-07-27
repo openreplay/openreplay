@@ -1,5 +1,6 @@
 from typing import Union
 
+from decouple import config
 from fastapi import Depends, Body
 
 import schemas
@@ -682,8 +683,8 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
 
 @app.get('/boarding', tags=['boarding'])
 def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
-    return
-    # TODO: remove this
+    if config("LOCAL_DEV", cast=bool, default=False):
+        return {"data": ""}
     return {"data": boarding.get_state(tenant_id=context.tenant_id)}
 
 

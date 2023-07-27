@@ -1,11 +1,12 @@
-from enum import Enum
 from typing import Optional, List, Union, Literal
 
-from pydantic import BaseModel, Field, EmailStr
-from pydantic import root_validator, validator
+from pydantic import Field, EmailStr, field_validator, model_validator
 
-import schemas
+from . import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
+from .overrides import BaseModel, Enum
+from .overrides import transform_email, remove_whitespace, remove_duplicate_values, \
+    single_to_list, ORUnion
 
 
 class Permissions(str, Enum):
@@ -28,10 +29,7 @@ class RolePayloadSchema(BaseModel):
     permissions: List[Permissions] = Field(...)
     all_projects: bool = Field(default=True)
     projects: List[int] = Field(default=[])
-    _transform_name = validator('name', pre=True, allow_reuse=True)(schemas.remove_whitespace)
-
-    class Config:
-        alias_generator = schemas.attribute_to_camel_case
+    _transform_name = field_validator('name', mode="before")(remove_whitespace)
 
 
 class SignalsSchema(BaseModel):
@@ -55,9 +53,6 @@ class GetInsightsSchema(schemas._TimedSchema):
     metricValue: List[InsightCategories] = Field(default=[])
     series: List[schemas.CardSeriesSchema] = Field(default=[])
 
-    class Config:
-        alias_generator = schemas.attribute_to_camel_case
-
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(None)
@@ -79,16 +74,13 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
     action: Optional[str] = Field(default=None)
     order: schemas.SortOrderType = Field(default=schemas.SortOrderType.desc)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def transform_order(cls, values):
         if values.get("order") is None:
             values["order"] = schemas.SortOrderType.desc
         else:
             values["order"] = values["order"].upper()
         return values
-
-    class Config:
-        alias_generator = schemas.attribute_to_camel_case
 
 
 class SessionModel(BaseModel):
@@ -119,15 +111,12 @@ class SessionModel(BaseModel):
 
 class AssistRecordUpdatePayloadSchema(BaseModel):
     name: str = Field(..., min_length=1)
-    _transform_name = validator('name', pre=True, allow_reuse=True)(schemas.remove_whitespace)
+    _transform_name = field_validator('name', mode="before")(remove_whitespace)
 
 
 class AssistRecordPayloadSchema(AssistRecordUpdatePayloadSchema):
     duration: int = Field(...)
     session_id: int = Field(...)
-
-    class Config:
-        alias_generator = schemas.attribute_to_camel_case
 
 
 class AssistRecordSavePayloadSchema(AssistRecordPayloadSchema):
@@ -139,41 +128,14 @@ class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema, schemas._TimedSc
     query: Optional[str] = Field(default=None)
     order: Literal["asc", "desc"] = Field(default="desc")
 
-    class Config:
-        alias_generator = schemas.attribute_to_camel_case
-
 
 # TODO: move these to schema when Insights is supported on PG
-class MetricOfInsights(str, Enum):
-    issue_categories = "issueCategories"
+class CardInsights(schemas.CardInsights):
+    metric_value: List[InsightCategories] = Field(default=[])
 
-
-class CardSchema(schemas.CardSchema):
-    metric_of: Union[schemas.MetricOfTimeseries, schemas.MetricOfTable, \
-        schemas.MetricOfErrors, schemas.MetricOfPerformance, \
-        schemas.MetricOfResources, schemas.MetricOfWebVitals, \
-        schemas.MetricOfClickMap, MetricOfInsights] = Field(default=schemas.MetricOfTable.user_id)
-    metric_value: List[Union[schemas.IssueType, InsightCategories]] = Field(default=[])
-
-    @root_validator
+    @model_validator(mode='after')
     def restrictions(cls, values):
         return values
 
-    @root_validator
-    def validator(cls, values):
-        values = super().validator(values)
-        if values.get("metric_type") == schemas.MetricType.insights:
-            assert values.get("view_type") == schemas.MetricOtherViewType.list_chart, \
-                f"viewType must be 'list' for metricOf:{values.get('metric_of')}"
-            assert isinstance(values.get("metric_of"), MetricOfInsights), \
-                f"metricOf must be of type {MetricOfInsights} for metricType:{schemas.MetricType.insights}"
-            if values.get("metric_value") is not None and len(values.get("metric_value")) > 0:
-                for i in values.get("metric_value"):
-                    assert isinstance(i, InsightCategories), \
-                        f"metricValue should be of type [InsightCategories] for metricType:{schemas.MetricType.insights}"
 
-        return values
-
-
-class UpdateCardSchema(CardSchema):
-    series: List[schemas.CardUpdateSeriesSchema] = Field(...)
+CardSchema = ORUnion(Union[schemas.__cards_union_base, CardInsights], discriminator='metric_type')

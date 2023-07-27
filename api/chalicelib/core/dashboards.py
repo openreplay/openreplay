@@ -224,7 +224,7 @@ def pin_dashboard(project_id, user_id, dashboard_id):
 
 
 def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.CardSchema):
-    metric_id = custom_metrics.create(project_id=project_id, user_id=user_id, data=data, dashboard=True)
+    metric_id = custom_metrics.create_card(project_id=project_id, user_id=user_id, data=data, dashboard=True)
     return add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
                       data=schemas.AddWidgetToDashboardPayloadSchema(metricId=metric_id))
 
