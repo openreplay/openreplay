@@ -35,7 +35,7 @@ export default (props: Props) => {
   let iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
 
   const variantClasses = {
-    default: 'bg-white hover:bg-gray-light border border-gray-light',
+    default: 'bg-white hover:!bg-gray-light border border-gray-light',
     primary: 'bg-teal color-white hover:bg-teal-dark',
     green: 'bg-green color-white hover:bg-green-dark',
     text: 'bg-transparent text-black hover:bg-active-blue hover:!text-teal hover-fill-teal',
@@ -49,7 +49,8 @@ export default (props: Props) => {
     variantClasses[variant],
     { 'opacity-40 pointer-events-none': disabled },
     { '!rounded-full h-10 w-10 justify-center': rounded },
-    className
+    className,
+    'btn'
   );
 
   if (variant === 'primary') {

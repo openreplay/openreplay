@@ -1441,7 +1441,7 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[], min_items=1)
+    conditions: List[FeatureFlagCondition] = Field(default=[])
     variants: List[FeatureFlagVariant] = Field(default=[])
 
     class Config:
