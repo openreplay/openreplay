@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 
@@ -17,17 +17,15 @@ import Notifications from './Notifications';
 import Roles from './Roles';
 import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
 
-@withRouter
-export default class Client extends React.PureComponent {
-  constructor(props) {
-    super(props);
-  }
+interface MatchParams {
+  activeTab?: string;
+}
 
-  setTab = (tab) => {
-    this.props.history.push(clientRoute(tab));
-  };
+const Client: React.FC<RouteComponentProps<MatchParams>> = ({ match }) => {
+  const { activeTab } = match.params;
+  const isIntegrations = activeTab === CLIENT_TABS.INTEGRATIONS;
 
-  renderActiveTab = () => (
+  const renderActiveTab = () => (
     <Switch>
       <Route exact strict path={clientRoute(CLIENT_TABS.PROFILE)} component={ProfileSettings} />
       <Route exact strict path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)} component={SessionsListingSettings} />
@@ -43,23 +41,18 @@ export default class Client extends React.PureComponent {
     </Switch>
   );
 
-  render() {
-    const {
-      match: {
-        params: { activeTab },
-      },
-    } = this.props;
-    return (
-      <div className={cn('page-margin container-90 flex relative')}>
-          <div className={styles.tabMenu}>
-            <PreferencesMenu activeTab={activeTab} />
-          </div>
-          <div className={cn('side-menu-margined w-full')}>
-            <div className="bg-white w-full rounded-lg mx-auto mb-8 border" style={{ maxWidth: '1300px'}}>
-              {activeTab && this.renderActiveTab()}
-            </div>
-          </div>
+  return (
+    <div className={cn('page-margin container-90 flex relative')}>
+      <div className={styles.tabMenu}>
+        <PreferencesMenu activeTab={activeTab!} />
       </div>
-    );
-  }
-}
+      <div className={cn('side-menu-margined w-full', { 'bg-white rounded-lg border' : !isIntegrations })}>
+        <div className='w-full mx-auto mb-8' style={{ maxWidth: '1300px' }}>
+          {activeTab && renderActiveTab()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default withRouter(Client);
