@@ -81,6 +81,7 @@ export default class Call {
 			const peerOpts: Peer.PeerJSOption = {
 				host: urlObject.hostname,
 				path: '/assist',
+				secure: location.protocol === 'https:',
 				port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),
 			}
 			if (this.config) {
@@ -94,10 +95,14 @@ export default class Call {
 			const peer = this._peer = new Peer(peerOpts)
 			peer.on('call', call => {
 				console.log('getting call from', call.peer)
-					call.answer(this.callArgs.localStream.stream)
+					if (this.callArgs?.localStream.stream) {
+						call.answer(this.callArgs.localStream.stream)
+					} else {
+						console.error("No local stream")
+					}
 					this.callConnection.push(call)
 
-					this.callArgs.localStream.onVideoTrack(vTrack => {
+					this.callArgs?.localStream.onVideoTrack(vTrack => {
 						const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
 						if (!sender) {
 							console.warn("No video sender found")
@@ -238,8 +243,8 @@ export default class Call {
 		if (!this.store.get().currentTab) {
 			console.warn('No tab data to connect to peer')
 		}
+		// @ts-ignore
 		const peerId = this.getAssistVersion() === 1 ? this.peerID : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`
-		console.log(peerId, this.getAssistVersion())
 		void this._peerConnection(peerId);
 		this.emitData("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
 	}
@@ -247,10 +252,13 @@ export default class Call {
 	private async _peerConnection(remotePeerId: string) {
 		try {
 			const peer = await this.getPeer();
-			const call = peer.call(remotePeerId, this.callArgs.localStream.stream)
+			if (this.callArgs === null) {
+				console.error("No call args")
+			}
+			const call = peer.call(remotePeerId, this.callArgs!.localStream.stream)
 			this.callConnection.push(call)
 
-			this.callArgs.localStream.onVideoTrack(vTrack => {
+			this.callArgs!.localStream.onVideoTrack(vTrack => {
 				const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
 				if (!sender) {
 					console.warn("No video sender found")
