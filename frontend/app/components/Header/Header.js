@@ -11,7 +11,7 @@ import Notifications from '../Alerts/Notifications';
 import { init as initSite } from 'Duck/site';
 import { getInitials } from 'App/utils';
 
-import ErrorGenPanel from 'App/dev/components';
+import ErrorGenPanel from 'App/dev/components/ErrorGenPanel';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
@@ -21,6 +21,7 @@ import DefaultMenuView from './DefaultMenuView';
 import PreferencesView from './PreferencesView';
 import HealthStatus from './HealthStatus'
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
+import { Button } from 'antd';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -55,8 +56,7 @@ const Header = (props) => {
 
   return (
     <div
-      className={cn(styles.header, 'fixed w-full bg-white flex justify-between')}
-      style={{ height: '50px' }}
+      className={cn('w-full flex justify-between')}
     >
       {!isPreferences && <DefaultMenuView siteId={siteId} />}
       {isPreferences && <PreferencesView />}

@@ -13,14 +13,15 @@ const Avatar = ({
   seed,
 }) => {
   var iconName = avatarIconName(seed);
+  console.log('iconName', iconName)
   return (
     <Tooltip title={isActive ? 'Active user' : 'User might be inactive'} disabled={!isAssist}>
       <div
         className={cn(
-          stl.wrapper,
-          'p-2 border flex items-center justify-center rounded-full relative'
+          // stl.wrapper,
+          'border flex items-center justify-center rounded-full relative'
         )}
-        style={{ width, height }}
+        // style={{ width, height }}
       >
         <Icon name={iconName} size={iconSize} color="tealx" />
         {isAssist && (
