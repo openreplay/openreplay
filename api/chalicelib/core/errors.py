@@ -454,10 +454,10 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
-    if data.startDate is None:
-        data.startDate = TimeUTC.now(-30)
-    if data.endDate is None:
-        data.endDate = TimeUTC.now(1)
+    if data.startTimestamp is None:
+        data.startTimestamp = TimeUTC.now(-30)
+    if data.endTimestamp is None:
+        data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
         statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
@@ -466,18 +466,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        step_size = __get_step_size(data.startDate, data.endDate, data.density, factor=1)
+        step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
-        order = schemas.SortOrderType.desc.value
+        order = schemas.SortOrderType.desc
         if data.order is not None:
-            order = data.order.value
+            order = data.order
         extra_join = ""
 
         params = {
-            "startDate": data.startDate,
-            "endDate": data.endDate,
+            "startDate": data.startTimestamp,
+            "endDate": data.endTimestamp,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
@@ -709,41 +709,3 @@ def change_state(project_id, user_id, error_id, action):
         for e in errors:
             e["status"] = row["status"]
     return {"data": errors}
-
-
-MAX_RANK = 2
-
-
-def __status_rank(status):
-    return {
-        'unresolved': MAX_RANK - 2,
-        'ignored': MAX_RANK - 1,
-        'resolved': MAX_RANK
-    }.get(status)
-
-
-def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """WITH user_viewed AS (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(user_id)s)
-                SELECT COUNT(timed_errors.*) AS unresolved_and_unviewed
-                FROM (SELECT root_error.error_id
-                      FROM events.errors
-                               INNER JOIN public.errors AS root_error USING (error_id)
-                               LEFT JOIN user_viewed USING (error_id)
-                      WHERE project_id = %(project_id)s
-                        AND timestamp >= %(startTimestamp)s
-                        AND timestamp <= %(endTimestamp)s
-                        AND source = 'js_exception'
-                        AND root_error.status = 'unresolved'
-                        AND user_viewed.error_id ISNULL
-                      LIMIT 1
-                     ) AS timed_errors;""",
-            {"project_id": project_id, "user_id": user_id, "startTimestamp": startTimestamp,
-             "endTimestamp": endTimestamp})
-        cur.execute(query=query)
-        row = cur.fetchone()
-
-    return {
-        "data": helper.dict_to_camel_case(row)
-    }

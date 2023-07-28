@@ -1,5 +1,5 @@
 import schemas
-import schemas_ee
+import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes
 from chalicelib.utils import errors_helper
@@ -17,7 +17,7 @@ def __group_metadata(session, project_metadata):
 
 # for backward compatibility
 # This function should not use Clickhouse because it doesn't have `file_key`
-def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, full_data=False,
+def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False,
                   include_fav_viewed=False, group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []

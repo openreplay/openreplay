@@ -4,16 +4,14 @@ import schemas
 from chalicelib.core import product_analytics
 from or_dependencies import OR_scope
 from routers.base import get_routers
-from schemas_ee import Permissions
 
-public_app, app, app_apikey = get_routers([OR_scope(Permissions.metrics)])
+public_app, app, app_apikey = get_routers([OR_scope(schemas.Permissions.metrics)])
 
 
 @app.post('/{projectId}/insights/journey', tags=["insights"])
 @app.get('/{projectId}/insights/journey', tags=["insights"])
 async def get_insights_journey(projectId: int, data: schemas.PathAnalysisSchema = Body(...)):
     return {"data": product_analytics.path_analysis(project_id=projectId, **data.dict())}
-
 
 # @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])
 # @app.get('/{projectId}/insights/users_acquisition', tags=["insights"])
@@ -79,7 +77,6 @@ async def get_insights_journey(projectId: int, data: schemas.PathAnalysisSchema 
 # @app.get('/{projectId}/insights/users_slipping', tags=["insights"])
 # async def get_users_slipping(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
 #     return {"data": product_analytics.users_slipping(project_id=projectId, **data.dict())}
-
 
 
 #

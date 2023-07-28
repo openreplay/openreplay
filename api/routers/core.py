@@ -1,5 +1,6 @@
 from typing import Union
 
+from decouple import config
 from fastapi import Depends, Body
 
 import schemas
@@ -19,14 +20,14 @@ public_app, app, app_apikey = get_routers()
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
     return {'data': data}
@@ -107,9 +108,9 @@ def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_cont
 
 
 @app.post('/{projectId}/integrations/sentry', tags=["integrations"])
-def add_edit_sentry(projectId: int, data: schemas.SentrySchema = Body(...),
+def add_edit_sentry(projectId: int, data: schemas.IntegrationSentrySchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_sentry.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_sentry.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/sentry', tags=["integrations"])
@@ -133,9 +134,9 @@ def get_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_con
 
 
 @app.post('/{projectId}/integrations/datadog', tags=["integrations"])
-def add_edit_datadog(projectId: int, data: schemas.DatadogSchema = Body(...),
+def add_edit_datadog(projectId: int, data: schemas.IntegrationDatadogSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_datadog.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_datadog.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/datadog', tags=["integrations"])
@@ -154,9 +155,9 @@ def get_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR
 
 
 @app.post('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def add_edit_stackdriver(projectId: int, data: schemas.StackdriverSchema = Body(...),
+def add_edit_stackdriver(projectId: int, data: schemas.IntegartionStackdriverSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_stackdriver.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_stackdriver.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/stackdriver', tags=["integrations"])
@@ -175,9 +176,9 @@ def get_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_co
 
 
 @app.post('/{projectId}/integrations/newrelic', tags=["integrations"])
-def add_edit_newrelic(projectId: int, data: schemas.NewrelicSchema = Body(...),
+def add_edit_newrelic(projectId: int, data: schemas.IntegrationNewrelicSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_newrelic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_newrelic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/newrelic', tags=["integrations"])
@@ -196,9 +197,9 @@ def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(OR_con
 
 
 @app.post('/{projectId}/integrations/rollbar', tags=["integrations"])
-def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(...),
+def add_edit_rollbar(projectId: int, data: schemas.IntegrationRollbarSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_rollbar.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_rollbar.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/rollbar', tags=["integrations"])
@@ -207,9 +208,9 @@ def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentContext
 
 
 @app.post('/integrations/bugsnag/list_projects', tags=["integrations"])
-def list_projects_bugsnag(data: schemas.BugsnagBasicSchema = Body(...),
+def list_projects_bugsnag(data: schemas.IntegrationBugsnagBasicSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorizationToken)}
+    return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorization_token)}
 
 
 @app.get('/integrations/bugsnag', tags=["integrations"])
@@ -223,9 +224,9 @@ def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_con
 
 
 @app.post('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(...),
+def add_edit_bugsnag(projectId: int, data: schemas.IntegrationBugsnagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_bugsnag.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_bugsnag.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/bugsnag', tags=["integrations"])
@@ -234,7 +235,7 @@ def delete_bugsnag(projectId: int, _=Body(None), context: schemas.CurrentContext
 
 
 @app.post('/integrations/cloudwatch/list_groups', tags=["integrations"])
-def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
+def list_groups_cloudwatch(data: schemas.IntegrationCloudwatchBasicSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.list_log_groups(aws_access_key_id=data.awsAccessKeyId,
                                                         aws_secret_access_key=data.awsSecretAccessKey,
@@ -252,9 +253,9 @@ def get_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_
 
 
 @app.post('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def add_edit_cloudwatch(projectId: int, data: schemas.CloudwatchSchema = Body(...),
+def add_edit_cloudwatch(projectId: int, data: schemas.IntegrationCloudwatchSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_cloudwatch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_cloudwatch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/cloudwatch', tags=["integrations"])
@@ -273,16 +274,16 @@ def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(
 
 
 @app.post('/integrations/elasticsearch/test', tags=["integrations"])
-def test_elasticsearch_connection(data: schemas.ElasticsearchBasicSchema = Body(...),
+def test_elasticsearch_connection(data: schemas.IntegrationElasticsearchTestSchema = Body(...),
                                   context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_elasticsearch.ping(tenant_id=context.tenant_id, **data.dict())}
+    return {"data": log_tool_elasticsearch.ping(tenant_id=context.tenant_id, data=data)}
 
 
 @app.post('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSchema = Body(...),
+def add_edit_elasticsearch(projectId: int, data: schemas.IntegrationElasticsearchSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": log_tool_elasticsearch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+        "data": log_tool_elasticsearch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/elasticsearch', tags=["integrations"])
@@ -301,9 +302,9 @@ def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 
 
 @app.post('/{projectId}/integrations/sumologic', tags=["integrations"])
-def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Body(...),
+def add_edit_sumologic(projectId: int, data: schemas.IntegrationSumologicSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_sumologic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+    return {"data": log_tool_sumologic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
 
 
 @app.delete('/{projectId}/integrations/sumologic', tags=["integrations"])
@@ -341,7 +342,7 @@ def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_c
 
 
 @app.post('/integrations/jira', tags=["integrations"])
-def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
+def add_edit_jira_cloud(data: schemas.IssueTrackingJiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     if not data.url.endswith('atlassian.net'):
         return {"errors": ["url must be a valid JIRA URL (example.atlassian.net)"]}
@@ -350,18 +351,18 @@ def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
                                                               user_id=context.user_id)
     if error is not None and integration is None:
         return error
-    return {"data": integration.add_edit(data=data.dict())}
+    return {"data": integration.add_edit(data=data)}
 
 
 @app.post('/integrations/github', tags=["integrations"])
-def add_edit_github(data: schemas.GithubSchema = Body(...),
+def add_edit_github(data: schemas.IssueTrackingGithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
         return error
-    return {"data": integration.add_edit(data=data.dict())}
+    return {"data": integration.add_edit(data=data)}
 
 
 @app.delete('/integrations/issues', tags=["integrations"])
@@ -452,7 +453,7 @@ def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_contex
 @app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
 def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
-    result = projects.edit_gdpr(project_id=projectId, gdpr=data.dict())
+    result = projects.edit_gdpr(project_id=projectId, gdpr=data)
     if "errors" in result:
         return result
     return {"data": result}
@@ -470,20 +471,20 @@ def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_co
     return {"data": metadata.get(project_id=projectId)}
 
 
-@app.post('/{projectId}/metadata/list', tags=["metadata"])
-def add_edit_delete_metadata(projectId: int, data: schemas.MetadataListSchema = Body(...),
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    return metadata.add_edit_delete(tenant_id=context.tenant_id, project_id=projectId, new_metas=data.list)
+# @app.post('/{projectId}/metadata/list', tags=["metadata"])
+# def add_edit_delete_metadata(projectId: int, data: schemas.MetadataListSchema = Body(...),
+#                              context: schemas.CurrentContext = Depends(OR_context)):
+#     return metadata.add_edit_delete(tenant_id=context.tenant_id, project_id=projectId, new_metas=data.list)
 
 
 @app.post('/{projectId}/metadata', tags=["metadata"])
-def add_metadata(projectId: int, data: schemas.MetadataBasicSchema = Body(...),
+def add_metadata(projectId: int, data: schemas.MetadataSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.add(tenant_id=context.tenant_id, project_id=projectId, new_name=data.key)
 
 
 @app.post('/{projectId}/metadata/{index}', tags=["metadata"])
-def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicSchema = Body(...),
+def edit_metadata(projectId: int, index: int, data: schemas.MetadataSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=index,
                          new_name=data.key)
@@ -519,7 +520,7 @@ def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends
 @app.post('/{projectId}/sample_rate', tags=["projects"])
 def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.update_capture_status(project_id=projectId, changes=data.dict())}
+    return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
 @app.get('/announcements', tags=["announcements"])
@@ -682,6 +683,8 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
 
 @app.get('/boarding', tags=['boarding'])
 def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
+    if config("LOCAL_DEV", cast=bool, default=False):
+        return {"data": ""}
     return {"data": boarding.get_state(tenant_id=context.tenant_id)}
 
 
@@ -721,9 +724,9 @@ def delete_slack_integration(webhookId: int, _=Body(None), context: schemas.Curr
 
 
 @app.put('/webhooks', tags=["webhooks"])
-def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
+def add_edit_webhook(data: schemas.WebhookSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}
+    return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data, replace_none=True)}
 
 
 @app.get('/webhooks', tags=["webhooks"])
@@ -733,7 +736,7 @@ def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
 def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
+    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @app.get('/client/members', tags=["client"])
@@ -759,8 +762,8 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
 @app.post('/account/password', tags=["account"])
 def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    return users.change_password(email=context.email, old_password=data.old_password,
-                                 new_password=data.new_password, tenant_id=context.tenant_id,
+    return users.change_password(email=context.email, old_password=data.old_password.get_secret_value(),
+                                 new_password=data.new_password.get_secret_value(), tenant_id=context.tenant_id,
                                  user_id=context.user_id)
 
 

@@ -25,7 +25,7 @@ class EventQueue():
             project_id, user_id, element = self.events.get()
             params[f'project_id_{i}'] = project_id
             params[f'user_id_{i}'] = user_id
-            for _key, _val in element.dict().items():
+            for _key, _val in element.model_dump().items():
                 if _key == 'data':
                     params[f'{_key}_{i}'] = json.dumps(_val)
                     if 'sessionId' in _val.keys():
@@ -77,7 +77,7 @@ async def terminate():
         logging.info('> queue fulshed')
 
 # def __process_schema(trace):
-#     data = trace.dict()
+#     data = trace.model_dump()
 #     data["parameters"] = json.dumps(trace.parameters) if trace.parameters is not None and len(
 #         trace.parameters.keys()) > 0 else None
 #     data["payload"] = json.dumps(trace.payload) if trace.payload is not None and len(trace.payload.keys()) > 0 else None
