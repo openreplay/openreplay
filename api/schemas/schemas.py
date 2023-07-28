@@ -1477,13 +1477,26 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
     #     return values
 
 
+class IssueFilterType(str, Enum):
+    _selector = "CLICK_SELECTOR"
+
+
+class IssueAdvancedFilter(BaseModel):
+    type: IssueFilterType = Field(default=IssueFilterType._selector)
+    value: List[str] = Field(default=[])
+    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
+
+
 class ClickMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
+    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    filters: List[IssueAdvancedFilter] = Field(default=[])
 
 
 class GetHeatmapPayloadSchema(_TimedSchema):
+    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-30))
     url: str = Field(...)
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
@@ -1536,5 +1549,5 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
+    conditions: List[FeatureFlagCondition] = Field(default=[])
     variants: List[FeatureFlagVariant] = Field(default=[])
