@@ -169,6 +169,7 @@ export default class Assist {
     // SocketIO
     const socket = this.socket = connect(`wss://${this.getHost()}`, {
       path: this.getBasePrefixUrl()+'/ws-assist/socket',
+      secure: location.protocol === 'https:',
       query: {
         'peerId': peerID,
         'identity': 'session',
@@ -380,7 +381,7 @@ export default class Assist {
       host: this.getHost(),
       path: this.getBasePrefixUrl()+'/assist',
       port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
-      // secure: true,
+      secure: location.protocol === 'https:',
       //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
     }
     if (this.options.config) {
