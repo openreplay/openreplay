@@ -123,7 +123,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertWebErrorEvent(session, types.WrapJSException(m)); err != nil {
 			return err
 		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, 1000)
+		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
 	case *IntegrationEvent:
 		return s.pg.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *InputChange:
