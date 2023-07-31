@@ -94,6 +94,7 @@ func main() {
 		case <-tick:
 			failedSessionEnds := make(map[uint64]uint64)
 			duplicatedSessionEnds := make(map[uint64]uint64)
+			negativeDuration := make(map[uint64]uint64)
 
 			// Find ended sessions and send notification to other services
 			sessionEndGenerator.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
@@ -107,6 +108,10 @@ func main() {
 					if strings.Contains(err.Error(), "integer out of range") {
 						// Skip session with broken duration
 						failedSessionEnds[sessionID] = timestamp
+						return true
+					}
+					if strings.Contains(err.Error(), "is less than zero for uint64") {
+						negativeDuration[sessionID] = timestamp
 						return true
 					}
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
@@ -137,6 +142,9 @@ func main() {
 			}
 			if len(duplicatedSessionEnds) > 0 {
 				log.Println("session end duplicates:", duplicatedSessionEnds)
+			}
+			if len(negativeDuration) > 0 {
+				log.Println("sessions with negative duration:", negativeDuration)
 			}
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
