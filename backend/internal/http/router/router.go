@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"openreplay/backend/internal/http/geoip"
+	"strings"
 	"sync"
 	"time"
 
@@ -105,6 +106,7 @@ func (e *Router) init() {
 		"/v1/web/start":         e.startSessionHandlerWeb,
 		"/v1/web/i":             e.pushMessagesHandlerWeb,
 		"/v1/web/feature-flags": e.featureFlagsHandlerWeb,
+		"/v1/web/beacon":        e.beaconHandlerWeb,
 	}
 	prefix := "/ingest"
 
@@ -123,6 +125,11 @@ func (e *Router) root(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Avoid CORS checks for
+		if strings.Contains(r.URL.Path, "beacon") {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if e.cfg.UseAccessControlHeaders {
 			// Prepare headers for preflight requests
 			w.Header().Set("Access-Control-Allow-Origin", "*")

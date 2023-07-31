@@ -357,3 +357,18 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	}
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
 }
+
+func (e *Router) beaconHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	bodyBytes, err := e.readBody(w, r, 4000) // limit - 4kb
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	log.Printf("beacon body: %s", bodyBytes)
+}
