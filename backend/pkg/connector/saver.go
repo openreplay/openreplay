@@ -18,7 +18,8 @@ type Saver struct {
 	cfg        *config.Config
 	objStorage objectstorage.ObjectStorage
 	db         *Redshift
-	batch      []map[string]string
+	sessions   map[uint64]map[string]string
+	events     []map[string]string
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshift) *Saver {
@@ -27,6 +28,46 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshif
 		objStorage: objStorage,
 		db:         db,
 	}
+}
+
+var sessionColumns = []string{
+	"sessionid",
+	"user_agent",
+	"user_browser",
+	"user_browser_version",
+	"user_country",
+	"user_device",
+	"user_device_heap_size",
+	"user_device_memory_size",
+	"user_device_type",
+	"user_os",
+	"user_os_version",
+	"user_uuid",
+	"connection_effective_bandwidth",
+	"connection_type",
+	"metadata_key",
+	"metadata_value",
+	"referrer",
+	"user_anonymous_id",
+	"user_id",
+	"session_start_timestamp",
+	"session_end_timestamp",
+	"session_duration",
+	"first_contentful_paint",
+	"speed_index",
+	"visually_complete",
+	"timing_time_to_interactive",
+	"avg_cpu",
+	"avg_fps",
+	"max_cpu",
+	"max_fps",
+	"max_total_js_heap_size",
+	"max_used_js_heap_size",
+	"js_exceptions_count",
+	"inputs_count",
+	"clicks_count",
+	"issues_count",
+	"urls_count",
 }
 
 var eventColumns = []string{
@@ -59,22 +100,6 @@ var eventColumns = []string{
 	"received_at",
 	"batch_order_number",
 }
-
-func mapToString(m map[string]string) string {
-	buf := bytes.NewBuffer(nil)
-	for _, column := range eventColumns {
-		if v, ok := m[column]; ok {
-			buf.WriteString(v + "|")
-		} else {
-			buf.WriteString("|")
-		}
-	}
-	return buf.String()[0 : buf.Len()-1]
-}
-
-// Empty string -> NULL
-// Empty number -> empty string
-// Delimiter -> "|"
 
 func QUOTES(s string) string {
 	return strconv.Quote(s)
@@ -124,6 +149,26 @@ func handleEventN(msg messages.Message) map[string]string {
 	event["received_at"] = fmt.Sprintf("%d", uint64(time.Now().UnixMilli()))
 	event["batch_order_number"] = fmt.Sprintf("%d", 0)
 	return event
+}
+
+func (s *Saver) handleSessionN(msg messages.Message) {
+	if s.sessions == nil {
+		s.sessions = make(map[uint64]map[string]string)
+	}
+	sess, ok := s.sessions[msg.SessionID()]
+	if !ok {
+		sess = make(map[string]string)
+		sess[`sessionid`] = fmt.Sprintf("%d", msg.SessionID())
+	}
+	if s.sessions[msg.SessionID()] == nil {
+		s.sessions[msg.SessionID()] = make(map[string]string)
+		s.sessions[msg.SessionID()][`sessionid`] = fmt.Sprintf("%d", msg.SessionID())
+	}
+	// Parse message and add to session
+	switch m := msg.(type) {
+	case *messages.SessionStart:
+		log.Printf("SessionStart: %v", m)
+	}
 }
 
 type Event struct {
@@ -701,17 +746,10 @@ func (s *Saver) Handle(msg messages.Message) {
 	if newEvent == nil {
 		return
 	}
-	if s.batch == nil {
-		s.batch = make([]map[string]string, 0, 2)
+	if s.events == nil {
+		s.events = make([]map[string]string, 0, 2)
 	}
-	s.batch = append(s.batch, newEvent)
-	//if s.cfg.EventLevel == "normal" {
-	//	event := s.handleEvent(msg)
-	//	fmt.Println(event)
-	//} else {
-	//	event := s.handleDetailedEvent(msg)
-	//	fmt.Println(event)
-	//}
+	s.events = append(s.events, newEvent)
 	return
 }
 
@@ -737,7 +775,7 @@ func eventsToBuffer(batch []map[string]string) *bytes.Buffer {
 
 // Commit saves batch to Redshift
 func (s *Saver) Commit() {
-	if len(s.batch) == 0 {
+	if len(s.events) == 0 {
 		log.Printf("empty batch")
 		return
 	}
@@ -751,8 +789,8 @@ func (s *Saver) Commit() {
 	// Send data to S3
 	fileName := fmt.Sprintf("test_connector/connector_events-%s.csv", uuid.New().String())
 	// Create csv file
-	buf := eventsToBuffer(s.batch)
-	s.batch = nil
+	buf := eventsToBuffer(s.events)
+	s.events = nil
 
 	reader := bytes.NewReader(buf.Bytes())
 	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
