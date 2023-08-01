@@ -267,6 +267,7 @@ export default class MessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
+      case MType.TabC
       case MType.TabChange:
         const prevChange = this.activeTabManager.last;
         if (!prevChange || prevChange.tabId !== msg.tabId) {
