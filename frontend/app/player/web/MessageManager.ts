@@ -63,6 +63,7 @@ export interface State extends ScreenState {
   currentTab: string;
   tabs: Set<string>;
   tabChangeEvents: TabChangeEvent[];
+  tabCloseEvents: string[];
 }
 
 export const visualChanges = [
@@ -90,6 +91,7 @@ export default class MessageManager {
     currentTab: '',
     tabs: new Set(),
     tabChangeEvents: [],
+    tabCloseEvents: [],
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -188,7 +190,8 @@ export default class MessageManager {
   move(t: number): any {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
-    this.activeTabManager.moveReady(t).then((tabId) => {
+    this.activeTabManager.moveReady(t).then((event) => {
+      const { tabId = null, tp = null } = event ?? {};
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
@@ -202,6 +205,9 @@ export default class MessageManager {
       }
 
       if (tabId) {
+        if (tp === MType.TabClosed) {
+          return this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
+        }
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
           this.activeTab = tabId;
@@ -267,7 +273,9 @@ export default class MessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
-      case MType.TabC
+      case MType.TabClosed:
+        this.activeTabManager.append(msg);
+        break;
       case MType.TabChange:
         const prevChange = this.activeTabManager.last;
         if (!prevChange || prevChange.tabId !== msg.tabId) {

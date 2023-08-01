@@ -85,14 +85,16 @@ ${icons.map(icon => {
   const canOptimize = !icon.includes('integrations');
   const { data } = optimize(svg, plugins(canOptimize));
   return `    case '${icon.slice(0, -4)}': return ${data.replace(/xlink\:href/g, 'xlinkHref')
-    .replace(/xmlns\:xlink/g, 'xmlnsXlink')
-    .replace(/clip\-path/g, 'clipPath')
-    .replace(/clip\-rule/g, 'clipRule')
+    .replace(/xmlns:xlink/g, 'xmlnsXlink')
+    .replace(/clip-path/g, 'clipPath')
+    .replace(/clip-rule/g, 'clipRule')
     // hack to keep fill rule for some icons like stop recording square
     .replace(/clipRule="evenoddCustomFill"/g, 'clipRule="evenodd" fillRule="evenodd"')
     .replace(/fill-rule/g, 'fillRule')
     .replace(/fill-opacity/g, 'fillOpacity')
     .replace(/stop-color/g, 'stopColor')
+    .replace(/stroke-miterlimit/g, 'strokeMiterlimit')
+    .replace(/stroke-width/g, 'strokeWidth')
     .replace(/xml:space="preserve"/g, '')};`;
 })
   .join('\n')}
