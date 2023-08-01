@@ -58,6 +58,14 @@ UPDATE public.roles
 SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{FEATURE_FLAGS}') AS e)
 where not permissions @> '{FEATURE_FLAGS}';
 
+ALTER TYPE public.user_role ADD VALUE IF NOT EXISTS 'service';
+
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS service_account bool NOT NULL DEFAULT FALSE;
+
+ALTER TABLE IF EXISTS public.roles
+    ADD COLUMN IF NOT EXISTS service_role bool NOT NULL DEFAULT FALSE;
+
 COMMIT;
 
 \elif :is_next
