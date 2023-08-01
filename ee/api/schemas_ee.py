@@ -18,8 +18,16 @@ class Permissions(str, Enum):
     feature_flags = "FEATURE_FLAGS"
 
 
+class ServicePermissions(str, Enum):
+    session_replay = "SERVICE_SESSION_REPLAY"
+    dev_tools = "SERVICE_DEV_TOOLS"
+    assist_live = "SERVICE_ASSIST_LIVE"
+    assist_call = "SERVICE_ASSIST_CALL"
+
+
 class CurrentContext(schemas.CurrentContext):
-    permissions: List[Optional[Permissions]] = Field(...)
+    permissions: List[Union[Permissions, ServicePermissions]] = Field(...)
+    service_account: bool = Field(default=False)
 
 
 class RolePayloadSchema(BaseModel):
