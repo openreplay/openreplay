@@ -887,3 +887,12 @@ export function TabData(
   ]
 }
 
+export function TabClosed(
+  tabId: string,
+): Messages.TabClosed {
+  return [
+    Messages.Type.TabClosed,
+    tabId,
+  ]
+}
+

@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        pass
+        
 
 
 class CreateElementNode(Message):
@@ -757,6 +757,27 @@ class ResourceTiming(Message):
         self.initiator = initiator
         self.transferred_size = transferred_size
         self.cached = cached
+
+
+class TabChange(Message):
+    __id__ = 117
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
+class TabData(Message):
+    __id__ = 118
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
+class TabClosed(Message):
+    __id__ = 119
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
 
 
 class IssueEvent(Message):

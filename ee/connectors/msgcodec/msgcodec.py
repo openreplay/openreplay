@@ -43,8 +43,7 @@ class MessageCodec(Codec):
         try:
             decoded = int.from_bytes(b, "little", signed=False)
         except Exception as e:
-            print(f"Error while decoding message key (SessionID) from {b}\n{e}")
-            raise e
+            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
         return decoded
 
     def decode_detailed(self, b: bytes) -> List[Message]:
@@ -696,6 +695,11 @@ class MessageCodec(Codec):
 
         if message_id == 118:
             return TabData(
+                tab_id=self.read_string(reader)
+            )
+
+        if message_id == 119:
+            return TabClosed(
                 tab_id=self.read_string(reader)
             )
 

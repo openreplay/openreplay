@@ -59,6 +59,7 @@ export const TP_MAP = {
   116: MType.ResourceTiming,
   117: MType.TabChange,
   118: MType.TabData,
+  119: MType.TabClosed,
   90: MType.IosSessionStart,
   93: MType.IosCustomEvent,
   96: MType.IosScreenChanges,
