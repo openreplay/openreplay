@@ -205,15 +205,16 @@ export default class MessageManager {
       }
 
       if (tabId) {
-        if (tp === MType.TabClosed) {
-          return this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
-        }
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
           this.activeTab = tabId;
           this.tabs[this.activeTab].clean();
         }
         const activeTabs = this.state.get().tabs;
+        const closedTabs = this.state.get().tabCloseEvents;
+        if (closedTabs.length !== this.activeTabManager.closedTabs.length) {
+          this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
+        }
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
           this.state.update({ tabs: this.activeTabManager.tabInstances });
         }
