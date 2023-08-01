@@ -2,7 +2,8 @@ import json
 import secrets
 
 from decouple import config
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
+from starlette import status
 
 import schemas
 import schemas_ee
@@ -282,7 +283,8 @@ def get(user_id, tenant_id):
                         roles.name AS role_name,
                         roles.permissions,
                         roles.all_projects,
-                        basic_authentication.password IS NOT NULL AS has_password
+                        basic_authentication.password IS NOT NULL AS has_password,
+                        users.service_account
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
                     WHERE
@@ -472,7 +474,9 @@ def get_members(tenant_id):
                     FROM public.users 
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
-                    WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL
+                    WHERE users.tenant_id = %(tenant_id)s 
+                        AND users.deleted_at IS NULL
+                        AND NOT users.service_account
                     ORDER BY name, user_id""",
                 {"tenant_id": tenant_id})
         )
@@ -626,17 +630,24 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"SELECT user_id AS id,jwt_iat, changed_at FROM public.users INNER JOIN public.basic_authentication USING(user_id) WHERE user_id = %(userId)s AND tenant_id = %(tenant_id)s AND deleted_at IS NULL LIMIT 1;",
+                f"""SELECT user_id,
+                           jwt_iat, 
+                           changed_at,
+                           service_account,
+                           basic_authentication.user_id IS NOT NULL AS has_basic_auth
+                    FROM public.users 
+                        LEFT JOIN public.basic_authentication USING(user_id) 
+                    WHERE user_id = %(userId)s 
+                        AND tenant_id = %(tenant_id)s 
+                        AND deleted_at IS NULL 
+                    LIMIT 1;""",
                 {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
     return r is not None \
-        and r.get("jwt_iat") is not None \
-        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-             or (jwt_aud.startswith("plugin") \
-                 and (r["changed_at"] is None \
-                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-             )
+        and (r["service_account"] and not r["has_basic_auth"]
+             or r.get("jwt_iat") is not None \
+             and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1))
 
 
 def change_jwt_iat(user_id):
@@ -665,7 +676,8 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
                     users.origin,
                     users.role_id,
                     roles.name AS role_name,
-                    roles.permissions
+                    roles.permissions,
+                    users.service_account
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                     LEFT JOIN public.roles ON (roles.role_id = users.role_id AND roles.tenant_id = users.tenant_id)
                 WHERE users.email = %(email)s 
@@ -694,7 +706,10 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
+        if r["serviceAccount"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="service account is not authorized to login")
+        elif config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
         jwt_iat = change_jwt_iat(r['userId'])
@@ -722,8 +737,9 @@ def authenticate_sso(email, internal_id, exp=None):
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                     origin,
-                    role_id
-                FROM public.users AS users
+                    role_id,
+                    service_account
+                FROM public.users
                 WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
             {"email": email, "internal_id": internal_id})
 
@@ -732,6 +748,9 @@ def authenticate_sso(email, internal_id, exp=None):
 
     if r is not None:
         r = helper.dict_to_camel_case(r)
+        if r["serviceAccount"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="service account is not authorized to login")
         jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
         return authorizers.generate_jwt(r['userId'], r['tenantId'],
                                         iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",

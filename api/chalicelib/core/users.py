@@ -548,16 +548,12 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                             WHERE user_id = %(userId)s 
                                 AND deleted_at IS NULL 
                             LIMIT 1;""",
-                {"userId": user_id})
+                        {"userId": user_id})
         )
         r = cur.fetchone()
     return r is not None \
         and r.get("jwt_iat") is not None \
-        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-             or (jwt_aud.startswith("plugin") \
-                 and (r["changed_at"] is None \
-                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-             )
+        and abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1
 
 
 def change_jwt_iat(user_id):
@@ -566,7 +562,7 @@ def change_jwt_iat(user_id):
                                 SET jwt_iat = timezone('utc'::text, now())
                                 WHERE user_id = %(user_id)s 
                                 RETURNING jwt_iat;""",
-            {"user_id": user_id})
+                            {"user_id": user_id})
         cur.execute(query)
         return cur.fetchone().get("jwt_iat")
 
