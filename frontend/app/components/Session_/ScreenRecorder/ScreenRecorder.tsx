@@ -105,20 +105,20 @@ function ScreenRecorder({
     player.assistManager.requestRecording({ onDeny });
   };
 
-  if (!isSupported() || !isEnterprise) {
-    return (
-      <div className="p-2">
-        {/* @ts-ignore */}
-        <Tooltip
-          title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED}
-        >
-          <Button icon="record-circle" disabled variant="text-primary">
-            Record Activity
-          </Button>
-        </Tooltip>
-      </div>
-    );
-  }
+  // if (!isSupported() || !isEnterprise) {
+  //   return (
+  //     <div className="p-2">
+  //       {/* @ts-ignore */}
+  //       <Tooltip
+  //         title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED}
+  //       >
+  //         <Button icon="record-circle" disabled variant="text-primary">
+  //           Record Activity
+  //         </Button>
+  //       </Tooltip>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div onClick={!isRecording ? recordingRequest : stopRecordingHandler} className="p-2">
