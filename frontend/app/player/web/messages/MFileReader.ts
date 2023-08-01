@@ -70,13 +70,13 @@ export default class MFileReader extends RawMessageReader {
       return null
     }
 
-    while (!this.noIndexes && this.needSkipMessage()) {
-      const skippedMessage = this.readRawMessage()
-      if (!skippedMessage) {
-        return null
-      }
-      Logger.group("Openreplay: Skipping messages ", skippedMessage)
-    }
+    // while (!this.noIndexes && this.needSkipMessage()) {
+    //   const skippedMessage = this.readRawMessage()
+    //   if (!skippedMessage) {
+    //     return null
+    //   }
+    //   Logger.group("Openreplay: Skipping messages ", skippedMessage)
+    // }
     this.pLastMessageID = this.noIndexes ? 0 : this.p
 
     const rMsg = this.readRawMessage()
