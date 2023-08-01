@@ -359,7 +359,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay,
+                                ServicePermissions.assist_live, ServicePermissions.session_replay)])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
@@ -380,7 +381,9 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools,
+                                ServicePermissions.assist_live, ServicePermissions.session_replay,
+                                ServicePermissions.dev_tools)])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}
