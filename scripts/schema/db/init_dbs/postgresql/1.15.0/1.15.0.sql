@@ -18,8 +18,8 @@ $fn_def$, :'next_version')
 \gexec
 
 --
-
--- TODO: delta goes here
+ALTER TABLE events_common.requests
+    ADD COLUMN transfer_size bigint NULL;
 
 COMMIT;
 
