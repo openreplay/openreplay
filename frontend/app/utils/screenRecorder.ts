@@ -1,3 +1,27 @@
+class AudioContextManager {
+  context = new AudioContext();
+  destination = this.context.createMediaStreamDestination();
+
+  getAllTracks() {
+    return this.destination.stream.getAudioTracks() || [];
+  }
+
+  mergeAudioStreams(stream: MediaStream) {
+    const source = this.context.createMediaStreamSource(stream);
+    const gain = this.context.createGain();
+    gain.gain.value = 0.7;
+    return source.connect(gain).connect(this.destination);
+  }
+
+  clear() {
+    // when everything is removed, tracks will be stopped automatically (hopefully)
+    this.context = new AudioContext();
+    this.destination = this.context.createMediaStreamDestination();
+  }
+}
+
+export const audioContextManager = new AudioContextManager();
+
 const FILE_TYPE = 'video/webm';
 const FRAME_RATE = 30;
 
@@ -14,7 +38,7 @@ function createFileRecorder(
 
   let recordedChunks: BlobPart[] = [];
   const SAVE_INTERVAL_MS = 200;
-  const mediaRecorder = new MediaRecorder(stream);
+  const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8,opus' });
 
   mediaRecorder.ondataavailable = function (e) {
     if (e.data.size > 0) {
@@ -27,7 +51,7 @@ function createFileRecorder(
 
     ended = true;
     saveFile(recordedChunks, mimeType, start, recName, sessionId, saveCb);
-    onStop()
+    onStop();
     recordedChunks = [];
   }
 
@@ -72,13 +96,24 @@ function saveFile(
 }
 
 async function recordScreen() {
-  return await navigator.mediaDevices.getDisplayMedia({
-    audio: true,
+  const desktopStreams = await navigator.mediaDevices.getDisplayMedia({
+    audio: {
+      // @ts-ignore
+      restrictOwnAudio: false,
+      echoCancellation: true,
+      noiseSuppression: false,
+      sampleRate: 44100,
+    },
     video: { frameRate: FRAME_RATE },
     // potential chrome hack
     // @ts-ignore
     preferCurrentTab: true,
   });
+  audioContextManager.mergeAudioStreams(desktopStreams);
+  return new MediaStream([
+    ...desktopStreams.getVideoTracks(),
+    ...audioContextManager.getAllTracks(),
+  ]);
 }
 
 /**
@@ -92,7 +127,18 @@ async function recordScreen() {
  *
  * @returns  a promise that resolves to a function that stops the recording
  */
-export async function screenRecorder(recName: string, sessionId: string, saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void, onStop: () => void) {
+export async function screenRecorder(
+  recName: string,
+  sessionId: string,
+  saveCb: (
+    saveObj: {
+      name: string;
+      duration: number;
+    },
+    blob: Blob
+  ) => void,
+  onStop: () => void
+) {
   try {
     const stream = await recordScreen();
     const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb, onStop);
@@ -100,9 +146,9 @@ export async function screenRecorder(recName: string, sessionId: string, saveCb:
     return () => {
       if (mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
-        onStop()
+        onStop();
       }
-    }
+    };
   } catch (e) {
     console.log(e);
   }

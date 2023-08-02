@@ -1,3 +1,4 @@
+import {audioContextManager} from "App/utils/screenRecorder";
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
@@ -57,7 +58,10 @@ function LivePlayer({
     );
     setContextValue({ player, store });
 
-    return () => player.clean();
+    return () => {
+      player.clean();
+      audioContextManager.clear();
+    }
   }, [session.sessionId, assistCredentials]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
