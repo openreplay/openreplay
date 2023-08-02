@@ -1,3 +1,4 @@
+import {audioContextManager} from "App/utils/screenRecorder";
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
@@ -72,6 +73,7 @@ function LivePlayer({
     return () => {
       if (!location.pathname.includes('multiview') || !location.pathname.includes(usedSession.sessionId)) {
         console.debug('unmount', usedSession.sessionId)
+        audioContextManager.clear();
         playerInst?.clean?.();
         // @ts-ignore default empty
         setContextValue(defaultContextValue)
