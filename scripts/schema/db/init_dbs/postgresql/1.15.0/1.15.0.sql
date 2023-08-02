@@ -18,14 +18,8 @@ $fn_def$, :'next_version')
 \gexec
 
 --
-ALTER TABLE IF EXISTS events_common.requests
+ALTER TABLE events_common.requests
     ADD COLUMN transfer_size bigint NULL;
-
-ALTER TABLE IF EXISTS public.sessions
-    ADD COLUMN IF NOT EXISTS timezone text NULL;
-
-ALTER TABLE IF EXISTS public.projects
-    ADD COLUMN IF NOT EXISTS platform public.platform NOT NULL DEFAULT 'web';
 
 COMMIT;
 
