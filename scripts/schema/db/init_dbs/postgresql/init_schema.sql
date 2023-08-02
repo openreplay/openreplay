@@ -561,6 +561,7 @@ $$
                 host          text        NULL,
                 path          text        NULL,
                 query         text        NULL,
+                transfer_size bigint      NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
 
