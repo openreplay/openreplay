@@ -7,6 +7,7 @@ import (
 
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/pkg/errors"
@@ -20,6 +21,7 @@ type Consumer struct {
 	commitTicker      *time.Ticker
 	pollTimeout       uint
 	events            chan interface{}
+	rebalanced        chan *types.PartitionsRebalancedEvent
 	lastReceivedPrtTs map[int32]int64
 }
 
@@ -72,7 +74,8 @@ func NewConsumer(
 		messageIterator:   messageIterator,
 		commitTicker:      commitTicker,
 		pollTimeout:       200,
-		events:            make(chan interface{}, 4),
+		events:            make(chan interface{}, 32),
+		rebalanced:        make(chan *types.PartitionsRebalancedEvent, 32),
 		lastReceivedPrtTs: make(map[int32]int64, 16),
 	}
 
@@ -96,15 +99,25 @@ func (consumer *Consumer) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) er
 	case kafka.RevokedPartitions:
 		// receive before re-balancing partitions; stop consuming messages and commit current state
 		consumer.events <- evt.String()
+		parts := make([]uint64, len(evt.Partitions))
+		for i, p := range evt.Partitions {
+			parts[i] = uint64(p.Partition)
+		}
+		consumer.rebalanced <- &types.PartitionsRebalancedEvent{Type: types.RebalanceTypeRevoke, Partitions: parts}
 	case kafka.AssignedPartitions:
 		// receive after re-balancing partitions; continue consuming messages
-		//consumer.events <- evt.String()
+		consumer.events <- evt.String()
+		parts := make([]uint64, len(evt.Partitions))
+		for i, p := range evt.Partitions {
+			parts[i] = uint64(p.Partition)
+		}
+		consumer.rebalanced <- &types.PartitionsRebalancedEvent{Type: types.RebalanceTypeAssign, Partitions: parts}
 	}
 	return nil
 }
 
-func (consumer *Consumer) Rebalanced() <-chan interface{} {
-	return consumer.events
+func (consumer *Consumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
+	return consumer.rebalanced
 }
 
 func (consumer *Consumer) Commit() error {
