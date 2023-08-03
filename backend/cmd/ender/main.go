@@ -6,6 +6,7 @@ import (
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
@@ -205,7 +206,13 @@ func main() {
 				log.Printf("can't commit messages with offset: %s", err)
 			}
 		case msg := <-consumer.Rebalanced():
-			log.Println(msg)
+			log.Printf("Rebalanced event, type: %s, partitions: %+v", msg.Type, msg.Partitions)
+			if msg.Type == types.RebalanceTypeRevoke {
+				sessionEndGenerator.Disable()
+			} else {
+				sessionEndGenerator.ActivePartitions(msg.Partitions)
+				sessionEndGenerator.Enable()
+			}
 		default:
 			if !memoryManager.HasFreeMemory() {
 				continue

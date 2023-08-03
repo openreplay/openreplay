@@ -24,6 +24,8 @@ type SessionEnder struct {
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
 	timeCtrl *timeController
+	parts    uint64
+	enabled  bool
 }
 
 func New(timeout int64, parts int) (*SessionEnder, error) {
@@ -31,7 +33,36 @@ func New(timeout int64, parts int) (*SessionEnder, error) {
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
 		timeCtrl: NewTimeController(parts),
+		parts:    uint64(parts), // ender uses all partitions by default
+		enabled:  true,
 	}, nil
+}
+
+func (se *SessionEnder) Enable() {
+	se.enabled = true
+}
+
+func (se *SessionEnder) Disable() {
+	se.enabled = false
+}
+
+func (se *SessionEnder) ActivePartitions(parts []uint64) {
+	activeParts := make(map[uint64]bool, 0)
+	for _, p := range parts {
+		activeParts[p] = true
+	}
+	removedSessions := 0
+	activeSessions := 0
+	for sessID, _ := range se.sessions {
+		if !activeParts[sessID%se.parts] {
+			delete(se.sessions, sessID)
+			removedSessions++
+		} else {
+			activeSessions++
+		}
+	}
+	log.Printf("SessionEnder: %d sessions left in active partitions: %+v, removed %d sessions",
+		activeSessions, parts, removedSessions)
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
@@ -74,6 +105,10 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
+	if !se.enabled {
+		log.Printf("SessionEnder is disabled")
+		return
+	}
 	currTime := time.Now().UnixMilli()
 	allSessions, removedSessions := len(se.sessions), 0
 	brokerTime := make(map[int]int, 0)
