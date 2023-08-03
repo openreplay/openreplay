@@ -121,12 +121,12 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 		}
 		batchTimeDiff := se.timeCtrl.LastBatchTimestamp(sessID) - sess.lastTimestamp
 
-		// Hasn't been updated for a long time and has been finished according to batch timestamp
+		// Has been finished according to batch timestamp and hasn't been updated for a long time
 		if (batchTimeDiff >= se.timeout) && (currTime-sess.lastUpdate >= se.timeout) {
 			return true, 2
 		}
 
-		// Hasn't been finished according to batch timestamp
+		// Hasn't been finished according to batch timestamp but hasn't been read from partition for a long time
 		if (batchTimeDiff < se.timeout) && (currTime-se.timeCtrl.LastUpdateTimestamp(sessID) >= se.timeout) {
 			return true, 3
 		}
@@ -152,6 +152,6 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 			}
 		}
 	}
-	log.Printf("Removed %d of %d sessions", removedSessions, allSessions)
-	log.Printf("[+] brokerTime: %d, serverTime: %d", brokerTime, serverTime)
+	log.Printf("Removed %d of %d sessions; brokerTime: %d, serverTime: %d",
+		removedSessions, allSessions, brokerTime, serverTime)
 }

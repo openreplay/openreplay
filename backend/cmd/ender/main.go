@@ -186,15 +186,6 @@ func main() {
 			if n := len(negativeDuration); n > 0 {
 				log.Println("sessions with negative duration:", n, negativeDuration)
 			}
-			if n := len(shorterDuration); n > 0 {
-				log.Println("sessions with shorter new duration:", n, shorterDuration)
-			}
-			//if n := len(duplicatedSessionEnds); n > 0 {
-			//	log.Println("sessions with the same duration:", n, duplicatedSessionEnds)
-			//}
-			if n := len(diffDuration); n > 0 {
-				log.Println("sessions with updated duration:", n, diffDuration)
-			}
 			if n := len(noSessionInDB); n > 0 {
 				log.Printf("sessions without info in DB: %d, %v", n, noSessionInDB)
 			}
