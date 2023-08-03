@@ -9,12 +9,12 @@ import (
 )
 
 // EndedSessionHandler handler for ended sessions
-type EndedSessionHandler func(sessionID uint64, timestamp uint64) bool
+type EndedSessionHandler func(sessionID uint64, timestamp uint64) (bool, int)
 
 // session holds information about user's session live status
 type session struct {
-	lastTimestamp int64
-	lastUpdate    int64
+	lastTimestamp int64 // timestamp from message broker
+	lastUpdate    int64 // local timestamp
 	lastUserTime  uint64
 	isEnded       bool
 }
@@ -24,6 +24,8 @@ type SessionEnder struct {
 	timeout  int64
 	sessions map[uint64]*session // map[sessionID]session
 	timeCtrl *timeController
+	parts    uint64
+	enabled  bool
 }
 
 func New(timeout int64, parts int) (*SessionEnder, error) {
@@ -31,7 +33,36 @@ func New(timeout int64, parts int) (*SessionEnder, error) {
 		timeout:  timeout,
 		sessions: make(map[uint64]*session),
 		timeCtrl: NewTimeController(parts),
+		parts:    uint64(parts), // ender uses all partitions by default
+		enabled:  true,
 	}, nil
+}
+
+func (se *SessionEnder) Enable() {
+	se.enabled = true
+}
+
+func (se *SessionEnder) Disable() {
+	se.enabled = false
+}
+
+func (se *SessionEnder) ActivePartitions(parts []uint64) {
+	activeParts := make(map[uint64]bool, 0)
+	for _, p := range parts {
+		activeParts[p] = true
+	}
+	removedSessions := 0
+	activeSessions := 0
+	for sessID, _ := range se.sessions {
+		if !activeParts[sessID%se.parts] {
+			delete(se.sessions, sessID)
+			removedSessions++
+		} else {
+			activeSessions++
+		}
+	}
+	log.Printf("SessionEnder: %d sessions left in active partitions: %+v, removed %d sessions",
+		activeSessions, parts, removedSessions)
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
@@ -46,14 +77,14 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
 	}
-	se.timeCtrl.UpdateTime(sessionID, batchTimestamp)
+	se.timeCtrl.UpdateTime(sessionID, batchTimestamp, localTimestamp)
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		// Register new session
 		se.sessions[sessionID] = &session{
-			lastTimestamp: batchTimestamp, // timestamp from message broker
-			lastUpdate:    localTimestamp, // local timestamp
-			lastUserTime:  msgTimestamp,   // last timestamp from user's machine
+			lastTimestamp: batchTimestamp,
+			lastUpdate:    localTimestamp,
+			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
 		}
 		ender.IncreaseActiveSessions()
@@ -74,21 +105,53 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
+	if !se.enabled {
+		log.Printf("SessionEnder is disabled")
+		return
+	}
 	currTime := time.Now().UnixMilli()
 	allSessions, removedSessions := len(se.sessions), 0
+	brokerTime := make(map[int]int, 0)
+	serverTime := make(map[int]int, 0)
+
+	isSessionEnded := func(sessID uint64, sess *session) (bool, int) {
+		// Has been finished already
+		if sess.isEnded {
+			return true, 1
+		}
+		batchTimeDiff := se.timeCtrl.LastBatchTimestamp(sessID) - sess.lastTimestamp
+
+		// Has been finished according to batch timestamp and hasn't been updated for a long time
+		if (batchTimeDiff >= se.timeout) && (currTime-sess.lastUpdate >= se.timeout) {
+			return true, 2
+		}
+
+		// Hasn't been finished according to batch timestamp but hasn't been read from partition for a long time
+		if (batchTimeDiff < se.timeout) && (currTime-se.timeCtrl.LastUpdateTimestamp(sessID) >= se.timeout) {
+			return true, 3
+		}
+		return false, 0
+	}
+
 	for sessID, sess := range se.sessions {
-		if sess.isEnded || (se.timeCtrl.LastTimestamp(sessID)-sess.lastTimestamp > se.timeout) ||
-			(currTime-sess.lastUpdate > se.timeout) {
+		if ended, endCase := isSessionEnded(sessID, sess); ended {
 			sess.isEnded = true
-			if handler(sessID, sess.lastUserTime) {
+			if res, _ := handler(sessID, sess.lastUserTime); res {
 				delete(se.sessions, sessID)
 				ender.DecreaseActiveSessions()
 				ender.IncreaseClosedSessions()
 				removedSessions++
+				if endCase == 2 {
+					brokerTime[1]++
+				}
+				if endCase == 3 {
+					serverTime[1]++
+				}
 			} else {
 				log.Printf("sessID: %d, userTime: %d", sessID, sess.lastUserTime)
 			}
 		}
 	}
-	log.Printf("Removed %d of %d sessions", removedSessions, allSessions)
+	log.Printf("Removed %d of %d sessions; brokerTime: %d, serverTime: %d",
+		removedSessions, allSessions, brokerTime, serverTime)
 }

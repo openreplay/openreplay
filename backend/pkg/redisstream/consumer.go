@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,7 +28,7 @@ type Consumer struct {
 	idsPending      streamPendingIDsMap
 	lastTs          int64
 	autoCommit      bool
-	event           chan interface{}
+	event           chan *types.PartitionsRebalancedEvent
 }
 
 func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
@@ -58,13 +59,13 @@ func NewConsumer(group string, streams []string, messageIterator messages.Messag
 		group:           group,
 		autoCommit:      true,
 		idsPending:      idsPending,
-		event:           make(chan interface{}, 4),
+		event:           make(chan *types.PartitionsRebalancedEvent, 4),
 	}
 }
 
 const READ_COUNT = 10
 
-func (c *Consumer) Rebalanced() <-chan interface{} {
+func (c *Consumer) Rebalanced() <-chan *types.PartitionsRebalancedEvent {
 	return c.event
 }
 
