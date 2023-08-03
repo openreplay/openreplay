@@ -3,12 +3,7 @@ import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import ChatWindow from '../../ChatWindow';
-import {
-  CallingState,
-  ConnectionStatus,
-  RemoteControlStatus,
-  RequestLocalStream,
-} from 'Player';
+import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
 import type { LocalStream } from 'Player';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -16,12 +11,14 @@ import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
+import { audioContextManager } from 'App/utils/screenRecorder';
 
 function onReject() {
   toast.info(`Call was rejected.`);
 }
+
 function onControlReject() {
-  toast.info('Remote control request was rejected by user')
+  toast.info('Remote control request was rejected by user');
 }
 
 function onError(e: any) {
@@ -47,7 +44,7 @@ function AssistActions({
   userDisplayName,
 }: Props) {
   // @ts-ignore ???
-  const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext)
+  const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
 
   const {
     assistManager: {
@@ -55,17 +52,17 @@ function AssistActions({
       setCallArgs,
       requestReleaseRemoteControl,
       toggleAnnotation,
-      setRemoteControlCallbacks
+      setRemoteControlCallbacks,
     },
-  toggleUserName,
-  } = player
+    toggleUserName,
+  } = player;
   const {
     calling,
     annotating,
     peerConnectionStatus,
     remoteControl: remoteControlStatus,
     livePlay,
-  } = store.get()
+  } = store.get();
 
   const [isPrestart, setPrestart] = useState(false);
   const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
@@ -121,8 +118,9 @@ function AssistActions({
 
   const addIncomeStream = (stream: MediaStream) => {
     setIncomeStream((oldState) => {
-      if (oldState === null) return [stream]
+      if (oldState === null) return [stream];
       if (!oldState.find((existingStream) => existingStream.id === stream.id)) {
+        audioContextManager.mergeAudioStreams(stream);
         return [...oldState, stream];
       }
       return oldState;
@@ -133,7 +131,16 @@ function AssistActions({
     RequestLocalStream()
       .then((lStream) => {
         setLocalStream(lStream);
-        setCallArgs(lStream, addIncomeStream, lStream.stop.bind(lStream), onReject, onError);
+        audioContextManager.mergeAudioStreams(lStream.stream);
+        setCallArgs(
+          lStream,
+          addIncomeStream,
+          () => {
+            lStream.stop.bind(lStream);
+          },
+          onReject,
+          onError
+        );
         setCallObject(callPeer());
         if (additionalAgentIds) {
           callPeer(additionalAgentIds);
@@ -157,7 +164,7 @@ function AssistActions({
   };
 
   const requestControl = () => {
-    setRemoteControlCallbacks({ onReject: onControlReject })
+    setRemoteControlCallbacks({ onReject: onControlReject });
     if (callRequesting || remoteRequesting) return;
     requestReleaseRemoteControl();
   };
@@ -249,17 +256,13 @@ function AssistActions({
   );
 }
 
-const con = connect(
-  (state: any) => {
-    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-    return {
-      hasPermission: permissions.includes('ASSIST_CALL'),
-      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
-    };
-  }
-);
+const con = connect((state: any) => {
+  const permissions = state.getIn(['user', 'account', 'permissions']) || [];
+  return {
+    hasPermission: permissions.includes('ASSIST_CALL'),
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
+  };
+});
 
-export default con(
-  observer(AssistActions)
-);
+export default con(observer(AssistActions));
