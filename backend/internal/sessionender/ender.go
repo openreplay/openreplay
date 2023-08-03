@@ -9,12 +9,12 @@ import (
 )
 
 // EndedSessionHandler handler for ended sessions
-type EndedSessionHandler func(sessionID uint64, timestamp uint64) bool
+type EndedSessionHandler func(sessionID uint64, timestamp uint64) (bool, int)
 
 // session holds information about user's session live status
 type session struct {
-	lastTimestamp int64
-	lastUpdate    int64
+	lastTimestamp int64 // timestamp from message broker
+	lastUpdate    int64 // local timestamp
 	lastUserTime  uint64
 	isEnded       bool
 }
@@ -46,14 +46,14 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
 	}
-	se.timeCtrl.UpdateTime(sessionID, batchTimestamp)
+	se.timeCtrl.UpdateTime(sessionID, batchTimestamp, localTimestamp)
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		// Register new session
 		se.sessions[sessionID] = &session{
-			lastTimestamp: batchTimestamp, // timestamp from message broker
-			lastUpdate:    localTimestamp, // local timestamp
-			lastUserTime:  msgTimestamp,   // last timestamp from user's machine
+			lastTimestamp: batchTimestamp,
+			lastUpdate:    localTimestamp,
+			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
 		}
 		ender.IncreaseActiveSessions()
@@ -76,19 +76,47 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	currTime := time.Now().UnixMilli()
 	allSessions, removedSessions := len(se.sessions), 0
+	brokerTime := make(map[int]int, 0)
+	serverTime := make(map[int]int, 0)
+
+	isSessionEnded := func(sessID uint64, sess *session) (bool, int) {
+		// Has been finished already
+		if sess.isEnded {
+			return true, 1
+		}
+		batchTimeDiff := se.timeCtrl.LastBatchTimestamp(sessID) - sess.lastTimestamp
+
+		// Hasn't been updated for a long time and has been finished according to batch timestamp
+		if (batchTimeDiff >= se.timeout) && (currTime-sess.lastUpdate >= se.timeout) {
+			return true, 2
+		}
+
+		// Hasn't been finished according to batch timestamp
+		if (batchTimeDiff < se.timeout) && (currTime-se.timeCtrl.LastUpdateTimestamp(sessID) >= se.timeout) {
+			return true, 3
+		}
+		return false, 0
+	}
+
 	for sessID, sess := range se.sessions {
-		if sess.isEnded || (se.timeCtrl.LastTimestamp(sessID)-sess.lastTimestamp > se.timeout) ||
-			(currTime-sess.lastUpdate > se.timeout) {
+		if ended, endCase := isSessionEnded(sessID, sess); ended {
 			sess.isEnded = true
-			if handler(sessID, sess.lastUserTime) {
+			if res, _ := handler(sessID, sess.lastUserTime); res {
 				delete(se.sessions, sessID)
 				ender.DecreaseActiveSessions()
 				ender.IncreaseClosedSessions()
 				removedSessions++
+				if endCase == 2 {
+					brokerTime[1]++
+				}
+				if endCase == 3 {
+					serverTime[1]++
+				}
 			} else {
 				log.Printf("sessID: %d, userTime: %d", sessID, sess.lastUserTime)
 			}
 		}
 	}
 	log.Printf("Removed %d of %d sessions", removedSessions, allSessions)
+	log.Printf("[+] brokerTime: %d, serverTime: %d", brokerTime, serverTime)
 }
