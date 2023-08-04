@@ -210,14 +210,14 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
     return {'data': data}
