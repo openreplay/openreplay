@@ -1,7 +1,8 @@
 import ListWalker from '../../common/ListWalker';
 import type { TabChange, TabClosed } from '../messages';
+import { MType } from '../messages';
 
-type TabEvent = TabChange | TabClosed
+type TabEvent = TabChange | TabClosed;
 
 export default class ActiveTabManager extends ListWalker<TabEvent> {
   currentTime = 0;
@@ -16,8 +17,8 @@ export default class ActiveTabManager extends ListWalker<TabEvent> {
     const msg = this.moveGetLast(t)
 
     if (msg) {
-      const ids = this.listNow.filter(m => m.tp === 117).map(m => m.tabId);
-      const closedIds = this.listNow.filter(m => m.tp === 119).map(m => m.tabId);
+      const ids = this.listNow.filter(m => m.tp === MType.TabChange).map(m => m.tabId);
+      const closedIds = this.listNow.filter(m => m.tp === MType.TabClosed).map(m => m.tabId);
       this.tabInstances = new Set(ids)
       this.closedTabs = closedIds
 

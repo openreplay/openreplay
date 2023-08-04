@@ -1,5 +1,3 @@
-// @ts-ignore
-import { Decoder } from 'syncod';
 import logger from 'App/logger';
 
 import type { Store, ILog } from 'Player';
@@ -9,7 +7,7 @@ import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
 
-import { MouseThrashing, MType } from './messages';
+import {MouseThrashing, MType, TabClosed} from './messages';
 import type { Message, MouseClick } from './messages';
 
 import Screen, {
@@ -100,14 +98,13 @@ export default class MessageManager {
   private mouseMoveManager: MouseMoveManager;
   private activeTabManager = new ActiveTabManager();
 
-  public readonly decoder = new Decoder();
-
   private readonly sessionStart: number;
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
   private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
+  private possiblyClosedTabs = new Map<string, TabClosed>();
 
   constructor(
     private readonly session: Record<string, any>,
@@ -168,6 +165,7 @@ export default class MessageManager {
   };
 
   public onFileReadFinally = () => {
+    this.updateTabCloseEvents()
     this.waitingForFiles = false;
     this.state.update({ messagesProcessed: true });
   };
@@ -205,16 +203,19 @@ export default class MessageManager {
       }
 
       if (tabId) {
+        if (tp === MType.TabClosed) {
+          const closedTabs = this.state.get().tabCloseEvents;
+          if (closedTabs.length !== this.activeTabManager.closedTabs.length) {
+            this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
+          }
+          return;
+        }
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
           this.activeTab = tabId;
-          this.tabs[this.activeTab].clean();
+          this.tabs[this.activeTab]?.clean();
         }
         const activeTabs = this.state.get().tabs;
-        const closedTabs = this.state.get().tabCloseEvents;
-        if (closedTabs.length !== this.activeTabManager.closedTabs.length) {
-          this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
-        }
         if (activeTabs.size !== this.activeTabManager.tabInstances.size) {
           this.state.update({ tabs: this.activeTabManager.tabInstances });
         }
@@ -229,6 +230,7 @@ export default class MessageManager {
           this.tabs,
           this.activeTab,
           tabId,
+          this.activeTab,
           this.activeTabManager.list
         );
       }
@@ -254,8 +256,23 @@ export default class MessageManager {
     this.state.update({ tabChangeEvents: this.tabChangeEvents });
   }
 
+  public updateTabCloseEvents() {
+    const events = Array.from(this.possiblyClosedTabs.values())
+    events.forEach(e => {
+      this.activeTabManager.unshift(e)
+    })
+
+    this.activeTabManager.sort(
+      (a, b) => a.time - b.time
+    )
+    console.log(this.activeTabManager.list)
+  }
+
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    if (!this.tabs[msg.tabId]) {
+    // we use 9999 as a placeholder for "nothing-is-going-on" message so its useless
+    // @ts-ignore
+    if (!msg.tabId && msg.tp === 9999) return;
+    if (msg.tabId && !this.tabs[msg.tabId]) {
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
         this.state,
@@ -274,9 +291,6 @@ export default class MessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
-      case MType.TabClosed:
-        this.activeTabManager.append(msg);
-        break;
       case MType.TabChange:
         const prevChange = this.activeTabManager.last;
         if (!prevChange || prevChange.tabId !== msg.tabId) {
@@ -315,6 +329,10 @@ export default class MessageManager {
               this.firstVisualEventSet = true;
             }
         }
+        // this is the dirtiest hack even imagined by mankind
+        // but it works simply because tracker sends hearbeat every few seconds
+        // so if its not present then tab is closed, simple!
+        this.possiblyClosedTabs.set(msg.tabId, { tp: MType.TabClosed, tabId: msg.tabId, time: msg.time + 1 });
         this.tabs[msg.tabId].distributeMessage(msg);
         break;
     }
