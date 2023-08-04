@@ -329,9 +329,9 @@ export default class MessageManager {
               this.firstVisualEventSet = true;
             }
         }
-        // this is the dirtiest hack even imagined by mankind
+        // this is the dirtiest hack ever imagined by mankind
         // but it works simply because tracker sends hearbeat every few seconds
-        // so if its not present then tab is closed, simple!
+        // so if its not present then the tab is closed, simple!
         this.possiblyClosedTabs.set(msg.tabId, { tp: MType.TabClosed, tabId: msg.tabId, time: msg.time + 1 });
         this.tabs[msg.tabId].distributeMessage(msg);
         break;
