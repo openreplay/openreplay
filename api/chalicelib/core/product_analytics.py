@@ -1,8 +1,10 @@
 import schemas
+from chalicelib.core import metadata
 from chalicelib.core.metrics import __get_constraints, __get_constraint_values
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils import sql_helper as sh
 
 
 def __transform_journey(rows):
@@ -33,22 +35,194 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema):
     # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
     #                                         time_constraint=True)
     # TODO: check if data=args is required
-    pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="sessions",
-                                            time_constraint=True)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="s", time_constraint=True)
     event_start = None
     event_table = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table"]
     event_column = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["column"]
     event_table_id = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table_id"]
     extra_values = {}
-    for f in data.filters:
+    reverse = False
+    has_exclusion = False
+    meta_keys = None
+    for i, f in enumerate(data.filters):
+        op = sh.get_sql_operator(f.operator)
+        is_any = sh.isAny_opreator(f.operator)
+        is_not = sh.is_negation_operator(f.operator)
+        is_undefined = sh.isUndefined_operator(f.operator)
+        f_k = f"f_value_{i}"
+        extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
+
         if f.type == schemas.ProductAnalyticsFilterType.start_point:
             event_start = f.value[0]
+        elif f.type == schemas.ProductAnalyticsFilterType.end_point:
+            event_start = f.value[0]
+            reverse = True
         elif f.type == schemas.ProductAnalyticsFilterType.event_type and JOURNEY_TYPES.get(f.value[0]):
             event_table = JOURNEY_TYPES[f.value[0]]["table"]
             event_column = JOURNEY_TYPES[f.value[0]]["column"]
-        elif f.type == schemas.ProductAnalyticsFilterType.user_id:
-            pg_sub_query_subset.append(f"sessions.user_id = %(user_id)s")
-            extra_values["user_id"] = f.value
+        elif f.type == schemas.ProductAnalyticsFilterType.exclude_point:
+            has_exclusion = True
+        # ---- meta-filters
+        if f.type == schemas.FilterType.user_browser:
+            if is_any:
+                pg_sub_query_subset.append('s.user_browser IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_os]:
+            if is_any:
+                pg_sub_query_subset.append('s.user_os IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_device]:
+            if is_any:
+                pg_sub_query_subset.append('s.user_device IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_country]:
+            if is_any:
+                pg_sub_query_subset.append('s.user_country IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type == schemas.FilterType.user_city:
+            if is_any:
+                pg_sub_query_subset.append('s.user_city IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type == schemas.FilterType.user_state:
+            if is_any:
+                pg_sub_query_subset.append('s.user_state IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_source]:
+            if is_any:
+                pg_sub_query_subset.append('s.utm_source IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.utm_source IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_medium]:
+            if is_any:
+                pg_sub_query_subset.append('s.utm_medium IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.utm_medium IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_campaign]:
+            if is_any:
+                pg_sub_query_subset.append('s.utm_campaign IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.utm_campaign IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type == schemas.FilterType.duration:
+            if len(f.value) > 0 and f.value[0] is not None:
+                pg_sub_query_subset.append("s.duration >= %(minDuration)s")
+                extra_values["minDuration"] = f.value[0]
+            if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                pg_sub_query_subset.append("s.duration <= %(maxDuration)s")
+                extra_values["maxDuration"] = f.value[1]
+        elif f.type == schemas.FilterType.referrer:
+            # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+            if is_any:
+                pg_sub_query_subset.append('s.base_referrer IS NOT NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
+        elif f.type == schemas.FilterType.metadata:
+            # get metadata list only if you need it
+            if meta_keys is None:
+                meta_keys = metadata.get(project_id=project_id)
+                meta_keys = {m["key"]: m["index"] for m in meta_keys}
+            if f.source in meta_keys.keys():
+                if is_any:
+                    pg_sub_query_subset.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
+                elif is_undefined:
+                    pg_sub_query_subset.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
+                else:
+                    pg_sub_query_subset.append(
+                        sh.multi_conditions(
+                            f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                            f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            if is_any:
+                pg_sub_query_subset.append('s.user_id IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.user_id IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_anonymous_id,
+                        schemas.FilterType.user_anonymous_id_ios]:
+            if is_any:
+                pg_sub_query_subset.append('s.user_anonymous_id IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.user_anonymous_id IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            if is_any:
+                pg_sub_query_subset.append('s.rev_id IS NOT NULL')
+            elif is_undefined:
+                pg_sub_query_subset.append('s.rev_id IS NULL')
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type == schemas.FilterType.platform:
+            # op = __ sh.get_sql_operator(f.operator)
+            pg_sub_query_subset.append(
+                sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                    value_key=f_k))
+
+        elif f.type == schemas.FilterType.issue:
+            if is_any:
+                pg_sub_query_subset.append("array_length(s.issue_types, 1) > 0")
+            else:
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type == schemas.FilterType.events_count:
+            pg_sub_query_subset.append(
+                sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                    value_key=f_k))
+
+    if has_exclusion:
+        for i, f in enumerate(data.filters):
+            if f.type == schemas.ProductAnalyticsFilterType.exclude_point:
+                f_k = f"exclude_value_{i}"
+                extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
+                pg_sub_query_subset.append(
+                    sh.multi_conditions(f"{event_table}.{event_column} != %({f_k})s", f.value, is_not=True,
+                                        value_key=f_k))
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT source_event,
@@ -78,8 +252,9 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema):
                                                              timestamp,
                                                              {event_column} AS value,
                                                              LAG(timestamp)
-                                                             OVER (PARTITION BY session_id ORDER BY timestamp) AS source_timestamp
-                                                      FROM {event_table} INNER JOIN public.sessions USING (session_id)
+                                                             OVER (PARTITION BY session_id 
+                                                                   ORDER BY timestamp {"DESC" if reverse else ""}) AS source_timestamp
+                                                      FROM {event_table} INNER JOIN public.sessions AS s USING (session_id)
                                                       WHERE {" AND ".join(pg_sub_query_subset)}
                                                      ) AS related_events) AS ranked_events) AS processed
                                                  {") AS marked) AS maxed WHERE timestamp >= max) AS filtered" if event_start else ""}
@@ -96,9 +271,9 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema):
                   # **__get_constraint_values(args),
                   **extra_values}
         query = cur.mogrify(pg_query, params)
-        print("----------------------")
-        print(query)
-        print("----------------------")
+        # print("----------------------")
+        # print(query)
+        # print("----------------------")
         cur.execute(query)
         rows = cur.fetchall()
 
