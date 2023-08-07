@@ -65,7 +65,7 @@ func WrapJSException(m *JSException) *ErrorEvent {
 	}
 	return &ErrorEvent{
 		MessageID: m.Meta().Index,
-		Timestamp: uint64(m.Meta().Timestamp),
+		Timestamp: m.Meta().Timestamp,
 		Source:    SOURCE_JS,
 		Name:      m.Name,
 		Message:   m.Message,
