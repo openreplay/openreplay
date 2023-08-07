@@ -839,7 +839,8 @@ class SearchErrorsSchema(SessionsSearchPayloadSchema):
 class ProductAnalyticsFilterType(str, Enum):
     event_type = 'eventType'
     start_point = 'startPoint'
-    user_id = FilterType.user_id.value
+    end_point = 'endPoint'
+    exclude_point = 'exclude'
 
 
 class ProductAnalyticsEventType(str, Enum):
@@ -850,27 +851,58 @@ class ProductAnalyticsEventType(str, Enum):
 
 
 class ProductAnalyticsFilter(BaseModel):
-    type: ProductAnalyticsFilterType = Field(...)
-    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
-    value: List[Union[ProductAnalyticsEventType, str]] = Field(...)
+    type: Union[ProductAnalyticsFilterType, FilterType]
+    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
+    # TODO: support session metadat filters
+    value: List[Union[ProductAnalyticsEventType, IssueType, PlatformType, int, str]] = Field(...)
+
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
     @model_validator(mode='after')
     def __validator(cls, values):
         if values.type == ProductAnalyticsFilterType.event_type:
             assert values.value is not None and len(values.value) > 0, \
                 f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
-            assert isinstance(values.value[0], ProductAnalyticsEventType), \
+            assert ProductAnalyticsEventType.has_value(values.value[0]), \
                 f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
 
         return values
 
 
-class PathAnalysisSchema(_TimedSchema):
-    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
-    endTimestamp: int = Field(default=TimeUTC.now())
+class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
+    # startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
+    # endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
+
+    @model_validator(mode='after')
+    def __validator(cls, values):
+        filters = []
+        for f in values.filters:
+            if ProductAnalyticsFilterType.has_value(f.type) and len(f.value) == 0:
+                continue
+            filters.append(f)
+        values.filters = filters
+        
+        # Path analysis should have only 1 start-point OR 1 end-point
+        # start-point's value and end-point's value should not be excluded
+        s_e_detected = 0
+        s_e_values = []
+        exclude_values = []
+        for f in values.filters:
+            if f.type in (
+                    ProductAnalyticsFilterType.event_type.start_point, ProductAnalyticsFilterType.event_type.end_point):
+                s_e_detected += 1
+                s_e_values += f.value
+            elif f.type == ProductAnalyticsFilterType.exclude_point.value:
+                exclude_values += f.value
+
+        assert s_e_detected <= 1, f"Only 1 startPoint OR 1 endPoint is allowed"
+        for v in exclude_values:
+            assert v not in s_e_values, f"startPoint and endPoint cannot be excluded, value: {v}"
+
+        return values
 
 
 # class AssistSearchPayloadSchema(BaseModel):
@@ -1009,6 +1041,10 @@ class MetricOfFunnels(str, Enum):
 
 class MetricOfClickMap(str, Enum):
     click_map_url = "clickMapUrl"
+
+
+class MetricOfPathAnalysis(str, Enum):
+    session_count = MetricOfTimeseries.session_count.value
 
 
 # class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
@@ -1246,12 +1282,18 @@ class CardInsights(__CardSchema):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
+# class CardPathAnalysisSchema(BaseModel):
+class CardPathAnalysisSchema(CardSessionsSchema):
+    filter: Optional[PathAnalysisSchema] = Field(default=None)
+
+
 class CardPathAnalysis(__CardSchema):
     metric_type: Literal[MetricType.pathAnalysis]
-
-    # TODO: what to put here?
-    # metric_of: MetricOfClickMap = Field(default=MetricOfTimeseries.session_count)
+    metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
+
+    # TODO: testing
+    series: List[CardPathAnalysisSchema] = Field(default=[])
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
@@ -1263,10 +1305,6 @@ class CardPathAnalysis(__CardSchema):
     def __transform(cls, values):
         # values.metric_of = MetricOfClickMap(values.metric_of)
         return values
-
-    @model_validator(mode='after')
-    def restrictions(cls, values):
-        raise ValueError(f"metricType:{MetricType.pathAnalysis} not supported yet.")
 
 
 # Union of cards-schemas that doesn't change between FOSS and EE
