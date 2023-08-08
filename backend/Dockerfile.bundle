@@ -16,7 +16,7 @@ COPY internal internal
 
 RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags dynamic openreplay/backend/cmd/$name; done
 
-FROM alpine AS entrypoint
+FROM alpine:3.18.3 AS entrypoint
 #FROM pygmy/alpine-tini:latest
 RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl-gssapi cyrus-sasl-devel pkgconf
 
