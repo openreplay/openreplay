@@ -5,7 +5,7 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite
+from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite, product_analytics
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient, extra
@@ -129,14 +129,13 @@ def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: i
                                                                            series=data.series))
 
 
-def __get_path_analysis_chart(project_id, data: schemas.CardSchema):
+def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
-        data.series.append(schemas.CardSeriesSchema())
+        data.series.append(schemas.CardPathAnalysisSchema())
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id,
-                                           data=schemas.PathAnalysisSchema(**data.series[0].filter.model_dump()))
+    return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter)
 
 
 def __is_path_analysis(data: schemas.CardSchema):
@@ -216,7 +215,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.click_map: __get_click_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
         schemas.MetricType.insights: __get_insights_chart,
-        schemas.MetricType.pathAnalysis: empty
+        schemas.MetricType.pathAnalysis: __get_path_analysis_chart
     }
     return supported.get(data.metric_type, empty)(project_id=project_id, data=data, user_id=user_id)
 
