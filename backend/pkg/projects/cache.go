@@ -28,10 +28,10 @@ func (c *cacheImpl) Set(project *Project) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("project:id:%d", project.ProjectID), projectBytes, time.Minute*10).Result(); err != nil {
+	if _, err = c.db.Redis.Set(fmt.Sprintf("project:id:%d", project.ProjectID), projectBytes, time.Minute*20).Result(); err != nil {
 		return err
 	}
-	if _, err = c.db.Redis.Set(fmt.Sprintf("project:key:%s", project.ProjectKey), projectBytes, time.Minute*10).Result(); err != nil {
+	if _, err = c.db.Redis.Set(fmt.Sprintf("project:key:%s", project.ProjectKey), projectBytes, time.Minute*20).Result(); err != nil {
 		return err
 	}
 	return nil
