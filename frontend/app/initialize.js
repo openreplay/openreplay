@@ -23,6 +23,8 @@ const customTheme = {
     colorSecondary: '#3EAAAF',
     colorBgLayout: colors['gray-lightest'],
     colorBgContainer: colors['white'],
+    colorLink: colors['teal'],
+    colorLinkHover: colors['teal-dark'],
 
     borderRadius: 4,
     fontSize: 14,

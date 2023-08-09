@@ -81,7 +81,7 @@ function ProjectDropdown(props: Props) {
 
   return (
     <Dropdown overlay={menu} placement='bottomLeft'>
-      <Button >
+      <Button type="text">
         <Space>
           {showCurrent && activeSite ? activeSite.host : 'All Projects'}
           <CaretDownOutlined />
