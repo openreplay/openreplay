@@ -4,6 +4,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import cn from 'classnames';
+import { Switch } from 'antd';
 
 type Props = {
   isAdmin: boolean;
@@ -51,7 +52,7 @@ function CaptureRate(props: Props) {
       <div className='my-1'>The percentage of session you want to capture</div>
       <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
         <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
-          <Toggler checked={captureAll} name='test' onChange={toggleRate} />
+          <Switch checked={captureAll} onChange={toggleRate} />
           <span className='ml-2' style={{ color: captureAll ? '#000000' : '#999' }}>
                         100%
                     </span>
