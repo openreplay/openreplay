@@ -12,7 +12,9 @@ import UserMenu from 'Components/Header/UserMenu/UserMenu';
 import ErrorGenPanel from 'App/dev/components/ErrorGenPanel';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { connect } from 'react-redux';
-import { Menu, MenuProps, Popover, Button } from 'antd';
+import { Menu, MenuProps, Popover } from 'antd';
+import { Button } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -42,12 +44,15 @@ function TopRight(props: Props) {
 
       <div className='mx-2' />
 
-      <Popover content={<SettingsMenu account={account} />}>
-        {/*<Button type='primary'>Hover me</Button>*/}
-        <NavLink to={CLIENT_PATH}>
-          <Icon name='gear' size='20' color='gray-dark' className='cursor-pointer' />
-        </NavLink>
-      </Popover>
+
+      {/*<Button type='primary'>Hover me</Button>*/}
+      <NavLink to={CLIENT_PATH}>
+        <Popover content={<SettingsMenu account={account} />}>
+          <Button icon={<SettingOutlined />}></Button>
+          {/*<Icon name='gear' size='20' color='gray-dark' className='cursor-pointer' />*/}
+        </Popover>
+      </NavLink>
+
 
       <div className='mx-2' />
 
@@ -55,7 +60,7 @@ function TopRight(props: Props) {
 
       <div className='mx-2' />
 
-      <Popover content={<UserMenu className='' />}>
+      <Popover content={<UserMenu className='' />} placement={'topRight'}>
         <div className='flex items-center cursor-pointer'>
           <div className='w-10 h-10 bg-tealx rounded-full flex items-center justify-center color-white'>
             {getInitials(account.name)}

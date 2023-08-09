@@ -132,7 +132,7 @@ const Sites = ({
 
   return (
     <Loader loading={loading}>
-      <div className={stl.wrapper}>
+      <div className="bg-white rounded-lg">
         <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
           <PageTitle
             title={<div className='mr-4'>Projects</div>}

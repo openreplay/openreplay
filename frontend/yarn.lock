@@ -49,6 +49,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ant-design/icons-svg@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "@ant-design/icons-svg@npm:4.3.0"
+  checksum: 09067374027ffbc971a5e351e102553ac4d1319148ee9f4247a1f657561a46d70229b7cffaa65bc0e4d3540a4f230a4402bb1d6ab81c2c9803c8888373c0ff21
+  languageName: node
+  linkType: hard
+
 "@ant-design/icons@npm:^5.0.0":
   version: 5.0.1
   resolution: "@ant-design/icons@npm:5.0.1"
@@ -62,6 +69,23 @@ __metadata:
     react: ">=16.0.0"
     react-dom: ">=16.0.0"
   checksum: c1bc8dbe1f3ce76ba934e0ea61bcabc04a942651a9366908d8081af0de37acca37c40ba93de2ae1d49b4b2591fc6b9bc7b9904824478f02fc69effae00aaf0ab
+  languageName: node
+  linkType: hard
+
+"@ant-design/icons@npm:^5.2.5":
+  version: 5.2.5
+  resolution: "@ant-design/icons@npm:5.2.5"
+  dependencies:
+    "@ant-design/colors": ^7.0.0
+    "@ant-design/icons-svg": ^4.3.0
+    "@babel/runtime": ^7.11.2
+    classnames: ^2.2.6
+    lodash.camelcase: ^4.3.0
+    rc-util: ^5.31.1
+  peerDependencies:
+    react: ">=16.0.0"
+    react-dom: ">=16.0.0"
+  checksum: 085087ebaa181de62323c706cf86c8304967340dfcbd5881117f01a20eaedefad6e42b6998090e7416d1378315f4ee19738a6f1ab0049b0b156cfd7e473c7544
   languageName: node
   linkType: hard
 
@@ -15648,6 +15672,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.camelcase@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "lodash.camelcase@npm:4.3.0"
+  checksum: fcba15d21a458076dd309fce6b1b4bf611d84a0ec252cb92447c948c533ac250b95d2e00955801ebc367e5af5ed288b996d75d37d2035260a937008e14eaf432
+  languageName: node
+  linkType: hard
+
 "lodash.clonedeep@npm:^4.5.0, lodash.clonedeep@npm:~4.5.0":
   version: 4.5.0
   resolution: "lodash.clonedeep@npm:4.5.0"
@@ -17558,6 +17589,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "openreplay@workspace:."
   dependencies:
+    "@ant-design/icons": ^5.2.5
     "@babel/cli": ^7.10.5
     "@babel/core": ^7.17.12
     "@babel/node": ^7.16.8
@@ -20110,6 +20142,19 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: c4ad4a1225833785260dac3210573290a991281eda923d6f58c3a63d2cbcd04792ab60da86d4652a172edcf6f01901c3a67198490bacbfd03b49e70d314bc4b7
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.31.1":
+  version: 5.36.0
+  resolution: "rc-util@npm:5.36.0"
+  dependencies:
+    "@babel/runtime": ^7.18.3
+    react-is: ^16.12.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 262e26e8be16c0ad0ccbfeeeb0b6b3913cebe3be83f7760f73b93e33bb04392b53fcfb05f01d6064c05a588603cb9c73a4c997b296739fc357772976b972bb29
   languageName: node
   linkType: hard
 

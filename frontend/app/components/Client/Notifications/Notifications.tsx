@@ -20,7 +20,7 @@ function Notifications() {
   };
 
   return (
-    <div className="p-5">
+    <div className="bg-white rounded-lg p-5">
       <div className={stl.tabHeader}>{<h3 className={cn(stl.tabTitle, 'text-2xl')}>{'Notifications'}</h3>}</div>
       <div className="">
         <div className="text-lg font-medium">Weekly project summary</div>

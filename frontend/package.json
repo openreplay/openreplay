@@ -23,6 +23,7 @@
     "cy:test-edge": "cypress run --browser edge"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.2.5",
     "@floating-ui/react-dom-interactions": "^0.10.3",
     "@sentry/browser": "^5.21.1",
     "@svg-maps/world": "^1.0.1",

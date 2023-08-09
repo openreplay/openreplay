@@ -4,20 +4,48 @@ import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { client, CLIENT_DEFAULT_TAB, CLIENT_TABS, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { categories, MENU, preferences, PREFERENCES_MENU } from './data';
+import { categories as main_menu, MENU, preferences, PREFERENCES_MENU } from './data';
+import { connect } from 'react-redux';
+import { MODULES } from 'Components/Client/Modules';
+import cn from 'classnames';
+import { Icon } from 'UI';
 
 const { Text } = Typography;
 
 
 interface Props {
   siteId?: string;
+  modules: string[];
 }
 
 
 function SideMenu(props: RouteComponentProps<Props>) {
   // @ts-ignore
-  const { siteId } = props;
+  const { siteId, modules } = props;
   const isPreferencesActive = props.location.pathname.includes('/client/');
+
+  let menu = isPreferencesActive ? preferences : main_menu;
+
+  menu.forEach((category) => {
+    category.items.forEach((item) => {
+      if (item.key === MENU.NOTES && !modules.includes(MODULES.NOTES)) {
+        item.hidden = true;
+      }
+
+      if ((item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && !modules.includes(MODULES.ASSIST)) {
+        item.hidden = true;
+      }
+
+      if (item.key === MENU.SESSIONS && !modules.includes(MODULES.OFFLINE_RECORDINGS)) {
+        item.hidden = true;
+      }
+
+      if (item.key === MENU.ALERTS && !modules.includes(MODULES.ALERTS)) {
+        item.hidden = true;
+      }
+    });
+  });
+
 
   const menuRoutes: any = {
     exit: () => props.history.push(withSiteId(routes.sessions(), siteId)),
@@ -42,6 +70,7 @@ function SideMenu(props: RouteComponentProps<Props>) {
     [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
+    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES)
   };
 
   const handleClick = (item: any) => {
@@ -68,31 +97,37 @@ function SideMenu(props: RouteComponentProps<Props>) {
   };
 
 
-
-
   return (
     <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
           style={{ backgroundColor: '#f6f6f6', border: 'none' }}>
       {isPreferencesActive && <Menu.Item key='exit' icon={<SVG name='arrow-bar-left' />}>
         <Text className='ml-2'>Exit</Text>
       </Menu.Item>}
-      {(isPreferencesActive ? preferences : categories).map((category, index) => (
+      {(isPreferencesActive ? preferences : main_menu).map((category, index) => (
         <React.Fragment key={category.key}>
           {index > 0 && <Divider style={{ margin: '6px 0' }} />}
           <Menu.ItemGroup key={category.key}
                           title={<Text className='uppercase text-sm' type='secondary'>{category.title}</Text>}>
-            {category.items.map((item) => item.children ? (
-              <Menu.SubMenu key={item.key} title={<Text className='ml-2'>{item.label}</Text>}
-                            icon={<SVG name={item.icon} size={16} />}>
-                {item.children.map((child) => <Menu.Item key={child.key}>{child.label}</Menu.Item>)}
-              </Menu.SubMenu>
-            ) : (
-              <Menu.Item key={item.key} icon={<SVG name={item.icon} size={16} />}
-                         style={{ color: '#333' }}
-                         className={isMenuItemActive(item.key) ? 'ant-menu-item-selected bg-active-blue color-teal' : ''}>
-                <Text className='ml-2'>{item.label}</Text>
-              </Menu.Item>
-            ))}
+            {category.items.filter((item: any) => !item.hidden).map((item: any) => {
+              const isActive = isMenuItemActive(item.key);
+              return item.children ? (
+                <Menu.SubMenu
+                  key={item.key}
+                  title={<Text
+                    className={cn('ml-5 !rounded')}>{item.label}</Text>}
+                  icon={<SVG name={item.icon} size={16} />}>
+                  {item.children.map((child: any) => <Menu.Item
+                    className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
+                    key={child.key}>{child.label}</Menu.Item>)}
+                </Menu.SubMenu>
+              ) : (
+                <Menu.Item key={item.key} icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                           style={{ color: '#333' }}
+                           className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}>
+                  <Text className={cn('ml-2', { 'color-teal': isActive })}>{item.label}</Text>
+                </Menu.Item>
+              );
+            })}
           </Menu.ItemGroup>
         </React.Fragment>
       ))}
@@ -100,4 +135,6 @@ function SideMenu(props: RouteComponentProps<Props>) {
   );
 }
 
-export default withRouter(SideMenu);
+export default withRouter(connect((state: any) => ({
+  modules: state.getIn(['user', 'account', 'modules']) || []
+}))(SideMenu));

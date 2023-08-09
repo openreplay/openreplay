@@ -31,7 +31,7 @@ function HealthWidget({
   }, [lastAsked]);
 
   const title = !isError && healthOk ? 'All Systems Operational' : 'Service disruption';
-  const icon = !isError && healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
+  const icon = !isError && healthOk ? ('check-circle-fill' as const) : ('ic-errors' as const);
 
   const problematicServices = Object.values(healthResponse?.healthMap || {}).filter(
     (service: Record<string, any>) => !service.healthOk
@@ -50,12 +50,12 @@ function HealthWidget({
         <div
           className={cn(
             'p-2 gap-2 w-full font-semibold flex items-center rounded',
-            healthOk
+            !isError && healthOk
               ? 'color-green bg-figmaColors-secondary-outlined-hover-background'
-              : 'bg-red-lightest'
+              : 'bg-red-lightest color-red'
           )}
         >
-          <Icon name={icon} size={16} color={'green'} />
+          <Icon name={icon} size={16} color={!isError && healthOk ? 'green': 'red'} />
           <span>{title}</span>
         </div>
         <div className={'text-secondary flex w-full justify-between items-center text-sm'}>
@@ -70,9 +70,9 @@ function HealthWidget({
         {isError && <div className={'text-secondary text-sm'}>Error getting service health status</div>}
 
         <div className={'w-full'}>
-          <div className={'font-semibold'}>Captured in total</div>
-          <div>Sessions: {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}</div>
-          <div>Events: {healthResponse.details?.numberOfEventCaptured.toLocaleString()}</div>
+          <div className={'font-semibold'}>Captured</div>
+          <div>{healthResponse.details?.numberOfSessionsCaptured.toLocaleString()} Sessions</div>
+          <div>{healthResponse.details?.numberOfEventCaptured.toLocaleString()} Events</div>
         </div>
         <div className={'w-full'}>
           {!isError && !healthOk ? (

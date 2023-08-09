@@ -19,7 +19,7 @@ const connector = connect(mapStateToProps);
 
 function SessionsListingSettings(props: Props) {
   return (
-    <div className='p-5'>
+    <div className='bg-white rounded-lg p-5'>
       <PageTitle title={<div>Sessions Listing</div>} />
 
       <div className='flex flex-col mt-4'>

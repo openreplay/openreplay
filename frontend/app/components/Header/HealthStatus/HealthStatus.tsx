@@ -6,6 +6,8 @@ import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
 import { getHealthRequest } from './getHealth';
 import UserMenu from 'Components/Header/UserMenu/UserMenu';
 import { Popover } from 'antd';
+import { Button } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 export interface IServiceStats {
   name: 'backendServices' | 'databases' | 'ingestionPipeline' | 'SSL';
@@ -68,15 +70,16 @@ function HealthStatus() {
           isError={isError}
         />
       }>
-        <div
-          className={
-            'rounded cursor-pointer flex items-center h-full'
-          }
-        >
-          <div className={'rounded p-2 border border-light-gray bg-white flex items-center'}>
-            <Icon name={icon} size={18} />
-          </div>
-        </div>
+        <Button icon={<ExclamationCircleOutlined />}></Button>
+        {/*<div*/}
+        {/*  className={*/}
+        {/*    'rounded cursor-pointer flex items-center h-full'*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <div className={'rounded p-2 border border-light-gray bg-white flex items-center'}>*/}
+        {/*    <Icon name={icon} size={18} />*/}
+        {/*  </div>*/}
+        {/*</div>*/}
       </Popover>
       {showModal ? (
         <HealthModal

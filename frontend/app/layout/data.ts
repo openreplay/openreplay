@@ -1,12 +1,14 @@
 import React from 'react';
 import PreferencesMenu from 'Components/Client/PreferencesMenu';
 
-interface MenuItem {
+export interface MenuItem {
   label: React.ReactNode;
   key: React.Key;
   icon?: string;
   children?: MenuItem[];
   route?: string;
+  hidden?: boolean;
+  disabled?: boolean;
 }
 
 interface Category {
@@ -21,6 +23,7 @@ export const enum PREFERENCES_MENU {
   INTEGRATIONS = 'integrations',
   METADATA = 'metadata',
   WEBHOOKS = 'webhooks',
+  MODULES = 'modules',
   PROJECTS = 'projects',
   ROLES_ACCESS = 'roles-access',
   AUDIT = 'audit',
@@ -56,7 +59,7 @@ export const categories: Category[] = [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
       // { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic' },
       // { label: 'Vault', key: MENU.VAULT, icon: 'safe' },
-      { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'safe' },
+      { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
     ]
   },
@@ -73,14 +76,15 @@ export const categories: Category[] = [
     key: 'analytics',
     items: [
       { label: 'Dashboards', key: MENU.DASHBOARDS, icon: 'columns-gap' },
-      {
-        label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
-          { label: 'All', key: MENU.CARDS },
-          { label: 'Funnels', key: MENU.FUNNELS },
-          { label: 'Error Tracking', key: MENU.ERROR_TRACKING },
-          { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
-        ]
-      },
+      { label: 'Card', key: MENU.CARDS, icon: 'bar-chart-line' },
+      // {
+      //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
+      //     { label: 'All', key: MENU.CARDS },
+      //     { label: 'Funnels', key: MENU.FUNNELS },
+      //     { label: 'Error Tracking', key: MENU.ERROR_TRACKING },
+      //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
+      //   ]
+      // },
       { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' }
     ]
   },
@@ -105,6 +109,7 @@ export const preferences: Category[] = [
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
+      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'link-45deg' },
       { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
       { label: 'Roles & Access', key: PREFERENCES_MENU.ROLES_ACCESS, icon: 'diagram-3' },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul' },

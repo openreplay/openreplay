@@ -69,6 +69,7 @@ export const CLIENT_TABS = {
   NOTIFICATIONS: 'notifications',
   AUDIT: 'audit',
   BILLING: 'billing',
+  MODULES: 'modules',
 };
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${Object.values(CLIENT_TABS).join('|')})`;
