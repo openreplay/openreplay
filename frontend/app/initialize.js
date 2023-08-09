@@ -8,17 +8,29 @@ import Router from './Router';
 import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, theme } from 'antd';
+import colors from 'App/theme/colors';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
-// Custom theme configuration
 const customTheme = {
-  '@primary-color': 'red', // Change the primary color to red
-  '@text-color': 'red', // Change the default text color to red
-  '@font-size-base': '20px', // Change the base font size
-  // Add more custom variables as needed...
+  // algorithm: theme.darkAlgorithm,
+  token: {
+    // Seed Token
+    colorPrimary: colors.teal,
+    colorPrimaryActive: '#394EFF',
+    colorSecondary: '#3EAAAF',
+    colorBgLayout: colors['gray-lightest'],
+    colorBgContainer: colors['white'],
+
+    borderRadius: 4,
+    fontSize: 14,
+    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\''
+
+    // Alias Token
+    // colorBgContainer: '#f6ffed'
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -657,7 +657,7 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
 
 @app.post('/users/modules', tags=['users'])
 def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
-                       data: schemas.FeatureFlagStatus = Body(...)):
+                       data: schemas.ModuleStatus = Body(...)):
     return users.update_user_module(context.user_id, data)
 
 

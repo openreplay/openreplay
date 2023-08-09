@@ -1,6 +1,6 @@
 export { default } from './Modules';
 
-const enum MODULES {
+export const enum MODULES {
   ASSIST = 'assist',
   NOTES = 'notes',
   BUG_REPORTS = 'bug-reports',

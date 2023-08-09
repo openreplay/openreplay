@@ -121,10 +121,6 @@ const Router: React.FC<RouterProps> = (props) => {
   } = props;
 
   useEffect(() => {
-    console.log('siteId from router', siteId);
-  }, [siteId]);
-
-  useEffect(() => {
     const fetchInitialData = async () => {
       const siteIdFromPath = parseInt(window.location.pathname.split('/')[1]);
       await fetchUserInfo();
@@ -193,8 +189,8 @@ const Router: React.FC<RouterProps> = (props) => {
   const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
 
   return isLoggedIn ? (
-      <Layout hideHeader={hideHeader} siteId={siteId}>
-        <ModalProvider>
+      <ModalProvider>
+        <Layout hideHeader={hideHeader} siteId={siteId}>
           <Loader loading={loading} className='flex-1'>
             <Notification />
 
@@ -276,8 +272,8 @@ const Router: React.FC<RouterProps> = (props) => {
             </Suspense>
           </Loader>
           {!isEnterprise && !isPlayer && <SupportCallout />}
-        </ModalProvider>
-      </Layout>
+        </Layout>
+      </ModalProvider>
     ) :
     <PublicRoutes />;
 };

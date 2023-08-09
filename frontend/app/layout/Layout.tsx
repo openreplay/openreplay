@@ -17,20 +17,7 @@ function Layout(props: Props) {
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {!hideHeader && (
-        <Header
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 1,
-            padding: '0 15px',
-            display: 'flex',
-            alignItems: 'center',
-            height: '60px'
-          }}
-          className='justify-between bg-gray-lightest'
-        >
-          <TopHeader />
-        </Header>
+        <TopHeader />
       )}
       <AntLayout>
         {!hideHeader && (

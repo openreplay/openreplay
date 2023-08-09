@@ -1,10 +1,17 @@
 import React from 'react';
 import ModuleCard from 'Components/Client/Modules/ModuleCard';
-import { modules } from './';
+import { modules as list } from './';
 import withPageTitle from 'HOCs/withPageTitle';
+import { connect } from 'react-redux';
 
-function Modules() {
-  const onToggle = (module: Module) => {
+interface Props {
+  modules: string[];
+}
+
+function Modules(props: Props) {
+  const { modules } = props;
+
+  const onToggle = (module: any) => {
     module.isEnabled = !module.isEnabled;
   };
   return (
@@ -19,7 +26,7 @@ function Modules() {
       </div>
 
       <div className='mt-4 grid grid-cols-3 gap-3'>
-        {modules.map((module) => (
+        {list.map((module) => (
           <div key={module.key} className='flex flex-col h-full'>
             <ModuleCard module={module} onToggle={onToggle} />
           </div>
@@ -29,4 +36,7 @@ function Modules() {
   );
 }
 
-export default withPageTitle('Modules - OpenReplay Preferences')(Modules);
+
+export default withPageTitle('Modules - OpenReplay Preferences')(connect((state: any) => ({
+  modules: state.getIn(['user', 'account', 'modules']) || []
+}))(Modules));
