@@ -14,7 +14,7 @@ export interface IAccount extends IMember {
   license: string
   expirationDate?: DateTime
   permissions: string[]
-  modules: string[]
+  settings: any
   iceServers: string
   hasPassword: boolean
   apiKey: string
@@ -34,7 +34,7 @@ export default Member.extend({
   license: '',
   expirationDate: undefined,
   permissions: [],
-  modules: ['notes'],
+  settings: {},
   iceServers: undefined,
   hasPassword: false, // to check if it's SSO
   apiKey: undefined,

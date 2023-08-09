@@ -60,7 +60,7 @@ function ProjectDropdown(props: Props) {
       {isAdmin && (
         <>
           <Menu.Item icon={<FolderAddOutlined />} key='all-projects' onClick={addProjectClickHandler}>
-            Add Project
+            <Text>Add Project</Text>
           </Menu.Item>
           <Divider style={{ margin: 0 }} />
         </>
@@ -71,9 +71,9 @@ function ProjectDropdown(props: Props) {
           icon={<FolderOutlined />}
           key={site.id}
           onClick={() => handleSiteChange(site.id)}
-          className='px-3 py-2'
+          className="!py-2"
         >
-          {site.host}
+          <Text className="capitalize">{site.host}</Text>
         </Menu.Item>
       ))}
     </Menu>
@@ -83,7 +83,7 @@ function ProjectDropdown(props: Props) {
     <Dropdown overlay={menu} placement='bottomLeft'>
       <Button type="text">
         <Space>
-          {showCurrent && activeSite ? activeSite.host : 'All Projects'}
+          <Text className="font-medium capitalize">{showCurrent && activeSite ? activeSite.host : 'All Projects'}</Text>
           <CaretDownOutlined />
         </Space>
       </Button>

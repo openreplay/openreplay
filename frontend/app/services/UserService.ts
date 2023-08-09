@@ -1,5 +1,5 @@
 import APIClient from 'App/api_client';
-import { IUser } from 'App/mstore/types/user'
+import  User from 'App/mstore/types/user'
 
 export default class UserService {
     private client: APIClient;
@@ -24,7 +24,7 @@ export default class UserService {
             .then((response: { data: any; }) => response.data || {});
     }
 
-    save(user: IUser): Promise<any> {
+    save(user: User): Promise<any> {
         const data = user.toSave();
         if (user.userId) {
             return this.client.put('/client/members/' + user.userId, data)
@@ -86,6 +86,13 @@ export default class UserService {
         return this.client.post(`/notifications/view`, params)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});
+    }
+
+    saveModules(module: any) {
+        return this.client.post('/users/modules', module)
+            .then(r => r.json())
+            .then((response: { data: any; }) => response.data || {})
+            .catch(e => Promise.reject(e))
     }
 
 }

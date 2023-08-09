@@ -17,10 +17,10 @@ const Avatar = ({
       <div
         className={cn(
           // stl.wrapper,
-          'border flex items-center justify-center rounded-full relative'
+          'border flex items-center justify-center rounded-full relative bg-gray-50'
         )}
-        // style={{ width, height }}
       >
+        {/*<img src={`/assets/${iconName}`} width={iconSize} height={iconSize} />*/}
         <Icon name={iconName} size={iconSize} color='tealx' />
         {isAssist && (
           <div

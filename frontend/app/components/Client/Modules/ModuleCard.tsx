@@ -22,7 +22,8 @@ function ModuleCard(props: Props) {
           <p className='flex-grow'>{module.description}</p>
         </div>
         <div className='flex items-end'>
-          <Switch size='small' checked={module.isEnabled} title={module.isEnabled ? 'A' : 'B'} />
+          <Switch size='small' checked={module.isEnabled} title={module.isEnabled ? 'A' : 'B'}
+                  onChange={() => props.onToggle(module)} />
         </div>
       </div>
     </div>

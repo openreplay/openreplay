@@ -33,7 +33,7 @@ def get_user_settings(user_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_user_module(user_id, module):
+def update_user_module(user_id, data: schemas.ModuleStatus):
     # example data = {"settings": {"modules": ['ASSIST', 'METADATA']}
     #     update user settings from users.settings:jsonb column only update settings.modules
     #   if module property is not exists, it will be created
@@ -46,10 +46,11 @@ def update_user_module(user_id, module):
     if settings.get("modules") is None:
         settings["modules"] = []
 
-    if module in settings["modules"]:
-        settings["modules"].remove(module)
-    else:
-        settings["modules"].append(module)
+    if data.status and data.module not in settings["modules"]:
+        settings["modules"].append(data.module)
+
+    elif not data.status and data.module in settings["modules"]:
+        settings["modules"].remove(data.module)
 
     return update_user_settings(user_id, settings)
 
@@ -64,7 +65,7 @@ def update_user_settings(user_id, settings):
                     WHERE users.user_id = %(user_id)s
                             AND deleted_at IS NULL
                     RETURNING settings;""",
-                {"user_id": user_id, "settings": settings})
+                {"user_id": user_id, "settings": json.dumps(settings)})
         )
         return helper.dict_to_camel_case(cur.fetchone())
 

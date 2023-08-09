@@ -1436,7 +1436,7 @@ class FeatureFlagStatus(BaseModel):
 
 class ModuleStatus(BaseModel):
     module: str = Field(..., description="Possible values: notes, bugs, live",
-                        regex="^(assist|notes|bug_reports|sessions|alerts)$")
+                        regex="^(assist|notes|bug-reports|offline-recordings|alerts)$")
     status: bool = Field(...)
 
     class Config:

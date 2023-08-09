@@ -23,6 +23,7 @@ function SideMenu(props: RouteComponentProps<Props>) {
   // @ts-ignore
   const { siteId, modules } = props;
   const isPreferencesActive = props.location.pathname.includes('/client/');
+  console.log('modules', modules);
 
   let menu = isPreferencesActive ? preferences : main_menu;
 
@@ -136,5 +137,5 @@ function SideMenu(props: RouteComponentProps<Props>) {
 }
 
 export default withRouter(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'modules']) || []
+  modules: state.getIn(['user', 'account', 'settings', "modules"]) || []
 }))(SideMenu));
