@@ -179,53 +179,9 @@ func (s *sessionsImpl) UpdateUserID(sessionID uint64, userID string) error {
 	return nil
 }
 
-func (s *sessionsImpl) _updateUserID(sessionID uint64, userID string) error {
-	if err := s.storage.InsertUserID(sessionID, userID); err != nil {
-		return err
-	}
-	if session, err := s.cache.Get(sessionID); err != nil {
-		session.UserID = &userID
-		if err := s.cache.Set(session); err != nil {
-			log.Printf("Failed to cache session: %v", err)
-		}
-		return nil
-	}
-	session, err := s.getFromDB(sessionID)
-	if err != nil {
-		log.Printf("Failed to get session from postgres: %v", err)
-		return nil
-	}
-	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
-	}
-	return nil
-}
-
 // UpdateAnonymousID usage: in db handler
 func (s *sessionsImpl) UpdateAnonymousID(sessionID uint64, userAnonymousID string) error {
 	s.updates.AddUserID(sessionID, userAnonymousID)
-	return nil
-}
-
-func (s *sessionsImpl) _updateAnonymousID(sessionID uint64, userAnonymousID string) error {
-	if err := s.storage.InsertUserAnonymousID(sessionID, userAnonymousID); err != nil {
-		return err
-	}
-	if session, err := s.cache.Get(sessionID); err != nil {
-		session.UserAnonymousID = &userAnonymousID
-		if err := s.cache.Set(session); err != nil {
-			log.Printf("Failed to cache session: %v", err)
-		}
-		return nil
-	}
-	session, err := s.getFromDB(sessionID)
-	if err != nil {
-		log.Printf("Failed to get session from postgres: %v", err)
-		return nil
-	}
-	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
-	}
 	return nil
 }
 
@@ -236,30 +192,6 @@ func (s *sessionsImpl) UpdateReferrer(sessionID uint64, referrer string) error {
 	}
 	baseReferrer := url.DiscardURLQuery(referrer)
 	s.updates.SetReferrer(sessionID, referrer, baseReferrer)
-	return nil
-}
-
-func (s *sessionsImpl) _updateReferrer(sessionID uint64, referrer string) error {
-	baseReferrer := url.DiscardURLQuery(referrer)
-	if err := s.storage.InsertReferrer(sessionID, referrer, baseReferrer); err != nil {
-		return err
-	}
-	if session, err := s.cache.Get(sessionID); err != nil {
-		session.Referrer = &referrer
-		session.ReferrerBase = &baseReferrer
-		if err := s.cache.Set(session); err != nil {
-			log.Printf("Failed to cache session: %v", err)
-		}
-		return nil
-	}
-	session, err := s.getFromDB(sessionID)
-	if err != nil {
-		log.Printf("Failed to get session from postgres: %v", err)
-		return nil
-	}
-	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
-	}
 	return nil
 }
 
@@ -280,31 +212,6 @@ func (s *sessionsImpl) UpdateMetadata(sessionID uint64, key, value string) error
 	}
 
 	s.updates.SetMetadata(sessionID, keyNo, value)
-	return nil
-}
-
-func (s *sessionsImpl) _updateMetadata(sessionID uint64, key, value string) error {
-	session, err := s.Get(sessionID)
-	if err != nil {
-		return err
-	}
-	project, err := s.projects.GetProject(session.ProjectID)
-	if err != nil {
-		return err
-	}
-
-	keyNo := project.GetMetadataNo(key)
-	if keyNo == 0 {
-		return nil
-	}
-
-	if err := s.storage.InsertMetadata(sessionID, keyNo, value); err != nil {
-		return err
-	}
-	session.SetMetadata(keyNo, value)
-	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
-	}
 	return nil
 }
 
