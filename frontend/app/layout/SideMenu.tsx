@@ -28,19 +28,19 @@ function SideMenu(props: RouteComponentProps<Props>) {
 
   menu.forEach((category) => {
     category.items.forEach((item) => {
-      if (item.key === MENU.NOTES && !modules.includes(MODULES.NOTES)) {
+      if (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)) {
         item.hidden = true;
       }
 
-      if ((item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && !modules.includes(MODULES.ASSIST)) {
+      if ((item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST)) {
         item.hidden = true;
       }
 
-      if (item.key === MENU.SESSIONS && !modules.includes(MODULES.OFFLINE_RECORDINGS)) {
+      if (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)) {
         item.hidden = true;
       }
 
-      if (item.key === MENU.ALERTS && !modules.includes(MODULES.ALERTS)) {
+      if (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)) {
         item.hidden = true;
       }
     });
