@@ -19,6 +19,8 @@ import {
   PERFORMANCE,
   WEB_VITALS,
   INSIGHTS,
+  USER_PATH,
+  RETENTION,
 } from 'App/constants/card';
 import { eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
@@ -47,6 +49,8 @@ function WidgetForm(props: Props) {
   const isClickmap = metric.metricType === CLICKMAP;
   const isFunnel = metric.metricType === FUNNEL;
   const isInsights = metric.metricType === INSIGHTS;
+  const isPathAnalysis = metric.metricType === USER_PATH;
+  const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
@@ -55,7 +59,7 @@ function WidgetForm(props: Props) {
     metric.metricType
   );
 
-  const excludeFilterKeys = isClickmap ? eventKeys : [];
+  const excludeFilterKeys = isClickmap || isPathAnalysis ? eventKeys : [];
 
   useEffect(() => {
     if (!!metric && !initialInstance) {
@@ -132,6 +136,38 @@ function WidgetForm(props: Props) {
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 
+          {isPathAnalysis && (
+            <>
+              <span className="mx-3"></span>
+              <Select
+                name="metricOf"
+                options={[
+                  { value: 'start-point', label: 'With Start Point' },
+                  { value: 'end-point', label: 'With End Point' },
+                ]}
+                defaultValue={metric.metricOf}
+                // value={metric.metricOf}
+                onChange={writeOption}
+                placeholder="All Issues"
+              />
+
+              <span className="mx-3">showing</span>
+              <Select
+                name="metricValue"
+                options={[
+                  { value: 'pages', label: 'Pages' },
+                  { value: 'clicks', label: 'Clicks' },
+                  { value: 'events', label: 'Events' },
+                ]}
+                defaultValue="pages"
+                // value={metric.metricValue}
+                isMulti={true}
+                onChange={writeOption}
+                placeholder="All Issues"
+              />
+            </>
+          )}
+
           {metric.metricOf === FilterKey.ISSUE && metric.metricType === TABLE && (
             <>
               <span className="mx-3">issue type</span>
@@ -187,8 +223,8 @@ function WidgetForm(props: Props) {
       {!isPredefined && (
         <div className="form-group">
           <div className="flex items-center font-medium py-2">
-            {`${isTable || isFunnel || isClickmap || isInsights ? 'Filter by' : 'Chart Series'}`}
-            {!isTable && !isFunnel && !isClickmap && !isInsights && (
+            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (
               <Button
                 className="ml-2"
                 variant="text-primary"
@@ -202,14 +238,15 @@ function WidgetForm(props: Props) {
 
           {metric.series.length > 0 &&
             metric.series
-              .slice(0, isTable || isFunnel || isClickmap || isInsights ? 1 : metric.series.length)
+              .slice(0, isTable || isFunnel || isClickmap || isInsights || isRetention ? 1 : metric.series.length)
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
-                    supportsEmpty={!isClickmap}
+                    canExclude={isPathAnalysis}
+                    supportsEmpty={!isClickmap && !isPathAnalysis}
                     excludeFilterKeys={excludeFilterKeys}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
-                    hideHeader={isTable || isClickmap || isInsights}
+                    hideHeader={isTable || isClickmap || isInsights || isPathAnalysis || isFunnel}
                     seriesIndex={index}
                     series={series}
                     onRemoveSeries={() => metric.removeSeries(index)}

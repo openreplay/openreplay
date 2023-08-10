@@ -208,9 +208,8 @@ export default Record({
   isEvent: false,
   index: 0,
   options: [],
-
   filters: [],
-
+  excludes: [],
 }, {
   keyKey: "_key",
   fromJS: ({ value, type, subFilter = false, ...filter }) => {

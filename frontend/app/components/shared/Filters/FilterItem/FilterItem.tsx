@@ -2,9 +2,9 @@ import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
-import {Button} from 'UI';
+import { Button } from 'UI';
 import FilterSource from '../FilterSource';
-import {FilterKey, FilterType} from 'App/types/filter/filterType';
+import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
 import {toJS} from "mobx";
 
@@ -18,6 +18,7 @@ interface Props {
   disableDelete?: boolean;
   excludeFilterKeys?: Array<string>;
   readonly?: boolean;
+  hideIndex?: boolean;
 }
 
 function FilterItem(props: Props) {
@@ -28,7 +29,7 @@ function FilterItem(props: Props) {
     saveRequestPayloads,
     disableDelete = false,
     excludeFilterKeys = []
-  } = props;
+ , hideIndex = false } = props;
   const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
   const isSubFilter = filter.type === FilterType.SUB_FILTERS;
   const replaceFilter = (filter: any) => {
@@ -62,7 +63,7 @@ function FilterItem(props: Props) {
   return (
     <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
       <div className="flex items-start w-full">
-        {!isFilter && (
+        {!isFilter && !hideIndex && (
           <div
             className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-light-shade mr-2">
             <span>{filterIndex + 1}</span>

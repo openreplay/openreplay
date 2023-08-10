@@ -13,13 +13,15 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 import { FilterKey } from 'Types/filter/filterType';
-import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS, INSIGHTS } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS, INSIGHTS, USER_PATH, RETENTION } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import SessionWidget from '../Sessions/SessionWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
+import SankeyChart from 'Shared/Insights/SankeyChart';
+import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 
 interface Props {
     metric: any;
@@ -199,6 +201,41 @@ function WidgetChart(props: Props) {
 
         if (metricType === INSIGHTS) {
             return <InsightsCard data={data} />
+        }
+
+        if (metricType === USER_PATH) {
+            const _data: any = {
+                nodes: [
+                  { name: 'Home Page' },
+                  { name: 'Dashboard' },
+                  { name: 'Preferences' },
+                  { name: 'Billing' },
+                ],
+                links: [
+                  { source: 0, target: 1, value: 100 },
+                  { source: 1, target: 2, value: 50 },
+                  { source: 1, target: 3, value: 50 },
+                  { source: 2, target: 3, value: 10 },
+                ],
+              };
+            return <SankeyChart data={_data} />
+        }
+
+        if (metricType === RETENTION) {
+            if (viewType === 'trend') {
+                return (
+                    <CustomMetriLineChart
+                        data={data}
+                        colors={colors}
+                        params={params}
+                        onClick={onChartClick}
+                    />
+                )
+            } else if (viewType === 'cohort') {
+                return (
+                    <CohortCard data={data[0]} />
+                )
+            }
         }
 
         return <div>Unknown metric type</div>;
