@@ -8,7 +8,8 @@ import { categories as main_menu, MENU, preferences, PREFERENCES_MENU } from './
 import { connect } from 'react-redux';
 import { MODULES } from 'Components/Client/Modules';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Icon as IconX } from 'UI';
+import Icon from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -100,10 +101,11 @@ function SideMenu(props: RouteComponentProps<Props>) {
 
   return (
     <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
-          style={{ backgroundColor: '#f6f6f6', border: 'none' }}>
-      {isPreferencesActive && <Menu.Item key='exit' icon={<SVG name='arrow-bar-left' />}>
-        <Text className='ml-2'>Exit</Text>
-      </Menu.Item>}
+          style={{ backgroundColor: '#f6f6f6', border: 'none', marginTop: '8px' }}>
+      {isPreferencesActive &&
+        <Menu.Item key='exit' style={{ color: '#333', height: '32px' }} icon={<SVG name='arrow-bar-left' />}>
+          <Text className='ml-2'>Exit</Text>
+        </Menu.Item>}
       {(isPreferencesActive ? preferences : main_menu).map((category, index) => (
         <React.Fragment key={category.key}>
           {index > 0 && <Divider style={{ margin: '6px 0' }} />}
@@ -114,17 +116,20 @@ function SideMenu(props: RouteComponentProps<Props>) {
               return item.children ? (
                 <Menu.SubMenu
                   key={item.key}
-                  title={<Text
-                    className={cn('ml-5 !rounded')}>{item.label}</Text>}
+                  title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
                   icon={<SVG name={item.icon} size={16} />}>
                   {item.children.map((child: any) => <Menu.Item
                     className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
                     key={child.key}>{child.label}</Menu.Item>)}
                 </Menu.SubMenu>
               ) : (
-                <Menu.Item key={item.key} icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                           style={{ color: '#333' }}
-                           className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}>
+                <Menu.Item
+                  key={item.key}
+                  icon={<IconX name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                  style={{ color: '#333', height: '32px' }}
+                  className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}
+                  itemIcon={item.leading ?
+                    <IconX name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
                   <Text className={cn('ml-2', { 'color-teal': isActive })}>{item.label}</Text>
                 </Menu.Item>
               );
@@ -137,5 +142,5 @@ function SideMenu(props: RouteComponentProps<Props>) {
 }
 
 export default withRouter(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'settings', "modules"]) || []
+  modules: state.getIn(['user', 'account', 'settings', 'modules']) || []
 }))(SideMenu));

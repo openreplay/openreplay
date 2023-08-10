@@ -8,7 +8,7 @@ const Avatar = ({
                   isAssist = false,
                   width = '38px',
                   height = '38px',
-                  iconSize = 26,
+                  iconSize = 24,
                   seed
                 }) => {
   var iconName = avatarIconName(seed);
@@ -17,8 +17,9 @@ const Avatar = ({
       <div
         className={cn(
           // stl.wrapper,
-          'border flex items-center justify-center rounded-full relative bg-gray-50'
+          'border flex items-center justify-center rounded-full relative bg-tealx-light'
         )}
+        style={{ width, height }}
       >
         {/*<img src={`/assets/${iconName}`} width={iconSize} height={iconSize} />*/}
         <Icon name={iconName} size={iconSize} color='tealx' />

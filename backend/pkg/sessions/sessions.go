@@ -135,12 +135,10 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 	if err != nil {
 		return 0, err
 	}
-	session, err := s.cache.Get(sessionID)
+	// Update session info in cache for future usage (for example in connectors)
+	session, err := s.getFromDB(sessionID)
 	if err != nil {
-		session, err = s.getFromDB(sessionID)
-		if err != nil {
-			return 0, err
-		}
+		return 0, err
 	}
 
 	session.Duration = &newDuration

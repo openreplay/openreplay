@@ -166,7 +166,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             {!compact && (
               <div className="flex items-center pr-2 shrink-0" style={{ width: '40%' }}>
                 <div>
-                  <Avatar iconSize={32} isActive={active} seed={userNumericHash} isAssist={isAssist} />
+                  <Avatar isActive={active} seed={userNumericHash} isAssist={isAssist} />
                 </div>
                 <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center shrink-0">
                   <div

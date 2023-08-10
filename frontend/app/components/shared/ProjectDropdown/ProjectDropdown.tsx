@@ -71,9 +71,9 @@ function ProjectDropdown(props: Props) {
           icon={<FolderOutlined />}
           key={site.id}
           onClick={() => handleSiteChange(site.id)}
-          className="!py-2"
+          className='!py-2'
         >
-          <Text className="capitalize">{site.host}</Text>
+          <Text className='capitalize'>{site.host}</Text>
         </Menu.Item>
       ))}
     </Menu>
@@ -81,9 +81,9 @@ function ProjectDropdown(props: Props) {
 
   return (
     <Dropdown overlay={menu} placement='bottomLeft'>
-      <Button type="text">
+      <Button>
         <Space>
-          <Text className="font-medium capitalize">{showCurrent && activeSite ? activeSite.host : 'All Projects'}</Text>
+          <Text className='font-medium capitalize'>{showCurrent && activeSite ? activeSite.host : 'All Projects'}</Text>
           <CaretDownOutlined />
         </Space>
       </Button>
