@@ -37,7 +37,7 @@ export function deviceTypeIcon(deviceType) {
 
 const ICON_LIST = [];
 
-for (let i = 1; i <= 31; i++) {
+for (let i = 1; i <= 22; i++) {
 	ICON_LIST.push(`icn_avatar${ i }`);
 }
 export function avatarIconName(seed = Math.floor(Math.random() * ICON_LIST.length)) {

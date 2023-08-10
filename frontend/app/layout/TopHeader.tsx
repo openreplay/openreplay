@@ -22,8 +22,6 @@ function TopHeader() {
     >
       <div className='flex items-center'>
         <Logo siteId={1} />
-        <div className='mx-1' />
-        <ProjectDropdown />
       </div>
 
       <TopRight />

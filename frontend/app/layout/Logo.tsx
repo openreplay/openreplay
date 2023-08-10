@@ -3,7 +3,7 @@ import { sessions, withSiteId } from 'App/routes';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { NavLink } from 'react-router-dom';
-import { Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 
 const SESSIONS_PATH = sessions();
 
@@ -15,9 +15,9 @@ function Logo(props: Props) {
   return (
     <NavLink to={withSiteId(SESSIONS_PATH, props.siteId)}>
       <Tooltip title={`v${window.env.VERSION}`}>
-        <div>
-          <AnimatedSVG name={ICONS.LOGO_SMALL} size='30' />
-        </div>
+        <Button type="link" className="p-0">
+          <AnimatedSVG name={ICONS.LOGO_FULL} size='150' />
+        </Button>
       </Tooltip>
     </NavLink>
   );

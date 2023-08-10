@@ -12,9 +12,10 @@ import UserMenu from 'Components/Header/UserMenu/UserMenu';
 import ErrorGenPanel from 'App/dev/components/ErrorGenPanel';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { connect } from 'react-redux';
-import { Menu, MenuProps, Popover } from 'antd';
+import { Menu, MenuProps, Popover, Space } from 'antd';
 import { Button } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
+import ProjectDropdown from 'Shared/ProjectDropdown';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -37,12 +38,11 @@ function TopRight(props: Props) {
     // <Menu mode='horizontal' defaultSelectedKeys={['2']} items={items}
     //       style={{ height: '50px' }}
     //       className='bg-gray-lightest' />
-    <div className='flex items-center'>
+    <Space className='flex items-center'>
+      <ProjectDropdown />
       <GettingStartedProgress />
 
       <Notifications />
-
-      <div className='mx-2' />
 
 
       {/*<Button type='primary'>Hover me</Button>*/}
@@ -53,12 +53,7 @@ function TopRight(props: Props) {
         </Popover>
       </NavLink>
 
-
-      <div className='mx-2' />
-
       <HealthStatus />
-
-      <div className='mx-2' />
 
       <Popover content={<UserMenu className='' />} placement={'topRight'}>
         <div className='flex items-center cursor-pointer'>
@@ -69,7 +64,7 @@ function TopRight(props: Props) {
       </Popover>
 
       <ErrorGenPanel />
-    </div>
+    </Space>
   );
 }
 

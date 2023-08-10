@@ -9,6 +9,7 @@ export interface MenuItem {
   route?: string;
   hidden?: boolean;
   disabled?: boolean;
+  leading?: any;
 }
 
 interface Category {
@@ -93,7 +94,7 @@ export const categories: Category[] = [
     key: 'other',
     items: [
       { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders' },
+      { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right' },
       { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' }
     ]
   }
@@ -114,7 +115,7 @@ export const preferences: Category[] = [
       { label: 'Roles & Access', key: PREFERENCES_MENU.ROLES_ACCESS, icon: 'diagram-3' },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul' },
       { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people' },
-      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' },
+      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' }
       // { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell' }
     ]
   }
