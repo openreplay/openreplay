@@ -789,10 +789,10 @@ func sessionsToBuffer(batch []map[string]string) *bytes.Buffer {
 	buf.Truncate(buf.Len() - 1)
 
 	// Write data
-	for _, event := range batch {
+	for _, sess := range batch {
 		buf.WriteString("\n")
-		for _, column := range eventColumns {
-			buf.WriteString(event[column] + "|")
+		for _, column := range sessionColumns {
+			buf.WriteString(sess[column] + "|")
 		}
 		buf.Truncate(buf.Len() - 1)
 	}
