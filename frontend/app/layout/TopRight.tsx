@@ -44,15 +44,6 @@ function TopRight(props: Props) {
 
       <Notifications />
 
-
-      {/*<Button type='primary'>Hover me</Button>*/}
-      <NavLink to={CLIENT_PATH}>
-        <Popover content={<SettingsMenu account={account} />}>
-          <Button icon={<SettingOutlined />}></Button>
-          {/*<Icon name='gear' size='20' color='gray-dark' className='cursor-pointer' />*/}
-        </Popover>
-      </NavLink>
-
       <HealthStatus />
 
       <Popover content={<UserMenu className='' />} placement={'topRight'}>
