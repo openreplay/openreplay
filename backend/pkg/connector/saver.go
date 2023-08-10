@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"log"
+	"openreplay/backend/internal/http/geoip"
 	"strconv"
 	"time"
 
@@ -15,11 +16,12 @@ import (
 
 // Saver collect sessions and events and saves them to Redshift
 type Saver struct {
-	cfg        *config.Config
-	objStorage objectstorage.ObjectStorage
-	db         *Redshift
-	sessions   map[uint64]map[string]string
-	events     []map[string]string
+	cfg              *config.Config
+	objStorage       objectstorage.ObjectStorage
+	db               *Redshift
+	sessions         map[uint64]map[string]string
+	finishedSessions []uint64
+	events           []map[string]string
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshift) *Saver {
@@ -32,27 +34,27 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshif
 
 var sessionColumns = []string{
 	"sessionid",
-	"user_agent",
+	"user_agent", // decided to remove from DB ???
 	"user_browser",
 	"user_browser_version",
-	"user_country",
-	"user_device",
+	"user_country", // s.UserCountry
+	"user_device",  // s.UserDevice
 	"user_device_heap_size",
 	"user_device_memory_size",
-	"user_device_type",
-	"user_os",
-	"user_os_version",
-	"user_uuid",
+	"user_device_type", // s.UserDeviceType
+	"user_os",          // s.UserOS
+	"user_os_version",  // s.UserOSVersion
+	"user_uuid",        // s.UserUUID
 	"connection_effective_bandwidth",
 	"connection_type",
-	"metadata_key",
-	"metadata_value",
-	"referrer",
-	"user_anonymous_id",
-	"user_id",
-	"session_start_timestamp",
-	"session_end_timestamp",
-	"session_duration",
+	"metadata_key",            // ??? last one
+	"metadata_value",          // ??? last one
+	"referrer",                // s.Referrer
+	"user_anonymous_id",       // s.UserAnonymousID
+	"user_id",                 // s.UserID
+	"session_start_timestamp", // s.Timestamp
+	"session_end_timestamp",   // ??? can be calculated
+	"session_duration",        // s.Duration
 	"first_contentful_paint",
 	"speed_index",
 	"visually_complete",
@@ -105,7 +107,7 @@ func QUOTES(s string) string {
 	return strconv.Quote(s)
 }
 
-func handleEventN(msg messages.Message) map[string]string {
+func handleEvent(msg messages.Message) map[string]string {
 	event := make(map[string]string)
 
 	switch m := msg.(type) {
@@ -151,7 +153,7 @@ func handleEventN(msg messages.Message) map[string]string {
 	return event
 }
 
-func (s *Saver) handleSessionN(msg messages.Message) {
+func (s *Saver) handleSession(msg messages.Message) {
 	if s.sessions == nil {
 		s.sessions = make(map[uint64]map[string]string)
 	}
@@ -163,123 +165,90 @@ func (s *Saver) handleSessionN(msg messages.Message) {
 	if s.sessions[msg.SessionID()] == nil {
 		s.sessions[msg.SessionID()] = make(map[string]string)
 		s.sessions[msg.SessionID()][`sessionid`] = fmt.Sprintf("%d", msg.SessionID())
+		sess = s.sessions[msg.SessionID()]
 	}
+
 	// Parse message and add to session
 	switch m := msg.(type) {
 	case *messages.SessionStart:
-		log.Printf("SessionStart: %v", m)
-	}
-}
-
-type Event struct {
-	SessionID                         uint64
-	ConsoleLogLevel                   string
-	ConsoleLogValue                   string
-	CustomEventName                   string
-	CustomEventPayload                string
-	NetworkRequestType                string
-	NetworkRequestMethod              string
-	NetworkRequestURL                 string
-	NetworkRequestRequest             string
-	NetworkRequestResponse            string
-	NetworkRequestStatus              uint64
-	NetworkRequestTimestamp           uint64
-	NetworkRequestDuration            uint64
-	IssueEventMessageID               uint64
-	IssueEventTimestamp               uint64
-	IssueEventType                    string
-	IssueEventContextString           string
-	IssueEventContext                 string
-	IssueEventPayload                 string
-	IssueEventURL                     string
-	CustomIssueName                   string
-	CustomIssuePayload                string
-	MetadataKey                       string
-	MetadataValue                     string
-	MouseClickID                      uint64
-	MouseClickLabel                   string
-	MouseClickSelector                string
-	MouseClickHesitation              uint64
-	PageEventFirstContentfulPaint     uint64
-	PageEventFirstPaint               uint64
-	PageEventMessageID                uint64
-	PageEventReferrer                 string
-	PageEventSpeedIndex               uint64
-	PageEventTimestamp                uint64
-	PageEventURL                      string
-	PageRenderTimingTimeToInteractive uint64
-	PageRenderTimingVisuallyComplete  uint64
-	SetViewPortSizeHeight             uint64
-	SetViewPortSizeWidth              uint64
-	TimestampTimestamp                uint64
-	UserAnonymousID                   string
-	UserID                            string
-	ReceivedAt                        uint64
-	BatchOrderNumber                  uint64
-}
-
-func (s *Saver) handleEvent(msg messages.Message) *Event {
-	event := &Event{
-		SessionID:  msg.SessionID(),
-		ReceivedAt: uint64(time.Now().UnixMilli()),
-	}
-	switch m := msg.(type) {
-	case *messages.ConsoleLog:
-		event.ConsoleLogLevel = m.Level
-		event.ConsoleLogValue = m.Value
-	case *messages.CustomEvent:
-		event.CustomEventName = m.Name
-		event.CustomEventPayload = m.Payload
+		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		sess["user_uuid"] = QUOTES(m.UserUUID)
+		sess["user_agent"] = QUOTES(m.UserAgent)
+		sess["user_os"] = QUOTES(m.UserOS)
+		sess["user_os_version"] = QUOTES(m.UserOSVersion)
+		sess["user_browser"] = QUOTES(m.UserBrowser)
+		sess["user_browser_version"] = QUOTES(m.UserBrowserVersion)
+		sess["user_device"] = QUOTES(m.UserDevice)
+		sess["user_device_type"] = QUOTES(m.UserDeviceType)
+		sess["user_device_memory_size"] = fmt.Sprintf("%d", m.UserDeviceMemorySize)
+		sess["user_device_heap_size"] = fmt.Sprintf("%d", m.UserDeviceHeapSize)
+		geoInfo := geoip.UnpackGeoRecord(m.UserCountry)
+		sess["user_country"] = QUOTES(geoInfo.Country)
+	case *messages.SessionEnd:
+		// TODO: load session from cache/db and update some fields
+		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		// TODO: add duration
+	case *messages.ConnectionInformation:
+		sess["connection_effective_bandwidth"] = fmt.Sprintf("%d", m.Downlink)
+		sess["connection_type"] = QUOTES(m.Type)
 	case *messages.Metadata:
-		event.MetadataKey = m.Key
-		event.MetadataValue = m.Value
-	case *messages.MouseClick:
-		event.MouseClickID = m.ID
-		event.MouseClickLabel = m.Label
-		event.MouseClickSelector = m.Selector
-		event.MouseClickHesitation = m.HesitationTime
-	case *messages.NetworkRequest:
-		event.NetworkRequestType = m.Type
-		event.NetworkRequestMethod = m.Method
-		event.NetworkRequestURL = m.URL
-		event.NetworkRequestRequest = m.Request
-		event.NetworkRequestResponse = m.Response
-		event.NetworkRequestStatus = m.Status
-		event.NetworkRequestTimestamp = m.Timestamp
-		event.NetworkRequestDuration = m.Duration
+		sess["metadata_key"] = QUOTES(m.Key)
+		sess["metadata_value"] = QUOTES(m.Value)
 	case *messages.PageEvent:
-		event.PageEventFirstContentfulPaint = m.FirstContentfulPaint
-		event.PageEventFirstPaint = m.FirstPaint
-		event.PageEventMessageID = m.MessageID
-		event.PageEventReferrer = m.Referrer
-		event.PageEventSpeedIndex = m.SpeedIndex
-		event.PageEventTimestamp = m.Timestamp
-		event.PageEventURL = m.URL
-	case *messages.PageRenderTiming:
-		event.PageRenderTimingTimeToInteractive = m.TimeToInteractive
-		event.PageRenderTimingVisuallyComplete = m.VisuallyComplete
-	case *messages.SetViewportSize:
-		event.SetViewPortSizeHeight = m.Height
-		event.SetViewPortSizeWidth = m.Width
-	case *messages.Timestamp:
-		event.TimestampTimestamp = m.Timestamp
-	case *messages.UserAnonymousID:
-		event.UserAnonymousID = m.ID
+		sess["referrer"] = QUOTES(m.Referrer)
+		sess["first_contentful_paint"] = fmt.Sprintf("%d", m.FirstContentfulPaint)
+		sess["speed_index"] = fmt.Sprintf("%d", m.SpeedIndex)
+		sess["timing_time_to_interactive"] = fmt.Sprintf("%d", m.TimeToInteractive)
+		sess["visually_complete"] = fmt.Sprintf("%d", m.VisuallyComplete)
+		currUrlsCount, err := strconv.Atoi(sess["urls_count"])
+		if err != nil {
+			log.Printf("Error converting urls_count to int: %v", err)
+			currUrlsCount = 0
+		}
+		sess["urls_count"] = fmt.Sprintf("%d", currUrlsCount+1)
+	case *messages.PerformanceTrackAggr:
+		sess["avg_cpu"] = fmt.Sprintf("%d", m.AvgCPU)
+		sess["avg_fps"] = fmt.Sprintf("%d", m.AvgFPS)
+		sess["max_cpu"] = fmt.Sprintf("%d", m.MaxCPU)
+		sess["max_fps"] = fmt.Sprintf("%d", m.MaxFPS)
+		sess["max_total_js_heap_size"] = fmt.Sprintf("%d", m.MaxTotalJSHeapSize)
+		sess["max_used_js_heap_size"] = fmt.Sprintf("%d", m.MaxUsedJSHeapSize)
 	case *messages.UserID:
-		event.UserID = m.ID
-	case *messages.IssueEvent:
-		event.IssueEventMessageID = m.MessageID
-		event.IssueEventTimestamp = m.Timestamp
-		event.IssueEventType = m.Type
-		event.IssueEventContextString = m.ContextString
-		event.IssueEventContext = m.Context
-		event.IssueEventPayload = m.Payload
-		event.IssueEventURL = m.URL
-	case *messages.CustomIssue:
-		event.CustomIssueName = m.Name
-		event.CustomIssuePayload = m.Payload
+		if m.ID != "" {
+			sess["user_id"] = QUOTES(m.ID)
+		}
+	case *messages.UserAnonymousID:
+		sess["user_anonymous_id"] = QUOTES(m.ID)
+	case *messages.JSException, *messages.JSExceptionDeprecated:
+		currExceptionsCount, err := strconv.Atoi(sess["js_exceptions_count"])
+		if err != nil {
+			log.Printf("Error converting js_exceptions_count to int: %v", err)
+			currExceptionsCount = 0
+		}
+		sess["js_exceptions_count"] = fmt.Sprintf("%d", currExceptionsCount+1)
+	case *messages.InputEvent:
+		currInputsCount, err := strconv.Atoi(sess["inputs_count"])
+		if err != nil {
+			log.Printf("Error converting inputs_count to int: %v", err)
+			currInputsCount = 0
+		}
+		sess["inputs_count"] = fmt.Sprintf("%d", currInputsCount+1)
+	case *messages.MouseClick:
+		currMouseClicksCount, err := strconv.Atoi(sess["clicks_count"])
+		if err != nil {
+			log.Printf("Error converting clicks_count to int: %v", err)
+			currMouseClicksCount = 0
+		}
+		sess["clicks_count"] = fmt.Sprintf("%d", currMouseClicksCount+1)
+	case *messages.IssueEvent, *messages.IssueEventDeprecated:
+		currIssuesCount, err := strconv.Atoi(sess["issues_count"])
+		if err != nil {
+			log.Printf("Error converting issues_count to int: %v", err)
+			currIssuesCount = 0
+		}
+		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
 	}
-	return event
+	s.sessions[msg.SessionID()] = sess
 }
 
 type DetailedEvent struct {
@@ -742,7 +711,7 @@ func (s *Saver) handleDetailedEvent(msg messages.Message) *DetailedEvent {
 }
 
 func (s *Saver) Handle(msg messages.Message) {
-	newEvent := handleEventN(msg)
+	newEvent := handleEvent(msg)
 	if newEvent == nil {
 		return
 	}
@@ -750,6 +719,13 @@ func (s *Saver) Handle(msg messages.Message) {
 		s.events = make([]map[string]string, 0, 2)
 	}
 	s.events = append(s.events, newEvent)
+	s.handleSession(msg)
+	if msg.TypeID() == messages.MsgSessionEnd {
+		if s.finishedSessions == nil {
+			s.finishedSessions = make([]uint64, 0)
+		}
+		s.finishedSessions = append(s.finishedSessions, msg.SessionID())
+	}
 	return
 }
 
@@ -773,14 +749,13 @@ func eventsToBuffer(batch []map[string]string) *bytes.Buffer {
 	return buf
 }
 
-// Commit saves batch to Redshift
-func (s *Saver) Commit() {
+func (s *Saver) commitEvents() {
 	if len(s.events) == 0 {
-		log.Printf("empty batch")
+		log.Printf("empty events batch")
 		return
 	}
 
-	// Validate column names
+	// Validate column names // TODO: do it once at the start
 	if err := validateColumnNames(eventColumns); err != nil {
 		log.Printf("can't validate column names: %s", err)
 		return
@@ -802,7 +777,68 @@ func (s *Saver) Commit() {
 		log.Printf("can't copy data from s3 to redshift: %s", err)
 		return
 	}
-	return
+}
+
+func sessionsToBuffer(batch []map[string]string) *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+
+	// Write header
+	for _, column := range sessionColumns {
+		buf.WriteString(column + "|")
+	}
+	buf.Truncate(buf.Len() - 1)
+
+	// Write data
+	for _, event := range batch {
+		buf.WriteString("\n")
+		for _, column := range eventColumns {
+			buf.WriteString(event[column] + "|")
+		}
+		buf.Truncate(buf.Len() - 1)
+	}
+	return buf
+}
+
+func (s *Saver) commitSessions() {
+	if len(s.finishedSessions) == 0 {
+		log.Printf("empty sessions batch")
+		return
+	}
+	sessions := make([]map[string]string, 0, len(s.finishedSessions))
+	for _, sessionID := range s.finishedSessions {
+		sessions = append(sessions, s.sessions[sessionID])
+	}
+
+	// Validate column names // TODO: do it once at the start
+	if err := validateColumnNames(sessionColumns); err != nil {
+		log.Printf("can't validate column names: %s", err)
+		return
+	}
+
+	// Send data to S3
+	fileName := fmt.Sprintf("test_connector/connector_sessions-%s.csv", uuid.New().String())
+	// Create csv file
+	buf := sessionsToBuffer(sessions)
+	s.events = nil
+
+	reader := bytes.NewReader(buf.Bytes())
+	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
+		log.Printf("can't upload file to s3: %s", err)
+		return
+	}
+	// Copy data from s3 bucket to redshift
+	if err := s.db.Copy("test_connector_sessions", fileName, "|", true, false); err != nil {
+		log.Printf("can't copy data from s3 to redshift: %s", err)
+		return
+	}
+	// Clear current list of finished sessions
+	s.finishedSessions = nil
+}
+
+// Commit saves batch to Redshift
+func (s *Saver) Commit() {
+	s.commitEvents()
+	s.commitSessions()
 }
 
 func (s *Saver) Close() error {
