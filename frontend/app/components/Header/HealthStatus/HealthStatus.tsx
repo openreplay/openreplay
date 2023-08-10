@@ -60,26 +60,21 @@ function HealthStatus() {
   const icon = !isError && healthResponse?.overallHealth ? 'pulse' : ('exclamation-circle-fill' as const);
   return (
     <>
-      <Popover content={
-        <HealthWidget
-          healthResponse={healthResponse}
-          getHealth={getHealth}
-          isLoading={isLoading}
-          lastAsked={lastAsked}
-          setShowModal={setShowModal}
-          isError={isError}
-        />
-      }>
+      <Popover
+        content={
+          <HealthWidget
+            healthResponse={healthResponse}
+            getHealth={getHealth}
+            isLoading={isLoading}
+            lastAsked={lastAsked}
+            setShowModal={setShowModal}
+            isError={isError}
+          />
+        }
+        open={true}
+        placement="topRight"
+      >
         <Button icon={<ExclamationCircleOutlined />}></Button>
-        {/*<div*/}
-        {/*  className={*/}
-        {/*    'rounded cursor-pointer flex items-center h-full'*/}
-        {/*  }*/}
-        {/*>*/}
-        {/*  <div className={'rounded p-2 border border-light-gray bg-white flex items-center'}>*/}
-        {/*    <Icon name={icon} size={18} />*/}
-        {/*  </div>*/}
-        {/*</div>*/}
       </Popover>
       {showModal ? (
         <HealthModal
