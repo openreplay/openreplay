@@ -110,7 +110,7 @@ export const preferences: Category[] = [
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
-      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'link-45deg' },
+      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'people' },
       { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
       { label: 'Roles & Access', key: PREFERENCES_MENU.ROLES_ACCESS, icon: 'diagram-3' },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul' },
