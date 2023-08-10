@@ -71,7 +71,6 @@ function HealthStatus() {
             isError={isError}
           />
         }
-        open={true}
         placement="topRight"
       >
         <Button icon={<ExclamationCircleOutlined />}></Button>
