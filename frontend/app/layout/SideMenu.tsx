@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Typography } from 'antd';
+import { Divider, Menu, Typography, Drawer, Button, Space } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { client, CLIENT_DEFAULT_TAB, CLIENT_TABS, withSiteId } from 'App/routes';
@@ -8,8 +8,10 @@ import { categories as main_menu, MENU, preferences, PREFERENCES_MENU } from './
 import { connect } from 'react-redux';
 import { MODULES } from 'Components/Client/Modules';
 import cn from 'classnames';
-import { Icon as IconX } from 'UI';
-import Icon from '@ant-design/icons';
+import { Icon } from 'UI';
+import { ArrowRightOutlined } from '@ant-design/icons';
+import SupportModal from 'App/layout/SupportModal';
+
 
 const { Text } = Typography;
 
@@ -24,7 +26,7 @@ function SideMenu(props: RouteComponentProps<Props>) {
   // @ts-ignore
   const { siteId, modules } = props;
   const isPreferencesActive = props.location.pathname.includes('/client/');
-  console.log('modules', modules);
+  const [supportOpen, setSupportOpen] = React.useState(false);
 
   let menu = isPreferencesActive ? preferences : main_menu;
 
@@ -76,6 +78,10 @@ function SideMenu(props: RouteComponentProps<Props>) {
   };
 
   const handleClick = (item: any) => {
+    if (item.key === MENU.SUPPORT) {
+      setSupportOpen(true);
+      return;
+    }
     const handler = menuRoutes[item.key];
     if (handler) {
       const route = handler();
@@ -100,44 +106,50 @@ function SideMenu(props: RouteComponentProps<Props>) {
 
 
   return (
-    <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
-          style={{ backgroundColor: '#f6f6f6', border: 'none', marginTop: '8px' }}>
-      {isPreferencesActive &&
-        <Menu.Item key='exit' style={{ color: '#333', height: '32px' }} icon={<SVG name='arrow-bar-left' />}>
-          <Text className='ml-2'>Exit</Text>
-        </Menu.Item>}
-      {(isPreferencesActive ? preferences : main_menu).map((category, index) => (
-        <React.Fragment key={category.key}>
-          {index > 0 && <Divider style={{ margin: '6px 0' }} />}
-          <Menu.ItemGroup key={category.key}
-                          title={<Text className='uppercase text-sm' type='secondary'>{category.title}</Text>}>
-            {category.items.filter((item: any) => !item.hidden).map((item: any) => {
-              const isActive = isMenuItemActive(item.key);
-              return item.children ? (
-                <Menu.SubMenu
-                  key={item.key}
-                  title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
-                  icon={<SVG name={item.icon} size={16} />}>
-                  {item.children.map((child: any) => <Menu.Item
-                    className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
-                    key={child.key}>{child.label}</Menu.Item>)}
-                </Menu.SubMenu>
-              ) : (
-                <Menu.Item
-                  key={item.key}
-                  icon={<IconX name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                  style={{ color: '#333', height: '32px' }}
-                  className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}
-                  itemIcon={item.leading ?
-                    <IconX name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
-                  <Text className={cn('ml-2', { 'color-teal': isActive })}>{item.label}</Text>
-                </Menu.Item>
-              );
-            })}
-          </Menu.ItemGroup>
-        </React.Fragment>
-      ))}
-    </Menu>
+    <>
+      <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
+            style={{ backgroundColor: '#f6f6f6', border: 'none', marginTop: '8px' }}>
+        {isPreferencesActive &&
+          <Menu.Item key='exit' style={{ color: '#333', height: '32px' }} icon={<SVG name='arrow-bar-left' />}>
+            <Text className='ml-2'>Exit</Text>
+          </Menu.Item>}
+        {(isPreferencesActive ? preferences : main_menu).map((category, index) => (
+          <React.Fragment key={category.key}>
+            {index > 0 && <Divider style={{ margin: '6px 0' }} />}
+            <Menu.ItemGroup key={category.key}
+                            title={<Text className='uppercase text-sm' type='secondary'>{category.title}</Text>}>
+              {category.items.filter((item: any) => !item.hidden).map((item: any) => {
+                const isActive = isMenuItemActive(item.key);
+                return item.children ? (
+                  <Menu.SubMenu
+                    key={item.key}
+                    title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
+                    icon={<SVG name={item.icon} size={16} />}>
+                    {item.children.map((child: any) => <Menu.Item
+                      className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
+                      key={child.key}>{child.label}</Menu.Item>)}
+                  </Menu.SubMenu>
+                ) : (
+                  <Menu.Item
+                    key={item.key}
+                    icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                    style={{ color: '#333', height: '32px' }}
+                    className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}
+                    itemIcon={item.leading ?
+                      <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
+                    <Text className={cn('ml-2', { 'color-teal': isActive })}>{item.label}</Text>
+                  </Menu.Item>
+                );
+              })}
+            </Menu.ItemGroup>
+          </React.Fragment>
+        ))}
+      </Menu>
+      <SupportModal
+        onClose={() => {
+          setSupportOpen(false);
+        }} open={supportOpen} />
+    </>
   );
 }
 

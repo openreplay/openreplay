@@ -77,7 +77,7 @@ export const categories: Category[] = [
     key: 'analytics',
     items: [
       { label: 'Dashboards', key: MENU.DASHBOARDS, icon: 'columns-gap' },
-      { label: 'Card', key: MENU.CARDS, icon: 'bar-chart-line' },
+      { label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line' },
       // {
       //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
       //     { label: 'All', key: MENU.CARDS },
