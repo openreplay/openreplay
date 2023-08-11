@@ -14,7 +14,7 @@ function SupportModal(props: Props) {
   const { onClose, open } = props;
   const WEBSITE_ID = window.env.CRISP_KEY;
   return (
-    <Drawer title='Open Replay Support' placement='right' open={open} width={400} onClose={onClose}
+    <Drawer title='OpenReplay Support' placement='right' open={open} width={400} onClose={onClose}
             closable={false}>
       <div className='flex flex-col items-center'>
         <div className='border p-3 bg-white flex rounded'>
