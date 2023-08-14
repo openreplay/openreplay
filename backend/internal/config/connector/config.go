@@ -4,11 +4,14 @@ import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/objectstorage"
+	"openreplay/backend/internal/config/redis"
 	"time"
 )
 
 type Config struct {
 	common.Config
+	common.Postgres
+	redis.Redis
 	common.Redshift
 	objectstorage.ObjectsConfig
 	EventLevel         string        `env:"EVENT_LEVEL,default=normal"`

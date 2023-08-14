@@ -2,6 +2,11 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessions"
 
 	config "openreplay/backend/internal/config/connector"
 	"openreplay/backend/internal/connector"
@@ -31,8 +36,30 @@ func main() {
 	}
 	defer db.Close()
 
+	// Init postgres connection
+	pgConn, err := pool.New(cfg.Postgres.String())
+	if err != nil {
+		log.Printf("can't init postgres connection: %s", err)
+		return
+	}
+	defer pgConn.Close()
+
+	// Init events module
+	pg := postgres.NewConn(pgConn)
+	defer pg.Close()
+
+	// Init redis connection
+	redisClient, err := redis.New(&cfg.Redis)
+	if err != nil {
+		log.Printf("can't init redis connection: %s", err)
+	}
+	defer redisClient.Close()
+
+	projManager := projects.New(pgConn, redisClient)
+	sessManager := sessions.New(pgConn, projManager, redisClient)
+
 	// Saves messages to Redshift
-	dataSaver := saver.New(cfg, objStore, db)
+	dataSaver := saver.New(cfg, objStore, db, sessManager)
 
 	// TODO: split into normal and detailed filters
 	// Message filter
