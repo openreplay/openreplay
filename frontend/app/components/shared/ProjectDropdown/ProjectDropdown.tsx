@@ -39,8 +39,6 @@ function ProjectDropdown(props: Props) {
   const showCurrent = hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
 
-  console.log('activeSite', activeSite);
-
   const handleSiteChange = (newSiteId: string) => {
     props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
     props.fetchIntegrationVariables();

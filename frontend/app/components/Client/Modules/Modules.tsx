@@ -43,11 +43,10 @@ function Modules(props: Props) {
     <div>
       <div className='bg-white rounded-lg border p-4'>
         <h3 className='text-2xl'>Modules</h3>
-        <div className='mt-3'>
-          <p>Copy
-            OpenReplay's modules are a collection of advanced features that provide enhanced functionality.</p>
-          <p>Easily enable any desired module within the user interface to access its capabilities</p>
-        </div>
+        <ul className='mt-3 ml-4 list-disc'>
+          <li>OpenReplay's modules are a collection of advanced features that provide enhanced functionality.</li>
+          <li>Easily enable any desired module within the user interface to access its capabilities</li>
+        </ul>
       </div>
 
       <div className='mt-4 grid grid-cols-3 gap-3'>

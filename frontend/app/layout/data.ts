@@ -77,7 +77,7 @@ export const categories: Category[] = [
     key: 'analytics',
     items: [
       { label: 'Dashboards', key: MENU.DASHBOARDS, icon: 'columns-gap' },
-      { label: 'Card', key: MENU.CARDS, icon: 'bar-chart-line' },
+      { label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line' },
       // {
       //   label: 'Cards', key: MENU.CARDS, icon: 'bar-chart-line', children: [
       //     { label: 'All', key: MENU.CARDS },
@@ -110,7 +110,7 @@ export const preferences: Category[] = [
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
-      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'link-45deg' },
+      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'people' },
       { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
       { label: 'Roles & Access', key: PREFERENCES_MENU.ROLES_ACCESS, icon: 'diagram-3' },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul' },

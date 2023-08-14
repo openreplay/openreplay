@@ -271,7 +271,6 @@ const Router: React.FC<RouterProps> = (props) => {
               </Switch>
             </Suspense>
           </Loader>
-          {!isEnterprise && !isPlayer && <SupportCallout />}
         </Layout>
       </ModalProvider>
     ) :

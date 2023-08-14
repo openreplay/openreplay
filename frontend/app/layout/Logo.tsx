@@ -15,7 +15,7 @@ function Logo(props: Props) {
   return (
     <NavLink to={withSiteId(SESSIONS_PATH, props.siteId)}>
       <Button type='link' className='p-0'>
-        <AnimatedSVG name={ICONS.LOGO_FULL} size='150' />
+        <AnimatedSVG name={ICONS.LOGO_FULL} size='120' />
       </Button>
     </NavLink>
   );
