@@ -61,16 +61,13 @@ func main() {
 	// Saves messages to Redshift
 	dataSaver := saver.New(cfg, objStore, db, sessManager)
 
-	// TODO: split into normal and detailed filters
 	// Message filter
-	//msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
-	//	messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
-	//	messages.MsgJSException, messages.MsgResourceTiming, messages.MsgCustomEvent, messages.MsgCustomIssue,
-	//	messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction,
-	//	messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument, messages.MsgMouseClick,
-	//	messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
-	//	messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
-	//	messages.MsgUnbindNodes}
+	msgFilter := []int{messages.MsgConsoleLog, messages.MsgCustomEvent, messages.MsgJSException,
+		messages.MsgNetworkRequest, messages.MsgIssueEvent, messages.MsgCustomIssue,
+		messages.MsgSessionStart, messages.MsgSessionEnd, messages.MsgConnectionInformation,
+		messages.MsgMetadata, messages.MsgPageEvent, messages.MsgPerformanceTrackAggr, messages.MsgUserID,
+		messages.MsgUserAnonymousID, messages.MsgJSException, messages.MsgJSExceptionDeprecated,
+		messages.MsgInputEvent, messages.MsgMouseClick, messages.MsgIssueEventDeprecated}
 
 	// Init consumer
 	consumer := queue.NewConsumer(
@@ -79,7 +76,7 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicAnalytics,
 		},
-		messages.NewMessageIterator(dataSaver.Handle, nil, true),
+		messages.NewMessageIterator(dataSaver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -93,6 +90,6 @@ func main() {
 
 	// Run service and wait for TERM signal
 	service := connector.New(cfg, consumer, dataSaver, memoryManager)
-	log.Printf("Db service started\n")
+	log.Printf("Connector service started\n")
 	terminator.Wait(service)
 }
