@@ -204,20 +204,36 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === USER_PATH) {
-            const _data: any = {
-                nodes: [
-                  { name: 'Home Page' },
-                  { name: 'Dashboard' },
-                  { name: 'Preferences' },
-                  { name: 'Billing' },
-                ],
-                links: [
-                  { source: 0, target: 1, value: 100 },
-                  { source: 1, target: 2, value: 50 },
-                  { source: 1, target: 3, value: 50 },
-                  { source: 2, target: 3, value: 10 },
-                ],
-              };
+            console.log('data', data)
+
+            const _data: { nodes: any} = {
+                nodes: [],
+                links: data.links,
+            }
+
+            if (data && data.nodes && data.links) {
+              data.nodes.forEach((node: any) => {
+                _data.nodes.push({ name: node })
+              })
+            }
+
+            console.log('_data', _data);
+
+
+            // const _data: any = {
+            //     nodes: [
+            //       { name: 'Home Page' },
+            //       { name: 'Dashboard' },
+            //       { name: 'Preferences' },
+            //       { name: 'Billing' },
+            //     ],
+            //     links: [
+            //       { source: 0, target: 1, value: 100 },
+            //       { source: 1, target: 2, value: 50 },
+            //       { source: 1, target: 3, value: 50 },
+            //       { source: 2, target: 3, value: 10 },
+            //     ],
+            //   };
             return <SankeyChart data={_data} />
         }
 

@@ -27,7 +27,7 @@ function SankeyChart(props: Props) {
   const { data, nodePadding = 50, nodeWidth = 10 } = props;
   const [activeLink, setActiveLink] = React.useState<any>(null);
 
-  return (
+  return (data && data.nodes.length && data.links) ? (
     <ResponsiveContainer height={400} width="100%">
       <Sankey
         width={960}
@@ -55,7 +55,7 @@ function SankeyChart(props: Props) {
         {/* <Tooltip content={<CustomTooltip />} /> */}
       </Sankey>
     </ResponsiveContainer>
-  );
+  ) : null;
 }
 
 export default SankeyChart;
