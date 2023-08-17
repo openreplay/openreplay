@@ -42,6 +42,9 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
       case 'open':
         return this.getOpen(target)
       case 'send':
+        this.setSessionTokenHeader((name: string, value: string) => {
+          target.setRequestHeader(name, value)
+        })
         return this.getSend(target)
       case 'setRequestHeader':
         return this.getSetRequestHeader(target)

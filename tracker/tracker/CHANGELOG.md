@@ -1,3 +1,12 @@
+# 9.0.2
+
+- fix "setSessionTokenHeader" method
+
+# 9.0.1
+
+- Warning about SSR mode
+- Prevent crashes due to network proxy in SSR
+
 # 9.0.0
 
 - Option to disable string dictionary `{disableStringDict: true}` in Tracker constructor
