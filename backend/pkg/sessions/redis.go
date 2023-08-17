@@ -7,6 +7,14 @@ import (
 
 type cacheImpl struct{}
 
+func (c *cacheImpl) SetCache(sessID uint64, data map[string]string) error {
+	return ErrDisabledCache
+}
+
+func (c *cacheImpl) GetCache(sessID uint64) (map[string]string, error) {
+	return nil, ErrDisabledCache
+}
+
 func (c *cacheImpl) Set(session *Session) error {
 	return ErrDisabledCache
 }

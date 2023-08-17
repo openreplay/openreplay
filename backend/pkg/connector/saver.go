@@ -22,16 +22,26 @@ type Saver struct {
 	db               *Redshift
 	sessModule       sessions.Sessions
 	sessions         map[uint64]map[string]string
+	updatedSessions  map[uint64]bool
 	finishedSessions []uint64
 	events           []map[string]string
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshift, sessions sessions.Sessions) *Saver {
+	// Validate column names in sessions table
+	if err := validateColumnNames(sessionColumns); err != nil {
+		log.Printf("can't validate column names: %s", err)
+	}
+	// Validate column names in events table
+	if err := validateColumnNames(eventColumns); err != nil {
+		log.Printf("can't validate column names: %s", err)
+	}
 	return &Saver{
-		cfg:        cfg,
-		objStorage: objStorage,
-		db:         db,
-		sessModule: sessions,
+		cfg:             cfg,
+		objStorage:      objStorage,
+		db:              db,
+		sessModule:      sessions,
+		updatedSessions: make(map[uint64]bool, 0),
 	}
 }
 
@@ -183,8 +193,17 @@ func (s *Saver) handleSession(msg messages.Message) {
 	}
 	sess, ok := s.sessions[msg.SessionID()]
 	if !ok {
-		sess = make(map[string]string)
-		sess[`sessionid`] = fmt.Sprintf("%d", msg.SessionID())
+		// Try to load session from cache
+		cached, err := s.sessModule.GetCached(msg.SessionID())
+		if err != nil && err != sessions.ErrSessionNotFound {
+			log.Printf("Failed to get cached session: %v", err)
+		}
+		if cached != nil {
+			sess = cached
+		} else {
+			sess = make(map[string]string)
+			sess[`sessionid`] = fmt.Sprintf("%d", msg.SessionID())
+		}
 	}
 	if s.sessions[msg.SessionID()] == nil {
 		s.sessions[msg.SessionID()] = make(map[string]string)
@@ -193,6 +212,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 	}
 
 	// Parse message and add to session
+	updated := true
 	switch m := msg.(type) {
 	case *messages.SessionStart:
 		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
@@ -282,7 +302,6 @@ func (s *Saver) handleSession(msg messages.Message) {
 		sess["visually_complete"] = fmt.Sprintf("%d", m.VisuallyComplete)
 		currUrlsCount, err := strconv.Atoi(sess["urls_count"])
 		if err != nil {
-			//log.Printf("Error converting urls_count to int: %v", err)
 			currUrlsCount = 0
 		}
 		sess["urls_count"] = fmt.Sprintf("%d", currUrlsCount+1)
@@ -302,31 +321,35 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.JSException, *messages.JSExceptionDeprecated:
 		currExceptionsCount, err := strconv.Atoi(sess["js_exceptions_count"])
 		if err != nil {
-			//log.Printf("Error converting js_exceptions_count to int: %v", err)
 			currExceptionsCount = 0
 		}
 		sess["js_exceptions_count"] = fmt.Sprintf("%d", currExceptionsCount+1)
 	case *messages.InputEvent:
 		currInputsCount, err := strconv.Atoi(sess["inputs_count"])
 		if err != nil {
-			//log.Printf("Error converting inputs_count to int: %v", err)
 			currInputsCount = 0
 		}
 		sess["inputs_count"] = fmt.Sprintf("%d", currInputsCount+1)
 	case *messages.MouseClick:
 		currMouseClicksCount, err := strconv.Atoi(sess["clicks_count"])
 		if err != nil {
-			//log.Printf("Error converting clicks_count to int: %v", err)
 			currMouseClicksCount = 0
 		}
 		sess["clicks_count"] = fmt.Sprintf("%d", currMouseClicksCount+1)
 	case *messages.IssueEvent, *messages.IssueEventDeprecated:
 		currIssuesCount, err := strconv.Atoi(sess["issues_count"])
 		if err != nil {
-			//log.Printf("Error converting issues_count to int: %v", err)
 			currIssuesCount = 0
 		}
 		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
+	default:
+		updated = false
+	}
+	if updated {
+		if s.updatedSessions == nil {
+			s.updatedSessions = make(map[uint64]bool)
+		}
+		s.updatedSessions[msg.SessionID()] = true
 	}
 	s.sessions[msg.SessionID()] = sess
 }
@@ -376,16 +399,11 @@ func (s *Saver) commitEvents() {
 	}
 	l := len(s.events)
 
-	// Validate column names // TODO: do it once at the start
-	if err := validateColumnNames(eventColumns); err != nil {
-		log.Printf("can't validate column names: %s", err)
-		return
-	}
-
 	// Send data to S3
 	fileName := fmt.Sprintf("test_connector/connector_events-%s.csv", uuid.New().String())
 	// Create csv file
 	buf := eventsToBuffer(s.events)
+	// Clear events batch
 	s.events = nil
 
 	reader := bytes.NewReader(buf.Bytes())
@@ -432,17 +450,10 @@ func (s *Saver) commitSessions() {
 		sessions = append(sessions, s.sessions[sessionID])
 	}
 
-	// Validate column names // TODO: do it once at the start
-	if err := validateColumnNames(sessionColumns); err != nil {
-		log.Printf("can't validate column names: %s", err)
-		return
-	}
-
 	// Send data to S3
 	fileName := fmt.Sprintf("test_connector/connector_sessions-%s.csv", uuid.New().String())
 	// Create csv file
 	buf := sessionsToBuffer(sessions)
-	s.events = nil
 
 	reader := bytes.NewReader(buf.Bytes())
 	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
@@ -455,12 +466,25 @@ func (s *Saver) commitSessions() {
 		return
 	}
 	// Clear current list of finished sessions
+	for _, sessionID := range s.finishedSessions {
+		delete(s.sessions, sessionID)
+	}
 	s.finishedSessions = nil
 	log.Printf("sessions batch of %d sessions is successfully saved", l)
 }
 
 // Commit saves batch to Redshift
 func (s *Saver) Commit() {
+	// Cache updated sessions
+	start := time.Now()
+	for sessionID, _ := range s.updatedSessions {
+		if err := s.sessModule.AddCached(sessionID, s.sessions[sessionID]); err != nil {
+			log.Printf("Error adding session to cache: %v", err)
+		}
+	}
+	log.Printf("Cached %d sessions in %s", len(s.updatedSessions), time.Since(start))
+	s.updatedSessions = nil
+	// Commit events and sessions (send to Redshift)
 	s.commitEvents()
 	s.commitSessions()
 }
