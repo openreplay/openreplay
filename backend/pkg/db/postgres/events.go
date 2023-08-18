@@ -183,7 +183,7 @@ func (conn *Conn) InsertWebNetworkRequest(sess *sessions.Session, e *messages.Ne
 		return err
 	}
 	conn.bulks.Get("webNetworkRequest").Append(sess.SessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400, e.TransferredBodySize)
 	return nil
 }
 
