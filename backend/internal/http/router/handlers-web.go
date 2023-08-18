@@ -370,27 +370,5 @@ func (e *Router) beaconHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	log.Printf("[DEBUG] beacon body: %s", bodyBytes)
-	type beacon struct {
-		Token string `json:"token"`
-		TabID string `json:"tabId"`
-	}
-	req := &beacon{}
-
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	tokenData, err := e.services.Tokenizer.Parse(req.Token)
-	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	event := TabClosed{TabId: req.TabID}
-
-	if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, event.Encode()); err != nil {
-		log.Printf("can't send session start: %s", err)
-	}
+	log.Printf("beacon body: %s", bodyBytes)
 }

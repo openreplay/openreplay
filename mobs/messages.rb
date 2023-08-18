@@ -484,14 +484,11 @@ message 116, 'ResourceTiming', :replayer => :devtools do
   boolean 'Cached'
 end
 
-# Tabs support
 message 117, 'TabChange' do
     string 'TabId'
 end
+
 message 118, 'TabData' do
-    string 'TabId'
-end
-message 119, 'TabClosed' do
     string 'TabId'
 end
 

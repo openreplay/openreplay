@@ -282,10 +282,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1])
     break
 
-    case Messages.Type.TabClosed:
-      return  this.string(msg[1])
-    break
-
     }
   }
 

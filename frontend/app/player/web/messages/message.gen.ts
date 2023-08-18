@@ -60,7 +60,6 @@ import type {
   RawResourceTiming,
   RawTabChange,
   RawTabData,
-  RawTabClosed,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -184,8 +183,6 @@ export type ResourceTiming = RawResourceTiming & Timed
 export type TabChange = RawTabChange & Timed
 
 export type TabData = RawTabData & Timed
-
-export type TabClosed = RawTabClosed & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 
