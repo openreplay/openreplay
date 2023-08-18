@@ -28,6 +28,9 @@ type Saver struct {
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshift, sessions sessions.Sessions) *Saver {
+	if cfg == nil {
+		log.Fatal("connector config is empty")
+	}
 	// Validate column names in sessions table
 	if err := validateColumnNames(sessionColumns); err != nil {
 		log.Printf("can't validate column names: %s", err)
@@ -47,27 +50,27 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshif
 
 var sessionColumns = []string{
 	"sessionid",
-	"user_agent",              // decided to remove from DB ???
-	"user_browser",            // s.UserBrowser
-	"user_browser_version",    // s.UserBrowserVersion
-	"user_country",            // s.UserCountry
-	"user_device",             // s.UserDevice
-	"user_device_heap_size",   // s.UserDeviceHeapSize
-	"user_device_memory_size", // s.UserDeviceMemorySize
-	"user_device_type",        // s.UserDeviceType
-	"user_os",                 // s.UserOS
-	"user_os_version",         // s.UserOSVersion
-	"user_uuid",               // s.UserUUID
+	"user_agent",
+	"user_browser",
+	"user_browser_version",
+	"user_country",
+	"user_device",
+	"user_device_heap_size",
+	"user_device_memory_size",
+	"user_device_type",
+	"user_os",
+	"user_os_version",
+	"user_uuid",
 	"connection_effective_bandwidth",
 	"connection_type",
-	"metadata_key",            // ??? last one
-	"metadata_value",          // ??? last one
-	"referrer",                // s.Referrer
-	"user_anonymous_id",       // s.UserAnonymousID
-	"user_id",                 // s.UserID
-	"session_start_timestamp", // s.Timestamp
-	"session_end_timestamp",   // ??? can be calculated
-	"session_duration",        // s.Duration
+	"metadata_key",
+	"metadata_value",
+	"referrer",
+	"user_anonymous_id",
+	"user_id",
+	"session_start_timestamp",
+	"session_end_timestamp",
+	"session_duration",
 	"first_contentful_paint",
 	"speed_index",
 	"visually_complete",
@@ -82,7 +85,7 @@ var sessionColumns = []string{
 	"inputs_count",
 	"clicks_count",
 	"issues_count",
-	"urls_count", // s.PagesCount
+	"urls_count",
 }
 
 var sessionInts = []string{
@@ -400,7 +403,7 @@ func (s *Saver) commitEvents() {
 	l := len(s.events)
 
 	// Send data to S3
-	fileName := fmt.Sprintf("test_connector/connector_events-%s.csv", uuid.New().String())
+	fileName := fmt.Sprintf("connector_data/%s-%s.csv", s.cfg.EventsTableName, uuid.New().String())
 	// Create csv file
 	buf := eventsToBuffer(s.events)
 	// Clear events batch
@@ -412,7 +415,7 @@ func (s *Saver) commitEvents() {
 		return
 	}
 	// Copy data from s3 bucket to redshift
-	if err := s.db.Copy("test_connector_events", fileName, "|", true, false); err != nil {
+	if err := s.db.Copy(s.cfg.EventsTableName, fileName, "|", true, false); err != nil {
 		log.Printf("can't copy data from s3 to redshift: %s", err)
 		return
 	}
@@ -451,7 +454,7 @@ func (s *Saver) commitSessions() {
 	}
 
 	// Send data to S3
-	fileName := fmt.Sprintf("test_connector/connector_sessions-%s.csv", uuid.New().String())
+	fileName := fmt.Sprintf("connector_data/%s-%s.csv", s.cfg.SessionsTableName, uuid.New().String())
 	// Create csv file
 	buf := sessionsToBuffer(sessions)
 
@@ -461,7 +464,7 @@ func (s *Saver) commitSessions() {
 		return
 	}
 	// Copy data from s3 bucket to redshift
-	if err := s.db.Copy("test_connector_user_sessions", fileName, "|", true, false); err != nil {
+	if err := s.db.Copy(s.cfg.SessionsTableName, fileName, "|", true, false); err != nil {
 		log.Printf("can't copy data from s3 to redshift: %s", err)
 		return
 	}
