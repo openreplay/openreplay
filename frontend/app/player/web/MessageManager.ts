@@ -7,7 +7,7 @@ import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
 
-import {MouseThrashing, MType, TabClosed} from './messages';
+import { MouseThrashing, MType } from './messages';
 import type { Message, MouseClick } from './messages';
 
 import Screen, {
@@ -26,6 +26,12 @@ interface RawList {
   stack: Record<string, any>[] & { tabId: string | null };
   exceptions: ILog[];
 }
+
+export const PlaceholderTp = 9999
+export const TabClosedTp = 9998 as const;
+export const tabClosedMsg = (tabId: string, time: number) =>
+  ({ tp: TabClosedTp, tabId, time } as const);
+export type ITabClosedMsg = ReturnType<typeof tabClosedMsg>;
 
 type TabChangeEvent = {
   tabId: string;
@@ -104,7 +110,7 @@ export default class MessageManager {
   public readonly tabs: Record<string, TabSessionManager> = {};
   private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
-  private possiblyClosedTabs = new Map<string, TabClosed>();
+  private possiblyClosedTabs: Map<string, ReturnType<typeof tabClosedMsg>> = new Map();
 
   constructor(
     private readonly session: Record<string, any>,
@@ -165,7 +171,7 @@ export default class MessageManager {
   };
 
   public onFileReadFinally = () => {
-    this.updateTabCloseEvents()
+    this.updateTabCloseEvents();
     this.waitingForFiles = false;
     this.state.update({ messagesProcessed: true });
   };
@@ -203,7 +209,7 @@ export default class MessageManager {
       }
 
       if (tabId) {
-        if (tp === MType.TabClosed) {
+        if (tp === TabClosedTp) {
           const closedTabs = this.state.get().tabCloseEvents;
           if (closedTabs.length !== this.activeTabManager.closedTabs.length) {
             this.state.update({ tabCloseEvents: this.activeTabManager.closedTabs });
@@ -257,21 +263,20 @@ export default class MessageManager {
   }
 
   public updateTabCloseEvents() {
-    const events = Array.from(this.possiblyClosedTabs.values())
-    events.forEach(e => {
-      this.activeTabManager.unshift(e)
-    })
+    const events = Array.from(this.possiblyClosedTabs.values());
+    events.forEach((e) => {
+      this.activeTabManager.unshift(e);
+    });
 
-    this.activeTabManager.sort(
-      (a, b) => a.time - b.time
-    )
-    console.log(this.activeTabManager.list)
+    this.activeTabManager.sort((a, b) => a.time - b.time);
+    console.log(this.activeTabManager.list);
   }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    // we use 9999 as a placeholder for "nothing-is-going-on" message so its useless
+    // we use 9999 as a placeholder for "nothing-is-going-on" message instead of timestamps
+    // sometimes it does not have tabId
     // @ts-ignore
-    if (!msg.tabId && msg.tp === 9999) return;
+    if (!msg.tabId && msg.tp === PlaceholderTp) return;
     if (msg.tabId && !this.tabs[msg.tabId]) {
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
@@ -330,9 +335,9 @@ export default class MessageManager {
             }
         }
         // this is the dirtiest hack ever imagined by mankind
-        // but it works simply because tracker sends hearbeat every few seconds
+        // but it works simply because tracker sends heartbeat every few seconds
         // so if its not present then the tab is closed, simple!
-        this.possiblyClosedTabs.set(msg.tabId, { tp: MType.TabClosed, tabId: msg.tabId, time: msg.time + 1 });
+        this.possiblyClosedTabs.set(msg.tabId, tabClosedMsg(msg.tabId, msg.time + 1));
         this.tabs[msg.tabId].distributeMessage(msg);
         break;
     }

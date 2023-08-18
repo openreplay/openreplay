@@ -1,3 +1,4 @@
+import {PlaceholderTp} from "Player/web/MessageManager";
 import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
@@ -65,11 +66,12 @@ export default class MFileReader extends RawMessageReader {
   }
 
   currentTab = 'back-compatability'
-  readNext(): Message & { _index?: number } | null {
+  readNext(): Message & { _index?: number, tabId?: string } | null {
     if (this.error || !this.hasNextByte()) {
       return null
     }
 
+    // TODO: remove this after testing
     // while (!this.noIndexes && this.needSkipMessage()) {
     //   const skippedMessage = this.readRawMessage()
     //   if (!skippedMessage) {
@@ -94,8 +96,9 @@ export default class MFileReader extends RawMessageReader {
       }
       this.currentTime = rMsg.timestamp - this.startTime
       return {
-        tp: 9999,
+        tp: PlaceholderTp,
         time: this.currentTime,
+        tabId: this.currentTab,
       }
     }
 

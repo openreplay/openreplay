@@ -42,7 +42,7 @@ export default class MessageLoader {
       toggleStatus?.(true);
       fileReader.append(b)
       fileReader.checkForIndexes()
-      const msgs: Array<Message & { _index?: number }> = []
+      const msgs: Array<Message & { _index?: number, tabId?: string }> = []
       for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
         msgs.push(msg)
       }
@@ -64,7 +64,7 @@ export default class MessageLoader {
     })
   }
 
-  loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
+  loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>): Promise<void> {
     if (urls.length > 0) {
       this.store.update({ domLoading: true })
       return loadFiles(urls, parser, true).then(() => this.store.update({ domLoading: false }))
