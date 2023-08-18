@@ -132,13 +132,9 @@ class Router extends React.Component {
     };
 
     componentDidMount() {
-        const { isLoggedIn, location } = this.props;
-        const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
-        if (!isLoggedIn && !location.pathname.includes('login')) {
+        const { location } = this.props;
+        if (!location.pathname.includes('login')) {
             localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
-        } else if (isLoggedIn && destinationPath && !location.pathname.includes(destinationPath)) {
-            this.props.history.push(destinationPath || '/');
-            localStorage.removeItem(GLOBAL_DESTINATION_PATH);
         }
     }
 
@@ -162,6 +158,7 @@ class Router extends React.Component {
 
         if (!prevProps.isLoggedIn && this.props.isLoggedIn) {
             this.fetchInitialData();
+            localStorage.removeItem(GLOBAL_DESTINATION_PATH);
         }
     }
 
