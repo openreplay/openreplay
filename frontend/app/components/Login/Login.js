@@ -96,6 +96,7 @@ class Login extends React.Component {
               <Form
                 onSubmit={this.onSubmit}
                 className={cn('flex items-center justify-center flex-col')}
+                style={{ width: '350px' }}
               >
                 <Loader loading={loading}>
                   {CAPTCHA_ENABLED && (
