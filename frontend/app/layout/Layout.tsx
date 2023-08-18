@@ -34,7 +34,7 @@ function Layout(props: Props) {
             <SideMenu siteId={siteId} />
           </Sider>
         )}
-        <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 50px)' }}>
+        <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 60px)' }}>
           {props.children}
         </Content>
       </AntLayout>
