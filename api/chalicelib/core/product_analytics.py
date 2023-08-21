@@ -1,3 +1,5 @@
+from typing import List
+
 import schemas
 from chalicelib.core import metadata
 from chalicelib.core.metrics import __get_constraints, __get_constraint_values
@@ -23,23 +25,34 @@ def __transform_journey(rows):
 
 JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
-    schemas.ProductAnalyticsEventType.location: {"table": "events.pages", "column": "path", "table_id": "message_id"},
-    schemas.ProductAnalyticsEventType.click: {"table": "events.clicks", "column": "label", "table_id": "message_id"},
-    schemas.ProductAnalyticsEventType.input: {"table": "events.inputs", "column": "label", "table_id": "message_id"},
-    schemas.ProductAnalyticsEventType.custom_event: {"table": "events_common.customs", "column": "name",
-                                                     "table_id": "seq_index"}
+    schemas.ProductAnalyticsSelectedEventType.location: {"table": "events.pages", "column": "path",
+                                                         "table_id": "message_id"},
+    schemas.ProductAnalyticsSelectedEventType.click: {"table": "events.clicks", "column": "label",
+                                                      "table_id": "message_id"},
+    schemas.ProductAnalyticsSelectedEventType.input: {"table": "events.inputs", "column": "label",
+                                                      "table_id": "message_id"},
+    schemas.ProductAnalyticsSelectedEventType.custom_event: {"table": "events_common.customs", "column": "name",
+                                                             "table_id": "seq_index"}
 }
 
 
-def path_analysis(project_id, data: schemas.PathAnalysisSchema):
+def path_analysis(project_id, data: schemas.PathAnalysisSchema,
+                  selected_event_type: List[schemas.ProductAnalyticsSelectedEventType]):
     # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
     #                                         time_constraint=True)
     # TODO: check if data=args is required
     pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="s", time_constraint=True)
     event_start = None
-    event_table = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table"]
-    event_column = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["column"]
-    event_table_id = JOURNEY_TYPES[schemas.ProductAnalyticsEventType.location]["table_id"]
+    event_table = JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["table"]
+    event_column = JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"]
+    event_table_id = JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["table_id"]
+    # TODO: support multi-event types
+    for v in selected_event_type:
+        if JOURNEY_TYPES.get(v):
+            event_table = JOURNEY_TYPES[v]["table"]
+            event_column = JOURNEY_TYPES[v]["column"]
+            break
+
     extra_values = {}
     reverse = False
     has_exclusion = False
@@ -57,9 +70,6 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema):
         elif f.type == schemas.ProductAnalyticsFilterType.end_point:
             event_start = f.value[0]
             reverse = True
-        elif f.type == schemas.ProductAnalyticsFilterType.event_type and JOURNEY_TYPES.get(f.value[0]):
-            event_table = JOURNEY_TYPES[f.value[0]]["table"]
-            event_column = JOURNEY_TYPES[f.value[0]]["column"]
         elif f.type == schemas.ProductAnalyticsFilterType.exclude_point:
             has_exclusion = True
         # ---- meta-filters
@@ -271,9 +281,9 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema):
                   # **__get_constraint_values(args),
                   **extra_values}
         query = cur.mogrify(pg_query, params)
-        # print("----------------------")
-        # print(query)
-        # print("----------------------")
+        print("----------------------")
+        print(query)
+        print("----------------------")
         cur.execute(query)
         rows = cur.fetchall()
 

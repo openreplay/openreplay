@@ -837,13 +837,12 @@ class SearchErrorsSchema(SessionsSearchPayloadSchema):
 
 
 class ProductAnalyticsFilterType(str, Enum):
-    event_type = 'eventType'
     start_point = 'startPoint'
     end_point = 'endPoint'
     exclude_point = 'exclude'
 
 
-class ProductAnalyticsEventType(str, Enum):
+class ProductAnalyticsSelectedEventType(str, Enum):
     click = EventType.click.value
     input = EventType.input.value
     location = EventType.location.value
@@ -854,19 +853,19 @@ class ProductAnalyticsFilter(BaseModel):
     type: Union[ProductAnalyticsFilterType, FilterType]
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadat filters
-    value: List[Union[ProductAnalyticsEventType, IssueType, PlatformType, int, str]] = Field(...)
+    value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
-    @model_validator(mode='after')
-    def __validator(cls, values):
-        if values.type == ProductAnalyticsFilterType.event_type:
-            assert values.value is not None and len(values.value) > 0, \
-                f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
-            assert ProductAnalyticsEventType.has_value(values.value[0]), \
-                f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
-
-        return values
+    # @model_validator(mode='after')
+    # def __validator(cls, values):
+    #     if values.type == ProductAnalyticsFilterType.event_type:
+    #         assert values.value is not None and len(values.value) > 0, \
+    #             f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
+    #         assert ProductAnalyticsEventType.has_value(values.value[0]), \
+    #             f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
+    #
+    #     return values
 
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
@@ -884,15 +883,14 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
                 continue
             filters.append(f)
         values.filters = filters
-        
+
         # Path analysis should have only 1 start-point OR 1 end-point
         # start-point's value and end-point's value should not be excluded
         s_e_detected = 0
         s_e_values = []
         exclude_values = []
         for f in values.filters:
-            if f.type in (
-                    ProductAnalyticsFilterType.event_type.start_point, ProductAnalyticsFilterType.event_type.end_point):
+            if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
                 s_e_detected += 1
                 s_e_values += f.value
             elif f.type == ProductAnalyticsFilterType.exclude_point.value:
@@ -1284,19 +1282,32 @@ class CardInsights(__CardSchema):
 
 # class CardPathAnalysisSchema(BaseModel):
 class CardPathAnalysisSchema(CardSessionsSchema):
-    filter: Optional[PathAnalysisSchema] = Field(default=None)
+    filter: PathAnalysisSchema = Field(...)
+
+    @model_validator(mode="before")
+    def __enforce_default(cls, values):
+        if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
+            values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
+                                                  endTimestamp=values["endTimestamp"])
+        return values
 
 
 class CardPathAnalysis(__CardSchema):
     metric_type: Literal[MetricType.pathAnalysis]
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
+    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
 
     # TODO: testing
     series: List[CardPathAnalysisSchema] = Field(default=[])
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
+        # TODO: remove this
+        # dev
+        values["series"] = []
+
+        values["viewType"] = MetricOtherViewType.other_chart.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
