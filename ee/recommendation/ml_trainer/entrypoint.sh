@@ -6,16 +6,15 @@ find airflow/ -type f -name "*.cfg" -exec sed -i "s/{{pg_port_airflow}}/${pg_por
 find airflow/ -type f -name "*.cfg" -exec sed -i "s/{{pg_dbname_airflow}}/${pg_dbname_airflow}/g" {} \;
 find airflow/ -type f -name "*.cfg" -exec sed -i "s#{{airflow_secret_key}}#${airflow_secret_key}#g" {} \;
 export MLFLOW_TRACKING_URI=postgresql+psycopg2://${pg_user_ml}:${pg_password_ml}@${pg_host_ml}:${pg_port_ml}/${pg_dbname_ml}
-mlflow db upgrade
 git init airflow/dags
 # Airflow setup
-airflow db init
-airflow users create \
- --username admin \
- --firstname admin \
- --lastname admin \
- --role Admin \
- --email admin@admin.admin \
- -p ${airflow_admin_password}
+# airflow db init
+# airflow users create \
+#  --username admin \
+#  --firstname admin \
+#  --lastname admin \
+#  --role Admin \
+#  --email admin@admin.admin \
+#  -p ${airflow_admin_password}
 # Run services
 airflow webserver --port 8080 & airflow scheduler & ./mlflow_server.sh
