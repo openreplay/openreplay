@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"openreplay/backend/pkg/metrics/database"
 )
 
@@ -95,7 +95,7 @@ func New(url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
 	}
-	conn, err := pgxpool.Connect(context.Background(), url)
+	conn, err := pgxpool.New(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
