@@ -1,3 +1,7 @@
+# 9.0.5
+
+- same fixes but for fetch proxy
+
 # 9.0.2 & 9.0.3 & 9.0.4
 
 - fixes for "setSessionTokenHeader" method

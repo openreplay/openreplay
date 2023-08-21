@@ -147,14 +147,16 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       if (argsList[1] === undefined && argsList[0] instanceof Request) {
         return argsList[0].headers.append(name, value)
       } else {
+        if (!argsList[1]) argsList[1] = {}
         if (argsList[1].headers === undefined) {
-          argsList[1].headers = {}
+          argsList[1] = { ...argsList[1], headers: {} }
         }
         if (argsList[1].headers instanceof Headers) {
           argsList[1].headers.append(name, value)
         } else if (Array.isArray(argsList[1].headers)) {
           argsList[1].headers.push([name, value])
         } else {
+          // @ts-ignore
           argsList[1].headers[name] = value
         }
       }
