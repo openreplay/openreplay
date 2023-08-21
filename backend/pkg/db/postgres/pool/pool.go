@@ -91,6 +91,18 @@ func (p *poolImpl) Close() {
 	p.conn.Close()
 }
 
+func (p *poolImpl) checker() {
+	for {
+		time.Sleep(time.Second * 5)
+		if p.conn != nil {
+			ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+			if err := p.conn.Ping(ctx); err != nil {
+				log.Println("pgxpool.Ping error: ", err)
+			}
+		}
+	}
+}
+
 func New(url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
@@ -99,10 +111,12 @@ func New(url string) (Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
-	return &poolImpl{
+	res := &poolImpl{
 		url:  url,
 		conn: conn,
-	}, nil
+	}
+	go res.checker()
+	return res, nil
 }
 
 // TX - start
