@@ -61,9 +61,7 @@ class Login extends React.Component {
 
   handleSubmit = (token) => {
     const { email, password } = this.state;
-    this.props.login({ email: email.trim(), password, 'g-recaptcha-response': token }).then(() => {
-      const { errors } = this.props;
-    });
+    this.props.login({ email: email.trim(), password, 'g-recaptcha-response': token });
   };
 
   onSubmit = (e) => {

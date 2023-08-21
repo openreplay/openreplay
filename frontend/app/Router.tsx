@@ -1,11 +1,10 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useRef } from 'react';
 import { Switch, Route, Redirect, withRouter, RouteComponentProps, BrowserRouter } from 'react-router-dom';
 import { connect, ConnectedProps } from 'react-redux';
 import { Notification } from 'UI';
 import { Loader } from 'UI';
-import { fetchUserInfo } from 'Duck/user';
+import { fetchUserInfo, setJwt } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import Header from 'Components/Header/Header';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { withStore } from 'App/mstore';
 import { Map } from 'immutable';
@@ -17,33 +16,38 @@ import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from 'Components/Modal';
 import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
-import SupportCallout from 'Shared/SupportCallout';
 import PublicRoutes from 'App/PublicRoutes';
 import Layout from 'App/layout/Layout';
 
-const SessionPure = lazy(() => import('Components/Session/Session'));
-const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
-const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
-const ClientPure = lazy(() => import('Components/Client/Client'));
-const AssistPure = lazy(() => import('Components/Assist/AssistRouter'));
-const SessionsOverviewPure = lazy(() => import('Components/Overview'));
-const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
-const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
-const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
-const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
-const MultiviewPure = lazy(() => import('Components/Session_/Multiview/Multiview'));
+const components = {
+  SessionPure: lazy(() => import('Components/Session/Session')),
+  LiveSessionPure: lazy(() => import('Components/Session/LiveSession')),
+  OnboardingPure: lazy(() => import('Components/Onboarding/Onboarding')),
+  ClientPure: lazy(() => import('Components/Client/Client')),
+  AssistPure: lazy(() => import('Components/Assist/AssistRouter')),
+  SessionsOverviewPure: lazy(() => import('Components/Overview')),
+  DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
+  FunnelDetailsPure: lazy(() => import('Components/Funnels/FunnelDetails')),
+  FunnelIssueDetails: lazy(() => import('Components/Funnels/FunnelIssueDetails')),
+  FunnelPagePure: lazy(() => import('Components/Funnels/FunnelPage')),
+  MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview'))
+};
 
-const SessionsOverview = withSiteIdUpdater(SessionsOverviewPure);
-const Dashboard = withSiteIdUpdater(DashboardPure);
-const Session = withSiteIdUpdater(SessionPure);
-const LiveSession = withSiteIdUpdater(LiveSessionPure);
-const Assist = withSiteIdUpdater(AssistPure);
-const Client = withSiteIdUpdater(ClientPure);
-const Onboarding = withSiteIdUpdater(OnboardingPure);
-const FunnelPage = withSiteIdUpdater(FunnelPagePure);
-const FunnelsDetails = withSiteIdUpdater(FunnelDetailsPure);
-const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
-const Multiview = withSiteIdUpdater(MultiviewPure);
+
+const enhancedComponents = {
+  SessionsOverview: withSiteIdUpdater(components.SessionsOverviewPure),
+  Dashboard: withSiteIdUpdater(components.DashboardPure),
+  Session: withSiteIdUpdater(components.SessionPure),
+  LiveSession: withSiteIdUpdater(components.LiveSessionPure),
+  Assist: withSiteIdUpdater(components.AssistPure),
+  Client: withSiteIdUpdater(components.ClientPure),
+  Onboarding: withSiteIdUpdater(components.OnboardingPure),
+  FunnelPage: withSiteIdUpdater(components.FunnelPagePure),
+  FunnelsDetails: withSiteIdUpdater(components.FunnelDetailsPure),
+  FunnelIssue: withSiteIdUpdater(components.FunnelIssueDetails),
+  Multiview: withSiteIdUpdater(components.MultiviewPure)
+};
+
 const withSiteId = routes.withSiteId;
 
 const METRICS_PATH = routes.metrics();
@@ -92,13 +96,14 @@ interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connect
   fetchUserInfo: () => any;
   fetchTenants: () => any;
   setSessionPath: (path: any) => any;
-  fetchSiteList: (siteId: number) => any;
+  fetchSiteList: (siteId?: number) => any;
   match: {
     params: {
       siteId: string;
     }
   };
   mstore: any;
+  setJwt: (jwt: string) => any;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
@@ -120,7 +125,16 @@ const Router: React.FC<RouterProps> = (props) => {
     match: { params: { siteId: siteIdFromPath } }
   } = props;
 
+  const checkJWT = () => {
+    const urlJWT = new URLSearchParams(window.location.search).get('jwt');
+    if (urlJWT && !props.isLoggedIn) {
+      props.setJwt(urlJWT);
+    }
+  };
+
   useEffect(() => {
+    checkJWT();
+
     const fetchInitialData = async () => {
       const siteIdFromPath = parseInt(window.location.pathname.split('/')[1]);
       await fetchUserInfo();
@@ -136,27 +150,34 @@ const Router: React.FC<RouterProps> = (props) => {
   }, []);
 
   useEffect(() => {
-    const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
-
-    if (!isLoggedIn && !location.pathname.includes('login')) {
+    if (!location.pathname.includes('login')) {
       localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
-    } else if (isLoggedIn && destinationPath && !location.pathname.includes(destinationPath)) {
-      history.push(destinationPath || '/');
-      localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
-  }, [isLoggedIn, location]);
+  }, [location]);
+
+  function usePrevious(value: any) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    }, [value]);
+    return ref.current;
+  }
+
+  const prevEmail = usePrevious(props.email);
+  const prevIsLoggedIn = usePrevious(props.isLoggedIn);
+
 
   useEffect(() => {
     setSessionPath(props.location);
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
 
-    if (props.email !== props.email && !props.email) {
+    if (prevEmail !== props.email && !props.email) {
       fetchTenants();
     }
 
     if (
       destinationPath &&
-      !props.isLoggedIn &&
+      !prevIsLoggedIn &&
       props.isLoggedIn &&
       destinationPath !== routes.login() &&
       destinationPath !== '/'
@@ -164,27 +185,30 @@ const Router: React.FC<RouterProps> = (props) => {
       history.push(destinationPath);
     }
 
-    if (!props.isLoggedIn && props.isLoggedIn) {
+    if (!prevIsLoggedIn && props.isLoggedIn) {
       const fetchInitialData = async () => {
         await fetchUserInfo();
+        await fetchSiteList();
         const { mstore } = props;
         mstore.initClient();
       };
 
       fetchInitialData();
+      localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
-  }, [props.email, props.isLoggedIn]);
+  }, [props.email, props.isLoggedIn, props.jwt]);
 
   const siteIdList = sites.map(({ id }) => id).toJS();
   const hideHeader =
     (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview');
-  const isPlayer =
-    isRoute(SESSION_PATH, location.pathname) ||
-    isRoute(LIVE_SESSION_PATH, location.pathname) ||
-    isRoute(MULTIVIEW_PATH, location.pathname) ||
-    isRoute(MULTIVIEW_INDEX_PATH, location.pathname);
+
+  // const isPlayer =
+  //   isRoute(SESSION_PATH, location.pathname) ||
+  //   isRoute(LIVE_SESSION_PATH, location.pathname) ||
+  //   isRoute(MULTIVIEW_PATH, location.pathname) ||
+  //   isRoute(MULTIVIEW_INDEX_PATH, location.pathname);
 
   const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
 
@@ -196,8 +220,8 @@ const Router: React.FC<RouterProps> = (props) => {
 
             <Suspense fallback={<Loader loading={true} className='flex-1' />}>
               <Switch key='content'>
-                <Route path={CLIENT_PATH} component={Client} />
-                <Route path={withSiteId(ONBOARDING_PATH, siteIdList)} component={Onboarding} />
+                <Route path={CLIENT_PATH} component={enhancedComponents.Client} />
+                <Route path={withSiteId(ONBOARDING_PATH, siteIdList)} component={enhancedComponents.Onboarding} />
                 <Route
                   path='/integrations/'
                   render={({ location }) => {
@@ -233,15 +257,20 @@ const Router: React.FC<RouterProps> = (props) => {
                   withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
                   withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
                   withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
-                ]} component={Dashboard} />
+                ]} component={enhancedComponents.Dashboard} />
 
-                <Route exact path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)} component={Multiview} />
-                <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
-                <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
-                <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
-                <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
-                <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
-                <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
+                <Route exact path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
+                       component={enhancedComponents.Multiview} />
+                <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={enhancedComponents.Multiview} />
+                <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={enhancedComponents.Assist} />
+                <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)}
+                       component={enhancedComponents.Assist} />
+                <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)}
+                       component={enhancedComponents.FunnelPage} />
+                <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)}
+                       component={enhancedComponents.FunnelsDetails} />
+                <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
+                       component={enhancedComponents.FunnelIssue} />
                 <Route
                   exact
                   strict
@@ -254,15 +283,16 @@ const Router: React.FC<RouterProps> = (props) => {
                     withSiteId(NOTES_PATH, siteIdList),
                     withSiteId(BOOKMARKS_PATH, siteIdList)
                   ]}
-                  component={SessionsOverview}
+                  component={enhancedComponents.SessionsOverview}
                 />
-                <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
-                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
+                <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={enhancedComponents.Session} />
+                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
+                       component={enhancedComponents.LiveSession} />
                 <Route
                   exact
                   strict
                   path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                  render={(props) => <Session {...props} live />}
+                  render={(props) => <enhancedComponents.Session {...props} live />}
                 />
                 {Object.entries(routes.redirects).map(([fr, to]) => (
                   <Redirect key={fr} exact strict from={fr} to={to} />
@@ -307,7 +337,8 @@ const mapDispatchToProps = {
   fetchUserInfo,
   fetchTenants,
   setSessionPath,
-  fetchSiteList
+  fetchSiteList,
+  setJwt
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
