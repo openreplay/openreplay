@@ -400,6 +400,7 @@ $$
                 project_id              integer      NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 tracker_version         text         NOT NULL,
                 start_ts                bigint       NOT NULL,
+                timezone                text         NULL,
                 duration                integer      NULL,
                 rev_id                  text                  DEFAULT NULL,
                 platform                platform     NOT NULL DEFAULT 'web',

@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     user_state LowCardinality(String),
     platform Enum8('web'=1,'ios'=2,'android'=3) DEFAULT 'web',
     datetime                       DateTime,
+    timezone LowCardinality(Nullable(String)),
     duration                       UInt32,
     pages_count                    UInt16,
     events_count                   UInt16,
