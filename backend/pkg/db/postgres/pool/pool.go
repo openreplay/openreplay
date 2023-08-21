@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -19,11 +20,18 @@ type Pool interface {
 	Exec(sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
 	Begin() (*_Tx, error)
+	IsConnected() bool
 	Close()
 }
 
 type poolImpl struct {
+	url  string
 	conn *pgxpool.Pool
+}
+
+func (p *poolImpl) IsConnected() bool {
+	log.Printf("stat: %v", p.conn.Stat())
+	return true
 }
 
 func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
@@ -32,6 +40,9 @@ func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
 	method, table := methodName(sql)
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
 	database.IncreaseTotalRequests(method, table)
+	if err != nil {
+		p.IsConnected()
+	}
 	return res, err
 }
 
@@ -50,6 +61,9 @@ func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
 	method, table := methodName(sql)
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
 	database.IncreaseTotalRequests(method, table)
+	if err != nil {
+		p.IsConnected()
+	}
 	return err
 }
 
@@ -66,6 +80,9 @@ func (p *poolImpl) Begin() (*_Tx, error) {
 	tx, err := p.conn.Begin(context.Background())
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
 	database.IncreaseTotalRequests("begin", "")
+	if err != nil {
+		p.IsConnected()
+	}
 	return &_Tx{tx}, err
 }
 
@@ -82,6 +99,7 @@ func New(url string) (Pool, error) {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
 	return &poolImpl{
+		url:  url,
 		conn: conn,
 	}, nil
 }
