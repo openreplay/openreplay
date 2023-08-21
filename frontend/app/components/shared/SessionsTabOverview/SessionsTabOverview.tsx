@@ -4,7 +4,6 @@ import SessionHeader from './components/SessionHeader';
 import NotesList from './components/Notes/NoteList';
 import { connect, DefaultRootState } from 'react-redux';
 import LatestSessionsMessage from './components/LatestSessionsMessage';
-import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
 
 function SessionsTabOverview({
                                activeTab,
@@ -18,7 +17,6 @@ function SessionsTabOverview({
   siteId: string;
 }) {
   const activeSite: any = sites.find((s: any) => s.id === siteId);
-  const hasNoRecordings = !activeSite || !activeSite.recorded;
 
   return (
     <div className='widget-wrapper'>

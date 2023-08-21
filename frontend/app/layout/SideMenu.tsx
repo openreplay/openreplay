@@ -2,30 +2,39 @@ import React from 'react';
 import { Divider, Menu, Typography, Drawer, Button, Space } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
-import { client, CLIENT_DEFAULT_TAB, CLIENT_TABS, withSiteId } from 'App/routes';
+import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { categories as main_menu, MENU, preferences, PREFERENCES_MENU } from './data';
 import { connect } from 'react-redux';
 import { MODULES } from 'Components/Client/Modules';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import { ArrowRightOutlined } from '@ant-design/icons';
 import SupportModal from 'App/layout/SupportModal';
+import { setActiveTab } from 'Duck/search';
 
 
 const { Text } = Typography;
 
+const TabToUrlMap = {
+  all: sessions() as '/sessions',
+  bookmark: bookmarks() as '/bookmarks',
+  notes: notes() as '/notes',
+  flags: fflags() as '/feature-flags'
+};
 
-interface Props {
+
+interface Props extends RouteComponentProps {
   siteId?: string;
   modules: string[];
+  setActiveTab: (tab: any) => void;
+  activeTab: string;
 }
 
 
-function SideMenu(props: RouteComponentProps<Props>) {
+function SideMenu(props: Props) {
   // @ts-ignore
-  const { siteId, modules } = props;
-  const isPreferencesActive = props.location.pathname.includes('/client/');
+  const { activeTab, siteId, modules, location } = props;
+  const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
 
   let menu = isPreferencesActive ? preferences : main_menu;
@@ -49,6 +58,14 @@ function SideMenu(props: RouteComponentProps<Props>) {
       }
     });
   });
+
+  React.useEffect(() => {
+    const currentLocation = location.pathname;
+    const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) => currentLocation.includes(TabToUrlMap[tab]));
+    if (tab && tab !== activeTab) {
+      props.setActiveTab({ type: tab });
+    }
+  }, [location.pathname]);
 
 
   const menuRoutes: any = {
@@ -90,7 +107,7 @@ function SideMenu(props: RouteComponentProps<Props>) {
   };
 
   const isMenuItemActive = (key: string) => {
-    const { pathname } = props.location;
+    const { pathname } = location;
     const activeRoute = menuRoutes[key];
     if (activeRoute) {
       const route = activeRoute();
@@ -154,5 +171,6 @@ function SideMenu(props: RouteComponentProps<Props>) {
 }
 
 export default withRouter(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'settings', 'modules']) || []
-}))(SideMenu));
+  modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
+  activeTab: state.getIn(['search', 'activeTab', 'type']),
+}), { setActiveTab })(SideMenu));
