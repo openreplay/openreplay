@@ -95,6 +95,14 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
+function getTimezone() {
+  const offset = new Date().getTimezoneOffset() * -1
+  const sign = offset >= 0 ? '+' : '-'
+  const hours = Math.floor(Math.abs(offset) / 60)
+  const minutes = Math.abs(offset) % 60
+  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
 export default class App {
   readonly nodes: Nodes
   readonly ticker: Ticker
@@ -525,6 +533,7 @@ export default class App {
           token: isNewSession ? undefined : sessionToken,
           deviceMemory,
           jsHeapSizeLimit,
+          timezone: getTimezone(),
         }),
       })
       .then((r) => {

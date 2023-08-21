@@ -22,6 +22,7 @@ interface IProps {
   setTimelineHoverTime: (t: number) => void
   startedAt: number
   tooltipVisible: boolean
+  timezone?: string
 }
 
 function Timeline(props: IProps) {
@@ -36,7 +37,7 @@ function Timeline(props: IProps) {
     devtoolsLoading,
     domLoading,
   } = store.get()
-  const { issues } = props;
+  const { issues, timezone } = props;
 
   const progressRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -86,9 +87,12 @@ function Timeline(props: IProps) {
     if (!time) return;
     const tz = settingsStore.sessionSettings.timezone.value
     const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
+    const userTimeStr = timezone ? DateTime.fromMillis(props.startedAt + time).setZone(timezone).toFormat(`hh:mm:ss a`) : undefined
+
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat(`mm:ss`),
-      timeStr,
+      localTime: timeStr,
+      userTime: userTimeStr,
       offset: e.nativeEvent.pageX,
       isVisible: true,
     };
@@ -173,6 +177,7 @@ export default connect(
   (state: any) => ({
     issues: state.getIn(['sessions', 'current']).issues || [],
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
+    timezone: state.getIn(['sessions', 'current']).timezone,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
   }),
   { setTimelinePointer, setTimelineHoverTime }

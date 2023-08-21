@@ -31,7 +31,7 @@ function WebPlayer(props: any) {
     fullscreen,
     fetchList,
   } = props;
-  const { notesStore } = useStore();
+  const { notesStore, sessionStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
@@ -43,7 +43,7 @@ function WebPlayer(props: any) {
     playerInst = undefined
     if (!session.sessionId || contextValue.player !== undefined) return;
     fetchList('issues');
-
+    sessionStore.setUserTimezone(session.timezone)
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
       (state) => makeAutoObservable(state),
