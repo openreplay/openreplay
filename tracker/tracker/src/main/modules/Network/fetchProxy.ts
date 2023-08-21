@@ -125,6 +125,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
     private readonly sendMessage: (item: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
+    private readonly tokenUrls: string[],
   ) {}
 
   public apply(target: T, _: typeof window, argsList: [RequestInfo | URL, RequestInit]) {
@@ -144,6 +145,14 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     this.beforeFetch(item, input as RequestInfo, init)
 
     this.setSessionTokenHeader((name, value) => {
+      if (this.tokenUrls.length > 0) {
+        const isWhitelisted = this.tokenUrls.some((url) => {
+          return item.url.includes(url)
+        })
+        if (!isWhitelisted) {
+          return
+        }
+      }
       if (argsList[1] === undefined && argsList[0] instanceof Request) {
         return argsList[0].headers.append(name, value)
       } else {
@@ -293,6 +302,7 @@ export default class FetchProxy {
     sanitize: (data: RequestResponseData) => RequestResponseData,
     sendMessage: (item: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
+    tokenUrls: string[],
   ) {
     return new Proxy(
       fetch,
@@ -302,6 +312,7 @@ export default class FetchProxy {
         sanitize,
         sendMessage,
         isServiceUrl,
+        tokenUrls,
       ),
     )
   }

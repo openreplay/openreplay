@@ -22,6 +22,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
     private readonly sendMessage: (message: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
+    private readonly tokenUrls: string[],
   ) {
     this.XMLReq = XMLReq
     this.XMLReq.onreadystatechange = () => {
@@ -43,6 +44,14 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
         return this.getOpen(target)
       case 'send':
         this.setSessionTokenHeader((name: string, value: string) => {
+          if (this.tokenUrls.length > 0) {
+            const isWhitelisted = this.tokenUrls.some((url) => {
+              return this.item.url.includes(url)
+            })
+            if (!isWhitelisted) {
+              return
+            }
+          }
           target.setRequestHeader(name, value)
         })
         return this.getSend(target)
@@ -228,6 +237,7 @@ export default class XHRProxy {
     sanitize: (data: RequestResponseData) => RequestResponseData,
     sendMessage: (data: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
+    tokenUrls: string[],
   ) {
     return new Proxy(XMLHttpRequest, {
       construct(original: any) {
@@ -241,6 +251,7 @@ export default class XHRProxy {
             sanitize,
             sendMessage,
             isServiceUrl,
+            tokenUrls,
           ),
         )
       },
