@@ -94,12 +94,14 @@ func (u *updatesImpl) Commit() {
 	for i := 0; i < l; i++ {
 		if _, err := br.Exec(); err != nil {
 			log.Printf("Error in PG batch.Exec(): %v \n", err)
+			u.db.IsConnected()
 			failed = true
 			break
 		}
 	}
 	if err := br.Close(); err != nil {
 		log.Printf("Error in PG batch.Close(): %v \n", err)
+		u.db.IsConnected()
 	}
 	if failed {
 		for _, upd := range u.updates {
