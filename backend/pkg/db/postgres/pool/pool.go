@@ -30,7 +30,8 @@ type poolImpl struct {
 }
 
 func (p *poolImpl) IsConnected() bool {
-	log.Printf("stat: %v", p.conn.Stat())
+	stat := p.conn.Stat()
+	log.Println("stat: ", stat.AcquireCount(), stat.IdleConns(), stat.MaxConns(), stat.TotalConns())
 	return true
 }
 
