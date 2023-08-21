@@ -10,6 +10,8 @@ export interface MenuItem {
   hidden?: boolean;
   disabled?: boolean;
   leading?: any;
+  isEnterprise?: boolean;
+  isAdmin?: boolean;
 }
 
 interface Category {
@@ -69,7 +71,7 @@ export const categories: Category[] = [
     key: 'assist',
     items: [
       { label: 'Live Sessions', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
-      { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn' }
+      { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true }
     ]
   },
   {
@@ -112,11 +114,17 @@ export const preferences: Category[] = [
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
       { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'people' },
       { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
-      { label: 'Roles & Access', key: PREFERENCES_MENU.ROLES_ACCESS, icon: 'diagram-3' },
-      { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul' },
-      { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people' },
-      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' }
-      // { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell' }
+      {
+        label: 'Roles & Access',
+        key: PREFERENCES_MENU.ROLES_ACCESS,
+        icon: 'diagram-3',
+        isEnterprise: true,
+        isAdmin: true
+      },
+      { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true },
+      { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
+      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' },
+      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell', hidden: true }
     ]
   }
 ];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Typography, Drawer, Button, Space } from 'antd';
+import { Divider, Menu, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
@@ -28,36 +28,43 @@ interface Props extends RouteComponentProps {
   modules: string[];
   setActiveTab: (tab: any) => void;
   activeTab: string;
+  isAdmin: boolean;
+  isEnterprise: boolean;
 }
 
 
 function SideMenu(props: Props) {
   // @ts-ignore
-  const { activeTab, siteId, modules, location } = props;
+  const { activeTab, siteId, modules, location, account, isEnterprise } = props;
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
+  const isAdmin = account.admin || account.superAdmin;
 
-  let menu = isPreferencesActive ? preferences : main_menu;
 
-  menu.forEach((category) => {
-    category.items.forEach((item) => {
-      if (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)) {
-        item.hidden = true;
-      }
+  let menu: any[] = React.useMemo(() => {
+    const sourceMenu = isPreferencesActive ? preferences : main_menu;
 
-      if ((item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST)) {
-        item.hidden = true;
-      }
+    return sourceMenu.map(category => {
+      return {
+        ...category,
+        items: category.items.map(item => {
+          if (item.hidden) return item; // Guard clause to early return if the item is already hidden.
 
-      if (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)) {
-        item.hidden = true;
-      }
+          const isHidden = [
+            (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
+            (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST),
+            (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
+            (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
+            (item.isAdmin && !isAdmin),
+            (item.isEnterprise && !isEnterprise)
+          ].some(cond => cond);
 
-      if (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)) {
-        item.hidden = true;
-      }
+          return { ...item, hidden: isHidden };
+        })
+      };
     });
-  });
+  }, [isAdmin, isEnterprise, isPreferencesActive, modules]);
+
 
   React.useEffect(() => {
     const currentLocation = location.pathname;
@@ -130,7 +137,7 @@ function SideMenu(props: Props) {
           <Menu.Item key='exit' style={{ color: '#333', height: '32px' }} icon={<SVG name='arrow-bar-left' />}>
             <Text className='ml-2'>Exit</Text>
           </Menu.Item>}
-        {(isPreferencesActive ? preferences : main_menu).map((category, index) => (
+        {menu.map((category, index) => (
           <React.Fragment key={category.key}>
             {index > 0 && <Divider style={{ margin: '6px 0' }} />}
             <Menu.ItemGroup key={category.key}
@@ -173,4 +180,6 @@ function SideMenu(props: Props) {
 export default withRouter(connect((state: any) => ({
   modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
   activeTab: state.getIn(['search', 'activeTab', 'type']),
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+  account: state.getIn(['user', 'account'])
 }), { setActiveTab })(SideMenu));
