@@ -483,7 +483,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
 	defer r.Body.Close()
 
-	err = r.ParseMultipartForm(1e6) // ~1Mb
+	err = r.ParseMultipartForm(5 * 1e6) // ~5Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
