@@ -16,6 +16,7 @@ const (
 type ObjectStorage interface {
 	Upload(reader io.Reader, key string, contentType string, compression CompressionType) error
 	Get(key string) (io.ReadCloser, error)
+	GetAll(key string) ([]io.ReadCloser, error)
 	Exists(key string) bool
 	GetCreationTime(key string) *time.Time
 }

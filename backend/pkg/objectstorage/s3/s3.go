@@ -102,6 +102,17 @@ func (s *storageImpl) Get(key string) (io.ReadCloser, error) {
 	return out.Body, nil
 }
 
+func (s *storageImpl) GetAll(key string) ([]io.ReadCloser, error) {
+	out, err := s.svc.GetObject(&s3.GetObjectInput{
+		Bucket: s.bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return []io.ReadCloser{out.Body}, nil
+}
+
 func (s *storageImpl) Exists(key string) bool {
 	_, err := s.svc.HeadObject(&s3.HeadObjectInput{
 		Bucket: s.bucket,
