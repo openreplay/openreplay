@@ -361,6 +361,8 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
 }
 
+// Mobile
+
 func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	req := &StartIOSSessionRequest{}
@@ -431,7 +433,8 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
 			UserCountry:    country,
 		}
-		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode())
+		log.Printf("mobile session start: %+v", sessStart)
+		//e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode())
 	}
 
 	ResponseWithJSON(w, &StartIOSSessionResponse{

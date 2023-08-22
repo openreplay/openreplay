@@ -37,6 +37,7 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 		ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
-	e.services.Producer.Produce(topicName, sessionID, buf) // What if not able to send?
+	log.Println("Produce message", len(buf))
+	//e.services.Producer.Produce(topicName, sessionID, buf) // What if not able to send?
 	w.WriteHeader(http.StatusOK)
 }
