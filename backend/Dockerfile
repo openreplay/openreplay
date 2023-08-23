@@ -95,12 +95,11 @@ ENV TZ=UTC \
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
-  wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; fi \
-
-
-RUN if [ "$SERVICE_NAME" = "videostorage" ]; then \
-  apt update && apt install -y ffmpeg; fi \
+      wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
+      wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
+    elif [ "$SERVICE_NAME" = "videostorage" ]; then \
+      apk add --no-cache ffmpeg; \
+    fi
 
 
 COPY --from=build /root/service /home/openreplay/service
