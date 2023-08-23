@@ -1,3 +1,7 @@
+# 9.0.6
+
+- added `tokenUrlMatcher` option to network settings, allowing to ingest session token header to custom allowed urls
+
 # 9.0.5
 
 - same fixes but for fetch proxy

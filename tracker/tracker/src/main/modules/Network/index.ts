@@ -14,7 +14,7 @@ export default function setProxy(
   sanitize: (data: RequestResponseData) => RequestResponseData,
   sendMessage: (message: NetworkRequest) => void,
   isServiceUrl: (url: string) => boolean,
-  tokenUrls: string[],
+  tokenUrlMatcher?: (url: string) => boolean,
 ) {
   if (context.XMLHttpRequest) {
     context.XMLHttpRequest = XHRProxy.create(
@@ -23,7 +23,7 @@ export default function setProxy(
       sanitize,
       sendMessage,
       isServiceUrl,
-      tokenUrls,
+      tokenUrlMatcher,
     )
   } else {
     getWarning('XMLHttpRequest')
@@ -35,7 +35,7 @@ export default function setProxy(
       sanitize,
       sendMessage,
       isServiceUrl,
-      tokenUrls,
+      tokenUrlMatcher,
     )
   } else {
     getWarning('fetch')
