@@ -26,18 +26,21 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 			ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: stage-dependent response
 			return
 		}
-		//log.Println("Gzip reader init", reader)
+		log.Println("Gzip reader init", reader)
 		defer reader.Close()
 	default:
 		reader = body
 	}
-	//log.Println("Reader after switch:", reader)
+	log.Println("Reader after switch:", reader)
 	buf, err := ioutil.ReadAll(reader)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 	log.Println("Produce message", len(buf))
-	//e.services.Producer.Produce(topicName, sessionID, buf) // What if not able to send?
+	if err := e.services.Producer.Produce(topicName, sessionID, buf); err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: send error here only on staging
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
