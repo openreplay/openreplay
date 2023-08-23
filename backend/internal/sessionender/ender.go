@@ -74,6 +74,10 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
 	)
+	if messages.IsIOSType(msg.TypeID()) {
+		msgTimestamp = messages.GetTimestamp(msg)
+		log.Printf("got timestamp from iOS message, session: %d, ts: %d", msg.SessionID(), msgTimestamp)
+	}
 	if batchTimestamp == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
