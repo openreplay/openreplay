@@ -75,10 +75,11 @@ func main() {
 		sinkMetrics.IncreaseTotalMessages()
 
 		// Send SessionEnd trigger to storage service
-		if msg.TypeID() == messages.MsgSessionEnd {
+		if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgIOSSessionEnd {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
+			// TODO: send ios session end to extra topic (video storage)
 			writer.Close(msg.SessionID())
 			return
 		}
@@ -178,6 +179,7 @@ func main() {
 		cfg.GroupSink,
 		[]string{
 			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
 		},
 		messages.NewSinkMessageIterator(msgHandler, nil, false),
 		false,

@@ -56,7 +56,7 @@ func main() {
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
 			},
-			[]int{messages.MsgSessionEnd},
+			[]int{messages.MsgSessionEnd, messages.MsgIOSSessionEnd},
 			true,
 		),
 		false,

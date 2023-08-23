@@ -17,6 +17,7 @@ type session struct {
 	lastUpdate    int64 // local timestamp
 	lastUserTime  uint64
 	isEnded       bool
+	isMobile      bool
 }
 
 // SessionEnder updates timestamp of last message for each session
@@ -86,6 +87,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
+			isMobile:      messages.IsIOSType(msg.TypeID()),
 		}
 		ender.IncreaseActiveSessions()
 		ender.IncreaseTotalSessions()
