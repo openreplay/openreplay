@@ -108,7 +108,7 @@ export interface ISession {
   notes: Note[];
   notesWithEvents: Array<Note | InjectedEvent>;
   fileKey: string;
-  platform: string;
+  platform: "web" | "ios" | "android";
   projectId: string;
   startTs: number;
   timestamp: number;
@@ -138,7 +138,8 @@ const emptyValues = {
   notes: [],
   metadata: {},
   startedAt: 0,
-};
+  platform: 'web',
+} as const
 
 export default class Session {
   sessionId: ISession['sessionId'];
@@ -198,6 +199,7 @@ export default class Session {
   notesWithEvents: ISession['notesWithEvents'];
   frustrations: Array<IIssue | InjectedEvent>
   timezone?: ISession['timezone'];
+  platform: ISession['platform'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
