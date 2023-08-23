@@ -63,7 +63,10 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewConsumer(
 		cfg.GroupEnder,
-		[]string{cfg.TopicRawWeb},
+		[]string{
+			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
+		},
 		messages.NewEnderMessageIterator(
 			func(msg messages.Message) { sessionEndGenerator.UpdateSession(msg) },
 			append([]int{messages.MsgTimestamp}, mobileMessages...),
