@@ -2,8 +2,10 @@ package videostorage
 
 import (
 	"fmt"
+	"log"
 	config "openreplay/backend/internal/config/videostorage"
 	"openreplay/backend/pkg/objectstorage"
+	"strconv"
 )
 
 type VideoStorage struct {
@@ -31,10 +33,11 @@ func (v *VideoStorage) Process(sessID uint64) error {
 		2. Untar Archives into One Folder
 		3. Convert JPEG Files to MP4 Video
 	*/
-	files, err := v.objStorage.GetAll(sessID)
+	files, err := v.objStorage.GetAll(strconv.Itoa(int(sessID)))
 	if err != nil {
 		return err
 	}
+	log.Printf("files: %v", files)
 	// TODO: untar files
 	// TODO: convert to mp4 (ffmpeg)
 	// TODO: upload to s3 resulted video
