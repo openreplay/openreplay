@@ -193,12 +193,6 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				log.Fatalf("failed reading data: %s", err)
 			}
 
-			// Read the content of the file into the byte slice
-			_, err = file.Read(data)
-			if err != nil {
-				log.Fatalf("failed reading file: %s", err)
-			}
-
 			log.Printf("Uploading image... %v, len: %d", util.SafeString(key), len(data))
 
 			if err := e.services.Producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
