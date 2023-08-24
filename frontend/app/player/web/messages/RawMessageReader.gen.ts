@@ -689,32 +689,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 90: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const projectID = this.readUint(); if (projectID === null) { return resetPointer() }
-      const trackerVersion = this.readString(); if (trackerVersion === null) { return resetPointer() }
-      const revID = this.readString(); if (revID === null) { return resetPointer() }
-      const userUUID = this.readString(); if (userUUID === null) { return resetPointer() }
-      const userOS = this.readString(); if (userOS === null) { return resetPointer() }
-      const userOSVersion = this.readString(); if (userOSVersion === null) { return resetPointer() }
-      const userDevice = this.readString(); if (userDevice === null) { return resetPointer() }
-      const userDeviceType = this.readString(); if (userDeviceType === null) { return resetPointer() }
-      const userCountry = this.readString(); if (userCountry === null) { return resetPointer() }
-      return {
-        tp: MType.IosSessionStart,
-        timestamp,
-        projectID,
-        trackerVersion,
-        revID,
-        userUUID,
-        userOS,
-        userOSVersion,
-        userDevice,
-        userDeviceType,
-        userCountry,
-      };
-    }
-
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }

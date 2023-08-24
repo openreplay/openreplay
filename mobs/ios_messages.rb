@@ -4,7 +4,7 @@ message 107, 'IOSBatchMeta', :replayer => false  do
     uint 'FirstIndex'
 end
 
-message 90, 'IOSSessionStart',  :replayer => true  do 
+message 90, 'IOSSessionStart',  :replayer => false  do
 	uint 'Timestamp'
 	# uint 'Length'
   

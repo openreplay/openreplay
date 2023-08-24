@@ -58,7 +58,6 @@ export const enum MType {
   ResourceTiming = 116,
   TabChange = 117,
   TabData = 118,
-  IosSessionStart = 90,
   IosCustomEvent = 93,
   IosScreenChanges = 96,
   IosClickEvent = 100,
@@ -459,20 +458,6 @@ export interface RawTabData {
   tabId: string,
 }
 
-export interface RawIosSessionStart {
-  tp: MType.IosSessionStart,
-  timestamp: number,
-  projectID: number,
-  trackerVersion: string,
-  revID: string,
-  userUUID: string,
-  userOS: string,
-  userOSVersion: string,
-  userDevice: string,
-  userDeviceType: string,
-  userCountry: string,
-}
-
 export interface RawIosCustomEvent {
   tp: MType.IosCustomEvent,
   timestamp: number,
@@ -530,4 +515,4 @@ export interface RawIosNetworkCall {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;

@@ -1121,6 +1121,24 @@ cdef class ResourceTiming(PyMessage):
         self.cached = cached
 
 
+cdef class TabChange(PyMessage):
+    cdef public int __id__
+    cdef public str tab_id
+
+    def __init__(self, str tab_id):
+        self.__id__ = 117
+        self.tab_id = tab_id
+
+
+cdef class TabData(PyMessage):
+    cdef public int __id__
+    cdef public str tab_id
+
+    def __init__(self, str tab_id):
+        self.__id__ = 118
+        self.tab_id = tab_id
+
+
 cdef class IssueEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long message_id
