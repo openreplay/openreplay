@@ -1182,55 +1182,6 @@ cdef class SessionSearch(PyMessage):
         self.partition = partition
 
 
-cdef class IOSBatchMeta(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long length
-    cdef public unsigned long first_index
-
-    def __init__(self, unsigned long timestamp, unsigned long length, unsigned long first_index):
-        self.__id__ = 107
-        self.timestamp = timestamp
-        self.length = length
-        self.first_index = first_index
-
-
-cdef class IOSSessionStart(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long project_id
-    cdef public str tracker_version
-    cdef public str rev_id
-    cdef public str user_uuid
-    cdef public str user_os
-    cdef public str user_os_version
-    cdef public str user_device
-    cdef public str user_device_type
-    cdef public str user_country
-
-    def __init__(self, unsigned long timestamp, unsigned long project_id, str tracker_version, str rev_id, str user_uuid, str user_os, str user_os_version, str user_device, str user_device_type, str user_country):
-        self.__id__ = 90
-        self.timestamp = timestamp
-        self.project_id = project_id
-        self.tracker_version = tracker_version
-        self.rev_id = rev_id
-        self.user_uuid = user_uuid
-        self.user_os = user_os
-        self.user_os_version = user_os_version
-        self.user_device = user_device
-        self.user_device_type = user_device_type
-        self.user_country = user_country
-
-
-cdef class IOSSessionEnd(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-
-    def __init__(self, unsigned long timestamp):
-        self.__id__ = 91
-        self.timestamp = timestamp
-
-
 cdef class IOSMetadata(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
@@ -1246,7 +1197,7 @@ cdef class IOSMetadata(PyMessage):
         self.value = value
 
 
-cdef class IOSCustomEvent(PyMessage):
+cdef class IOSEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1265,26 +1216,26 @@ cdef class IOSUserID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 94
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSUserAnonymousID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 95
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSScreenChanges(PyMessage):
@@ -1453,6 +1404,38 @@ cdef class IOSNetworkCall(PyMessage):
         self.success = success
         self.method = method
         self.status = status
+
+
+cdef class IOSSwipeEvent(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long length
+    cdef public str label
+    cdef public unsigned long x
+    cdef public unsigned long y
+    cdef public str direction
+
+    def __init__(self, unsigned long timestamp, unsigned long length, str label, unsigned long x, unsigned long y, str direction):
+        self.__id__ = 106
+        self.timestamp = timestamp
+        self.length = length
+        self.label = label
+        self.x = x
+        self.y = y
+        self.direction = direction
+
+
+cdef class IOSBatchMeta(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long length
+    cdef public unsigned long first_index
+
+    def __init__(self, unsigned long timestamp, unsigned long length, unsigned long first_index):
+        self.__id__ = 107
+        self.timestamp = timestamp
+        self.length = length
+        self.first_index = first_index
 
 
 cdef class IOSPerformanceAggregated(PyMessage):

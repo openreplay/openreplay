@@ -58,12 +58,16 @@ export const enum MType {
   ResourceTiming = 116,
   TabChange = 117,
   TabData = 118,
-  IosCustomEvent = 93,
+  IosEvent = 93,
   IosScreenChanges = 96,
   IosClickEvent = 100,
+  IosInputEvent = 101,
   IosPerformanceEvent = 102,
   IosLog = 103,
+  IosInternalError = 104,
   IosNetworkCall = 105,
+  IosSwipeEvent = 106,
+  IosIssueEvent = 111,
 }
 
 
@@ -458,8 +462,8 @@ export interface RawTabData {
   tabId: string,
 }
 
-export interface RawIosCustomEvent {
-  tp: MType.IosCustomEvent,
+export interface RawIosEvent {
+  tp: MType.IosEvent,
   timestamp: number,
   length: number,
   name: string,
@@ -485,6 +489,15 @@ export interface RawIosClickEvent {
   y: number,
 }
 
+export interface RawIosInputEvent {
+  tp: MType.IosInputEvent,
+  timestamp: number,
+  length: number,
+  value: string,
+  valueMasked: boolean,
+  label: string,
+}
+
 export interface RawIosPerformanceEvent {
   tp: MType.IosPerformanceEvent,
   timestamp: number,
@@ -501,6 +514,13 @@ export interface RawIosLog {
   content: string,
 }
 
+export interface RawIosInternalError {
+  tp: MType.IosInternalError,
+  timestamp: number,
+  length: number,
+  content: string,
+}
+
 export interface RawIosNetworkCall {
   tp: MType.IosNetworkCall,
   timestamp: number,
@@ -514,5 +534,24 @@ export interface RawIosNetworkCall {
   status: number,
 }
 
+export interface RawIosSwipeEvent {
+  tp: MType.IosSwipeEvent,
+  timestamp: number,
+  length: number,
+  label: string,
+  x: number,
+  y: number,
+  direction: string,
+}
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
+export interface RawIosIssueEvent {
+  tp: MType.IosIssueEvent,
+  timestamp: number,
+  type: string,
+  contextString: string,
+  context: string,
+  payload: string,
+}
+
+
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosEvent | RawIosScreenChanges | RawIosClickEvent | RawIosInputEvent | RawIosPerformanceEvent | RawIosLog | RawIosInternalError | RawIosNetworkCall | RawIosSwipeEvent | RawIosIssueEvent;

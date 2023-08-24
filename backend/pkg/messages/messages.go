@@ -86,11 +86,8 @@ const (
     MsgIssueEvent = 125
     MsgSessionEnd = 126
     MsgSessionSearch = 127
-    MsgIOSBatchMeta = 107
-    MsgIOSSessionStart = 90
-    MsgIOSSessionEnd = 91
     MsgIOSMetadata = 92
-    MsgIOSCustomEvent = 93
+    MsgIOSEvent = 93
     MsgIOSUserID = 94
     MsgIOSUserAnonymousID = 95
     MsgIOSScreenChanges = 96
@@ -103,6 +100,8 @@ const (
     MsgIOSLog = 103
     MsgIOSInternalError = 104
     MsgIOSNetworkCall = 105
+    MsgIOSSwipeEvent = 106
+    MsgIOSBatchMeta = 107
     MsgIOSPerformanceAggregated = 110
     MsgIOSIssueEvent = 111
 )
@@ -2288,91 +2287,6 @@ func (msg *SessionSearch) TypeID() int {
 	return 127
 }
 
-type IOSBatchMeta struct {
-	message
-	Timestamp uint64
-	Length uint64
-	FirstIndex uint64
-}
-
-func (msg *IOSBatchMeta) Encode() []byte {
-	buf := make([]byte, 31)
-	buf[0] = 107
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Length, buf, p)
-	p = WriteUint(msg.FirstIndex, buf, p)
-	return buf[:p]
-}
-
-func (msg *IOSBatchMeta) Decode() Message {
-	return msg
-}
-
-func (msg *IOSBatchMeta) TypeID() int {
-	return 107
-}
-
-type IOSSessionStart struct {
-	message
-	Timestamp uint64
-	ProjectID uint64
-	TrackerVersion string
-	RevID string
-	UserUUID string
-	UserOS string
-	UserOSVersion string
-	UserDevice string
-	UserDeviceType string
-	UserCountry string
-}
-
-func (msg *IOSSessionStart) Encode() []byte {
-	buf := make([]byte, 101+len(msg.TrackerVersion)+len(msg.RevID)+len(msg.UserUUID)+len(msg.UserOS)+len(msg.UserOSVersion)+len(msg.UserDevice)+len(msg.UserDeviceType)+len(msg.UserCountry))
-	buf[0] = 90
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.ProjectID, buf, p)
-	p = WriteString(msg.TrackerVersion, buf, p)
-	p = WriteString(msg.RevID, buf, p)
-	p = WriteString(msg.UserUUID, buf, p)
-	p = WriteString(msg.UserOS, buf, p)
-	p = WriteString(msg.UserOSVersion, buf, p)
-	p = WriteString(msg.UserDevice, buf, p)
-	p = WriteString(msg.UserDeviceType, buf, p)
-	p = WriteString(msg.UserCountry, buf, p)
-	return buf[:p]
-}
-
-func (msg *IOSSessionStart) Decode() Message {
-	return msg
-}
-
-func (msg *IOSSessionStart) TypeID() int {
-	return 90
-}
-
-type IOSSessionEnd struct {
-	message
-	Timestamp uint64
-}
-
-func (msg *IOSSessionEnd) Encode() []byte {
-	buf := make([]byte, 11)
-	buf[0] = 91
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	return buf[:p]
-}
-
-func (msg *IOSSessionEnd) Decode() Message {
-	return msg
-}
-
-func (msg *IOSSessionEnd) TypeID() int {
-	return 91
-}
-
 type IOSMetadata struct {
 	message
 	Timestamp uint64
@@ -2400,7 +2314,7 @@ func (msg *IOSMetadata) TypeID() int {
 	return 92
 }
 
-type IOSCustomEvent struct {
+type IOSEvent struct {
 	message
 	Timestamp uint64
 	Length uint64
@@ -2408,7 +2322,7 @@ type IOSCustomEvent struct {
 	Payload string
 }
 
-func (msg *IOSCustomEvent) Encode() []byte {
+func (msg *IOSEvent) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Name)+len(msg.Payload))
 	buf[0] = 93
 	p := 1
@@ -2419,11 +2333,11 @@ func (msg *IOSCustomEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSCustomEvent) Decode() Message {
+func (msg *IOSEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSCustomEvent) TypeID() int {
+func (msg *IOSEvent) TypeID() int {
 	return 93
 }
 
@@ -2431,16 +2345,16 @@ type IOSUserID struct {
 	message
 	Timestamp uint64
 	Length uint64
-	Value string
+	ID string
 }
 
 func (msg *IOSUserID) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Value))
+	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 94
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Value, buf, p)
+	p = WriteString(msg.ID, buf, p)
 	return buf[:p]
 }
 
@@ -2456,16 +2370,16 @@ type IOSUserAnonymousID struct {
 	message
 	Timestamp uint64
 	Length uint64
-	Value string
+	ID string
 }
 
 func (msg *IOSUserAnonymousID) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Value))
+	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 95
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Value, buf, p)
+	p = WriteString(msg.ID, buf, p)
 	return buf[:p]
 }
 
@@ -2763,6 +2677,62 @@ func (msg *IOSNetworkCall) Decode() Message {
 
 func (msg *IOSNetworkCall) TypeID() int {
 	return 105
+}
+
+type IOSSwipeEvent struct {
+	message
+	Timestamp uint64
+	Length uint64
+	Label string
+	X uint64
+	Y uint64
+	Direction string
+}
+
+func (msg *IOSSwipeEvent) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Label)+len(msg.Direction))
+	buf[0] = 106
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Length, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteUint(msg.X, buf, p)
+	p = WriteUint(msg.Y, buf, p)
+	p = WriteString(msg.Direction, buf, p)
+	return buf[:p]
+}
+
+func (msg *IOSSwipeEvent) Decode() Message {
+	return msg
+}
+
+func (msg *IOSSwipeEvent) TypeID() int {
+	return 106
+}
+
+type IOSBatchMeta struct {
+	message
+	Timestamp uint64
+	Length uint64
+	FirstIndex uint64
+}
+
+func (msg *IOSBatchMeta) Encode() []byte {
+	buf := make([]byte, 31)
+	buf[0] = 107
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Length, buf, p)
+	p = WriteUint(msg.FirstIndex, buf, p)
+	return buf[:p]
+}
+
+func (msg *IOSBatchMeta) Decode() Message {
+	return msg
+}
+
+func (msg *IOSBatchMeta) TypeID() int {
+	return 107
 }
 
 type IOSPerformanceAggregated struct {

@@ -721,32 +721,6 @@ class MessageCodec(Codec):
                 partition=self.read_uint(reader)
             )
 
-        if message_id == 107:
-            return IOSBatchMeta(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                first_index=self.read_uint(reader)
-            )
-
-        if message_id == 90:
-            return IOSSessionStart(
-                timestamp=self.read_uint(reader),
-                project_id=self.read_uint(reader),
-                tracker_version=self.read_string(reader),
-                rev_id=self.read_string(reader),
-                user_uuid=self.read_string(reader),
-                user_os=self.read_string(reader),
-                user_os_version=self.read_string(reader),
-                user_device=self.read_string(reader),
-                user_device_type=self.read_string(reader),
-                user_country=self.read_string(reader)
-            )
-
-        if message_id == 91:
-            return IOSSessionEnd(
-                timestamp=self.read_uint(reader)
-            )
-
         if message_id == 92:
             return IOSMetadata(
                 timestamp=self.read_uint(reader),
@@ -756,7 +730,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 93:
-            return IOSCustomEvent(
+            return IOSEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -767,14 +741,14 @@ class MessageCodec(Codec):
             return IOSUserID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                value=self.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 95:
             return IOSUserAnonymousID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                value=self.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 96:
@@ -864,6 +838,23 @@ class MessageCodec(Codec):
                 success=self.read_boolean(reader),
                 method=self.read_string(reader),
                 status=self.read_uint(reader)
+            )
+
+        if message_id == 106:
+            return IOSSwipeEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                label=self.read_string(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader),
+                direction=self.read_string(reader)
+            )
+
+        if message_id == 107:
+            return IOSBatchMeta(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                first_index=self.read_uint(reader)
             )
 
         if message_id == 110:

@@ -802,38 +802,6 @@ class SessionSearch(Message):
         self.partition = partition
 
 
-class IOSBatchMeta(Message):
-    __id__ = 107
-
-    def __init__(self, timestamp, length, first_index):
-        self.timestamp = timestamp
-        self.length = length
-        self.first_index = first_index
-
-
-class IOSSessionStart(Message):
-    __id__ = 90
-
-    def __init__(self, timestamp, project_id, tracker_version, rev_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country):
-        self.timestamp = timestamp
-        self.project_id = project_id
-        self.tracker_version = tracker_version
-        self.rev_id = rev_id
-        self.user_uuid = user_uuid
-        self.user_os = user_os
-        self.user_os_version = user_os_version
-        self.user_device = user_device
-        self.user_device_type = user_device_type
-        self.user_country = user_country
-
-
-class IOSSessionEnd(Message):
-    __id__ = 91
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
 class IOSMetadata(Message):
     __id__ = 92
 
@@ -844,7 +812,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSCustomEvent(Message):
+class IOSEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name, payload):
@@ -857,19 +825,19 @@ class IOSCustomEvent(Message):
 class IOSUserID(Message):
     __id__ = 94
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSUserAnonymousID(Message):
     __id__ = 95
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSScreenChanges(Message):
@@ -979,6 +947,27 @@ class IOSNetworkCall(Message):
         self.success = success
         self.method = method
         self.status = status
+
+
+class IOSSwipeEvent(Message):
+    __id__ = 106
+
+    def __init__(self, timestamp, length, label, x, y, direction):
+        self.timestamp = timestamp
+        self.length = length
+        self.label = label
+        self.x = x
+        self.y = y
+        self.direction = direction
+
+
+class IOSBatchMeta(Message):
+    __id__ = 107
+
+    def __init__(self, timestamp, length, first_index):
+        self.timestamp = timestamp
+        self.length = length
+        self.first_index = first_index
 
 
 class IOSPerformanceAggregated(Message):
