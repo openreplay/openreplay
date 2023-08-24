@@ -56,8 +56,10 @@ const CountryFlag: FC<CountryFlagProps> = ({
     <div className='flex items-center' style={style}>
       {knownCountry ? (
         <Tooltip title={fullGeoInfo}>
-          <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
-                           style={{ width: `${width}px`, borderRadius: '3px' }} />
+          <div>
+            <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
+                             style={{ width: `${width}px`, borderRadius: '2px' }} />
+          </div>
         </Tooltip>
       ) : (
         renderUnknownCountry
