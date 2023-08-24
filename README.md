@@ -47,7 +47,7 @@ OpenReplay is a session replay suite you can host yourself, that lets you see wh
 - **Session replay:** Lets you relive your users' experience, see where they struggle and how it affects their behavior. Each session replay is automatically analyzed based on heuristics, for easy triage.
 - **DevTools:** It's like debugging in your own browser. OpenReplay provides you with the full context (network activity, JS errors, store actions/state and 40+ metrics) so you can instantly reproduce bugs and understand performance issues.
 - **Assist:** Helps you support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.
-- **Feature:** flags: Enable or disable a feature, make gradual releases and A/B test all without redeploying your app.
+- **Feature flags:** Enable or disable a feature, make gradual releases and A/B test all without redeploying your app.
 - **Omni-search:** Search and filter by almost any user action/criteria, session attribute or technical event, so you can answer any question. No instrumentation required.
 - **Analytics:** For surfacing the most impactful issues causing conversion and revenue loss.
 - **Fine-grained privacy controls:** Choose what to capture, what to obscure or what to ignore so user data doesn't even reach your servers.
