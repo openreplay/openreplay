@@ -26,18 +26,24 @@ def __transform_journey(rows):
 def __transform_journey2(rows):
     # nodes should contain duplicates for different steps otherwise the UI crashes
     nodes = []
+    nodes_values = []
     links = []
     for r in rows:
-        source = f"{r['event_number_in_session']}_{r['e_value']}"
+        source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
+            # TODO: remove this after UI supports long values
+            nodes_values.append({"name": r['e_value'][:10]})
         if r['next_value']:
-            target = f"{r['event_number_in_session'] + 1}_{r['next_value']}"
+            target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
             if target not in nodes:
                 nodes.append(target)
-            links.append({"source": nodes.index(source), "target": nodes.index(target),
-                          "value": r["e_value"], "avgTimeToTarget": r["avg_time_to_target"]})
-    return {"nodes": [n[n.index("_") + 1:] for n in nodes],
+                # TODO: remove this after UI supports long values
+                nodes_values.append({"name": r['next_value'][:10]})
+            links.append({"eventType": r['event_type'], "source": nodes.index(source), "target": nodes.index(target),
+                          "value": r["sessions_count"], "avgTimeToTarget": r["avg_time_to_target"]})
+
+    return {"nodes": nodes_values,
             "links": sorted(links, key=lambda x: x["value"], reverse=True)}
 
 
@@ -294,61 +300,87 @@ def path_analysis(project_id, data: schemas.PathAnalysisSchema,
         #                 ORDER BY value DESC
         #                 LIMIT 20;"""
         pg_query = """\
-            WITH sub_sessions AS (SELECT session_id
-                                  FROM public.sessions
-                                  WHERE project_id = 65
-                                    AND duration > 0
-                                    AND start_ts >= 1691971200000
-                                    AND start_ts < 1692662399000
-                                    AND events_count > 1),
-                 event AS (SELECT session_id, path AS e_value, timestamp, 'LOCATION' AS event_type
-                           FROM events.pages AS e
-                                    INNER JOIN sub_sessions USING (session_id)
-                           WHERE e.timestamp >= 1691971200000
-                             AND e.timestamp < 1692662399000
-                           UNION ALL
-                           SELECT session_id, label AS e_value, timestamp, 'CLICK' AS event_type
-                           FROM events.clicks AS e
-                                    INNER JOIN sub_sessions USING (session_id)
-                           WHERE e.timestamp >= 1691971200000
-                             AND e.timestamp < 1692662399000
-                           UNION ALL
-                           SELECT session_id, name AS e_value, timestamp, 'CUSTOM' AS event_type
-                           FROM events_common.customs AS e
-                                    INNER JOIN sub_sessions USING (session_id)
-                           WHERE e.timestamp >= 1691971200000
-                             AND e.timestamp < 1692662399000),
-                 ranked_events AS (SELECT *
-                                   FROM (SELECT *,
-                                                row_number() OVER (PARTITION BY session_id ORDER BY timestamp)     AS event_number_in_session,
-            --                               LAG(path, 1) OVER (PARTITION BY session_id ORDER BY timestamp)  AS previous_path,
-                                                LEAD(e_value, 1) OVER (PARTITION BY session_id ORDER BY timestamp) AS next_value,
-                                                LEAD(timestamp, 1) OVER (PARTITION BY session_id ORDER BY timestamp) -
-                                                timestamp                                                          AS time_to_next
-                                         FROM event
-                                         ORDER BY session_id) AS full_ranked_events
-                                   WHERE event_number_in_session < 3),
-                 start_points AS (SELECT session_id
-                                  FROM ranked_events,
-                                       (SELECT event_type, e_value
-                                        FROM ranked_events
-                                        WHERE event_number_in_session = 1
-            --                                     TODO: add startpoint values here & exclude filters
-                                        GROUP BY event_type, e_value
-                                        ORDER BY count(1) DESC
-                                        LIMIT 2) AS top_events
-                                  WHERE event_number_in_session = 1
-                                    AND ranked_events.e_value = top_events.e_value
-                                    AND ranked_events.event_type = top_events.event_type),
-                 limited_events AS (SELECT ranked_events.*
+WITH sub_sessions AS (SELECT session_id
+                      FROM public.sessions
+                      WHERE project_id = 65
+                        AND duration > 0
+                        AND start_ts >= 1691971200000
+                        AND start_ts < 1692662399000
+                        AND events_count > 1),
+     event AS (SELECT session_id, path AS e_value, timestamp, 'LOCATION' AS event_type
+               FROM events.pages AS e
+                        INNER JOIN sub_sessions USING (session_id)
+               WHERE e.timestamp >= 1691971200000
+                 AND e.timestamp < 1692662399000
+                 --                         TODO: add exclude filters
+               UNION ALL
+               SELECT session_id, label AS e_value, timestamp, 'CLICK' AS event_type
+               FROM events.clicks AS e
+                        INNER JOIN sub_sessions USING (session_id)
+               WHERE e.timestamp >= 1691971200000
+                 AND e.timestamp < 1692662399000
+                 --                         TODO: add exclude filters
+               UNION ALL
+               SELECT session_id, name AS e_value, timestamp, 'CUSTOM' AS event_type
+               FROM events_common.customs AS e
+                        INNER JOIN sub_sessions USING (session_id)
+               WHERE e.timestamp >= 1691971200000
+                 AND e.timestamp < 1692662399000
+         --                         TODO: add exclude filters
+     ),
+     ranked_events AS (SELECT *
+                       FROM (SELECT session_id,
+                                    event_type,
+                                    e_value,
+                                    row_number() OVER (PARTITION BY session_id ORDER BY timestamp)        AS event_number_in_session,
+--                               LAG(path, 1) OVER (PARTITION BY session_id ORDER BY timestamp)  AS previous_path,
+                                    LEAD(e_value, 1) OVER (PARTITION BY session_id ORDER BY timestamp)    AS next_value,
+                                    LEAD(event_type, 1) OVER (PARTITION BY session_id ORDER BY timestamp) AS next_type,
+                                    LEAD(timestamp, 1) OVER (PARTITION BY session_id ORDER BY timestamp) -
+                                    timestamp                                                             AS time_to_next
+                             FROM event
+                             ORDER BY session_id) AS full_ranked_events
+                        WHERE event_number_in_session < 3
+     ),
+     start_points AS (SELECT session_id
+                      FROM ranked_events
+                               INNER JOIN
+                           (SELECT event_type, e_value
+                            FROM ranked_events
+                            WHERE event_number_in_session = 1
+--                                     TODO: add startpoint values here & exclude filters
+                            GROUP BY event_type, e_value
+                            ORDER BY count(1) DESC
+                            LIMIT 2
+                           ) AS top_start_events USING (event_type, e_value)
+                      WHERE event_number_in_session = 1
+                            AND next_value IS NOT NULL),
+     limited_events AS (SELECT *
+                        FROM (SELECT *,
+                                     row_number()
+                                     OVER (PARTITION BY event_number_in_session, event_type, e_value ORDER BY sessions_count DESC ) AS _event_number_in_group
+                              FROM (SELECT event_number_in_session,
+                                           event_type,
+                                           e_value,
+                                           next_type,
+                                           next_value,
+                                           time_to_next,
+                                           count(1) AS sessions_count
                                     FROM ranked_events
                                              INNER JOIN start_points USING (session_id)
-            --                         WHERE session_id IN (SELECT session_id FROM start_points)
-            --                         TODO: add exclude filters
-                 )
-            SELECT event_number_in_session, event_type, e_value, next_value, count(1), avg(time_to_next) AS avg_time_to_target
-            FROM limited_events
-            GROUP BY event_number_in_session, event_type, e_value, next_value;"""
+                                    GROUP BY event_number_in_session, event_type, e_value, next_type, next_value,
+                                             time_to_next) AS groupped_events) AS ranked_groupped_events
+                        WHERE _event_number_in_group < 4)
+SELECT event_number_in_session,
+       event_type,
+       e_value,
+       next_type,
+       next_value,
+       sessions_count,
+       avg(time_to_next) AS avg_time_to_target
+FROM limited_events
+GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count
+ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   # TODO: add if data=args is required
