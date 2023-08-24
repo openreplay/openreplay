@@ -113,7 +113,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if IsIOSType(msgType) {
 			msgTime := i.getIOSTimestamp(msg)
 			if msg.Meta().Timestamp != 0 && msgTime != 0 {
-				log.Printf("duplicate timestamp in msgTime: %s, batch info: %s", msgType, msg.Meta().Timestamp)
+				log.Printf("duplicate timestamp in msgTime: %d, batch info: %d", msgTime, msg.Meta().Timestamp)
 			}
 			msg.Meta().Timestamp = msgTime
 		}
