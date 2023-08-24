@@ -300,9 +300,9 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequestDeprecated(reader BytesReader) (Message, error) {
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &NetworkRequestDeprecated{}
+	msg := &NetworkRequest{}
 	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1221,39 +1221,6 @@ func DecodePartitionedMessage(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &NetworkRequest{}
-	if msg.Type, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Method, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Request, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.TransferredBodySize, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeInputChange(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
@@ -1416,51 +1383,6 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSSessionStart(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IOSSessionStart{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.ProjectID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.TrackerVersion, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.RevID, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserUUID, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserOS, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserOSVersion, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserDevice, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserDeviceType, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.UserCountry, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeIOSSessionEnd(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IOSSessionEnd{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeIOSMetadata(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IOSMetadata{}
@@ -1479,9 +1401,9 @@ func DecodeIOSMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSCustomEvent(reader BytesReader) (Message, error) {
+func DecodeIOSEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSCustomEvent{}
+	msg := &IOSEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1506,7 +1428,7 @@ func DecodeIOSUserID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1521,7 +1443,7 @@ func DecodeIOSUserAnonymousID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1572,22 +1494,37 @@ func DecodeIOSCrash(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSViewComponentEvent(reader BytesReader) (Message, error) {
+func DecodeIOSScreenEnter(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSViewComponentEvent{}
+	msg := &IOSScreenEnter{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.ScreenName, err = reader.ReadString(); err != nil {
+	if msg.Title, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.ViewName, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.Visible, err = reader.ReadBoolean(); err != nil {
+	return msg, err
+}
+
+func DecodeIOSScreenLeave(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &IOSScreenLeave{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Length, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Title, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ViewName, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1695,25 +1632,25 @@ func DecodeIOSNetworkCall(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Type, err = reader.ReadString(); err != nil {
+	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Method, err = reader.ReadString(); err != nil {
+	if msg.Headers, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Body, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.URL, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.Request, err = reader.ReadString(); err != nil {
+	if msg.Success, err = reader.ReadBoolean(); err != nil {
 		return nil, err
 	}
-	if msg.Response, err = reader.ReadString(); err != nil {
+	if msg.Method, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1870,7 +1807,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 20:
 		return DecodeMouseMove(reader)
 	case 21:
-		return DecodeNetworkRequestDeprecated(reader)
+		return DecodeNetworkRequest(reader)
 	case 22:
 		return DecodeConsoleLog(reader)
 	case 23:
@@ -1977,8 +1914,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
-	case 83:
-		return DecodeNetworkRequest(reader)
 	case 112:
 		return DecodeInputChange(reader)
 	case 113:
@@ -1999,14 +1934,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSessionEnd(reader)
 	case 127:
 		return DecodeSessionSearch(reader)
-	case 90:
-		return DecodeIOSSessionStart(reader)
-	case 91:
-		return DecodeIOSSessionEnd(reader)
 	case 92:
 		return DecodeIOSMetadata(reader)
 	case 93:
-		return DecodeIOSCustomEvent(reader)
+		return DecodeIOSEvent(reader)
 	case 94:
 		return DecodeIOSUserID(reader)
 	case 95:
@@ -2016,7 +1947,9 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 97:
 		return DecodeIOSCrash(reader)
 	case 98:
-		return DecodeIOSViewComponentEvent(reader)
+		return DecodeIOSScreenEnter(reader)
+	case 99:
+		return DecodeIOSScreenLeave(reader)
 	case 100:
 		return DecodeIOSClickEvent(reader)
 	case 101:

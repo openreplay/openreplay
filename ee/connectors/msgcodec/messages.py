@@ -185,7 +185,7 @@ class MouseMove(Message):
         self.y = y
 
 
-class NetworkRequestDeprecated(Message):
+class NetworkRequest(Message):
     __id__ = 21
 
     def __init__(self, type, method, url, request, response, status, timestamp, duration):
@@ -708,21 +708,6 @@ class PartitionedMessage(Message):
         self.part_total = part_total
 
 
-class NetworkRequest(Message):
-    __id__ = 83
-
-    def __init__(self, type, method, url, request, response, status, timestamp, duration, transferred_body_size):
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
-        self.transferred_body_size = transferred_body_size
-
-
 class InputChange(Message):
     __id__ = 112
 
@@ -817,29 +802,6 @@ class SessionSearch(Message):
         self.partition = partition
 
 
-class IOSSessionStart(Message):
-    __id__ = 90
-
-    def __init__(self, timestamp, project_id, tracker_version, rev_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country):
-        self.timestamp = timestamp
-        self.project_id = project_id
-        self.tracker_version = tracker_version
-        self.rev_id = rev_id
-        self.user_uuid = user_uuid
-        self.user_os = user_os
-        self.user_os_version = user_os_version
-        self.user_device = user_device
-        self.user_device_type = user_device_type
-        self.user_country = user_country
-
-
-class IOSSessionEnd(Message):
-    __id__ = 91
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
 class IOSMetadata(Message):
     __id__ = 92
 
@@ -850,7 +812,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSCustomEvent(Message):
+class IOSEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name, payload):
@@ -863,19 +825,19 @@ class IOSCustomEvent(Message):
 class IOSUserID(Message):
     __id__ = 94
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSUserAnonymousID(Message):
     __id__ = 95
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSScreenChanges(Message):
@@ -901,15 +863,24 @@ class IOSCrash(Message):
         self.stacktrace = stacktrace
 
 
-class IOSViewComponentEvent(Message):
+class IOSScreenEnter(Message):
     __id__ = 98
 
-    def __init__(self, timestamp, length, screen_name, view_name, visible):
+    def __init__(self, timestamp, length, title, view_name):
         self.timestamp = timestamp
         self.length = length
-        self.screen_name = screen_name
+        self.title = title
         self.view_name = view_name
-        self.visible = visible
+
+
+class IOSScreenLeave(Message):
+    __id__ = 99
+
+    def __init__(self, timestamp, length, title, view_name):
+        self.timestamp = timestamp
+        self.length = length
+        self.title = title
+        self.view_name = view_name
 
 
 class IOSClickEvent(Message):
@@ -966,16 +937,16 @@ class IOSInternalError(Message):
 class IOSNetworkCall(Message):
     __id__ = 105
 
-    def __init__(self, timestamp, length, type, method, url, request, response, status, duration):
+    def __init__(self, timestamp, length, duration, headers, body, url, success, method, status):
         self.timestamp = timestamp
         self.length = length
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
         self.duration = duration
+        self.headers = headers
+        self.body = body
+        self.url = url
+        self.success = success
+        self.method = method
+        self.status = status
 
 
 class IOSSwipeEvent(Message):

@@ -268,7 +268,7 @@ cdef class MouseMove(PyMessage):
         self.y = y
 
 
-cdef class NetworkRequestDeprecated(PyMessage):
+cdef class NetworkRequest(PyMessage):
     cdef public int __id__
     cdef public str type
     cdef public str method
@@ -1044,31 +1044,6 @@ cdef class PartitionedMessage(PyMessage):
         self.part_total = part_total
 
 
-cdef class NetworkRequest(PyMessage):
-    cdef public int __id__
-    cdef public str type
-    cdef public str method
-    cdef public str url
-    cdef public str request
-    cdef public str response
-    cdef public unsigned long status
-    cdef public unsigned long timestamp
-    cdef public unsigned long duration
-    cdef public unsigned long transferred_body_size
-
-    def __init__(self, str type, str method, str url, str request, str response, unsigned long status, unsigned long timestamp, unsigned long duration, unsigned long transferred_body_size):
-        self.__id__ = 83
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
-        self.transferred_body_size = transferred_body_size
-
-
 cdef class InputChange(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
@@ -1207,42 +1182,6 @@ cdef class SessionSearch(PyMessage):
         self.partition = partition
 
 
-cdef class IOSSessionStart(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long project_id
-    cdef public str tracker_version
-    cdef public str rev_id
-    cdef public str user_uuid
-    cdef public str user_os
-    cdef public str user_os_version
-    cdef public str user_device
-    cdef public str user_device_type
-    cdef public str user_country
-
-    def __init__(self, unsigned long timestamp, unsigned long project_id, str tracker_version, str rev_id, str user_uuid, str user_os, str user_os_version, str user_device, str user_device_type, str user_country):
-        self.__id__ = 90
-        self.timestamp = timestamp
-        self.project_id = project_id
-        self.tracker_version = tracker_version
-        self.rev_id = rev_id
-        self.user_uuid = user_uuid
-        self.user_os = user_os
-        self.user_os_version = user_os_version
-        self.user_device = user_device
-        self.user_device_type = user_device_type
-        self.user_country = user_country
-
-
-cdef class IOSSessionEnd(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-
-    def __init__(self, unsigned long timestamp):
-        self.__id__ = 91
-        self.timestamp = timestamp
-
-
 cdef class IOSMetadata(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
@@ -1258,7 +1197,7 @@ cdef class IOSMetadata(PyMessage):
         self.value = value
 
 
-cdef class IOSCustomEvent(PyMessage):
+cdef class IOSEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1277,26 +1216,26 @@ cdef class IOSUserID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 94
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSUserAnonymousID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 95
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSScreenChanges(PyMessage):
@@ -1335,21 +1274,34 @@ cdef class IOSCrash(PyMessage):
         self.stacktrace = stacktrace
 
 
-cdef class IOSViewComponentEvent(PyMessage):
+cdef class IOSScreenEnter(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str screen_name
+    cdef public str title
     cdef public str view_name
-    cdef public bint visible
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str screen_name, str view_name, bint visible):
+    def __init__(self, unsigned long timestamp, unsigned long length, str title, str view_name):
         self.__id__ = 98
         self.timestamp = timestamp
         self.length = length
-        self.screen_name = screen_name
+        self.title = title
         self.view_name = view_name
-        self.visible = visible
+
+
+cdef class IOSScreenLeave(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long length
+    cdef public str title
+    cdef public str view_name
+
+    def __init__(self, unsigned long timestamp, unsigned long length, str title, str view_name):
+        self.__id__ = 99
+        self.timestamp = timestamp
+        self.length = length
+        self.title = title
+        self.view_name = view_name
 
 
 cdef class IOSClickEvent(PyMessage):
@@ -1433,25 +1385,25 @@ cdef class IOSNetworkCall(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str type
-    cdef public str method
-    cdef public str url
-    cdef public str request
-    cdef public str response
-    cdef public unsigned long status
     cdef public unsigned long duration
+    cdef public str headers
+    cdef public str body
+    cdef public str url
+    cdef public bint success
+    cdef public str method
+    cdef public unsigned long status
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str type, str method, str url, str request, str response, unsigned long status, unsigned long duration):
+    def __init__(self, unsigned long timestamp, unsigned long length, unsigned long duration, str headers, str body, str url, bint success, str method, unsigned long status):
         self.__id__ = 105
         self.timestamp = timestamp
         self.length = length
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
         self.duration = duration
+        self.headers = headers
+        self.body = body
+        self.url = url
+        self.success = success
+        self.method = method
+        self.status = status
 
 
 cdef class IOSSwipeEvent(PyMessage):
