@@ -37,7 +37,7 @@ func main() {
 	imageConsumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
 		[]string{
-			cfg.TopicMobileTrigger,
+			cfg.TopicRawImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte) {
 			log.Printf("image data: %d", len(data))
