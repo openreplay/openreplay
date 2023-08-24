@@ -9,12 +9,12 @@ interface CountryFlagProps {
 
 const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, style }) => {
   if (!hasFlag(countryCode)) {
-    return <p>Flag not available</p>;
+    return <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>;
   }
 
   const FlagComponent = Flags[countryCode as keyof typeof Flags];
   if (!FlagComponent) {
-    return <p>Error rendering flag</p>;
+    return <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>;
   }
 
   return <FlagComponent style={style} />;
