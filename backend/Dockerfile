@@ -50,6 +50,7 @@ ENV TZ=UTC \
     REDIS_STREAMS_MAX_LEN=10000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \
+    TOPIC_RAW_IMAGES=raw-images \
     TOPIC_CACHE=cache \
     TOPIC_ANALYTICS=analytics \
     TOPIC_TRIGGER=trigger \

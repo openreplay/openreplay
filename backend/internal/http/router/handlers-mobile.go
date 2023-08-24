@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -186,13 +187,29 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
-			log.Printf("Uploading image... %v", util.SafeString(key))
-			go func() { //TODO: mime type from header
-				log.Printf("Uploading image... %v", file)
-				//if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
-				//	log.Printf("Upload ios screen error. %v", err)
-				//}
-			}()
+
+			data, err := ioutil.ReadAll(file)
+			if err != nil {
+				log.Fatalf("failed reading data: %s", err)
+			}
+
+			// Read the content of the file into the byte slice
+			_, err = file.Read(data)
+			if err != nil {
+				log.Fatalf("failed reading file: %s", err)
+			}
+
+			log.Printf("Uploading image... %v, len: %d", util.SafeString(key), len(data))
+
+			if err := e.services.Producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
+				log.Printf("failed to produce mobile session start message: %v", err)
+			}
+			//go func() { //TODO: mime type from header
+			//	log.Printf("Uploading image... %v", file)
+			//	//if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
+			//	//	log.Printf("Upload ios screen error. %v", err)
+			//	//}
+			//}()
 		}
 	}
 
