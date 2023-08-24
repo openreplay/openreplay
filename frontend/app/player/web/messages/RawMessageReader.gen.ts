@@ -16,7 +16,7 @@ export default class RawMessageReader extends PrimitiveReader {
 
     const tp = this.readUint()
     if (tp === null) { return resetPointer() }
-    console.log(tp)
+
     switch (tp) {
 
     case 0: {
