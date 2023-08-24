@@ -33,6 +33,7 @@
     "chroma-js": "^2.4.2",
     "classnames": "^2.3.1",
     "copy-to-clipboard": "^3.3.1",
+    "country-flag-icons": "^1.5.7",
     "deep-diff": "^1.0.2",
     "fflate": "^0.7.4",
     "html-to-image": "^1.9.0",
