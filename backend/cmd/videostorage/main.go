@@ -34,6 +34,18 @@ func main() {
 		return
 	}
 
+	imageConsumer := queue.NewConsumer(
+		cfg.GroupImageStorage,
+		[]string{
+			cfg.TopicMobileTrigger,
+		},
+		messages.NewImagesMessageIterator(func(data []byte) {
+			log.Printf("image data: %d", len(data))
+		}, nil, true),
+		false,
+		cfg.MessageSizeLimit,
+	)
+
 	consumer := queue.NewConsumer(
 		cfg.GroupVideoStorage,
 		[]string{
@@ -65,10 +77,14 @@ func main() {
 			log.Printf("Caught signal %v: terminating\n", sig)
 			srv.Wait()
 			consumer.Close()
+			imageConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
 			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
+			if err := imageConsumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
 		case msg := <-consumer.Rebalanced():
