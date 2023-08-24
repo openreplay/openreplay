@@ -819,6 +819,25 @@ cdef class MessageCodec:
                 partition=self.read_uint(reader)
             )
 
+        if message_id == 90:
+            return IOSSessionStart(
+                timestamp=self.read_uint(reader),
+                project_id=self.read_uint(reader),
+                tracker_version=self.read_string(reader),
+                rev_id=self.read_string(reader),
+                user_uuid=self.read_string(reader),
+                user_os=self.read_string(reader),
+                user_os_version=self.read_string(reader),
+                user_device=self.read_string(reader),
+                user_device_type=self.read_string(reader),
+                user_country=self.read_string(reader)
+            )
+
+        if message_id == 91:
+            return IOSSessionEnd(
+                timestamp=self.read_uint(reader)
+            )
+
         if message_id == 92:
             return IOSMetadata(
                 timestamp=self.read_uint(reader),
@@ -828,7 +847,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 93:
-            return IOSEvent(
+            return IOSCustomEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -839,14 +858,14 @@ cdef class MessageCodec:
             return IOSUserID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                id=self.read_string(reader)
+                value=self.read_string(reader)
             )
 
         if message_id == 95:
             return IOSUserAnonymousID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                id=self.read_string(reader)
+                value=self.read_string(reader)
             )
 
         if message_id == 96:
