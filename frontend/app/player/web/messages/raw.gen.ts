@@ -19,7 +19,7 @@ export const enum MType {
   SetInputValue = 18,
   SetInputChecked = 19,
   MouseMove = 20,
-  NetworkRequestDeprecated = 21,
+  NetworkRequest = 21,
   ConsoleLog = 22,
   CssInsertRule = 37,
   CssDeleteRule = 38,
@@ -53,20 +53,21 @@ export const enum MType {
   AdoptedSsAddOwner = 76,
   AdoptedSsRemoveOwner = 77,
   Zustand = 79,
-  NetworkRequest = 83,
   SelectionChange = 113,
   MouseThrashing = 114,
   ResourceTiming = 116,
   TabChange = 117,
   TabData = 118,
-  IosCustomEvent = 93,
+  IosEvent = 93,
   IosScreenChanges = 96,
   IosClickEvent = 100,
   IosInputEvent = 101,
   IosPerformanceEvent = 102,
   IosLog = 103,
+  IosInternalError = 104,
   IosNetworkCall = 105,
   IosSwipeEvent = 106,
+  IosIssueEvent = 111,
 }
 
 
@@ -178,8 +179,8 @@ export interface RawMouseMove {
   y: number,
 }
 
-export interface RawNetworkRequestDeprecated {
-  tp: MType.NetworkRequestDeprecated,
+export interface RawNetworkRequest {
+  tp: MType.NetworkRequest,
   type: string,
   method: string,
   url: string,
@@ -425,19 +426,6 @@ export interface RawZustand {
   state: string,
 }
 
-export interface RawNetworkRequest {
-  tp: MType.NetworkRequest,
-  type: string,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-  transferredBodySize: number,
-}
-
 export interface RawSelectionChange {
   tp: MType.SelectionChange,
   selectionStart: number,
@@ -474,8 +462,8 @@ export interface RawTabData {
   tabId: string,
 }
 
-export interface RawIosCustomEvent {
-  tp: MType.IosCustomEvent,
+export interface RawIosEvent {
+  tp: MType.IosEvent,
   timestamp: number,
   length: number,
   name: string,
@@ -526,17 +514,24 @@ export interface RawIosLog {
   content: string,
 }
 
+export interface RawIosInternalError {
+  tp: MType.IosInternalError,
+  timestamp: number,
+  length: number,
+  content: string,
+}
+
 export interface RawIosNetworkCall {
   tp: MType.IosNetworkCall,
   timestamp: number,
   length: number,
-  type: string,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
   duration: number,
+  headers: string,
+  body: string,
+  url: string,
+  success: boolean,
+  method: string,
+  status: number,
 }
 
 export interface RawIosSwipeEvent {
@@ -549,5 +544,14 @@ export interface RawIosSwipeEvent {
   direction: string,
 }
 
+export interface RawIosIssueEvent {
+  tp: MType.IosIssueEvent,
+  timestamp: number,
+  type: string,
+  contextString: string,
+  context: string,
+  payload: string,
+}
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosInputEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall | RawIosSwipeEvent;
+
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawIosEvent | RawIosScreenChanges | RawIosClickEvent | RawIosInputEvent | RawIosPerformanceEvent | RawIosLog | RawIosInternalError | RawIosNetworkCall | RawIosSwipeEvent | RawIosIssueEvent;

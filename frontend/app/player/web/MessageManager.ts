@@ -248,6 +248,7 @@ export default class MessageManager {
   }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
+    console.log(msg)
     if (!this.tabs[msg.tabId]) {
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
