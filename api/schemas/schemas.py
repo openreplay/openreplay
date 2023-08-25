@@ -836,17 +836,26 @@ class SearchErrorsSchema(SessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
-class ProductAnalyticsFilterType(str, Enum):
-    start_point = 'startPoint'
-    end_point = 'endPoint'
-    exclude_point = 'exclude'
-
-
 class ProductAnalyticsSelectedEventType(str, Enum):
     click = EventType.click.value
     input = EventType.input.value
     location = EventType.location.value
     custom_event = EventType.custom.value
+
+
+class ProductAnalyticsFilterType(str, Enum):
+    start_point = 'startPoint'
+    end_point = 'endPoint'
+    exclude_click = 'exclude' + ProductAnalyticsSelectedEventType.click.capitalize()
+    exclude_input = 'exclude' + ProductAnalyticsSelectedEventType.input.capitalize()
+    exclude_location = 'exclude' + ProductAnalyticsSelectedEventType.location.capitalize()
+    exclude_custom_event = 'exclude' + ProductAnalyticsSelectedEventType.custom_event.capitalize()
+
+
+_ProductAnalyticsExcludes = [ProductAnalyticsFilterType.exclude_click,
+                             ProductAnalyticsFilterType.exclude_input,
+                             ProductAnalyticsFilterType.exclude_location,
+                             ProductAnalyticsFilterType.exclude_custom_event]
 
 
 class ProductAnalyticsFilter(BaseModel):
@@ -884,7 +893,7 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
             filters.append(f)
         values.filters = filters
 
-        # Path analysis should have only 1 start-point OR 1 end-point
+        # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
         # start-point's value and end-point's value should not be excluded
         s_e_detected = 0
         s_e_values = []
@@ -893,10 +902,10 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
             if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
                 s_e_detected += 1
                 s_e_values += f.value
-            elif f.type == ProductAnalyticsFilterType.exclude_point.value:
+            elif f.type in _ProductAnalyticsExcludes:
                 exclude_values += f.value
 
-        assert s_e_detected <= 1, f"Only 1 startPoint OR 1 endPoint is allowed"
+        assert s_e_detected <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
         for v in exclude_values:
             assert v not in s_e_values, f"startPoint and endPoint cannot be excluded, value: {v}"
 
@@ -1303,10 +1312,6 @@ class CardPathAnalysis(__CardSchema):
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        # TODO: remove this
-        # dev
-        values["series"] = []
-
         values["viewType"] = MetricOtherViewType.other_chart.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
