@@ -60,8 +60,16 @@ func main() {
 				log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
 			}
 
+			dir := workDir + "/screenshots/" + strconv.FormatUint(sessID, 10) + "/"
+
+			// Ensure the directory exists
+			err = os.MkdirAll(dir, 0755)
+			if err != nil {
+				log.Fatalf("Error creating directories: %v", err)
+			}
+
 			if header.Typeflag == tar.TypeReg {
-				filePath := workDir + "/screenshots/" + strconv.FormatUint(sessID, 10) + "/" + header.Name
+				filePath := dir + header.Name
 				outFile, err := os.Create(filePath) // or open file in rewrite mode
 				if err != nil {
 					log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
