@@ -3,6 +3,8 @@ from chalicelib.core import events
 
 
 def get_customs_by_sessionId(session_id, project_id):
+    # TODO: remove this when IOS events are supported by workers
+    return []
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
             SELECT 
@@ -19,6 +21,8 @@ def get_customs_by_sessionId(session_id, project_id):
 
 
 def get_by_sessionId(session_id, project_id):
+    # TODO: remove this when IOS events are supported by workers
+    return []
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
             SELECT 
@@ -58,6 +62,8 @@ def get_by_sessionId(session_id, project_id):
 
 
 def get_crashes_by_session_id(session_id):
+    # TODO: remove this when IOS events are supported by workers
+    return []
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
