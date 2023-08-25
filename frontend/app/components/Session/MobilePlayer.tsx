@@ -3,32 +3,32 @@ import { connect } from 'react-redux';
 import { Modal, Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
-import { createWebPlayer } from 'Player';
+import { createIOSPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
-import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
+import MobilePlayerHeader from 'Components/Session/Player/MobilePlayer/MobilePlayerHeader';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import PlayerContent from './Player/ReplayPlayer/PlayerContent';
-import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
+import PlayerContent from './Player/MobilePlayer/PlayerContent';
+import { IOSPlayerContext, defaultContextValue, MobilePlayerContext } from './playerContext';
 import { observer } from 'mobx-react-lite';
 import { Note } from 'App/services/NotesService';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
 
 const TABS = {
   EVENTS: 'User Events',
-  CLICKMAP: 'Click Map',
 };
 
-let playerInst: IPlayerContext['player'] | undefined;
+let playerInst: IOSPlayerContext['player'] | undefined;
 
-function WebPlayer(props: any) {
+function MobilePlayer(props: any) {
   const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList } = props;
+
   const { notesStore, sessionStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
-  const [visuallyAdjusted, setAdjusted] = useState(false);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
@@ -38,35 +38,24 @@ function WebPlayer(props: any) {
     if (!session.sessionId || contextValue.player !== undefined) return;
     fetchList('issues');
     sessionStore.setUserTimezone(session.timezone);
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(
+    const [IOSPlayerInst, PlayerStore] = createIOSPlayer(
       session,
       (state) => makeAutoObservable(state),
       toast
     );
-    setContextValue({ player: WebPlayerInst, store: PlayerStore });
-    playerInst = WebPlayerInst;
+    setContextValue({ player: IOSPlayerInst, store: PlayerStore });
+    playerInst = IOSPlayerInst;
 
     notesStore.fetchSessionNotes(session.sessionId).then((r) => {
       const note = props.query.get('note');
       if (note) {
         setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-        WebPlayerInst.pause();
+        IOSPlayerInst.pause();
       }
     });
-
-    const freeze = props.query.get('freeze');
-    if (freeze) {
-      void WebPlayerInst.freeze();
-    }
   }, [session.sessionId]);
 
-  const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {};
-
-  React.useEffect(() => {
-    if ((messagesProcessed && session.events.length > 0) || session.errors.length > 0) {
-      contextValue.player?.updateLists?.(session);
-    }
-  }, [session.events, session.errors, contextValue.player, messagesProcessed]);
+  const { messagesProcessed } = contextValue.store?.get() || {};
 
   React.useEffect(() => {
     if (noteItem !== undefined) {
@@ -75,28 +64,15 @@ function WebPlayer(props: any) {
 
     if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
       const jumpToTime = props.query.get('jumpto');
-      const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
-      if (jumpToTime || shouldAdjustOffset) {
-        if (jumpToTime > visualOffset) {
-          contextValue.player.jump(parseInt(jumpToTime));
-        } else {
-          contextValue.player.jump(visualOffset);
-          setAdjusted(true);
-        }
+      if (jumpToTime) {
+        contextValue.player.jump(parseInt(jumpToTime));
       }
 
       contextValue.player.play();
     }
-  }, [activeTab, noteItem, visualOffset, messagesProcessed]);
+  }, [activeTab, noteItem, messagesProcessed]);
 
-  React.useEffect(() => {
-    if (activeTab === 'Click Map') {
-      contextValue.player?.pause();
-    }
-  }, [activeTab]);
-
-  // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
     () => () => {
       console.debug('cleaning up player after', params.sessionId);
@@ -129,40 +105,40 @@ function WebPlayer(props: any) {
     );
 
   return (
-    <PlayerContext.Provider value={contextValue}>
-      <PlayerBlockHeader
+    <MobilePlayerContext.Provider value={contextValue}>
+      <MobilePlayerHeader
         // @ts-ignore TODO?
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         tabs={TABS}
         fullscreen={fullscreen}
       />
-      {/* @ts-ignore  */}
-      {contextValue.player ? (
-        <PlayerContent
-          activeTab={activeTab}
-          fullscreen={fullscreen}
-          setActiveTab={setActiveTab}
-          session={session}
-        />
-      ) : (
-        <Loader
-          style={{ position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)' }}
-        />
-      )}
-      <Modal open={noteItem !== undefined} onClose={onNoteClose}>
-        {noteItem !== undefined ? (
-          <ReadNote note={noteItem} onClose={onNoteClose} notFound={!noteItem} />
-        ) : null}
-      </Modal>
-    </PlayerContext.Provider>
+      <PlayerErrorBoundary>
+        {contextValue.player ? (
+          <PlayerContent
+            activeTab={activeTab}
+            fullscreen={fullscreen}
+            setActiveTab={setActiveTab}
+            session={session}
+          />
+        ) : (
+          <Loader
+            style={{ position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)' }}
+          />
+        )}
+        <Modal open={noteItem !== undefined} onClose={onNoteClose}>
+          {noteItem !== undefined ? (
+            <ReadNote note={noteItem} onClose={onNoteClose} notFound={!noteItem} />
+          ) : null}
+        </Modal>
+      </PlayerErrorBoundary>
+    </MobilePlayerContext.Provider>
   );
 }
 
 export default connect(
   (state: any) => ({
     session: state.getIn(['sessions', 'current']),
-    insights: state.getIn(['sessions', 'insights']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
@@ -174,4 +150,4 @@ export default connect(
     closeBottomBlock,
     fetchList,
   }
-)(withLocationHandlers()(observer(WebPlayer)));
+)(withLocationHandlers()(observer(MobilePlayer)));

@@ -74,7 +74,7 @@ export default class Cursor {
   }
 
   click() {
-    const styleList = this.isMobile ? styles.clickedMobile : styles.clicked
+    const styleList = styles.clicked
     this.cursor.classList.add(styleList)
     this.onClick?.()
     setTimeout(() => {

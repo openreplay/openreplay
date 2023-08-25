@@ -11,7 +11,17 @@ import WebPlayer from './WebPlayer';
 import { useStore } from 'App/mstore';
 import { clearLogs } from 'App/dev/console';
 
+import MobilePlayer from "Components/Session/MobilePlayer";
+
 const SESSIONS_ROUTE = sessionsRoute();
+
+interface Props {
+	sessionId: string;
+	loading: boolean;
+	hasErrors: boolean;
+	fetchV2: (sessionId: string) => void;
+	clearCurrentSession: () => void;
+}
 
 function Session({ 
 	sessionId,
@@ -19,7 +29,7 @@ function Session({
 	hasErrors,
 	fetchV2,
 	clearCurrentSession,
- }) {
+ }: Props) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
 	const { sessionStore }	= useStore();
@@ -52,13 +62,14 @@ function Session({
 			}
 		>
 			<Loader className="flex-1" loading={ loading || initializing }> 
-				<WebPlayer />
+				{/*<WebPlayer />*/}
+				<MobilePlayer />
 			</Loader>
 		</NoContent>
 	);
 }
 
-export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state, props) => {
+export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state: any, props: any) => {
 	const { match: { params: { sessionId } } } = props;
 	return {
 		sessionId,

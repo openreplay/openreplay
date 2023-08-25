@@ -255,7 +255,7 @@ export default class Session {
       stackEventsList.push(...mergedArrays);
     }
 
-    const exceptions = (errors as IError[]).map((e) => new SessionError(e)) || [];
+    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
 
     const issuesList =
       (issues as IIssue[]).map(
@@ -324,7 +324,7 @@ export default class Session {
     userEvents: any[],
     stackEvents: any[]
   ) {
-    const exceptions = (errors as IError[]).map((e) => new SessionError(e)) || [];
+    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
     const issuesList =
       (issues as IIssue[]).map(
         (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k })

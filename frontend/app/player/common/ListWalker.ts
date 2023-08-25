@@ -1,4 +1,4 @@
-import type { Timed } from './types';
+import type { Timed } from 'Player';
 
 export default class ListWalker<T extends Timed> {
 	private p = 0  /* Pointer to the "current" item */
@@ -123,10 +123,12 @@ export default class ListWalker<T extends Timed> {
 		}
 
 		let changed = false;
+		// @ts-ignore
 		while (this.p < this.length && this.list[this.p][key] <= val) {
 			this.moveNext()
 			changed = true;
 		}
+		// @ts-ignore
 		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
 			this.movePrev()
 			changed = true;
