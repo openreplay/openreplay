@@ -54,6 +54,7 @@ ENV TZ=UTC \
     TOPIC_CACHE=cache \
     TOPIC_ANALYTICS=analytics \
     TOPIC_TRIGGER=trigger \
+    TOPIC_MOBILE_TRIGGER=mobile-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
