@@ -79,7 +79,12 @@ func main() {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
-			// TODO: send ios session end to extra topic (video storage)
+			// duplicate session end message to mobile trigger topic to build video replay for mobile sessions
+			if msg.TypeID() == messages.MsgIOSSessionEnd {
+				if err := producer.Produce(cfg.TopicMobileTrigger, msg.SessionID(), msg.Encode()); err != nil {
+					log.Printf("can't send iOSSessionEnd to mobile trigger topic: %s; sessID: %d", err, msg.SessionID())
+				}
+			}
 			writer.Close(msg.SessionID())
 			return
 		}
