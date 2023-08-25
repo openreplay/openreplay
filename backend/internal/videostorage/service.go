@@ -56,6 +56,9 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 		log.Fatalf("Failed to read video file: %v", err)
 	}
 	log.Printf("Video file size: %d", len(video))
+	if err := v.objStorage.Upload(bytes.NewReader(video), "replay.mp4", "video/mp4", objectstorage.NoCompression); err != nil {
+		log.Fatalf("Storage: start upload video replay failed. %s", err)
+	}
 	return nil
 }
 
