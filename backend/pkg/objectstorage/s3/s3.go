@@ -80,6 +80,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		contentEncoding = &gzipStr
 	}
 
+	log.Printf("Uploading to S3, bucket: %s, key: %s", *s.bucket, key)
 	_, err := s.uploader.Upload(&s3manager.UploadInput{
 		Body:            reader,
 		Bucket:          s.bucket,
