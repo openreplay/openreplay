@@ -1,11 +1,13 @@
 package videostorage
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	config "openreplay/backend/internal/config/videostorage"
 	"openreplay/backend/pkg/objectstorage"
-	"strconv"
+	"os/exec"
 )
 
 type VideoStorage struct {
@@ -27,20 +29,22 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 	return newStorage, nil
 }
 
-func (v *VideoStorage) Process(sessID uint64) error {
-	/*
-		1. Download Several Archives from S3 Folder
-		2. Untar Archives into One Folder
-		3. Convert JPEG Files to MP4 Video
-	*/
-	files, err := v.objStorage.GetAll(strconv.Itoa(int(sessID)))
+func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
+	files, _ := ioutil.ReadDir(filesPath)
+	fmt.Printf("There are %d screenshot of session %d", len(files), sessID)
+	// Try to call ffmpeg and print the result
+	cmd := exec.Command("ffmpeg", "-h")
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
-		return err
+		log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
-	log.Printf("files: %v", files)
-	// TODO: untar files
-	// TODO: convert to mp4 (ffmpeg)
-	// TODO: upload to s3 resulted video
+
+	fmt.Println("Output:", stdout.String())
 	return nil
 }
 

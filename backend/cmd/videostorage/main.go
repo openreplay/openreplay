@@ -1,9 +1,14 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
+	gzip "github.com/klauspost/pgzip"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -34,13 +39,55 @@ func main() {
 		return
 	}
 
+	workDir := cfg.FSDir
+
+	ExtractTarGz := func(gzipStream io.Reader, sessID uint64) {
+		uncompressedStream, err := gzip.NewReader(gzipStream)
+		if err != nil {
+			log.Fatal("ExtractTarGz: NewReader failed")
+		}
+
+		tarReader := tar.NewReader(uncompressedStream)
+
+		for true {
+			header, err := tarReader.Next()
+
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
+			}
+
+			if header.Typeflag == tar.TypeReg {
+				filePath := workDir + "/screenshots/" + strconv.FormatUint(sessID, 10) + "/" + header.Name
+				outFile, err := os.Create(filePath) // or open file in rewrite mode
+				if err != nil {
+					log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+				}
+				if _, err := io.Copy(outFile, tarReader); err != nil {
+					log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
+				}
+				outFile.Close()
+			} else {
+				log.Printf(
+					"ExtractTarGz: uknown type: %d in %s",
+					header.Typeflag,
+					header.Name)
+			}
+		}
+	}
+
 	imageConsumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
 		[]string{
 			cfg.TopicRawImages,
 		},
-		messages.NewImagesMessageIterator(func(data []byte) {
-			log.Printf("image data: %d", len(data))
+		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			log.Printf("image data: %d from session: %d", len(data), sessID)
+			// Try to extract an archive
+			ExtractTarGz(bytes.NewReader(data), sessID)
 		}, nil, true),
 		false,
 		cfg.MessageSizeLimit,
@@ -53,8 +100,9 @@ func main() {
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
-				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.Process(sesEnd.SessionID()); err != nil {
+				sesEnd := msg.(*messages.IOSSessionEnd)
+				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
+				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/"); err != nil {
 					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 				}
 			},

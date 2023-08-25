@@ -5,7 +5,7 @@ type imagesIteratorImpl struct {
 	handler      ImageMessageHandler
 }
 
-type ImageMessageHandler func(data []byte)
+type ImageMessageHandler func(data []byte, sessID uint64)
 
 func NewImagesMessageIterator(messageHandler ImageMessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	enderIter := &imagesIteratorImpl{
@@ -20,5 +20,5 @@ func (e *imagesIteratorImpl) handle(message Message) {
 }
 
 func (e *imagesIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
-	e.handler(batchData)
+	e.handler(batchData, batchInfo.sessionID)
 }
