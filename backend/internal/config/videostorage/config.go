@@ -17,6 +17,7 @@ type Config struct {
 	GroupVideoStorage    string        `env:"GROUP_STORAGE,required"`
 	GroupImageStorage    string        `env:"GROUP_IMAGE_STORAGE,required"`
 	TopicMobileTrigger   string        `env:"TOPIC_MOBILE_TRIGGER,required"`
+	TopicTrigger         string        `env:"TOPIC_TRIGGER,required"`
 	DeleteTimeout        time.Duration `env:"DELETE_TIMEOUT,default=48h"`
 	ProducerCloseTimeout int           `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`

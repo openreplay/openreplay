@@ -8,6 +8,7 @@ import (
 	config "openreplay/backend/internal/config/videostorage"
 	"openreplay/backend/pkg/objectstorage"
 	"os/exec"
+	"strconv"
 )
 
 type VideoStorage struct {
@@ -33,7 +34,12 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	files, _ := ioutil.ReadDir(filesPath)
 	fmt.Printf("There are %d screenshot of session %d", len(files), sessID)
 	// Try to call ffmpeg and print the result
-	cmd := exec.Command("ffmpeg", "-h")
+	sessionID := strconv.FormatUint(sessID, 10)
+	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
+	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
+	cmd := exec.Command("ffmpeg", "-f", "image2", "-framerate", "3", "-start_number", "000000", "-i",
+		imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+		videoPath)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -45,6 +51,11 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	}
 
 	fmt.Println("Output:", stdout.String())
+	video, err := ioutil.ReadFile(videoPath)
+	if err != nil {
+		log.Fatalf("Failed to read video file: %v", err)
+	}
+	log.Printf("Video file size: %d", len(video))
 	return nil
 }
 
