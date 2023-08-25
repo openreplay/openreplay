@@ -48,6 +48,15 @@ func main() {
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
+				// Convert IOSSessionEnd to SessionEnd
+				if msg.TypeID() == messages.MsgIOSSessionEnd {
+					mobileEnd, oldMeta := msg.(*messages.IOSSessionEnd), msg.Meta()
+					msg = &messages.SessionEnd{
+						Timestamp: mobileEnd.Timestamp,
+					}
+					msg.Meta().SetMeta(oldMeta)
+				}
+				// Process session to save mob files to s3
 				sesEnd := msg.(*messages.SessionEnd)
 				if err := srv.Process(sesEnd); err != nil {
 					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
