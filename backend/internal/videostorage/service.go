@@ -37,7 +37,7 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	sessionID := strconv.FormatUint(sessID, 10)
 	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
 	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
-	cmd := exec.Command("ffmpeg", "-f", "image2", "-framerate", "3", "-start_number", "000000", "-i",
+	cmd := exec.Command("ffmpeg", "-y", "-f", "image2", "-framerate", "3", "-start_number", "000000", "-i",
 		imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
 		videoPath)
 
