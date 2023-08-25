@@ -178,7 +178,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	prefix := r.MultipartForm.Value["projectKey"][0] + "/" + strconv.FormatUint(sessionData.ID, 10) + "/"
+	//prefix := r.MultipartForm.Value["projectKey"][0] + "/" + strconv.FormatUint(sessionData.ID, 10) + "/"
 
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
@@ -186,18 +186,19 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			if err != nil {
 				continue // TODO: send server error or accumulate successful files
 			}
-			key := prefix + fileHeader.Filename
+			//key := prefix + fileHeader.Filename
 
 			data, err := ioutil.ReadAll(file)
 			if err != nil {
 				log.Fatalf("failed reading data: %s", err)
 			}
 
-			log.Printf("Uploading image... %v, len: %d", util.SafeString(key), len(data))
+			log.Printf("Uploading image... %v, len: %d", util.SafeString(fileHeader.Filename), len(data))
 
 			if err := e.services.Producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
 				log.Printf("failed to produce mobile session start message: %v", err)
 			}
+			log.Printf("Image uploaded")
 			//go func() { //TODO: mime type from header
 			//	log.Printf("Uploading image... %v", file)
 			//	//if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
