@@ -116,7 +116,7 @@ func main() {
 					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 				}
 			},
-			[]int{messages.MsgSessionEnd},
+			[]int{messages.MsgIOSSessionEnd},
 			true,
 		),
 		false,
