@@ -32,7 +32,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 
 func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	files, _ := ioutil.ReadDir(filesPath)
-	fmt.Printf("There are %d screenshot of session %d", len(files), sessID)
+	fmt.Printf("There are %d screenshot of session %d\n", len(files), sessID)
 	// Try to call ffmpeg and print the result
 	sessionID := strconv.FormatUint(sessID, 10)
 	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
@@ -59,6 +59,7 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	if err := v.objStorage.Upload(bytes.NewReader(video), "replay.mp4", "video/mp4", objectstorage.NoCompression); err != nil {
 		log.Fatalf("Storage: start upload video replay failed. %s", err)
 	}
+	log.Printf("Video file uploaded successfully")
 	return nil
 }
 

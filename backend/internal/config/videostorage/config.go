@@ -14,7 +14,7 @@ type Config struct {
 	FileSplitSize        int           `env:"FILE_SPLIT_SIZE,required"`
 	RetryTimeout         time.Duration `env:"RETRY_TIMEOUT,default=2m"`
 	TopicRawImages       string        `env:"TOPIC_RAW_IMAGES,required"`
-	GroupVideoStorage    string        `env:"GROUP_STORAGE,required"`
+	GroupVideoStorage    string        `env:"GROUP_VIDEO_STORAGE,required"`
 	GroupImageStorage    string        `env:"GROUP_IMAGE_STORAGE,required"`
 	TopicMobileTrigger   string        `env:"TOPIC_MOBILE_TRIGGER,required"`
 	TopicTrigger         string        `env:"TOPIC_TRIGGER,required"`
