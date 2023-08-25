@@ -126,7 +126,10 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['domURL'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id,
+                                                           check_existence=False)
+                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
+                                                                    check_existence=False)
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
@@ -199,11 +202,11 @@ def reduce_issues(issues_list):
     i = 0
     # remove same-type issues if the time between them is <2s
     while i < len(issues_list) - 1:
-        for j in range(i+1,len(issues_list)):
+        for j in range(i + 1, len(issues_list)):
             if issues_list[i]["type"] == issues_list[j]["type"]:
                 break
         else:
-            i+=1
+            i += 1
             break
 
         if issues_list[i]["timestamp"] - issues_list[j]["timestamp"] < 2000:
