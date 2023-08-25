@@ -32,7 +32,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 
 func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	files, _ := ioutil.ReadDir(filesPath)
-	fmt.Printf("There are %d screenshot of session %d\n", len(files), sessID)
+	log.Printf("There are %d screenshot of session %d\n", len(files), sessID)
 	// Try to call ffmpeg and print the result
 	sessionID := strconv.FormatUint(sessID, 10)
 	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
@@ -50,7 +50,6 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 		log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
 
-	fmt.Println("Output:", stdout.String())
 	video, err := ioutil.ReadFile(videoPath)
 	if err != nil {
 		log.Fatalf("Failed to read video file: %v", err)
