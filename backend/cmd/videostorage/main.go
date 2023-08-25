@@ -138,9 +138,13 @@ func main() {
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
-			err := consumer.ConsumeNext()
+			err := imageConsumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on consumption: %v", err)
+				log.Fatalf("Error on images consumption: %v", err)
+			}
+			err = consumer.ConsumeNext()
+			if err != nil {
+				log.Fatalf("Error on end event consumption: %v", err)
 			}
 		}
 	}
