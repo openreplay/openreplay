@@ -69,7 +69,7 @@ def get_ios(session_id, project_id, check_existence=False):
 
 def get_ios_videos(session_id, project_id, check_existence=False):
     results = []
-    for k in __get_mob_keys(project_id=project_id, session_id=session_id):
+    for k in __get_ios_video_keys(project_id=project_id, session_id=session_id):
         if check_existence and not StorageClient.exists(bucket=config("IOS_VIDEO_BUCKET"), key=k):
             continue
         results.append(StorageClient.get_presigned_url_for_sharing(
