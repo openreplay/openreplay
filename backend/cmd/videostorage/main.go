@@ -95,7 +95,9 @@ func main() {
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
 			log.Printf("image data: %d from session: %d", len(data), sessID)
 			// Try to extract an archive
+			start := time.Now()
 			ExtractTarGz(bytes.NewReader(data), sessID)
+			log.Printf("extracted archive in: %s", time.Since(start))
 		}, nil, true),
 		false,
 		cfg.MessageSizeLimit,
@@ -105,20 +107,9 @@ func main() {
 		cfg.GroupVideoStorage,
 		[]string{
 			cfg.TopicMobileTrigger,
-			cfg.TopicTrigger, // TODO: remove after tests !!!
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
-				if msg.TypeID() == messages.MsgSessionEnd {
-					sesEnd := msg.(*messages.SessionEnd)
-					// TEST case with the same sessionID
-					log.Printf("recieved regular session end: %d", sesEnd.SessionID())
-					var testSessID uint64 = 9368774178764550
-					if err := srv.Process(testSessID, workDir+"/screenshots/"+strconv.FormatUint(testSessID, 10)+"/"); err != nil {
-						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
-					}
-					return
-				}
 				sesEnd := msg.(*messages.IOSSessionEnd)
 				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
 				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/"); err != nil {

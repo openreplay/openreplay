@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 	"os/exec"
 	"strconv"
+	"time"
 )
 
 type VideoStorage struct {
@@ -33,7 +34,9 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	files, _ := ioutil.ReadDir(filesPath)
 	log.Printf("There are %d screenshot of session %d\n", len(files), sessID)
+
 	// Try to call ffmpeg and print the result
+	start := time.Now()
 	sessionID := strconv.FormatUint(sessID, 10)
 	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
 	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
@@ -49,7 +52,9 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	if err != nil {
 		log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
+	log.Printf("made video replay in %v", time.Since(start))
 
+	start = time.Now()
 	video, err := ioutil.ReadFile(videoPath)
 	if err != nil {
 		log.Fatalf("Failed to read video file: %v", err)
@@ -58,7 +63,7 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string) error {
 	if err := v.objStorage.Upload(bytes.NewReader(video), sessionID+"/replay.mp4", "video/mp4", objectstorage.NoCompression); err != nil {
 		log.Fatalf("Storage: start upload video replay failed. %s", err)
 	}
-	log.Printf("Video file uploaded successfully")
+	log.Printf("Video file uploaded successfully in %v", time.Since(start))
 	return nil
 }
 
