@@ -5,18 +5,18 @@ name = "pypi"
 
 [packages]
 requests = "==2.31.0"
-boto3 = "==1.28.30"
+boto3 = "==1.28.35"
 pyjwt = "==2.8.0"
 psycopg2-binary = "==2.9.7"
 elasticsearch = "==8.9.0"
 jira = "==3.5.2"
-fastapi = "==0.101.1"
+fastapi = "==0.103.0"
 python-decouple = "==3.8"
 apscheduler = "==3.10.4"
 redis = "==5.0.0"
 urllib3 = "==1.26.16"
 uvicorn = {version = "==0.23.2", extras = ["standard"]}
-pydantic = {version = "==2.2.1", extras = ["email"]}
+pydantic = {version = "==2.3.0", extras = ["email"]}
 
 [dev-packages]
 
