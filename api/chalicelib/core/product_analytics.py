@@ -63,8 +63,9 @@ JOURNEY_TYPES = {
 }
 
 
-def path_analysis(project_id, data: schemas.PathAnalysisSchema,
-                  selected_event_type: List[schemas.ProductAnalyticsSelectedEventType]):
+def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
+                  selected_event_type: List[schemas.ProductAnalyticsSelectedEventType],
+                  hide_minor_paths: bool = False):
     # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
     #                                         time_constraint=True)
     # TODO: check if data=args is required
@@ -338,7 +339,7 @@ WITH sub_sessions AS ( SELECT session_id
                                              INNER JOIN start_points USING (session_id)
                                     GROUP BY event_number_in_session, event_type, e_value, next_type, next_value,
                                              time_to_next) AS groupped_events) AS ranked_groupped_events
-                        WHERE _event_number_in_group < 4)
+                        WHERE _event_number_in_group < %(eventThresholdNumberInGroup)s)
 SELECT event_number_in_session,
        event_type,
        e_value,
@@ -351,6 +352,7 @@ GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, se
 ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "JOURNEY_DEPTH": JOURNEY_DEPTH,
+                  "eventThresholdNumberInGroup": 8 if hide_minor_paths else 6,
                   # TODO: add if data=args is required
                   # **__get_constraint_values(args),
                   **extra_values}

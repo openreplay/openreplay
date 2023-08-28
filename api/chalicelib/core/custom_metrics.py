@@ -112,7 +112,7 @@ def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardP
         data.series[0].filter = schemas.PathAnalysisSchema()
 
     return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter,
-                                           selected_event_type=data.metric_value)
+                                           selected_event_type=data.metric_value, hide_minor_paths=data.hide_excess)
 
 
 def __is_path_analysis(data: schemas.CardSchema):
