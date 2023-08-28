@@ -21,6 +21,7 @@ interface Props {
 	hasErrors: boolean;
 	fetchV2: (sessionId: string) => void;
 	clearCurrentSession: () => void;
+	session: Record<string, any>;
 }
 
 function Session({ 
@@ -29,6 +30,7 @@ function Session({
 	hasErrors,
 	fetchV2,
 	clearCurrentSession,
+	session,
  }: Props) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
@@ -50,6 +52,7 @@ function Session({
 		sessionStore.resetUserFilter();
 	} ,[])
 
+	const player = session.platform === 'ios' ? <MobilePlayer /> : <WebPlayer />
 	return (
 		<NoContent
 			show={ hasErrors }
@@ -62,8 +65,7 @@ function Session({
 			}
 		>
 			<Loader className="flex-1" loading={ loading || initializing }> 
-				{/*<WebPlayer />*/}
-				<MobilePlayer />
+				{player}
 			</Loader>
 		</NoContent>
 	);

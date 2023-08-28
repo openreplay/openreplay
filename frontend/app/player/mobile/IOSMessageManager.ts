@@ -155,10 +155,10 @@ export default class IOSMessageManager implements IMessageManager {
     switch (msg.tp) {
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
+        console.log(msg.time)
         this.touchManager.append(msg);
         break;
       case MType.IosLog:
-        console.log(msg)
         // @ts-ignore
         this.lists.lists.log.append(Log(msg));
         break;
