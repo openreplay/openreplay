@@ -65,4 +65,5 @@ export const TP_MAP = {
   102: MType.IosPerformanceEvent,
   103: MType.IosLog,
   105: MType.IosNetworkCall,
+  106: MType.IosSwipeEvent,
 } as const

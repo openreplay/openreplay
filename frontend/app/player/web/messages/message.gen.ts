@@ -66,6 +66,7 @@ import type {
   RawIosPerformanceEvent,
   RawIosLog,
   RawIosNetworkCall,
+  RawIosSwipeEvent,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -194,4 +195,6 @@ export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 export type IosLog = RawIosLog & Timed
 
 export type IosNetworkCall = RawIosNetworkCall & Timed
+
+export type IosSwipeEvent = RawIosSwipeEvent & Timed
 

@@ -134,7 +134,7 @@ message 105, 'IOSNetworkCall', :replayer => true do
   uint 'Status'
 end
 
-message 106, 'IOSSwipeEvent' do
+message 106, 'IOSSwipeEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Label'

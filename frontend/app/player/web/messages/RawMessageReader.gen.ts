@@ -789,6 +789,24 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 106: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      const x = this.readUint(); if (x === null) { return resetPointer() }
+      const y = this.readUint(); if (y === null) { return resetPointer() }
+      const direction = this.readString(); if (direction === null) { return resetPointer() }
+      return {
+        tp: MType.IosSwipeEvent,
+        timestamp,
+        length,
+        label,
+        x,
+        y,
+        direction,
+      };
+    }
+
     default:
       throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
       return null;
