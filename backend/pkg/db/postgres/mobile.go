@@ -64,6 +64,21 @@ func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOS
 	return nil
 }
 
+func (conn *Conn) InsertIOSSwipeEvent(sessionID uint64, swipeEvent *messages.IOSSwipeEvent) error {
+	if err := conn.Pool.Exec(`
+		INSERT INTO events_ios.swipes (
+			session_id, timestamp, seq_index, label, direction
+		) VALUES (
+			$1, $2, $3, $4, $5
+		)`,
+		sessionID, swipeEvent.Timestamp, swipeEvent.Index, swipeEvent.Label, swipeEvent.Direction,
+	); err != nil {
+		return err
+	}
+	conn.InsertAutocompleteValue(sessionID, 0, "SWIPE_IOS", swipeEvent.Label)
+	return nil
+}
+
 func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOSInputEvent) error {
 	var value interface{} = inputEvent.Value
 	if inputEvent.ValueMasked {

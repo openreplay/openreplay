@@ -91,6 +91,11 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSSwipeEvent:
+		if err := s.pg.InsertIOSSwipeEvent(m.SessionID(), m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *IOSInputEvent:
 		if err := s.pg.InsertIOSInputEvent(m.SessionID(), m); err != nil {
 			return err

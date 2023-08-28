@@ -52,14 +52,21 @@ func main() {
 	saver := datasaver.New(cfg, pg, sessManager)
 
 	// Message filter
-	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
+	msgFilter := []int{
+		// Web messages
+		messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
 		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
 		messages.MsgJSException, messages.MsgResourceTiming, messages.MsgCustomEvent, messages.MsgCustomIssue,
 		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction,
 		messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument, messages.MsgMouseClick,
 		messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
-		messages.MsgUnbindNodes}
+		messages.MsgUnbindNodes,
+		// Mobile messages
+		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall,
+		messages.MsgIOSScreenEnter, messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
+		messages.MsgIOSCrash,
+	}
 
 	// Init consumer
 	consumer := queue.NewConsumer(
