@@ -25,3 +25,20 @@
   opacity: 0;
   transition: all 0.25s cubic-bezier(0, 0, 0.4, 1.0);
 }
+
+.mobileScreen {
+  user-select: none;
+  overflow: hidden;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  background: none;
+  box-shadow: none;
+}
+
+.mobileIframe {
+  position: absolute;
+  border: none;
+  background: none;
+}

@@ -18,17 +18,14 @@ import {
   fullscreenOff,
 } from 'Duck/components/player';
 import NetworkPanel from 'Shared/DevTools/NetworkPanel';
-import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
-import GraphQL from 'Components/Session_/GraphQL';
 import Exceptions from 'Components/Session_/Exceptions/Exceptions';
-import Inspector from 'Components/Session_/Inspector';
 import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from 'Components/Session_/OverviewPanel';
-import ConsolePanel from 'Shared/DevTools/ConsolePanel';
+import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import StackEventPanel from 'Shared/DevTools/StackEventPanel';
@@ -45,6 +42,7 @@ interface IProps {
   activeTab: string;
   updateLastPlayedSession: (id: string) => void
   videoURL: string;
+  userDevice: string;
 }
 
 function Player(props: IProps) {
@@ -56,6 +54,7 @@ function Player(props: IProps) {
     activeTab,
     fullView,
     videoURL,
+    userDevice,
   } = props;
   const playerContext = React.useContext(MobilePlayerContext);
   const isReady = playerContext.store.get().ready
@@ -78,6 +77,7 @@ function Player(props: IProps) {
 
   if (!playerContext.player) return null;
 
+  const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
   return (
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
@@ -88,8 +88,13 @@ function Player(props: IProps) {
         <Overlay nextId={nextId} />
 
         <div className={cn(stl.screenWrapper)} ref={screenWrapper}/>
-        <ReplayWindow videoURL={videoURL} />
+        <ReplayWindow videoURL={videoURL} userDevice={userDevice} />
       </div>
+      {!fullscreen && !!bottomBlock && (
+        <div style={{ maxWidth, width: '100%' }}>
+          {bottomBlock === CONSOLE && <MobileConsolePanel isLive={false} />}
+        </div>
+      )}
       {!fullView ? (
         <MobileControls
           speedDown={playerContext.player.speedDown}
@@ -106,6 +111,7 @@ export default connect(
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
     nextId: state.getIn(['sessions', 'nextId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
+    userDevice: state.getIn(['sessions', 'current']).userDevice,
     videoURL: state.getIn(['sessions', 'current']).videoURL,
     bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
   }),

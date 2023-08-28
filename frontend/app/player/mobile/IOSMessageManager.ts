@@ -20,6 +20,8 @@ import Screen, {
   State as ScreenState,
 } from '../web/Screen/Screen';
 
+import { Log } from './types/log'
+
 import type { SkipInterval } from '../web/managers/ActivityManager';
 
 export interface State extends ScreenState, ListsState {
@@ -143,10 +145,7 @@ export default class IOSMessageManager implements IMessageManager {
     }
   }
 
-  lastTime = 0;
   distributeMessage = (msg: Message & { tabId: string }): void => {
-    msg.time = this.lastTime;
-    this.lastTime += 500;
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
     this.lastMessageTime = lastMessageTime;
     this.state.update({ lastMessageTime });
@@ -157,6 +156,11 @@ export default class IOSMessageManager implements IMessageManager {
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
         this.touchManager.append(msg);
+        break;
+      case MType.IosLog:
+        console.log(msg)
+        // @ts-ignore
+        this.lists.lists.log.append(Log(msg));
         break;
       default:
         // stuff

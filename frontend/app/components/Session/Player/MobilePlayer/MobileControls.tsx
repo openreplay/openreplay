@@ -1,18 +1,18 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
+import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
 
 import { Tooltip } from 'UI';
 import {
   fullscreenOff,
   fullscreenOn,
-  INSPECTOR,
   OVERVIEW,
   toggleBottomBlock,
   changeSkipInterval,
+  CONSOLE,
 } from 'Duck/components/player';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
 
@@ -35,26 +35,14 @@ export const SKIP_INTERVALS = {
 };
 
 function Controls(props: any) {
-  const { player, store } = React.useContext(PlayerContext);
+  const { player, store } = React.useContext(MobilePlayerContext);
 
-  const {
-    playing,
-    completed,
-    skip,
-    speed,
-    messagesLoading,
-  } = store.get();
+  const { playing, completed, skip, speed, messagesLoading } = store.get();
 
-  const {
-    bottomBlock,
-    toggleBottomBlock,
-    fullscreen,
-    changeSkipInterval,
-    skipInterval,
-    session,
-  } = props;
+  const { bottomBlock, toggleBottomBlock, fullscreen, changeSkipInterval, skipInterval, session } =
+    props;
 
-  const disabled =  messagesLoading
+  const disabled = messagesLoading;
   const sessionTz = session?.timezone;
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -95,16 +83,14 @@ function Controls(props: any) {
   };
 
   const toggleBottomTools = (blockName: number) => {
-    if (blockName === INSPECTOR) {
-      // player.toggleInspectorMode(false);
-      bottomBlock && toggleBottomBlock();
-    } else {
-      // player.toggleInspectorMode(false);
-      toggleBottomBlock(blockName);
-    }
+    toggleBottomBlock(blockName);
   };
 
-  const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
+  const state = completed
+    ? PlayingState.Completed
+    : playing
+    ? PlayingState.Playing
+    : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
@@ -128,15 +114,16 @@ function Controls(props: any) {
               currentInterval={skipInterval}
               startedAt={session.startedAt}
             />
-            <div className={cn('mx-2')} />
-            <XRayButton
-              isActive={bottomBlock === OVERVIEW}
-              onClick={() => toggleBottomTools(OVERVIEW)}
-            />
-          </div>
+            {/* TODO: replicate same stuff but for mobile session ? */}
+            {/*<div className={cn('mx-2')} />*/}
+            {/*  <XRayButton*/}
+            {/*    isActive={bottomBlock === OVERVIEW}*/}
+            {/*    onClick={() => toggleBottomTools(OVERVIEW)}*/}
+            {/*  />*/}
+            </div>
 
           <div className="flex items-center h-full">
-            <DevtoolsButtons />
+            <DevtoolsButtons toggleBottomTools={toggleBottomTools} bottomBlock={bottomBlock} />
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
                 size={16}
@@ -151,21 +138,31 @@ function Controls(props: any) {
   );
 }
 
-function DevtoolsButtons() {
+interface DevtoolsButtonsProps {
+  toggleBottomTools: (blockName: number) => void;
+  bottomBlock: number;
+}
+
+function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProps) {
+  const { store } = React.useContext(MobilePlayerContext);
+
+  const { exceptionsList, logMarkedCountNow, messagesLoading } = store.get();
+
+  const showExceptions = exceptionsList.length > 0;
   return (
     <>
       <ControlButton
-        disabled={false}
-        onClick={() => null}
-        active={false}
-        label="TEST"
+        disabled={messagesLoading}
+        onClick={() => toggleBottomTools(CONSOLE)}
+        active={bottomBlock === CONSOLE}
+        label="CONSOLE"
         noIcon
         labelClassName="!text-base font-semibold"
-        hasErrors={false}
+        hasErrors={logMarkedCountNow > 0 || showExceptions}
         containerClassName="mx-2"
       />
     </>
-  )
+  );
 }
 
 const ControlPlayer = observer(Controls);

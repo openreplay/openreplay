@@ -4,7 +4,7 @@ import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { useStore } from 'App/mstore';
@@ -59,7 +59,7 @@ const getIconProps = (level: any) => {
 
 const INDEX_KEY = 'console';
 
-function ConsolePanel({ isLive }: { isLive?: boolean }) {
+function MobileConsolePanel({ isLive }: { isLive: boolean }) {
   const {
     sessionStore: { devTools },
   } = useStore()
@@ -71,20 +71,19 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   const [ isDetailsModalActive, setIsDetailsModalActive ] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } = React.useContext(PlayerContext)
+  const { player, store } = React.useContext(MobilePlayerContext)
   const jump = (t: number) => player.jump(t)
 
-  const { currentTab, tabStates } = store.get()
-  const { logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [] } = tabStates[currentTab]
+  const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
 
   const list = isLive ?
     useMemo(() => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
       [logListNow.length, exceptionsListNow.length]
     ) as ILog[]
     : useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-    [ logList.length, exceptionsList.length ],
+      [ logList.length, exceptionsList.length ],
     ) as ILog[]
-  let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
+  let filteredList = useRegExListFilterMemo(list, l => l.value, filter)
   filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
 
   React.useEffect(() => {
@@ -96,7 +95,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
-  // AutoScroll 
+  // AutoScroll
   const [
     timeoutStartAutoscroll,
     stopAutoscroll,
@@ -111,7 +110,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
     if (isDetailsModalActive) { return }
     timeoutStartAutoscroll()
   }
-  
+
   const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
@@ -125,8 +124,8 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
     showModal(
-      <ErrorDetailsModal errorId={log.errorId} />, 
-      { 
+      <ErrorDetailsModal errorId={log.errorId} />,
+      {
         right: true,
         width: 1200,
         onClose: () => {
@@ -141,21 +140,21 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
     const item = filteredList[index];
 
     return (
-        // @ts-ignore
-        <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-          {({ measure, registerChild }) => (
-            <div ref={registerChild} style={style}>
-              <ConsoleRow
-                log={item}
-                jump={jump}
-                iconProps={getIconProps(item.level)}
-                renderWithNL={renderWithNL}
-                onClick={() => showDetails(item)}
-                recalcHeight={measure}
-              />
-            </div>
-          )}
-        </CellMeasurer>
+      // @ts-ignore
+      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
+        {({ measure, registerChild }) => (
+          <div ref={registerChild} style={style}>
+            <ConsoleRow
+              log={item}
+              jump={jump}
+              iconProps={getIconProps(item.level)}
+              renderWithNL={renderWithNL}
+              onClick={() => showDetails(item)}
+              recalcHeight={measure}
+            />
+          </div>
+        )}
+      </CellMeasurer>
     )
   }
 
@@ -220,4 +219,4 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   );
 }
 
-export default observer(ConsolePanel);
+export default observer(MobileConsolePanel);

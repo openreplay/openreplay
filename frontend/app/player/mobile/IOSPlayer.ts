@@ -45,15 +45,32 @@ export default class IOSPlayer extends Player {
 
   attach = (parent: HTMLElement) => {
     this.screen.attach(parent)
-    window.addEventListener('resize', this.scale)
-    this.scale()
+  }
+
+  injectPlayer = (player: HTMLElement) => {
+    this.screen.addToBody(player)
+    this.screen.addMobileStyles()
+    window.addEventListener('resize', () =>
+      this.customScale(this.customConstrains.width, this.customConstrains.height)
+    )
   }
 
   scale = () => {
-    const { width, height } = this.wpState.get()
+    // const { width, height } = this.wpState.get()
     if (!this.screen) return;
+    console.debug("using customConstrains to scale player")
     // sometimes happens in live assist sessions for some reason
-    this.screen?.scale?.({ width: 320, height: 720 })
+    this.screen?.scale?.(this.customConstrains)
+  }
+
+  customConstrains = {
+    width: 0,
+    height: 0,
+  }
+  customScale = (width: number, height: number) => {
+    if (!this.screen) return;
+    this.screen?.scale?.({ width, height })
+    this.customConstrains = { width, height }
   }
 
 

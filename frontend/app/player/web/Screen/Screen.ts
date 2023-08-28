@@ -84,6 +84,11 @@ export default class Screen {
     this.cursor = new Cursor(this.overlay, isMobile) // TODO: move outside
   }
 
+  addMobileStyles() {
+   this.iframe.className = styles.mobileIframe
+   this.screen.className = styles.mobileScreen
+  }
+
   clean() {
     this.iframe?.remove?.();
     this.overlay?.remove?.();
@@ -98,6 +103,13 @@ export default class Screen {
 
     parentElement.appendChild(this.screen);
     this.parentElement = parentElement;
+  }
+
+  addToBody(el: HTMLElement) {
+    if (this.document) {
+      this.document.body.style.margin = '0';
+      this.document.body.appendChild(el)
+    }
   }
 
   getParentElement():  HTMLElement | null {
