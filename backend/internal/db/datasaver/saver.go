@@ -41,6 +41,15 @@ func (s *saverImpl) Handle(msg Message) {
 	if msg.TypeID() == MsgCustomEvent {
 		defer s.Handle(types.WrapCustomEvent(msg.(*CustomEvent)))
 	}
+	if IsIOSType(msg.TypeID()) {
+		// Handle iOS messages
+		if err := s.handleMobileMessage(msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("iOS Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+			}
+			return
+		}
+	}
 	if err := s.handleMessage(msg); err != nil {
 		if !postgres.IsPkeyViolation(err) {
 			log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
@@ -51,6 +60,56 @@ func (s *saverImpl) Handle(msg Message) {
 		log.Printf("Stats Insertion Error %v; Session: %d, Message: %v", err, msg.SessionID(), msg)
 	}
 	return
+}
+
+func (s *saverImpl) handleMobileMessage(msg Message) error {
+	session, err := s.sessions.Get(msg.SessionID())
+	if err != nil {
+		return err
+	}
+	switch m := msg.(type) {
+	case *IOSSessionStart:
+		return s.pg.InsertIOSSessionStart(m.SessionID(), m)
+	case *IOSSessionEnd:
+		return s.pg.InsertIOSSessionEnd(m.SessionID(), m)
+	case *IOSUserID:
+		if err = s.sessions.UpdateUserID(session.SessionID, m.Value); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_IOS", m.Value)
+		return nil
+	case *IOSUserAnonymousID:
+		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.Value); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.Value)
+		return nil
+	case *IOSCustomEvent:
+		return s.pg.InsertIOSCustomEvent(session, m)
+	case *IOSClickEvent:
+		if err := s.pg.InsertIOSClickEvent(m.SessionID(), m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSInputEvent:
+		if err := s.pg.InsertIOSInputEvent(m.SessionID(), m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSNetworkCall:
+		return s.pg.InsertIOSNetworkCall(m.SessionID(), m)
+	case *IOSScreenEnter:
+		if err := s.pg.InsertIOSScreenEnter(m.SessionID(), m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
+	case *IOSCrash:
+		if err := s.pg.InsertIOSCrash(session.SessionID, session.ProjectID, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
+	}
+	return nil
 }
 
 func (s *saverImpl) handleMessage(msg Message) error {
