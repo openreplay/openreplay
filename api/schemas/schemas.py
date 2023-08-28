@@ -1061,6 +1061,9 @@ class CardSessionsSchema(SessionsSearchPayloadSchema):
     density: Optional[int] = Field(default=7)
     series: List[CardSeriesSchema] = Field(default=[])
 
+    # Used mainly for PathAnalysis, and could be used by other cards
+    hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
+
     @model_validator(mode="before")
     def __enforce_default(cls, values):
         if values.get("startTimestamp") is None:
