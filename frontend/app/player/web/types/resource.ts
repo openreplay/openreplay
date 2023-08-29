@@ -1,4 +1,4 @@
-import type { ResourceTiming, NetworkRequest, Fetch } from '../messages'
+import type {ResourceTiming, NetworkRequest, Fetch, IosNetworkCall} from '../messages'
 
 export const enum ResourceType {
   XHR = 'xhr',
@@ -103,7 +103,7 @@ export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: nu
   })
 }
 
-export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch, sessStart: number) {
+export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | IosNetworkCall, sessStart: number) {
   return Resource({
     ...msg,
     // @ts-ignore

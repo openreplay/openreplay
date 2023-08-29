@@ -1632,25 +1632,25 @@ func DecodeIOSNetworkCall(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Headers, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Body, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Success, err = reader.ReadBoolean(); err != nil {
+	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.Method, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
 	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err

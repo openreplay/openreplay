@@ -17,7 +17,7 @@ import {
   OVERVIEW,
   fullscreenOff,
 } from 'Duck/components/player';
-import NetworkPanel from 'Shared/DevTools/NetworkPanel';
+import NetworkPanel, {MobileNetworkPanel} from 'Shared/DevTools/NetworkPanel';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
 import Exceptions from 'Components/Session_/Exceptions/Exceptions';
 import MobileControls from './MobileControls';
@@ -94,6 +94,7 @@ function Player(props: IProps) {
         <div style={{ maxWidth, width: '100%' }}>
           {bottomBlock === CONSOLE && <MobileConsolePanel isLive={false} />}
           {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
+          {bottomBlock === NETWORK && <MobileNetworkPanel />}
         </div>
       )}
       {!fullView ? (

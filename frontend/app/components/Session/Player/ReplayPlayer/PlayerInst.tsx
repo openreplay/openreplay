@@ -18,7 +18,7 @@ import {
   OVERVIEW,
   fullscreenOff,
 } from 'Duck/components/player';
-import NetworkPanel from 'Shared/DevTools/NetworkPanel';
+import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
 import GraphQL from 'Components/Session_/GraphQL';
@@ -83,7 +83,7 @@ function Player(props: IProps) {
         <div style={{ maxWidth, width: '100%' }}>
           {bottomBlock === OVERVIEW && <OverviewPanel />}
           {bottomBlock === CONSOLE && <ConsolePanel />}
-          {bottomBlock === NETWORK && <NetworkPanel />}
+          {bottomBlock === NETWORK && <WebNetworkPanel />}
           {bottomBlock === STACKEVENTS && <WebStackEventPanel />}
           {bottomBlock === STORAGE && <Storage />}
           {bottomBlock === PROFILER && <ProfilerPanel />}

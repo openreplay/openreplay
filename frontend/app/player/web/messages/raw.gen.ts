@@ -525,13 +525,13 @@ export interface RawIosNetworkCall {
   tp: MType.IosNetworkCall,
   timestamp: number,
   length: number,
-  duration: number,
-  headers: string,
-  body: string,
-  url: string,
-  success: boolean,
+  type: string,
   method: string,
+  url: string,
+  request: string,
+  response: string,
   status: number,
+  duration: number,
 }
 
 export interface RawIosSwipeEvent {

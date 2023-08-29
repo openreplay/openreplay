@@ -937,16 +937,16 @@ class IOSInternalError(Message):
 class IOSNetworkCall(Message):
     __id__ = 105
 
-    def __init__(self, timestamp, length, duration, headers, body, url, success, method, status):
+    def __init__(self, timestamp, length, type, method, url, request, response, status, duration):
         self.timestamp = timestamp
         self.length = length
-        self.duration = duration
-        self.headers = headers
-        self.body = body
-        self.url = url
-        self.success = success
+        self.type = type
         self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
         self.status = status
+        self.duration = duration
 
 
 class IOSSwipeEvent(Message):

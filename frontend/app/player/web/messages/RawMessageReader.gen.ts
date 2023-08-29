@@ -211,7 +211,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: MType.NetworkRequestDeprecated,
+        tp: MType.NetworkRequest,
         type,
         method,
         url,
@@ -627,30 +627,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 83: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const transferredBodySize = this.readUint(); if (transferredBodySize === null) { return resetPointer() }
-      return {
-        tp: MType.NetworkRequest,
-        type,
-        method,
-        url,
-        request,
-        response,
-        status,
-        timestamp,
-        duration,
-        transferredBodySize,
-      };
-    }
-
     case 113: {
       const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
       const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
@@ -838,24 +814,6 @@ export default class RawMessageReader extends PrimitiveReader {
         response,
         status,
         duration,
-      };
-    }
-
-    case 106: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
-      const direction = this.readString(); if (direction === null) { return resetPointer() }
-      return {
-        tp: MType.IosSwipeEvent,
-        timestamp,
-        length,
-        label,
-        x,
-        y,
-        direction,
       };
     }
 

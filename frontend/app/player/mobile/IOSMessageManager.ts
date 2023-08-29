@@ -1,4 +1,5 @@
 import logger from 'App/logger';
+import {getResourceFromNetworkRequest} from "Player";
 
 import type { Store } from 'Player';
 import { IMessageManager } from 'Player/player/Animator';
@@ -146,13 +147,17 @@ export default class IOSMessageManager implements IMessageManager {
     if (userEvents.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
+
     switch (msg.tp) {
+      case MType.IosNetworkCall:
+        console.log(msg)
+        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
+        break;
       case MType.IosEvent:
         this.lists.lists.event.insert(msg);
         break;
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
-        console.log(msg.time)
         this.touchManager.append(msg);
         break;
       case MType.IosLog:
@@ -160,6 +165,7 @@ export default class IOSMessageManager implements IMessageManager {
         this.lists.lists.log.append(Log(msg));
         break;
       default:
+        console.log(msg)
         // stuff
         break;
     }
