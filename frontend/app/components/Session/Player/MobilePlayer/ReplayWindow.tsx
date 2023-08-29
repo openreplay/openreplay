@@ -32,8 +32,8 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
       const { svg, styles } = mapIphoneModel(userDevice)
       shell.innerHTML = svg
 
-      videoEl.width = styles.width
-      videoEl.height = styles.height
+      videoEl.width = styles.screen.width
+      videoEl.height = styles.screen.height
       videoEl.style.margin = styles.margin
       shell.style.position = 'absolute'
 
@@ -46,7 +46,7 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
 
       videoRef.current = videoEl
       playerContext.player.injectPlayer(host)
-      playerContext.player.customScale(438, 883)
+      playerContext.player.customScale(styles.shell.width, styles.shell.height)
     }
   }, [videoURL, playerContext.player.screen.document])
   return (

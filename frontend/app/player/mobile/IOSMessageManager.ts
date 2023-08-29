@@ -87,23 +87,17 @@ export default class IOSMessageManager implements IMessageManager {
     });
   }
 
-  private setCSSLoading = (cssLoading: boolean) => {
-    this.screen.displayFrame(!cssLoading);
-    this.state.update({
-      cssLoading,
-      ready: !this.state.get().messagesLoading && !cssLoading,
-    });
-  };
-
   _sortMessagesHack() {
     return;
   }
 
   private waitingForFiles: boolean = false;
   public onFileReadSuccess = () => {
+    const eventCount = this.lists?.lists.event?.length || 0
     if (this.activityManager) {
       this.activityManager.end();
       this.state.update({
+        eventCount,
         skipIntervals: this.activityManager.list,
         ...this.lists.getFullListsState(),
       });
@@ -153,6 +147,9 @@ export default class IOSMessageManager implements IMessageManager {
       this.activityManager?.updateAcctivity(msg.time);
     }
     switch (msg.tp) {
+      case MType.IosEvent:
+        this.lists.lists.event.insert(msg);
+        break;
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
         console.log(msg.time)

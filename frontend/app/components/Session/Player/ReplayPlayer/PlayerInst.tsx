@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
+import { WebStackEventPanel } from 'Shared/DevTools/StackEventPanel/StackEventPanel';
 import { EscapeButton } from 'UI';
 import {
   NONE,
@@ -31,8 +32,6 @@ import OverviewPanel from 'Components/Session_/OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
-import StackEventPanel from 'Shared/DevTools/StackEventPanel';
-
 
 interface IProps {
   fullView: boolean;
@@ -43,20 +42,13 @@ interface IProps {
   nextId: string;
   sessionId: string;
   activeTab: string;
-  updateLastPlayedSession: (id: string) => void
+  updateLastPlayedSession: (id: string) => void;
 }
 
 function Player(props: IProps) {
-  const {
-    fullscreen,
-    fullscreenOff,
-    nextId,
-    bottomBlock,
-    activeTab,
-    fullView,
-  } = props;
+  const { fullscreen, fullscreenOff, nextId, bottomBlock, activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
-  const isReady = playerContext.store.get().ready
+  const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
   const [isAttached, setAttached] = React.useState(false);
@@ -66,7 +58,7 @@ function Player(props: IProps) {
     const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
     if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
-      setAttached(true)
+      setAttached(true);
     }
   }, [isReady]);
 
@@ -83,7 +75,7 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={cn("relative flex-1",'overflow-hidden')}>
+      <div className={cn('relative flex-1', 'overflow-hidden')}>
         <Overlay nextId={nextId} />
         <div className={cn(stl.screenWrapper)} ref={screenWrapper} />
       </div>
@@ -92,7 +84,7 @@ function Player(props: IProps) {
           {bottomBlock === OVERVIEW && <OverviewPanel />}
           {bottomBlock === CONSOLE && <ConsolePanel />}
           {bottomBlock === NETWORK && <NetworkPanel />}
-          {bottomBlock === STACKEVENTS && <StackEventPanel />}
+          {bottomBlock === STACKEVENTS && <WebStackEventPanel />}
           {bottomBlock === STORAGE && <Storage />}
           {bottomBlock === PROFILER && <ProfilerPanel />}
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}

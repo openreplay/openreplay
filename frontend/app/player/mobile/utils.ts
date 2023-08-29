@@ -6,29 +6,53 @@ const iphone14ProMaxSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"473
 
 const screenResolutions = {
   iPhone12Pro: {
-    width: 390,
-    height: 844,
     margin: '20px 0 0 24px',
+    screen: {
+      width: 390,
+      height: 844,
+    },
+    shell: {
+      width: 438,
+      height: 883,
+    },
   },
   iPhone12ProMax: {
-    width: 428,
-    height: 926,
     margin: '20px 0 0 24px',
+    screen: {
+      width: 428,
+      height: 926,
+    },
+    shell: {
+      width: 476,
+      height: 965,
+    },
   },
   iPhone14Pro: {
-    width: 393,
-    height: 852,
     margin: '20px 0 0 22px',
+    screen: {
+      width: 393,
+      height: 852,
+    },
+    shell: {
+      width: 436,
+      height: 891,
+    },
   },
   iPhone14ProMax: {
-    width: 430,
-    height: 932,
     margin: '20px 0 0 22px',
-  }
-}
+    screen: {
+      width: 430,
+      height: 932,
+    },
+    shell: {
+      width: 473,
+      height: 971,
+    },
+  },
+};
 
 /**
- * @param modelName - safeDescription from DeviceKit
+ * @param modelName - device.safeDescription from DeviceKit
  * @returns - returns a phone shell svg and styles for inner screen dimensions
  * plus margins from shell
  * _______

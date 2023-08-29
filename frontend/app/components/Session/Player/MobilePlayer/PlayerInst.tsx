@@ -28,7 +28,7 @@ import OverviewPanel from 'Components/Session_/OverviewPanel';
 import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
-import StackEventPanel from 'Shared/DevTools/StackEventPanel';
+import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
 
 interface IProps {
@@ -93,6 +93,7 @@ function Player(props: IProps) {
       {!fullscreen && !!bottomBlock && (
         <div style={{ maxWidth, width: '100%' }}>
           {bottomBlock === CONSOLE && <MobileConsolePanel isLive={false} />}
+          {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
         </div>
       )}
       {!fullView ? (

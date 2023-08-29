@@ -10,7 +10,7 @@ import {
   OVERVIEW,
   toggleBottomBlock,
   changeSkipInterval,
-  CONSOLE,
+  CONSOLE, STACKEVENTS,
 } from 'Duck/components/player';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -146,7 +146,7 @@ interface DevtoolsButtonsProps {
 function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProps) {
   const { store } = React.useContext(MobilePlayerContext);
 
-  const { exceptionsList, logMarkedCountNow, messagesLoading } = store.get();
+  const { exceptionsList, logMarkedCountNow, messagesLoading, stackMarkedCountNow } = store.get();
 
   const showExceptions = exceptionsList.length > 0;
   return (
@@ -159,6 +159,16 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         noIcon
         labelClassName="!text-base font-semibold"
         hasErrors={logMarkedCountNow > 0 || showExceptions}
+        containerClassName="mx-2"
+      />
+      <ControlButton
+        disabled={messagesLoading}
+        onClick={() => toggleBottomTools(STACKEVENTS)}
+        active={bottomBlock === STACKEVENTS}
+        label="EVENTS"
+        noIcon
+        labelClassName="!text-base font-semibold"
+        hasErrors={stackMarkedCountNow > 0 || showExceptions}
         containerClassName="mx-2"
       />
     </>

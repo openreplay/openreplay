@@ -5,7 +5,11 @@ const LOCATION = 'LOCATION';
 const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
 const IOS_VIEW = 'VIEW';
-export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW };
+
+const TOUCH = 'TOUCH';
+const SWIPE = 'SWIPE';
+
+export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE };
 
 export type EventType =
   | typeof CONSOLE
@@ -13,7 +17,10 @@ export type EventType =
   | typeof INPUT
   | typeof LOCATION
   | typeof CUSTOM
-  | typeof CLICKRAGE;
+  | typeof CLICKRAGE
+  | typeof IOS_VIEW
+  | typeof TOUCH
+  | typeof SWIPE;
 
 interface IEvent {
   time: number;

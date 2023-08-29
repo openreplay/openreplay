@@ -73,8 +73,8 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock, setCreateNoteTooltip }
   const { player, store } = React.useContext(PlayerContext);
 
   const togglePlay = () => player.togglePlay();
-  const { playing, messagesLoading, completed, autoplay, cssLoading } = store.get();
-  const loading = messagesLoading || cssLoading;
+  const { playing, messagesLoading, completed, autoplay } = store.get();
+  const loading = messagesLoading
 
   const showAutoplayTimer = completed && autoplay && nextId;
   const showPlayIconLayer =
