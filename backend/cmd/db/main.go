@@ -73,6 +73,7 @@ func main() {
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
 			cfg.TopicAnalytics,
 		},
 		messages.NewMessageIterator(saver.Handle, msgFilter, true),
