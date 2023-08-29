@@ -89,24 +89,24 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 	case *IOSCustomEvent:
 		return s.pg.InsertIOSCustomEvent(session, m)
 	case *IOSClickEvent:
-		if err := s.pg.InsertIOSClickEvent(m.SessionID(), m); err != nil {
+		if err := s.pg.InsertIOSClickEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *IOSSwipeEvent:
-		if err := s.pg.InsertIOSSwipeEvent(m.SessionID(), m); err != nil {
+		if err := s.pg.InsertIOSSwipeEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *IOSInputEvent:
-		if err := s.pg.InsertIOSInputEvent(m.SessionID(), m); err != nil {
+		if err := s.pg.InsertIOSInputEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *IOSNetworkCall:
-		return s.pg.InsertIOSNetworkCall(m.SessionID(), m)
+		return s.pg.InsertIOSNetworkCall(session, m)
 	case *IOSScreenEnter:
-		if err := s.pg.InsertIOSScreenEnter(m.SessionID(), m); err != nil {
+		if err := s.pg.InsertIOSScreenEnter(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)

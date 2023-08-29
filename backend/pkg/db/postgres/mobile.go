@@ -26,71 +26,71 @@ func (conn *Conn) InsertIOSCustomEvent(session *sessions.Session, e *messages.IO
 	return nil
 }
 
-func (conn *Conn) InsertIOSNetworkCall(sessionID uint64, e *messages.IOSNetworkCall) error {
-	err := conn.InsertRequest(sessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success)
+func (conn *Conn) InsertIOSNetworkCall(sess *sessions.Session, e *messages.IOSNetworkCall) error {
+	err := conn.InsertRequest(sess.SessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success)
 	if err == nil {
-		conn.InsertAutocompleteValue(sessionID, 0, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
+		conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
 	}
 	return err
 }
 
-func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.IOSScreenEnter) error {
+func (conn *Conn) InsertIOSScreenEnter(sess *sessions.Session, screenEnter *messages.IOSScreenEnter) error {
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.views (
 			session_id, timestamp, seq_index, name
 		) VALUES (
 			$1, $2, $3, $4
 		)`,
-		sessionID, screenEnter.Timestamp, screenEnter.Index, screenEnter.ViewName,
+		sess.SessionID, screenEnter.Timestamp, screenEnter.Index, screenEnter.ViewName,
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sessionID, 0, "VIEW_IOS", screenEnter.ViewName)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "VIEW_IOS", screenEnter.ViewName)
 	return nil
 }
 
-func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOSClickEvent) error {
+func (conn *Conn) InsertIOSClickEvent(sess *sessions.Session, clickEvent *messages.IOSClickEvent) error {
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.taps (
 			session_id, timestamp, seq_index, label
 		) VALUES (
 			$1, $2, $3, $4
 		)`,
-		sessionID, clickEvent.Timestamp, clickEvent.Index, clickEvent.Label,
+		sess.SessionID, clickEvent.Timestamp, clickEvent.Index, clickEvent.Label,
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sessionID, 0, "CLICK_IOS", clickEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK_IOS", clickEvent.Label)
 	return nil
 }
 
-func (conn *Conn) InsertIOSSwipeEvent(sessionID uint64, swipeEvent *messages.IOSSwipeEvent) error {
+func (conn *Conn) InsertIOSSwipeEvent(sess *sessions.Session, swipeEvent *messages.IOSSwipeEvent) error {
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.swipes (
 			session_id, timestamp, seq_index, label, direction
 		) VALUES (
 			$1, $2, $3, $4, $5
 		)`,
-		sessionID, swipeEvent.Timestamp, swipeEvent.Index, swipeEvent.Label, swipeEvent.Direction,
+		sess.SessionID, swipeEvent.Timestamp, swipeEvent.Index, swipeEvent.Label, swipeEvent.Direction,
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sessionID, 0, "SWIPE_IOS", swipeEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "SWIPE_IOS", swipeEvent.Label)
 	return nil
 }
 
-func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOSInputEvent) error {
+func (conn *Conn) InsertIOSInputEvent(sess *sessions.Session, inputEvent *messages.IOSInputEvent) error {
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.inputs (
 			session_id, timestamp, seq_index, label
 		) VALUES (
 			$1, $2, $3, $4
 		)`,
-		sessionID, inputEvent.Timestamp, inputEvent.Index, inputEvent.Label,
+		sess.SessionID, inputEvent.Timestamp, inputEvent.Index, inputEvent.Label,
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sessionID, 0, "INPUT_IOS", inputEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT_IOS", inputEvent.Label)
 	return nil
 }
 
