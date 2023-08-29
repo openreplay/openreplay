@@ -84,6 +84,8 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		}
 		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.Value)
 		return nil
+	case *IOSMetadata:
+		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IOSCustomEvent:
 		return s.pg.InsertIOSCustomEvent(session, m)
 	case *IOSClickEvent:

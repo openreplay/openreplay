@@ -63,9 +63,9 @@ func main() {
 		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
 		messages.MsgUnbindNodes,
 		// Mobile messages
-		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall,
-		messages.MsgIOSScreenEnter, messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
-		messages.MsgIOSCrash,
+		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
+		messages.MsgIOSMetadata, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall, messages.MsgIOSScreenEnter,
+		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent, messages.MsgIOSCrash,
 	}
 
 	// Init consumer
