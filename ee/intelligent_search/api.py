@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from crons.base_crons import cron_jobs
 from auth.auth_key import api_key_auth
 from utils.declarations import LLMQuestion
+from utils.sql_to_filters import get_filter_values
 from core.llm_api import llm_api
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -57,9 +58,9 @@ async def get_recommended_sessions(data: LLMQuestion):
     llm_api.add_question(data.question)
     response = llm_api.send_question_to_llm()
     if response:
-        return {'response': response}
+        return {'response': get_filter_values(response)}
     else:
-        return {'status': 500}
+        return {'response': 'Sorry I could not generate the filters'}
 
 
 @app.get('/')
