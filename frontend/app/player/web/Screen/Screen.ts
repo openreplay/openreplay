@@ -248,7 +248,7 @@ export default class Screen {
     })
 
     this.boundingRect = this.screen.getBoundingClientRect();
-    this.onUpdateHook(width, height)
+    this.onUpdateHook?.(width, height)
   }
 
   setOnUpdate(cb: any) {
@@ -265,6 +265,10 @@ export default class Screen {
       start.className = styles.highlightoff
       end.className = styles.highlightoff
     }, 750)
+  }
+
+  public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
+    Object.assign(this.overlay.style, style)
   }
 
   public clearSelection() {

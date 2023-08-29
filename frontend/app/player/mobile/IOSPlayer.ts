@@ -47,6 +47,14 @@ export default class IOSPlayer extends Player {
     this.screen.attach(parent)
   }
 
+  public updateDimensions(dimensions: { width: number; height: number }) {
+    return this.messageManager.updateDimensions(dimensions)
+  }
+
+  public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
+    this.screen.updateOverlayStyle(style)
+  }
+
   injectPlayer = (player: HTMLElement) => {
     this.screen.addToBody(player)
     this.screen.addMobileStyles()

@@ -9,12 +9,13 @@ import type Screen from 'Player/web/Screen/Screen';
 export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEvent> {
   private touchTrail: MouseTrail | undefined;
   private readonly removeTouchTrail: boolean = false;
+  private canvas: HTMLCanvasElement | undefined;
 
   constructor(private screen: Screen) {
     super();
     const canvas = document.createElement('canvas');
     canvas.id = 'openreplay-touch-trail';
-    canvas.className = styles.canvas;
+    // canvas.className = styles.canvas;
 
     this.removeTouchTrail = localStorage.getItem(MOUSE_TRAIL) === 'false'
     if (!this.removeTouchTrail) {
@@ -23,12 +24,10 @@ export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEve
 
     this.screen.overlay.appendChild(canvas);
     this.touchTrail?.createContext();
+  }
 
-    const updateSize = (w: number, h: number) => {
-      return this.touchTrail?.resizeCanvas(w, h);
-    }
-
-    this.screen.setOnUpdate(updateSize);
+  public updateDimensions({ width, height }: { width: number; height: number; }) {
+    return this.touchTrail?.resizeCanvas(width, height);
   }
 
   public move(t: number) {

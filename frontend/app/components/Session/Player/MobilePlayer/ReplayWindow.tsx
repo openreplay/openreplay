@@ -47,6 +47,15 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
       videoRef.current = videoEl
       playerContext.player.injectPlayer(host)
       playerContext.player.customScale(styles.shell.width, styles.shell.height)
+      playerContext.player.updateDimensions({
+        width: styles.screen.width,
+        height: styles.screen.height,
+      })
+      playerContext.player.updateOverlayStyle({
+        margin: styles.margin,
+        width: styles.screen.width,
+        height: styles.screen.height,
+      })
     }
   }, [videoURL, playerContext.player.screen.document])
   return (

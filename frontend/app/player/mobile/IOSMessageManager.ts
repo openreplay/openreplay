@@ -75,6 +75,10 @@ export default class IOSMessageManager implements IMessageManager {
     this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
   }
 
+  public updateDimensions(dimensions: { width: number; height: number }) {
+    this.touchManager.updateDimensions(dimensions);
+  }
+
   public updateLists(lists: Partial<InitialLists>) {
     Object.keys(lists).forEach((k: 'event') => {
       const currentList = this.lists.lists[k];
