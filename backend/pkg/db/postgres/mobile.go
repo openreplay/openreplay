@@ -51,7 +51,7 @@ func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.I
 
 func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOSClickEvent) error {
 	if err := conn.Pool.Exec(`
-		INSERT INTO events_ios.clicks (
+		INSERT INTO events_ios.taps (
 			session_id, timestamp, seq_index, label
 		) VALUES (
 			$1, $2, $3, $4
