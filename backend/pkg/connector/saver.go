@@ -23,6 +23,7 @@ type Saver struct {
 	sessModule       sessions.Sessions
 	sessions         map[uint64]map[string]string
 	updatedSessions  map[uint64]bool
+	lastUpdate       map[uint64]time.Time
 	finishedSessions []uint64
 	events           []map[string]string
 }
@@ -45,6 +46,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshif
 		db:              db,
 		sessModule:      sessions,
 		updatedSessions: make(map[uint64]bool, 0),
+		lastUpdate:      make(map[uint64]time.Time, 0),
 	}
 }
 
@@ -191,6 +193,15 @@ func handleEvent(msg messages.Message) map[string]string {
 }
 
 func (s *Saver) handleSession(msg messages.Message) {
+	// Filter out messages that are not related to session table
+	switch msg.(type) {
+	case *messages.SessionStart, *messages.SessionEnd, *messages.ConnectionInformation, *messages.Metadata,
+		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
+		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
+		*messages.IssueEvent, *messages.IssueEventDeprecated:
+	default:
+		return
+	}
 	if s.sessions == nil {
 		s.sessions = make(map[uint64]map[string]string)
 	}
@@ -355,6 +366,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 		s.updatedSessions[msg.SessionID()] = true
 	}
 	s.sessions[msg.SessionID()] = sess
+	s.lastUpdate[msg.SessionID()] = time.Now()
 }
 
 func (s *Saver) Handle(msg messages.Message) {
@@ -449,9 +461,18 @@ func (s *Saver) commitSessions() {
 	}
 	l := len(s.finishedSessions)
 	sessions := make([]map[string]string, 0, len(s.finishedSessions))
+	toKeep := make([]uint64, 0, len(s.finishedSessions))
+	toSend := make([]uint64, 0, len(s.finishedSessions))
 	for _, sessionID := range s.finishedSessions {
-		sessions = append(sessions, s.sessions[sessionID])
+		// ts, now, ts+1min
+		if s.lastUpdate[sessionID].Add(time.Minute * 1).After(time.Now()) {
+			toKeep = append(toKeep, sessionID)
+		} else {
+			sessions = append(sessions, s.sessions[sessionID])
+			toSend = append(toSend, sessionID)
+		}
 	}
+	log.Printf("finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
 
 	// Send data to S3
 	fileName := fmt.Sprintf("connector_data/%s-%s.csv", s.cfg.SessionsTableName, uuid.New().String())
@@ -469,10 +490,11 @@ func (s *Saver) commitSessions() {
 		return
 	}
 	// Clear current list of finished sessions
-	for _, sessionID := range s.finishedSessions {
-		delete(s.sessions, sessionID)
+	for _, sessionID := range toSend {
+		delete(s.sessions, sessionID)   // delete session info
+		delete(s.lastUpdate, sessionID) // delete last session update timestamp
 	}
-	s.finishedSessions = nil
+	s.finishedSessions = toKeep
 	log.Printf("sessions batch of %d sessions is successfully saved", l)
 }
 
