@@ -154,7 +154,7 @@ func MapIOSDevice(identifier string) string {
 		return "HomePod"
 	case "AudioAccessory5,1":
 		return "HomePod mini"
-	case "i386", "x86_64":
+	case "i386", "x86_64", "arm64":
 		return "Simulator"
 	default:
 		return identifier
