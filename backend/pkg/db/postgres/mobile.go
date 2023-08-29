@@ -80,17 +80,13 @@ func (conn *Conn) InsertIOSSwipeEvent(sessionID uint64, swipeEvent *messages.IOS
 }
 
 func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOSInputEvent) error {
-	var value interface{} = inputEvent.Value
-	if inputEvent.ValueMasked {
-		value = nil
-	}
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.inputs (
-			session_id, timestamp, seq_index, label, value
+			session_id, timestamp, seq_index, label
 		) VALUES (
-			$1, $2, $3, $4, $5
+			$1, $2, $3, $4
 		)`,
-		sessionID, inputEvent.Timestamp, inputEvent.Index, inputEvent.Label, value,
+		sessionID, inputEvent.Timestamp, inputEvent.Index, inputEvent.Label,
 	); err != nil {
 		return err
 	}
