@@ -1,0 +1,6 @@
+pydantic
+requests
+fastapi
+uvicorn
+apscheduler
+python-decouple
