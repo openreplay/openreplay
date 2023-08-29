@@ -4,16 +4,14 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	config "openreplay/backend/internal/config/videostorage"
-	"openreplay/backend/internal/videostorage"
+	"openreplay/backend/internal/imagestorage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/videostorage"
-	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -25,34 +23,20 @@ func main() {
 
 	cfg := config.New()
 
-	objStore, err := store.NewStore(&cfg.ObjectsConfig)
-	if err != nil {
-		log.Fatalf("can't init object storage: %s", err)
-	}
-	srv, err := videostorage.New(cfg, objStore)
+	srv, err := imagestorage.New(cfg)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
 	}
 
-	workDir := cfg.FSDir
-
 	consumer := queue.NewConsumer(
-		cfg.GroupVideoStorage,
+		cfg.GroupImageStorage,
 		[]string{
-			cfg.TopicMobileTrigger,
+			cfg.TopicRawImages,
 		},
-		messages.NewMessageIterator(
-			func(msg messages.Message) {
-				sesEnd := msg.(*messages.IOSSessionEnd)
-				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/"); err != nil {
-					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
-				}
-			},
-			[]int{messages.MsgIOSSessionEnd},
-			true,
-		),
+		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			srv.Process(data, sessID)
+		}, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -78,9 +62,9 @@ func main() {
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
-			err = consumer.ConsumeNext()
+			err := consumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on end event consumption: %v", err)
+				log.Fatalf("Error on images consumption: %v", err)
 			}
 		}
 	}
