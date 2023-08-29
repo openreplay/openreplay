@@ -7,6 +7,7 @@ from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import sql_helper as sh
+from time import time
 
 
 def __transform_journey(rows):
@@ -65,7 +66,7 @@ JOURNEY_TYPES = {
 
 def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
                   selected_event_type: List[schemas.ProductAnalyticsSelectedEventType],
-                  hide_minor_paths: bool = False):
+                  density: int = 4, hide_minor_paths: bool = False):
     # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
     #                                         time_constraint=True)
     # TODO: check if data=args is required
@@ -319,7 +320,7 @@ WITH sub_sessions AS ( SELECT session_id
                                         timestamp)                                                             AS time_to_next
                              FROM sub_events
                              ORDER BY session_id) AS full_ranked_events
-                        WHERE event_number_in_session < 3
+                        WHERE event_number_in_session < %(density)s
      ),
      start_points AS (SELECT session_id
                       FROM ranked_events {start_points_join}
@@ -353,14 +354,19 @@ ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   "eventThresholdNumberInGroup": 8 if hide_minor_paths else 6,
+                  "density": density,
                   # TODO: add if data=args is required
                   # **__get_constraint_values(args),
                   **extra_values}
         query = cur.mogrify(pg_query, params)
-        print("----------------------")
-        print(query)
-        print("----------------------")
+        _now = time()
+
         cur.execute(query)
+        if time() - _now > 3:
+            print(f">>>>>>>>>PathAnalysis long query ({int(time() - _now)}s)<<<<<<<<<")
+            print("----------------------")
+            print(query)
+            print("----------------------")
         rows = cur.fetchall()
 
     # return __transform_journey(rows)
