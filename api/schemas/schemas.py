@@ -1058,7 +1058,7 @@ class MetricOfPathAnalysis(str, Enum):
 class CardSessionsSchema(SessionsSearchPayloadSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(defautl=TimeUTC.now())
-    density: Optional[int] = Field(default=7)
+    density: int = Field(default=7, ge=1, le=200)
     series: List[CardSeriesSchema] = Field(default=[])
 
     # Used mainly for PathAnalysis, and could be used by other cards
@@ -1295,12 +1295,14 @@ class CardInsights(__CardSchema):
 # class CardPathAnalysisSchema(BaseModel):
 class CardPathAnalysisSchema(CardSessionsSchema):
     filter: PathAnalysisSchema = Field(...)
+    density: int = Field(default=4, ge=2, le=10)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
         if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
             values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
-                                                  endTimestamp=values["endTimestamp"])
+                                                  endTimestamp=values["endTimestamp"],
+                                                  density=values["density"])
         return values
 
 
@@ -1309,6 +1311,7 @@ class CardPathAnalysis(__CardSchema):
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
+    density: int = Field(default=4, ge=2, le=10)
 
     # TODO: testing
     series: List[CardPathAnalysisSchema] = Field(default=[])
