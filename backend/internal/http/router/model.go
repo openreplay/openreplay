@@ -48,6 +48,7 @@ type StartIOSSessionRequest struct {
 	UserOSVersion  string  `json:"userOSVersion"`
 	UserDevice     string  `json:"userDevice"`
 	Timestamp      uint64  `json:"timestamp"`
+	Timezone       string  `json:"timezone"`
 }
 
 type StartIOSSessionResponse struct {

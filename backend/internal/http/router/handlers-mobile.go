@@ -78,6 +78,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			SessionID:      sessionID,
 			Platform:       "ios",
 			Timestamp:      req.Timestamp,
+			Timezone:       req.Timezone,
 			ProjectID:      p.ProjectID,
 			TrackerVersion: req.TrackerVersion,
 			RevID:          req.RevID,
