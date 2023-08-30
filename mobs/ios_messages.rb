@@ -123,15 +123,15 @@ message 104, 'IOSInternalError' do
 end
 
 message 105, 'IOSNetworkCall', :replayer => true do
-  uint 'Timestamp'
-  uint 'Length'
-  uint 'Duration'
-  string 'Headers'
-  string 'Body'
-  string 'URL'
-  boolean 'Success'
-  string 'Method'
-  uint 'Status'
+    uint 'Timestamp'
+    uint 'Length'
+    string 'Type'
+    string 'Method'
+    string 'URL'
+    string 'Request'
+    string 'Response'
+    uint 'Status'
+    uint 'Duration'
 end
 
 message 106, 'IOSSwipeEvent', :replayer => true do

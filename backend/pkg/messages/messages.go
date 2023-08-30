@@ -2708,28 +2708,28 @@ type IOSNetworkCall struct {
 	message
 	Timestamp uint64
 	Length uint64
-	Duration uint64
-	Headers string
-	Body string
-	URL string
-	Success bool
+	Type string
 	Method string
+	URL string
+	Request string
+	Response string
 	Status uint64
+	Duration uint64
 }
 
 func (msg *IOSNetworkCall) Encode() []byte {
-	buf := make([]byte, 91+len(msg.Headers)+len(msg.Body)+len(msg.URL)+len(msg.Method))
+	buf := make([]byte, 91+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
 	buf[0] = 105
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	p = WriteString(msg.Headers, buf, p)
-	p = WriteString(msg.Body, buf, p)
-	p = WriteString(msg.URL, buf, p)
-	p = WriteBoolean(msg.Success, buf, p)
+	p = WriteString(msg.Type, buf, p)
 	p = WriteString(msg.Method, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Request, buf, p)
+	p = WriteString(msg.Response, buf, p)
 	p = WriteUint(msg.Status, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
 	return buf[:p]
 }
 

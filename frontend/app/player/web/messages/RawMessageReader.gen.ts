@@ -768,24 +768,24 @@ export default class RawMessageReader extends PrimitiveReader {
     case 105: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const headers = this.readString(); if (headers === null) { return resetPointer() }
-      const body = this.readString(); if (body === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const success = this.readBoolean(); if (success === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { return resetPointer() }
       const method = this.readString(); if (method === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const request = this.readString(); if (request === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
       const status = this.readUint(); if (status === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
         tp: MType.IosNetworkCall,
         timestamp,
         length,
-        duration,
-        headers,
-        body,
-        url,
-        success,
+        type,
         method,
+        url,
+        request,
+        response,
         status,
+        duration,
       };
     }
 

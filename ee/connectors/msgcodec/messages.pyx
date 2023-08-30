@@ -1421,25 +1421,25 @@ cdef class IOSNetworkCall(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public unsigned long duration
-    cdef public str headers
-    cdef public str body
-    cdef public str url
-    cdef public bint success
+    cdef public str type
     cdef public str method
+    cdef public str url
+    cdef public str request
+    cdef public str response
     cdef public unsigned long status
+    cdef public unsigned long duration
 
-    def __init__(self, unsigned long timestamp, unsigned long length, unsigned long duration, str headers, str body, str url, bint success, str method, unsigned long status):
+    def __init__(self, unsigned long timestamp, unsigned long length, str type, str method, str url, str request, str response, unsigned long status, unsigned long duration):
         self.__id__ = 105
         self.timestamp = timestamp
         self.length = length
-        self.duration = duration
-        self.headers = headers
-        self.body = body
-        self.url = url
-        self.success = success
+        self.type = type
         self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
         self.status = status
+        self.duration = duration
 
 
 cdef class IOSSwipeEvent(PyMessage):
