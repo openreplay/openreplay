@@ -43,7 +43,7 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 s.*,
-                'SWIP' AS type
+                'SWIPE' AS type
             FROM events_ios.swipes AS s
             WHERE 
               s.session_id = %(session_id)s
