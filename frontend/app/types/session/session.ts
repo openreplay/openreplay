@@ -321,8 +321,8 @@ export default class Session {
     errors: any[],
     issues: any[],
     resources: any[],
-    userEvents: any[],
-    stackEvents: any[]
+    userEvents: any[] = [],
+    stackEvents: any[] = []
   ) {
     const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
     const issuesList =

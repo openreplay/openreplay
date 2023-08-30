@@ -48,6 +48,11 @@ interface ClickEvent extends IEvent {
   hesitation: number;
 }
 
+interface SwipeEvent extends IEvent {
+  direction: 'left' | 'right' | 'up' | 'down';
+  label: string
+}
+
 interface InputEvent extends IEvent {
   value: string;
   hesitation: number;
@@ -91,6 +96,19 @@ class Event {
       },
     });
   }
+}
+
+class Swipe extends Event {
+    readonly type = SWIPE;
+    readonly name = 'Swipe';
+    readonly label: string;
+    readonly direction: string;
+
+    constructor(evt: SwipeEvent) {
+        super(evt);
+        this.label = evt.label;
+        this.direction = evt.direction;
+    }
 }
 
 class Console extends Event {
@@ -166,24 +184,23 @@ export class Location extends Event {
 export type InjectedEvent = Console | Click | Input | Location;
 
 export default function (event: EventData) {
-  if (event.type && event.type === CONSOLE) {
-    return new Console(event as ConsoleEvent);
+  if (!event.type) {
+    return console.error('Unknown event type: ', event)
   }
-  if (event.type && event.type === CLICK) {
-    return new Click(event as ClickEvent);
+  switch (event.type) {
+    case CONSOLE:
+      return new Console(event as ConsoleEvent);
+    case CLICK:
+        return new Click(event as ClickEvent);
+    case INPUT:
+        return new Input(event as InputEvent);
+    case LOCATION:
+        return new Location(event as LocationEvent);
+    case CLICKRAGE:
+        return new Click(event as ClickEvent, true);
+    case SWIPE:
+        return new Swipe(event as SwipeEvent);
+    default:
+      return console.error(`Unknown event type: ${event.type}`);
   }
-  if (event.type && event.type === INPUT) {
-    return new Input(event as InputEvent);
-  }
-  if (event.type && event.type === LOCATION) {
-    return new Location(event as LocationEvent);
-  }
-  if (event.type && event.type === CLICKRAGE) {
-    return new Click(event as ClickEvent, true);
-  }
-  // not used right now?
-  // if (event.type === CUSTOM || !event.type) {
-  //   return new Event(event)
-  // }
-  console.error(`Unknown event type: ${event.type}`);
 }

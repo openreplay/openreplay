@@ -30,7 +30,7 @@ function MobilePlayer(props: any) {
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
-  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] = useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
 
   useEffect(() => {
@@ -56,6 +56,12 @@ function MobilePlayer(props: any) {
   }, [session.sessionId]);
 
   const { messagesProcessed } = contextValue.store?.get() || {};
+
+  React.useEffect(() => {
+    if ((messagesProcessed && session.events.length > 0) || session.errors.length > 0) {
+      contextValue.player?.updateLists?.(session);
+    }
+  }, [session.events, session.errors, contextValue.player, messagesProcessed]);
 
   React.useEffect(() => {
     if (noteItem !== undefined) {

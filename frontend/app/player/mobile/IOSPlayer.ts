@@ -51,6 +51,22 @@ export default class IOSPlayer extends Player {
     return this.messageManager.updateDimensions(dimensions)
   }
 
+  public updateLists(session: any) {
+    const lists = {
+      event: session.events || [],
+      frustrations: session.frustrations || [],
+      stack: session.stackEvents || [],
+      exceptions: session.errors?.map(({ name, ...rest }: any) =>
+        Log({
+          level: LogLevel.ERROR,
+          value: name,
+          ...rest,
+        })
+      ) || [],
+    }
+    return this.messageManager.updateLists(lists)
+  }
+
   public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
     this.screen.updateOverlayStyle(style)
   }

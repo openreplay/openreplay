@@ -39,7 +39,7 @@ export interface State extends ScreenState, ListsState {
   eventCount: number;
 }
 
-const userEvents = [MType.IosSwipeEvent, MType.IosClickEvent, MType.IosScreenChanges];
+const userEvents = [MType.IosSwipeEvent, MType.IosClickEvent, MType.IosInputEvent, MType.IosScreenChanges];
 
 export default class IOSMessageManager implements IMessageManager {
   static INITIAL_STATE: State = {
@@ -153,8 +153,10 @@ export default class IOSMessageManager implements IMessageManager {
     }
 
     switch (msg.tp) {
+      // case MType.IosInputEvent:
+      //   console.log('input', msg)
+      //   break;
       case MType.IosNetworkCall:
-        console.log(msg)
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.IosEvent:

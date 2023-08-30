@@ -188,6 +188,7 @@ function MobileNetworkPanelCont({ startedAt }: { startedAt: number }) {
 
   return (
     <NetworkPanelComp
+      isMobile
       loadTime={loadTime}
       domBuildingTime={domBuildingTime}
       domContentLoadedTime={domContentLoadedTime}
@@ -217,9 +218,10 @@ interface Props {
   resourceListNow: Timed[];
   player: WebPlayer | MobilePlayer;
   startedAt: number;
+  isMobile?: boolean;
 }
 
-function NetworkPanelComp({
+const NetworkPanelComp = observer(({
   loadTime,
   domBuildingTime,
   domContentLoadedTime,
@@ -229,7 +231,8 @@ function NetworkPanelComp({
   resourceListNow,
   player,
   startedAt,
-}: Props) {
+  isMobile
+}: Props) => {
   const { showModal } = useModal();
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
@@ -377,13 +380,15 @@ function NetworkPanelComp({
         <BottomBlock.Header>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">Network</span>
-            <Tabs
-              className="uppercase"
-              tabs={TABS}
-              active={activeTab}
-              onClick={onTabClick}
-              border={false}
-            />
+            {isMobile ? null :
+              <Tabs
+                className="uppercase"
+                tabs={TABS}
+                active={activeTab}
+                onClick={onTabClick}
+                border={false}
+              />
+            }
           </div>
           <Input
             className="input-small"
@@ -504,7 +509,7 @@ function NetworkPanelComp({
       </BottomBlock>
     </React.Fragment>
   );
-}
+})
 
 const WebNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
