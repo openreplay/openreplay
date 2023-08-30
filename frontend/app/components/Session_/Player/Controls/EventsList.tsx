@@ -27,12 +27,12 @@ function EventsList({ scale }: { scale: number }) {
 
 function MobileEventsList({ scale }: { scale: number }) {
   const { store } = useContext(MobilePlayerContext);
-
   const { eventList } = store.get();
+  const events = eventList.filter(e => e.type !== 'SWIPE')
 
   return (
     <>
-      {eventList.map((e) => (
+      {events.map((e) => (
         <div
           /*@ts-ignore TODO */
           key={e.key}

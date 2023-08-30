@@ -3,7 +3,6 @@ import {getResourceFromNetworkRequest} from "Player";
 
 import type { Store } from 'Player';
 import { IMessageManager } from 'Player/player/Animator';
-import ListWalker from '../common/ListWalker';
 
 import TouchManager from 'Player/mobile/managers/TouchManager';
 import ActivityManager from '../web/managers/ActivityManager';
