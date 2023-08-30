@@ -62,6 +62,7 @@ export const TP_MAP = {
   93: MType.IosCustomEvent,
   96: MType.IosScreenChanges,
   100: MType.IosClickEvent,
+  101: MType.IosInputEvent,
   102: MType.IosPerformanceEvent,
   103: MType.IosLog,
   105: MType.IosNetworkCall,

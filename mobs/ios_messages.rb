@@ -80,7 +80,7 @@ message 100, 'IOSClickEvent', :replayer => true do
     uint 'Y'
 end
 
-message 101, 'IOSInputEvent' do
+message 101, 'IOSInputEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Value'

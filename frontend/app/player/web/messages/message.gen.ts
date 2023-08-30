@@ -63,6 +63,7 @@ import type {
   RawIosCustomEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
+  RawIosInputEvent,
   RawIosPerformanceEvent,
   RawIosLog,
   RawIosNetworkCall,
@@ -189,6 +190,8 @@ export type IosCustomEvent = RawIosCustomEvent & Timed
 export type IosScreenChanges = RawIosScreenChanges & Timed
 
 export type IosClickEvent = RawIosClickEvent & Timed
+
+export type IosInputEvent = RawIosInputEvent & Timed
 
 export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 

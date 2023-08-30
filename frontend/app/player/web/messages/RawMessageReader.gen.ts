@@ -737,6 +737,22 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 101: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const value = this.readString(); if (value === null) { return resetPointer() }
+      const valueMasked = this.readBoolean(); if (valueMasked === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      return {
+        tp: MType.IosInputEvent,
+        timestamp,
+        length,
+        value,
+        valueMasked,
+        label,
+      };
+    }
+
     case 102: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
