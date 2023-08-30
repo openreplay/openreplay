@@ -2,33 +2,17 @@ from chalicelib.utils import pg_client, helper
 from chalicelib.core import events
 
 
-def get_customs_by_sessionId(session_id, project_id):
-    # TODO: remove this when IOS events are supported by workers
-    return []
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
-            SELECT 
-                c.*,
-                '{events.EventType.CUSTOM_IOS.ui_type}' AS type
-            FROM {events.EventType.CUSTOM_IOS.table} AS c
-            WHERE 
-              c.session_id = %(session_id)s
-            ORDER BY c.timestamp;""",
-                                {"project_id": project_id, "session_id": session_id})
-                    )
-        rows = cur.fetchall()
-    return helper.dict_to_camel_case(rows)
+def get_customs_by_session_id(session_id, project_id):
+    return events.get_customs_by_session_id(session_id=session_id, project_id=project_id)
 
 
 def get_by_sessionId(session_id, project_id):
-    # TODO: remove this when IOS events are supported by workers
-    return []
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
             SELECT 
                 c.*,
-                '{events.EventType.CLICK_IOS.ui_type}' AS type
-            FROM {events.EventType.CLICK_IOS.table} AS c
+                'CLICK' AS type
+            FROM events_ios.taps AS c
             WHERE 
               c.session_id = %(session_id)s
             ORDER BY c.timestamp;""",
@@ -39,8 +23,8 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 i.*,
-                '{events.EventType.INPUT_IOS.ui_type}' AS type
-            FROM {events.EventType.INPUT_IOS.table} AS i
+                'INPUT' AS type
+            FROM events_ios.inputs AS i
             WHERE 
               i.session_id = %(session_id)s
             ORDER BY i.timestamp;""",
@@ -50,11 +34,20 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 v.*,
-                '{events.EventType.VIEW_IOS.ui_type}' AS type
-            FROM {events.EventType.VIEW_IOS.table} AS v
+                'VIEW' AS type
+            FROM events_ios.views AS v
             WHERE 
               v.session_id = %(session_id)s
             ORDER BY v.timestamp;""", {"project_id": project_id, "session_id": session_id}))
+        rows += cur.fetchall()
+        cur.execute(cur.mogrify(f"""
+            SELECT 
+                s.*,
+                'SWIP' AS type
+            FROM events_ios.swipes AS s
+            WHERE 
+              s.session_id = %(session_id)s
+            ORDER BY s.timestamp;""", {"project_id": project_id, "session_id": session_id}))
         rows += cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["timestamp"])
@@ -62,8 +55,6 @@ def get_by_sessionId(session_id, project_id):
 
 
 def get_crashes_by_session_id(session_id):
-    # TODO: remove this when IOS events are supported by workers
-    return []
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
