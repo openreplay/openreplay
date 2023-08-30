@@ -27,7 +27,7 @@ func (conn *Conn) InsertIOSCustomEvent(session *sessions.Session, e *messages.IO
 }
 
 func (conn *Conn) InsertIOSNetworkCall(sess *sessions.Session, e *messages.IOSNetworkCall) error {
-	err := conn.InsertRequest(sess.SessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success)
+	err := conn.InsertRequest(sess.SessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Status < 400)
 	if err == nil {
 		conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
 	}
