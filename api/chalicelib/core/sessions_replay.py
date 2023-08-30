@@ -41,8 +41,6 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
@@ -55,9 +53,9 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                         if e["type"].endswith("_IOS"):
                             e["type"] = e["type"][:-len("_IOS")]
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                    data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                             session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                              session_id=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id)
                 else:
                     data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                               group_clickrage=True)
@@ -117,8 +115,6 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
@@ -157,8 +153,6 @@ def get_events(project_id, session_id):
                     AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         s_data = cur.fetchone()
@@ -171,8 +165,8 @@ def get_events(project_id, session_id):
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
                 data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                         session_id=session_id)
+                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)

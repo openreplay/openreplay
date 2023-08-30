@@ -110,11 +110,12 @@ class EventType:
                   column=None)  # column=None because errors are searched by name or message
     METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
     #     IOS
-    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.clicks", column="label")
+    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.taps", column="label")
     INPUT_IOS = Event(ui_type=schemas.EventType.input_ios, table="events_ios.inputs", column="label")
     VIEW_IOS = Event(ui_type=schemas.EventType.view_ios, table="events_ios.views", column="name")
+    SWIPE_IOS = Event(ui_type=schemas.EventType.swipe_ios, table="events_ios.swipes", column="label")
     CUSTOM_IOS = Event(ui_type=schemas.EventType.custom_ios, table="events_common.customs", column="name")
-    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="url")
+    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="path")
     ERROR_IOS = Event(ui_type=schemas.EventType.error_ios, table="events_ios.crashes",
                       column=None)  # column=None because errors are searched by name or message
 

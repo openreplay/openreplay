@@ -458,12 +458,13 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
-    click_ios = "clickIos"
+    click_ios = "tapIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
     custom_ios = "customIos"
     request_ios = "requestIos"
     error_ios = "errorIos"
+    swipe_ios = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
