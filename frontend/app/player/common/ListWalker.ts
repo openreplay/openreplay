@@ -1,7 +1,8 @@
 import type { Timed } from 'Player';
 
 export default class ListWalker<T extends Timed> {
-	private p = 0  /* Pointer to the "current" item */
+	/* Pointer to the "current" item */
+	private p = 0
 	constructor(private _list: Array<T> = []) {}
 
 	append(m: T): void {

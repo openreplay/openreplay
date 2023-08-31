@@ -79,11 +79,10 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   public updateLists(lists: Partial<InitialLists>) {
-    Object.keys(lists).forEach((k: 'event') => {
-      const currentList = this.lists.lists[k];
-      lists[k]!.forEach((i) => currentList.insert(i));
-    });
-    const eventCount = lists?.event?.length || 0;
+    const exceptions = lists.exceptions
+    exceptions?.forEach(e => this.lists.lists.exceptions.insert(e))
+
+    const eventCount = this.lists.lists.event.count //lists?.event?.length || 0;
     const currentState = this.state.get();
     this.state.update({
       eventCount: currentState.eventCount + eventCount,
@@ -159,7 +158,8 @@ export default class IOSMessageManager implements IMessageManager {
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.IosEvent:
-        this.lists.lists.event.insert(msg);
+        // @ts-ignore
+        this.lists.lists.event.insert({ ...msg, source: 'openreplay' });
         break;
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
