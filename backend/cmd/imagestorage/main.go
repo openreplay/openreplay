@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	config "openreplay/backend/internal/config/videostorage"
+	config "openreplay/backend/internal/config/imagestorage"
 	"openreplay/backend/internal/imagestorage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	storageMetrics "openreplay/backend/pkg/metrics/videostorage"
+	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -35,13 +35,15 @@ func main() {
 			cfg.TopicRawImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			srv.Process(data, sessID)
+			if err := srv.Process(sessID, data); err != nil {
+				log.Printf("can't process image: %s", err)
+			}
 		}, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Video storage service started\n")
+	log.Printf("Image storage service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)

@@ -11,11 +11,23 @@ import (
 	"time"
 
 	gzip "github.com/klauspost/pgzip"
-	config "openreplay/backend/internal/config/videostorage"
+	config "openreplay/backend/internal/config/imagestorage"
 )
 
+type Task struct {
+	sessionID   uint64 // to generate path
+	images      map[string]*bytes.Buffer
+	isBreakTask bool
+}
+
+func NewBreakTask() *Task {
+	return &Task{isBreakTask: true}
+}
+
 type ImageStorage struct {
-	cfg *config.Config
+	cfg              *config.Config
+	writeToDiskTasks chan *Task
+	workersStopped   chan struct{}
 }
 
 func New(cfg *config.Config) (*ImageStorage, error) {
@@ -24,66 +36,143 @@ func New(cfg *config.Config) (*ImageStorage, error) {
 		return nil, fmt.Errorf("config is empty")
 	}
 	newStorage := &ImageStorage{
-		cfg: cfg,
+		cfg:              cfg,
+		writeToDiskTasks: make(chan *Task, 1),
+		workersStopped:   make(chan struct{}),
 	}
+	go newStorage.runWorker()
 	return newStorage, nil
 }
 
-func (v *ImageStorage) Process(data []byte, sessID uint64) error {
-	log.Printf("image data: %d from session: %d", len(data), sessID)
-	// Try to extract an archive
+func (v *ImageStorage) Wait() {
+	// send stop signal
+	v.writeToDiskTasks <- NewBreakTask()
+	// wait for workers to stop
+	<-v.workersStopped
+}
+
+func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 	start := time.Now()
-	v.ExtractTarGz(bytes.NewReader(data), sessID)
-	log.Printf("extracted archive in: %s", time.Since(start))
+	if err := v.extract(sessID, data); err != nil {
+		return err
+	}
+	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
 	return nil
 }
 
-func (v *ImageStorage) Wait() {
-	return
-}
-
-func (v *ImageStorage) ExtractTarGz(gzipStream io.Reader, sessID uint64) {
-	uncompressedStream, err := gzip.NewReader(gzipStream)
+func (v *ImageStorage) extract(sessID uint64, data []byte) error {
+	images := make(map[string]*bytes.Buffer)
+	uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
-		log.Fatal("ExtractTarGz: NewReader failed")
+		return fmt.Errorf("can't create gzip reader: %s", err.Error())
 	}
-
 	tarReader := tar.NewReader(uncompressedStream)
 
-	for true {
+	for {
 		header, err := tarReader.Next()
-
-		if err == io.EOF {
-			break
-		}
-
 		if err != nil {
-			log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
-		}
-
-		dir := v.cfg.FSDir + "/screenshots/" + strconv.FormatUint(sessID, 10) + "/"
-
-		// Ensure the directory exists
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			log.Fatalf("Error creating directories: %v", err)
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("can't read tar header: %s", err.Error())
 		}
 
 		if header.Typeflag == tar.TypeReg {
-			filePath := dir + header.Name
-			outFile, err := os.Create(filePath) // or open file in rewrite mode
+			var buf bytes.Buffer
+			if _, err := buf.ReadFrom(tarReader); err != nil {
+				return fmt.Errorf("can't copy file: %s", err.Error())
+			}
+			images[header.Name] = &buf
+		} else {
+			log.Printf("ExtractTarGz: uknown type: %d in %s", header.Typeflag, header.Name)
+		}
+	}
+
+	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images}
+	return nil
+}
+
+func (v *ImageStorage) writeToDisk(task *Task) {
+	// Build the directory path
+	path := v.cfg.FSDir + "/"
+	if v.cfg.ScreenshotsDir != "" {
+		path += v.cfg.ScreenshotsDir + "/"
+	}
+	path += strconv.FormatUint(task.sessionID, 10) + "/"
+
+	// Ensure the directory exists
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatalf("Error creating directories: %v", err)
+	}
+
+	// Write images to disk
+	for name, img := range task.images {
+		outFile, err := os.Create(path + name) // or open file in rewrite mode
+		if err != nil {
+			log.Printf("can't create file: %s", err.Error())
+		}
+		if _, err := io.Copy(outFile, img); err != nil {
+			log.Printf("can't copy file: %s", err.Error())
+		}
+		outFile.Close()
+	}
+	return
+}
+
+func (v *ImageStorage) extractImages(gzipStream io.Reader, sessID uint64) error {
+	uncompressedStream, err := gzip.NewReader(gzipStream)
+	if err != nil {
+		return fmt.Errorf("can't create gzip reader: %s", err.Error())
+	}
+	tarReader := tar.NewReader(uncompressedStream)
+
+	// Build the directory path
+	path := v.cfg.FSDir + "/"
+	if v.cfg.ScreenshotsDir != "" {
+		path += v.cfg.ScreenshotsDir + "/"
+	}
+	path += strconv.FormatUint(sessID, 10) + "/"
+
+	// Ensure the directory exists
+	err = os.MkdirAll(path, 0755)
+	if err != nil {
+		log.Fatalf("Error creating directories: %v", err)
+	}
+
+	for {
+		header, err := tarReader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("can't read tar header: %s", err.Error())
+		}
+
+		if header.Typeflag == tar.TypeReg {
+			outFile, err := os.Create(path + header.Name) // or open file in rewrite mode
 			if err != nil {
-				log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+				return fmt.Errorf("can't create file: %s", err.Error())
 			}
 			if _, err := io.Copy(outFile, tarReader); err != nil {
-				log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
+				return fmt.Errorf("can't copy file: %s", err.Error())
 			}
 			outFile.Close()
 		} else {
-			log.Printf(
-				"ExtractTarGz: uknown type: %d in %s",
-				header.Typeflag,
-				header.Name)
+			log.Printf("ExtractTarGz: uknown type: %d in %s", header.Typeflag, header.Name)
+		}
+	}
+	return nil
+}
+
+func (v *ImageStorage) runWorker() {
+	for {
+		select {
+		case task := <-v.writeToDiskTasks:
+			if task.isBreakTask {
+				v.workersStopped <- struct{}{}
+				continue
+			}
+			v.writeToDisk(task)
 		}
 	}
 }
