@@ -5,7 +5,8 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite, product_analytics
+from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite, \
+    product_analytics
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient, extra
@@ -131,11 +132,13 @@ def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: i
 
 def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
-        data.series.append(schemas.CardPathAnalysisSchema())
+        data.series.append(
+            schemas.CardPathAnalysisSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter)
+    return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter, density=data.density,
+                                           selected_event_type=data.metric_value, hide_minor_paths=data.hide_excess)
 
 
 def __is_path_analysis(data: schemas.CardSchema):
