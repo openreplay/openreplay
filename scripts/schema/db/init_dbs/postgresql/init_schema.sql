@@ -164,6 +164,7 @@ $$
             );
             CREATE UNIQUE INDEX oauth_authentication_unique_user_id_provider_idx ON oauth_authentication (user_id, provider);
 
+            CREATE TYPE platform AS ENUM ('web','ios','android');
 
             CREATE TABLE projects
             (
@@ -172,6 +173,7 @@ $$
                 name                      text                        NOT NULL,
                 active                    boolean                     NOT NULL,
                 sample_rate               smallint                    NOT NULL        DEFAULT 100 CHECK (sample_rate >= 0 AND sample_rate <= 100),
+                platform                  platform                    NOT NULL        DEFAULT 'web',
                 created_at                timestamp without time zone NOT NULL        DEFAULT (now() at time zone 'utc'),
                 deleted_at                timestamp without time zone NULL            DEFAULT NULL,
                 max_session_duration      integer                     NOT NULL        DEFAULT 7200000,
@@ -379,7 +381,6 @@ $$
 
             CREATE TYPE device_type AS ENUM ('desktop', 'tablet', 'mobile', 'other');
             CREATE TYPE country AS ENUM ('UN', 'RW', 'SO', 'YE', 'IQ', 'SA', 'IR', 'CY', 'TZ', 'SY', 'AM', 'KE', 'CD', 'DJ', 'UG', 'CF', 'SC', 'JO', 'LB', 'KW', 'OM', 'QA', 'BH', 'AE', 'IL', 'TR', 'ET', 'ER', 'EG', 'SD', 'GR', 'BI', 'EE', 'LV', 'AZ', 'LT', 'SJ', 'GE', 'MD', 'BY', 'FI', 'AX', 'UA', 'MK', 'HU', 'BG', 'AL', 'PL', 'RO', 'XK', 'ZW', 'ZM', 'KM', 'MW', 'LS', 'BW', 'MU', 'SZ', 'RE', 'ZA', 'YT', 'MZ', 'MG', 'AF', 'PK', 'BD', 'TM', 'TJ', 'LK', 'BT', 'IN', 'MV', 'IO', 'NP', 'MM', 'UZ', 'KZ', 'KG', 'TF', 'HM', 'CC', 'PW', 'VN', 'TH', 'ID', 'LA', 'TW', 'PH', 'MY', 'CN', 'HK', 'BN', 'MO', 'KH', 'KR', 'JP', 'KP', 'SG', 'CK', 'TL', 'RU', 'MN', 'AU', 'CX', 'MH', 'FM', 'PG', 'SB', 'TV', 'NR', 'VU', 'NC', 'NF', 'NZ', 'FJ', 'LY', 'CM', 'SN', 'CG', 'PT', 'LR', 'CI', 'GH', 'GQ', 'NG', 'BF', 'TG', 'GW', 'MR', 'BJ', 'GA', 'SL', 'ST', 'GI', 'GM', 'GN', 'TD', 'NE', 'ML', 'EH', 'TN', 'ES', 'MA', 'MT', 'DZ', 'FO', 'DK', 'IS', 'GB', 'CH', 'SE', 'NL', 'AT', 'BE', 'DE', 'LU', 'IE', 'MC', 'FR', 'AD', 'LI', 'JE', 'IM', 'GG', 'SK', 'CZ', 'NO', 'VA', 'SM', 'IT', 'SI', 'ME', 'HR', 'BA', 'AO', 'NA', 'SH', 'BV', 'BB', 'CV', 'GY', 'GF', 'SR', 'PM', 'GL', 'PY', 'UY', 'BR', 'FK', 'GS', 'JM', 'DO', 'CU', 'MQ', 'BS', 'BM', 'AI', 'TT', 'KN', 'DM', 'AG', 'LC', 'TC', 'AW', 'VG', 'VC', 'MS', 'MF', 'BL', 'GP', 'GD', 'KY', 'BZ', 'SV', 'GT', 'HN', 'NI', 'CR', 'VE', 'EC', 'CO', 'PA', 'HT', 'AR', 'CL', 'BO', 'PE', 'MX', 'PF', 'PN', 'KI', 'TK', 'TO', 'WF', 'WS', 'NU', 'MP', 'GU', 'PR', 'VI', 'UM', 'AS', 'CA', 'US', 'PS', 'RS', 'AQ', 'SX', 'CW', 'BQ', 'SS','AC','AN','BU','CP','CS','CT','DD','DG','DY','EA','FQ','FX','HV','IC','JT','MI','NH','NQ','NT','PC','PU','PZ','RH','SU','TA','TP','VD','WK','YD','YU','ZR');
-            CREATE TYPE platform AS ENUM ('web','ios','android');
 
             CREATE TABLE sessions
             (
