@@ -111,6 +111,7 @@ class EditUserPasswordSchema(BaseModel):
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
+    platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 

@@ -42,12 +42,12 @@ def __update(tenant_id, project_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __create(tenant_id, name):
+def __create(tenant_id, data):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, active)
+        query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, platform, active)
                                 VALUES (%(tenant_id)s,%(name)s,TRUE)
                                 RETURNING project_id;""",
-                            {"tenant_id": tenant_id, "name": name})
+                            {"tenant_id": tenant_id, **data})
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
@@ -178,7 +178,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
             return {"errors": ["unauthorized"]}
         if admin["roleId"] is not None and not admin["allProjects"]:
             return {"errors": ["unauthorized: you need allProjects permission to create a new project"]}
-    return {"data": __create(tenant_id=tenant_id, name=data.name)}
+    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
 def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -188,7 +188,7 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes={"name": data.name})}
+                             changes=data.model_dump())}
 
 
 def delete(tenant_id, user_id, project_id):
