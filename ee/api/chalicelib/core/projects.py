@@ -45,7 +45,7 @@ def __update(tenant_id, project_id, changes):
 def __create(tenant_id, data):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, platform, active)
-                                VALUES (%(tenant_id)s,%(name)s,TRUE)
+                                VALUES (%(tenant_id)s,%(name)s,%(platform)s,TRUE)
                                 RETURNING project_id;""",
                             {"tenant_id": tenant_id, **data})
         cur.execute(query=query)
