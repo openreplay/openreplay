@@ -7,6 +7,8 @@ from chalicelib.utils import ch_client
 from chalicelib.utils import helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import sql_helper as sh
+from chalicelib.core import metadata
+from time import time
 
 
 def __transform_journey(rows):
@@ -65,13 +67,27 @@ JOURNEY_TYPES = {
 def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
                   selected_event_type: List[schemas.ProductAnalyticsSelectedEventType],
                   density: int = 4, hide_minor_paths: bool = False):
-    event_start = None
-    event_type = JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.click]["eventType"]
-    event_column = JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.click]["column"]
+    sub_events = []
+    start_points_conditions = []
+    if len(selected_event_type) == 0:
+        selected_event_type.append(schemas.ProductAnalyticsSelectedEventType.location)
+        sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"],
+                           "eventType": schemas.ProductAnalyticsSelectedEventType.location.value})
+    else:
+        for v in selected_event_type:
+            if JOURNEY_TYPES.get(v):
+                sub_events.append({"column": JOURNEY_TYPES[v]["column"],
+                                   "eventType": JOURNEY_TYPES[v]["eventType"]})
+    if len(sub_events) == 1:
+        main_column = sub_events[0]['column']
+    else:
+        main_column = f"multiIf(%s,%s)" % (
+            ','.join([f"event_type='{s['eventType']}',{s['column']}" for s in sub_events[:-1]]),
+            sub_events[-1]["column"])
     extra_values = {}
-    meta_condition = []
+    sessions_conditions = []
     reverse = False
-    has_exclusion = False
+    meta_keys = None
     for i, f in enumerate(data.filters):
         op = sh.get_sql_operator(f.operator)
         is_any = sh.isAny_opreator(f.operator)
@@ -80,107 +96,244 @@ def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
         f_k = f"f_value_{i}"
         extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
 
-        if f.type == schemas.ProductAnalyticsFilterType.start_point:
-            event_start = f.value[0]
-        elif f.type == schemas.ProductAnalyticsFilterType.end_point:
-            event_start = f.value[0]
-            reverse = True
-        # elif f.type == schemas.ProductAnalyticsFilterType.event_type and JOURNEY_TYPES.get(f.value[0]):
-        #     event_type = JOURNEY_TYPES[f.value[0]]["eventType"]
-        #     event_column = JOURNEY_TYPES[f.value[0]]["column"]
-        # elif f.type == schemas.ProductAnalyticsFilterType.exclude_point:
-        #     has_exclusion = True
+        if f.type in [schemas.ProductAnalyticsFilterType.start_point, schemas.ProductAnalyticsFilterType.end_point]:
+            start_points_conditions.append(
+                sh.multi_conditions(f'e_value {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+            reverse = f.type == schemas.ProductAnalyticsFilterType.end_point
+        # elif f.type == schemas.ProductAnalyticsFilterType.exclude_click and schemas.ProductAnalyticsSelectedEventType.click in selected_event_type:
+        #     exclusions[schemas.ProductAnalyticsSelectedEventType.click] = \
+        #         [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.click]["column"]}\
+        #                          != %({f_k})s', f.value, is_not=True, value_key=f_k)]
+        # elif f.type == schemas.ProductAnalyticsFilterType.exclude_input and schemas.ProductAnalyticsSelectedEventType.input in selected_event_type:
+        #     exclusions[schemas.ProductAnalyticsSelectedEventType.input] = \
+        #         [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.input]["column"]}\
+        #                          != %({f_k})s', f.value, is_not=True, value_key=f_k)]
+        # elif f.type == schemas.ProductAnalyticsFilterType.exclude_location and schemas.ProductAnalyticsSelectedEventType.location in selected_event_type:
+        #     exclusions[schemas.ProductAnalyticsSelectedEventType.location] = \
+        #         [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"]}\
+        #                          != %({f_k})s', f.value, is_not=True, value_key=f_k)]
+        # elif f.type == schemas.ProductAnalyticsFilterType.exclude_custom_event and schemas.ProductAnalyticsSelectedEventType.custom_event in selected_event_type:
+        #     exclusions[schemas.ProductAnalyticsSelectedEventType.custom_event] = \
+        #         [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.custom_event]["column"]}\
+        #          != %({f_k})s', f.value, is_not=True, value_key=f_k)]
 
-        # elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
-        #     meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
-        #     meta_condition.append(f"sessions_metadata.project_id = %(project_id)s")
-        #     meta_condition.append(f"sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
-        #     meta_condition.append(f"sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)")
-        #     extra_values["user_id"] = f["value"]
-        #     TODO: support meta filters
+        # ---- meta-filters
+        if f.type == schemas.FilterType.user_browser:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_browser)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_os]:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_os)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_device]:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_device)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.user_country]:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_country)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type == schemas.FilterType.user_city:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_city)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type == schemas.FilterType.user_state:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_state)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_source]:
+            if is_any:
+                sessions_conditions.append('isNotNull(utm_source)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(utm_source)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_medium]:
+            if is_any:
+                sessions_conditions.append('isNotNull(utm_medium)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(utm_medium)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type in [schemas.FilterType.utm_campaign]:
+            if is_any:
+                sessions_conditions.append('isNotNull(utm_campaign)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(utm_campaign)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f'utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
+                                        value_key=f_k))
+
+        elif f.type == schemas.FilterType.duration:
+            if len(f.value) > 0 and f.value[0] is not None:
+                sessions_conditions.append("duration >= %(minDuration)s")
+                extra_values["minDuration"] = f.value[0]
+            if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                sessions_conditions.append("duration <= %(maxDuration)s")
+                extra_values["maxDuration"] = f.value[1]
+        elif f.type == schemas.FilterType.referrer:
+            # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+            if is_any:
+                sessions_conditions.append('isNotNull(base_referrer)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f"base_referrer {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
+        elif f.type == schemas.FilterType.metadata:
+            # get metadata list only if you need it
+            if meta_keys is None:
+                meta_keys = metadata.get(project_id=project_id)
+                meta_keys = {m["key"]: m["index"] for m in meta_keys}
+            if f.source in meta_keys.keys():
+                if is_any:
+                    sessions_conditions.append(f"isNotNull({metadata.index_to_colname(meta_keys[f.source])})")
+                elif is_undefined:
+                    sessions_conditions.append(f"isNull({metadata.index_to_colname(meta_keys[f.source])})")
+                else:
+                    sessions_conditions.append(
+                        sh.multi_conditions(
+                            f"{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                            f.value, is_not=is_not, value_key=f_k))
+
+
+        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_id)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(user_id)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                        value_key=f_k))
+        elif f.type in [schemas.FilterType.user_anonymous_id,
+                        schemas.FilterType.user_anonymous_id_ios]:
+            if is_any:
+                sessions_conditions.append('isNotNull(user_anonymous_id)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(user_anonymous_id)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f"user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                        value_key=f_k))
+        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            if is_any:
+                sessions_conditions.append('isNotNull(rev_id)')
+            elif is_undefined:
+                sessions_conditions.append('isNull(rev_id)')
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f"rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+        elif f.type == schemas.FilterType.platform:
+            # op = __ sh.get_sql_operator(f.operator)
+            sessions_conditions.append(
+                sh.multi_conditions(f"user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                    value_key=f_k))
+        elif f.type == schemas.FilterType.issue:
+            if is_any:
+                sessions_conditions.append("array_length(issue_types, 1) > 0")
+            else:
+                sessions_conditions.append(
+                    sh.multi_conditions(f"%({f_k})s {op} ANY (issue_types)", f.value, is_not=is_not,
+                                        value_key=f_k))
+        elif f.type == schemas.FilterType.events_count:
+            sessions_conditions.append(
+                sh.multi_conditions(f"events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                    value_key=f_k))
 
     # ch_sub_query = __get_basic_constraints(table_name="experimental.events", data=data.model_dump())
     ch_sub_query = __get_basic_constraints(table_name="events")
-    ch_sub_query.append("events.event_type = %(event_type)s")
+
     # meta_condition += __get_meta_constraint(args)
     # ch_sub_query += meta_condition
-    extra_values["event_type"] = event_type
 
-    if has_exclusion:
-        for i, f in enumerate(data.filters):
-            continue
-            if f.type == schemas.ProductAnalyticsFilterType.exclude_point:
-                f_k = f"exclude_value_{i}"
-                extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
-                ch_sub_query.append(
-                    sh.multi_conditions(f"{event_column} != %({f_k})s", f.value, is_not=True, value_key=f_k))
+    # if has_exclusion:
+    #     for i, f in enumerate(data.filters):
+    #         continue
+    #         if f.type == schemas.ProductAnalyticsFilterType.exclude_point:
+    #             f_k = f"exclude_value_{i}"
+    #             extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
+    #             ch_sub_query.append(
+    #                 sh.multi_conditions(f"{event_column} != %({f_k})s", f.value, is_not=True, value_key=f_k))
+
+    main_table = "experimental.events"
+    if len(sessions_conditions) > 0:
+        sessions_conditions.append(f"project_id = %(project_id)s")
+        sessions_conditions.append(f"datetime >= toDateTime(%(startTimestamp)s / 1000)")
+        sessions_conditions.append(f"datetime < toDateTime(%(endTimestamp)s / 1000)")
+        sessions_conditions.append("events_count>1")
+        sessions_conditions.append("duration>0")
+        main_table = f"""(SELECT DISTINCT session_id
+                        FROM experimental.sessions
+                        WHERE {" AND ".join(sessions_conditions)}) AS sub_sessions 
+                            INNER JOIN experimental.events USING (session_id)"""
+    if len(start_points_conditions) == 0:
+        start_points_subquery = """SELECT DISTINCT session_id
+                        FROM (SELECT event_type, e_value
+                              FROM full_ranked_events
+                              WHERE event_number_in_session = 1
+                              GROUP BY event_type, e_value
+                              ORDER BY count(1) DESC
+                              LIMIT 2) AS top_start_events
+                                 INNER JOIN full_ranked_events
+                                            ON (top_start_events.event_type = full_ranked_events.event_type AND
+                                                top_start_events.e_value = full_ranked_events.e_value AND
+                                                full_ranked_events.event_number_in_session = 1 AND
+                                                isNotNull(next_value))"""
+    else:
+        start_points_subquery = f"""SELECT DISTINCT session_id
+                                    FROM full_ranked_events
+                                    WHERE full_ranked_events.event_number_in_session = 1 
+                                         AND isNotNull(next_value)
+                                         AND {" AND ".join(start_points_conditions)}"""
+    del start_points_conditions
+    if reverse:
+        path_direction = "DESC"
+    else:
+        path_direction = ""
 
     with ch_client.ClickHouseClient() as ch:
-        # ch_query = f"""SELECT source_event,
-        #                        target_event,
-        #                        count(*) AS    value
-        #                 FROM (SELECT toString(event_number) || '_' || value                   AS target_event,
-        #                              lagInFrame(toString(event_number) || '_' || value) OVER (PARTITION BY session_rank ORDER BY datetime ASC ROWS
-        #                                  BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS source_event
-        #                       FROM (SELECT session_rank,
-        #                                    datetime,
-        #                                    value,
-        #                                    row_number AS event_number
-        #                             FROM (SELECT session_rank,
-        #                                          groupArray(datetime)         AS arr_datetime,
-        #                                          groupArray(value)            AS arr_value,
-        #                                          arrayEnumerate(arr_datetime) AS row_number
-        #                                        {f"FROM (SELECT * FROM (SELECT *, MIN(mark) OVER ( PARTITION BY session_id , session_rank ORDER BY datetime ) AS max FROM (SELECT *, CASE WHEN value = %(event_start)s THEN datetime ELSE NULL END as mark" if event_start else ""}
-        #                                   FROM (SELECT session_id,
-        #                                                datetime,
-        #                                                value,
-        #                                                SUM(new_session) OVER (ORDER BY session_id, datetime) AS session_rank
-        #                                         FROM (SELECT *,
-        #                                                      if(equals(source_timestamp, '1970-01-01'), 1, 0) AS new_session
-        #                                               FROM (SELECT session_id,
-        #                                                            datetime,
-        #                                                            {event_column} AS             value,
-        #                                                            lagInFrame(datetime) OVER (PARTITION BY session_id ORDER BY datetime {"DESC" if reverse else ""} ROWS
-        #                                                                     BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS source_timestamp
-        #                                                     FROM experimental.events {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-        #                                                     WHERE {" AND ".join(ch_sub_query)}
-        #                                                     ORDER BY session_id, datetime) AS related_events) AS ranked_events
-        #                                         ORDER BY session_rank, datetime
-        #                                            ) AS processed
-        #                                    {") AS marked) AS maxed WHERE datetime >= max) AS filtered" if event_start else ""}
-        #                                   GROUP BY session_rank
-        #                                   ORDER BY session_rank)
-        #                                 ARRAY JOIN
-        #                                  arr_datetime AS datetime,
-        #                                  arr_value AS value,
-        #                                 row_number
-        #                             ORDER BY session_rank ASC,
-        #                                      row_number ASC) AS sorted_events
-        #                       WHERE event_number <= %(JOURNEY_DEPTH)s) AS final
-        #                 WHERE not empty(source_event)
-        #                     AND not empty(target_event)
-        #                 GROUP BY source_event, target_event
-        #                 ORDER BY value DESC
-        #                 LIMIT 20;"""
-        print("-------------------")
-        print(ch_sub_query)
-        print("-------------------")
         ch_query = f"""\
 WITH full_ranked_events AS (SELECT session_id,
                                    event_type,
-                                   label                                                                        AS e_value,
-                                   row_number() OVER (PARTITION BY session_id ORDER BY datetime,message_id ASC) AS event_number_in_session,
+                                   {main_column}  AS e_value,
+                                   row_number() OVER (PARTITION BY session_id ORDER BY datetime {path_direction},message_id {path_direction}) AS event_number_in_session,
                                    leadInFrame(label)
-                                               OVER (PARTITION BY session_id ORDER BY datetime,message_id ASC ROWS
+                                               OVER (PARTITION BY session_id ORDER BY datetime {path_direction},message_id {path_direction} ROWS
                                                    BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)         AS next_value,
                                    leadInFrame(toNullable(event_type))
-                                               OVER (PARTITION BY session_id ORDER BY datetime,message_id ASC ROWS
+                                               OVER (PARTITION BY session_id ORDER BY datetime {path_direction},message_id {path_direction} ROWS
                                                    BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)         AS next_type,
                                    abs(leadInFrame(toNullable(datetime))
-                                                   OVER (PARTITION BY session_id ORDER BY datetime,message_id ASC ROWS
+                                                   OVER (PARTITION BY session_id ORDER BY datetime {path_direction},message_id {path_direction} ROWS
                                                        BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) -
                                        events.datetime)                                                         AS time_to_next
-                            FROM experimental.events
+                            FROM {main_table}
                             WHERE {" AND ".join(ch_sub_query)})
 SELECT event_number_in_session,
        event_type,
@@ -200,18 +353,7 @@ FROM (SELECT *
                          next_value,
                          time_to_next,
                          count(1) AS sessions_count
-                  FROM (SELECT DISTINCT session_id
-                        FROM (SELECT event_type, e_value
-                              FROM full_ranked_events
-                              WHERE event_number_in_session = 1
-                              GROUP BY event_type, e_value
-                              ORDER BY count(1) DESC
-                              LIMIT 2) AS top_start_events
-                                 INNER JOIN full_ranked_events
-                                            ON (top_start_events.event_type = full_ranked_events.event_type AND
-                                                top_start_events.e_value = full_ranked_events.e_value AND
-                                                full_ranked_events.event_number_in_session = 1 AND
-                                                next_value IS NOT NULL)) AS start_points
+                  FROM ({start_points_subquery}) AS start_points
                            INNER JOIN full_ranked_events USING (session_id)
                   GROUP BY event_number_in_session, event_type, e_value, next_type, next_value,
                            time_to_next) AS groupped_events) AS ranked_groupped_events
@@ -219,12 +361,18 @@ FROM (SELECT *
 GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count
 ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
-                  "endTimestamp": data.endTimestamp, "event_start": event_start,
+                  "endTimestamp": data.endTimestamp,
                   # **__get_constraint_values(args),
                   **extra_values}
-        print(ch.format(ch_query, params))
+
+        _now = time()
         rows = ch.execute(query=ch_query, params=params)
-    return __transform_journey2(rows=rows)
+        if time() - _now > 3:
+            print(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
+            print("----------------------")
+            print(print(ch.format(ch_query, params)))
+            print("----------------------")
+    return __transform_journey2(rows=rows, reverse_path=reverse)
 
 #
 # def __compute_weekly_percentage(rows):

@@ -367,7 +367,6 @@ ORDER BY event_number_in_session, e_value, next_value;"""
             print("----------------------")
         rows = cur.fetchall()
 
-    # return __transform_journey(rows)
     return __transform_journey2(rows=rows, reverse_path=reverse)
 
 #
