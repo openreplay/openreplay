@@ -119,51 +119,6 @@ func (v *ImageStorage) writeToDisk(task *Task) {
 	return
 }
 
-func (v *ImageStorage) extractImages(gzipStream io.Reader, sessID uint64) error {
-	uncompressedStream, err := gzip.NewReader(gzipStream)
-	if err != nil {
-		return fmt.Errorf("can't create gzip reader: %s", err.Error())
-	}
-	tarReader := tar.NewReader(uncompressedStream)
-
-	// Build the directory path
-	path := v.cfg.FSDir + "/"
-	if v.cfg.ScreenshotsDir != "" {
-		path += v.cfg.ScreenshotsDir + "/"
-	}
-	path += strconv.FormatUint(sessID, 10) + "/"
-
-	// Ensure the directory exists
-	err = os.MkdirAll(path, 0755)
-	if err != nil {
-		log.Fatalf("Error creating directories: %v", err)
-	}
-
-	for {
-		header, err := tarReader.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return fmt.Errorf("can't read tar header: %s", err.Error())
-		}
-
-		if header.Typeflag == tar.TypeReg {
-			outFile, err := os.Create(path + header.Name) // or open file in rewrite mode
-			if err != nil {
-				return fmt.Errorf("can't create file: %s", err.Error())
-			}
-			if _, err := io.Copy(outFile, tarReader); err != nil {
-				return fmt.Errorf("can't copy file: %s", err.Error())
-			}
-			outFile.Close()
-		} else {
-			log.Printf("ExtractTarGz: uknown type: %d in %s", header.Typeflag, header.Name)
-		}
-	}
-	return nil
-}
-
 func (v *ImageStorage) runWorker() {
 	for {
 		select {
