@@ -48,6 +48,13 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
+
+	// Check if the project supports mobile sessions
+	if !p.IsMobile() {
+		ResponseWithError(w, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, r.URL.Path, 0)
+		return
+	}
+
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 

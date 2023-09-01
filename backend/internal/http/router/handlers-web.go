@@ -115,6 +115,12 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Check if the project supports mobile sessions
+	if !p.IsWeb() {
+		ResponseWithError(w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	ua := e.services.UaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
 		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
