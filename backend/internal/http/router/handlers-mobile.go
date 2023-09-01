@@ -82,21 +82,23 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		geoInfo := e.ExtractGeoData(r)
 
 		if err := e.services.Sessions.Add(&sessions.Session{
-			SessionID:      sessionID,
-			Platform:       "ios",
-			Timestamp:      req.Timestamp,
-			Timezone:       req.Timezone,
-			ProjectID:      p.ProjectID,
-			TrackerVersion: req.TrackerVersion,
-			RevID:          req.RevID,
-			UserUUID:       userUUID,
-			UserOS:         "IOS",
-			UserOSVersion:  req.UserOSVersion,
-			UserDevice:     ios.MapIOSDevice(req.UserDevice),
-			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
-			UserCountry:    geoInfo.Country,
-			UserState:      geoInfo.State,
-			UserCity:       geoInfo.City,
+			SessionID:            sessionID,
+			Platform:             "ios",
+			Timestamp:            req.Timestamp,
+			Timezone:             req.Timezone,
+			ProjectID:            p.ProjectID,
+			TrackerVersion:       req.TrackerVersion,
+			RevID:                req.RevID,
+			UserUUID:             userUUID,
+			UserOS:               "IOS",
+			UserOSVersion:        req.UserOSVersion,
+			UserDevice:           ios.MapIOSDevice(req.UserDevice),
+			UserDeviceType:       ios.GetIOSDeviceType(req.UserDevice),
+			UserCountry:          geoInfo.Country,
+			UserState:            geoInfo.State,
+			UserCity:             geoInfo.City,
+			UserDeviceMemorySize: req.DeviceMemory,
+			UserDeviceHeapSize:   req.DeviceMemory,
 		}); err != nil {
 			log.Printf("failed to add mobile session to DB: %v", err)
 		}
