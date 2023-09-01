@@ -8,7 +8,9 @@ import {
   TextLink,
   NoContent,
   Pagination,
-  PageTitle, Divider
+  PageTitle,
+  Divider,
+  Icon,
 } from 'UI';
 import {
   init,
@@ -31,6 +33,7 @@ import CaptureRate from 'Shared/SessionSettings/components/CaptureRate';
 type Project = {
   id: number;
   name: string;
+  platform: 'web' | 'mobile';
   host: string;
   projectKey: string;
   sampleRate: number;
@@ -103,6 +106,9 @@ const Sites = ({
             </div>
           </div>
           <span className='ml-2'>{project.host}</span>
+          <div className={'ml-4'}>
+            <Icon color={'main'} name={project.platform === 'web' ? 'browser/browser' : 'mobile'} />
+          </div>
         </div>
       </div>
       <div className='col-span-3'>

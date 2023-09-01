@@ -79,7 +79,7 @@ export default class SiteDropdown extends React.PureComponent {
               <div className="border-b border-dashed my-1" />
               {sites.map((site) => (
                 <li key={site.id} onClick={() => this.switchSite(site.id)}>
-                  <Icon name="folder2" size="16" />
+                  <Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} size="16" />
                   <span className="ml-3">{site.host}</span>
                 </li>
               ))}

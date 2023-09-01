@@ -11,7 +11,7 @@ import Lists, {
   INITIAL_STATE as LISTS_INITIAL_STATE,
   State as ListsState,
 } from './IOSLists';
-
+import IOSPerformanceTrackManager, { PerformanceChartPoint } from "Player/mobile/managers/IOSPerformanceTrackManager";
 import { MType } from '../web/messages';
 import type { Message } from '../web/messages';
 
@@ -26,6 +26,8 @@ import type { SkipInterval } from '../web/managers/ActivityManager';
 
 export interface State extends ScreenState, ListsState {
   skipIntervals: SkipInterval[];
+  performanceChartData: PerformanceChartPoint[];
+  performanceChartTime: number;
   location?: string;
 
   error: boolean;
@@ -45,6 +47,8 @@ export default class IOSMessageManager implements IMessageManager {
     ...SCREEN_INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
     eventCount: 0,
+    performanceChartData: [],
+    performanceChartTime: 0,
     skipIntervals: [],
     error: false,
     ready: false,
@@ -55,7 +59,7 @@ export default class IOSMessageManager implements IMessageManager {
   };
 
   private activityManager: ActivityManager | null = null;
-
+  private performanceManager = new IOSPerformanceTrackManager();
   private readonly sessionStart: number;
   private lastMessageTime: number = 0;
   private touchManager: TouchManager;
@@ -96,15 +100,18 @@ export default class IOSMessageManager implements IMessageManager {
 
   private waitingForFiles: boolean = false;
   public onFileReadSuccess = () => {
-    const eventCount = this.lists?.lists.event?.length || 0
+    let newState: Partial<State> = {
+      ...this.state.get(),
+      eventCount:  this.lists?.lists.event?.length || 0,
+      performanceChartData: this.performanceManager.chartData,
+      ...this.lists.getFullListsState(),
+    }
+
     if (this.activityManager) {
       this.activityManager.end();
-      this.state.update({
-        eventCount,
-        skipIntervals: this.activityManager.list,
-        ...this.lists.getFullListsState(),
-      });
+      newState['skipIntervals'] = this.activityManager.list
     }
+    this.state.update(newState);
   };
 
   public onFileReadFailed = (e: any) => {
@@ -130,7 +137,12 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   move(t: number): any {
-    // Moving mouse and setting :hover classes on ready view
+    const lastPerformanceTrackMessage = this.performanceManager.moveGetLast(t);
+    if (lastPerformanceTrackMessage) {
+      this.state.update({
+        performanceChartTime: lastPerformanceTrackMessage.time,
+      })
+    }
     this.touchManager.move(t);
 
     if (
@@ -151,6 +163,9 @@ export default class IOSMessageManager implements IMessageManager {
     }
 
     switch (msg.tp) {
+      case MType.IosPerformanceEvent:
+        this.performanceManager.append(msg);
+        break;
       // case MType.IosInputEvent:
       //   console.log('input', msg)
       //   break;

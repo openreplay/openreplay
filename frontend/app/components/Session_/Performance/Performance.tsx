@@ -1,6 +1,8 @@
+import {Timed} from "Player";
+import {PerformanceChartPoint} from "Player/mobile/managers/IOSPerformanceTrackManager";
 import React from 'react';
 import { connect } from 'react-redux';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import {MobilePlayerContext, PlayerContext} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import {
   AreaChart,
@@ -96,6 +98,27 @@ const CPUTooltip = ({ active, payload }) => {
   );
 };
 
+const MobileCpuTooltip = ({ active, payload }) => {
+  if (!payload) return null;
+  if (!active || payload.length < 1) {
+    return null;
+  }
+  if (payload[0].value === null) {
+    return (
+      <div className={stl.tooltipWrapper} style={{ color: HIDDEN_SCREEN_COLOR }}>
+        {'App is in the background.'}
+      </div>
+    );
+  }
+  return (
+      <div className={stl.tooltipWrapper}>
+        <span className="font-medium">{`${CPU}: `}</span>
+        {payload[0].value}
+        {'%'}
+      </div>
+  );
+}
+
 const HeapTooltip = ({ active, payload }) => {
   if (!payload) return null;
   if (!active || payload.length < 2) return null;
@@ -112,6 +135,19 @@ const HeapTooltip = ({ active, payload }) => {
     </div>
   );
 };
+
+const MobileMemoryTooltip = ({ active, payload }) => {
+  if (!payload) return null;
+  if (!active || payload.length < 1 || payload[1].value === null) return null;
+  return (
+      <div className={stl.tooltipWrapper}>
+        <p>
+          <span className="font-medium">Used Memory: </span>
+          {formatBytes(payload[1].value)}
+        </p>
+      </div>
+  );
+}
 
 const NodesCountTooltip = ({ active, payload }) => {
   if (!payload) return null;
@@ -178,6 +214,202 @@ function addFpsMetadata(data) {
   });
 }
 
+function generateMobileChart(data: PerformanceChartPoint[], biggestMemSpike: number) {
+  return data.map(p => ({
+    ...p,
+    isBackground: p.isBackground ? 50 : 0,
+    isMemBackground: p.isBackground ? biggestMemSpike : 0
+  }))
+}
+
+export const MobilePerformance = connect((state: any) => ({
+  userDeviceMemorySize: state.getIn(['sessions', 'current']).userDeviceMemorySize || 0,
+}))(observer(({ userDeviceMemorySize }:  { userDeviceMemorySize: number }) => {
+  const { player, store } = React.useContext(MobilePlayerContext);
+  const [_timeTicks, setTicks] = React.useState<number[]>([])
+  const [_data, setData] = React.useState<any[]>([])
+
+  const {
+    performanceChartTime = 0,
+    performanceChartData = [],
+  } = store.get();
+
+
+  React.useEffect(() => {
+    // setTicks(generateTicks(performanceChartData));
+    setTicks(performanceChartData.map(p => p.time));
+    const biggestMemSpike = performanceChartData.reduce((acc, p) => {
+        if (p.memory && p.memory > acc) return p.memory;
+        return acc;
+    }, 0);
+    setData(generateMobileChart(performanceChartData, biggestMemSpike));
+  }, [])
+
+
+  const onDotClick = ({ index: pointer }: { index: number }) => {
+    const point = _data[pointer];
+    if (!!point) {
+      player.jump(point.time);
+    }
+  };
+
+  const onChartClick = (e: any) => {
+    if (e === null) return;
+    const { activeTooltipIndex } = e;
+    const point = _data[activeTooltipIndex];
+    if (!!point) {
+      player.jump(point.time);
+    }
+  };
+
+  const availableCount = 2
+  const height = `${100 / availableCount}%`;
+
+  return (
+      <BottomBlock>
+        <BottomBlock.Header>
+          <div className="flex items-center w-full">
+            <div className="font-semibold color-gray-medium mr-auto">Performance</div>
+            <InfoLine>
+              <InfoLine.Point
+                  label="Device Memory Size"
+                  value={formatBytes(userDeviceMemorySize * 1024)}
+                  display={true}
+              />
+            </InfoLine>
+          </div>
+        </BottomBlock.Header>
+        <BottomBlock.Content>
+
+              <ResponsiveContainer height={height}>
+                <AreaChart
+                    onClick={onChartClick}
+                    data={_data}
+                    syncId="s"
+                    margin={{
+                      top: 0,
+                      right: 0,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                >
+                  <defs>
+                    <Gradient id="cpuGradient" color={CPU_COLOR} />
+                  </defs>
+                  {/* <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" /> */}
+                  <XAxis
+                      dataKey="time"
+                      type="number"
+                      mirror
+                      orientation="top"
+                      tickLine={false}
+                      tickFormatter={() => ''}
+                      domain={[0, 'dataMax']}
+                      ticks={_timeTicks}
+                  >
+                    <Label value="CPU" position="insideTopRight" className="fill-gray-darkest" />
+                  </XAxis>
+                  <YAxis axisLine={false} tick={false} mirror domain={[0, 120]} orientation="right" />
+                  <Area
+                      dataKey="cpu"
+                      type="monotone"
+                      stroke={CPU_STROKE_COLOR}
+                      fill="url(#cpuGradient)"
+                      dot={false}
+                      activeDot={{
+                        onClick: onDotClick,
+                        style: { cursor: 'pointer' },
+                      }}
+                      isAnimationActive={false}
+                  />
+                  <Area
+                      dataKey="isBackground"
+                      type="stepBefore"
+                      stroke="none"
+                      fill={HIDDEN_SCREEN_COLOR}
+                      activeDot={false}
+                      isAnimationActive={false}
+                  />
+                  <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
+                  <Tooltip content={MobileCpuTooltip} filterNull={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <ResponsiveContainer height={height}>
+                <ComposedChart
+                    onClick={onChartClick}
+                    data={_data}
+                    margin={{
+                      top: 0,
+                      right: 0,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                    syncId="s"
+                >
+                  <defs>
+                    <Gradient id="usedHeapGradient" color={USED_HEAP_COLOR} />
+                  </defs>
+                  <XAxis
+                      dataKey="time"
+                      type="number"
+                      mirror
+                      orientation="top"
+                      tickLine={false}
+                      tickFormatter={() => ''} // tick={false} + _timeTicks to cartesian array
+                      domain={[0, 'dataMax']}
+                      ticks={_timeTicks}
+                  >
+                    <Label value="Memory" position="insideTopRight" className="fill-gray-darkest" />
+                  </XAxis>
+                  <YAxis
+                      axisLine={false}
+                      tickFormatter={formatBytes}
+                      mirror
+                      // Hack to keep only end tick
+                      minTickGap={Number.MAX_SAFE_INTEGER}
+                      domain={[0, (max: number) => max * 1.2]}
+                  />
+                  {/*<Line*/}
+                  {/*    type="monotone"*/}
+                  {/*    dataKey="totalHeap"*/}
+                  {/*    stroke={TOTAL_HEAP_STROKE_COLOR}*/}
+                  {/*    dot={false}*/}
+                  {/*    activeDot={{*/}
+                  {/*      onClick: onDotClick,*/}
+                  {/*      style: { cursor: 'pointer' },*/}
+                  {/*    }}*/}
+                  {/*    isAnimationActive={false}*/}
+                  {/*/>*/}
+                  <Area
+                    dataKey="isMemBackground"
+                    type="stepBefore"
+                    stroke="none"
+                    fill={HIDDEN_SCREEN_COLOR}
+                    activeDot={false}
+                    isAnimationActive={false}
+                  />
+                  <Area
+                      dataKey="memory"
+                      type="monotone"
+                      fill="url(#usedHeapGradient)"
+                      stroke={USED_HEAP_STROKE_COLOR}
+                      dot={false}
+                      activeDot={{
+                        onClick: onDotClick,
+                        style: { cursor: 'pointer' },
+                      }}
+                      isAnimationActive={false}
+                  />
+                  <ReferenceLine x={performanceChartTime} stroke={CURSOR_COLOR} />
+                  <Tooltip content={MobileMemoryTooltip} filterNull={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+        </BottomBlock.Content>
+      </BottomBlock>
+  );
+}));
+
+
 function Performance({
   userDeviceHeapSize,
 }: {
@@ -226,6 +458,7 @@ function Performance({
   const availableCount = [fps, cpu, heap, nodes].reduce((c, av) => (av ? c + 1 : c), 0);
   const height = availableCount === 0 ? '0' : `${100 / availableCount}%`;
 
+  console.log(_data)
   return (
     <BottomBlock>
       <BottomBlock.Header>

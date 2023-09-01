@@ -10,7 +10,7 @@ import {
   OVERVIEW,
   toggleBottomBlock,
   changeSkipInterval,
-  CONSOLE, STACKEVENTS, NETWORK,
+  CONSOLE, STACKEVENTS, NETWORK, PERFORMANCE,
 } from 'Duck/components/player';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -180,6 +180,15 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         labelClassName="!text-base font-semibold"
         hasErrors={stackMarkedCountNow > 0 || showExceptions}
         containerClassName="mx-2"
+      />
+      <ControlButton
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(PERFORMANCE)}
+          active={bottomBlock === PERFORMANCE}
+          label="PERFORMANCE"
+          noIcon
+          labelClassName="!text-base font-semibold"
+          containerClassName="mx-2"
       />
     </>
   );
