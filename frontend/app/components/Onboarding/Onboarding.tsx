@@ -33,7 +33,7 @@ const Onboarding = (props: Props) => {
   }
 
   return (
-    <div className="page-margin container-90 flex relative">
+    <div className="container-90 flex relative">
       <div className="side-menu">
         <SideMenu activeTab={activeTab} onClick={onMenuItemClick} />
       </div>

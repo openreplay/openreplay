@@ -14,13 +14,14 @@ interface Props {
 function Layout(props: Props) {
   const { hideHeader, siteId } = props;
   const isPlayer = /\/(session|assist)\//.test(window.location.pathname);
+
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {!hideHeader && (
         <TopHeader />
       )}
       <AntLayout>
-        {!hideHeader && (
+        {!hideHeader && !window.location.pathname.includes('/onboarding/')  && (
           <Sider
             style={{
               position: 'sticky',
