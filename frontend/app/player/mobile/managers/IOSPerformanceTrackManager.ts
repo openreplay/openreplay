@@ -23,7 +23,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
     if (!Object.values(performanceEvTypes).includes(msg.name)) {
       return console.log('Unsupported performance event type', msg.name)
     }
-    console.log(msg)
+
     let cpu: number | null = null;
     let memory: number | null = null;
     if (msg.time < 0) msg.time = 1;

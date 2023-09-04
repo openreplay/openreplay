@@ -6,10 +6,10 @@ const iphone14ProMaxSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"473
 
 const screenResolutions = {
   iPhone12Pro: {
-    margin: '20px 0 0 24px',
+    margin: '19px 0 0 23px',
     screen: {
-      width: 390,
-      height: 844,
+      width: 391,
+      height: 845,
     },
     shell: {
       width: 438,
@@ -17,10 +17,10 @@ const screenResolutions = {
     },
   },
   iPhone12ProMax: {
-    margin: '20px 0 0 24px',
+    margin: '19px 0 0 23px',
     screen: {
-      width: 428,
-      height: 926,
+      width: 429,
+      height: 927,
     },
     shell: {
       width: 476,
@@ -28,10 +28,10 @@ const screenResolutions = {
     },
   },
   iPhone14Pro: {
-    margin: '20px 0 0 22px',
+    margin: '19px 0 0 21px',
     screen: {
-      width: 393,
-      height: 852,
+      width: 394,
+      height: 853,
     },
     shell: {
       width: 436,
@@ -39,10 +39,10 @@ const screenResolutions = {
     },
   },
   iPhone14ProMax: {
-    margin: '20px 0 0 22px',
+    margin: '19px 0 0 21px',
     screen: {
-      width: 430,
-      height: 932,
+      width: 431,
+      height: 933,
     },
     shell: {
       width: 473,

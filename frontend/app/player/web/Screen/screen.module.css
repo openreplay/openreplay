@@ -28,13 +28,13 @@
 
 .mobileScreen {
   user-select: none;
-  overflow: hidden;
   position: absolute;
   transform-origin: left top;
   top: 50%;
   left: 50%;
-  background: none;
-  box-shadow: none;
+  background-color: rgb(223, 223, 223);
+  border-radius: 70px;
+  box-shadow: 0 0 30px 0 rgba(0,0,0,0.2); /* 0 0 70px 30px rgba(0,0,0,0.1); */
 }
 
 .mobileIframe {

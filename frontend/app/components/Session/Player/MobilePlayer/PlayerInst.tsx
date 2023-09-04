@@ -84,10 +84,10 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={cn("relative flex-1",'overflow-hidden')}>
+      <div className={"relative flex-1"}>
         <Overlay nextId={nextId} />
 
-        <div className={cn(stl.screenWrapper)} ref={screenWrapper}/>
+        <div className={cn(stl.mobileScreenWrapper)} ref={screenWrapper}/>
         <ReplayWindow videoURL={videoURL} userDevice={userDevice} />
       </div>
       {!fullscreen && !!bottomBlock && (
