@@ -1,5 +1,5 @@
 import React from 'react'
-import { MobilePlayerContext } from 'App/components/Session/playerContext';
+import { MobilePlayerContext, IOSPlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { mapIphoneModel } from "Player/mobile/utils";
 
@@ -14,7 +14,7 @@ const appleIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72
 </svg>`
 
 function ReplayWindow({ videoURL, userDevice }: Props) {
-  const playerContext = React.useContext(MobilePlayerContext);
+  const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>();
 
   const time = playerContext.store.get().time
