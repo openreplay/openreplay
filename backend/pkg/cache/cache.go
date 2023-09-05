@@ -9,6 +9,8 @@ type Cache interface {
 	Set(key, value interface{})
 	Get(key interface{}) (interface{}, bool)
 	GetAndRefresh(key interface{}) (interface{}, bool)
+	SetCache(sessID uint64, data map[string]string) error
+	GetCache(sessID uint64) (map[string]string, error)
 }
 
 type item struct {
@@ -19,6 +21,14 @@ type item struct {
 type cacheImpl struct {
 	mutex sync.Mutex
 	items map[interface{}]item
+}
+
+func (c *cacheImpl) SetCache(sessID uint64, data map[string]string) error {
+	return nil
+}
+
+func (c *cacheImpl) GetCache(sessID uint64) (map[string]string, error) {
+	return nil, nil
 }
 
 func New(cleaningInterval, itemDuration time.Duration) Cache {
