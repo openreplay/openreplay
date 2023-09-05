@@ -28,7 +28,7 @@ import Controls from 'Components/Session_/Player/Controls';
 import Overlay from 'Components/Session_/Player/Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
-import OverviewPanel from 'Components/Session_/OverviewPanel';
+import { OverviewPanel } from 'Components/Session_/OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';

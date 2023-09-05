@@ -1,1 +1,1 @@
-export { default } from './OverviewPanel';
+export { OverviewPanel, MobileOverviewPanel } from './OverviewPanel';

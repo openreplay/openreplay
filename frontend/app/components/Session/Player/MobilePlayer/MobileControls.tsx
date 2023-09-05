@@ -114,12 +114,11 @@ function Controls(props: any) {
               currentInterval={skipInterval}
               startedAt={session.startedAt}
             />
-            {/* TODO: replicate same stuff but for mobile session ? */}
-            {/*<div className={cn('mx-2')} />*/}
-            {/*  <XRayButton*/}
-            {/*    isActive={bottomBlock === OVERVIEW}*/}
-            {/*    onClick={() => toggleBottomTools(OVERVIEW)}*/}
-            {/*  />*/}
+            <div className={cn('mx-2')} />
+            <XRayButton
+                isActive={bottomBlock === OVERVIEW}
+                onClick={() => toggleBottomTools(OVERVIEW)}
+            />
             </div>
 
           <div className="flex items-center h-full">

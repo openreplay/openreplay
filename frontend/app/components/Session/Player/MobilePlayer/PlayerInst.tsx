@@ -13,20 +13,18 @@ import {
   PERFORMANCE,
   GRAPHQL,
   EXCEPTIONS,
-  INSPECTOR,
   OVERVIEW,
   fullscreenOff,
 } from 'Duck/components/player';
-import NetworkPanel, {MobileNetworkPanel} from 'Shared/DevTools/NetworkPanel';
-import {ConnectedPerformance, MobilePerformance} from 'Components/Session_/Performance';
+import {MobileNetworkPanel} from 'Shared/DevTools/NetworkPanel';
+import { MobilePerformance} from 'Components/Session_/Performance';
 import Exceptions from 'Components/Session_/Exceptions/Exceptions';
 import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
-import OverviewPanel from 'Components/Session_/OverviewPanel';
+import { MobileOverviewPanel } from 'Components/Session_/OverviewPanel';
 import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
-import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
@@ -92,6 +90,7 @@ function Player(props: IProps) {
       </div>
       {!fullscreen && !!bottomBlock && (
         <div style={{ maxWidth, width: '100%' }}>
+          {bottomBlock === OVERVIEW && <MobileOverviewPanel />}
           {bottomBlock === CONSOLE && <MobileConsolePanel isLive={false} />}
           {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
           {bottomBlock === NETWORK && <MobileNetworkPanel />}
