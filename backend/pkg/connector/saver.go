@@ -511,7 +511,30 @@ func (s *Saver) Commit() {
 	s.updatedSessions = nil
 	// Commit events and sessions (send to Redshift)
 	s.commitEvents()
+	s.checkZombieSessions()
 	s.commitSessions()
+}
+
+func (s *Saver) checkZombieSessions() {
+	// Check if there are old sessions that should be sent to Redshift
+	finished := make(map[uint64]bool, len(s.finishedSessions))
+	for _, sessionID := range s.finishedSessions {
+		finished[sessionID] = true
+	}
+	now := time.Now()
+	zombieSessionsCount := 0
+	for sessionID, _ := range s.sessions {
+		if finished[sessionID] {
+			continue
+		}
+		if s.lastUpdate[sessionID].Add(time.Minute * 5).Before(now) {
+			s.finishedSessions = append(s.finishedSessions, sessionID)
+			zombieSessionsCount++
+		}
+	}
+	if zombieSessionsCount > 0 {
+		log.Printf("Found %d zombie sessions", zombieSessionsCount)
+	}
 }
 
 func (s *Saver) Close() error {
