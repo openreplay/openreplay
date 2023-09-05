@@ -23,7 +23,6 @@ func main() {
 
 	cfg := config.New()
 
-	// TODO: specify bucket name for redshift batches
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		log.Fatalf("can't init object storage: %s", err)
