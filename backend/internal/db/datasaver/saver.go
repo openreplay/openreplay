@@ -66,7 +66,8 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *Metadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
-		if err = s.pg.InsertIssueEvent(session, m); err != nil {
+		err = s.pg.InsertIssueEvent(session, m)
+		if err != nil {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m))
