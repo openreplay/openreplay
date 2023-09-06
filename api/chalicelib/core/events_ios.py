@@ -11,7 +11,7 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 c.*,
-                'CLICK' AS type
+                'TAP' AS type
             FROM events_ios.taps AS c
             WHERE 
               c.session_id = %(session_id)s
