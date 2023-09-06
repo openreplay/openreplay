@@ -98,25 +98,21 @@ def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
         extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
 
         if f.type in [schemas.ProductAnalyticsFilterType.start_point, schemas.ProductAnalyticsFilterType.end_point]:
-            start_points_conditions.append(
-                sh.multi_conditions(f'e_value {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+            for sf in f.filters:
+                extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
+                start_points_conditions.append(f"(event_type='{JOURNEY_TYPES[sf.type]['eventType']}' AND " +
+                                               sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
+                                                                   value_key=f_k)
+                                               + ")")
+
             reverse = f.type == schemas.ProductAnalyticsFilterType.end_point
-        elif f.type == schemas.ProductAnalyticsFilterType.exclude_click and schemas.ProductAnalyticsSelectedEventType.click in selected_event_type:
-            exclusions[schemas.ProductAnalyticsSelectedEventType.click] = [
-                sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.click]["column"]}\
-                                 != %({f_k})s', f.value, is_not=True, value_key=f_k)]
-        elif f.type == schemas.ProductAnalyticsFilterType.exclude_input and schemas.ProductAnalyticsSelectedEventType.input in selected_event_type:
-            exclusions[schemas.ProductAnalyticsSelectedEventType.input] = \
-                [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.input]["column"]}\
-                                 != %({f_k})s', f.value, is_not=True, value_key=f_k)]
-        elif f.type == schemas.ProductAnalyticsFilterType.exclude_location and schemas.ProductAnalyticsSelectedEventType.location in selected_event_type:
-            exclusions[schemas.ProductAnalyticsSelectedEventType.location] = \
-                [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"]}\
-                                 != %({f_k})s', f.value, is_not=True, value_key=f_k)]
-        elif f.type == schemas.ProductAnalyticsFilterType.exclude_custom_event and schemas.ProductAnalyticsSelectedEventType.custom_event in selected_event_type:
-            exclusions[schemas.ProductAnalyticsSelectedEventType.custom_event] = \
-                [sh.multi_conditions(f'{JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.custom_event]["column"]}\
-                 != %({f_k})s', f.value, is_not=True, value_key=f_k)]
+        elif f.type == schemas.ProductAnalyticsFilterType.exclude:
+            for sf in f.filters:
+                if sf.type in selected_event_type:
+                    extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
+                    exclusions[sf.type] = [
+                        sh.multi_conditions(f'{JOURNEY_TYPES[sf.type]["column"]} != %({f_k})s', sf.value, is_not=True,
+                                            value_key=f_k)]
 
         # ---- meta-filters
         if f.type == schemas.FilterType.user_browser:
@@ -281,18 +277,6 @@ def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
     selected_event_type_sub_query = " OR ".join(selected_event_type_sub_query)
     ch_sub_query.append(f"({selected_event_type_sub_query})")
 
-    # meta_condition += __get_meta_constraint(args)
-    # ch_sub_query += meta_condition
-
-    # if has_exclusion:
-    #     for i, f in enumerate(data.filters):
-    #         continue
-    #         if f.type == schemas.ProductAnalyticsFilterType.exclude_point:
-    #             f_k = f"exclude_value_{i}"
-    #             extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
-    #             ch_sub_query.append(
-    #                 sh.multi_conditions(f"{event_column} != %({f_k})s", f.value, is_not=True, value_key=f_k))
-
     main_table = "experimental.events"
     if len(sessions_conditions) > 0:
         sessions_conditions.append(f"sessions.project_id = %(project_id)s")
@@ -318,11 +302,12 @@ def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
                                                 full_ranked_events.event_number_in_session = 1 AND
                                                 isNotNull(next_value))"""
     else:
+        start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")",
+                                   "event_number_in_session = 1",
+                                   "isNotNull(next_value)"]
         start_points_subquery = f"""SELECT DISTINCT session_id
                                     FROM full_ranked_events
-                                    WHERE full_ranked_events.event_number_in_session = 1 
-                                         AND isNotNull(next_value)
-                                         AND {" AND ".join(start_points_conditions)}"""
+                                    WHERE {" AND ".join(start_points_conditions)}"""
     del start_points_conditions
     if reverse:
         path_direction = "DESC"
