@@ -1623,12 +1623,9 @@ class FeatureFlagStatus(BaseModel):
 
 
 class ModuleStatus(BaseModel):
-    module: str = Field(..., description="Possible values: notes, bugs, live",
-                        regex="^(assist|notes|bug-reports|offline-recordings|alerts)$")
+    module: Literal["assist", "notes", "bug-reports", "offline-recordings", "alerts"] = Field(...,
+                                                                                              description="Possible values: notes, bugs, live")
     status: bool = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
 
 
 class FeatureFlagSchema(BaseModel):
