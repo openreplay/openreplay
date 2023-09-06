@@ -80,6 +80,11 @@ const Event: React.FC<Props> = ({
         body = event.direction;
         icon = `chevron-${event.direction}`
         break;
+      case TYPES.TOUCH:
+        title = 'Tapped';
+        body = event.label;
+        icon = 'event/click';
+        break;
       case TYPES.CLICK:
         title = 'Clicked';
         body = event.label;

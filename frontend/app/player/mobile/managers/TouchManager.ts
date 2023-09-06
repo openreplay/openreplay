@@ -32,7 +32,6 @@ export default class TouchManager extends ListWalker<IosClickEvent | IosSwipeEve
     const lastTouch = this.moveGetLast(t)
     if (!!lastTouch) {
       if (lastTouch.tp === MType.IosSwipeEvent) {
-        console.log('swipe', lastTouch)
         this.touchTrail?.createSwipeTrail({
           x: lastTouch.x,
           y: lastTouch.y,

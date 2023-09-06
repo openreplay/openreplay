@@ -53,7 +53,10 @@ export default class IOSPlayer extends Player {
 
   public updateLists(session: any) {
     const lists = {
-      event: session.events || [],
+      event: session.events.map(e => {
+        if (e.name === 'Click') e.name = 'Touch'
+        return e
+      }) || [],
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
       exceptions: session.errors?.map(({ name, ...rest }: any) =>

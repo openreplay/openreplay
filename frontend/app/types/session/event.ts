@@ -6,7 +6,7 @@ const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
 const IOS_VIEW = 'VIEW';
 
-const TOUCH = 'TOUCH';
+const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
 
 export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE };
@@ -46,6 +46,11 @@ interface ClickEvent extends IEvent {
   targetContent: string;
   count: number;
   hesitation: number;
+}
+
+interface TouchEvent extends IEvent {
+  targetContent: string;
+  count: number;
 }
 
 interface SwipeEvent extends IEvent {
@@ -142,6 +147,20 @@ export class Click extends Event {
   }
 }
 
+export class Touch extends Event {
+  readonly type: typeof TOUCH = TOUCH;
+  readonly name = 'Tap';
+  targetContent = '';
+  count: number;
+  hesitation: number = 0;
+
+  constructor(evt: TouchEvent) {
+    super(evt);
+    this.targetContent = evt.targetContent;
+    this.count = evt.count;
+  }
+}
+
 class Input extends Event {
   readonly type = INPUT;
   readonly name = 'Input';
@@ -190,6 +209,8 @@ export default function (event: EventData) {
   switch (event.type) {
     case CONSOLE:
       return new Console(event as ConsoleEvent);
+    case TOUCH:
+      return new Touch(event as TouchEvent)
     case CLICK:
         return new Click(event as ClickEvent);
     case INPUT:
