@@ -1,3 +1,7 @@
+# 9.0.7
+
+- fix for `getSessionURL` method
+
 # 9.0.6
 
 - added `tokenUrlMatcher` option to network settings, allowing to ingest session token header to custom allowed urls
