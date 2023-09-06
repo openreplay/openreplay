@@ -6,7 +6,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
 
 
-def filter_stages(stages: List[schemas._SessionSearchEventSchema]):
+def filter_stages(stages: List[schemas.SessionSearchEventSchema2]):
     ALLOW_TYPES = [schemas.EventType.click, schemas.EventType.input,
                    schemas.EventType.location, schemas.EventType.custom,
                    schemas.EventType.click_ios, schemas.EventType.input_ios,
@@ -15,10 +15,10 @@ def filter_stages(stages: List[schemas._SessionSearchEventSchema]):
 
 
 def __parse_events(f_events: List[dict]):
-    return [schemas._SessionSearchEventSchema.parse_obj(e) for e in f_events]
+    return [schemas.SessionSearchEventSchema2.parse_obj(e) for e in f_events]
 
 
-def __fix_stages(f_events: List[schemas._SessionSearchEventSchema]):
+def __fix_stages(f_events: List[schemas.SessionSearchEventSchema2]):
     if f_events is None:
         return
     events = []
@@ -41,7 +41,7 @@ def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilte
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         return {"stages": [], "totalDropDueToIssues": 0}
-    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
+    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
     insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
         # TODO: check if this correct
@@ -64,5 +64,5 @@ def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchem
 
     return {
         "issues": helper.dict_to_camel_case(
-            significance.get_issues_list(filter_d=data.dict(), project_id=project_id, first_stage=1,
+            significance.get_issues_list(filter_d=data, project_id=project_id, first_stage=1,
                                          last_stage=len(data.events)))}

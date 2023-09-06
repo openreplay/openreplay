@@ -18,9 +18,10 @@ if config('ch_receive_timeout', cast=int, default=-1) > 0:
 class ClickHouseClient:
     __client = None
 
-    def __init__(self):
+    def __init__(self, database=None):
         self.__client = clickhouse_driver.Client(host=config("ch_host"),
-                                                 database=config("ch_database", default="default"),
+                                                 database=database if database else config("ch_database",
+                                                                                           default="default"),
                                                  user=config("ch_user", default="default"),
                                                  password=config("ch_password", default=""),
                                                  port=config("ch_port", cast=int),

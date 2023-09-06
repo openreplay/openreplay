@@ -10,12 +10,12 @@ from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-import schemas_ee
+import schemas
 from chalicelib.utils import helper
 from chalicelib.core import traces
 
 
-async def OR_context(request: Request) -> schemas_ee.CurrentContext:
+async def OR_context(request: Request) -> schemas.CurrentContext:
     if hasattr(request.state, "currentContext"):
         return request.state.currentContext
     else:
@@ -55,11 +55,20 @@ class ORRoute(APIRoute):
         return custom_route_handler
 
 
-def __check(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
+def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
+    s_p = 0
     for scope in security_scopes.scopes:
+        if isinstance(scope, schemas.ServicePermissions):
+            s_p += 1
+        if context.service_account and not isinstance(scope, schemas.ServicePermissions) \
+                or not context.service_account and not isinstance(scope, schemas.Permissions):
+            continue
         if scope not in context.permissions:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Not enough permissions")
+    if context.service_account and s_p == 0:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Not enough permissions (service account)")
 
 
 def OR_scope(*scopes):

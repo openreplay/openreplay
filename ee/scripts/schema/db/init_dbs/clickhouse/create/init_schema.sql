@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
     issue_id Nullable(String),
     error_tags_keys Array(String),
     error_tags_values Array(Nullable(String)),
+    transfer_size Nullable(UInt32),
     message_id                                     UInt64   DEFAULT 0,
     _timestamp                                     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -131,6 +132,7 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     user_state LowCardinality(String),
     platform Enum8('web'=1,'ios'=2,'android'=3) DEFAULT 'web',
     datetime                       DateTime,
+    timezone LowCardinality(Nullable(String)),
     duration                       UInt32,
     pages_count                    UInt16,
     events_count                   UInt16,
@@ -273,6 +275,7 @@ SELECT session_id,
        issue_id,
        error_tags_keys,
        error_tags_values,
+       transfer_size,
        message_id,
        _timestamp
 FROM experimental.events

@@ -41,12 +41,12 @@ def __update(tenant_id, project_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __create(tenant_id, name):
+def __create(tenant_id, data):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.projects (name, active)
-                                VALUES (%(name)s,TRUE)
+        query = cur.mogrify(f"""INSERT INTO public.projects (name, platform, active)
+                                VALUES (%(name)s,%(platform)s,TRUE)
                                 RETURNING project_id;""",
-                            {"name": name})
+                            data)
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
@@ -69,7 +69,8 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       created_at, sessions_last_check_at, sample_rate {extra_projection}
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""",
@@ -159,7 +160,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, name=data.name)}
+    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
 def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -169,7 +170,7 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes={"name": data.name})}
+                             changes=data.model_dump())}
 
 
 def delete(tenant_id, user_id, project_id):
@@ -200,14 +201,14 @@ def get_gdpr(project_id):
         return row
 
 
-def edit_gdpr(project_id, gdpr):
+def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
                                SET gdpr = gdpr|| %(gdpr)s
                                WHERE project_id = %(project_id)s 
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
-                            {"project_id": project_id, "gdpr": json.dumps(gdpr)})
+                            {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump_json())})
         cur.execute(query=query)
         row = cur.fetchone()
         if not row:
@@ -252,15 +253,9 @@ def get_capture_status(project_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_capture_status(project_id, changes):
-    if "rate" not in changes and "captureAll" not in changes:
-        return {"errors": ["please provide 'rate' and/or 'captureAll' attributes to update."]}
-    if int(changes["rate"]) < 0 or int(changes["rate"]) > 100:
-        return {"errors": ["'rate' must be between 0..100."]}
-    sample_rate = 0
-    if "rate" in changes:
-        sample_rate = int(changes["rate"])
-    if changes.get("captureAll"):
+def update_capture_status(project_id, changes: schemas.SampleRateSchema):
+    sample_rate = changes.rate
+    if changes.capture_all:
         sample_rate = 100
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects

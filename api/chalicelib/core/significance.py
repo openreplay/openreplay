@@ -24,17 +24,19 @@ T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.36
             21: 2.080, 22: 2.074, 23: 2.069, 25: 2.064, 26: 2.060, 27: 2.056, 28: 2.052, 29: 2.045, 30: 2.042}
 
 
-def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
+def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
     """
     Add minimal timestamp
     :param filter_d: dict contains events&filters&...
     :return:
     """
-    stages: [dict] = filter_d.get("events", [])
-    filters: [dict] = filter_d.get("filters", [])
-    filter_issues = filter_d.get("issueTypes")
-    if filter_issues is None or len(filter_issues) == 0:
-        filter_issues = []
+    stages: [dict] = filter_d.events
+    filters: [dict] = filter_d.filters
+    filter_issues = []
+    # TODO: enable this if needed by an endpoint
+    # filter_issues = filter_d.get("issueTypes")
+    # if filter_issues is None or len(filter_issues) == 0:
+    #     filter_issues = []
     stage_constraints = ["main.timestamp <= %(endTimestamp)s"]
     first_stage_extra_constraints = ["s.project_id=%(project_id)s", "s.start_ts >= %(startTimestamp)s",
                                      "s.start_ts <= %(endTimestamp)s"]
@@ -120,22 +122,22 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     i = -1
     for s in stages:
 
-        if s.get("operator") is None:
-            s["operator"] = "is"
+        if s.operator is None:
+            s.operator = schemas.SearchEventOperator._is
 
-        if not isinstance(s["value"], list):
-            s["value"] = [s["value"]]
-        is_any = sh.isAny_opreator(s["operator"])
-        if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
+        if not isinstance(s.value, list):
+            s.value = [s.value]
+        is_any = sh.isAny_opreator(s.operator)
+        if not is_any and isinstance(s.value, list) and len(s.value) == 0:
             continue
         i += 1
         if i == 0:
             extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
         else:
             extra_from = []
-        op = sh.get_sql_operator(s["operator"])
+        op = sh.get_sql_operator(s.operator)
         # event_type = s["type"].upper()
-        event_type = s["type"]
+        event_type = s.type
         if event_type == events.EventType.CLICK.ui_type:
             next_table = events.EventType.CLICK.table
             next_col_name = events.EventType.CLICK.column
@@ -165,16 +167,16 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             print(f"=================UNDEFINED:{event_type}")
             continue
 
-        values = {**values, **sh.multi_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
+        values = {**values, **sh.multi_values(helper.values_for_operator(value=s.value, op=s.operator),
                                               value_key=f"value{i + 1}")}
-        if sh.is_negation_operator(s["operator"]) and i > 0:
+        if sh.is_negation_operator(s.operator) and i > 0:
             op = sh.reverse_sql_operator(op)
             main_condition = "left_not.session_id ISNULL"
             extra_from.append(f"""LEFT JOIN LATERAL (SELECT session_id 
                                                         FROM {next_table} AS s_main 
                                                         WHERE 
                                                         {sh.multi_conditions(f"s_main.{next_col_name} {op} %(value{i + 1})s",
-                                                                             values=s["value"], value_key=f"value{i + 1}")}
+                                                                             values=s.value, value_key=f"value{i + 1}")}
                                                         AND s_main.timestamp >= T{i}.stage{i}_timestamp
                                                         AND s_main.session_id = T1.session_id) AS left_not ON (TRUE)""")
         else:
@@ -182,7 +184,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 main_condition = "TRUE"
             else:
                 main_condition = sh.multi_conditions(f"main.{next_col_name} {op} %(value{i + 1})s",
-                                                     values=s["value"], value_key=f"value{i + 1}")
+                                                     values=s.value, value_key=f"value{i + 1}")
         n_stages_query.append(f""" 
         (SELECT main.session_id, 
                 {"MIN(main.timestamp)" if i + 1 < len(stages) else "MAX(main.timestamp)"} AS stage{i + 1}_timestamp
@@ -225,7 +227,8 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     """
 
     #  LIMIT 10000
-    params = {"project_id": project_id, "startTimestamp": filter_d["startDate"], "endTimestamp": filter_d["endDate"],
+    params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
+              "endTimestamp": filter_d.endTimestamp,
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(n_stages_query, params)
@@ -239,7 +242,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             print("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
             print(query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(filter_d)
+            print(filter_d.model_dump_json())
             print("--------------------")
             raise err
     return rows
@@ -544,9 +547,9 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d, project_id):
+def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     output = []
-    stages = filter_d.get("events", [])
+    stages = filter_d.events
     # TODO: handle 1 stage alone
     if len(stages) == 0:
         print("no stages found")
@@ -554,17 +557,24 @@ def get_top_insights(filter_d, project_id):
     elif len(stages) == 1:
         # TODO: count sessions, and users for single stage
         output = [{
-            "type": stages[0]["type"],
-            "value": stages[0]["value"],
+            "type": stages[0].type,
+            "value": stages[0].value,
             "dropPercentage": None,
-            "operator": stages[0]["operator"],
+            "operator": stages[0].operator,
             "sessionsCount": 0,
             "dropPct": 0,
             "usersCount": 0,
             "dropDueToIssues": 0
 
         }]
-        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+        # original
+        # counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+        #                                   project_id=project_id, user_id=None, count_only=True)
+        # first change
+        # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
+        #                                   project_id=project_id, user_id=None, count_only=True)
+        # last change
+        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
                                           project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
@@ -583,9 +593,9 @@ def get_top_insights(filter_d, project_id):
     return stages_list, total_drop_due_to_issues
 
 
-def get_issues_list(filter_d, project_id, first_stage=None, last_stage=None):
+def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
     output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
-    stages = filter_d.get("events", [])
+    stages = filter_d.events
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
     # print(json.dumps(rows[0],indent=4))
