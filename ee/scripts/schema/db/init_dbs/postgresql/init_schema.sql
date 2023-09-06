@@ -514,6 +514,26 @@ $$
 
             IF NOT EXISTS(SELECT *
                           FROM pg_type typ
+                          WHERE typ.typname = 'platform') THEN
+                CREATE TYPE platform AS ENUM ('web','ios','android');
+            END IF;
+            CREATE TABLE IF NOT EXISTS errors_tags
+            (
+                key        text                        NOT NULL,
+                value      text                        NOT NULL,
+                created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
+                error_id   text                        NOT NULL REFERENCES errors (error_id) ON DELETE CASCADE,
+                session_id bigint                      NOT NULL,
+                message_id bigint                      NOT NULL,
+                FOREIGN KEY (session_id, message_id) REFERENCES events.errors (session_id, message_id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS errors_tags_error_id_idx ON errors_tags (error_id);
+            CREATE INDEX IF NOT EXISTS errors_tags_session_id_idx ON errors_tags (session_id);
+            CREATE INDEX IF NOT EXISTS errors_tags_message_id_idx ON errors_tags (message_id);
+
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
                           WHERE typ.typname = 'device_type') THEN
                 CREATE TYPE device_type AS ENUM ('desktop','tablet','mobile','other');
             END IF;

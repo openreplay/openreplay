@@ -41,12 +41,12 @@ def __update(tenant_id, project_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __create(tenant_id, data):
+def __create(tenant_id, name):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.projects (name, platform, active)
-                                VALUES (%(name)s,%(platform)s,TRUE)
+        query = cur.mogrify(f"""INSERT INTO public.projects (name, active)
+                                VALUES (%(name)s,TRUE)
                                 RETURNING project_id;""",
-                            data)
+                            {"name": name})
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
@@ -160,7 +160,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
+    return {"data": __create(tenant_id=tenant_id, name=data.name)}
 
 
 def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -170,7 +170,7 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes=data.model_dump())}
+                             changes={"name": data.name})}
 
 
 def delete(tenant_id, user_id, project_id):
@@ -253,7 +253,7 @@ def get_capture_status(project_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_capture_status(project_id, changes: schemas.SampleRateSchema):
+def update_capture_status(project_id, changes:schemas.SampleRateSchema):
     sample_rate = changes.rate
     if changes.capture_all:
         sample_rate = 100
