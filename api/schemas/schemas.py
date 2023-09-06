@@ -846,19 +846,21 @@ class ProductAnalyticsSelectedEventType(str, Enum):
 class ProductAnalyticsFilterType(str, Enum):
     start_point = 'startPoint'
     end_point = 'endPoint'
-    exclude_click = 'exclude' + ProductAnalyticsSelectedEventType.click.capitalize()
-    exclude_input = 'exclude' + ProductAnalyticsSelectedEventType.input.capitalize()
-    exclude_location = 'exclude' + ProductAnalyticsSelectedEventType.location.capitalize()
-    exclude_custom_event = 'exclude' + ProductAnalyticsSelectedEventType.custom_event.capitalize()
+    exclude = 'exclude'
 
 
-_ProductAnalyticsExcludes = [ProductAnalyticsFilterType.exclude_click,
-                             ProductAnalyticsFilterType.exclude_input,
-                             ProductAnalyticsFilterType.exclude_location,
-                             ProductAnalyticsFilterType.exclude_custom_event]
+class PathAnalysisSubFilterSchema(BaseModel):
+    is_event: Literal[True] = True
+    value: List[str] = Field(...)
+    type: ProductAnalyticsSelectedEventType = Field(...)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
+
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
 
 class ProductAnalyticsFilter(BaseModel):
+    # The filters attribute will help with startPoint/endPoint/exclude
+    filters: Optional[List[PathAnalysisSubFilterSchema]] = Field(default=[])
     type: Union[ProductAnalyticsFilterType, FilterType]
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadat filters
@@ -888,7 +890,7 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     def __validator(cls, values):
         filters = []
         for f in values.filters:
-            if ProductAnalyticsFilterType.has_value(f.type) and len(f.value) == 0:
+            if ProductAnalyticsFilterType.has_value(f.type) and (f.filters is None or len(f.filters) == 0):
                 continue
             filters.append(f)
         values.filters = filters
@@ -896,18 +898,21 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
         # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
         # start-point's value and end-point's value should not be excluded
         s_e_detected = 0
-        s_e_values = []
-        exclude_values = []
+        s_e_values = {}
+        exclude_values = {}
         for f in values.filters:
             if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
                 s_e_detected += 1
-                s_e_values += f.value
-            elif f.type in _ProductAnalyticsExcludes:
-                exclude_values += f.value
+                for s in f.filters:
+                    s_e_values[s.type] = s_e_values.get(s.type, []) + s.value
+            elif f.type in ProductAnalyticsFilterType.exclude:
+                for s in f.filters:
+                    exclude_values[s.type] = exclude_values.get(s.type, []) + s.value
 
         assert s_e_detected <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
-        for v in exclude_values:
-            assert v not in s_e_values, f"startPoint and endPoint cannot be excluded, value: {v}"
+        for t in exclude_values:
+            for v in t:
+                assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
 
         return values
 
@@ -1321,6 +1326,21 @@ class CardPathAnalysis(__CardSchema):
         values["viewType"] = MetricOtherViewType.other_chart.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
+        return values
+
+    @model_validator(mode="after")
+    def __enforce_metric_value(cls, values):
+        metric_value = []
+        for s in values.series:
+            for f in s.filter.filters:
+                if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
+                    for ff in f.filters:
+                        metric_value.append(ff.type)
+
+        if len(metric_value) > 0:
+            metric_value = remove_duplicate_values(metric_value)
+            values.metric_value = metric_value
+
         return values
 
     @model_validator(mode="after")
