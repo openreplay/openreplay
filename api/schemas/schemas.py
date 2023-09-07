@@ -111,6 +111,7 @@ class EditUserPasswordSchema(BaseModel):
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
+    platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
@@ -458,12 +459,13 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
-    click_ios = "clickIos"
+    click_ios = "tapIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
     custom_ios = "customIos"
     request_ios = "requestIos"
     error_ios = "errorIos"
+    swipe_ios = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
@@ -1557,26 +1559,13 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
     #     return values
 
 
-class IssueFilterType(str, Enum):
-    _selector = "CLICK_SELECTOR"
-
-
-class IssueAdvancedFilter(BaseModel):
-    type: IssueFilterType = Field(default=IssueFilterType._selector)
-    value: List[str] = Field(default=[])
-    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
-
-
 class ClickMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
-    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
-    filters: List[IssueAdvancedFilter] = Field(default=[])
 
 
 class GetHeatmapPayloadSchema(_TimedSchema):
-    startTimestamp: int = Field(default=TimeUTC.now(delta_days=-30))
     url: str = Field(...)
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
@@ -1635,5 +1624,5 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[])
+    conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])

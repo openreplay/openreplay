@@ -24,6 +24,9 @@ ALTER TABLE IF EXISTS events_common.requests
 ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS timezone text NULL;
 
+ALTER TABLE IF EXISTS public.projects
+    ADD COLUMN IF NOT EXISTS platform public.platform NOT NULL DEFAULT 'web';
+
 COMMIT;
 
 \elif :is_next
