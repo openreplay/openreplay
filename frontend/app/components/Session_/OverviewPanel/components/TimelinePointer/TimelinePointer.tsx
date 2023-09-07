@@ -99,7 +99,7 @@ const TimelinePointer = React.memo((props: Props) => {
       <Tooltip
         title={
           <div className="">
-            <b>{'Stack Event'}</b>
+            <b>{item.name || 'Stack Event'}</b>
           </div>
         }
       >
