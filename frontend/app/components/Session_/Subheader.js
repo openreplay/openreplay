@@ -23,6 +23,7 @@ function SubHeader(props) {
     const { player, store } = React.useContext(PlayerContext);
     const { width, height, endTime, location: currentLocation = 'loading...', } = store.get();
 
+
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;
         if (!integrations || !integrations.size) {
@@ -160,4 +161,5 @@ function SubHeader(props) {
 export default connect((state) => ({
     siteId: state.getIn(['site', 'siteId']),
     integrations: state.getIn(['issues', 'list']),
+    modules: state.getIn(['user', 'account', 'modules']) || [],
 }))(observer(SubHeader));

@@ -39,7 +39,7 @@ tracker.reloadFlags()
 `}
         </Highlight>
       </div>
-      <a className={'link'}>Documentation</a>
+      <a className={'link'} href={"https://docs.openreplay.com/en/installation/feature-flags"}>Documentation</a>
     </div>
   );
 }

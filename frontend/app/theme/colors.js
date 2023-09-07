@@ -32,6 +32,7 @@ module.exports = {
   blue: "#366CD9",
   blue2: "#0076FF",
   "active-blue": "#F6F7FF",
+  'active-dark-blue': "#E2E4F6",
   "bg-blue": "#e3e6ff",
   "active-blue-border": "#D0D4F2",
   pink: "#ffb9b9",

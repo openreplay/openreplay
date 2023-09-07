@@ -118,6 +118,7 @@ export interface ISession {
   userID: string;
   userUUID: string;
   userEvents: any[];
+  timezone?: string;
 }
 
 const emptyValues = {
@@ -196,6 +197,7 @@ export default class Session {
   notes: ISession['notes'];
   notesWithEvents: ISession['notesWithEvents'];
   frustrations: Array<IIssue | InjectedEvent>
+  timezone?: ISession['timezone'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;

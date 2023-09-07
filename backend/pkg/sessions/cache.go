@@ -3,8 +3,9 @@ package sessions
 import (
 	"errors"
 	"log"
-	"openreplay/backend/pkg/cache"
 	"time"
+
+	"openreplay/backend/pkg/cache"
 )
 
 type Cache interface {
@@ -33,6 +34,7 @@ func (i *inMemoryCacheImpl) Get(sessionID uint64) (*Session, error) {
 	}
 	session, err := i.redis.Get(sessionID)
 	if err == nil {
+		i.sessions.Set(sessionID, session)
 		return session, nil
 	}
 	if !errors.Is(err, ErrDisabledCache) && err.Error() != "redis: nil" {
@@ -43,7 +45,7 @@ func (i *inMemoryCacheImpl) Get(sessionID uint64) (*Session, error) {
 
 func NewInMemoryCache(redisCache Cache) Cache {
 	return &inMemoryCacheImpl{
-		sessions: cache.New(time.Minute*3, time.Minute*5),
+		sessions: cache.New(time.Minute*3, time.Minute*10),
 		redis:    redisCache,
 	}
 }

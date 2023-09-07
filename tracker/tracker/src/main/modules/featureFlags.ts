@@ -13,7 +13,7 @@ export interface FetchPersistFlagsData {
 }
 
 export default class FeatureFlags {
-  flags: IFeatureFlag[]
+  flags: IFeatureFlag[] = []
   storageKey = '__openreplay_flags'
   onFlagsCb: (flags: IFeatureFlag[]) => void
 

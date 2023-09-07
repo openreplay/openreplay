@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Webhook, { IWebhook } from 'Types/webhook';
 import { webhookService } from 'App/services';
 import { GettingStarted } from './types/gettingStarted';
+import ModuleSettings from 'MOBX/types/moduleSettings';
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
@@ -15,6 +16,7 @@ export default class SettingsStore {
   webhookInst = new Webhook();
   hooksLoading = false;
   gettingStarted: GettingStarted = new GettingStarted();
+  // moduleSettings: ModuleSettings = new ModuleSettings();
 
   constructor() {
     makeAutoObservable(this, {

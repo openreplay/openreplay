@@ -19,8 +19,8 @@ const connector = connect(mapStateToProps);
 
 function SessionsListingSettings(props: Props) {
   return (
-    <div className='p-5'>
-      <PageTitle title={<div>Sessions Listings</div>} />
+    <div className='bg-white rounded-lg p-5'>
+      <PageTitle title={<div>Sessions Listing</div>} />
 
       <div className='flex flex-col mt-4'>
         <div className='max-w-lg'>

@@ -29,6 +29,7 @@
 .fill-blue { fill: $blue }
 .fill-blue2 { fill: $blue2 }
 .fill-active-blue { fill: $active-blue }
+.fill-active-dark-blue { fill: $active-dark-blue }
 .fill-bg-blue { fill: $bg-blue }
 .fill-active-blue-border { fill: $active-blue-border }
 .fill-pink { fill: $pink }
@@ -65,6 +66,7 @@
 .hover-fill-blue:hover svg { fill: $blue }
 .hover-fill-blue2:hover svg { fill: $blue2 }
 .hover-fill-active-blue:hover svg { fill: $active-blue }
+.hover-fill-active-dark-blue:hover svg { fill: $active-dark-blue }
 .hover-fill-bg-blue:hover svg { fill: $bg-blue }
 .hover-fill-active-blue-border:hover svg { fill: $active-blue-border }
 .hover-fill-pink:hover svg { fill: $pink }
@@ -103,6 +105,7 @@
 .color-blue { color: $blue }
 .color-blue2 { color: $blue2 }
 .color-active-blue { color: $active-blue }
+.color-active-dark-blue { color: $active-dark-blue }
 .color-bg-blue { color: $bg-blue }
 .color-active-blue-border { color: $active-blue-border }
 .color-pink { color: $pink }
@@ -141,6 +144,7 @@
 .hover-blue:hover { color: $blue }
 .hover-blue2:hover { color: $blue2 }
 .hover-active-blue:hover { color: $active-blue }
+.hover-active-dark-blue:hover { color: $active-dark-blue }
 .hover-bg-blue:hover { color: $bg-blue }
 .hover-active-blue-border:hover { color: $active-blue-border }
 .hover-pink:hover { color: $pink }
@@ -178,6 +182,7 @@
 .border-blue { border-color: $blue }
 .border-blue2 { border-color: $blue2 }
 .border-active-blue { border-color: $active-blue }
+.border-active-dark-blue { border-color: $active-dark-blue }
 .border-bg-blue { border-color: $bg-blue }
 .border-active-blue-border { border-color: $active-blue-border }
 .border-pink { border-color: $pink }

@@ -19,7 +19,7 @@ export default class ProfileSettings extends React.PureComponent {
     render() {
         const { account, isEnterprise } = this.props;
         return (
-            <div className="p-5">
+            <div className="bg-white rounded-lg p-5">
                 <PageTitle title={<div>Account</div>} />
                 <div className="flex items-center">
                     <div className={styles.left}>

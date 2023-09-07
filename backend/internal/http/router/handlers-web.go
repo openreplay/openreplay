@@ -170,6 +170,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			SessionID:            sessionID,
 			Platform:             "web",
 			Timestamp:            sessionStart.Timestamp,
+			Timezone:             req.Timezone,
 			ProjectID:            uint32(sessionStart.ProjectID),
 			TrackerVersion:       sessionStart.TrackerVersion,
 			RevID:                sessionStart.RevID,

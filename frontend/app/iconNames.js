@@ -35,11 +35,11 @@ export function deviceTypeIcon(deviceType) {
 	}
 }
 
-const ICON_LIST = ['icn_chameleon', 'icn_fox', 'icn_gorilla', 'icn_hippo', 'icn_horse', 'icn_hyena',
-	'icn_kangaroo', 'icn_lemur', 'icn_mammel', 'icn_monkey', 'icn_moose', 'icn_panda',
-	'icn_penguin', 'icn_porcupine', 'icn_quail', 'icn_rabbit', 'icn_rhino', 'icn_sea_horse',
-	'icn_sheep', 'icn_snake', 'icn_squirrel', 'icn_tapir', 'icn_turtle', 'icn_vulture',
-	'icn_wild1', 'icn_wild_bore'];
+const ICON_LIST = [];
+
+for (let i = 1; i <= 22; i++) {
+	ICON_LIST.push(`icn_avatar${ i }`);
+}
 export function avatarIconName(seed = Math.floor(Math.random() * ICON_LIST.length)) {
 	return `avatar/${ICON_LIST[ seed % ICON_LIST.length ]}`;
 }

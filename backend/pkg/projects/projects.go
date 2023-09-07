@@ -3,10 +3,11 @@ package projects
 import (
 	"errors"
 	"log"
+	"time"
+
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
-	"time"
 )
 
 type Projects interface {
@@ -36,6 +37,7 @@ func (c *projectsImpl) GetProject(projectID uint32) (*Project, error) {
 		return proj.(*Project), nil
 	}
 	if proj, err := c.cache.GetByID(projectID); err == nil {
+		c.projectsByID.Set(projectID, proj)
 		return proj, nil
 	}
 	p, err := c.getProject(projectID)
@@ -54,6 +56,7 @@ func (c *projectsImpl) GetProjectByKey(projectKey string) (*Project, error) {
 		return proj.(*Project), nil
 	}
 	if proj, err := c.cache.GetByKey(projectKey); err == nil {
+		c.projectsByKeys.Set(projectKey, proj)
 		return proj, nil
 	}
 	p, err := c.getProjectByKey(projectKey)

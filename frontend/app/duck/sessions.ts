@@ -82,7 +82,7 @@ const initObj = {
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timeLineTooltip: { time: 0, offset: 0, isVisible: false, timeStr: '' },
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false, localTime: '', userTime: '' },
     createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
     fetchFailed: false,
 }
@@ -583,7 +583,7 @@ export function updateNote(note) {
     }
 }
 
-export function setSessionPath(path) {
+export function setSessionPath(path: any) {
     return {
         type: SET_SESSION_PATH,
         path,

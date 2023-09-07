@@ -11,8 +11,8 @@ const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
 interface Props {
   history: any;
-  onLogoutClick: any;
-  className: string;
+  onLogoutClick?: any;
+  className?: string;
   account: any;
 }
 function UserMenu(props: RouteComponentProps<Props>) {
@@ -23,10 +23,9 @@ function UserMenu(props: RouteComponentProps<Props>) {
   };
   return (
     <div
-      style={{ width: '250px' }}
-      className={cn(className, 'rounded absolute right-0 top-0 bg-white border mt-14')}
+
     >
-      <div className="flex items-start p-3 border-b border-dashed hover:bg-active-blue" onClick={onAccountClick}>
+      <div className="flex items-start p-3 border-b border-dashed hover:bg-active-blue cursor-pointer" onClick={onAccountClick}>
         <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0 uppercase">
           {getInitials(account.name)}
         </div>

@@ -26,6 +26,14 @@ const RealReplayTimeConnected: React.FC<{startedAt: number}> = observer(({ start
   return <RealPlayTime sessionStart={startedAt} time={time} tz={tz} />
 })
 
+const RealUserReplayTimeConnected: React.FC<{startedAt: number, sessionTz?: string}> = observer(({ startedAt, sessionTz }) => {
+  if (!sessionTz) return null;
+  const { store } = React.useContext(PlayerContext)
+  const time = store.get().time || 0
+
+  return <RealPlayTime sessionStart={startedAt} time={time} tz={sessionTz} />
+})
+
 ReduxTime.displayName = "ReduxTime";
 
-export { ReduxTime, RealReplayTimeConnected };
+export { ReduxTime, RealReplayTimeConnected, RealUserReplayTimeConnected };
