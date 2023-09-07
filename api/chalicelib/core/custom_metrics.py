@@ -131,7 +131,7 @@ def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_i
     return results
 
 
-def empty(**args):
+def not_supported(**args):
     raise Exception("not supported")
 
 
@@ -179,7 +179,7 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.user_country: __get_table_of_countries,
         schemas.MetricOfTable.visited_url: __get_table_of_urls,
     }
-    return supported.get(data.metric_of, empty)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
@@ -191,48 +191,10 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.table: __get_table_chart,
         schemas.MetricType.click_map: __get_click_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
-        schemas.MetricType.insights: empty,
+        schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_chart
     }
-    return supported.get(data.metric_type, empty)(project_id=project_id, data=data, user_id=user_id)
-
-
-def merged_live(project_id, data: schemas.CardSchema, user_id=None):
-    return get_chart(project_id=project_id, data=data, user_id=user_id)
-    print("---1")
-    if data.is_template:
-        print("---2")
-        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.model_dump())
-    elif __is_funnel_chart(data):
-        print("---3")
-        return __get_funnel_chart(project_id=project_id, data=data)
-    elif __is_errors_list(data):
-        print("---4")
-        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_sessions_list(data):
-        print("---5")
-        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_click_map(data):
-        print("---6")
-        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
-    elif __is_path_analysis(data):
-        print("---7")
-        return __get_path_analysis_chart(project_id=project_id, data=data)
-    elif len(data.series) == 0:
-        print("---8")
-        return []
-    series_charts = __try_live(project_id=project_id, data=data)
-    print("---9")
-    if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
-        print("---10")
-        return series_charts
-    results = [{}] * len(series_charts[0])
-    print("---11")
-    for i in range(len(results)):
-        for j, series_chart in enumerate(series_charts):
-            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-                          data.series[j].name if data.series[j].name else j + 1: series_chart[i]["count"]}
-    return results
+    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def __merge_metric_with_data(metric: schemas.CardSchema,
@@ -260,7 +222,7 @@ def make_chart(project_id, user_id, data: schemas.CardSessionsSchema, metric: sc
         return None
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
 
-    return merged_live(project_id=project_id, data=metric, user_id=user_id)
+    return get_chart(project_id=project_id, data=metric, user_id=user_id)
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
@@ -330,6 +292,30 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
+
+
+def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
+    if len(data.series) == 0:
+        return {"data": []}
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
+    data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+    return {"data": data}
+
+
+def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
+    if data.is_template:
+        return not_supported()
+
+    supported = {
+        schemas.MetricType.timeseries: not_supported,
+        schemas.MetricType.table: not_supported,
+        schemas.MetricType.click_map: not_supported,
+        schemas.MetricType.funnel: __get_funnel_issues,
+        schemas.MetricType.insights: not_supported,
+        schemas.MetricType.pathAnalysis: __get_path_analysis_chart
+    }
+    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):

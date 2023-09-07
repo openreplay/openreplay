@@ -102,13 +102,13 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
 # @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 def try_card(projectId: int, data: schemas.CardSchema = Body(...),
              context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
+    return {"data": custom_metrics.get_chart(project_id=projectId, data=data, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
 # @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(...),
+def try_card_sessions(projectId: int, data: schemas.CardSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
@@ -117,14 +117,9 @@ def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(..
 @app.post('/{projectId}/cards/try/issues', tags=["cards"])
 # @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
-def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchema = Body(...),
+def try_card_funnel_issues(projectId: int, data: schemas.CardSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
-    if len(data.series) == 0:
-        return {"data": []}
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
-    data = funnels.get_issues_on_the_fly_widget(project_id=projectId, data=data.series[0].filter)
-    return {"data": data}
+    return {"data": custom_metrics.get_issues(project_id=projectId, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards', tags=["cards"])
