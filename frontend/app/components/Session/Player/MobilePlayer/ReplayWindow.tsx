@@ -31,24 +31,31 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
   React.useEffect(() => {
     if (playerContext.player.screen.document && videoURL) {
       playerContext.player.pause()
+      const { svg, styles } = mapIphoneModel(userDevice)
+
       const host = document.createElement('div')
       const videoEl = document.createElement('video')
       const sourceEl = document.createElement('source')
       const shell = document.createElement('div')
       const icon = document.createElement('div')
+      const videoContainer = document.createElement('div')
 
-      const { svg, styles } = mapIphoneModel(userDevice)
+      videoContainer.style.borderRadius = '10px'
+      videoContainer.style.overflow = 'hidden'
+      videoContainer.style.margin = styles.margin
+      videoContainer.style.display = 'none'
+
+      videoContainer.appendChild(videoEl)
+
       shell.innerHTML = svg
 
       videoEl.width = styles.screen.width
       videoEl.height = styles.screen.height
-      videoEl.style.margin = styles.margin
       videoEl.style.backgroundColor = '#333'
-      videoEl.style.display = 'none'
 
       Object.assign(icon.style, {
         backgroundColor: '#333',
-        borderRadius: '3px',
+        borderRadius: '10px',
         width: styles.screen.width + 'px',
         height: styles.screen.height + 'px',
         margin: styles.margin,
@@ -78,13 +85,13 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
       sourceEl.setAttribute('src', videoURL)
       sourceEl.setAttribute('type', 'video/mp4')
 
-      host.appendChild(videoEl)
+      host.appendChild(videoContainer)
       host.appendChild(shell)
       host.appendChild(icon)
       videoEl.appendChild(sourceEl)
 
       videoEl.addEventListener("loadeddata", () => {
-        videoEl.style.display = 'block'
+        videoContainer.style.display = 'block'
         icon.style.display = 'none'
         host.removeChild(icon)
         console.log('loaded')
