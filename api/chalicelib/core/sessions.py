@@ -746,8 +746,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_where.append(
                         sh.multi_conditions(f"main.{events.EventType.REQUEST_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.EventType.ERROR_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
+            elif event_type == events.EventType.CRASH_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.CRASH_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",

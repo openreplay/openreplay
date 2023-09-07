@@ -2,13 +2,14 @@ BEGIN;
 -- Schemas and functions definitions:
 CREATE SCHEMA IF NOT EXISTS events_common;
 CREATE SCHEMA IF NOT EXISTS events;
+CREATE SCHEMA IF NOT EXISTS events_ios;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.14.0-ee'
+SELECT 'v1.15.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -952,13 +953,13 @@ $$
 
             CREATE TABLE IF NOT EXISTS public.crashes_ios
             (
-                crash_id   text    NOT NULL PRIMARY KEY,
-                project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-                name       text    NOT NULL,
-                reason     text    NOT NULL,
-                stacktrace text    NOT NULL
+                crash_ios_id text    NOT NULL PRIMARY KEY,
+                project_id   integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+                name         text    NOT NULL,
+                reason       text    NOT NULL,
+                stacktrace   text    NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS crashes_ios_project_id_crash_id_idx ON public.crashes_ios (project_id, crash_id);
+            CREATE INDEX IF NOT EXISTS crashes_ios_project_id_crash_id_idx ON public.crashes_ios (project_id, crash_ios_id);
             CREATE INDEX IF NOT EXISTS crashes_ios_project_id_idx ON public.crashes_ios (project_id);
 
             RAISE NOTICE 'Created missing public schema tables';
@@ -1236,7 +1237,8 @@ $$
     BEGIN
         IF (with to_check (name) as (values ('customs'),
                                             ('issues'),
-                                            ('requests'))
+                                            ('requests'),
+                                            ('crashes'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'events_common'
@@ -1312,6 +1314,17 @@ $$
             CREATE INDEX IF NOT EXISTS requests_path_nn_gin_idx ON events_common.requests USING GIN (path gin_trgm_ops) WHERE path IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
+
+            CREATE TABLE IF NOT EXISTS events_common.crashes
+            (
+                session_id   bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+                timestamp    bigint  NOT NULL,
+                seq_index    integer NOT NULL,
+                crash_ios_id text    NULL REFERENCES public.crashes_ios (crash_ios_id) ON DELETE CASCADE,
+                PRIMARY KEY (session_id, timestamp, seq_index)
+            );
+            CREATE INDEX IF NOT EXISTS crashes_crash_ios_id_timestamp_idx ON events_common.crashes (crash_ios_id, timestamp);
+            CREATE INDEX IF NOT EXISTS crashes_timestamp_idx ON events_common.crashes (timestamp);
         END IF;
     END;
 $$
@@ -1324,7 +1337,6 @@ $$
         IF (with to_check (name) as (values ('views'),
                                             ('taps'),
                                             ('inputs'),
-                                            ('crashes'),
                                             ('swipes'))
             select bool_and(exists(select *
                                    from information_schema.tables t
@@ -1370,18 +1382,6 @@ $$
             CREATE INDEX IF NOT EXISTS inputs_label_gin_idx ON events_ios.inputs USING GIN (label gin_trgm_ops);
             CREATE INDEX IF NOT EXISTS inputs_timestamp_idx ON events_ios.inputs (timestamp);
             CREATE INDEX IF NOT EXISTS inputs_label_session_id_timestamp_idx ON events_ios.inputs (label, session_id, timestamp);
-
-
-            CREATE TABLE IF NOT EXISTS events_ios.crashes
-            (
-                session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-                timestamp  bigint  NOT NULL,
-                seq_index  integer NOT NULL,
-                crash_id   text    NOT NULL REFERENCES public.crashes_ios (crash_id) ON DELETE CASCADE,
-                PRIMARY KEY (session_id, timestamp, seq_index)
-            );
-            CREATE INDEX IF NOT EXISTS crashes_crash_id_timestamp_idx ON events_ios.crashes (crash_id, timestamp);
-            CREATE INDEX IF NOT EXISTS crashes_timestamp_idx ON events_ios.crashes (timestamp);
 
             CREATE TABLE IF NOT EXISTS events_ios.swipes
             (

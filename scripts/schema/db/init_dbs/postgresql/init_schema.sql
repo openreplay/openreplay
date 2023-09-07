@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.14.0'
+SELECT 'v1.15.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -1071,25 +1071,25 @@ $$
 
             CREATE TABLE public.crashes_ios
             (
-                crash_id   text    NOT NULL PRIMARY KEY,
-                project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-                name       text    NOT NULL,
-                reason     text    NOT NULL,
-                stacktrace text    NOT NULL
+                crash_ios_id text    NOT NULL PRIMARY KEY,
+                project_id   integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+                name         text    NOT NULL,
+                reason       text    NOT NULL,
+                stacktrace   text    NOT NULL
             );
-            CREATE INDEX crashes_ios_project_id_crash_id_idx ON public.crashes_ios (project_id, crash_id);
+            CREATE INDEX crashes_ios_project_id_crash_ios_id_idx ON public.crashes_ios (project_id, crash_ios_id);
             CREATE INDEX crashes_ios_project_id_idx ON public.crashes_ios (project_id);
 
-            CREATE TABLE events_ios.crashes
+            CREATE TABLE events_common.crashes
             (
-                session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-                timestamp  bigint  NOT NULL,
-                seq_index  integer NOT NULL,
-                crash_id   text    NOT NULL REFERENCES public.crashes_ios (crash_id) ON DELETE CASCADE,
+                session_id   bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+                timestamp    bigint  NOT NULL,
+                seq_index    integer NOT NULL,
+                crash_ios_id text    NULL REFERENCES public.crashes_ios (crash_ios_id) ON DELETE CASCADE,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
-            CREATE INDEX crashes_crash_id_timestamp_idx ON events_ios.crashes (crash_id, timestamp);
-            CREATE INDEX crashes_timestamp_idx ON events_ios.crashes (timestamp);
+            CREATE INDEX crashes_crash_ios_id_timestamp_idx ON events_common.crashes (crash_ios_id, timestamp);
+            CREATE INDEX crashes_timestamp_idx ON events_common.crashes (timestamp);
 
 
             CREATE TABLE events_ios.swipes
