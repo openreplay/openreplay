@@ -108,16 +108,16 @@ def try_card(projectId: int, data: schemas.CardSchema = Body(...),
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
 # @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-def try_card_sessions(projectId: int, data: schemas.CardSchema = Body(...),
+def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
+    data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
 
 
 @app.post('/{projectId}/cards/try/issues', tags=["cards"])
 # @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
-def try_card_funnel_issues(projectId: int, data: schemas.CardSchema = Body(...),
+def try_card_issues(projectId: int, data: schemas.CardSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.get_issues(project_id=projectId, user_id=context.user_id, data=data)}
 
@@ -175,7 +175,8 @@ def get_card(projectId: int, metric_id: Union[int, str], context: schemas.Curren
 def get_card_sessions(projectId: int, metric_id: int,
                       data: schemas.CardSessionsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    data = custom_metrics.get_sessions_by_card_id(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                                  data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}

@@ -928,9 +928,6 @@ class MobileSignPayloadSchema(BaseModel):
 
 
 class CardSeriesFilterSchema(SearchErrorsSchema):
-    # TODO: transform these if they are used by the UI
-    # startDate: Optional[int] = Field(default=None)
-    # endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
     group_by_user: Literal[False] = False
@@ -1112,7 +1109,7 @@ class CardConfigSchema(BaseModel):
 class __CardSchema(CardSessionsSchema):
     name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
-    default_config: CardConfigSchema = Field(..., alias="config")
+    default_config: CardConfigSchema = Field(default=CardConfigSchema(), alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
 
@@ -1320,7 +1317,6 @@ class CardPathAnalysis(__CardSchema):
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
     density: int = Field(default=4, ge=2, le=10)
 
-    # TODO: testing
     series: List[CardPathAnalysisSchema] = Field(default=[])
 
     @model_validator(mode="before")
