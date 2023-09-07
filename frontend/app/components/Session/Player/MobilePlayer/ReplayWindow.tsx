@@ -44,6 +44,8 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
       videoContainer.style.overflow = 'hidden'
       videoContainer.style.margin = styles.margin
       videoContainer.style.display = 'none'
+      videoContainer.style.width = styles.screen.width + 'px'
+      videoContainer.style.height = styles.screen.height + 'px'
 
       videoContainer.appendChild(videoEl)
 
