@@ -55,6 +55,7 @@ def __transform_journey2(rows, reverse_path=False):
             "links": sorted(links, key=lambda x: x["value"], reverse=True)}
 
 
+JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
     schemas.ProductAnalyticsSelectedEventType.location: {"table": "events.pages", "column": "path"},
     schemas.ProductAnalyticsSelectedEventType.click: {"table": "events.clicks", "column": "label"},
@@ -347,8 +348,9 @@ FROM limited_events
 GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count
 ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
-                  "endTimestamp": data.endTimestamp, "density": density,
+                  "endTimestamp": data.endTimestamp, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   "eventThresholdNumberInGroup": 8 if hide_minor_paths else 6,
+                  "density": density,
                   # TODO: add if data=args is required
                   # **__get_constraint_values(args),
                   **extra_values}
@@ -363,6 +365,7 @@ ORDER BY event_number_in_session, e_value, next_value;"""
             print("----------------------")
         rows = cur.fetchall()
 
+    # return __transform_journey(rows)
     return __transform_journey2(rows=rows, reverse_path=reverse)
 
 #

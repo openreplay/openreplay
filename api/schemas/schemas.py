@@ -111,7 +111,6 @@ class EditUserPasswordSchema(BaseModel):
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
-    platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
@@ -459,13 +458,12 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
-    click_ios = "tapIos"
+    click_ios = "clickIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
     custom_ios = "customIos"
     request_ios = "requestIos"
     error_ios = "errorIos"
-    swipe_ios = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
