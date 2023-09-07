@@ -84,7 +84,10 @@ export default class IOSMessageManager implements IMessageManager {
 
   public updateLists(lists: Partial<InitialLists>) {
     const exceptions = lists.exceptions
-    exceptions?.forEach(e => this.lists.lists.exceptions.insert(e))
+    exceptions?.forEach(e => {
+      this.lists.lists.exceptions.insert(e);
+      this.lists.lists.log.insert(e)
+    })
 
     const eventCount = this.lists.lists.event.count //lists?.event?.length || 0;
     const currentState = this.state.get();

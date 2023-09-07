@@ -51,6 +51,18 @@ function hashString(s: string): number {
   return hash;
 }
 
+interface IosCrash {
+  crashId: string
+  name: string
+  projectId: number
+  reason: string
+  seqIndex: number
+  sessionId: string
+  stacktrace: string
+  time: number
+  timestamp: number
+}
+
 export interface ISession {
   sessionId: string;
   pageTitle: string;
@@ -62,6 +74,7 @@ export interface ISession {
   startedAt: number;
   duration: number;
   events: InjectedEvent[];
+  crashes: IosCrash[]
   stackEvents: StackEvent[];
   metadata: [];
   favorite: boolean;
@@ -98,7 +111,6 @@ export interface ISession {
   userDeviceHeapSize: number;
   userDeviceMemorySize: number;
   errors: SessionError[];
-  crashes?: [];
   socket: string;
   isIOS: boolean;
   revId: string | null;
@@ -220,6 +232,7 @@ export default class Session {
       domURL = [],
       devtoolsURL = [],
       mobsUrl = [],
+      crashes = [],
       notes = [],
       ...session
     } = sessionData;
@@ -293,6 +306,7 @@ export default class Session {
       isMobile,
       startedAt,
       duration,
+      crashes,
       durationSeconds,
       userNumericHash: hashString(
         session.userId ||
@@ -318,6 +332,7 @@ export default class Session {
 
   addEvents(
     sessionEvents: EventData[],
+    crashes: IosCrash[],
     errors: any[],
     issues: any[],
     resources: any[],
@@ -380,6 +395,7 @@ export default class Session {
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;
+    this.crashes = crashes || [];
     return this;
   }
 

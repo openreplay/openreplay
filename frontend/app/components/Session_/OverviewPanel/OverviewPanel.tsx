@@ -59,7 +59,13 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
     }
   }, [issuesList, exceptionsList, eventsList, performanceChartData]);
 
-  return <PanelComponent resources={resources} endTime={endTime} selectedFeatures={selectedFeatures} fetchPresented={fetchPresented} setSelectedFeatures={setSelectedFeatures} />
+  return <PanelComponent
+    resources={resources}
+    endTime={endTime}
+    selectedFeatures={selectedFeatures}
+    fetchPresented={fetchPresented}
+    setSelectedFeatures={setSelectedFeatures}
+  />
 }
 
 function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[] }) {

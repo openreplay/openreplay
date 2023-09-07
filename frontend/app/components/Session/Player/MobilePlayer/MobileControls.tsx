@@ -177,7 +177,6 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         label="EVENTS"
         noIcon
         labelClassName="!text-base font-semibold"
-        hasErrors={stackMarkedCountNow > 0 || showExceptions}
         containerClassName="mx-2"
       />
       <ControlButton

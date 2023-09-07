@@ -29,6 +29,7 @@ function ConsoleRow(props: Props) {
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
+
   return (
     <div
       style={style}

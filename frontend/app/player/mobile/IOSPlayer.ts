@@ -52,17 +52,20 @@ export default class IOSPlayer extends Player {
   }
 
   public updateLists(session: any) {
+    const exceptions = session.crashes.concat(session.errors || [])
     const lists = {
-      event: session.events.map(e => {
+      event: session.events.map((e: Record<string, any>) => {
         if (e.name === 'Click') e.name = 'Touch'
         return e
       }) || [],
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
-      exceptions: session.errors?.map(({ name, ...rest }: any) =>
+      exceptions: exceptions.map(({ name, ...rest }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
+          message: rest.reason,
+          errorId: rest.crashId || rest.errorId,
           ...rest,
         })
       ) || [],

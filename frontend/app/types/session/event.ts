@@ -200,7 +200,7 @@ export class Location extends Event {
   }
 }
 
-export type InjectedEvent = Console | Click | Input | Location;
+export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe;
 
 export default function (event: EventData) {
   if (!event.type) {
