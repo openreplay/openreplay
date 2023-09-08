@@ -58,5 +58,6 @@ type StartIOSSessionResponse struct {
 	UserUUID        string   `json:"userUUID"`
 	BeaconSizeLimit int64    `json:"beaconSizeLimit"`
 	SessionID       string   `json:"sessionID"`
+	ImageQuality    string   `json:"quality"`
 	FrameRate       int      `json:"fps"`
 }
