@@ -78,7 +78,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
               <span>{countries[userCountry]}</span>
               <span className="mx-1 font-bold text-xl">&#183;</span>
               <span>
-                {`${capitalize(userBrowser)}, `}
+                {userBrowser ? `${capitalize(userBrowser)}, ` : ''}
                 {`${/ios/i.test(userOs) ? 'iOS ' : capitalize(userOs) + ','} `}
                 {capitalize(userDevice)}
               </span>
