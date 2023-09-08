@@ -127,6 +127,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
+		FrameRate:       3, // Pull from project settings
 	}, startTime, r.URL.Path, 0)
 }
 
