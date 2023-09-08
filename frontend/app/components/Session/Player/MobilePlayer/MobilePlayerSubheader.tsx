@@ -24,7 +24,7 @@ function SubHeader(props: any) {
 
   const viewportWidth = window.innerWidth;
 
-  const menuItems = [
+  const baseMenuItems = [
     {
       key: 1,
       component: <AutoplayToggle />,
@@ -34,12 +34,10 @@ function SubHeader(props: any) {
       component: <Bookmark noMargin sessionId={props.sessionId} />,
     },
   ]
-  if (viewportWidth > 1400) {
-    menuItems.push({
-      key: 3,
-      component: <NotePopup />,
-    })
-  }
+  const menuItems = viewportWidth > 1400 ? baseMenuItems : baseMenuItems.concat({
+    key: 3,
+    component: <NotePopup />,
+  })
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
