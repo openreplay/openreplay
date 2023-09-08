@@ -1616,3 +1616,9 @@ class FeatureFlagSchema(BaseModel):
     is_active: Optional[bool] = Field(default=True)
     conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])
+
+
+class ModuleStatus(BaseModel):
+    module: Literal["assist", "notes", "bug-reports",
+    "offline-recordings", "alerts"] = Field(..., description="Possible values: notes, bugs, live")
+    status: bool = Field(...)
