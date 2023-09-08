@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Drawer } from 'antd';
+import { Drawer, Tag } from 'antd';
 import cn from 'classnames';
 import {
   Loader,
@@ -105,7 +105,7 @@ const Sites = ({
           <span className="ml-2">{project.host}</span>
           <div className={'ml-4 flex items-center gap-2'}>
             <Icon color={'main'} name={project.platform === 'web' ? 'browser/browser' : 'mobile'} />
-            {project.platform === 'web' ? null : <div className="rounded border border-green px-2 text-green">iOS BETA</div>}
+            {project.platform === 'web' ? null : <Tag color="error">iOS BETA</Tag>}
           </div>
         </div>
       </div>

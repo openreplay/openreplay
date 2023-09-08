@@ -9,6 +9,7 @@ import ItemMenu from 'Components/Session_/components/HeaderMenu';
 import { observer } from 'mobx-react-lite';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
+import { Tag } from 'antd'
 
 function SubHeader(props: any) {
 
@@ -42,7 +43,7 @@ function SubHeader(props: any) {
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
-        <div className="rounded border border-green px-2 text-green">iOS BETA</div>
+        <Tag color="error">iOS BETA</Tag>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
