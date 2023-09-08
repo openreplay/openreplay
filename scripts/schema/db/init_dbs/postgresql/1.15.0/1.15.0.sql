@@ -105,6 +105,8 @@ CREATE INDEX IF NOT EXISTS swipes_label_gin_idx ON events_ios.swipes USING GIN (
 CREATE INDEX IF NOT EXISTS swipes_timestamp_idx ON events_ios.swipes (timestamp);
 CREATE INDEX IF NOT EXISTS swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
 
+ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'tap_rage';
+
 COMMIT;
 
 \elif :is_next

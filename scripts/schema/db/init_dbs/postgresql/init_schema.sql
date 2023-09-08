@@ -301,6 +301,7 @@ $$
 
             CREATE TYPE issue_type AS ENUM (
                 'click_rage',
+                'tap_rage',
                 'dead_click',
                 'excessive_scrolling',
                 'bad_request',

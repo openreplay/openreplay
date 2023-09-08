@@ -551,6 +551,8 @@ class IssueType(str, Enum):
     custom = 'custom'
     js_exception = 'js_exception'
     mouse_thrashing = 'mouse_thrashing'
+    # IOS
+    tap_rage = 'tap_rage'
 
 
 class MetricFormatType(str, Enum):
