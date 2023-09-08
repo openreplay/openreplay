@@ -181,7 +181,7 @@ export const camelCased = (val) =>
   });
 
 export function capitalize(s: string) {
-  if (!s || s.length === 0) return s;
+  if (!s || !s.length) return s;
   return s[0].toUpperCase() + s.slice(1);
 }
 
