@@ -111,11 +111,12 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *IOSCrash:
-		log.Printf("iOS Crash: %+v", m)
 		if err := s.pg.InsertIOSCrash(session.SessionID, session.ProjectID, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
+	case *IOSIssueEvent:
+		log.Printf("iOS Issue event: %+v", m)
 	}
 	return nil
 }

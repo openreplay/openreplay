@@ -7,6 +7,7 @@ import (
 	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/handlers/ios"
 	"openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -35,6 +36,7 @@ func main() {
 			&web.NetworkIssueDetector{},
 			&web.PerformanceAggregator{},
 			web.NewAppCrashDetector(),
+			&ios.TapRageDetector{},
 		}
 	}
 
@@ -44,6 +46,7 @@ func main() {
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
 		},
 		messages.NewMessageIterator(eventBuilder.HandleMessage, nil, true),
 		false,

@@ -119,3 +119,14 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 	}
 	return nil
 }
+
+type IOSCrash struct {
+	Timestamp  uint64 `json:"timestamp"`
+	Name       string `json:"name"`
+	Reason     string `json:"reason"`
+	Stacktrace string `json:"stacktrace"`
+}
+
+type WebCrash struct {
+	Timestamp uint64 `json:"timestamp"`
+}
