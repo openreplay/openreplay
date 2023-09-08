@@ -88,6 +88,9 @@ export default class IOSMessageManager implements IMessageManager {
       this.lists.lists.exceptions.insert(e);
       this.lists.lists.log.insert(e)
     })
+    lists.frustrations?.forEach(f => {
+      this.lists.lists.frustrations.insert(f);
+    })
 
     const eventCount = this.lists.lists.event.count //lists?.event?.length || 0;
     const currentState = this.state.get();

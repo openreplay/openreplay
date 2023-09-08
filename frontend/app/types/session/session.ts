@@ -373,11 +373,11 @@ export default class Session {
           // @ts-ignore
           return ev.hesitation > 1000
         }
-        return ev.type === TYPES.CLICKRAGE
+        return ev.type === TYPES.CLICKRAGE || ev.type === TYPES.TAPRAGE
       }
     )
 
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE)
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(

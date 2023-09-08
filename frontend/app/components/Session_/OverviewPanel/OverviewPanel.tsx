@@ -34,15 +34,13 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
 
   const fetchPresented = fetchList.length > 0;
 
-  const resources: any = React.useMemo(() => {
-    return {
+  const resources = {
       NETWORK: fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow),
       ERRORS: exceptionsList,
       EVENTS: eventsList,
       PERFORMANCE: performanceChartData,
       FRUSTRATIONS: frustrationsList,
-    };
-  }, [dataLoaded]);
+  };
 
   useEffect(() => {
     if (dataLoaded) {
@@ -53,19 +51,22 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
       exceptionsList.length > 0 ||
       eventsList.length > 0 ||
       issuesList.length > 0 ||
-      performanceChartData.length > 0
+      performanceChartData.length > 0 ||
+      frustrationsList.length > 0
     ) {
       setDataLoaded(true);
     }
-  }, [issuesList, exceptionsList, eventsList, performanceChartData]);
+  }, [issuesList, exceptionsList, eventsList, performanceChartData, frustrationsList]);
 
-  return <PanelComponent
-    resources={resources}
-    endTime={endTime}
-    selectedFeatures={selectedFeatures}
-    fetchPresented={fetchPresented}
-    setSelectedFeatures={setSelectedFeatures}
-  />
+  return (
+    <PanelComponent
+      resources={resources}
+      endTime={endTime}
+      selectedFeatures={selectedFeatures}
+      fetchPresented={fetchPresented}
+      setSelectedFeatures={setSelectedFeatures}
+    />
+  )
 }
 
 function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[] }) {

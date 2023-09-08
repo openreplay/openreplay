@@ -71,6 +71,7 @@ export default class IOSPlayer extends Player {
         })
       ) || [],
     }
+
     return this.messageManager.updateLists(lists)
   }
 

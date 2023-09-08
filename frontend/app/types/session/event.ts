@@ -4,12 +4,13 @@ const INPUT = 'INPUT';
 const LOCATION = 'LOCATION';
 const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
+const TAPRAGE = 'tap_rage'
 const IOS_VIEW = 'VIEW';
 
 const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
 
-export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE };
+export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE, TAPRAGE };
 
 export type EventType =
   | typeof CONSOLE
