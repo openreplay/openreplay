@@ -45,8 +45,8 @@ func (h *TapRageDetector) Build() Message {
 		event := &IOSIssueEvent{
 			Type:          "tap_rage",
 			ContextString: h.lastLabel,
+			Timestamp:     h.firstInARawTimestamp,
 		}
-		event.Timestamp = h.firstInARawTimestamp
 		event.Index = h.firstInARawSeqIndex // Associated Index/ MessageID ?
 		return event
 	}

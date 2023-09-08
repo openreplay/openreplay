@@ -98,8 +98,8 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 	crashID := hashid.IOSCrashID(projectID, crash)
 
 	if err := conn.Pool.Exec(`
-		INSERT INTO crashes_ios (
-			project_id, crash_id, name, reason, stacktrace
+		INSERT INTO public.crashes_ios (
+			project_id, crash_ios_id, name, reason, stacktrace
 		) VALUES (
 			$1, $2, $3, $4, $5
 		) ON CONFLICT DO NOTHING`,
@@ -108,8 +108,8 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 		return err
 	}
 	if err := conn.Pool.Exec(`
-		INSERT INTO events_ios.crashes (
-			session_id, timestamp, seq_index, crash_id
+		INSERT INTO events_common.crashes (
+			session_id, timestamp, seq_index, crash_ios_id
 		) VALUES (
 			$1, $2, $3, $4
 		)`,
