@@ -14,7 +14,7 @@ import {
 import { error as errorRoute } from 'App/routes';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
-import {MobilePlayerContext, PlayerContext} from 'App/components/Session/playerContext';
+import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
 interface IProps {
@@ -25,7 +25,7 @@ interface IProps {
 
 function MobileExceptionsCont() {
   const { player, store } = React.useContext(MobilePlayerContext);
-  const {  exceptionsList: exceptions = [] } = store.get();
+  const { exceptionsList: exceptions = [] } = store.get();
   const [filter, setFilter] = React.useState('');
 
   const onFilterChange = ({ target: { value } }: any) => setFilter(value);

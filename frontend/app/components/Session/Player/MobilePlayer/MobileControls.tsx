@@ -176,7 +176,7 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
           onClick={() => toggleBottomTools(EXCEPTIONS)}
           active={bottomBlock === EXCEPTIONS}
           hasErrors={showExceptions}
-          label="EVENTS"
+          label="EXCEPTIONS"
           noIcon
           labelClassName="!text-base font-semibold"
           containerClassName="mx-2"

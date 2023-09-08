@@ -64,6 +64,7 @@ export default class IOSPlayer extends Player {
         Log({
           level: LogLevel.ERROR,
           value: name,
+          name,
           message: rest.reason,
           errorId: rest.crashId || rest.errorId,
           ...rest,
