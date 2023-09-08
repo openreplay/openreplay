@@ -116,7 +116,10 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
 	case *IOSIssueEvent:
-		log.Printf("iOS Issue event: %+v", m)
+		if err = s.pg.InsertIOSIssueEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m.Type))
 	}
 	return nil
 }
@@ -138,7 +141,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err != nil {
 			return err
 		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m))
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m.Type))
 	case *CustomIssue:
 		ie := &IssueEvent{
 			Type:          "custom",
@@ -151,7 +154,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertIssueEvent(session, ie); err != nil {
 			return err
 		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(ie))
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(ie.Type))
 	case *UserID:
 		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err

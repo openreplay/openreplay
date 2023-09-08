@@ -120,6 +120,22 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 	return nil
 }
 
+func (conn *Conn) InsertIOSIssueEvent(sess *sessions.Session, e *messages.IOSIssueEvent) error {
+	issueID := hashid.IOSIssueID(sess.ProjectID, e)
+	payload := &e.Payload
+	if *payload == "" || *payload == "{}" {
+		payload = nil
+	}
+
+	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
+		log.Printf("insert web issue err: %s", err)
+	}
+	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.Index), payload); err != nil {
+		log.Printf("insert web issue event err: %s", err)
+	}
+	return nil
+}
+
 type IOSCrash struct {
 	Timestamp  uint64 `json:"timestamp"`
 	Name       string `json:"name"`
