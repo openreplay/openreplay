@@ -12,6 +12,7 @@ import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
 import { IFRAME } from 'App/constants/storageKeys';
+import { capitalize } from "App/utils";
 
 function UserCard({ className, request, session, width, height, similarSessions, loading }) {
     const { settingsStore } = useStore();
@@ -124,10 +125,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
         </div>
       </div>
     );
-}
-
-function capitalize(str) {
-    return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
 
 const component = React.memo(connect((state) => ({ session: state.getIn(['sessions', 'current']) }))(UserCard));
