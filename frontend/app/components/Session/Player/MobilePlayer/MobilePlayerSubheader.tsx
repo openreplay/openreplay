@@ -21,14 +21,33 @@ function SubHeader(props: any) {
     return integrations.some((i: Record<string, any>) => i.token);
   }, [props.integrations]);
 
+  const viewportWidth = window.innerWidth;
+
+  const menuItems = [
+    {
+      key: 1,
+      component: <AutoplayToggle />,
+    },
+    {
+      key: 2,
+      component: <Bookmark noMargin sessionId={props.sessionId} />,
+    },
+  ]
+  if (viewportWidth > 1400) {
+    menuItems.push({
+      key: 3,
+      component: <NotePopup />,
+    })
+  }
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
+        <div className="rounded border border-green px-2 text-green">iOS BETA</div>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
-          <NotePopup />
+          {viewportWidth > 1400 ? <NotePopup /> : null}
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
           <SharePopup
             entity="sessions"
@@ -43,16 +62,7 @@ function SubHeader(props: any) {
             }
           />
           <ItemMenu
-            items={[
-              {
-                key: 1,
-                component: <AutoplayToggle />,
-              },
-              {
-                key: 2,
-                component: <Bookmark noMargin sessionId={props.sessionId} />,
-              },
-            ]}
+            items={menuItems}
           />
 
           <div>

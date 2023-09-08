@@ -37,6 +37,17 @@
   box-shadow: 0 0 30px 0 rgba(0,0,0,0.2); /* 0 0 70px 30px rgba(0,0,0,0.1); */
   margin-top: -20px;
 }
+.mobileScreenFullview {
+  user-select: none;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  background-color: rgb(223, 223, 223);
+  border-radius: 70px;
+  box-shadow: 0 0 30px 0 rgba(0,0,0,0.2);
+  margin-top: 0!important;
+}
 
 .mobileIframe {
   position: absolute;

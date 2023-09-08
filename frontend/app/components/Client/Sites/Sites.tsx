@@ -94,42 +94,34 @@ const Sites = ({
   const ProjectItem = ({ project }: { project: Project }) => (
     <div
       key={project.id}
-      className='grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center px-5 py-3'
+      className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center px-5 py-3"
     >
-      <div className='col-span-4'>
-        <div className='flex items-center'>
-          <div className='relative flex items-center justify-center w-10 h-10'>
-            <div
-              className='absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx' />
-            <div className='text-lg uppercase color-tealx'>
-              {getInitials(project.name)}
-            </div>
+      <div className="col-span-4">
+        <div className="flex items-center">
+          <div className="relative flex items-center justify-center w-10 h-10">
+            <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
+            <div className="text-lg uppercase color-tealx">{getInitials(project.name)}</div>
           </div>
-          <span className='ml-2'>{project.host}</span>
-          <div className={'ml-4'}>
+          <span className="ml-2">{project.host}</span>
+          <div className={'ml-4 flex items-center gap-2'}>
             <Icon color={'main'} name={project.platform === 'web' ? 'browser/browser' : 'mobile'} />
+            {project.platform === 'web' ? null : <div className="rounded border border-green px-2 text-green">iOS BETA</div>}
           </div>
         </div>
       </div>
-      <div className='col-span-3'>
-        <ProjectKey
-          value={project.projectKey}
-          tooltip='Project key copied to clipboard'
-        />
+      <div className="col-span-3">
+        <ProjectKey value={project.projectKey} tooltip="Project key copied to clipboard" />
       </div>
-      <div className='col-span-2'>
-        <Button
-          variant='text-primary'
-          onClick={() => captureRateClickHandler(project)}
-        >
+      <div className="col-span-2">
+        <Button variant="text-primary" onClick={() => captureRateClickHandler(project)}>
           {project.sampleRate}%
         </Button>
       </div>
-      <div className='col-span-3 justify-self-end flex items-center'>
-        <div className='mr-4'>
+      <div className="col-span-3 justify-self-end flex items-center">
+        <div className="mr-4">
           <InstallButton site={project} />
         </div>
-        <div className='invisible group-hover:visible'>
+        <div className="invisible group-hover:visible">
           <EditButton isAdmin={isAdmin} onClick={() => init(project)} />
         </div>
       </div>

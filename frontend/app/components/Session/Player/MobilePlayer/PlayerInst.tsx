@@ -8,17 +8,14 @@ import {
   CONSOLE,
   NETWORK,
   STACKEVENTS,
-  STORAGE,
-  PROFILER,
   PERFORMANCE,
-  GRAPHQL,
   EXCEPTIONS,
   OVERVIEW,
   fullscreenOff,
 } from 'Duck/components/player';
-import {MobileNetworkPanel} from 'Shared/DevTools/NetworkPanel';
+import { MobileNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import { MobilePerformance} from 'Components/Session_/Performance';
-import Exceptions from 'Components/Session_/Exceptions/Exceptions';
+import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
 import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
@@ -73,6 +70,9 @@ function Player(props: IProps) {
     playerContext.player.scale();
   }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
 
+  React.useEffect(() => {
+    playerContext.player.addFullscreenBoundary(props.fullscreen || fullView);
+  }, [props.fullscreen, fullView])
   if (!playerContext.player) return null;
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
@@ -95,6 +95,7 @@ function Player(props: IProps) {
           {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
           {bottomBlock === NETWORK && <MobileNetworkPanel />}
           {bottomBlock === PERFORMANCE && <MobilePerformance />}
+          {bottomBlock === EXCEPTIONS && <MobileExceptions />}
         </div>
       )}
       {!fullView ? (

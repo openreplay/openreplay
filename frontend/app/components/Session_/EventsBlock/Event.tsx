@@ -170,6 +170,7 @@ const Event: React.FC<Props> = ({
 
   const isFrustration = isFrustrationEvent(event);
 
+  const mobileTypes = [TYPES.TOUCH, TYPES.SWIPE]
   return (
     <div
       ref={wrapperRef}
@@ -187,7 +188,8 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION
+        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION,
+        ['border-0 border-l-0 ml-0']: mobileTypes.includes(event.type),
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}

@@ -22,7 +22,7 @@ import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
 import GraphQL from 'Components/Session_/GraphQL';
-import Exceptions from 'Components/Session_/Exceptions/Exceptions';
+import { Exceptions } from 'Components/Session_/Exceptions/Exceptions';
 import Inspector from 'Components/Session_/Inspector';
 import Controls from 'Components/Session_/Player/Controls';
 import Overlay from 'Components/Session_/Player/Overlay';

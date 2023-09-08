@@ -103,6 +103,14 @@ export default class IOSPlayer extends Player {
     this.customConstrains = { width, height }
   }
 
+  addFullscreenBoundary = (isFullscreen?: boolean) => {
+    if (isFullscreen) {
+      this.screen?.addFullscreenBoundary()
+    } else {
+      this.screen?.addMobileStyles()
+    }
+  }
+
 
   clean = () => {
     super.clean()

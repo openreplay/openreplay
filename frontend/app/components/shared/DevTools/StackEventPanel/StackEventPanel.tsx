@@ -15,6 +15,11 @@ import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 
+const mapNames = (type: string) => {
+  if (type === 'openreplay') return 'OpenReplay';
+  return type
+}
+
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
 const TAB_KEYS = [ALL, ...typeList] as const;
@@ -141,7 +146,7 @@ function EventsPanel({
       <BottomBlock.Header>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Stack Events</span>
-          <Tabs tabs={tabs} active={activeTab} onClick={onTabClick} border={false} />
+          <Tabs renameTab={mapNames} tabs={tabs} active={activeTab} onClick={onTabClick} border={false} />
         </div>
         <Input
           className="input-small h-8"

@@ -89,6 +89,10 @@ export default class Screen {
    this.screen.className = styles.mobileScreen
   }
 
+  addFullscreenBoundary() {
+    this.screen.className = styles.mobileScreenFullview
+  }
+
   clean() {
     this.iframe?.remove?.();
     this.overlay?.remove?.();

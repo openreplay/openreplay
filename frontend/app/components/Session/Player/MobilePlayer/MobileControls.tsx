@@ -10,7 +10,7 @@ import {
   OVERVIEW,
   toggleBottomBlock,
   changeSkipInterval,
-  CONSOLE, STACKEVENTS, NETWORK, PERFORMANCE,
+  CONSOLE, STACKEVENTS, NETWORK, PERFORMANCE, EXCEPTIONS,
 } from 'Duck/components/player';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -170,6 +170,18 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         labelClassName="!text-base font-semibold"
         containerClassName="mx-2"
       />
+      {showExceptions ?
+        <ControlButton
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(EXCEPTIONS)}
+          active={bottomBlock === EXCEPTIONS}
+          hasErrors={showExceptions}
+          label="EVENTS"
+          noIcon
+          labelClassName="!text-base font-semibold"
+          containerClassName="mx-2"
+        />
+      : null}
       <ControlButton
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(STACKEVENTS)}
@@ -180,13 +192,13 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         containerClassName="mx-2"
       />
       <ControlButton
-          disabled={messagesLoading}
-          onClick={() => toggleBottomTools(PERFORMANCE)}
-          active={bottomBlock === PERFORMANCE}
-          label="PERFORMANCE"
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
+        disabled={messagesLoading}
+        onClick={() => toggleBottomTools(PERFORMANCE)}
+        active={bottomBlock === PERFORMANCE}
+        label="PERFORMANCE"
+        noIcon
+        labelClassName="!text-base font-semibold"
+        containerClassName="mx-2"
       />
     </>
   );
