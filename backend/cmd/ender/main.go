@@ -205,8 +205,7 @@ func main() {
 				sessionEndGenerator.Enable()
 			}
 		default:
-			// TODO: will trigger on every tick
-			if memoryManager.HasFreeMemory() {
+			if !memoryManager.HasFreeMemory() {
 				continue
 			}
 			if err := consumer.ConsumeNext(); err != nil {
