@@ -1,20 +1,10 @@
-FROM golang:1.19-alpine3.18 AS prepare
-
-RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash cyrus-sasl cyrus-sasl-gssapiv2 krb5
-
-# Manually install latest librdkafka
-RUN git clone https://github.com/edenhill/librdkafka.git
-WORKDIR librdkafka
-RUN ./configure --prefix /usr --install-deps
-RUN make
-RUN make install
+FROM openreplayalexander/golang_with_librdkafka:v1-release AS prepare
 
 WORKDIR /root
 
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
-
 
 FROM prepare AS build
 COPY cmd cmd
@@ -25,18 +15,9 @@ ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 
-FROM alpine AS entrypoint
+FROM openreplayalexander/alpine_with_librdkafka:v1-release AS entrypoint
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
-
-RUN apk add --no-cache git ca-certificates cyrus-sasl cyrus-sasl-gssapiv2 krb5
-
-# Manually install latest librdkafka
-RUN git clone https://github.com/edenhill/librdkafka.git
-WORKDIR librdkafka
-RUN ./configure --prefix /usr --install-deps
-RUN make
-RUN make install
 
 RUN adduser -u 1001 openreplay -D
 
