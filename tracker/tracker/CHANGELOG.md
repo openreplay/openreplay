@@ -1,3 +1,7 @@
+# 9.0.8
+
+- added slight delay to iframe handler (rapid updates of stacked frames used to break player)
+
 # 9.0.7
 
 - fix for `getSessionURL` method
