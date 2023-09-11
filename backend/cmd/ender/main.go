@@ -93,6 +93,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
+			time.Sleep(time.Minute * 10)
 			failedSessionEnds := make(map[uint64]uint64)
 			duplicatedSessionEnds := make(map[uint64]uint64)
 			negativeDuration := make(map[uint64]uint64)
@@ -205,7 +206,7 @@ func main() {
 				sessionEndGenerator.Enable()
 			}
 		default:
-			if memoryManager.HasFreeMemory() {
+			if !memoryManager.HasFreeMemory() {
 				continue
 			}
 			if err := consumer.ConsumeNext(); err != nil {
