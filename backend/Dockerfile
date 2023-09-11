@@ -1,6 +1,13 @@
 FROM golang:1.19-alpine3.18 AS prepare
 
-RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
+RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash cyrus-sasl cyrus-sasl-gssapiv2 krb5
+
+# Manually install latest librdkafka
+RUN git clone https://github.com/edenhill/librdkafka.git
+WORKDIR librdkafka
+RUN ./configure --prefix /usr --install-deps
+RUN make
+RUN make install
 
 WORKDIR /root
 
@@ -22,7 +29,15 @@ FROM alpine AS entrypoint
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
-RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
+RUN apk add --no-cache git ca-certificates cyrus-sasl cyrus-sasl-gssapiv2 krb5
+
+# Manually install latest librdkafka
+RUN git clone https://github.com/edenhill/librdkafka.git
+WORKDIR librdkafka
+RUN ./configure --prefix /usr --install-deps
+RUN make
+RUN make install
+
 RUN adduser -u 1001 openreplay -D
 
 ARG SERVICE_NAME
