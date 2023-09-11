@@ -205,7 +205,7 @@ func main() {
 				sessionEndGenerator.Enable()
 			}
 		default:
-			if !memoryManager.HasFreeMemory() {
+			if memoryManager.HasFreeMemory() {
 				continue
 			}
 			if err := consumer.ConsumeNext(); err != nil {
