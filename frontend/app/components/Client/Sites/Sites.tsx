@@ -98,13 +98,11 @@ const Sites = ({
     >
       <div className="col-span-4">
         <div className="flex items-center">
-          <div className="relative flex items-center justify-center w-10 h-10">
-            <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-            <div className="text-lg uppercase color-tealx">{getInitials(project.name)}</div>
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-tealx-light">
+            <Icon color={'tealx'} size={18} name={project.platform === 'web' ? 'browser/browser' : 'mobile'} />
           </div>
           <span className="ml-2">{project.host}</span>
           <div className={'ml-4 flex items-center gap-2'}>
-            <Icon color={'main'} name={project.platform === 'web' ? 'browser/browser' : 'mobile'} />
             {project.platform === 'web' ? null : <Tag color="error">iOS BETA</Tag>}
           </div>
         </div>

@@ -14,7 +14,7 @@ import { observer } from 'mobx-react-lite';
 import {MobilePlayerContext, PlayerContext} from 'App/components/Session/playerContext';
 
 function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, any>[] }) {
-  const { store } = React.useContext(MobilePlayerContext)
+  const { store, player } = React.useContext(MobilePlayerContext)
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -57,6 +57,10 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
       setDataLoaded(true);
     }
   }, [issuesList, exceptionsList, eventsList, performanceChartData, frustrationsList]);
+
+  React.useEffect(() => {
+    player.scale()
+  }, [selectedFeatures])
 
   return (
     <PanelComponent
