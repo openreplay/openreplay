@@ -9,7 +9,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 
-        "github.com/confluentinc/confluent-kafka-go/v2/kafka"	
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/pkg/errors"
 )
 
@@ -41,6 +41,7 @@ func NewConsumer(
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
+		"go.logs.channel.enable":          true,
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {
