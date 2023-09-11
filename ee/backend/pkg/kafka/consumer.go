@@ -9,7 +9,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+        "github.com/confluentinc/confluent-kafka-go/v2/kafka"	
 	"github.com/pkg/errors"
 )
 
