@@ -3,6 +3,7 @@ package kafka
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"openreplay/backend/pkg/env"
@@ -94,7 +95,12 @@ func NewConsumer(
 	go func() {
 		for {
 			logMsg := <-consumer.c.Logs()
-			log.Printf("Kafka consumer log, name: %s, tag: %s, level: %d, msg: %s", logMsg.Name, logMsg.Tag, logMsg.Level, logMsg.Message)
+			if logMsg.Tag == "MAXPOLL" && strings.Contains(logMsg.Message, "leaving group") {
+				// By some reason service logic took too much time and was kicked out from the group
+				log.Printf("Kafka consumer left the group, exiting...")
+				os.Exit(1)
+			}
+			log.Printf("Kafka consumer log: %s", logMsg.String())
 		}
 	}()
 	return consumer
