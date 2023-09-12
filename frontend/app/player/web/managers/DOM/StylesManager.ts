@@ -1,16 +1,13 @@
 import type Screen from '../../Screen/Screen';
-import type { CssInsertRule, CssDeleteRule } from '../../messages';
 import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage'
-
-type CSSRuleMessage = CssInsertRule | CssDeleteRule;
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
 function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
   const ss = Object.values(doc.styleSheets).find(s => s.ownerNode === node);
   if (!ss || !ss.hasOwnProperty('rules')) { return; }
-  for(let i = 0; i < ss.rules.length; i++){
-    const r = ss.rules[i]
+  for(let i = 0; i < ss.cssRules.length; i++){
+    const r = ss.cssRules[i]
     if (r instanceof CSSStyleRule) {
       r.selectorText = replaceCSSPseudoclasses(r.selectorText)
     }
