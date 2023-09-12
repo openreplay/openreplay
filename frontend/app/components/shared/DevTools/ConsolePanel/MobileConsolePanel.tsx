@@ -1,18 +1,18 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
-import { MobilePlayerContext } from 'App/components/Session/playerContext';
+import { IOSPlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -25,13 +25,17 @@ const LEVEL_TAB = {
   [LogLevel.WARN]: WARNINGS,
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
-} as const
+} as const;
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
 
 function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
-  return s.split('\n').map((line, i) => <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>{line}</div>);
+  return s.split('\n').map((line, i) => (
+    <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
+      {line}
+    </div>
+  ));
 }
 
 const getIconProps = (level: any) => {
@@ -56,60 +60,61 @@ const getIconProps = (level: any) => {
   return null;
 };
 
-
 const INDEX_KEY = 'console';
 
-function MobileConsolePanel({ isLive }: { isLive: boolean }) {
+function MobileConsolePanel() {
   const {
     sessionStore: { devTools },
-  } = useStore()
+  } = useStore();
 
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
-  const [ isDetailsModalActive, setIsDetailsModalActive ] = useState(false);
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } = React.useContext(MobilePlayerContext)
-  const jump = (t: number) => player.jump(t)
+  const { player, store } = React.useContext<IOSPlayerContext>(MobilePlayerContext);
+  const jump = (t: number) => player.jump(t);
 
-  const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
+  const {
+    logList,
+    // exceptionsList,
+    logListNow,
+    exceptionsListNow,
+  } = store.get();
 
-  const list = isLive ?
-    useMemo(() => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
-      [logListNow.length, exceptionsListNow.length]
-    ) as ILog[]
-    : useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-      [ logList.length, exceptionsList.length ],
-    ) as ILog[]
-  let filteredList = useRegExListFilterMemo(list, l => l.value, filter)
-  filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
+  const list = logList as ILog[];
+  // useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
+  //   [ logList.length, exceptionsList.length ],
+  // ) as ILog[]
+  let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
+  filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
   React.useEffect(() => {
     setTimeout(() => {
       cache.clearAll();
       _list.current?.recomputeRowHeights();
-    }, 0)
-  }, [activeTab, filter])
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
-  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
+    }, 0);
+  }, [activeTab, filter]);
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) =>
+    devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
-  const [
-    timeoutStartAutoscroll,
-    stopAutoscroll,
-  ] = useAutoscroll(
+  const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
     getLastItemTime(logListNow, exceptionsListNow),
     activeIndex,
-    index => devTools.update(INDEX_KEY, { index })
-  )
-  const onMouseEnter = stopAutoscroll
+    (index) => devTools.update(INDEX_KEY, { index })
+  );
+  const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
-    if (isDetailsModalActive) { return }
-    timeoutStartAutoscroll()
-  }
+    if (isDetailsModalActive) {
+      return;
+    }
+    timeoutStartAutoscroll();
+  };
 
   const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
@@ -119,23 +124,21 @@ function MobileConsolePanel({ isLive }: { isLive: boolean }) {
     }
   }, [activeIndex]);
 
-  const cache = useCellMeasurerCache()
+  const cache = useCellMeasurerCache();
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
-    showModal(
-      <ErrorDetailsModal errorId={log.errorId} />,
-      {
-        right: true,
-        width: 1200,
-        onClose: () => {
-          setIsDetailsModalActive(false)
-          timeoutStartAutoscroll()
-        }
-      });
+    showModal(<ErrorDetailsModal errorId={log.errorId} />, {
+      right: true,
+      width: 1200,
+      onClose: () => {
+        setIsDetailsModalActive(false);
+        timeoutStartAutoscroll();
+      },
+    });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
-    stopAutoscroll()
-  }
+    stopAutoscroll();
+  };
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
@@ -155,8 +158,8 @@ function MobileConsolePanel({ isLive }: { isLive: boolean }) {
           </div>
         )}
       </CellMeasurer>
-    )
-  }
+    );
+  };
 
   return (
     <BottomBlock

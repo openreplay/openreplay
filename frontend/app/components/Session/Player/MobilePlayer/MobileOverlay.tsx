@@ -56,11 +56,6 @@ const menuItems: MenuProps['items'] = [
     label: 'Events',
     icon: <Icon name={'filetype-js'} size={14} />,
   },
-  {
-    key: ItemKey.State,
-    label: 'State',
-    icon: <Icon name={'redux'} size={14} />,
-  },
   { type: 'divider' },
   {
     key: ItemKey.AddNote,

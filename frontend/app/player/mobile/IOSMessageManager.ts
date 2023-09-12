@@ -187,8 +187,9 @@ export default class IOSMessageManager implements IMessageManager {
         this.touchManager.append(msg);
         break;
       case MType.IosLog:
+        const log = { ...msg, level: msg.severity }
         // @ts-ignore
-        this.lists.lists.log.append(Log(msg));
+        this.lists.lists.log.append(Log(log));
         break;
       default:
         console.log(msg)
