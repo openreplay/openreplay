@@ -21,6 +21,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/klauspost/compress v1.15.15
 	github.com/klauspost/pgzip v1.2.5
+	github.com/lib/pq v1.10.2
 	github.com/oschwald/maxminddb-golang v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
@@ -56,6 +57,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/paulmach/orb v0.7.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
