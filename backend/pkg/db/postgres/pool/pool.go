@@ -41,9 +41,6 @@ func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
 	method, table := methodName(sql)
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
 	database.IncreaseTotalRequests(method, table)
-	if err != nil {
-		p.IsConnected()
-	}
 	return res, err
 }
 
@@ -62,9 +59,6 @@ func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
 	method, table := methodName(sql)
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
 	database.IncreaseTotalRequests(method, table)
-	if err != nil {
-		p.IsConnected()
-	}
 	return err
 }
 
@@ -81,9 +75,6 @@ func (p *poolImpl) Begin() (*_Tx, error) {
 	tx, err := p.conn.Begin(context.Background())
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
 	database.IncreaseTotalRequests("begin", "")
-	if err != nil {
-		p.IsConnected()
-	}
 	return &_Tx{tx}, err
 }
 
