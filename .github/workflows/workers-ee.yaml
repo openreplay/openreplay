@@ -26,10 +26,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 10
     - name: Checkout
       uses: actions/checkout@v2
       with:
