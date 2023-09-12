@@ -94,7 +94,7 @@ func NewConsumer(
 	go func() {
 		for {
 			logMsg := <-consumer.c.Logs()
-			log.Printf("Kafka consumer log: %+v", logMsg)
+			log.Printf("Kafka consumer log, name: %s, tag: %s, level: %d, msg: %s", logMsg.Name, logMsg.Tag, logMsg.Level, logMsg.Message)
 		}
 	}()
 	return consumer
