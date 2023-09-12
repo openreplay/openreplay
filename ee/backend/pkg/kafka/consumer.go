@@ -91,7 +91,12 @@ func NewConsumer(
 	if err := c.Subscribe(subREx, consumer.reBalanceCallback); err != nil {
 		log.Fatalln(err)
 	}
-
+	go func() {
+		for {
+			logMsg := <-consumer.c.Logs()
+			log.Printf("Kafka consumer log: %+v", logMsg)
+		}
+	}()
 	return consumer
 }
 
