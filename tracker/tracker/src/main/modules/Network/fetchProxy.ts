@@ -81,8 +81,10 @@ export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T>
               // @ts-ignore
               readerReceivedValue = new Uint8Array(result.value)
             } else {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const newValue = new Uint8Array(readerReceivedValue.length + result.value!.length)
               newValue.set(readerReceivedValue)
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               newValue.set(result.value!, readerReceivedValue.length)
               readerReceivedValue = newValue
             }
@@ -123,9 +125,10 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
     private readonly sendMessage: (item: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
+    private readonly tokenUrlMatcher?: (url: string) => boolean,
   ) {}
 
-  public apply(target: T, thisArg: typeof window, argsList: [RequestInfo | URL, RequestInit]) {
+  public apply(target: T, _: typeof window, argsList: [RequestInfo | URL, RequestInit]) {
     const input = argsList[0]
     const init = argsList[1]
 
@@ -141,6 +144,29 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     const item = new NetworkMessage(this.ignoredHeaders, this.setSessionTokenHeader, this.sanitize)
     this.beforeFetch(item, input as RequestInfo, init)
 
+    this.setSessionTokenHeader((name, value) => {
+      if (this.tokenUrlMatcher !== undefined) {
+        if (!this.tokenUrlMatcher(item.url)) {
+          return
+        }
+      }
+      if (argsList[1] === undefined && argsList[0] instanceof Request) {
+        return argsList[0].headers.append(name, value)
+      } else {
+        if (!argsList[1]) argsList[1] = {}
+        if (argsList[1].headers === undefined) {
+          argsList[1] = { ...argsList[1], headers: {} }
+        }
+        if (argsList[1].headers instanceof Headers) {
+          argsList[1].headers.append(name, value)
+        } else if (Array.isArray(argsList[1].headers)) {
+          argsList[1].headers.push([name, value])
+        } else {
+          // @ts-ignore
+          argsList[1].headers[name] = value
+        }
+      }
+    })
     return (<ReturnType<T>>target.apply(window, argsList))
       .then(this.afterFetch(item))
       .catch((e) => {
@@ -273,6 +299,7 @@ export default class FetchProxy {
     sanitize: (data: RequestResponseData) => RequestResponseData,
     sendMessage: (item: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
+    tokenUrlMatcher?: (url: string) => boolean,
   ) {
     return new Proxy(
       fetch,
@@ -282,6 +309,7 @@ export default class FetchProxy {
         sanitize,
         sendMessage,
         isServiceUrl,
+        tokenUrlMatcher,
       ),
     )
   }

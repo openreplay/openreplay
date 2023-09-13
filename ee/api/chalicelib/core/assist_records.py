@@ -3,7 +3,7 @@ import hashlib
 from decouple import config
 
 import schemas
-import schemas_ee
+import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient
@@ -14,16 +14,16 @@ def generate_file_key(project_id, key):
     return f"{project_id}/{hashlib.md5(key.encode()).hexdigest()}"
 
 
-def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
+def presign_record(project_id, data: schemas.AssistRecordPayloadSchema, context: schemas.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800,
                                                                key=key)
     return {"URL": presigned_url, "key": key}
 
 
-def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, context: schemas_ee.CurrentContext):
+def save_record(project_id, data: schemas.AssistRecordSavePayloadSchema, context: schemas.CurrentContext):
     extra.tag_record(file_key=data.key, tag_value=config('RETENTION_L_VALUE', default='vault'))
-    params = {"user_id": context.user_id, "project_id": project_id, **data.dict()}
+    params = {"user_id": context.user_id, "project_id": project_id, **data.model_dump()}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration, session_id)
@@ -40,8 +40,8 @@ def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, cont
     return result
 
 
-def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSchema,
-                   context: schemas_ee.CurrentContext):
+def search_records(project_id: int, data: schemas.AssistRecordSearchPayloadSchema,
+                   context: schemas.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
                   "projects.project_id=%(project_id)s",
@@ -54,7 +54,7 @@ def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSc
     params = {"tenant_id": context.tenant_id, "project_id": project_id,
               "startDate": data.startTimestamp, "endDate": data.endTimestamp,
               "p_start": (data.page - 1) * data.limit, "p_limit": data.limit,
-              **data.dict()}
+              **data.model_dump()}
     if data.user_id is not None:
         conditions.append("assist_records.user_id=%(user_id)s")
     if data.query is not None and len(data.query) > 0:
@@ -85,7 +85,7 @@ def search_records(project_id: int, data: schemas_ee.AssistRecordSearchPayloadSc
     return results
 
 
-def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
+def get_record(project_id, record_id, context: schemas.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
                   "assist_records.record_id=%(record_id)s",
@@ -110,8 +110,8 @@ def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
     return result
 
 
-def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayloadSchema,
-                  context: schemas_ee.CurrentContext):
+def update_record(project_id, record_id, data: schemas.AssistRecordUpdatePayloadSchema,
+                  context: schemas.CurrentContext):
     conditions = ["assist_records.record_id=%(record_id)s", "assist_records.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id, "name": data.name}
     with pg_client.PostgresClient() as cur:
@@ -136,7 +136,7 @@ def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayl
     return result
 
 
-def delete_record(project_id, record_id, context: schemas_ee.CurrentContext):
+def delete_record(project_id, record_id, context: schemas.CurrentContext):
     conditions = ["assist_records.record_id=%(record_id)s"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id}
     with pg_client.PostgresClient() as cur:

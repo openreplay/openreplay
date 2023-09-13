@@ -223,29 +223,29 @@ def update(tenant_id, user_id, changes, output=True):
     return get(user_id=user_id, tenant_id=tenant_id)
 
 
-def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
+def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    if data.get("userId") is not None:
+    if data.user_id is not None:
         return {"errors": ["please use POST/PUT /client/members/{memberId} for update"]}
-    user = get_by_email_only(email=data["email"])
+    user = get_by_email_only(email=data.email)
     if user:
         return {"errors": ["user already exists"]}
-    name = data.get("name", None)
-    if name is None or len(name) == 0:
-        name = data["email"]
+
+    if data.name is None or len(data.name) == 0:
+        data.name = data.email
     invitation_token = __generate_invitation_token()
-    user = get_deleted_user_by_email(email=data["email"])
+    user = get_deleted_user_by_email(email=data.email)
     if user is not None:
-        new_member = restore_member(email=data["email"], invitation_token=invitation_token,
-                                    admin=data.get("admin", False), name=name, user_id=user["userId"])
+        new_member = restore_member(email=data.email, invitation_token=invitation_token,
+                                    admin=data.admin, name=data.name, user_id=user["userId"])
     else:
-        new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=name)
+        new_member = create_new_member(email=data.email, invitation_token=invitation_token,
+                                       admin=data.admin, name=data.name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     background_tasks.add_task(email_helper.send_team_invitation, **{
-        "recipient": data["email"],
+        "recipient": data.email,
         "invitation_link": new_member["invitationLink"],
         "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
         "sender_name": admin["name"]
@@ -607,11 +607,7 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
         r = cur.fetchone()
     return r is not None \
         and r.get("jwt_iat") is not None \
-        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-             or (jwt_aud.startswith("plugin") \
-                 and (r["changed_at"] is None \
-                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-             )
+        and abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1
 
 
 def change_jwt_iat(user_id):

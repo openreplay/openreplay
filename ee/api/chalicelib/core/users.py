@@ -2,15 +2,17 @@ import json
 import secrets
 
 from decouple import config
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
+from starlette import status
 
 import schemas
-import schemas_ee
-from chalicelib.core import authorizers, metadata, projects, roles
+from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants, assist
-from chalicelib.utils import helper, email_helper, smtp
+from chalicelib.utils import email_helper, smtp
+from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.core import roles
 
 
 def __generate_invitation_token():
@@ -210,33 +212,33 @@ def update(tenant_id, user_id, changes, output=True):
     return get(user_id=user_id, tenant_id=tenant_id)
 
 
-def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
+def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    if data.get("userId") is not None:
+    if data.user_id is not None:
         return {"errors": ["please use POST/PUT /client/members/{memberId} for update"]}
-    user = get_by_email_only(email=data["email"])
+    user = get_by_email_only(email=data.email)
     if user:
         return {"errors": ["user already exists"]}
-    name = data.get("name", None)
-    if name is None or len(name) == 0:
-        name = data["email"]
+
+    if data.name is None or len(data.name) == 0:
+        data.name = data.email
     role_id = data.get("roleId")
     if role_id is None:
         role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
     invitation_token = __generate_invitation_token()
-    user = get_deleted_user_by_email(email=data["email"])
+    user = get_deleted_user_by_email(email=data.email)
     if user is not None and user["tenantId"] == tenant_id:
-        new_member = restore_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                    admin=data.get("admin", False), name=name, user_id=user["userId"], role_id=role_id)
+        new_member = restore_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
+                                    admin=data.admin, name=data.name, user_id=user["userId"], role_id=role_id)
     elif user is not None:
         __hard_delete_user(user_id=user["userId"])
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=name, role_id=role_id)
+                                       admin=data.get("admin", False), name=data.name, role_id=role_id)
     else:
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=name, role_id=role_id)
+                                       admin=data.get("admin", False), name=data.name, role_id=role_id)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data["email"],
@@ -282,7 +284,8 @@ def get(user_id, tenant_id):
                         roles.name AS role_name,
                         roles.permissions,
                         roles.all_projects,
-                        basic_authentication.password IS NOT NULL AS has_password
+                        basic_authentication.password IS NOT NULL AS has_password,
+                        users.service_account
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
                     WHERE
@@ -351,7 +354,7 @@ def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
 
-def edit_member(user_id_to_update, tenant_id, changes: schemas_ee.EditMemberSchema, editor_id):
+def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
     user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
     _changes = {}
     if editor_id != user_id_to_update:
@@ -472,7 +475,9 @@ def get_members(tenant_id):
                     FROM public.users 
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
-                    WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL
+                    WHERE users.tenant_id = %(tenant_id)s 
+                        AND users.deleted_at IS NULL
+                        AND NOT users.service_account
                     ORDER BY name, user_id""",
                 {"tenant_id": tenant_id})
         )
@@ -626,17 +631,24 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"SELECT user_id AS id,jwt_iat, changed_at FROM public.users INNER JOIN public.basic_authentication USING(user_id) WHERE user_id = %(userId)s AND tenant_id = %(tenant_id)s AND deleted_at IS NULL LIMIT 1;",
+                f"""SELECT user_id,
+                           jwt_iat, 
+                           changed_at,
+                           service_account,
+                           basic_authentication.user_id IS NOT NULL AS has_basic_auth
+                    FROM public.users 
+                        LEFT JOIN public.basic_authentication USING(user_id) 
+                    WHERE user_id = %(userId)s 
+                        AND tenant_id = %(tenant_id)s 
+                        AND deleted_at IS NULL 
+                    LIMIT 1;""",
                 {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
     return r is not None \
-        and r.get("jwt_iat") is not None \
-        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-             or (jwt_aud.startswith("plugin") \
-                 and (r["changed_at"] is None \
-                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-             )
+        and (r["service_account"] and not r["has_basic_auth"]
+             or r.get("jwt_iat") is not None \
+             and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1))
 
 
 def change_jwt_iat(user_id):
@@ -665,7 +677,8 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
                     users.origin,
                     users.role_id,
                     roles.name AS role_name,
-                    roles.permissions
+                    roles.permissions,
+                    users.service_account
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                     LEFT JOIN public.roles ON (roles.role_id = users.role_id AND roles.tenant_id = users.tenant_id)
                 WHERE users.email = %(email)s 
@@ -694,7 +707,10 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
+        if r["serviceAccount"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="service account is not authorized to login")
+        elif config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
         jwt_iat = change_jwt_iat(r['userId'])
@@ -710,33 +726,27 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
     return None
 
 
-def authenticate_sso(email, internal_id, exp=None):
+def get_user_role(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""SELECT 
-                    users.user_id,
-                    users.tenant_id,
-                    users.role,
-                    users.name,
-                    (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                    (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                    (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    origin,
-                    role_id
-                FROM public.users AS users
-                WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
-            {"email": email, "internal_id": internal_id})
-
-        cur.execute(query)
-        r = cur.fetchone()
-
-    if r is not None:
-        r = helper.dict_to_camel_case(r)
-        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
-        return authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                        iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
-                                        exp=(exp + jwt_iat // 1000) if exp is not None else None)
-    return None
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        users.user_id,
+                        users.email, 
+                        users.role, 
+                        users.name, 
+                        users.created_at,
+                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
+                    FROM public.users 
+                    WHERE users.deleted_at IS NULL 
+                        AND users.user_id=%(user_id)s
+                        AND users.tenant_id=%(tenant_id)s
+                    LIMIT 1""",
+                {"tenant_id": tenant_id, "user_id": user_id})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
 
 
 def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=None):
@@ -770,6 +780,48 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def __hard_delete_user(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""DELETE FROM public.users
+                WHERE users.user_id = %(user_id)s AND users.deleted_at IS NOT NULL ;""",
+            {"user_id": user_id})
+        cur.execute(query)
+
+
+def authenticate_sso(email, internal_id, exp=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""SELECT 
+                    users.user_id,
+                    users.tenant_id,
+                    users.role,
+                    users.name,
+                    (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                    (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                    (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                    origin,
+                    role_id,
+                    service_account
+                FROM public.users AS users
+                WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
+            {"email": email, "internal_id": internal_id})
+
+        cur.execute(query)
+        r = cur.fetchone()
+
+    if r is not None:
+        r = helper.dict_to_camel_case(r)
+        if r["serviceAccount"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="service account is not authorized to login")
+        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
+        return authorizers.generate_jwt(r['userId'], r['tenantId'],
+                                        iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
+                                        exp=(exp + jwt_iat // 1000) if exp is not None else None)
+    return None
 
 
 def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, internal_id=None):
@@ -820,37 +872,5 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                              "user_id": user_id})
         cur.execute(
             query
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def __hard_delete_user(user_id):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""DELETE FROM public.users
-                WHERE users.user_id = %(user_id)s AND users.deleted_at IS NOT NULL ;""",
-            {"user_id": user_id})
-        cur.execute(query)
-
-
-def get_user_role(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT 
-                        users.user_id,
-                        users.email, 
-                        users.role, 
-                        users.name, 
-                        users.created_at,
-                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
-                    FROM public.users 
-                    WHERE users.deleted_at IS NULL 
-                        AND users.user_id=%(user_id)s
-                        AND users.tenant_id=%(tenant_id)s
-                    LIMIT 1""",
-                {"tenant_id": tenant_id, "user_id": user_id})
         )
         return helper.dict_to_camel_case(cur.fetchone())

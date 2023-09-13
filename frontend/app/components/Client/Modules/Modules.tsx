@@ -23,7 +23,7 @@ function Modules(props: Props) {
         module: module.key,
         status: isEnabled
       });
-      toast.success(`Module ${module.label} ${isEnabled ? 'enabled' : 'disabled'}`);
+      toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
     } catch (err) {
       toast.error(`Failed to ${module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
       module.isEnabled = !module.isEnabled;

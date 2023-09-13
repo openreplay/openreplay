@@ -11,6 +11,8 @@ import (
 type Cache interface {
 	Set(session *Session) error
 	Get(sessionID uint64) (*Session, error)
+	SetCache(sessID uint64, data map[string]string) error
+	GetCache(sessID uint64) (map[string]string, error)
 }
 
 var ErrSessionNotFound = errors.New("session not found")
@@ -18,6 +20,24 @@ var ErrSessionNotFound = errors.New("session not found")
 type inMemoryCacheImpl struct {
 	sessions cache.Cache
 	redis    Cache
+}
+
+func (i *inMemoryCacheImpl) SetCache(sessID uint64, data map[string]string) error {
+	if err := i.redis.SetCache(sessID, data); err != nil && !errors.Is(err, ErrDisabledCache) {
+		log.Printf("Failed to cache session: %v", err)
+	}
+	return nil
+}
+
+func (i *inMemoryCacheImpl) GetCache(sessID uint64) (map[string]string, error) {
+	session, err := i.redis.GetCache(sessID)
+	if err == nil {
+		return session, nil
+	}
+	if !errors.Is(err, ErrDisabledCache) && err.Error() != "redis: nil" {
+		log.Printf("Failed to get session from cache: %v", err)
+	}
+	return nil, ErrSessionNotFound
 }
 
 func (i *inMemoryCacheImpl) Set(session *Session) error {

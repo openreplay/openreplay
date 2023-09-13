@@ -6,13 +6,12 @@ from chalicelib.core import tenants
 from chalicelib.core import users
 
 
-def jwt_authorizer(token):
-    token = token.split(" ")
-    if len(token) != 2 or token[0].lower() != "bearer":
+def jwt_authorizer(scheme: str, token: str):
+    if scheme.lower() != "bearer":
         return None
     try:
         payload = jwt.decode(
-            token[1],
+            token,
             config("jwt_secret"),
             algorithms=config("jwt_algorithm"),
             audience=[f"front:{helper.get_stage_name()}"]
@@ -22,6 +21,7 @@ def jwt_authorizer(token):
         return None
     except BaseException as e:
         print("! JWT Base Exception")
+        print(e)
         return None
     return payload
 

@@ -44,7 +44,7 @@ def get_all_count(tenant_id, user_id):
 
 
 def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
-    if (notification_ids is None or len(notification_ids) == 0) and endTimestamp is None:
+    if len(notification_ids) == 0 and endTimestamp is None:
         return False
     if startTimestamp is None:
         startTimestamp = 0

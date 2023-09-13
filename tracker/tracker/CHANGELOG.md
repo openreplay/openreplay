@@ -1,3 +1,28 @@
+# 9.0.8
+
+- added slight delay to iframe handler (rapid updates of stacked frames used to break player)
+
+# 9.0.7
+
+- fix for `getSessionURL` method
+
+# 9.0.6
+
+- added `tokenUrlMatcher` option to network settings, allowing to ingest session token header to custom allowed urls
+
+# 9.0.5
+
+- same fixes but for fetch proxy
+
+# 9.0.2 & 9.0.3 & 9.0.4
+
+- fixes for "setSessionTokenHeader" method
+
+# 9.0.1
+
+- Warning about SSR mode
+- Prevent crashes due to network proxy in SSR
+
 # 9.0.0
 
 - Option to disable string dictionary `{disableStringDict: true}` in Tracker constructor

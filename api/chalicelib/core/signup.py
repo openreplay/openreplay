@@ -16,7 +16,7 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     email = data.email
     print(f"=====================> {email}")
-    password = data.password
+    password = data.password.get_secret_value()
 
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")

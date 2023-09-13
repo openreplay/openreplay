@@ -113,21 +113,20 @@ class JIRAIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data):
+    def add_edit(self, data: schemas.IssueTrackingJiraSchema):
         if self.integration is not None:
             return self.update(
                 changes={
-                    "username": data["username"],
-                    "token": data["token"] \
-                        if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
-                        else self.integration["token"],
-                    "url": data["url"]
+                    "username": data.username,
+                    "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
+                        else self.integration.token,
+                    "url": data.url
                 },
                 obfuscate=True
             )
         else:
             return self.add(
-                username=data["username"],
-                token=data["token"],
-                url=data["url"]
+                username=data.username,
+                token=data.token,
+                url=data.url
             )

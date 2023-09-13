@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
+import {MarkedTarget, selectStorageType, STORAGE_TYPES, StorageType} from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
 import { Tooltip } from 'UI';
@@ -84,7 +84,7 @@ function Controls(props: any) {
   } = props;
 
   const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
-
+  const sessionTz = session?.timezone;
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
       return;
@@ -149,6 +149,7 @@ function Controls(props: any) {
           <div className="flex items-center">
             <PlayerControls
               skip={skip}
+              sessionTz={sessionTz}
               speed={speed}
               disabled={disabled}
               backTenSeconds={backTenSeconds}
@@ -192,7 +193,16 @@ function Controls(props: any) {
   );
 }
 
-function DevtoolsButtons({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets}) {
+interface IDevtoolsButtons {
+  showStorageRedux: boolean;
+  disabledRedux: boolean;
+  toggleBottomTools: (blockName: number) => void;
+  bottomBlock: number;
+  markedTargets: MarkedTarget[] | null;
+  messagesLoading: boolean;
+}
+
+function DevtoolsButtons({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets }: IDevtoolsButtons) {
   const { store } = React.useContext(PlayerContext);
 
   const {

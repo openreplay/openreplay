@@ -13,6 +13,7 @@ export default class Nodes {
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback)
   }
+
   attachNodeListener(node: Node, type: string, listener: EventListener, useCapture = true): void {
     const id = this.getID(node)
     if (id === undefined) {
@@ -38,6 +39,7 @@ export default class Nodes {
     }
     return [id, isNew]
   }
+
   unregisterNode(node: Node): number | undefined {
     const id = (node as any)[this.node_id]
     if (id !== undefined) {
@@ -67,12 +69,16 @@ export default class Nodes {
       }
     }
   }
+
   callNodeCallbacks(node: Node, isStart: boolean): void {
     this.nodeCallbacks.forEach((cb) => cb(node, isStart))
   }
+
   getID(node: Node): number | undefined {
+    if (!node) return undefined
     return (node as any)[this.node_id]
   }
+
   getNode(id: number) {
     return this.nodes[id]
   }

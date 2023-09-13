@@ -97,7 +97,8 @@ export default class TopObserver extends Observer {
           //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
           this.contextCallbacks.forEach((cb) => cb(currentWin))
         }
-      }, 0),
+        // we need this delay because few iframes stacked one in another with rapid updates will break the player (or browser engine rather?)
+      }, 100),
     )
     iframe.addEventListener('load', handle) // why app.attachEventListener not working?
     handle()

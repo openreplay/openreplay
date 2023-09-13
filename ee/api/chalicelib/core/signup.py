@@ -3,7 +3,6 @@ import json
 from decouple import config
 
 import schemas
-import schemas_ee
 from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
@@ -19,7 +18,7 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     email = data.email
     print(f"=====================> {email}")
-    password = data.password
+    password = data.password.get_secret_value()
 
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")
@@ -52,7 +51,7 @@ def create_tenant(data: schemas.UserSignupSchema):
     params = {
         "email": email, "password": password, "fullname": fullname, "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}), "organizationName": organization_name,
-        "permissions": [p.value for p in schemas_ee.Permissions]
+        "permissions": [p.value for p in schemas.Permissions]
     }
     query = """WITH t AS (
                 INSERT INTO public.tenants (name)

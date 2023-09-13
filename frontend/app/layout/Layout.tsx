@@ -14,13 +14,14 @@ interface Props {
 function Layout(props: Props) {
   const { hideHeader, siteId } = props;
   const isPlayer = /\/(session|assist)\//.test(window.location.pathname);
+
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       {!hideHeader && (
         <TopHeader />
       )}
       <AntLayout>
-        {!hideHeader && (
+        {!hideHeader && !window.location.pathname.includes('/onboarding/')  && (
           <Sider
             style={{
               position: 'sticky',
@@ -34,7 +35,7 @@ function Layout(props: Props) {
             <SideMenu siteId={siteId} />
           </Sider>
         )}
-        <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 50px)' }}>
+        <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 60px)' }}>
           {props.children}
         </Content>
       </AntLayout>

@@ -11,8 +11,8 @@ const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
 interface Props {
   history: any;
-  onLogoutClick: any;
-  className: string;
+  onLogoutClick?: any;
+  className?: string;
   account: any;
 }
 function UserMenu(props: RouteComponentProps<Props>) {

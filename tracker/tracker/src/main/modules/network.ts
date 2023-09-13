@@ -56,6 +56,7 @@ export interface Options {
   sanitizer?: Sanitizer
   axiosInstances?: Array<AxiosInstance>
   useProxy?: boolean
+  tokenUrlMatcher?: (url: string) => boolean
 }
 
 export default function (app: App, opts: Partial<Options> = {}) {
@@ -136,6 +137,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         sanitize,
         (message) => app.send(message),
         (url) => app.isServiceURL(url),
+        options.tokenUrlMatcher,
       )
     }
     /* ====== Fetch ====== */
