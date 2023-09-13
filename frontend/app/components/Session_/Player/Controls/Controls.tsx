@@ -202,7 +202,7 @@ interface IDevtoolsButtons {
   messagesLoading: boolean;
 }
 
-function DevtoolsButtons({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets }: IDevtoolsButtons) {
+const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets }: IDevtoolsButtons) => {
   const { store } = React.useContext(PlayerContext);
 
   const {
@@ -308,7 +308,7 @@ function DevtoolsButtons({ showStorageRedux, toggleBottomTools, bottomBlock, dis
     )}
     </>
   )
-}
+})
 
 const ControlPlayer = observer(Controls);
 
