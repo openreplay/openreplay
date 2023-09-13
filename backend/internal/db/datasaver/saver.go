@@ -110,6 +110,11 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
+	case *IOSScreenLeave:
+		if err := s.pg.InsertIOSScreenLeave(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *IOSCrash:
 		if err := s.pg.InsertIOSCrash(session.SessionID, session.ProjectID, m); err != nil {
 			return err

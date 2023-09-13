@@ -65,8 +65,8 @@ func main() {
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
 		messages.MsgIOSMetadata, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall, messages.MsgIOSScreenEnter,
-		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent, messages.MsgIOSCrash,
-		messages.MsgIOSIssueEvent,
+		messages.MsgIOSScreenLeave, messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
+		messages.MsgIOSCrash, messages.MsgIOSIssueEvent,
 	}
 
 	// Init consumer

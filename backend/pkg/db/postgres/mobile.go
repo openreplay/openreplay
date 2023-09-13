@@ -34,6 +34,7 @@ func (conn *Conn) InsertIOSNetworkCall(sess *sessions.Session, e *messages.IOSNe
 	return err
 }
 
+// TODO: add title column to views table and view_type (screen_enter, screen_leave)
 func (conn *Conn) InsertIOSScreenEnter(sess *sessions.Session, screenEnter *messages.IOSScreenEnter) error {
 	if err := conn.Pool.Exec(`
 		INSERT INTO events_ios.views (
@@ -46,6 +47,20 @@ func (conn *Conn) InsertIOSScreenEnter(sess *sessions.Session, screenEnter *mess
 		return err
 	}
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "VIEW_IOS", screenEnter.ViewName)
+	return nil
+}
+
+func (conn *Conn) InsertIOSScreenLeave(sess *sessions.Session, screenEnter *messages.IOSScreenLeave) error {
+	if err := conn.Pool.Exec(`
+		INSERT INTO events_ios.views (
+			session_id, timestamp, seq_index, name
+		) VALUES (
+			$1, $2, $3, $4
+		)`,
+		sess.SessionID, screenEnter.Timestamp, screenEnter.Index, screenEnter.ViewName,
+	); err != nil {
+		return err
+	}
 	return nil
 }
 
