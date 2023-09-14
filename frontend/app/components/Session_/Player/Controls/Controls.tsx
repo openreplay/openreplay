@@ -171,12 +171,9 @@ function Controls(props: any) {
           <div className="flex items-center h-full">
             <DevtoolsButtons
               showStorageRedux={showStorageRedux}
-              disabledRedux={disabledRedux}
               toggleBottomTools={toggleBottomTools}
               bottomBlock={bottomBlock}
-              markedTargets={markedTargets}
-              messagesLoading={messagesLoading}
-
+              disabled={disabled}
             />
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
@@ -194,14 +191,12 @@ function Controls(props: any) {
 
 interface IDevtoolsButtons {
   showStorageRedux: boolean;
-  disabledRedux: boolean;
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
-  markedTargets: MarkedTarget[] | null;
-  messagesLoading: boolean;
+  disabled: boolean;
 }
 
-const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomBlock, disabledRedux, messagesLoading, markedTargets }: IDevtoolsButtons) => {
+const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomBlock, disabled }: IDevtoolsButtons) => {
   const { store } = React.useContext(PlayerContext);
 
   const {
@@ -210,8 +205,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
     tabStates
   } = store.get();
 
-  const cssLoading = tabStates[currentTab]?.cssLoading ?? false;
-  const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
+  const disableButtons = disabled;
 
   const profilesList = tabStates[currentTab]?.profilesList || [];
   const graphqlList = tabStates[currentTab]?.graphqlList || [];
@@ -230,7 +224,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
   return (
     <>
       <ControlButton
-        disabled={disabled && !inspectorMode}
+        disabled={disableButtons}
         onClick={() => toggleBottomTools(CONSOLE)}
         active={bottomBlock === CONSOLE && !inspectorMode}
         label="CONSOLE"
@@ -241,7 +235,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
       />
 
     <ControlButton
-      disabled={disabled && !inspectorMode}
+      disabled={disableButtons}
       onClick={() => toggleBottomTools(NETWORK)}
       active={bottomBlock === NETWORK && !inspectorMode}
       label="NETWORK"
@@ -252,7 +246,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
     />
 
     <ControlButton
-      disabled={disabled && !inspectorMode}
+      disabled={disableButtons}
       onClick={() => toggleBottomTools(PERFORMANCE)}
       active={bottomBlock === PERFORMANCE && !inspectorMode}
       label="PERFORMANCE"
@@ -263,7 +257,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
 
     {showGraphql && (
       <ControlButton
-        disabled={disabled && !inspectorMode}
+        disabled={disableButtons}
         onClick={() => toggleBottomTools(GRAPHQL)}
         active={bottomBlock === GRAPHQL && !inspectorMode}
         label="GRAPHQL"
@@ -275,7 +269,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
 
     {showStorage && (
       <ControlButton
-        disabled={disabled && !inspectorMode}
+        disabled={disableButtons}
         onClick={() => toggleBottomTools(STORAGE)}
         active={bottomBlock === STORAGE && !inspectorMode}
         label={getStorageName(storageType)}
@@ -285,7 +279,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
       />
     )}
     <ControlButton
-      disabled={disabled && !inspectorMode}
+      disabled={disableButtons}
       onClick={() => toggleBottomTools(STACKEVENTS)}
       active={bottomBlock === STACKEVENTS && !inspectorMode}
       label="EVENTS"
@@ -296,7 +290,7 @@ const DevtoolsButtons = observer(({ showStorageRedux, toggleBottomTools, bottomB
     />
     {showProfiler && (
       <ControlButton
-        disabled={disabled && !inspectorMode}
+        disabled={disableButtons}
         onClick={() => toggleBottomTools(PROFILER)}
         active={bottomBlock === PROFILER && !inspectorMode}
         label="PROFILER"
