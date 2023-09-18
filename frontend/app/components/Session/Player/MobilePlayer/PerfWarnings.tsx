@@ -9,33 +9,32 @@ type warningsType = "thermalState" | "memoryWarning" | "lowDiskSpace" | "isLowPo
 const elements = {
   thermalState: {
     title: "Overheating",
-    icon: <Icon name={"thermometer-sun"} />,
+    icon: "thermometer-sun",
   },
   memoryWarning: {
     title: "High Memory Usage",
-    icon: <Icon name={"memory-ios"} />
+    icon: "memory-ios"
   },
   lowDiskSpace: {
     title: "Low Disk Space",
-    icon: <Icon name={"low-disc-space"} />
+    icon: "low-disc-space"
   },
   isLowPowerModeEnabled: {
     title: "Low Power Mode",
-    icon: <Icon name={"battery-charging"} />
+    icon: "battery-charging"
   },
   batteryLevel: {
     title: "Low Battery",
-    icon: <Icon name={"battery"} />
+    icon: "battery"
   }
-}
+} as const
 
 function PerfWarnings({ userDevice }: { userDevice: string }) {
   const { store } = React.useContext(MobilePlayerContext);
 
   const scale = store.get().scale
-  const warningsStateObj = store.get().warnings
-  // @ts-ignore
-  const activeWarnings: warningsType[] = Object.keys(warningsStateObj).filter((key: warningsType) => warningsStateObj[key])
+  const updateWarnings = store.get().updateWarnings
+
   const contStyles = {
     left: '50%',
     display: 'flex',
@@ -50,11 +49,18 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
     transform: 'translateY(-50%)',
     zIndex: 0,
   } as const
+
+  // @ts-ignore
+  const activeWarnings: warningsType[] = React.useMemo(() => {
+    const warningsStateObj = store.get().warnings
+    return Object.keys(warningsStateObj).filter((key: warningsType) => warningsStateObj[key])
+  }, [updateWarnings])
+
   return (
     <div style={contStyles}>
       {activeWarnings.map(w => (
-        <div className={"flex items-center gap-1 bg-white border rounded p-1"}>
-          {elements[w].icon}
+        <div className={"flex items-center gap-1 bg-white border rounded px-2 py-1"}>
+          <Icon name={elements[w].icon} color={"red"} />
           <span>{elements[w].title}</span>
         </div>
       ))}

@@ -67,6 +67,7 @@ export interface State extends ScreenState, ListsState, WarningsState {
   lastMessageTime: number;
   messagesProcessed: boolean;
   eventCount: number;
+  updateWarnings: number;
 }
 
 const userEvents = [MType.IosSwipeEvent, MType.IosClickEvent, MType.IosInputEvent, MType.IosScreenChanges];
@@ -76,6 +77,7 @@ export default class IOSMessageManager implements IMessageManager {
     ...SCREEN_INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
     ...WARNINGS_STATE,
+    updateWarnings: 0,
     eventCount: 0,
     performanceChartData: [],
     performanceChartTime: 0,
@@ -183,17 +185,10 @@ export default class IOSMessageManager implements IMessageManager {
       })
     }
     const warnings = this.performanceWarningsManager.move(t);
-    const keys = Object.keys(warnings) as unknown as (keyof WarningsState['warnings'])[]
-    let shouldUpdate = false
-    // saving some performance here by using local state instead of state.get() on every .move
-    keys.forEach(k => {
-      if (warnings[k] !== this.warnings[k]) {
-        shouldUpdate = true
-      }
-    })
+    let shouldUpdate = Object.values(warnings).some(w => w)
     if (shouldUpdate) {
       this.warnings = warnings
-      this.state.update({warnings})
+      this.state.update({ warnings, updateWarnings: t })
     }
     this.touchManager.move(t);
 
@@ -221,7 +216,7 @@ export default class IOSMessageManager implements IMessageManager {
           this.performanceManager.append(msg);
         }
         if (performanceWarnings.includes(msg.name)) {
-          this.performanceWarningsManager.append(msg);
+          this.performanceWarningsManager.insert(msg);
           // @ts-ignore
           const item = perfWarningFrustrations[msg.name]
           this.lists.lists.frustrations.append({
