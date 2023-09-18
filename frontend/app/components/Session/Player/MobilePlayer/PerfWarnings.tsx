@@ -2,7 +2,6 @@ import React from 'react'
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from "mobx-react-lite";
 import { Icon } from 'UI'
-import styles from './perfWarnings.module.css'
 import { mapIphoneModel } from "Player/mobile/utils";
 
 type warningsType = "thermalState" | "memoryWarning" | "lowDiskSpace" | "isLowPowerModeEnabled" | "batteryLevel"
@@ -54,7 +53,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
   return (
     <div style={contStyles}>
       {activeWarnings.map(w => (
-        <div className={styles.warning}>
+        <div className={"flex items-center gap-1 bg-white border rounded p-1"}>
           {elements[w].icon}
           <span>{elements[w].title}</span>
         </div>
