@@ -11,6 +11,7 @@ export default class IOSPlayer extends Player {
     ...Player.INITIAL_STATE,
     ...MessageLoader.INITIAL_STATE,
     ...IOSMessageManager.INITIAL_STATE,
+    scale: 1,
   }
   public screen: Screen
   protected messageManager: IOSMessageManager
@@ -103,6 +104,7 @@ export default class IOSPlayer extends Player {
     if (!this.screen) return;
     this.screen?.scale?.({ width, height })
     this.customConstrains = { width, height }
+    this.wpState.update({ scale: this.screen.getScale() })
   }
 
   addFullscreenBoundary = (isFullscreen?: boolean) => {

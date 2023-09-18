@@ -14,7 +14,7 @@ import {
   fullscreenOff,
 } from 'Duck/components/player';
 import { MobileNetworkPanel } from 'Shared/DevTools/NetworkPanel';
-import { MobilePerformance} from 'Components/Session_/Performance';
+import { MobilePerformance } from 'Components/Session_/Performance';
 import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
 import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
@@ -25,6 +25,7 @@ import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel'
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
+import PerfWarnings from "Components/Session/Player/MobilePlayer/PerfWarnings";
 
 interface IProps {
   fullView: boolean;
@@ -85,8 +86,10 @@ function Player(props: IProps) {
       <div className={"relative flex-1"}>
         <Overlay nextId={nextId} />
 
-        <div className={cn(stl.mobileScreenWrapper)} ref={screenWrapper}/>
-        <ReplayWindow videoURL={videoURL} userDevice={userDevice} />
+        <div className={cn(stl.mobileScreenWrapper)} ref={screenWrapper}>
+          <ReplayWindow videoURL={videoURL} userDevice={userDevice} />
+          <PerfWarnings userDevice={userDevice} />
+        </div>
       </div>
       {!fullscreen && !!bottomBlock && (
         <div style={{ maxWidth, width: '100%' }}>

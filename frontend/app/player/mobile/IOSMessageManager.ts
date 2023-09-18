@@ -1,5 +1,5 @@
 import logger from 'App/logger';
-import {getResourceFromNetworkRequest} from "Player";
+import { getResourceFromNetworkRequest } from "Player";
 
 import type { Store } from 'Player';
 import { IMessageManager } from 'Player/player/Animator';
@@ -14,6 +14,11 @@ import Lists, {
 import IOSPerformanceTrackManager, { PerformanceChartPoint } from "Player/mobile/managers/IOSPerformanceTrackManager";
 import { MType } from '../web/messages';
 import type { Message } from '../web/messages';
+import IOSPerformanceWarningsManager, {
+  performanceWarnings,
+  INITIAL_STATE as WARNINGS_STATE,
+  WarningsState
+} from "Player/mobile/managers/IOSPerformanceWarningsManager";
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -24,7 +29,31 @@ import { Log } from './types/log'
 
 import type { SkipInterval } from '../web/managers/ActivityManager';
 
-export interface State extends ScreenState, ListsState {
+
+const perfWarningFrustrations = {
+  thermalState: {
+    title: "Overheating",
+    icon: "thermometer-sun",
+  },
+  memoryWarning: {
+    title: "High Memory Usage",
+    icon: "memory-ios"
+  },
+  lowDiskSpace: {
+    title: "Low Disk Space",
+    icon: "low-disc-space"
+  },
+  isLowPowerModeEnabled: {
+    title: "Low Power Mode",
+    icon: "battery-charging"
+  },
+  batteryLevel: {
+    title: "Low Battery",
+    icon: "battery"
+  }
+}
+
+export interface State extends ScreenState, ListsState, WarningsState {
   skipIntervals: SkipInterval[];
   performanceChartData: PerformanceChartPoint[];
   performanceChartTime: number;
@@ -46,6 +75,7 @@ export default class IOSMessageManager implements IMessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
+    ...WARNINGS_STATE,
     eventCount: 0,
     performanceChartData: [],
     performanceChartTime: 0,
@@ -60,6 +90,9 @@ export default class IOSMessageManager implements IMessageManager {
 
   private activityManager: ActivityManager | null = null;
   private performanceManager = new IOSPerformanceTrackManager();
+  private performanceWarningsManager = new IOSPerformanceWarningsManager();
+  private warnings = WARNINGS_STATE.warnings;
+
   private readonly sessionStart: number;
   private lastMessageTime: number = 0;
   private touchManager: TouchManager;
@@ -108,7 +141,7 @@ export default class IOSMessageManager implements IMessageManager {
   public onFileReadSuccess = () => {
     let newState: Partial<State> = {
       ...this.state.get(),
-      eventCount:  this.lists?.lists.event?.length || 0,
+      eventCount: this.lists?.lists.event?.length || 0,
       performanceChartData: this.performanceManager.chartData,
       ...this.lists.getFullListsState(),
     }
@@ -122,18 +155,18 @@ export default class IOSMessageManager implements IMessageManager {
 
   public onFileReadFailed = (e: any) => {
     logger.error(e);
-    this.state.update({ error: true });
+    this.state.update({error: true});
     this.uiErrorHandler?.error('Error requesting a session file');
   };
 
   public onFileReadFinally = () => {
     this.waitingForFiles = false;
-    this.state.update({ messagesProcessed: true });
+    this.state.update({messagesProcessed: true});
   };
 
   public startLoading = () => {
     this.waitingForFiles = true;
-    this.state.update({ messagesProcessed: false });
+    this.state.update({messagesProcessed: false});
     this.setMessagesLoading(true);
   };
 
@@ -149,6 +182,19 @@ export default class IOSMessageManager implements IMessageManager {
         performanceChartTime: lastPerformanceTrackMessage.time,
       })
     }
+    const warnings = this.performanceWarningsManager.move(t);
+    const keys = Object.keys(warnings) as unknown as (keyof WarningsState['warnings'])[]
+    let shouldUpdate = false
+    // saving some performance here by using local state instead of state.get() on every .move
+    keys.forEach(k => {
+      if (warnings[k] !== this.warnings[k]) {
+        shouldUpdate = true
+      }
+    })
+    if (shouldUpdate) {
+      this.warnings = warnings
+      this.state.update({warnings})
+    }
     this.touchManager.move(t);
 
     if (
@@ -163,14 +209,27 @@ export default class IOSMessageManager implements IMessageManager {
   distributeMessage = (msg: Message & { tabId: string }): void => {
     const lastMessageTime = Math.max(msg.time, this.lastMessageTime);
     this.lastMessageTime = lastMessageTime;
-    this.state.update({ lastMessageTime });
+    this.state.update({lastMessageTime});
     if (userEvents.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
 
     switch (msg.tp) {
       case MType.IosPerformanceEvent:
-        this.performanceManager.append(msg);
+        const performanceStats = ['background', 'memoryUsage', 'mainThreadCPU']
+        if (performanceStats.includes(msg.name)) {
+          this.performanceManager.append(msg);
+        }
+        if (performanceWarnings.includes(msg.name)) {
+          this.performanceWarningsManager.append(msg);
+          // @ts-ignore
+          const item = perfWarningFrustrations[msg.name]
+          this.lists.lists.frustrations.append({
+            ...msg,
+            name: item.title,
+            icon: item.icon
+          } as any)
+        }
         break;
       // case MType.IosInputEvent:
       //   console.log('input', msg)
@@ -180,14 +239,14 @@ export default class IOSMessageManager implements IMessageManager {
         break;
       case MType.IosEvent:
         // @ts-ignore
-        this.lists.lists.event.insert({ ...msg, source: 'openreplay' });
+        this.lists.lists.event.insert({...msg, source: 'openreplay'});
         break;
       case MType.IosSwipeEvent:
       case MType.IosClickEvent:
         this.touchManager.append(msg);
         break;
       case MType.IosLog:
-        const log = { ...msg, level: msg.severity }
+        const log = {...msg, level: msg.severity}
         // @ts-ignore
         this.lists.lists.log.append(Log(log));
         break;
@@ -201,12 +260,12 @@ export default class IOSMessageManager implements IMessageManager {
   setMessagesLoading = (messagesLoading: boolean) => {
     this.screen.display(!messagesLoading);
     // @ts-ignore idk
-    this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
+    this.state.update({messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading});
   };
 
-  private setSize({ height, width }: { height: number; width: number }) {
-    this.screen.scale({ height, width });
-    this.state.update({ width, height });
+  private setSize({height, width}: { height: number; width: number }) {
+    this.screen.scale({height, width});
+    this.state.update({width, height});
   }
 
   // TODO: clean managers?
