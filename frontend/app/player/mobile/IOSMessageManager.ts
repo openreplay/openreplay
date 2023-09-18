@@ -227,7 +227,8 @@ export default class IOSMessageManager implements IMessageManager {
           this.lists.lists.frustrations.append({
             ...msg,
             name: item.title,
-            icon: item.icon
+            icon: item.icon,
+            type: 'ios_perf_event'
           } as any)
         }
         break;
