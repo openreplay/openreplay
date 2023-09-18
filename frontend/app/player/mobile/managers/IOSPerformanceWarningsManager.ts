@@ -5,11 +5,11 @@ export const performanceWarnings = ['thermalState', 'memoryWarning', 'lowDiskSpa
 
 export const INITIAL_STATE = {
   warnings: {
-    thermalState: true,
-    isLowPowerModeEnabled: true,
-    memoryWarning: true,
-    lowDiskSpace: true,
-    batteryLevel: true,
+    thermalState: false,
+    isLowPowerModeEnabled: false,
+    memoryWarning: false,
+    lowDiskSpace: false,
+    batteryLevel: false,
   }
 }
 
