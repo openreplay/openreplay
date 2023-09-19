@@ -14,11 +14,6 @@ import Lists, {
 import IOSPerformanceTrackManager, { PerformanceChartPoint } from "Player/mobile/managers/IOSPerformanceTrackManager";
 import { MType } from '../web/messages';
 import type { Message } from '../web/messages';
-import IOSPerformanceWarningsManager, {
-  performanceWarnings,
-  INITIAL_STATE as WARNINGS_STATE,
-  WarningsState
-} from "Player/mobile/managers/IOSPerformanceWarningsManager";
 
 import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -29,6 +24,7 @@ import { Log } from './types/log'
 
 import type { SkipInterval } from '../web/managers/ActivityManager';
 
+export const performanceWarnings = ['thermalState', 'memoryWarning', 'lowDiskSpace', 'isLowPowerModeEnabled', 'batteryLevel']
 
 const perfWarningFrustrations = {
   thermalState: {
@@ -53,7 +49,7 @@ const perfWarningFrustrations = {
   }
 }
 
-export interface State extends ScreenState, ListsState, WarningsState {
+export interface State extends ScreenState, ListsState {
   skipIntervals: SkipInterval[];
   performanceChartData: PerformanceChartPoint[];
   performanceChartTime: number;
@@ -76,7 +72,6 @@ export default class IOSMessageManager implements IMessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
-    ...WARNINGS_STATE,
     updateWarnings: 0,
     eventCount: 0,
     performanceChartData: [],
@@ -92,8 +87,6 @@ export default class IOSMessageManager implements IMessageManager {
 
   private activityManager: ActivityManager | null = null;
   private performanceManager = new IOSPerformanceTrackManager();
-  private performanceWarningsManager = new IOSPerformanceWarningsManager();
-  private warnings = WARNINGS_STATE.warnings;
 
   private readonly sessionStart: number;
   private lastMessageTime: number = 0;
@@ -178,20 +171,16 @@ export default class IOSMessageManager implements IMessageManager {
   }
 
   move(t: number): any {
+    const stateToUpdate: Record<string, any> = {};
+
     const lastPerformanceTrackMessage = this.performanceManager.moveGetLast(t);
     if (lastPerformanceTrackMessage) {
-      this.state.update({
+      Object.assign(stateToUpdate, {
         performanceChartTime: lastPerformanceTrackMessage.time,
       })
     }
-    const warnings = this.performanceWarningsManager.move(t);
-    let shouldUpdate = Object.values(warnings).some(w => w)
-    if (shouldUpdate) {
-      this.warnings = warnings
-      this.state.update({ warnings, updateWarnings: t })
-    }
-    this.touchManager.move(t);
 
+    this.touchManager.move(t);
     if (
       this.waitingForFiles &&
       this.lastMessageTime <= t &&
@@ -199,6 +188,10 @@ export default class IOSMessageManager implements IMessageManager {
     ) {
       this.setMessagesLoading(true);
     }
+
+    Object.assign(stateToUpdate, this.lists.moveGetState(t))
+    Object.assign(stateToUpdate, { performanceListNow: this.lists.lists.performance.listNow })
+    Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
   }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
@@ -216,12 +209,12 @@ export default class IOSMessageManager implements IMessageManager {
           this.performanceManager.append(msg);
         }
         if (performanceWarnings.includes(msg.name)) {
-          this.performanceWarningsManager.insert(msg);
           // @ts-ignore
           const item = perfWarningFrustrations[msg.name]
           this.lists.lists.performance.append({
             ...msg,
             name: item.title,
+            techName: msg.name,
             icon: item.icon,
             type: 'ios_perf_event'
           } as any)

@@ -1,3 +1,4 @@
+import {IosPerformanceEvent} from "Player/web/messages";
 import React from 'react';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -39,9 +40,12 @@ const elements = {
 
 function PerfWarnings({ userDevice, bottomBlock }: { userDevice: string; bottomBlock: number }) {
   const { store } = React.useContext(MobilePlayerContext);
+  const { scale, performanceListNow, performanceList } = store.get()
 
-  const scale = store.get().scale;
-  const updateWarnings = store.get().updateWarnings;
+  const allElements = Object.keys(elements) as warningsType[];
+  const list = React.useMemo(() => allElements
+    .filter(el => performanceList.findIndex((pw: IosPerformanceEvent & { techName: warningsType }) => pw.techName === el) !== -1)
+  , [performanceList.length])
 
   const contStyles = {
     left: '50%',
@@ -58,18 +62,32 @@ function PerfWarnings({ userDevice, bottomBlock }: { userDevice: string; bottomB
     zIndex: 0,
   } as const;
 
-  // @ts-ignore
-  const activeWarnings: warningsType[] = React.useMemo(() => {
-    const warningsStateObj = store.get().warnings;
-    return Object.keys(warningsStateObj).filter((key: warningsType) => warningsStateObj[key]);
-  }, [updateWarnings]);
+  const activeWarnings = React.useMemo(() => {
+    const warnings: warningsType[] = []
+    performanceListNow.forEach((warn: IosPerformanceEvent & { techName: warningsType }) => {
+      switch (warn.techName) {
+        case 'thermalState':
+          if (warn.value > 1) warnings.push(warn.techName) // 2 = serious 3 = overheating
+          break;
+        case 'memoryWarning':
+          warnings.push(warn.techName)
+          break;
+        case 'lowDiskSpace':
+          warnings.push(warn.techName)
+          break;
+        case 'isLowPowerModeEnabled':
+          if (warn.value === 1) warnings.push(warn.techName)
+          break;
+        case 'batteryLevel':
+          if (warn.value < 25) warnings.push(warn.techName)
+          break;
+      }
+    })
 
-  const allElements = Object.keys(elements) as warningsType[];
+    return warnings
+  }, [performanceListNow.length]);
   if (bottomBlock !== NONE) return null;
 
-  const list = allElements.sort(
-    (a, b) => activeWarnings.findIndex((w) => w === b) - activeWarnings.findIndex((w) => w === a)
-  );
   return (
     <div style={contStyles}>
       {list.map((w) => (
