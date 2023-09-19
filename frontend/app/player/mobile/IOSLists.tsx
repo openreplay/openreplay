@@ -7,7 +7,8 @@ const SIMPLE_LIST_NAMES = [
   "event",
   "exceptions",
   "profiles",
-  "frustrations"
+  "frustrations",
+  "performance"
 ] as const
 const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const
 

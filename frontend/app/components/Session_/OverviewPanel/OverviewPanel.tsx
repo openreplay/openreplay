@@ -30,6 +30,7 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
     exceptionsList,
     fetchList,
     performanceChartData,
+    performanceList,
   } = store.get()
 
   const fetchPresented = fetchList.length > 0;
@@ -69,6 +70,8 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
       selectedFeatures={selectedFeatures}
       fetchPresented={fetchPresented}
       setSelectedFeatures={setSelectedFeatures}
+      isMobile
+      performanceList={performanceList}
     />
   )
 }
@@ -135,7 +138,7 @@ function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[
   return <PanelComponent resources={resources} endTime={endTime} selectedFeatures={selectedFeatures} fetchPresented={fetchPresented} setSelectedFeatures={setSelectedFeatures} />
 }
 
-function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, setSelectedFeatures }: any) {
+function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, setSelectedFeatures, isMobile, performanceList }: any) {
   return (
       <React.Fragment>
         <BottomBlock style={{ height: '100%' }}>
@@ -167,7 +170,7 @@ function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, 
                   {selectedFeatures.map((feature: any, index: number) => (
                     <div
                       key={feature}
-                      className={cn('border-b last:border-none', { 'bg-white': index % 2 })}
+                      className={cn('border-b last:border-none relative', { 'bg-white': index % 2 })}
                     >
                       <EventRow
                         isGraph={feature === 'PERFORMANCE'}
@@ -183,6 +186,25 @@ function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, 
                         endTime={endTime}
                         message={HELP_MESSAGE[feature]}
                       />
+                      {isMobile && feature === 'PERFORMANCE' ? (
+                        <div className={"absolute top-0 left-0 py-2 flex items-center py-4 w-full"}>
+                          <EventRow
+                            isGraph={false}
+                            title={''}
+                            list={performanceList}
+                            renderElement={(pointer: any) => (
+                              <div className="rounded bg-white p-1 border">
+                                <TimelinePointer
+                                  pointer={pointer}
+                                  type={"FRUSTRATIONS"}
+                                  fetchPresented={fetchPresented}
+                                />
+                              </div>
+                            )}
+                            endTime={endTime}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </NoContent>

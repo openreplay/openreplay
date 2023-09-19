@@ -219,7 +219,7 @@ export default class IOSMessageManager implements IMessageManager {
           this.performanceWarningsManager.insert(msg);
           // @ts-ignore
           const item = perfWarningFrustrations[msg.name]
-          this.lists.lists.frustrations.append({
+          this.lists.lists.performance.append({
             ...msg,
             name: item.title,
             icon: item.icon,
