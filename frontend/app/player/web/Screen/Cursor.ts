@@ -82,6 +82,22 @@ export default class Cursor {
     }, 600)
   }
 
+  clickTimeout?: NodeJS.Timeout
+  mobileClick() {
+    const styleList = styles.mobileTouch
+    if (this.clickTimeout) {
+      clearTimeout(this.clickTimeout)
+      this.cursor.classList.remove(styleList)
+      this.clickTimeout = undefined
+    }
+    this.cursor.classList.add(styleList)
+    this.onClick?.()
+    this.clickTimeout = setTimeout(() => {
+      this.cursor.classList.remove(styleList)
+      this.clickTimeout = undefined
+    }, 600)
+  }
+
   setOnClickHook(callback: () => void) {
     this.onClick = callback
   }
