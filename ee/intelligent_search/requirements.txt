@@ -1,6 +1,17 @@
+# General utils
 pydantic
 requests
-fastapi
-uvicorn
-apscheduler
 python-decouple
+
+# ML modules
+torch
+fairscale
+sentencepiece
+
+# Serving modules
+fastapi
+apscheduler
+uvicorn
+
+# Observability modules
+traceloop-sdk

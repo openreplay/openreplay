@@ -1,4 +1,3 @@
-from sys import intern
 from pydantic import BaseModel
 
 
