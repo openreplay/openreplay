@@ -18,7 +18,7 @@ function NodeButton(props: Props) {
   return (
     <div className='relative'>
       <Popover content={
-        <div className='bg-white rounded w-fit mt-1 text-sm'>
+        <div className='bg-white rounded w-fit mt-1 text-xs'>
           <div className='border-b py-1 px-2 flex items-center'>
             <div className='w-6 shrink-0'>
               <Icon name='link-45deg' size={18} />
@@ -40,7 +40,7 @@ function NodeButton(props: Props) {
             </div>
           </div>
         </div>
-      } title='Title'>
+      } title={<div className='text-sm'>Title</div>}>
         <div
           className='copy-popover select-none rounded shadow'
           style={{

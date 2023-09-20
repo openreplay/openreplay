@@ -1,6 +1,6 @@
 import Widget from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
-import { CLICKMAP } from "App/constants/card";
+import { CLICKMAP, USER_PATH } from 'App/constants/card';
 
 export default class MetricService {
     private client: APIClient;
@@ -26,7 +26,7 @@ export default class MetricService {
     /**
      * Get a metric by metricId.
      * @param metricId
-     * @returns {Promise<any>} 
+     * @returns {Promise<any>}
      */
     getMetric(metricId: string): Promise<any> {
         return this.client.get('/cards/' + metricId)
@@ -38,7 +38,7 @@ export default class MetricService {
     /**
      * Save a metric.
      * @param metric
-     * @returns 
+     * @returns
      */
     saveMetric(metric: Widget): Promise<any> {
         const data = metric.toJson()
@@ -72,26 +72,33 @@ export default class MetricService {
             .then((response: { data: any; }) => response.data || []);
     }
 
-    getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
+    async getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
         if (
           metric.metricType === CLICKMAP
           && document.location.pathname.split('/').pop() === 'metrics'
           && (document.location.pathname.indexOf('dashboard') !== -1 && document.location.pathname.indexOf('metric') === -1)
         ) {
-            return Promise.resolve({})
+            return Promise.resolve({});
         }
         const path = isWidget ? `/cards/${metric.metricId}/chart` : `/cards/try`;
-        return this.client.post(path, data)
-            .then(r => r.json())
-            .then((response: { data: any; }) => response.data || {})
-            .catch(e => Promise.reject(e))
+        if (metric.metricType === USER_PATH) {
+            data.density = 4;
+            data.metricOf = 'sessionCount';
+        }
+        try {
+            const r = await this.client.post(path, data);
+            const response = await r.json();
+            return response.data || {};
+        } catch (e) {
+            return await Promise.reject(e);
+        }
     }
 
     /**
      * Fetch sessions from the server.
      * @param metricId {String}
      * @param filter
-     * @returns 
+     * @returns
      */
      fetchSessions(metricId: string, filter: any): Promise<any> {
         return this.client.post(metricId ? `/cards/${metricId}/sessions` : '/cards/try/sessions', filter)

@@ -1,6 +1,6 @@
 import React from 'react';
-import Select from 'Shared/Select';
-import { Dropdown, MenuProps, Space } from 'antd';
+// import Select from 'Shared/Select';
+import { Dropdown, MenuProps, Select, Space } from 'antd';
 import { DownOutlined, SmileOutlined } from '@ant-design/icons';
 
 interface Props {
@@ -19,25 +19,12 @@ function NodeDropdown(props: Props) {
     }
   ];
   return (
-    <div>
-      <Dropdown menu={{ items }}>
-        <a onClick={(e) => e.preventDefault()}>
-          <Space>
-            Hover me
-            <DownOutlined />
-          </Space>
-        </a>
-      </Dropdown>
-      {/*<Select*/}
-      {/*  plain={true}*/}
-      {/*  name="projectId"*/}
-      {/*  options={options}*/}
-      {/*  defaultValue={1}*/}
-      {/*  fluid*/}
-      {/*  onChange={() => {}}*/}
-      {/*  placeholder="Project"*/}
-      {/*/>*/}
-    </div>
+    <Select style={{ width: 120 }} placeholder='Slect Event' dropdownStyle={{
+      border: 'none'
+    }}>
+      <Select.Option value='jack'>Jack</Select.Option>
+      <Select.Option value='lucy'>Lucy</Select.Option>
+    </Select>
   );
 }
 

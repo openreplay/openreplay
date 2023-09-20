@@ -15,7 +15,7 @@ function CustomNode({ x, y, width, height, index, payload, containerWidth }: any
       <foreignObject
         x={isOut ? x - 6 : x + width + 5}
         y={0}
-        height='200'
+        height={48}
         style={{ width: '150px', padding: '2px' }}
       >
         <NodeDropdown payload={payload} />

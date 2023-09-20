@@ -178,7 +178,12 @@ export default class MetricStore {
       obj['viewType'] = 'list';
     }
 
-    if (value === CLICKMAP || value === USER_PATH) {
+    if (value === USER_PATH) {
+      obj['startType'] = 'start-point';
+
+    }
+
+    if (value === CLICKMAP) {
       obj.series = obj.series.slice(0, 1);
       if (this.instance.metricType !== CLICKMAP) {
         obj.series[0].filter.removeFilter(0);
@@ -191,6 +196,8 @@ export default class MetricStore {
         });
       }
     }
+
+    console.log('obj', obj);
     this.instance.update(obj);
   }
 

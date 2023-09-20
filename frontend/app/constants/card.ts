@@ -196,6 +196,7 @@ export const TYPES: CardType[] = [
     icon: 'arrow-repeat',
     description: 'Get an understanding of how many users are returning.',
     slug: RETENTION,
+    disabled: true,
   },
   // {
   //   title: 'Feature Adoption',

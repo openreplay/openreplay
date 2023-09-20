@@ -67,6 +67,10 @@ export const flagConditionFilters = [
   { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'isUndefined', operatorOptions: [{ label: 'is undefined', value: 'isUndefined'}, { key: 'isAny', label: 'is any', value: 'isAny' }], icon: 'filters/userid' },
 ]
 
+const pathAnalysisStartPoint = [
+  { key: FilterKey.LOCATION, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Visited URL', placeholder: 'Enter path', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/location', isEvent: true },
+]
+
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {
   return flagConditionFilters.findIndex(f => f.key === i.key) === -1
@@ -85,6 +89,7 @@ export const clickmapFilter = {
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
+    filter.value = ['']
     acc[filter.key] = filter;
     return acc;
   }, {});

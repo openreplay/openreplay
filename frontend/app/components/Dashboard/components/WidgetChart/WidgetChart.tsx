@@ -204,21 +204,16 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === USER_PATH) {
-            console.log('data', data)
-
-            const _data: { nodes: any} = {
-                nodes: [],
-                links: data.links,
-            }
-
-            if (data && data.nodes && data.links) {
-              data.nodes.forEach((node: any) => {
-                _data.nodes.push({ name: node })
-              })
-            }
-
-            console.log('_data', _data);
-
+            // const _data: { nodes: any} = {
+            //     nodes: [],
+            //     links: data.links,
+            // }
+            //
+            // if (data && data.nodes && data.links) {
+            //   data.nodes.forEach((node: any) => {
+            //     _data.nodes.push({ name: node })
+            //   })
+            // }
 
             // const _data: any = {
             //     nodes: [
@@ -234,7 +229,7 @@ function WidgetChart(props: Props) {
             //       { source: 2, target: 3, value: 10 },
             //     ],
             //   };
-            return <SankeyChart data={_data} />
+            return <SankeyChart data={data} />
         }
 
         if (metricType === RETENTION) {

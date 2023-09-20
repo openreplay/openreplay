@@ -20,11 +20,13 @@ import {
   WEB_VITALS,
   INSIGHTS,
   USER_PATH,
-  RETENTION,
+  RETENTION
 } from 'App/constants/card';
-import { eventKeys } from 'App/types/filter/newFilter';
+import { eventKeys, filtersMap } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
 import Widget from 'App/mstore/types/widget';
+import FilterItem from 'Shared/Filters/FilterItem';
+
 interface Props {
   history: any;
   match: any;
@@ -35,8 +37,8 @@ function WidgetForm(props: Props) {
   const {
     history,
     match: {
-      params: { siteId, dashboardId },
-    },
+      params: { siteId, dashboardId }
+    }
   } = props;
   const { metricStore, dashboardStore } = useStore();
   const isSaving = metricStore.isSaving;
@@ -95,7 +97,7 @@ function WidgetForm(props: Props) {
       }
     }
     const savedMetric = await metricStore.save(metric);
-    setInitialInstance(metric.toJson())
+    setInitialInstance(metric.toJson());
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
         history.replace(
@@ -116,82 +118,83 @@ function WidgetForm(props: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this card?`,
+        confirmation: `Are you sure you want to permanently delete this card?`
       })
     ) {
       metricStore.delete(metric).then(props.onDelete);
     }
   };
 
-  const undoChnages = () => {
+  const undoChanges = () => {
     const w = new Widget();
     metricStore.merge(w.fromJson(initialInstance), false);
   };
 
   return (
-    <div className="p-6">
-      <div className="form-group">
-        <div className="flex items-center">
-          <span className="mr-2">Card showing</span>
+    <div className='p-6'>
+      <div className='form-group'>
+        <div className='flex items-center'>
+          <span className='mr-2'>Card showing</span>
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 
           {isPathAnalysis && (
             <>
-              <span className="mx-3"></span>
+              <span className='mx-3'></span>
               <Select
-                name="metricOf"
+                name='startType'
                 options={[
                   { value: 'start-point', label: 'With Start Point' },
-                  { value: 'end-point', label: 'With End Point' },
+                  { value: 'end-point', label: 'With End Point' }
                 ]}
-                defaultValue={metric.metricOf}
+                defaultValue={metric.startType}
                 // value={metric.metricOf}
                 onChange={writeOption}
-                placeholder="All Issues"
+                placeholder='All Issues'
               />
 
-              <span className="mx-3">showing</span>
+              <span className='mx-3'>showing</span>
               <Select
-                name="metricValue"
+                name='metricValue'
                 options={[
-                  { value: 'pages', label: 'Pages' },
-                  { value: 'clicks', label: 'Clicks' },
-                  { value: 'events', label: 'Events' },
+                  { value: 'location', label: 'Pages' },
+                  { value: 'click', label: 'Clicks' },
+                  { value: 'input', label: 'Input' },
+                  // { value: 'custom', label: 'Custom' },
                 ]}
-                defaultValue="pages"
+                defaultValue='pages'
                 // value={metric.metricValue}
                 isMulti={true}
                 onChange={writeOption}
-                placeholder="All Issues"
+                placeholder='All Issues'
               />
             </>
           )}
 
           {metric.metricOf === FilterKey.ISSUE && metric.metricType === TABLE && (
             <>
-              <span className="mx-3">issue type</span>
+              <span className='mx-3'>issue type</span>
               <Select
-                name="metricValue"
+                name='metricValue'
                 options={issueOptions}
                 value={metric.metricValue}
                 onChange={writeOption}
                 isMulti={true}
-                placeholder="All Issues"
+                placeholder='All Issues'
               />
             </>
           )}
 
           {metric.metricType === INSIGHTS && (
             <>
-              <span className="mx-3">of</span>
+              <span className='mx-3'>of</span>
               <Select
-                name="metricValue"
+                name='metricValue'
                 options={issueCategories}
                 value={metric.metricValue}
                 onChange={writeOption}
                 isMulti={true}
-                placeholder="All Categories"
+                placeholder='All Categories'
               />
             </>
           )}
@@ -199,9 +202,9 @@ function WidgetForm(props: Props) {
           {metric.metricType === 'table' &&
             !(metric.metricOf === FilterKey.ERRORS || metric.metricOf === FilterKey.SESSIONS) && (
               <>
-                <span className="mx-3">showing</span>
+                <span className='mx-3'>showing</span>
                 <Select
-                  name="metricFormat"
+                  name='metricFormat'
                   options={[{ value: 'sessionCount', label: 'Session Count' }]}
                   defaultValue={metric.metricFormat}
                   onChange={writeOption}
@@ -211,23 +214,36 @@ function WidgetForm(props: Props) {
         </div>
       </div>
 
+      {isPathAnalysis && (
+        <div className='form-group flex flex-col'>
+          Start Point
+
+          <FilterItem
+            filter={metric.startPoint}
+            onUpdate={(val) => {
+              metric.updateStartPoint(val);
+            }} onRemoveFilter={() => {
+          }} />
+        </div>
+      )}
+
       {isPredefined && (
-        <div className="flex items-center my-6 justify-center">
-          <Icon name="info-circle" size="18" color="gray-medium" />
-          <div className="ml-2">
+        <div className='flex items-center my-6 justify-center'>
+          <Icon name='info-circle' size='18' color='gray-medium' />
+          <div className='ml-2'>
             Filtering and drill-downs will be supported soon for this card type.
           </div>
         </div>
       )}
 
       {!isPredefined && (
-        <div className="form-group">
-          <div className="flex items-center font-medium py-2">
+        <div className='form-group'>
+          <div className='flex items-center font-medium py-2'>
             {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
             {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (
               <Button
-                className="ml-2"
-                variant="text-primary"
+                className='ml-2'
+                variant='text-primary'
                 onClick={() => metric.addSeries()}
                 disabled={!canAddSeries}
               >
@@ -240,7 +256,7 @@ function WidgetForm(props: Props) {
             metric.series
               .slice(0, isTable || isFunnel || isClickmap || isInsights || isRetention ? 1 : metric.series.length)
               .map((series: any, index: number) => (
-                <div className="mb-2" key={series.name}>
+                <div className='mb-2' key={series.name}>
                   <FilterSeries
                     canExclude={isPathAnalysis}
                     supportsEmpty={!isClickmap && !isPathAnalysis}
@@ -262,30 +278,30 @@ function WidgetForm(props: Props) {
         </div>
       )}
 
-      <div className="form-groups flex items-center justify-between">
+      <div className='form-groups flex items-center justify-between'>
         <Tooltip
-          title="Cannot save funnel metric without at least 2 events"
+          title='Cannot save funnel metric without at least 2 events'
           disabled={!cannotSaveFunnel}
         >
-          <div className="flex items-center">
-            <Button variant="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
+          <div className='flex items-center'>
+            <Button variant='primary' onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
               {metric.exists()
                 ? 'Update'
                 : parseInt(dashboardId) > 0
-                ? 'Create & Add to Dashboard'
-                : 'Create'}
+                  ? 'Create & Add to Dashboard'
+                  : 'Create'}
             </Button>
             {metric.exists() && metric.hasChanged && (
-              <Button onClick={undoChnages} variant="text" icon="arrow-counterclockwise" className="ml-2">
+              <Button onClick={undoChanges} variant='text' icon='arrow-counterclockwise' className='ml-2'>
                 Undo
               </Button>
             )}
           </div>
         </Tooltip>
-        <div className="flex items-center">
+        <div className='flex items-center'>
           {metric.exists() && (
-            <Button variant="text-primary" onClick={onDelete}>
-              <Icon name="trash" size="14" className="mr-2" color="teal" />
+            <Button variant='text-primary' onClick={onDelete}>
+              <Icon name='trash' size='14' className='mr-2' color='teal' />
               Delete
             </Button>
           )}

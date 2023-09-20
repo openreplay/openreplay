@@ -6,11 +6,13 @@ import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions, issueCategories, issueCategoriesMap } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import Funnel from "../types/funnel";
+import Funnel from '../types/funnel';
 import { metricService } from 'App/services';
-import { FUNNEL, INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
+import { FUNNEL, INSIGHTS, TABLE, USER_PATH, WEB_VITALS } from 'App/constants/card';
 import Error from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
+import FilterItem from './filterItem';
+import { filtersMap } from 'Types/filter/newFilter';
 
 export class InishtIssue {
   icon: string;
@@ -46,10 +48,20 @@ export class InishtIssue {
   }
 }
 
+function cleanFilter(filter: any) {
+  delete filter['operatorOptions'];
+  delete filter['placeholder'];
+  delete filter['category'];
+  delete filter['label'];
+  delete filter['icon'];
+  delete filter['key'];
+}
+
 export default class Widget {
   public static get ID_KEY(): string {
     return 'metricId';
   }
+
   metricId: any = undefined;
   widgetId: any = undefined;
   category?: string = undefined;
@@ -71,6 +83,8 @@ export default class Widget {
   limit: number = 5;
   thumbnail?: string;
   params: any = { density: 70 };
+  startType: string = 'start-point';
+  startPoint: FilterItem = filtersMap[FilterKey.LOCATION];
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -83,7 +97,7 @@ export default class Widget {
     chart: [],
     namesMap: {},
     avg: 0,
-    percentiles: [],
+    percentiles: []
   };
   isLoading: boolean = false;
   isValid: boolean = false;
@@ -156,13 +170,13 @@ export default class Widget {
       config: {
         position: this.position,
         col: this.config.col,
-        row: this.config.row,
-      },
+        row: this.config.row
+      }
     };
   }
 
   toJson() {
-    return {
+    const data = {
       metricId: this.metricId,
       widgetId: this.widgetId,
       metricOf: this.metricOf,
@@ -184,10 +198,25 @@ export default class Widget {
           this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION
             ? 4
             : this.metricType === WEB_VITALS
-            ? 1
-            : 2,
-      },
+              ? 1
+              : 2
+      }
     };
+
+    if (this.metricType === USER_PATH) {
+      const startPoint: any = { ...this.startPoint, type: 'startPoint' };
+      cleanFilter(startPoint);
+
+
+      data['series'][0]['filter']['filters'].push(startPoint);
+      console.log('data', data['series'][0]['filter']['filters']);
+    }
+    return data;
+  }
+
+  updateStartPoint(startPoint: any) {
+    console.log('startPoint', startPoint);
+    this.startPoint = startPoint;
   }
 
   validate() {
@@ -217,7 +246,7 @@ export default class Widget {
             new InishtIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
         );
     } else if (this.metricType === FUNNEL) {
-        _data.funnel = new Funnel().fromJSON(_data);
+      _data.funnel = new Funnel().fromJSON(_data);
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['value'] = data.value;
@@ -237,20 +266,20 @@ export default class Widget {
         _data['chart'] = getChartFormatter(period)(Array.isArray(data) ? data : []);
         _data['namesMap'] = Array.isArray(data)
           ? data
-              .map((i) => Object.keys(i))
-              .flat()
-              .filter((i) => i !== 'time' && i !== 'timestamp')
-              .reduce((unique: any, item: any) => {
-                if (!unique.includes(item)) {
-                  unique.push(item);
-                }
-                return unique;
-              }, [])
+            .map((i) => Object.keys(i))
+            .flat()
+            .filter((i) => i !== 'time' && i !== 'timestamp')
+            .reduce((unique: any, item: any) => {
+              if (!unique.includes(item)) {
+                unique.push(item);
+              }
+              return unique;
+            }, [])
           : [];
       }
     }
 
-    Object.assign(this.data, _data)
+    Object.assign(this.data, _data);
     return _data;
   }
 
@@ -261,7 +290,7 @@ export default class Widget {
           response.map((cat: { sessions: any[] }) => {
             return {
               ...cat,
-              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
+              sessions: cat.sessions.map((s: any) => new Session().fromJson(s))
             };
           })
         );
@@ -279,7 +308,7 @@ export default class Widget {
           ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue))
           : [];
         resolve({
-          issues: significantIssues.length > 0 ? significantIssues : insignificantIssues,
+          issues: significantIssues.length > 0 ? significantIssues : insignificantIssues
         });
       });
     });
@@ -292,7 +321,7 @@ export default class Widget {
         .then((response: any) => {
           resolve({
             issue: new Funnelissue().fromJSON(response.issue),
-            sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),
+            sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s))
           });
         })
         .catch((error: any) => {

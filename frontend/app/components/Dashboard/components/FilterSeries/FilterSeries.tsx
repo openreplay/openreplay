@@ -53,7 +53,6 @@ function FilterSeries(props: Props) {
     observeChanges();
   };
 
-  console.log(series.filter)
   return (
     <div className="border rounded bg-white">
       {canExclude && <ExcludeFilters filter={series.filter} />}
