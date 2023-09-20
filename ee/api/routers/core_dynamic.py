@@ -74,6 +74,7 @@ def login_user(data: schemas.UserLoginSchema = Body(...)):
 
 @app.get('/logout', tags=["login", "logout"])
 def logout_user(context: schemas.CurrentContext = Depends(OR_context)):
+    users.logout(user_id=context.user_id)
     return {"data": "success"}
 
 
