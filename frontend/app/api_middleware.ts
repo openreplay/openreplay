@@ -2,49 +2,52 @@ import logger from 'App/logger';
 import APIClient from './api_client';
 import { FETCH_ACCOUNT, UPDATE_JWT } from './duck/user';
 
-export default () => (next) => (action) => {
-  const { types, call, ...rest } = action;
-  if (!call) {
-    return next(action);
-  }
-  const [REQUEST, SUCCESS, FAILURE] = types;
-  next({ ...rest, type: REQUEST });
-  const client = new APIClient();
+export default () => {
+  return (next: any) => async (action: any) => {
+    const { types, call, ...rest } = action;
 
-  return call(client)
-    .then(async (response) => {
-      // if (response.status === 403) {
-      //   next({ type: FETCH_ACCOUNT.FAILURE });
-      // }
+    if (!call) {
+      return next(action);
+    }
+
+    const [REQUEST, SUCCESS, FAILURE] = types;
+    next({ ...rest, type: REQUEST });
+
+    try {
+      const client = new APIClient();
+      const response = await call(client);
+
       if (!response.ok) {
         const text = await response.text();
-        return Promise.reject(text);
+        throw new Error(text);
       }
-      return response.json();
-    })
-    .then((json) => json || {}) // TEMP  TODO on server: no empty responces
-    .then(({ jwt, errors, data }) => {
+
+      const json = await response.json() || {}; // TEMP TODO on server: no empty responses
+      const { jwt, errors, data, refreshToken } = json;
+
       if (errors) {
         next({ type: FAILURE, errors, data });
       } else {
         next({ type: SUCCESS, data, ...rest });
       }
+
       if (jwt) {
         next({ type: UPDATE_JWT, data: jwt });
       }
-    })
-    .catch(async (e) => {
+
+    } catch (e) {
       if (e.response?.status === 403) {
         next({ type: FETCH_ACCOUNT.FAILURE });
       }
 
       const data = await e.response?.json();
       logger.error('Error during API request. ', e);
-      return next({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
-    });
+      next({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
+    }
+  };
 };
 
-export function parseError(e) {
+export function parseError(e: any) {
   try {
     return [...JSON.parse(e).errors] || [];
   } catch {
@@ -52,7 +55,7 @@ export function parseError(e) {
   }
 }
 
-function jwtExpired(token) {
+function jwtExpired(token: string) {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace('-', '+').replace('_', '/');
