@@ -67,7 +67,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
         }
     }
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=refresh_token,
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/refresh",
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     return response
 
@@ -75,7 +75,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
 @app.get('/logout', tags=["login"])
 def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     users.logout(user_id=context.user_id)
-    response.delete_cookie(key="refreshToken")
+    response.delete_cookie(key="refreshToken", path="/refresh")
     return {"data": "success"}
 
 
@@ -84,9 +84,8 @@ def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=r.get("refreshToken"),
-                        max_age=r.pop("refreshTokenMaxAge"),
-                        secure=True, httponly=True)
+    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/refresh",
+                        max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
     return response
 
 

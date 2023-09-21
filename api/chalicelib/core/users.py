@@ -596,7 +596,7 @@ def get_by_invitation_token(token, pass_token=None):
 def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud, jwt_jti=None):
     extra_condition = ""
     if jwt_jti is not None:
-        extra_condition = " AND jwt_jti = %(jwt_jti)s"
+        extra_condition = " AND jwt_refresh_jti = %(jwt_jti)s"
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id,jwt_iat 
@@ -661,7 +661,7 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
             "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
                                                              iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
                                                              jwt_jti=jwt_r_jti),
-            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+            "refreshTokenMaxAge": TimeUTC.now() // 1000 - authorizers.get_jwt_refresh_exp(jwt_r_iat),
             "email": email,
             **r
         }
@@ -678,37 +678,18 @@ def logout(user_id: int):
         cur.execute(query)
 
 
-def refresh(user_id: int) -> dict:
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""SELECT 
-                    users.user_id,
-                    1 AS tenant_id,
-                    users.jwt_refresh_jti,
-                    users.jwt_refresh_iat,
-                FROM public.users
-                WHERE users.user_id = %(user_id)s 
-                    AND deleted_at IS NULL
-                LIMIT 1;""",
-            {"user_id": user_id})
-
-        cur.execute(query)
-        r = cur.fetchone()
-
-    if r is not None:
-        r = helper.dict_to_camel_case(r)
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
-        jwt_iat = TimeUTC.datetime_to_timestamp(jwt_iat)
-        jwt_r_iat = TimeUTC.datetime_to_timestamp(jwt_r_iat)
-        return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                            aud=f"front:{helper.get_stage_name()}"),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                             jwt_jti=jwt_r_jti),
-            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
-        }
-    return {}
+def refresh(user_id: int, tenant_id: int = -1) -> dict:
+    jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=user_id)
+    jwt_iat = TimeUTC.datetime_to_timestamp(jwt_iat)
+    jwt_r_iat = TimeUTC.datetime_to_timestamp(jwt_r_iat)
+    return {
+        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
+                                        aud=f"front:{helper.get_stage_name()}"),
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id,
+                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                         jwt_jti=jwt_r_jti),
+        "refreshTokenMaxAge": TimeUTC.now() // 1000 - authorizers.get_jwt_refresh_exp(jwt_r_iat)
+    }
 
 
 def get_user_role(tenant_id, user_id):
