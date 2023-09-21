@@ -16,8 +16,8 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
         print("JWTAuth: User not found.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
     request.state.authorizer_identity = "jwt"
-    request.state.currentContext = schemas.CurrentContext(tenant_id=jwt_payload.get("tenantId", -1),
-                                                          user_id=jwt_payload.get("userId", -1),
+    request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
+                                                          userId=jwt_payload.get("userId", -1),
                                                           email=user["email"])
     return request.state.currentContext
 
