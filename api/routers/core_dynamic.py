@@ -3,7 +3,7 @@ from typing import Optional, Union
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
 from fastapi import HTTPException, status
-from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
+from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
@@ -38,7 +38,7 @@ if not tenants.tenants_exists(use_pool=False):
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
+def login_user(data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,36 +58,19 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
         )
 
     r["smtp"] = smtp.has_smtp()
-    refresh_token = r.pop("refreshToken")
-    refresh_token_max_age = r.pop("refreshTokenMaxAge")
     content = {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r
         }
     }
-    response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=refresh_token,
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
-    return response
+
+    return content
 
 
-@app.get('/logout', tags=["login"])
-def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
-    users.logout(user_id=context.user_id)
-    response.delete_cookie(key="refreshToken")
+@app.get('/logout', tags=["login", "logout"])
+def logout_user(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": "success"}
-
-
-@app.get('/refresh', tags=["login"])
-def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
-    r = users.refresh(user_id=context.user_id)
-    content = {"jwt": r.get("jwt")}
-    response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=r.get("refreshToken"),
-                        max_age=r.pop("refreshTokenMaxAge"),
-                        secure=True, httponly=True)
-    return response
 
 
 @app.get('/account', tags=['accounts'])

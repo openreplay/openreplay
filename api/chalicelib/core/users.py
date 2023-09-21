@@ -593,19 +593,16 @@ def get_by_invitation_token(token, pass_token=None):
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud, jwt_jti=None):
-    extra_condition = ""
-    if jwt_jti is not None:
-        extra_condition = " AND jwt_jti = %(jwt_jti)s"
+def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""SELECT user_id,jwt_iat 
-                            FROM public.users  
+            cur.mogrify(f"""SELECT user_id,jwt_iat, changed_at 
+                            FROM public.users 
+                                INNER JOIN public.basic_authentication USING(user_id) 
                             WHERE user_id = %(userId)s 
-                                AND deleted_at IS NULL
-                                {extra_condition} 
+                                AND deleted_at IS NULL 
                             LIMIT 1;""",
-                        {"userId": user_id, "jwt_jti": jwt_jti})
+                        {"userId": user_id})
         )
         r = cur.fetchone()
     return r is not None \
@@ -613,21 +610,18 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud, jwt_jti=None):
         and abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1
 
 
-def change_jwt_iat_jti(user_id):
+def change_jwt_iat(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
-                                SET jwt_iat = timezone('utc'::text, now()),
-                                    jwt_refresh_jti = coalesce(jwt_refresh_jti,0) + 1, 
-                                    jwt_refresh_iat = coalesce(jwt_refresh_iat,timezone('utc'::text, now())) 
+                                SET jwt_iat = timezone('utc'::text, now())
                                 WHERE user_id = %(user_id)s 
-                                RETURNING jwt_iat, jwt_refresh_jti, jwt_refresh_iat;""",
+                                RETURNING jwt_iat;""",
                             {"user_id": user_id})
         cur.execute(query)
-        row = cur.fetchone()
-        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
+        return cur.fetchone().get("jwt_iat")
 
 
-def authenticate(email, password, for_change_password=False) -> dict | bool | None:
+def authenticate(email, password, for_change_password=False) -> dict | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -652,63 +646,15 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
-        jwt_iat = TimeUTC.datetime_to_timestamp(jwt_iat)
-        jwt_r_iat = TimeUTC.datetime_to_timestamp(jwt_r_iat)
+        jwt_iat = change_jwt_iat(r['userId'])
+        iat = TimeUTC.datetime_to_timestamp(jwt_iat)
         return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'], iat=iat,
                                             aud=f"front:{helper.get_stage_name()}"),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                             jwt_jti=jwt_r_jti),
-            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
             **r
         }
     return None
-
-
-def logout(user_id: int):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """UPDATE public.users
-               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
-               WHERE user_id = %(user_id)s;""",
-            {"user_id": user_id})
-        cur.execute(query)
-
-
-def refresh(user_id: int) -> dict:
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""SELECT 
-                    users.user_id,
-                    1 AS tenant_id,
-                    users.jwt_refresh_jti,
-                    users.jwt_refresh_iat,
-                FROM public.users
-                WHERE users.user_id = %(user_id)s 
-                    AND deleted_at IS NULL
-                LIMIT 1;""",
-            {"user_id": user_id})
-
-        cur.execute(query)
-        r = cur.fetchone()
-
-    if r is not None:
-        r = helper.dict_to_camel_case(r)
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
-        jwt_iat = TimeUTC.datetime_to_timestamp(jwt_iat)
-        jwt_r_iat = TimeUTC.datetime_to_timestamp(jwt_r_iat)
-        return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                            aud=f"front:{helper.get_stage_name()}"),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                             jwt_jti=jwt_r_jti),
-            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
-        }
-    return {}
 
 
 def get_user_role(tenant_id, user_id):
