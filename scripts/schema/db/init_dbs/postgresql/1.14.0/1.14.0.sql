@@ -67,6 +67,10 @@ CREATE TABLE IF NOT EXISTS public.sessions_feature_flags
     condition_id    integer NULL REFERENCES feature_flags_conditions (condition_id) ON DELETE SET NULL
 );
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS jwt_refresh_jti integer                     NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next
