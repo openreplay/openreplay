@@ -350,3 +350,107 @@ search_context_v3 = """We have a SQL table called sessions that contains the col
 [[AI_BOT]]: Plan is a string that could be 'pay_as_you_go', 'trial', 'free', 'enterprise'
 [[USER]]: Can you translate the following text into SQL query: {user_question}
 [[AI_BOT]]:"""
+
+search_context_v4 = """We have a database working with GraphQL, the type system is the following:
+    type Click (name: String)
+    type Text_Input (value: String)
+    type Visited_URL (url: String)
+    type Custom_Events (name: String)
+    type Network Request (url: String, status_code: Int, method: String, duration: Int)
+    type GraphQL (name: String, method: String, request_body: String, response_body: String)
+    type State_Action (value: Int)
+    type Error_Message (name: String)
+    type Issue (name: String)
+    type User_OS (name: String)
+    type User_Browser (name: String)
+    type User_Device (name: String)
+    type Platform (name: String)
+    type Version_ID (name: String)
+    type Referrer (url: String)
+    type Duration (value: Int)
+    type User_Country (name: String)
+    type User_City (name: String)
+    type User_State (name: String)
+    type User_Id (name: String)
+    type User_Anonymous_Id (name: String)
+    type DOM_Complete (time_to_render: Int, url: String)
+    type Largest_Contentful_Paint (time_to_load: Int, url: String)
+    type Time_to_First_Byte (time_to_load: Int, url: String)
+    type Avg_Memory_Usage (percentage: Int, url: String)
+    type Avg_Memory_Usage (percentage: Int, url: String)
+    type Failed_Request (name: String)
+    type Plan (name: String)
+    [[USER]]: Get all session from India which has 5 minutes length
+    [[AI_BOT]]: ```[
+    (
+        "value": [],
+        "type": "User_Country",
+        "operator": "is",
+        "isEvent": true,
+        "filters": [
+            (
+                "value": ["India"],
+                "type": "name",
+                "operator": "=",
+                "filters": []
+            )
+        ]
+    ),
+    (
+        "value": [300],  // 5 minutes in seconds (5 * 60)
+        "type": "Duration",
+        "operator": "=",
+        "filters": [
+            (
+                "value": [],
+                "type": "value",
+                "operator": "=",
+                "filters": []
+            )
+        ]
+    )
+]```
+    [[USER]]: How can I see all the sessions from the free plan that had a cpu load of under 30% in the /watchagain/film url?
+    [[AI_BOT]]: ```[
+            (
+                "value": [],
+                "type": "Plan",
+                "operator": "is",
+                "filters": [
+                    (
+                        "value": ["free"],
+                        "type": "name",
+                        "operator": "=",
+                        "filters": []
+                    )
+                ]
+            ),
+            (
+                "value": [],
+                "type": "Avg_Memory_Usage",
+                "operator": "<",
+                "filters": [
+                    (
+                        "value": ["30"],
+                        "type": "percentage",
+                        "operator": "<",
+                        "filters": []
+                    )
+                ]
+            ),
+            (
+                "value": [],
+                "type": "Network Request",
+                "operator": "is",
+                "filters": [
+                    (
+                        "value": ["/watchagain/film"],
+                        "type": "url",
+                        "operator": "=",
+                        "filters": []
+                    )
+                ]
+            )
+        ]```
+    [[USER]]: Can you translate the following text into a GraphQL request to database: {user_question}
+    [[AI_BOT]]:""" # Using GraphQL form to create filters in json format
