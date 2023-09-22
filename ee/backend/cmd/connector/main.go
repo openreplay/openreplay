@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/projects"
@@ -28,10 +27,18 @@ func main() {
 		log.Fatalf("can't init object storage: %s", err)
 	}
 
-	db, err := saver.NewRedshift(cfg)
-	if err != nil {
-		log.Printf("can't init redshift connection: %s", err)
-		return
+	var db saver.Database
+	switch cfg.ConnectorType {
+	case "redshift":
+		if db, err = saver.NewRedshift(cfg, objStore); err != nil {
+			log.Fatalf("can't init redshift connection: %s", err)
+		}
+	case "clickhouse":
+		if db, err = saver.NewClickHouse(cfg); err != nil {
+			log.Fatalf("can't init clickhouse connection: %s", err)
+		}
+	default:
+		log.Fatalf("unknown connector type: %s", cfg.ConnectorType)
 	}
 	defer db.Close()
 
@@ -42,10 +49,6 @@ func main() {
 		return
 	}
 	defer pgConn.Close()
-
-	// Init events module
-	pg := postgres.NewConn(pgConn)
-	defer pg.Close()
 
 	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
@@ -58,7 +61,7 @@ func main() {
 	sessManager := sessions.New(pgConn, projManager, redisClient)
 
 	// Saves messages to Redshift
-	dataSaver := saver.New(cfg, objStore, db, sessManager)
+	dataSaver := saver.New(cfg, db, sessManager)
 
 	// Message filter
 	msgFilter := []int{messages.MsgConsoleLog, messages.MsgCustomEvent, messages.MsgJSException,

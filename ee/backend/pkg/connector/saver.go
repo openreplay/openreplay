@@ -1,25 +1,21 @@
 package connector
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
-	"openreplay/backend/internal/http/geoip"
-	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"time"
 
 	config "openreplay/backend/internal/config/connector"
+	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/sessions"
 )
 
 // Saver collect sessions and events and saves them to Redshift
 type Saver struct {
 	cfg              *config.Config
-	objStorage       objectstorage.ObjectStorage
-	db               *Redshift
+	db               Database
 	sessModule       sessions.Sessions
 	sessions         map[uint64]map[string]string
 	updatedSessions  map[uint64]bool
@@ -28,7 +24,7 @@ type Saver struct {
 	events           []map[string]string
 }
 
-func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshift, sessions sessions.Sessions) *Saver {
+func New(cfg *config.Config, db Database, sessions sessions.Sessions) *Saver {
 	if cfg == nil {
 		log.Fatal("connector config is empty")
 	}
@@ -42,108 +38,11 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage, db *Redshif
 	}
 	return &Saver{
 		cfg:             cfg,
-		objStorage:      objStorage,
 		db:              db,
 		sessModule:      sessions,
 		updatedSessions: make(map[uint64]bool, 0),
 		lastUpdate:      make(map[uint64]time.Time, 0),
 	}
-}
-
-var sessionColumns = []string{
-	"sessionid",
-	"user_agent",
-	"user_browser",
-	"user_browser_version",
-	"user_country",
-	"user_device",
-	"user_device_heap_size",
-	"user_device_memory_size",
-	"user_device_type",
-	"user_os",
-	"user_os_version",
-	"user_uuid",
-	"connection_effective_bandwidth",
-	"connection_type",
-	"metadata_key",
-	"metadata_value",
-	"referrer",
-	"user_anonymous_id",
-	"user_id",
-	"session_start_timestamp",
-	"session_end_timestamp",
-	"session_duration",
-	"first_contentful_paint",
-	"speed_index",
-	"visually_complete",
-	"timing_time_to_interactive",
-	"avg_cpu",
-	"avg_fps",
-	"max_cpu",
-	"max_fps",
-	"max_total_js_heap_size",
-	"max_used_js_heap_size",
-	"js_exceptions_count",
-	"inputs_count",
-	"clicks_count",
-	"issues_count",
-	"urls_count",
-}
-
-var sessionInts = []string{
-	"user_device_heap_size",
-	"user_device_memory_size",
-	"connection_effective_bandwidth",
-	"first_contentful_paint",
-	"speed_index",
-	"visually_complete",
-	"timing_time_to_interactive",
-	"avg_cpu",
-	"avg_fps",
-	"max_cpu",
-	"max_fps",
-	"max_total_js_heap_size",
-	"max_used_js_heap_size",
-	"js_exceptions_count",
-	"inputs_count",
-	"clicks_count",
-	"issues_count",
-	"urls_count",
-}
-
-var eventColumns = []string{
-	"sessionid",
-	"consolelog_level",
-	"consolelog_value",
-	"customevent_name",
-	"customevent_payload",
-	"jsexception_message",
-	"jsexception_name",
-	"jsexception_payload",
-	"jsexception_metadata",
-	"networkrequest_type",
-	"networkrequest_method",
-	"networkrequest_url",
-	"networkrequest_request",
-	"networkrequest_response",
-	"networkrequest_status",
-	"networkrequest_timestamp",
-	"networkrequest_duration",
-	"issueevent_message_id",
-	"issueevent_timestamp",
-	"issueevent_type",
-	"issueevent_context_string",
-	"issueevent_context",
-	"issueevent_payload",
-	"issueevent_url",
-	"customissue_name",
-	"customissue_payload",
-	"received_at",
-	"batch_order_number",
-}
-
-func QUOTES(s string) string {
-	return strconv.Quote(s)
 }
 
 func handleEvent(msg messages.Message) map[string]string {
@@ -387,71 +286,15 @@ func (s *Saver) Handle(msg messages.Message) {
 	return
 }
 
-func eventsToBuffer(batch []map[string]string) *bytes.Buffer {
-	buf := bytes.NewBuffer(nil)
-
-	// Write header
-	for _, column := range eventColumns {
-		buf.WriteString(column + "|")
-	}
-	buf.Truncate(buf.Len() - 1)
-
-	// Write data
-	for _, event := range batch {
-		buf.WriteString("\n")
-		for _, column := range eventColumns {
-			buf.WriteString(event[column] + "|")
-		}
-		buf.Truncate(buf.Len() - 1)
-	}
-	return buf
-}
-
 func (s *Saver) commitEvents() {
 	if len(s.events) == 0 {
 		log.Printf("empty events batch")
 		return
 	}
-	l := len(s.events)
-
-	// Send data to S3
-	fileName := fmt.Sprintf("connector_data/%s-%s.csv", s.cfg.EventsTableName, uuid.New().String())
-	// Create csv file
-	buf := eventsToBuffer(s.events)
-	// Clear events batch
+	if err := s.db.InsertEvents(s.events); err != nil {
+		log.Printf("can't insert events: %s", err)
+	}
 	s.events = nil
-
-	reader := bytes.NewReader(buf.Bytes())
-	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		log.Printf("can't upload file to s3: %s", err)
-		return
-	}
-	// Copy data from s3 bucket to redshift
-	if err := s.db.Copy(s.cfg.EventsTableName, fileName, "|", true, false); err != nil {
-		log.Printf("can't copy data from s3 to redshift: %s", err)
-		return
-	}
-	log.Printf("events batch of %d events is successfully saved", l)
-}
-
-func sessionsToBuffer(batch []map[string]string) *bytes.Buffer {
-	buf := bytes.NewBuffer(nil)
-
-	// Write header
-	for _, column := range sessionColumns {
-		buf.WriteString(column + "|")
-	}
-	buf.Truncate(buf.Len() - 1)
-
-	// Write data
-	for _, sess := range batch {
-		buf.WriteString("\n")
-		for _, column := range sessionColumns {
-			buf.WriteString(sess[column] + "|")
-		}
-		buf.Truncate(buf.Len() - 1)
-	}
-	return buf
 }
 
 func (s *Saver) commitSessions() {
@@ -473,29 +316,12 @@ func (s *Saver) commitSessions() {
 		}
 	}
 	log.Printf("finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
-
-	// Send data to S3
-	fileName := fmt.Sprintf("connector_data/%s-%s.csv", s.cfg.SessionsTableName, uuid.New().String())
-	// Create csv file
-	buf := sessionsToBuffer(sessions)
-
-	reader := bytes.NewReader(buf.Bytes())
-	if err := s.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		log.Printf("can't upload file to s3: %s", err)
-		return
-	}
-	// Copy data from s3 bucket to redshift
-	if err := s.db.Copy(s.cfg.SessionsTableName, fileName, "|", true, false); err != nil {
-		log.Printf("can't copy data from s3 to redshift: %s", err)
-		return
-	}
 	// Clear current list of finished sessions
 	for _, sessionID := range toSend {
 		delete(s.sessions, sessionID)   // delete session info
 		delete(s.lastUpdate, sessionID) // delete last session update timestamp
 	}
 	s.finishedSessions = toKeep
-	log.Printf("sessions batch of %d sessions is successfully saved", l)
 }
 
 // Commit saves batch to Redshift
