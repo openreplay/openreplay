@@ -91,8 +91,8 @@ export default class APIClient {
     return tokenObj.exp * 1000 < Date.now(); // exp in Unix time (sec)
   }
 
-  private async refreshJwtIfNeeded(path: string): Promise<void> {
-    if (path.includes('dashboards') || await this.checkJwtExpired()) {
+  private async refreshJwtIfNeeded(): Promise<void> {
+    if (await this.checkJwtExpired()) {
       // Token is expired, refresh it here
       try {
         const refreshedJwt = await this.refreshJwt();
@@ -123,7 +123,7 @@ export default class APIClient {
 
   private async fetch(path: string, params: any, options: InitOptions = { clean: true }): Promise<Response> {
     if (path !== '/login' && path !== '/refresh') {
-      await this.refreshJwtIfNeeded(path);
+      await this.refreshJwtIfNeeded();
     }
 
     if (params !== undefined) {
