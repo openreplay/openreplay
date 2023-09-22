@@ -63,9 +63,9 @@ def generate_jwt(user_id, tenant_id, iat, aud):
         payload={
             "userId": user_id,
             "tenantId": tenant_id,
-            "exp": iat + config("JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset(),
+            "exp": iat + config("JWT_EXPIRATION", cast=int),
             "iss": config("JWT_ISSUER"),
-            "iat": iat + TimeUTC.get_utc_offset(),
+            "iat": iat,
             "aud": aud
         },
         key=config("jwt_secret"),
@@ -79,9 +79,9 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
         payload={
             "userId": user_id,
             "tenantId": tenant_id,
-            "exp": iat + config("JWT_REFRESH_EXPIRATION", cast=int) + TimeUTC.get_utc_offset(),
+            "exp": iat + config("JWT_REFRESH_EXPIRATION", cast=int),
             "iss": config("JWT_ISSUER"),
-            "iat": iat + TimeUTC.get_utc_offset(),
+            "iat": iat,
             "aud": aud,
             "jti": jwt_jti
         },
