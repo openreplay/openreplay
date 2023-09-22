@@ -18,11 +18,11 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     request.state.authorizer_identity = "jwt"
     if user["serviceAccount"]:
         user["permissions"] = [p.value for p in schemas.ServicePermissions]
-    request.state.currentContext = schemas.CurrentContext(tenant_id=jwt_payload.get("tenantId", -1),
-                                                             user_id=jwt_payload.get("userId", -1),
-                                                             email=user["email"],
-                                                             permissions=user["permissions"],
-                                                             service_account=user["serviceAccount"])
+    request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
+                                                          userId=jwt_payload.get("userId", -1),
+                                                          email=user["email"],
+                                                          permissions=user["permissions"],
+                                                          serviceAccount=user["serviceAccount"])
     return request.state.currentContext
 
 
@@ -30,7 +30,7 @@ class JWTAuth(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super(JWTAuth, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request) -> Optional[schemas_ee.CurrentContext]:
+    async def __call__(self, request: Request) -> Optional[schemas.CurrentContext]:
         if request.url.path == "/api/refresh":
             refresh_token = request.cookies.get("refreshToken")
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=refresh_token)
