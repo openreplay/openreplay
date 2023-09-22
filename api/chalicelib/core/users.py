@@ -609,7 +609,7 @@ def auth_exists(user_id, jwt_iat):
         and abs(jwt_iat - r["jwt_iat"]) <= 1
 
 
-def refresh_auth_exists(user_id, tenant_id, jwt_iat, jwt_aud, jwt_jti=None):
+def refresh_auth_exists(user_id, jwt_jti=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id 
