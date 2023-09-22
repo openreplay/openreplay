@@ -1,6 +1,6 @@
 import store from 'App/store';
 import { queried } from './routes';
-import { setJwt } from './duck/user';
+import { setJwt } from 'Duck/user';
 
 interface InitOptions {
   clean?: boolean;
@@ -91,13 +91,12 @@ export default class APIClient {
     return tokenObj.exp * 1000 < Date.now(); // exp in Unix time (sec)
   }
 
-  private async refreshJwtIfNeeded(): Promise<void> {
-    if (await this.checkJwtExpired()) {
+  private async refreshJwtIfNeeded(path: string): Promise<void> {
+    if (path.includes('dashboards') || await this.checkJwtExpired()) {
       // Token is expired, refresh it here
       try {
         const refreshedJwt = await this.refreshJwt();
         if (refreshedJwt) {
-          localStorage.setItem('jwt', refreshedJwt);
           this.init.headers!.Authorization = `Bearer ${refreshedJwt}`;
           store.dispatch(setJwt(refreshedJwt));
         } else {
@@ -110,14 +109,11 @@ export default class APIClient {
   }
 
   private async refreshJwt(): Promise<string | null> {
-    // Implement token refresh logic here and return the new JWT
-    // If refresh fails, return null
-    // Example:
     try {
-      const response = await fetch('/refresh_token_endpoint');
+      const response = await this.get('/refresh', undefined);
       if (response.ok) {
         const json = await response.json();
-        return json.newToken;
+        return json.jwt;
       }
     } catch (e) {
       // Handle refresh failure
@@ -126,7 +122,9 @@ export default class APIClient {
   }
 
   private async fetch(path: string, params: any, options: InitOptions = { clean: true }): Promise<Response> {
-    await this.refreshJwtIfNeeded();
+    if (path !== '/login' && path !== '/refresh') {
+      await this.refreshJwtIfNeeded(path);
+    }
 
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;

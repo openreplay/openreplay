@@ -1,6 +1,6 @@
 import logger from 'App/logger';
 import APIClient from './api_client';
-import { FETCH_ACCOUNT, UPDATE_JWT } from './duck/user';
+import { FETCH_ACCOUNT, UPDATE_JWT } from 'Duck/user';
 
 export default () => {
   return (next: any) => async (action: any) => {
@@ -23,7 +23,7 @@ export default () => {
       }
 
       const json = await response.json() || {}; // TEMP TODO on server: no empty responses
-      const { jwt, errors, data, refreshToken } = json;
+      const { jwt, errors, data } = json;
 
       if (errors) {
         next({ type: FAILURE, errors, data });
@@ -52,16 +52,5 @@ export function parseError(e: any) {
     return [...JSON.parse(e).errors] || [];
   } catch {
     return Array.isArray(e) ? e : [e];
-  }
-}
-
-function jwtExpired(token: string) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
-    const tokenObj = JSON.parse(window.atob(base64));
-    return tokenObj.exp * 1000 < Date.now(); // exp in Unix time (sec)
-  } catch (e) {
-    return true;
   }
 }
