@@ -58,22 +58,14 @@ def jwt_context(context):
     }
 
 
-def get_jwt_exp(iat):
-    return iat // 1000 + config("JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000
-
-
-def get_jwt_refresh_exp(iat):
-    return iat // 1000 + config("JWT_REFRESH_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000
-
-
 def generate_jwt(user_id, tenant_id, iat, aud):
     token = jwt.encode(
         payload={
             "userId": user_id,
             "tenantId": tenant_id,
-            "exp": get_jwt_exp(iat),
+            "exp": iat + config("JWT_EXPIRATION", cast=int),
             "iss": config("JWT_ISSUER"),
-            "iat": iat // 1000,
+            "iat": iat,
             "aud": aud
         },
         key=config("jwt_secret"),
@@ -87,9 +79,9 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
         payload={
             "userId": user_id,
             "tenantId": tenant_id,
-            "exp": get_jwt_refresh_exp(iat),
+            "exp": iat + config("JWT_REFRESH_EXPIRATION", cast=int),
             "iss": config("JWT_ISSUER"),
-            "iat": iat // 1000,
+            "iat": iat,
             "aud": aud,
             "jti": jwt_jti
         },

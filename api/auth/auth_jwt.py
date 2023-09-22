@@ -32,11 +32,11 @@ class JWTAuth(HTTPBearer):
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=refresh_token)
             if jwt_payload is None or jwt_payload.get("jti") is None:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
-            auth_exists = users.auth_exists(user_id=jwt_payload.get("userId", -1),
-                                            tenant_id=jwt_payload.get("tenantId", -1),
-                                            jwt_iat=jwt_payload.get("iat", 100),
-                                            jwt_aud=jwt_payload.get("aud", ""),
-                                            jwt_jti=jwt_payload["jti"])
+            auth_exists = users.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
+                                                    tenant_id=jwt_payload.get("tenantId", -1),
+                                                    jwt_iat=jwt_payload.get("iat", 100),
+                                                    jwt_aud=jwt_payload.get("aud", ""),
+                                                    jwt_jti=jwt_payload["jti"])
             if not auth_exists:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
