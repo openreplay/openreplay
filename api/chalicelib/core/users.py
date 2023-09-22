@@ -594,7 +594,6 @@ def get_by_invitation_token(token, pass_token=None):
 
 
 def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
-    extra_condition = ""
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat 

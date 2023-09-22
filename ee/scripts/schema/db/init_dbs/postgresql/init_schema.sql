@@ -196,6 +196,8 @@ $$
                 deleted_at      timestamp without time zone NULL     DEFAULT NULL,
                 api_key         text UNIQUE                          DEFAULT generate_api_key(20) NOT NULL,
                 jwt_iat         timestamp without time zone NULL     DEFAULT NULL,
+                jwt_refresh_jti integer                     NULL     DEFAULT NULL,
+                jwt_refresh_iat timestamp without time zone NULL     DEFAULT NULL,
                 data            jsonb                       NOT NULL DEFAULT'{}'::jsonb,
                 weekly_report   boolean                     NOT NULL DEFAULT TRUE,
                 origin          text                        NULL     DEFAULT NULL,

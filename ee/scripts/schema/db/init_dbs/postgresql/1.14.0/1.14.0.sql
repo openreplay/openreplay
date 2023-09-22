@@ -79,6 +79,11 @@ ALTER TABLE IF EXISTS public.users
 ALTER TABLE IF EXISTS public.roles
     ADD COLUMN IF NOT EXISTS service_role bool NOT NULL DEFAULT FALSE;
 
+
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS jwt_refresh_jti integer                     NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next
