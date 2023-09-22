@@ -601,7 +601,7 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                             WHERE user_id = %(userId)s 
                                 AND deleted_at IS NULL
                             LIMIT 1;""",
-                        {"userId": user_id, "jwt_jti": jwt_jti})
+                        {"userId": user_id})
         )
         r = cur.fetchone()
     return r is not None \
