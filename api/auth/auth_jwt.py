@@ -63,9 +63,7 @@ class JWTAuth(HTTPBearer):
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
                 auth_exists = jwt_payload is not None \
                               and users.auth_exists(user_id=jwt_payload.get("userId", -1),
-                                                    tenant_id=jwt_payload.get("tenantId", -1),
-                                                    jwt_iat=jwt_payload.get("iat", 100),
-                                                    jwt_aud=jwt_payload.get("aud", ""))
+                                                    jwt_iat=jwt_payload.get("iat", 100))
                 if jwt_payload is None \
                         or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
                         or not auth_exists:
