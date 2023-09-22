@@ -2,7 +2,7 @@ import re
 
 
 def filter_sql_where_statement(sql_query):
-    m = re.search('(?<=WHERE).*\n', sql_query)
+    m = re.search('(?<=[W,w][H,h][E,e][R,r][E,e]).*[;,\n]', sql_query)
     if m:
         return m.group(0)
     else:
@@ -29,4 +29,16 @@ def get_filter_values(where_statement):
     else:
         statement_tree.append((0, where_statement[last_parentheses+1:len(where_statement)]))
         return statement_tree
+
+def filter_substatement(where_statement):
+    ...
+
+def filter_code_markdown(text_response):
+    m = re.finditer('```', text_response)
+    try:
+        pos1 = next(m).end()
+        pos2 = next(m).start()
+        return text_response[pos1:pos2]
+    except Exception:
+        return None
 
