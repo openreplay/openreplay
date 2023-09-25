@@ -30,13 +30,10 @@ class FastAPI_with_LLM(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI_with_LLM):
-    if not config('REMOTE_MODEL', cast=bool):
-        app.build_llm(ckpt_dir=parameters.ckpt_dir,
-                      tokenizer_path=parameters.tokenizer_path,
-                      max_seq_len=parameters.max_seq_len,
-                      max_batch_size=parameters.max_batch_size)
-    else:
-        app.llm_api = LLMResponseProcessing(queue_size=10)
+    app.build_llm(ckpt_dir=parameters.ckpt_dir,
+                  tokenizer_path=parameters.tokenizer_path,
+                  max_seq_len=parameters.max_seq_len,
+                  max_batch_size=parameters.max_batch_size)
     yield
     app.clear()
 

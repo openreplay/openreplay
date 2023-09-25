@@ -4,12 +4,13 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 WORKDIR api
-COPY llama/llama /api/llama
-COPY crons /api/crons
-COPY utils /api/utils
-COPY core /api/core
-COPY *.sh /api/
-COPY *.py /api/
+COPY llama/llama/*.py llama/
+COPY auth/*.py auth/
+COPY crons/*.py crons/
+COPY utils/*.py utils/
+COPY core/*.py core/
+COPY *.sh ./
+COPY *.py ./
 ENV \
 	RANK=0 \
 	WORLD_SIZE=1 \
