@@ -1,9 +1,4 @@
-FROM nvidia/cuda:12.2.0-base-ubuntu20.04
-FROM python:3.11-slim-buster
-
-RUN apt-get update && apt-get install unzip curl -y \
-	&& curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-	&& unzip awscliv2.zip && ./aws/install && rm awscliv2.zip && rm -rf aws
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
