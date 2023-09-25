@@ -108,6 +108,10 @@ CREATE INDEX IF NOT EXISTS swipes_label_session_id_timestamp_idx ON events_ios.s
 
 ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'tap_rage';
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS jwt_refresh_jti integer                     NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next
