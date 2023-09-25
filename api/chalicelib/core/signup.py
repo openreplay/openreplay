@@ -108,6 +108,8 @@ def create_tenant(data: schemas.UserSignupSchema):
     }
     return {
         'jwt': r.pop('jwt'),
+        'refreshToken': r.pop('refreshToken'),
+        'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
         'data': {
             "user": r,
             "client": c,

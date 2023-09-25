@@ -58,7 +58,9 @@ def get_crashes_by_session_id(session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
-                    FROM {events.EventType.ERROR_IOS.table} AS cr INNER JOIN public.crashes_ios AS uc USING (crash_id) INNER JOIN public.sessions AS s USING (session_id)
+                    FROM {events.EventType.CRASH_IOS.table} AS cr 
+                        INNER JOIN public.crashes_ios AS uc USING (crash_ios_id) 
+                        INNER JOIN public.sessions AS s USING (session_id)
                     WHERE
                       cr.session_id = %(session_id)s
                     ORDER BY timestamp;""", {"session_id": session_id}))

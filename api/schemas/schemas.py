@@ -111,6 +111,7 @@ class EditUserPasswordSchema(BaseModel):
 
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
+    platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
@@ -458,12 +459,13 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
-    click_ios = "clickIos"
+    click_ios = "tapIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
     custom_ios = "customIos"
     request_ios = "requestIos"
     error_ios = "errorIos"
+    swipe_ios = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
@@ -549,6 +551,8 @@ class IssueType(str, Enum):
     custom = 'custom'
     js_exception = 'js_exception'
     mouse_thrashing = 'mouse_thrashing'
+    # IOS
+    tap_rage = 'tap_rage'
 
 
 class MetricFormatType(str, Enum):
@@ -926,9 +930,6 @@ class MobileSignPayloadSchema(BaseModel):
 
 
 class CardSeriesFilterSchema(SearchErrorsSchema):
-    # TODO: transform these if they are used by the UI
-    # startDate: Optional[int] = Field(default=None)
-    # endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
     order: SortOrderType = Field(default=SortOrderType.desc)
     group_by_user: Literal[False] = False
@@ -1110,7 +1111,7 @@ class CardConfigSchema(BaseModel):
 class __CardSchema(CardSessionsSchema):
     name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
-    default_config: CardConfigSchema = Field(..., alias="config")
+    default_config: CardConfigSchema = Field(default=CardConfigSchema(), alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
 
@@ -1318,7 +1319,6 @@ class CardPathAnalysis(__CardSchema):
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
     density: int = Field(default=4, ge=2, le=10)
 
-    # TODO: testing
     series: List[CardPathAnalysisSchema] = Field(default=[])
 
     @model_validator(mode="before")
@@ -1583,8 +1583,6 @@ class FeatureFlagConditionFilterSchema(BaseModel):
     type: FilterType = Field(...)
     value: List[str] = Field(default=[], min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
-    source: Optional[str] = Field(default=None)
-    sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
 
 
 class FeatureFlagCondition(BaseModel):
@@ -1611,12 +1609,6 @@ class FeatureFlagStatus(BaseModel):
     is_active: bool = Field(...)
 
 
-class ModuleStatus(BaseModel):
-    module: Literal["assist", "notes", "bug-reports", "offline-recordings", "alerts"] = Field(...,
-                                                                                              description="Possible values: notes, bugs, live")
-    status: bool = Field(...)
-
-
 class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
     flag_key: str = Field(..., pattern=r'^[a-zA-Z0-9\-]+$')
@@ -1626,3 +1618,9 @@ class FeatureFlagSchema(BaseModel):
     is_active: Optional[bool] = Field(default=True)
     conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
     variants: List[FeatureFlagVariant] = Field(default=[])
+
+
+class ModuleStatus(BaseModel):
+    module: Literal["assist", "notes", "bug-reports",
+    "offline-recordings", "alerts"] = Field(..., description="Possible values: notes, bugs, live")
+    status: bool = Field(...)

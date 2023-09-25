@@ -77,9 +77,10 @@ CREATE TABLE IF NOT EXISTS experimental.events
     response_body Nullable(String),
     issue_type Nullable(Enum8('click_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19,'mouse_thrashing'=20,'app_crash'=21)),
     issue_id Nullable(String),
-    error_tags_keys Array(String),
-    error_tags_values Array(Nullable(String)),
+    error_tags_keys                                Array(String),
+    error_tags_values                              Array(Nullable(String)),
     transfer_size Nullable(UInt32),
+    selector Nullable(String),
     message_id                                     UInt64   DEFAULT 0,
     _timestamp                                     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -152,7 +153,7 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     metadata_8 Nullable(String),
     metadata_9 Nullable(String),
     metadata_10 Nullable(String),
-    issue_types Array(LowCardinality(String)),
+    issue_types                    Array(LowCardinality(String)),
     referrer Nullable(String),
     base_referrer Nullable(String) MATERIALIZED lower(concat(domain(referrer), path(referrer))),
     issue_score Nullable(UInt32),
@@ -203,7 +204,7 @@ CREATE TABLE IF NOT EXISTS experimental.issues
     issue_id       String,
     type Enum8('click_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19,'mouse_thrashing'=20,'app_crash'=21),
     context_string String,
-    context_keys Array(String),
+    context_keys   Array(String),
     context_values Array(Nullable(String)),
     _timestamp     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -276,6 +277,7 @@ SELECT session_id,
        error_tags_keys,
        error_tags_values,
        transfer_size,
+       selector,
        message_id,
        _timestamp
 FROM experimental.events

@@ -2,7 +2,6 @@ import ast
 from typing import List, Union
 
 import schemas
-import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 
@@ -728,15 +727,20 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
-                    if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
-                        events_conditions_not[-1]["condition"] = event_where[-1]
-                    else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                    if event.operator == schemas.ClickEventExtraOperator._on_selector:
+                        event_where.append(
+                            _multiple_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
+                    else:
+                        if is_not:
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
+                            events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                            events_conditions_not[-1]["condition"] = event_where[-1]
+                        else:
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
+                            events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.INPUT.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
