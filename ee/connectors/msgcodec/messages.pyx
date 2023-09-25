@@ -1274,34 +1274,21 @@ cdef class IOSCrash(PyMessage):
         self.stacktrace = stacktrace
 
 
-cdef class IOSScreenEnter(PyMessage):
+cdef class IOSViewComponentEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str title
+    cdef public str screen_name
     cdef public str view_name
+    cdef public bint visible
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str title, str view_name):
+    def __init__(self, unsigned long timestamp, unsigned long length, str screen_name, str view_name, bint visible):
         self.__id__ = 98
         self.timestamp = timestamp
         self.length = length
-        self.title = title
+        self.screen_name = screen_name
         self.view_name = view_name
-
-
-cdef class IOSScreenLeave(PyMessage):
-    cdef public int __id__
-    cdef public unsigned long timestamp
-    cdef public unsigned long length
-    cdef public str title
-    cdef public str view_name
-
-    def __init__(self, unsigned long timestamp, unsigned long length, str title, str view_name):
-        self.__id__ = 99
-        self.timestamp = timestamp
-        self.length = length
-        self.title = title
-        self.view_name = view_name
+        self.visible = visible
 
 
 cdef class IOSClickEvent(PyMessage):
