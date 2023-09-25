@@ -12,8 +12,10 @@ import (
 type Sessions interface {
 	Add(session *Session) error
 	AddUnStarted(session *UnStartedSession) error
+	AddCached(sessionID uint64, data map[string]string) error
 	Get(sessionID uint64) (*Session, error)
 	GetUpdated(sessionID uint64) (*Session, error)
+	GetCached(sessionID uint64) (map[string]string, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
 	UpdateEncryptionKey(sessionID uint64, key []byte) error
@@ -106,6 +108,14 @@ func (s *sessionsImpl) GetUpdated(sessionID uint64) (*Session, error) {
 		log.Printf("Failed to cache session: %v", err)
 	}
 	return session, nil
+}
+
+func (s *sessionsImpl) AddCached(sessionID uint64, data map[string]string) error {
+	return s.cache.SetCache(sessionID, data)
+}
+
+func (s *sessionsImpl) GetCached(sessionID uint64) (map[string]string, error) {
+	return s.cache.GetCache(sessionID)
 }
 
 // GetDuration usage: in ender to check current and new duration to avoid duplicates

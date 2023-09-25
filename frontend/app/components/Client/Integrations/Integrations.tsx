@@ -310,54 +310,54 @@ const integrations = [
     integrations: [
       {
         title: 'Redux',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture Redux actions/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/redux', component: <ReduxDoc />
       },
       {
         title: 'VueX',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture VueX mutations/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/vuejs',
         component: <VueDoc />
       },
       {
         title: 'Pinia',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture Pinia mutations/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/pinia',
         component: <PiniaDoc />
       },
       {
         title: 'GraphQL',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture GraphQL requests and inspect them later on while replaying session recordings. This plugin is compatible with Apollo and Relay implementations.',
         icon: 'integrations/graphql',
         component: <GraphQLDoc />
       },
       {
         title: 'NgRx',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture NgRx actions/state and inspect them later on while replaying session recordings.\n',
         icon: 'integrations/ngrx',
         component: <NgRxDoc />
       },
       {
         title: 'MobX',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture MobX mutations and inspect them later on while replaying session recordings.',
         icon: 'integrations/mobx',
         component: <MobxDoc />
       },
       {
         title: 'Profiler',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Plugin allows you to measure your JS functions performance and capture both arguments and result for each call.',
         icon: 'integrations/openreplay',
         component: <ProfilerDoc />
       },
       {
         title: 'Assist',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.\n',
         icon: 'integrations/openreplay',
         component: <AssistDoc />
       },
       {
         title: 'Zustand',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
         icon: '',
         header: '🐻',
         component: <ZustandDoc />

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"openreplay/backend/pkg/metrics/database"
 )
 
@@ -19,11 +20,19 @@ type Pool interface {
 	Exec(sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
 	Begin() (*_Tx, error)
+	IsConnected() bool
 	Close()
 }
 
 type poolImpl struct {
+	url  string
 	conn *pgxpool.Pool
+}
+
+func (p *poolImpl) IsConnected() bool {
+	stat := p.conn.Stat()
+	log.Println("stat: ", stat.AcquireCount(), stat.IdleConns(), stat.MaxConns(), stat.TotalConns())
+	return true
 }
 
 func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
@@ -73,17 +82,32 @@ func (p *poolImpl) Close() {
 	p.conn.Close()
 }
 
+func (p *poolImpl) checker() {
+	for {
+		time.Sleep(time.Second * 5)
+		if p.conn != nil {
+			ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+			if err := p.conn.Ping(ctx); err != nil {
+				log.Println("pgxpool.Ping error: ", err)
+			}
+		}
+	}
+}
+
 func New(url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
 	}
-	conn, err := pgxpool.Connect(context.Background(), url)
+	conn, err := pgxpool.New(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
-	return &poolImpl{
+	res := &poolImpl{
+		url:  url,
 		conn: conn,
-	}, nil
+	}
+	go res.checker()
+	return res, nil
 }
 
 // TX - start

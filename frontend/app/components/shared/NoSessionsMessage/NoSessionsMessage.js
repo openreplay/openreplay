@@ -14,6 +14,8 @@ const NoSessionsMessage = (props) => {
   } = props;
   const activeSite = sites.find((s) => s.id === siteId);
   const showNoSessions = !!activeSite && !activeSite.recorded;
+  const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
+  console.log('onboardingPath', onboardingPath, siteId);
   return (
     <>
       {showNoSessions && (
@@ -36,7 +38,7 @@ const NoSessionsMessage = (props) => {
               <Button
                 variant='primary'
                 className='bg-white h-8 hover:bg-gray-light text-base'
-                onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}
+                onClick={() => props.history.push(onboardingPath)}
               >
                 Complete Project Setup
               </Button>

@@ -165,7 +165,7 @@ const REQUIRED_SITE_ID_ROUTES = [
 
   error(''),
   errors(),
-  onboarding(),
+  onboarding(''),
   funnels(),
   funnelsCreate(),
   funnel(''),

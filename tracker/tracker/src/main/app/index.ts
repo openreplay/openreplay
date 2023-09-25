@@ -418,7 +418,7 @@ export default class App {
     const ingest = this.options.ingestPoint
     const isSaas = /api\.openreplay\.com/.test(ingest)
 
-    const projectPath = isSaas ? 'https://openreplay.com/ingest' : ingest
+    const projectPath = isSaas ? 'https://app.openreplay.com/ingest' : ingest
 
     const url = projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
 

@@ -1,3 +1,15 @@
+# 9.0.9
+
+- Fix for `{disableStringDict: true}` behavior
+
+# 9.0.8
+
+- added slight delay to iframe handler (rapid updates of stacked frames used to break player)
+
+# 9.0.7
+
+- fix for `getSessionURL` method
+
 # 9.0.6
 
 - added `tokenUrlMatcher` option to network settings, allowing to ingest session token header to custom allowed urls

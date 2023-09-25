@@ -203,6 +203,7 @@ const Router: React.FC<RouterProps> = (props) => {
     (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview');
+  const hideMenu = hideHeader || location.pathname.includes('/onboarding/');
 
   // const isPlayer =
   //   isRoute(SESSION_PATH, location.pathname) ||
