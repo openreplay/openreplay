@@ -34,7 +34,13 @@ if not tenants.tenants_exists(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
     def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-        return signup.create_tenant(data)
+        content = signup.create_tenant(data)
+        refresh_token = content.pop("refreshToken")
+        refresh_token_max_age = content.pop("refreshTokenMaxAge")
+        response = JSONResponse(content=content)
+        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        return response
 
 
 @public_app.post('/login', tags=["authentication"])
