@@ -1,3 +1,7 @@
+# 9.0.9
+
+- Fix for `{disableStringDict: true}` behavior
+
 # 9.0.8
 
 - added slight delay to iframe handler (rapid updates of stacked frames used to break player)
