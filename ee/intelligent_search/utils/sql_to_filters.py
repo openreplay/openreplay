@@ -1,8 +1,8 @@
 import re
 
 
-def filter_sql_where_statement(sql_query):
-    m = re.search('(?<=[W,w][H,h][E,e][R,r][E,e]).*[;,\n]', sql_query)
+def filter_sql_where_statement2(sql_query):
+    m = re.search('(?<=[W,w][H,h][E,e][R,r][E,e])[^;]*;', sql_query)
     if m:
         return m.group(0)
     else:
@@ -40,5 +40,14 @@ def filter_code_markdown(text_response):
         pos2 = next(m).start()
         return text_response[pos1:pos2]
     except Exception:
+        return None
+
+def filter_sql_where_statement(sql_query):
+    sql_query = sql_query.replace('\n','  ')
+    m = re.search('[S,s][E,e][L,l][E,e][C,c][T,t]', sql_query)
+    if m:
+        return filter_sql_where_statement2(sql_query[m.end():])
+    else:
+        print('[INFO] This None arrived')
         return None
 
