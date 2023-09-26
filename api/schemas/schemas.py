@@ -1583,6 +1583,8 @@ class FeatureFlagConditionFilterSchema(BaseModel):
     type: FilterType = Field(...)
     value: List[str] = Field(default=[], min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
+    source: Optional[str] = Field(default=None)
+    sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
 
 
 class FeatureFlagCondition(BaseModel):
