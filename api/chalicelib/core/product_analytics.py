@@ -63,58 +63,53 @@ JOURNEY_TYPES = {
 }
 
 
-def path_analysis(project_id: int, data: schemas.PathAnalysisSchema,
-                  selected_event_type: List[schemas.ProductAnalyticsSelectedEventType],
-                  density: int = 4, hide_minor_paths: bool = False):
-    # pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-    #                                         time_constraint=True)
-    # TODO: check if data=args is required
-    pg_sub_query_subset = __get_constraints(project_id=project_id, duration=True, main_table="s", time_constraint=True)
+def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_join = ""
     start_points_conditions = []
     sessions_conditions = ["start_ts>=%(startTimestamp)s", "start_ts<%(endTimestamp)s",
                            "project_id=%(project_id)s", "events_count > 1", "duration>0"]
-    if len(selected_event_type) == 0:
-        selected_event_type.append(schemas.ProductAnalyticsSelectedEventType.location)
+    if len(data.metric_value) == 0:
+        data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.location)
         sub_events.append({"table": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["table"],
                            "column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"],
                            "eventType": schemas.ProductAnalyticsSelectedEventType.location.value})
     else:
-        for v in selected_event_type:
+        for v in data.metric_value:
             if JOURNEY_TYPES.get(v):
                 sub_events.append({"table": JOURNEY_TYPES[v]["table"],
                                    "column": JOURNEY_TYPES[v]["column"],
                                    "eventType": v})
 
     extra_values = {}
-    reverse = False
-    meta_keys = None
+    reverse = data.start_type == "end"
+    for i, sf in enumerate(data.start_point):
+        f_k = f"start_point_{i}"
+        op = sh.get_sql_operator(sf.operator)
+        is_not = sh.is_negation_operator(sf.operator)
+        extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
+        start_points_conditions.append(f"(event_type='{sf.type}' AND " +
+                                       sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
+                                                           value_key=f_k)
+                                       + ")")
+
     exclusions = {}
-    for i, f in enumerate(data.filters):
+    for i, ef in enumerate(data.exclude):
+        if ef.type in data.metric_value:
+            f_k = f"exclude_{i}"
+            extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}
+            exclusions[ef.type] = [
+                sh.multi_conditions(f'{JOURNEY_TYPES[ef.type]["column"]} != %({f_k})s', ef.value, is_not=True,
+                                    value_key=f_k)]
+
+    meta_keys = None
+    for i, f in enumerate(data.series[0].filter.filters):
         op = sh.get_sql_operator(f.operator)
         is_any = sh.isAny_opreator(f.operator)
         is_not = sh.is_negation_operator(f.operator)
         is_undefined = sh.isUndefined_operator(f.operator)
         f_k = f"f_value_{i}"
         extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
-
-        if f.type in [schemas.ProductAnalyticsFilterType.start_point, schemas.ProductAnalyticsFilterType.end_point]:
-            for sf in f.filters:
-                extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
-                start_points_conditions.append(f"(event_type='{sf.type}' AND " +
-                                               sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
-                                                                   value_key=f_k)
-                                               + ")")
-
-            reverse = f.type == schemas.ProductAnalyticsFilterType.end_point
-        elif f.type == schemas.ProductAnalyticsFilterType.exclude:
-            for sf in f.filters:
-                if sf.type in selected_event_type:
-                    extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
-                    exclusions[sf.type] = [
-                        sh.multi_conditions(f'{JOURNEY_TYPES[sf.type]["column"]} != %({f_k})s', sf.value, is_not=True,
-                                            value_key=f_k)]
 
         # ---- meta-filters
         if f.type == schemas.FilterType.user_browser:
@@ -347,8 +342,8 @@ FROM limited_events
 GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count
 ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
-                  "endTimestamp": data.endTimestamp, "density": density,
-                  "eventThresholdNumberInGroup": 8 if hide_minor_paths else 6,
+                  "endTimestamp": data.endTimestamp, "density": data.density,
+                  "eventThresholdNumberInGroup": 8 if data.hide_excess else 6,
                   # TODO: add if data=args is required
                   # **__get_constraint_values(args),
                   **extra_values}

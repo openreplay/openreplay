@@ -863,66 +863,18 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
 
 class ProductAnalyticsFilter(BaseModel):
-    # The filters attribute will help with startPoint/endPoint/exclude
-    filters: Optional[List[PathAnalysisSubFilterSchema]] = Field(default=[])
-    type: Union[ProductAnalyticsFilterType, FilterType]
+    type: FilterType
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadat filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
-    # @model_validator(mode='after')
-    # def __validator(cls, values):
-    #     if values.type == ProductAnalyticsFilterType.event_type:
-    #         assert values.value is not None and len(values.value) > 0, \
-    #             f"value must be provided for type:{ProductAnalyticsFilterType.event_type}"
-    #         assert ProductAnalyticsEventType.has_value(values.value[0]), \
-    #             f"value must be of type {ProductAnalyticsEventType} for type:{ProductAnalyticsFilterType.event_type}"
-    #
-    #     return values
-
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
-    # startTimestamp: int = Field(default=TimeUTC.now(delta_days=-1))
-    # endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
-
-    @model_validator(mode='after')
-    def __validator(cls, values):
-        filters = []
-        for f in values.filters:
-            if ProductAnalyticsFilterType.has_value(f.type) and (f.filters is None or len(f.filters) == 0):
-                continue
-            filters.append(f)
-        values.filters = filters
-
-        # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
-        # start-point's value and end-point's value should not be excluded
-        s_e_detected = 0
-        s_e_values = {}
-        exclude_values = {}
-        for f in values.filters:
-            if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
-                s_e_detected += 1
-                for s in f.filters:
-                    s_e_values[s.type] = s_e_values.get(s.type, []) + s.value
-            elif f.type in ProductAnalyticsFilterType.exclude:
-                for s in f.filters:
-                    exclude_values[s.type] = exclude_values.get(s.type, []) + s.value
-
-        assert s_e_detected <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
-        for t in exclude_values:
-            for v in t:
-                assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
-
-        return values
-
-
-# class AssistSearchPayloadSchema(BaseModel):
-#     filters: List[dict] = Field([])
 
 
 class MobileSignPayloadSchema(BaseModel):
@@ -1319,6 +1271,10 @@ class CardPathAnalysis(__CardSchema):
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
     density: int = Field(default=4, ge=2, le=10)
 
+    start_type: Literal["start", "end"] = Field(default="start")
+    start_point: List[PathAnalysisSubFilterSchema] = Field(default=[])
+    exclude: List[PathAnalysisSubFilterSchema] = Field(default=[])
+
     series: List[CardPathAnalysisSchema] = Field(default=[])
 
     @model_validator(mode="before")
@@ -1331,11 +1287,8 @@ class CardPathAnalysis(__CardSchema):
     @model_validator(mode="after")
     def __enforce_metric_value(cls, values):
         metric_value = []
-        for s in values.series:
-            for f in s.filter.filters:
-                if f.type in (ProductAnalyticsFilterType.start_point, ProductAnalyticsFilterType.end_point):
-                    for ff in f.filters:
-                        metric_value.append(ff.type)
+        for s in values.start_point:
+            metric_value.append(s.type)
 
         if len(metric_value) > 0:
             metric_value = remove_duplicate_values(metric_value)
@@ -1343,9 +1296,29 @@ class CardPathAnalysis(__CardSchema):
 
         return values
 
-    @model_validator(mode="after")
-    def __transform(cls, values):
-        # values.metric_of = MetricOfClickMap(values.metric_of)
+    # @model_validator(mode="after")
+    # def __transform(cls, values):
+    #     # values.metric_of = MetricOfClickMap(values.metric_of)
+    #     return values
+    @model_validator(mode='after')
+    def __validator(cls, values):
+        # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
+        # start-point's value and end-point's value should not be excluded
+
+        s_e_values = {}
+        exclude_values = {}
+        for f in values.start_point:
+            s_e_values[f.type] = s_e_values.get(f.type, []) + f.value
+
+        for f in values.exclude:
+            exclude_values[f.type] = exclude_values.get(f.type, []) + f.value
+
+        assert len(
+            values.start_point) <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
+        for t in exclude_values:
+            for v in t:
+                assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
+
         return values
 
 

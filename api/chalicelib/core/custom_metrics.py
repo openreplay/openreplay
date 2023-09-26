@@ -103,8 +103,7 @@ def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardP
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter, density=data.density,
-                                           selected_event_type=data.metric_value, hide_minor_paths=data.hide_excess)
+    return product_analytics.path_analysis(project_id=project_id, data=data)
 
 
 def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
