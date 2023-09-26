@@ -886,24 +886,15 @@ class IOSCrash(Message):
         self.stacktrace = stacktrace
 
 
-class IOSScreenEnter(Message):
+class IOSViewComponentEvent(Message):
     __id__ = 98
 
-    def __init__(self, timestamp, length, title, view_name):
+    def __init__(self, timestamp, length, screen_name, view_name, visible):
         self.timestamp = timestamp
         self.length = length
-        self.title = title
+        self.screen_name = screen_name
         self.view_name = view_name
-
-
-class IOSScreenLeave(Message):
-    __id__ = 99
-
-    def __init__(self, timestamp, length, title, view_name):
-        self.timestamp = timestamp
-        self.length = length
-        self.title = title
-        self.view_name = view_name
+        self.visible = visible
 
 
 class IOSClickEvent(Message):

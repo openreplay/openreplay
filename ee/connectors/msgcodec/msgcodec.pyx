@@ -888,19 +888,12 @@ cdef class MessageCodec:
             )
 
         if message_id == 98:
-            return IOSScreenEnter(
+            return IOSViewComponentEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                title=self.read_string(reader),
-                view_name=self.read_string(reader)
-            )
-
-        if message_id == 99:
-            return IOSScreenLeave(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                title=self.read_string(reader),
-                view_name=self.read_string(reader)
+                screen_name=self.read_string(reader),
+                view_name=self.read_string(reader),
+                visible=self.read_boolean(reader)
             )
 
         if message_id == 100:

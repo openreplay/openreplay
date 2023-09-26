@@ -58,18 +58,12 @@ message 97, 'IOSCrash' do
     string 'Stacktrace'
 end
 
-message 98, 'IOSScreenEnter' do
+message 98, 'IOSViewComponentEvent' do
     uint 'Timestamp'
     uint 'Length'
-    string 'Title'
+    string 'ScreenName'
     string 'ViewName'
-end
-
-message 99, 'IOSScreenLeave' do
-    uint 'Timestamp'
-    uint 'Length'
-    string 'Title'
-    string 'ViewName'
+    boolean 'Visible'
 end
 
 message 100, 'IOSClickEvent', :replayer => true do

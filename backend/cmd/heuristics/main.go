@@ -37,6 +37,7 @@ func main() {
 			&web.PerformanceAggregator{},
 			web.NewAppCrashDetector(),
 			&ios.TapRageDetector{},
+			ios.NewViewComponentDurations(),
 		}
 	}
 

@@ -1539,37 +1539,22 @@ func DecodeIOSCrash(reader BytesReader) (Message, error) {
         return msg, err
 }
 
-func DecodeIOSScreenEnter(reader BytesReader) (Message, error) {
+func DecodeIOSViewComponentEvent(reader BytesReader) (Message, error) {
     var err error = nil
-    msg := &IOSScreenEnter{}
+    msg := &IOSViewComponentEvent{}
     	if msg.Timestamp, err = reader.ReadUint(); err != nil {
             return nil, err
         }
 	if msg.Length, err = reader.ReadUint(); err != nil {
             return nil, err
         }
-	if msg.Title, err = reader.ReadString(); err != nil {
+	if msg.ScreenName, err = reader.ReadString(); err != nil {
             return nil, err
         }
 	if msg.ViewName, err = reader.ReadString(); err != nil {
             return nil, err
         }
-        return msg, err
-}
-
-func DecodeIOSScreenLeave(reader BytesReader) (Message, error) {
-    var err error = nil
-    msg := &IOSScreenLeave{}
-    	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Length, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Title, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-	if msg.ViewName, err = reader.ReadString(); err != nil {
+	if msg.Visible, err = reader.ReadBoolean(); err != nil {
             return nil, err
         }
         return msg, err
@@ -1996,9 +1981,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 97:
 		return DecodeIOSCrash(reader)
 	case 98:
-		return DecodeIOSScreenEnter(reader)
-	case 99:
-		return DecodeIOSScreenLeave(reader)
+		return DecodeIOSViewComponentEvent(reader)
 	case 100:
 		return DecodeIOSClickEvent(reader)
 	case 101:

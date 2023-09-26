@@ -28,10 +28,7 @@ func GetTimestamp(message Message) uint64 {
 	case *IOSCrash:
 		return msg.Timestamp
 
-	case *IOSScreenEnter:
-		return msg.Timestamp
-
-	case *IOSScreenLeave:
+	case *IOSViewComponentEvent:
 		return msg.Timestamp
 
 	case *IOSClickEvent:

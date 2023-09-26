@@ -94,8 +94,7 @@ const (
     MsgIOSUserAnonymousID = 95
     MsgIOSScreenChanges = 96
     MsgIOSCrash = 97
-    MsgIOSScreenEnter = 98
-    MsgIOSScreenLeave = 99
+    MsgIOSViewComponentEvent = 98
     MsgIOSClickEvent = 100
     MsgIOSInputEvent = 101
     MsgIOSPerformanceEvent = 102
@@ -2513,58 +2512,33 @@ func (msg *IOSCrash) TypeID() int {
 	return 97
 }
 
-type IOSScreenEnter struct {
+type IOSViewComponentEvent struct {
 	message
 	Timestamp uint64
 	Length uint64
-	Title string
+	ScreenName string
 	ViewName string
+	Visible bool
 }
 
-func (msg *IOSScreenEnter) Encode() []byte {
-	buf := make([]byte, 41+len(msg.Title)+len(msg.ViewName))
+func (msg *IOSViewComponentEvent) Encode() []byte {
+	buf := make([]byte, 51+len(msg.ScreenName)+len(msg.ViewName))
 	buf[0] = 98
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Title, buf, p)
+	p = WriteString(msg.ScreenName, buf, p)
 	p = WriteString(msg.ViewName, buf, p)
+	p = WriteBoolean(msg.Visible, buf, p)
 	return buf[:p]
 }
 
-func (msg *IOSScreenEnter) Decode() Message {
+func (msg *IOSViewComponentEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSScreenEnter) TypeID() int {
+func (msg *IOSViewComponentEvent) TypeID() int {
 	return 98
-}
-
-type IOSScreenLeave struct {
-	message
-	Timestamp uint64
-	Length uint64
-	Title string
-	ViewName string
-}
-
-func (msg *IOSScreenLeave) Encode() []byte {
-	buf := make([]byte, 41+len(msg.Title)+len(msg.ViewName))
-	buf[0] = 99
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Title, buf, p)
-	p = WriteString(msg.ViewName, buf, p)
-	return buf[:p]
-}
-
-func (msg *IOSScreenLeave) Decode() Message {
-	return msg
-}
-
-func (msg *IOSScreenLeave) TypeID() int {
-	return 99
 }
 
 type IOSClickEvent struct {
