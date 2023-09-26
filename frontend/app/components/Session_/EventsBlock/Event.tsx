@@ -23,7 +23,7 @@ type Props = {
 };
 
 const isFrustrationEvent = (evt: any): boolean => {
-  if (evt.type === 'mouse_thrashing' || evt.type === TYPES.CLICKRAGE) {
+  if (evt.type === 'mouse_thrashing' || evt.type === TYPES.CLICKRAGE || evt.type === TYPES.TAPRAGE) {
     return true;
   }
   if (evt.type === TYPES.CLICK || evt.type === TYPES.INPUT) {
@@ -108,7 +108,8 @@ const Event: React.FC<Props> = ({
           : null;
         break;
       case TYPES.CLICKRAGE:
-        title = `${event.count} Clicks`;
+      case TYPES.TAPRAGE:
+        title = event.count ? `${event.count} Clicks` : 'Click Rage';
         body = event.label;
         icon = 'event/clickrage';
         break;
@@ -170,7 +171,7 @@ const Event: React.FC<Props> = ({
 
   const isFrustration = isFrustrationEvent(event);
 
-  const mobileTypes = [TYPES.TOUCH, TYPES.SWIPE]
+  const mobileTypes = [TYPES.TOUCH, TYPES.SWIPE, TYPES.TAPRAGE]
   return (
     <div
       ref={wrapperRef}
