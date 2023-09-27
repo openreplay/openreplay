@@ -47,14 +47,14 @@ function SideMenu(props: Props) {
       const updatedItems = category.items.map(item => {
         if (item.hidden) return item;
 
-        const isHidden = [
-          (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
-          (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST),
-          (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
-          (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
-          (item.isAdmin && !isAdmin),
-          (item.isEnterprise && !isEnterprise)
-        ].some(cond => cond);
+          const isHidden = [
+            (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
+            (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS || item.key === MENU.STATS) && modules.includes(MODULES.ASSIST),
+            (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
+            (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
+            (item.isAdmin && !isAdmin),
+            (item.isEnterprise && !isEnterprise)
+          ].some(cond => cond);
 
         return { ...item, hidden: isHidden };
       });
@@ -86,6 +86,7 @@ function SideMenu(props: Props) {
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
+    [MENU.STATS]: () => withSiteId(routes.assistStats(), siteId),
     [MENU.RECORDINGS]: () => withSiteId(routes.recordings(), siteId),
     [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
     [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
