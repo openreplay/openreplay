@@ -1609,3 +1609,18 @@ class ModuleStatus(BaseModel):
     module: Literal["assist", "notes", "bug-reports",
     "offline-recordings", "alerts"] = Field(..., description="Possible values: notes, bugs, live")
     status: bool = Field(...)
+
+
+class AssistStatsAverage(BaseModel):
+    key: str = Field(...)
+    avg: float = Field(...)
+    chartData: List[dict] = Field(...)
+
+
+class AssistStatsSession(BaseModel):
+    sessionId: str = Field(...)
+    timestamp: int = Field(...)
+    teamMembers: List[dict] = Field(...)
+    liveDuration: int = Field(...)
+    callDuration: int = Field(...)
+    remoteDuration: int = Field(...)

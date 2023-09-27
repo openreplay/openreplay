@@ -1,7 +1,7 @@
-from typing import Union
-
+from datetime import datetime, timedelta
+from typing import Union, List
 from decouple import config
-from fastapi import Depends, Body
+from fastapi import Depends, Body, Query
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, assist_stats
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -862,3 +862,56 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
+
+
+@public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
+def get_assist_stats_avg(
+        project_id: int,
+        startTimestamp: int = 0,
+        endTimestamp: int = 0,
+):
+    if not startTimestamp:
+        startTimestamp = datetime.now() - timedelta(hours=24)
+        endTimestamp = datetime.now()
+
+    return assist_stats.get_averages(start_timestamp=startTimestamp, end_timestamp=endTimestamp)
+
+
+@public_app.get('/{project_id}/assist-stats/top-members', tags=["assist-stats"], response_model=List[dict])
+def get_assist_stats_top_members(
+        project_id: int,
+        startTimestamp: int = 0,
+        endTimestamp: int = 0,
+        sortyBy: str = "count",
+        sortOder: str = "desc"
+):
+    if not startTimestamp:
+        startTimestamp = datetime.now() - timedelta(hours=24)
+        endTimestamp = datetime.now()
+
+    return assist_stats.get_top_members()
+
+
+@public_app.get('/{project_id}/assist-stats/sessions', tags=["assist-stats"],
+                response_model=List[schemas.AssistStatsSession])
+def get_assist_stats_sessions(
+        project_id: int,
+        startTimestamp: int = 0,
+        endTimestamp: int = 0,
+        sortyBy: str = "count",
+        sortOder: str = "desc",
+        page: int = 1,
+        limit: int = 100
+):
+    return assist_stats.get_sessions()
+
+
+@public_app.get('/{project_id}/assist-stats/export-csv', tags=["assist-stats"])
+def get_assist_stats_export_csv(
+        project_id: int,
+        startTimestamp: int = 0,
+        endTimestamp: int = 0,
+        sortyBy: str = "count",
+        sortOder: str = "desc"
+):
+    return assist_stats.export_csv()
