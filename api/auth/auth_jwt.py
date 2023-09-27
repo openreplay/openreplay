@@ -18,7 +18,8 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     request.state.authorizer_identity = "jwt"
     request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
                                                           userId=jwt_payload.get("userId", -1),
-                                                          email=user["email"])
+                                                          email=user["email"],
+                                                          role=user["role"])
     return request.state.currentContext
 
 

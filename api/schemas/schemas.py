@@ -123,8 +123,24 @@ class CurrentAPIContext(BaseModel):
 class CurrentContext(CurrentAPIContext):
     user_id: int = Field(...)
     email: EmailStr = Field(...)
+    role: str = Field(...)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
+
+    @computed_field
+    @property
+    def is_owner(self) -> bool:
+        return self.role == "owner"
+
+    @computed_field
+    @property
+    def is_admin(self) -> bool:
+        return self.role == "admin"
+
+    @computed_field
+    @property
+    def is_member(self) -> bool:
+        return self.role == "member"
 
 
 class AddCollaborationSchema(BaseModel):
