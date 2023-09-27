@@ -16,7 +16,7 @@ apscheduler = "==3.10.4"
 redis = "==5.0.1"
 urllib3 = "==1.26.16"
 uvicorn = {extras = ["standard"], version = "==0.23.2"}
-pydantic = {extras = ["email"], version = "==2.4.0"}
+pydantic = {extras = ["email"], version = "==2.3.0"}
 
 [dev-packages]
 
