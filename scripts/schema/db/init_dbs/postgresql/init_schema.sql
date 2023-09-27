@@ -662,6 +662,8 @@ $$
                 path       text,
                 selector   text    DEFAULT '' NOT NULL,
                 hesitation integer DEFAULT NULL,
+                x          integer DEFAULT NULL,
+                y          integer DEFAULT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX clicks_session_id_idx ON events.clicks (session_id);

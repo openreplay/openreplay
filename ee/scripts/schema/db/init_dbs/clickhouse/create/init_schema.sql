@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
     error_tags_values                              Array(Nullable(String)),
     transfer_size Nullable(UInt32),
     selector Nullable(String),
+    coordinate Tuple(x Nullable(UInt16), y Nullable(UInt16)),
     message_id                                     UInt64   DEFAULT 0,
     _timestamp                                     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -278,6 +279,7 @@ SELECT session_id,
        error_tags_values,
        transfer_size,
        selector,
+       coordinate,
        message_id,
        _timestamp
 FROM experimental.events

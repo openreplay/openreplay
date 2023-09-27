@@ -111,6 +111,10 @@ ALTER TABLE IF EXISTS public.users
     ADD COLUMN IF NOT EXISTS jwt_refresh_jti integer                     NULL DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
 
+ALTER TABLE IF EXISTS events.clicks
+    ADD COLUMN IF NOT EXISTS x integer DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS y integer DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next
