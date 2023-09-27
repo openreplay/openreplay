@@ -6,8 +6,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette import status
 from starlette.exceptions import HTTPException
 
-from chalicelib.core import authorizers, users
 import schemas
+from chalicelib.core import authorizers, users
 
 
 def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
@@ -21,6 +21,7 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
                                                           userId=jwt_payload.get("userId", -1),
                                                           email=user["email"],
+                                                          role=user["role"],
                                                           permissions=user["permissions"],
                                                           serviceAccount=user["serviceAccount"])
     return request.state.currentContext

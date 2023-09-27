@@ -155,7 +155,7 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
 
 
 @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),
+def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
                                background_tasks=background_tasks)
@@ -195,7 +195,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 
 
 @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
+def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                              user_id_to_update=memberId)
