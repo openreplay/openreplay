@@ -6,7 +6,7 @@ import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from "Components/AssistStats/components/TeamMembers";
 
 import Chart from './components/Charts';
-import Table from './components/Table';
+import StatsTable from './components/Table';
 
 const { Search } = Input;
 
@@ -108,7 +108,7 @@ function AssistStats() {
         </div>
       </div>
       <div className={'w-full mt-2'}>
-        <Table onSort={() => null} />
+        <StatsTable onSort={() => null} />
       </div>
     </div>
   );
@@ -116,9 +116,9 @@ function AssistStats() {
 
 export default AssistStats;
 
-function randomizeData(inputData) {
+function randomizeData(inputData: any) {
   const newData = JSON.parse(JSON.stringify(inputData));
-  newData.chart = newData.chart.map((entry) => {
+  newData.chart = newData.chart.map((entry: any) => {
     // Randomize the value field
     const randomFactor = Math.random() * 2 - 1;
     const variance = entry.value * 1.5;

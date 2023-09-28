@@ -36,7 +36,7 @@ const currentPage = 1
 const list = { size: 10 }
 const total = 100
 
-function Table({ onSort }: Props) {
+function StatsTable({ onSort }: Props) {
   const [sortValue, setSort] = React.useState(sortItems[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = sortItems.find((item) => item.key === key);
@@ -124,4 +124,4 @@ function Cell({ size, children, isReversed }: { size: number, isReversed?: boole
   )
 }
 
-export default Table;
+export default StatsTable;
