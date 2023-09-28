@@ -73,3 +73,14 @@ def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = D
 
 def OR_scope(*scopes):
     return Security(__check, scopes=list(scopes))
+
+
+def __check_role(required_roles: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
+    if len(required_roles.scopes) > 0:
+        if context.role not in required_roles.scopes:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You need a different role to access this resource")
+
+
+def OR_role(*required_roles):
+    return Security(__check_role, scopes=list(required_roles))

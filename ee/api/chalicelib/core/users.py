@@ -627,7 +627,7 @@ def get_by_invitation_token(token, pass_token=None):
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
+def auth_exists(user_id, tenant_id, jwt_iat):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -651,7 +651,7 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
              and (abs(jwt_iat - r["jwt_iat"]) <= 1))
 
 
-def refresh_auth_exists(user_id, tenant_id, jwt_iat, jwt_aud, jwt_jti=None):
+def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id 
@@ -851,6 +851,7 @@ def refresh(user_id: int, tenant_id: int) -> dict:
                                                          jwt_jti=jwt_r_jti),
         "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
     }
+
 
 def authenticate_sso(email, internal_id, exp=None):
     with pg_client.PostgresClient() as cur:

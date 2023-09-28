@@ -6,10 +6,10 @@ name = "pypi"
 [packages]
 urllib3 = "==1.26.16"
 requests = "==2.31.0"
-boto3 = "==1.28.42"
+boto3 = "==1.28.55"
 pyjwt = "==2.8.0"
 psycopg2-binary = "==2.9.7"
-elasticsearch = "==8.9.0"
+elasticsearch = "==8.10.0"
 jira = "==3.5.2"
 fastapi = "==0.103.1"
 gunicorn = "==21.2.0"
@@ -17,11 +17,11 @@ python-decouple = "==3.8"
 apscheduler = "==3.10.4"
 python3-saml = "==1.15.0"
 python-multipart = "==0.0.6"
-redis = "==5.0.0"
-azure-storage-blob = "==12.17.0"
-uvicorn = {version = "==0.23.2", extras = ["standard"]}
-pydantic = {version = "==2.3.0", extras = ["email"]}
-clickhouse-driver = {version = "==0.2.6", extras = ["lz4"]}
+redis = "==5.0.1"
+azure-storage-blob = "==12.18.2"
+uvicorn = {extras = ["standard"], version = "==0.23.2"}
+pydantic = {extras = ["email"], version = "==2.3.0"}
+clickhouse-driver = {extras = ["lz4"], version = "==0.2.6"}
 
 [dev-packages]
 

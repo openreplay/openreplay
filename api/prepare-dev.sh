@@ -7,5 +7,3 @@ else
   cp env.dev $DOTENV_FILE
   echo "$DOTENV_FILE was created, please fill the missing required values."
 fi
-
-rsync -avr --exclude=".*" --ignore-existing ../../api/* ./

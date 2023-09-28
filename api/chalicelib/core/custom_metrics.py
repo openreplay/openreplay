@@ -1,5 +1,5 @@
 import json
-from typing import Union
+from typing import Union, List
 
 from decouple import config
 from fastapi import HTTPException, status
@@ -103,8 +103,7 @@ def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardP
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data.series[0].filter, density=data.density,
-                                           selected_event_type=data.metric_value, hide_minor_paths=data.hide_excess)
+    return product_analytics.path_analysis(project_id=project_id, data=data)
 
 
 def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
@@ -293,28 +292,28 @@ def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel)
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         return {"data": []}
-    filters = []
-    print(data.series[0].filter.filters)
-    for f in data.series[0].filter.filters:
-        if schemas.ProductAnalyticsFilterType.has_value(f.type):
-            for sf in f.filters:
-                o = sf.model_dump()
-                o["isEvent"] = True
-                if f.type == schemas.ProductAnalyticsFilterType.exclude:
-                    o["operator"] = "notOn"
-                filters.append(o)
+    card_table = schemas.CardTable(
+        startTimestamp=data.startTimestamp,
+        endTimestamp=data.endTimestamp,
+        metricType=schemas.MetricType.table,
+        metricOf=schemas.MetricOfTable.issues,
+        viewType=schemas.MetricTableViewType.table,
+        series=data.model_dump()["series"])
+    for s in data.start_point:
+        if data.start_type == "end":
+            card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                         operator=s.operator,
+                                                                                         value=s.value))
         else:
-            o = f.model_dump()
-            o["isEvent"] = False
-            filters.append(o)
-    return __get_table_of_issues(project_id=project_id, user_id=user_id,
-                                 data=schemas.CardTable(
-                                     startTimestamp=data.startTimestamp,
-                                     endTimestamp=data.endTimestamp,
-                                     metricType=schemas.MetricType.table,
-                                     metricOf=schemas.MetricOfTable.issues,
-                                     viewType=schemas.MetricTableViewType.table,
-                                     series=[{"filter": {"filters": filters}}]))
+            card_table.series[0].filter.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                            operator=s.operator,
+                                                                                            value=s.value))
+    for s in data.exclude:
+        card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                     operator=schemas.SearchEventOperator._not_on,
+                                                                                     value=s.value))
+
+    return __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
