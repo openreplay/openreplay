@@ -13,7 +13,7 @@ from fastapi import Depends, Body
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/client/roles', tags=["client", "roles"])
+@app.get('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
 def get_roles(context: schemas.CurrentContext = Depends(OR_context)):
     return {
         'data': roles.get_roles(tenant_id=context.tenant_id)
