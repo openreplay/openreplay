@@ -19,6 +19,7 @@ interface Props {
   excludeFilterKeys?: Array<string>;
   readonly?: boolean;
   hideIndex?: boolean;
+  hideDelete?: boolean;
 }
 
 function FilterItem(props: Props) {
@@ -28,6 +29,7 @@ function FilterItem(props: Props) {
     filter,
     saveRequestPayloads,
     disableDelete = false,
+    hideDelete = false,
     excludeFilterKeys = []
  , hideIndex = false } = props;
   const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
@@ -141,7 +143,7 @@ function FilterItem(props: Props) {
           </div>
         )}
       </div>
-      {props.readonly ? null :
+      {(props.readonly || props.hideDelete) ? null :
         <div className="flex flex-shrink-0 self-start ml-auto">
           <Button
             disabled={disableDelete}

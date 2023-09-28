@@ -83,8 +83,11 @@ export default class Widget {
   limit: number = 5;
   thumbnail?: string;
   params: any = { density: 70 };
-  startType: string = 'start-point';
-  startPoint: FilterItem = filtersMap[FilterKey.LOCATION];
+  startType: string = 'start';
+  // startPoint: FilterItem = filtersMap[FilterKey.LOCATION];
+  startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
+  excludes: FilterItem[] = [];
+  hideMinorPaths?: boolean = false;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -176,7 +179,7 @@ export default class Widget {
   }
 
   toJson() {
-    const data = {
+    const data: any = {
       metricId: this.metricId,
       widgetId: this.widgetId,
       metricOf: this.metricOf,
@@ -204,19 +207,18 @@ export default class Widget {
     };
 
     if (this.metricType === USER_PATH) {
-      const startPoint: any = { ...this.startPoint, type: 'startPoint' };
-      cleanFilter(startPoint);
-
-
-      data['series'][0]['filter']['filters'].push(startPoint);
-      console.log('data', data['series'][0]['filter']['filters']);
+      data.hideMinorPaths = this.hideMinorPaths;
+      data.startType = this.startType;
+      data.startPoint = [this.startPoint.toJson()];
+      data.excludes = this.excludes.map((i) => i.toJson());
     }
     return data;
   }
 
   updateStartPoint(startPoint: any) {
-    console.log('startPoint', startPoint);
-    this.startPoint = startPoint;
+    runInAction(() => {
+      this.startPoint = new FilterItem(startPoint);
+    });
   }
 
   validate() {

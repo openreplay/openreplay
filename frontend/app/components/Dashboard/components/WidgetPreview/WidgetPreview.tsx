@@ -8,7 +8,8 @@ import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 import ClickMapRagePicker from "Components/Dashboard/components/ClickMapRagePicker";
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
-import { CLICKMAP, TABLE, TIMESERIES, RETENTION } from "App/constants/card";
+import { CLICKMAP, TABLE, TIMESERIES, RETENTION, USER_PATH } from 'App/constants/card';
+import { Space, Switch } from 'antd';
 
 interface Props {
     className?: string;
@@ -40,6 +41,23 @@ function WidgetPreview(props: Props) {
                     {props.name}
                 </h2>
                 <div className="flex items-center">
+                    {metric.metricType === USER_PATH && (
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            metric.update({ hideMinorPaths: !metric.hideMinorPaths });
+                          }}
+                        >
+                          <Space>
+                            <Switch
+                              checked={metric.hideMinorPaths}
+                              size="small"
+                            />
+                            <span className="mr-4 color-gray-medium">Hide Minor Paths</span>
+                          </Space>
+                        </a>
+                    )}
                     {isTimeSeries && (
                         <>
                             <span className="mr-4 color-gray-medium">Visualization</span>

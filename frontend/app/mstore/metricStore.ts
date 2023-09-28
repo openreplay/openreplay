@@ -179,8 +179,7 @@ export default class MetricStore {
     }
 
     if (value === USER_PATH) {
-      obj['startType'] = 'start-point';
-
+      // obj['startType'] = 'start';
     }
 
     if (value === CLICKMAP) {

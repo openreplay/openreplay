@@ -77,7 +77,7 @@ function WidgetChart(props: Props) {
         }
     }
 
-    const depsString = JSON.stringify(_metric.series);
+    const depsString = JSON.stringify({..._metric.series, ..._metric.excludes, ..._metric.startPoint});
     const fetchMetricChartData = (metric: any, payload: any, isWidget: any, period: any) => {
         if (!isMounted()) return;
         setLoading(true)
@@ -102,7 +102,7 @@ function WidgetChart(props: Props) {
     useEffect(() => {
         _metric.updateKey('page', 1)
         loadPage();
-    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue]);
+    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue, metric.startType]);
     useEffect(loadPage, [_metric.page]);
 
 

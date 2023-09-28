@@ -144,8 +144,8 @@ function WidgetForm(props: Props) {
               <Select
                 name='startType'
                 options={[
-                  { value: 'start-point', label: 'With Start Point' },
-                  { value: 'end-point', label: 'With End Point' }
+                  { value: 'start', label: 'With Start Point' },
+                  { value: 'end', label: 'With End Point' }
                 ]}
                 defaultValue={metric.startType}
                 // value={metric.metricOf}
@@ -216,9 +216,10 @@ function WidgetForm(props: Props) {
 
       {isPathAnalysis && (
         <div className='form-group flex flex-col'>
-          Start Point
+          {metric.startType === 'start' ? 'Start Point' : 'End Point'}
 
           <FilterItem
+            hideDelete={true}
             filter={metric.startPoint}
             onUpdate={(val) => {
               metric.updateStartPoint(val);
