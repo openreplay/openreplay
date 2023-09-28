@@ -30,7 +30,7 @@ ALTER TABLE IF EXISTS public.projects
 CREATE TABLE IF NOT EXISTS public.crashes_ios
 (
     crash_ios_id text    NOT NULL PRIMARY KEY,
-    project_id   integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+    project_id   integer NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     name         text    NOT NULL,
     reason       text    NOT NULL,
     stacktrace   text    NOT NULL
@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS crashes_ios_project_id_idx ON public.crashes_ios (pro
 
 CREATE TABLE IF NOT EXISTS events_common.crashes
 (
-    session_id   bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    session_id   bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     timestamp    bigint  NOT NULL,
     seq_index    integer NOT NULL,
     crash_ios_id text    NULL REFERENCES public.crashes_ios (crash_ios_id) ON DELETE CASCADE,
@@ -54,7 +54,7 @@ CREATE SCHEMA IF NOT EXISTS events_ios;
 
 CREATE TABLE IF NOT EXISTS events_ios.views
 (
-    session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     timestamp  bigint  NOT NULL,
     seq_index  integer NOT NULL,
     name       text    NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS events_ios.views
 
 CREATE TABLE IF NOT EXISTS events_ios.taps
 (
-    session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     timestamp  bigint  NOT NULL,
     seq_index  integer NOT NULL,
     label      text    NOT NULL,
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS taps_session_id_timestamp_idx ON events_ios.taps (ses
 
 CREATE TABLE IF NOT EXISTS events_ios.inputs
 (
-    session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     timestamp  bigint  NOT NULL,
     seq_index  integer NOT NULL,
     label      text    NOT NULL,
@@ -93,7 +93,7 @@ CREATE INDEX IF NOT EXISTS inputs_label_session_id_timestamp_idx ON events_ios.i
 
 CREATE TABLE IF NOT EXISTS events_ios.swipes
 (
-    session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
     timestamp  bigint  NOT NULL,
     seq_index  integer NOT NULL,
     label      text    NOT NULL,
@@ -114,6 +114,9 @@ ALTER TABLE IF EXISTS public.users
 ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS x integer DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS y integer DEFAULT NULL;
+
+ALTER TABLE IF EXISTS public.metrics
+    ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
 COMMIT;
 
