@@ -130,7 +130,7 @@ function AssistStats() {
   };
 
   const exportCSV = () => {
-    assistStatsService.exportCSV({ ...period, sortBy, sortOrder: 'desc' })
+    void assistStatsService.exportCSV({ ...period, sortBy: 'count', sortOrder: 'desc' })
   }
 
   return (
