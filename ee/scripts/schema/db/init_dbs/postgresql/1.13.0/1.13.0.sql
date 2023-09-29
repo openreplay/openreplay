@@ -20,7 +20,7 @@ $fn_def$, :'next_version')
 --
 
 ALTER TABLE IF EXISTS public.frontend_signals
-    ADD COLUMN IF NOT EXISTS session_id integer NULL REFERENCES sessions (session_id) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS session_id integer NULL REFERENCES public.sessions (session_id) ON DELETE SET NULL;
 
 ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS user_city  text,
@@ -28,8 +28,8 @@ ALTER TABLE IF EXISTS public.sessions
 
 COMMIT;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON public.sessions (project_id, user_city);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON public.sessions (project_id, user_state);
 
 \elif :is_next
 \echo new version detected :'next_version', nothing to do

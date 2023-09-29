@@ -863,12 +863,6 @@ class ProductAnalyticsSelectedEventType(str, Enum):
     custom_event = EventType.custom.value
 
 
-class ProductAnalyticsFilterType(str, Enum):
-    start_point = 'startPoint'
-    end_point = 'endPoint'
-    exclude = 'exclude'
-
-
 class PathAnalysisSubFilterSchema(BaseModel):
     is_event: Literal[True] = True
     value: List[str] = Field(...)
