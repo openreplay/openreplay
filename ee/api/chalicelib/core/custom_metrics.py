@@ -358,6 +358,14 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
+def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
+    r = {"start_point": [s.model_dump() for s in data.start_point],
+         "start_type": data.start_type,
+         "exclude": [e.model_dump() for e in data.exclude]}
+    print(r)
+    return r
+
+
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
@@ -387,12 +395,18 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
         params["default_config"] = json.dumps(data.default_config.model_dump())
+        params["card_info"] = None
+        if data.metric_type == schemas.MetricType.pathAnalysis:
+            params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
-                            metric_format, default_config, thumbnail, data)
+                            metric_format, default_config, thumbnail, data,
+                            card_info)
                    VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
                               %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s)
+                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s,
+                              %(card_info)s)
                    RETURNING metric_id"""
         if len(data.series) > 0:
             query = f"""WITH m AS ({query})
@@ -587,12 +601,20 @@ def delete_card(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
+def __get_path_analysis_attributes(row):
+    card_info = row.pop("cardInfo")
+    row["exclude"] = card_info.get("exclude", [])
+    row["startPoint"] = card_info.get("startPoint", [])
+    row["startType"] = card_info.get("startType", "start")
+    return row
+
+
 def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        default_config AS config,series, dashboards, owner_email
+                        default_config AS config,series, dashboards, owner_email, card_info
                         {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
@@ -629,7 +651,10 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
-    return helper.dict_to_camel_case(row)
+        row = helper.dict_to_camel_case(row)
+        if row["metricType"] == schemas.MetricType.pathAnalysis:
+            row = __get_path_analysis_attributes(row=row)
+    return row
 
 
 def get_series_for_alert(project_id, user_id):
