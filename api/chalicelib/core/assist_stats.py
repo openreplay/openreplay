@@ -1,7 +1,7 @@
 import random
-from typing import List
+from typing import List, Dict
 from datetime import datetime, timedelta
-from schemas import AssistStatsAverage, AssistStatsSession
+from schemas import AssistStatsAverage, AssistStatsSession, schemas
 
 
 def get_averages(start_timestamp: int, end_timestamp: int):
@@ -25,7 +25,7 @@ def get_averages(start_timestamp: int, end_timestamp: int):
     ]
 
 
-def get_top_members():
+def get_top_members() -> schemas.AssistStatsTopMembersResponse:
     data = []
 
     for _ in range(5):  # Change the range to the desired number of data points
@@ -33,10 +33,14 @@ def get_top_members():
         value = random.randint(1, 10)  # Adjust the range as needed
         data.append({"name": name, "count": value})
 
-    return data
+    return schemas.AssistStatsTopMembersResponse(
+        total=100,
+        page=1,
+        list=data,
+    )
 
 
-def get_sessions() -> List[AssistStatsSession]:
+def get_sessions() -> schemas.AssistStatsSessionsResponse:
     data = []
     for _ in range(5):
         data.append(AssistStatsSession(
@@ -48,9 +52,13 @@ def get_sessions() -> List[AssistStatsSession]:
             remoteDuration=random.randint(1, 30),
         ))
 
+    return schemas.AssistStatsSessionsResponse(
+        total=100,
+        page=1,
+        list=data,
+    )
+
+
+def export_csv() -> schemas.AssistStatsSessionsResponse:
+    data = get_sessions()
     return data
-
-
-def export_csv():
-    # return sample csv data
-    return ""

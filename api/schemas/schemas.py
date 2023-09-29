@@ -1617,10 +1617,38 @@ class AssistStatsAverage(BaseModel):
     chartData: List[dict] = Field(...)
 
 
+class AssistStatsMember(BaseModel):
+    name: str
+    count: int
+
+
+class AssistStatsSessionAgent(BaseModel):
+    name: str
+    id: str
+
+
+class AssistStatsTopMembersResponse(BaseModel):
+    total: int
+    list: List[AssistStatsMember]
+
+
+class AssistStatsSessionRecording(BaseModel):
+    recordId: int = Field(...)
+    name: str = Field(...)
+    duration: int = Field(...)
+
+
 class AssistStatsSession(BaseModel):
     sessionId: str = Field(...)
     timestamp: int = Field(...)
-    teamMembers: List[dict] = Field(...)
+    teamMembers: List[AssistStatsSessionAgent] = Field(...)
     liveDuration: int = Field(...)
     callDuration: int = Field(...)
     remoteDuration: int = Field(...)
+    recordings: list[AssistStatsSessionRecording] = Field(default=[])
+
+
+class AssistStatsSessionsResponse(BaseModel):
+    total: int = Field(...)
+    page: int = Field(...)
+    list: List[AssistStatsSession] = Field(default=[])

@@ -1,7 +1,9 @@
+import json
 from datetime import datetime, timedelta
-from typing import Union, List
+from typing import Union, List, Dict
 from decouple import config
 from fastapi import Depends, Body, Query
+from starlette.responses import FileResponse
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -877,7 +879,11 @@ def get_assist_stats_avg(
     return assist_stats.get_averages(start_timestamp=startTimestamp, end_timestamp=endTimestamp)
 
 
-@public_app.get('/{project_id}/assist-stats/top-members', tags=["assist-stats"], response_model=List[dict])
+@public_app.get(
+    '/{project_id}/assist-stats/top-members',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsTopMembersResponse
+)
 def get_assist_stats_top_members(
         project_id: int,
         startTimestamp: int = 0,
@@ -892,8 +898,11 @@ def get_assist_stats_top_members(
     return assist_stats.get_top_members()
 
 
-@public_app.get('/{project_id}/assist-stats/sessions', tags=["assist-stats"],
-                response_model=List[schemas.AssistStatsSession])
+@public_app.get(
+    '/{project_id}/assist-stats/sessions',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsSessionsResponse
+)
 def get_assist_stats_sessions(
         project_id: int,
         startTimestamp: int = 0,
@@ -906,7 +915,7 @@ def get_assist_stats_sessions(
     return assist_stats.get_sessions()
 
 
-@public_app.get('/{project_id}/assist-stats/export-csv', tags=["assist-stats"])
+@public_app.get('/{project_id}/assist-stats/export-csv', tags=["assist-stats"], response_class=FileResponse)
 def get_assist_stats_export_csv(
         project_id: int,
         startTimestamp: int = 0,
@@ -914,4 +923,13 @@ def get_assist_stats_export_csv(
         sortyBy: str = "count",
         sortOder: str = "desc"
 ):
-    return assist_stats.export_csv()
+    fileName = 'assist_stats_sessions.csv'
+    data = assist_stats.export_csv()
+
+    file = open(fileName, 'w')
+    file.write(json.dumps(data.list))
+    file.close()
+
+    return FileResponse(fileName, media_type="text/csv", filename=fileName)
+
+
