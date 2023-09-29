@@ -52,6 +52,27 @@ def get_sessions() -> schemas.AssistStatsSessionsResponse:
             remoteDuration=random.randint(1, 30),
         ))
 
+    data[0].recordings = [
+        {
+            "id": f"record_1",
+            "name": f"Recording {1}",
+            "duration": random.randint(1, 2000),
+        }
+    ]
+
+    data[1].recordings = [
+        {
+            "id": f"record_1",
+            "name": f"Recording {1}",
+            "duration": random.randint(1, 2000),
+        },
+        {
+            "id": f"record_2",
+            "name": f"Recording {2}",
+            "duration": random.randint(1, 2000),
+        }
+    ]
+
     return schemas.AssistStatsSessionsResponse(
         total=100,
         page=1,
