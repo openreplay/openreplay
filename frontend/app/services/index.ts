@@ -12,6 +12,7 @@ import AlertsService from './AlertsService'
 import WebhookService from './WebhookService'
 import HealthService from "./HealthService";
 import FFlagsService from "App/services/FFlagsService";
+import AssistStatsService from './AssistStatsService'
 
 export const dashboardService  = new DashboardService();
 export const metricService = new MetricService();
@@ -30,6 +31,8 @@ export const healthService = new HealthService();
 
 export const fflagsService = new FFlagsService();
 
+export const assistStatsService = new AssistStatsService();
+
 export const services = [
   dashboardService,
   metricService,
@@ -44,5 +47,6 @@ export const services = [
   alertsService,
   webhookService,
   healthService,
-  fflagsService
+  fflagsService,
+  assistStatsService
 ]

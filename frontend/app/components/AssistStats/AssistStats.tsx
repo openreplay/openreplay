@@ -1,12 +1,15 @@
+import { Member, SessionsResponse } from 'App/services/AssistStatsService';
 import React from 'react';
 import { Button, Typography, Input } from 'antd';
-import { FilePdfOutlined, } from '@ant-design/icons';
+import { FilePdfOutlined } from '@ant-design/icons';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
-import TeamMembers from "Components/AssistStats/components/TeamMembers";
+import TeamMembers from 'Components/AssistStats/components/TeamMembers';
+import { Loader } from 'UI';
 
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
+import { assistStatsService } from 'App/services';
 
 const { Search } = Input;
 
@@ -60,10 +63,72 @@ const Charts = [
 
 function AssistStats() {
   const [period, setPeriod] = React.useState<any>(Period({ rangeName: LAST_24_HOURS }));
+  const [topMembers, setTopMembers] = React.useState<{ list: Member[]; total: number }>({
+    list: [],
+    total: 0,
+  });
+  const [graphs, setGraphs] = React.useState<any>([]);
+  const [sessions, setSessions] = React.useState<SessionsResponse>({
+    list: [],
+    total: 0,
+    page: 1,
+  });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [page, setPage] = React.useState(1);
 
-  const onChangePeriod = (period: any) => {
+  React.useEffect(() => {
+    void updateData();
+  }, []);
+
+  const onChangePeriod = async (period: any) => {
     setPeriod(period);
+    void updateData();
   };
+
+  const updateData = async () => {
+    setIsLoading(true);
+    const topMembersPr = assistStatsService.getTopMembers({
+      ...period,
+      sortBy: 'count',
+      sortOrder: 'desc',
+    });
+    const graphsPr = assistStatsService.getGraphs(period);
+    const sessionsPr = assistStatsService.getSessions({
+      ...period,
+      sortBy: 'count',
+      sortOrder: 'desc',
+      page: 1,
+      limit: 10,
+    });
+    Promise.allSettled([topMembersPr, graphsPr, sessionsPr]).then(
+      ([topMembers, graphs, sessions]) => {
+        topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
+        graphs.status === 'fulfilled' && setGraphs(graphs.value);
+        sessions.status === 'fulfilled' && setSessions(sessions.value);
+        console.log(graphs, topMembers, sessions, '<><><><>');
+      }
+    );
+    setIsLoading(false);
+  };
+
+  const onPageChange = (page: number) => {
+    setPage(page);
+    assistStatsService
+      .getSessions({ ...period, sortBy: 'count', sortOrder: 'desc', page, limit: 10 })
+      .then((sessions) => {
+        setSessions(sessions);
+      });
+  };
+
+  const onMembersSort = (sortBy: string) => {
+    assistStatsService
+      .getTopMembers({ ...period, sortBy, sortOrder: 'desc' })
+      .then((topMembers) => {
+        console.log(topMembers);
+        setTopMembers(topMembers);
+      });
+  };
+
   return (
     <div className={'w-full'}>
       <div className={'w-full flex items-center mb-2'}>
@@ -99,16 +164,28 @@ function AssistStats() {
                   <Typography.Text>hrs</Typography.Text>
                 </div>
               </div>
-              <Chart data={randomizeData(fakeData)} label={'Test'} />
+              <Loader loading style={{ minHeight: 90, height: 90 }} size={36}>
+                <Chart data={randomizeData(fakeData)} label={'Test'} />
+              </Loader>
             </div>
           ))}
         </div>
         <div className={'flex-1 col-span-1'}>
-          <TeamMembers />
+          <TeamMembers
+            isLoading={isLoading}
+            topMembers={topMembers}
+            onMembersSort={onMembersSort}
+          />
         </div>
       </div>
       <div className={'w-full mt-2'}>
-        <StatsTable onSort={() => null} />
+        <StatsTable
+          sessions={sessions}
+          isLoading={isLoading}
+          onSort={() => null}
+          onPageChange={onPageChange}
+          page={page}
+        />
       </div>
     </div>
   );

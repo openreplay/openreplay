@@ -1,7 +1,9 @@
 import { DownOutlined, TableOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Space, Typography } from 'antd';
+import { Member } from 'App/services/AssistStatsService';
 import { getInitials } from 'App/utils';
 import React from 'react';
+import { Loader } from 'UI';
 
 const items = [
   {
@@ -22,12 +24,14 @@ const items = [
   },
 ];
 
-function TeamMembers() {
+function TeamMembers({ isLoading, topMembers, onMembersSort }: { isLoading: boolean; topMembers: { list: Member[], total: number }, onMembersSort: (v: string) => void }) {
   const [dateRange, setDateRange] = React.useState(items[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = items.find((item) => item.key === key);
     setDateRange(item?.label || items[0].label);
+    onMembersSort(item?.key || items[0].key);
   };
+
   return (
     <div className={'rounded bg-white border p-2 h-full w-full'}>
       <div className={'flex items-center'}>
@@ -46,18 +50,24 @@ function TeamMembers() {
           <Button shape={'default'} size={'small'} icon={<TableOutlined rev={undefined} />} />
         </div>
       </div>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
-          <div className="relative flex items-center justify-center w-10 h-10">
-            <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-            <div className="text-lg uppercase color-tealx">{getInitials('Sudheer Salavadi')}</div>
-          </div>
-          <div>Sudheer Salavadi</div>
-          <div className={'ml-auto'}>300</div>
-        </div>
-      ))}
+      {/*<div style={{ minHeight: 299 }}>*/}
+        <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
+          {topMembers.list.map((member) => (
+            <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
+              <div className="relative flex items-center justify-center w-10 h-10">
+                <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
+                <div className="text-lg uppercase color-tealx">
+                  {getInitials(member.name)}
+                </div>
+              </div>
+              <div>{member.name}</div>
+              <div className={'ml-auto'}>{member.count}</div>
+            </div>
+          ))}
+        </Loader>
+      {/*</div>*/}
       <div className={'flex items-center justify-center text-disabled-text pt-1'}>
-        Showing 1 to 5 of the total 25
+        {isLoading || topMembers.list.length === 0 ? '' : `Showing 1 to ${topMembers.total} of the total`}
       </div>
     </div>
   );
