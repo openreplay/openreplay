@@ -4,7 +4,7 @@ import re
 def filter_sql_where_statement2(sql_query):
     m = re.search('(?<=[W,w][H,h][E,e][R,r][E,e])[^;]*;', sql_query)
     if m:
-        return m.group(0)
+        return m.group(0).replace('->','.')
     else:
         return None
 

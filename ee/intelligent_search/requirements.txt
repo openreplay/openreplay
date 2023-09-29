@@ -2,6 +2,7 @@
 pydantic==2.3.0
 requests==2.31.0
 python-decouple==3.8
+certifi==2023.7.22
 
 # AWS utils
 awscli==1.29.53

@@ -6,6 +6,7 @@ from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 
 from utils.contexts import search_context_v2, search_context_v3
+from utils.contexts_charts import chart_context_v2, formatable_end
 from utils.sql_to_filters import filter_sql_where_statement
 from utils import parameters, declarations
 from core.llm_api import LLM_Model, LLMResponseProcessing
@@ -44,7 +45,6 @@ app = FastAPI_with_LLM(lifespan=lifespan)
 @app.post("/llm/completion", dependencies=[Depends(api_key_auth)])
 async def predict(msg: declarations.LLMQuestion):
     question = msg.question
-    print(question)
     t1 = time()
     result = app.llm_model.execute_prompts([search_context_v3.format(user_question=question)],
                                             temperature=parameters.temperature,
@@ -55,4 +55,24 @@ async def predict(msg: declarations.LLMQuestion):
     if processed is None:
         return {"content": None, "raw_response": result, "inference_time": t2-t1}
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
+
+
+@app.post("/llm/completion/charts", dependencies=[Depends(api_key_auth)])
+async def chart_predict(msg: declarations.LLMQuestion):
+     question = msg.question
+     t1 = time()
+     result = app.llm_model.execute_prompts([chart_context_v2+formatable_end.format(user_question=question)],
+                                             temperature=parameters.temperature,
+                                             top_p=parameters.top_p,
+                                             max_gen_len=parameters.max_gen_len)
+     t2 = time()
+     processed = result[0]['generation']
+     if processed is None:
+         return {"content": None, "raw_response": result, "inference_time": t2-t1}
+     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
+
+
+@app.get('/')
+async def health():
+    return {'status': 200}
 
