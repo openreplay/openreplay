@@ -129,6 +129,10 @@ function AssistStats() {
       });
   };
 
+  const exportCSV = () => {
+    assistStatsService.exportCSV({ ...period, sortBy, sortOrder: 'desc' })
+  }
+
   return (
     <div className={'w-full'}>
       <div className={'w-full flex items-center mb-2'}>
@@ -180,6 +184,7 @@ function AssistStats() {
       </div>
       <div className={'w-full mt-2'}>
         <StatsTable
+          exportCSV={exportCSV}
           sessions={sessions}
           isLoading={isLoading}
           onSort={() => null}

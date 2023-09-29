@@ -63,4 +63,13 @@ export default class AssistStatsService {
   }): Promise<SessionsResponse> {
     return this.fetch('sessions', filters);
   }
+
+  exportCSV(filters: {
+    start: number;
+    end: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  }) {
+    return this.fetch('export-csv', filters)
+  }
 }

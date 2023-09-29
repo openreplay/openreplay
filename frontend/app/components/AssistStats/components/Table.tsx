@@ -14,6 +14,7 @@ interface Props {
   onPageChange: (page: number) => void;
   page: number;
   sessions: SessionsResponse;
+  exportCSV: () => void;
 }
 
 const PER_PAGE = 10;
@@ -42,7 +43,7 @@ const sortItems = [
 
 const total = 100;
 
-function StatsTable({ onSort, isLoading, onPageChange, page, sessions }: Props) {
+function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV }: Props) {
   const [sortValue, setSort] = React.useState(sortItems[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = sortItems.find((item) => item.key === key);
@@ -65,7 +66,7 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions }: Props) 
             </Space>
           </Button>
         </Dropdown>
-        <Button size={'small'} icon={<TableOutlined rev={undefined} />}>
+        <Button size={'small'} icon={<TableOutlined rev={undefined} />} onClick={exportCSV}>
           Export CSV
         </Button>
       </div>
@@ -133,14 +134,14 @@ function Row({ session }: { session: AssistStatsSession }) {
                     key: recording.recordId,
                     label: recording.name.slice(0, 20),
                   })),
-                  onClick: (item) => recordingsService.fetchRecording(parseInt(item.key)),
+                  onClick: (item) => recordingsService.fetchRecording(item.key),
                 }}
               >
                 <CloudDownloadOutlined rev={undefined} style={{ fontSize: 22, color: '#8C8C8C' }} />
               </Dropdown>
             ) : (
               <div
-                className={'pointer'}
+                className={'cursor-pointer'}
                 onClick={() => recordingsService.fetchRecording(session.recordings[0].recordId)}
               >
                 <CloudDownloadOutlined rev={undefined} style={{ fontSize: 22, color: '#8C8C8C' }} />
