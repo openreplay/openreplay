@@ -195,7 +195,7 @@ export default class Assist {
       if (this.remoteControl){
         callUI?.showRemoteControl(this.remoteControl.releaseControl)
       }
-      this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
+      this.agents[id] = { ...this.agents[id], onControlReleased: this.options.onRemoteControlStart(this.agents[id]?.agentInfo), }
       this.emit('control_granted', id)
       annot = new AnnotationCanvas()
       annot.mount()
@@ -229,6 +229,7 @@ export default class Assist {
       this.options,
       onGrand,
       (id, isDenied) => onRelease(id, isDenied),
+      (id) => this.emit('control_busy', id),
     )
 
     const onAcceptRecording = () => {

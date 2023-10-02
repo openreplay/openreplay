@@ -24,6 +24,7 @@ export default class RemoteControl {
   onReject: () => void = () => {};
   onStart: () => void = () => {};
   onEnd: () => void = () => {};
+  onBusy: () => void = () => {};
 
   constructor(
     private store: Store<State>,
@@ -49,6 +50,12 @@ export default class RemoteControl {
         return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
       }
     });
+    socket.on('control_busy', ({ meta, data }) => {
+      this.onBusy();
+      if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
+        return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
+      }
+    })
     socket.on('SESSION_DISCONNECTED', () => {
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         this.toggleRemoteControl(false); // else its remaining
@@ -89,10 +96,12 @@ export default class RemoteControl {
     onReject,
     onStart,
     onEnd,
+                           onBusy,
   }: {
     onReject: () => void;
     onStart: () => void;
     onEnd: () => void;
+    onBusy: () => void;
   }) => {
     this.onReject = onReject;
     this.onStart = onStart;

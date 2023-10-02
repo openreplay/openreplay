@@ -20,6 +20,9 @@ function onReject() {
 function onControlReject() {
   toast.info('Remote control request was rejected by user');
 }
+function onControlBusy() {
+  toast.info('Remote control busy');
+}
 
 function onError(e: any) {
   console.log(e);
@@ -188,6 +191,7 @@ function AssistActions({
       onReject: onControlReject,
       onStart: onStart,
       onEnd: onEnd,
+      onBusy: onControlBusy,
     });
     requestReleaseRemoteControl();
   };
