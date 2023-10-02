@@ -162,8 +162,8 @@ export default class AssistManager {
           identity: "agent",
           agentInfo: JSON.stringify({
             ...this.session.agentInfo,
+            id: agentId,
             query: document.location.search,
-            agentId,
           })
         }
       })
