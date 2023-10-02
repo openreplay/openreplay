@@ -43,7 +43,7 @@ export default class RemoteControl {
     socket.on('control_rejected', ({ meta, data }) => {
       if (data === socket.id) {
         this.toggleRemoteControl(false);
-        this.onEnd();
+        if (this.store.get().remoteControl === RemoteControlStatus.Enabled) this.onEnd();
       }
       this.onReject();
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
@@ -63,11 +63,9 @@ export default class RemoteControl {
     });
     socket.on('disconnect', () => {
       this.toggleRemoteControl(false);
-      this.onEnd();
     });
     socket.on('error', () => {
       this.toggleRemoteControl(false);
-      this.onEnd();
     });
     this.assistVersion = getAssistVersion();
   }
@@ -96,7 +94,7 @@ export default class RemoteControl {
     onReject,
     onStart,
     onEnd,
-                           onBusy,
+    onBusy,
   }: {
     onReject: () => void;
     onStart: () => void;
@@ -106,6 +104,7 @@ export default class RemoteControl {
     this.onReject = onReject;
     this.onStart = onStart;
     this.onEnd = onEnd;
+    this.onBusy = onBusy;
   };
 
   private onMouseClick = (e: MouseEvent): void => {
