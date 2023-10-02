@@ -114,7 +114,7 @@ function AssistStats() {
   const onPageChange = (page: number) => {
     setPage(page);
     assistStatsService
-      .getSessions({ ...period, sortBy: 'count', sortOrder: 'desc', page, limit: 10 })
+      .getSessions({ start: period.start, end: period.end, sortBy: 'count', sortOrder: 'desc', page, limit: 10 })
       .then((sessions) => {
         setSessions(sessions);
       });
@@ -122,7 +122,7 @@ function AssistStats() {
 
   const onMembersSort = (sortBy: string) => {
     assistStatsService
-      .getTopMembers({ ...period, sortBy, sortOrder: 'desc' })
+      .getTopMembers({ start: period.start, end: period.end, sortBy, sortOrder: 'desc' })
       .then((topMembers) => {
         console.log(topMembers);
         setTopMembers(topMembers);
@@ -130,7 +130,7 @@ function AssistStats() {
   };
 
   const exportCSV = () => {
-    void assistStatsService.exportCSV({ ...period, sortBy: 'count', sortOrder: 'desc' })
+    void assistStatsService.exportCSV({ start: period.start, end: period.end, sortBy: 'count', sortOrder: 'desc' })
   }
 
   return (

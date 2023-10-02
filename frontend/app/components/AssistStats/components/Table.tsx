@@ -7,6 +7,7 @@ import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
 import { Loader, Pagination } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
+import { checkForRecent, getDateFromMill } from 'App/date'
 
 interface Props {
   onSort: (v: string) => void;
@@ -112,7 +113,7 @@ function Row({ session }: { session: AssistStatsSession }) {
 
   return (
     <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
-      <Cell size={1}>{session.timestamp}</Cell>
+      <Cell size={1}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, yyyy, hh:mm a')}</Cell>
       <Cell size={2}>
         <div className={'flex gap-2'}>
           {session.teamMembers.map((member) => (
