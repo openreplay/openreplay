@@ -23,7 +23,8 @@ export default class WebLivePlayer extends WebPlayer {
     wpState: Store<typeof WebLivePlayer.INITIAL_STATE>,
     private session: SessionFilesInfo,
     config: RTCIceServer[] | null,
-    uiErrorHandler?: { error: (msg: string) => void }
+    agentId: number,
+    uiErrorHandler?: { error: (msg: string) => void },
   ) {
     super(wpState, session, true, false, uiErrorHandler)
 
@@ -42,7 +43,7 @@ export default class WebLivePlayer extends WebPlayer {
       wpState,
       uiErrorHandler,
     )
-    this.assistManager.connect(session.agentToken!)
+    this.assistManager.connect(session.agentToken!, agentId)
   }
 
   toggleTimetravel = async () => {
