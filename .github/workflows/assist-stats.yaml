@@ -111,7 +111,7 @@ jobs:
         cat /tmp/image_override.yaml
         # Deploy command
         mv openreplay/charts/{ingress-nginx,assist-stats,quickwit} /tmp
-        rm -rf  openreplay/assist-stats/*
+        rm -rf  openreplay/charts/*
         mv /tmp/{ingress-nginx,assist-stats,quickwit} openreplay/charts/
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -f -
       env:
