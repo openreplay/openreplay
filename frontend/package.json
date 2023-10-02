@@ -123,7 +123,7 @@
     "country-data": "0.0.31",
     "css-loader": "^6.7.1",
     "cssnano": "^5.0.12",
-    "cypress": "^12.3.0",
+    "cypress": "^13.3.0",
     "cypress-image-snapshot": "^4.0.1",
     "dotenv": "^6.2.0",
     "eslint": "^8.15.0",

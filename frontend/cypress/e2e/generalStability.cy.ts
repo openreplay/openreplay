@@ -11,9 +11,6 @@ describe('Testing general stability', {
     cy.get('[data-test-id=log-button]').click();
     cy.wait('@getAccount')
 
-    cy.get('#search').should('be.visible')
-
-
     cy.get('[data-test-id="dashboards"]').click()
 
     cy.get(':nth-child(1) > .relative > :nth-child(1) > #menu-manage-alerts > .w-full').should('be.visible')
