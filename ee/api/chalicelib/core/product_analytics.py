@@ -34,14 +34,13 @@ def __transform_journey2(rows, reverse_path=False):
         source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
-            # TODO: remove this after UI supports long values
-            nodes_values.append({"name": r['e_value'][:10], "eventType": r['event_type']})
+            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
         if r['next_value']:
             target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
             if target not in nodes:
                 nodes.append(target)
                 # TODO: remove this after UI supports long values
-                nodes_values.append({"name": r['next_value'][:10], "eventType": r['next_type']})
+                nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
             link = {"eventType": r['event_type'], "value": r["sessions_count"],
                     "avgTimeToTarget": r["avg_time_to_target"]}
             if not reverse_path:
