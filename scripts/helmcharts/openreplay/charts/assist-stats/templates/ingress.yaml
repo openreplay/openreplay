@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "chalice.fullname" . -}}
+{{- $svcPort := .Values.service.ports.http -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chalice.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Cache-Control "no-store,no-cache";
+      add_header Pragma "no-cache";
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+            path: /api/(.*)
+{{- end }}

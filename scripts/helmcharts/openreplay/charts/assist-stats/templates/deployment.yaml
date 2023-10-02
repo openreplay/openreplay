@@ -1,0 +1,198 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chalice.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chalice.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "chalice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "chalice.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chalice.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            - name: KAFKA_SERVERS
+              value: "{{ .Values.global.kafka.kafkaHost }}"
+            - name: ch_username
+              value: "{{ .Values.global.clickhouse.username }}"
+            - name: ch_password
+              value: "{{ .Values.global.clickhouse.password }}"
+            - name: ch_host
+              value: "{{ .Values.global.clickhouse.chHost }}"
+            - name: ch_port
+              value: "{{ .Values.global.clickhouse.service.webPort }}"
+            - name: sourcemaps_reader
+              value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/sourcemaps/%s/sourcemaps"
+            - name: ASSIST_URL
+              value: "http://assist-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9001/assist/%s"
+            - name: ASSIST_JWT_SECRET
+              value: {{ .Values.global.assistJWTSecret }}
+            - name: ASSIST_KEY
+              value: {{ .Values.global.assistKey }}
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: version_number
+              value: '{{ .Chart.AppVersion }}'
+            - name: pg_host
+              value: '{{ .Values.global.postgresql.postgresqlHost }}'
+            - name: pg_port
+              value: '{{ .Values.global.postgresql.postgresqlPort }}'
+            - name: pg_dbname
+              value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: pg_user
+              value: '{{ .Values.global.postgresql.postgresqlUser }}'
+            - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
+            - name: SITE_URL
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
+            - name: S3_HOST
+              {{- if contains "minio" .Values.global.s3.endpoint }}
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
+              {{- else}}
+              value: '{{ .Values.global.s3.endpoint }}'
+              {{- end}}
+            - name: S3_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
+              value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
+            - name: S3_SECRET
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
+              value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
+            - name: AWS_DEFAULT_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: sessions_region
+              value: '{{ .Values.global.s3.region }}' 
+            - name: ASSIST_RECORDS_BUCKET
+              value: {{ .Values.global.s3.assistRecordsBucket }}
+            - name: sessions_bucket
+              value: {{ .Values.global.s3.recordingsBucket }}
+            - name: sourcemaps_bucket
+              value: {{ .Values.global.s3.sourcemapsBucket }} 
+            - name: js_cache_bucket
+              value: {{ .Values.global.s3.assetsBucket }} 
+            - name: EMAIL_HOST
+              value: '{{ .Values.global.email.emailHost }}'
+            - name: EMAIL_PORT
+              value: '{{ .Values.global.email.emailPort }}'
+            - name: EMAIL_USER
+              value: '{{ .Values.global.email.emailUser }}'
+            - name: EMAIL_PASSWORD
+              value: '{{ .Values.global.email.emailPassword }}'
+            - name: EMAIL_USE_TLS
+              value: '{{ .Values.global.email.emailUseTls }}'
+            - name: EMAIL_USE_SSL
+              value: '{{ .Values.global.email.emailUseSsl }}'
+            - name: EMAIL_SSL_KEY
+              value: '{{ .Values.global.email.emailSslKey }}'
+            - name: EMAIL_SSL_CERT
+              value: '{{ .Values.global.email.emailSslCert }}'
+            - name: EMAIL_FROM
+              value: '{{ .Values.global.email.emailFrom }}'
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: datadir
+              mountPath: /mnt/efs
+          {{- with .Values.persistence.mounts  }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
+      volumes:
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ .Values.pvc.hostMountPath }}
+          type: DirectoryOrCreate
+      {{- with .Values.persistence.volumes  }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- else }}
+      volumes:
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: "{{ tpl .Values.pvc.name . }}"
+      {{- with .Values.persistence.volumes  }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
