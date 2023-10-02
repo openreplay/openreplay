@@ -15,7 +15,7 @@ exit_err() {
   fi
 }
 
-app="assist_stats"  # Set the app variable to "chalice"
+app="assist-stats"  # Set the app variable to "chalice"
 environment=$1
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
