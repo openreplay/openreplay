@@ -42,7 +42,7 @@ export default class RemoteControl {
       this.releaseControl()
       return
     }
-    setTimeout(() =>{
+    setTimeout(() => {
       if (this.status === RCStatus.Requesting) {
         this.releaseControl()
       }

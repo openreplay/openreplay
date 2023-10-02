@@ -178,17 +178,20 @@ function AssistActions({
   };
 
   const requestControl = () => {
-    if (remoteActive) player.assistManager.ping(AssistActionsPing.control.end, agentId)
-    setRemoteControlCallbacks({ onReject: onControlReject });
-    if (callRequesting || remoteRequesting) return;
+    const onStart = () => {
+      player.assistManager.ping(AssistActionsPing.control.start, agentId)
+    }
+    const onEnd = () => {
+      player.assistManager.ping(AssistActionsPing.control.end, agentId)
+    }
+    setRemoteControlCallbacks({
+      onReject: onControlReject,
+      onStart: onStart,
+      onEnd: onEnd,
+    });
     requestReleaseRemoteControl();
   };
 
-  React.useEffect(() => {
-    if (remoteActive) {
-      player.assistManager.ping(AssistActionsPing.control.start, agentId)
-    }
-  }, [remoteActive])
   React.useEffect(() => {
     if (onCall) {
       player.assistManager.ping(AssistActionsPing.call.start, agentId)
