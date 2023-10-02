@@ -33,7 +33,19 @@ interface Props {
   isCallActive: boolean;
   agentIds: string[];
   userDisplayName: string;
+  agentId: number,
 }
+
+const AssistActionsPing = {
+  control: {
+    start: 's_control_started',
+    end: 's_control_ended'
+  },
+  call: {
+    start: 's_call_started',
+    end: 's_call_ended'
+  },
+} as const
 
 function AssistActions({
   userId,
@@ -42,6 +54,7 @@ function AssistActions({
   isCallActive,
   agentIds,
   userDisplayName,
+  agentId,
 }: Props) {
   // @ts-ignore ???
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
@@ -136,6 +149,7 @@ function AssistActions({
           lStream,
           addIncomeStream,
           () => {
+            player.assistManager.ping(AssistActionsPing.call.end, agentId)
             lStream.stop.bind(lStream);
           },
           onReject,
@@ -164,10 +178,22 @@ function AssistActions({
   };
 
   const requestControl = () => {
+    if (remoteActive) player.assistManager.ping(AssistActionsPing.control.end, agentId)
     setRemoteControlCallbacks({ onReject: onControlReject });
     if (callRequesting || remoteRequesting) return;
     requestReleaseRemoteControl();
   };
+
+  React.useEffect(() => {
+    if (remoteActive) {
+      player.assistManager.ping(AssistActionsPing.control.start, agentId)
+    }
+  }, [remoteActive])
+  React.useEffect(() => {
+    if (onCall) {
+      player.assistManager.ping(AssistActionsPing.call.start, agentId)
+    }
+  }, [onCall])
 
   return (
     <div className="flex items-center">
@@ -262,6 +288,7 @@ const con = connect((state: any) => {
     hasPermission: permissions.includes('ASSIST_CALL'),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
+    agentId: state.getIn(['user', 'account', 'id'])
   };
 });
 
