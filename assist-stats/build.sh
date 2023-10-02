@@ -11,7 +11,7 @@
 exit_err() {
   err_code=$1
   if [[ $err_code != 0 ]]; then
-    exit $err_code
+    exit "$err_code"
   fi
 }
 

@@ -113,7 +113,7 @@ jobs:
         mv openreplay/charts/{ingress-nginx,assist-stats,quickwit} /tmp
         rm -rf  openreplay/assist-stats/*
         mv /tmp/{ingress-nginx,assist-stats,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
@@ -157,7 +157,7 @@ jobs:
         mv openreplay/charts/{ingress-nginx,assist-stats,quickwit} /tmp
         rm -rf  openreplay/charts/*
         mv /tmp/{ingress-nginx,assist-stats,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.
