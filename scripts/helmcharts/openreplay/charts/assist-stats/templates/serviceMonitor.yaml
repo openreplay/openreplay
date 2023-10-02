@@ -2,10 +2,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "chalice.fullname" . }}
+  name: {{ include "assist-stats.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "chalice.labels" . | nindent 4 }}
+    {{- include "assist-stats.labels" . | nindent 4 }}
   {{- if .Values.serviceMonitor.additionalLabels }}
     {{- toYaml .Values.serviceMonitor.additionalLabels | nindent 4 }}
   {{- end }}
@@ -14,5 +14,5 @@ spec:
     {{- .Values.serviceMonitor.scrapeConfigs | toYaml | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "chalice.selectorLabels" . | nindent 6 }}
+      {{- include "assist-stats.selectorLabels" . | nindent 6 }}
 {{- end }}

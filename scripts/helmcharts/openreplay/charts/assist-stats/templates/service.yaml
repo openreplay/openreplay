@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "chalice.fullname" . }}
+  name: {{ include "assist-stats.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "chalice.labels" . | nindent 4 }}
+    {{- include "assist-stats.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -15,4 +15,4 @@ spec:
       name: {{ $key }}
     {{- end}}
   selector:
-    {{- include "chalice.selectorLabels" . | nindent 4 }}
+    {{- include "assist-stats.selectorLabels" . | nindent 4 }}

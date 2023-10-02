@@ -63,7 +63,7 @@ serviceMonitor:
       scrapeTimeout: 10s
 
 ingress:
-  enabled: true
+  enabled: false
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
@@ -91,25 +91,9 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  captcha_server: ''
-  captcha_key: ''
-  async_Token: ''
-  announcement_url: ''
-  jwt_secret: "SetARandomStringHere"
-  jwt_algorithm: HS512
-  jwt_exp_delta_seconds: '2592000'
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'
-  SAML2_MD_URL: ''
-  idp_entityId: ''
-  idp_sso_url: ''
-  idp_x509cert: ''
-  idp_sls_url: ''
-  idp_name: ''
-  idp_tenantKey: ''
-  assist_secret: ''
-  iceServers: ''
 
 
 nodeSelector: {}
@@ -126,23 +110,3 @@ healthCheck:
     initialDelaySeconds: 120
     periodSeconds: 30
     timeoutSeconds: 15
-
-
-pvc:
-  # This can be either persistentVolumeClaim or hostPath.
-  # In case of pvc, you'll have to provide the pvc name.
-  # For example
-  # name: openreplay-efs
-  name: "{{ .Values.global.pvcRWXName }}"
-  hostMountPath: /openreplay/storage/nfs
-
-persistence: {}
-  # # Spec of spec.template.spec.containers[*].volumeMounts
-  # mounts:
-  # - name: kafka-ssl
-  #   mountPath: /opt/kafka/ssl
-  # # Spec of spec.template.spec.volumes
-  # volumes:
-  # - name: kafka-ssl
-  #   secret:
-  #     secretName: kafka-ssl
