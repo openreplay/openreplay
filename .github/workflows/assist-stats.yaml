@@ -119,6 +119,51 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
+### Enterprise code deployment 
+
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontextee
+
+    - name: Resetting vars file
+      run: |
+        git checkout -- scripts/helmcharts/vars.yaml
+    - name: Deploy to kubernetes ee
+      run: |
+        cd scripts/helmcharts/
+        cat <<EOF>/tmp/image_override.yaml
+        assist-stats:
+          image:
+            # We've to strip off the -ee, as helm will append it.
+            tag: ${IMAGE_TAG}
+        EOF
+
+        ## Update secerts
+        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
+        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
+
+        # Update changed image tag
+        sed -i "/assist-stats/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        mv openreplay/charts/{ingress-nginx,assist-stats,quickwit} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,assist-stats,quickwit} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+      env:
+        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+        # We're not passing -ee flag, because helm will add that.
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        ENVIRONMENT: staging
+
     - name: Alert slack
       if: ${{ failure() }}
       uses: rtCamp/action-slack-notify@v2
