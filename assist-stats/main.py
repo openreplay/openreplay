@@ -1,10 +1,8 @@
 import logging
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, Response
-from sqlalchemy import Column, Integer, String, DateTime, update, create_engine, PrimaryKeyConstraint, UniqueConstraint
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
-from datetime import datetime
 from decouple import config
 from enum import Enum as PythonEnum
 from sqlalchemy import Enum
@@ -52,53 +50,6 @@ def shutdown_db_client():
     engine.dispose()
 
 
-class EventStateEnum(PythonEnum):
-    start = "start"
-    end = "end"
-
-
-class EventTypeEnum(PythonEnum):
-    # live = "live"
-    assist = "assist"
-    call = "call"
-    remote = "remote"
-    record = "record"
-
-
-class Event(Base):
-    __tablename__ = "assist_events"
-    project_id = Column(Integer, nullable=False)
-    session_id = Column(String, index=True)
-    event_type = Column(Enum(EventTypeEnum), nullable=False)
-    event_state = Column(Enum(EventStateEnum), nullable=False)
-    timestamp = Column(Integer, nullable=True)
-    user_id = Column(String, nullable=True)
-    agent_id = Column(String, nullable=True)
-
-    __table_args__ = (
-        PrimaryKeyConstraint('session_id', 'project_id', 'event_type', 'timestamp', name='pk_session_user_event'),
-        CheckConstraint(
-            event_type.in_(['live', 'assist', 'call', 'remote', 'record']),
-            name='event_type_check'
-        ),
-
-        CheckConstraint(
-            event_state.in_(['start', 'end']),
-            name='event_state_check'
-        ),
-    )
-
-
-class EventCreate(BaseModel):
-    project_id: str = Field(..., description="The ID of the project")
-    session_id: str = Field(..., description="The session ID of the event")
-    event_type: EventTypeEnum = Field(..., description="The type of event")
-    event_state: EventStateEnum = Field(..., description="The state of the event")
-    user_id: Optional[str] = Field(None, description="The ID of the user")
-    agent_id: str = Field(..., description="The ID of the agent")
-    timestamp: int = Field(..., description="The timestamp of the event")
-
-
 def get_db():
     db = SessionLocal()
     try:
@@ -107,14 +58,72 @@ def get_db():
         db.close()
 
 
-@app.post("/events", response_model=EventCreate)
-async def create_event_start(event: EventCreate, db: Session = Depends(get_db)):
+class EventStateEnum(PythonEnum):
+    start = "start"
+    end = "end"
+
+
+class EventTypeEnum(PythonEnum):
+    assist = "assist"
+    call = "call"
+    control = "control"
+    record = "record"
+
+
+class Event(Base):
+    __tablename__ = "assist_events"
+    event_id = Column(String, primary_key=True)
+    project_id = Column(Integer, nullable=False)
+    session_id = Column(String, index=True)
+    agent_id = Column(String, nullable=True)
+    event_type = Column(Enum(EventTypeEnum), nullable=False)
+    timestamp = Column(Integer, nullable=True)
+    duration = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            event_type.in_(['assist', 'call', 'control', 'record']),
+            name='event_type_check'
+        ),
+    )
+
+
+class EventCreate(BaseModel):
+    event_id: str = Field(..., description="The ID of the event")
+    project_id: int = Field(..., description="The ID of the project")
+    session_id: str = Field(..., description="The session ID of the event")
+    event_type: EventTypeEnum = Field(..., description="The type of event")
+    event_state: EventStateEnum = Field(..., description="The state of the event")
+    agent_id: str = Field(..., description="The ID of the agent")
+    timestamp: int = Field(..., description="The timestamp of the event")
+
+
+def update_duration(event_id, timestamp, db):
+    try:
+        existing_event = db.query(Event).filter(Event.event_id == event_id).first()
+
+        if existing_event:
+            duration = timestamp - existing_event.timestamp
+            if duration < 0:
+                raise HTTPException(status_code=400, detail="Invalid timestamp")
+
+            existing_event.duration = duration
+            db.commit()
+        else:
+            raise HTTPException(status_code=400, detail="Existing event not found")
+    except Exception as e:
+        logging.error(f"Error updating duration -: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+def insert_event(event: EventCreate, db: Session):
     db_event = Event(
+        event_id=event.event_id,
         session_id=event.session_id,
-        user_uuid=event.user_uuid,
+        project_id=event.project_id,
         event_type=event.event_type,
-        event_state=event.event_state,
-        user_id=event.user_id,
         agent_id=event.agent_id,
         timestamp=event.timestamp,
     )
@@ -123,7 +132,6 @@ async def create_event_start(event: EventCreate, db: Session = Depends(get_db)):
         db.add(db_event)
         db.commit()
         db.refresh(db_event)
-        return Response(status_code=200)
     except SQLAlchemyError as e:
         logging.error(f"Error creating event -: {e}")
 
@@ -135,19 +143,13 @@ async def create_event_start(event: EventCreate, db: Session = Depends(get_db)):
     except Exception as e:
         logging.error(f"Error creating event: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
 
 
-async def calculate_total_event_duration(event_type: EventTypeEnum, db: Session = Depends(get_db)):
-    events = db.query(Event).filter(Event.event_type == event_type).order_by(Event.timestamp).all()
-
-    total_duration = 0
-    start_time = None
-
-    for event in events:
-        if event.event_state == EventStateEnum.start:
-            start_time = event.timestamp
-        elif event.event_state == EventStateEnum.end and start_time is not None:
-            total_duration += event.timestamp - start_time
-            start_time = None
-
-    return total_duration
+@app.post("/events")
+def create_event(event: EventCreate, db: Session = Depends(get_db)):
+    if event.event_state == EventStateEnum.end:
+        update_duration(event.event_id, event.timestamp, db)
+    else:
+        insert_event(event, db)
