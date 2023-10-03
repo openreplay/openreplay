@@ -21,6 +21,17 @@ class Permissions(str, Enum):
 class CurrentContext(schemas.CurrentContext):
     permissions: List[Optional[Permissions]] = Field(...)
 
+    @root_validator(pre=True)
+    def remove_unsupported_perms(cls, values):
+        if values.get("permissions") is not None:
+            perms = []
+            _perms = [item.value for item in Permissions]
+            for p in values["permissions"]:
+                if p in _perms:
+                    perms.append(p)
+            values["permissions"] = perms
+        return values
+
 
 class RolePayloadSchema(BaseModel):
     name: str = Field(..., min_length=1, max_length=40)
