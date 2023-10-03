@@ -273,7 +273,7 @@ async function postData(payload) {
     try {
         const response = await fetch(url, options)
         const jsonResponse = await response.json();
-        console.log('JSON response', jsonResponse);
+        console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
     } catch(err) {
         console.log('ERROR', err);
     }
