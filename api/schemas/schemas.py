@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 from typing import Optional, List, Union, Literal
 
-from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
+from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl, validator
 from pydantic import field_validator, model_validator, computed_field
 
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -1648,15 +1648,30 @@ class AssistStatsSession(BaseModel):
     # recordings: list[AssistStatsSessionRecording] = Field(default=[])
 
 
+assist_sort_options = ["timestamp", "assist_duration", "call_duration", "control_duration"]
+
+
 class AssistStatsSessionsRequest(BaseModel):
     startTimestamp: int = Field(...)
     endTimestamp: int = Field(...)
     limit: Optional[int] = Field(default=10)
     page: Optional[int] = Field(default=1)
     sort: Optional[str] = Field(default="timestamp",
-                                choices=["timestamp", "live_duration", "call_duration", "remote_duration"])
+                                enum=assist_sort_options)
     order: Optional[str] = Field(default="desc", choices=["desc", "asc"])
     userId: Optional[int] = Field(default=None)
+
+    @field_validator("sort")
+    def validate_sort(cls, v):
+        if v not in assist_sort_options:
+            raise ValueError(f"Invalid sort option. Allowed options: {', '.join(assist_sort_options)}")
+        return v
+
+    @field_validator("order")
+    def validate_order(cls, v):
+        if v not in ["desc", "asc"]:
+            raise ValueError("Invalid order option. Must be 'desc' or 'asc'.")
+        return v
 
 
 class AssistStatsSessionsResponse(BaseModel):
