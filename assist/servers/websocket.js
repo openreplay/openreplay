@@ -268,7 +268,7 @@ async function postData(payload) {
     }
 
     // TODO: move to env variable
-    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8080/events';
+    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
 
     try {
         const response = await fetch(url, options)
