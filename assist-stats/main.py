@@ -58,7 +58,7 @@ class EventStateEnum(PythonEnum):
 
 
 class EventTypeEnum(PythonEnum):
-    live = "live"
+    # live = "live"
     assist = "assist"
     call = "call"
     remote = "remote"
@@ -67,21 +67,16 @@ class EventTypeEnum(PythonEnum):
 
 class Event(Base):
     __tablename__ = "assist_events"
-
+    project_id = Column(Integer, nullable=False)
     session_id = Column(String, index=True)
-    user_uuid = Column(String, nullable=False)
     event_type = Column(Enum(EventTypeEnum), nullable=False)
     event_state = Column(Enum(EventStateEnum), nullable=False)
     timestamp = Column(Integer, nullable=True)
-    # end_ts = Column(Integer, nullable=True)
     user_id = Column(String, nullable=True)
     agent_id = Column(String, nullable=True)
-    # duration = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        PrimaryKeyConstraint('session_id', 'agent_id', 'event_type', 'timestamp', name='pk_session_user_event'),
-        # UniqueConstraint('session_id', 'user_uuid', 'event_type', 'agent_id', name='uq_session_user_event_agent'),
+        PrimaryKeyConstraint('session_id', 'project_id', 'event_type', 'timestamp', name='pk_session_user_event'),
         CheckConstraint(
             event_type.in_(['live', 'assist', 'call', 'remote', 'record']),
             name='event_type_check'
@@ -95,14 +90,13 @@ class Event(Base):
 
 
 class EventCreate(BaseModel):
+    project_id: str = Field(..., description="The ID of the project")
     session_id: str = Field(..., description="The session ID of the event")
-    user_uuid: str = Field(..., description="The UUID of the user")
     event_type: EventTypeEnum = Field(..., description="The type of event")
     event_state: EventStateEnum = Field(..., description="The state of the event")
     user_id: Optional[str] = Field(None, description="The ID of the user")
     agent_id: str = Field(..., description="The ID of the agent")
     timestamp: int = Field(..., description="The timestamp of the event")
-    # end_ts: Optional[int] = Field(default=None, description="The timestamp of the end of the event")
 
 
 def get_db():
