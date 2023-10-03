@@ -4,28 +4,31 @@ from datetime import datetime, timedelta
 from schemas import AssistStatsAverage, AssistStatsSession, schemas
 
 
-def get_averages(start_timestamp: int, end_timestamp: int):
-    return [
-        AssistStatsAverage(
-            key="January",
-            avg=25.5,
-            chartData=[
-                {"timestamp": (start_timestamp + timedelta(hours=i)), "value": random.randint(20, 30)}
-                for i in range(30)  # Generate 3 rows
-            ]
-        ),
-        AssistStatsAverage(
-            key="February",
-            avg=22.0,
-            chartData=[
-                {"timestamp": (start_timestamp + timedelta(hours=i)), "value": random.randint(20, 30)}
-                for i in range(30)  # Generate 3 rows
-            ]
-        ),
-    ]
+def get_averages(project_id: int, start_timestamp: int, end_timestamp: int):
+    if start_timestamp is None:
+        start_datetime = datetime.utcnow() - timedelta(days=1)
+    else:
+        start_datetime = datetime.utcfromtimestamp(start_timestamp)
+
+    averages = []
+    for month in range(1, 3):  # Generate data for January and February
+        month_name = datetime(2000, month, 1).strftime('%B')
+        chart_data = [
+            {"timestamp": int((start_datetime + timedelta(hours=i)).timestamp()), "value": random.randint(20, 30)}
+            for i in range(30)
+        ]
+        averages.append(AssistStatsAverage(key=month_name, avg=22.0, chartData=chart_data))
+
+    return averages
 
 
-def get_top_members() -> schemas.AssistStatsTopMembersResponse:
+def get_top_members(
+        project_id: int,
+        start_timestamp: int,
+        end_timestamp: int,
+        sort_by: str,
+        sort_order: str,
+) -> schemas.AssistStatsTopMembersResponse:
     data = []
 
     for _ in range(5):  # Change the range to the desired number of data points
@@ -40,7 +43,10 @@ def get_top_members() -> schemas.AssistStatsTopMembersResponse:
     )
 
 
-def get_sessions() -> schemas.AssistStatsSessionsResponse:
+def get_sessions(
+        project_id: int,
+        data: schemas.AssistStatsSessionsRequest,
+) -> schemas.AssistStatsSessionsResponse:
     data = []
     for _ in range(5):
         data.append(AssistStatsSession(

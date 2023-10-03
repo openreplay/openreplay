@@ -1648,6 +1648,17 @@ class AssistStatsSession(BaseModel):
     recordings: list[AssistStatsSessionRecording] = Field(default=[])
 
 
+class AssistStatsSessionsRequest(BaseModel):
+    startTimestamp: int = Field(...)
+    endTimestamp: int = Field(...)
+    limit: Optional[int] = Field(default=10)
+    page: Optional[int] = Field(default=1)
+    sort: Optional[str] = Field(default="timestamp",
+                                choices=["timestamp", "liveDuration", "callDuration", "remoteDuration"])
+    order: Optional[str] = Field(default="desc", choices=["desc", "asc"])
+    userId: Optional[int] = Field(default=None)
+
+
 class AssistStatsSessionsResponse(BaseModel):
     total: int = Field(...)
     page: int = Field(...)

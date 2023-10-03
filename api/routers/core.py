@@ -869,14 +869,10 @@ def health_check():
 @public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
 def get_assist_stats_avg(
         project_id: int,
-        startTimestamp: int = 0,
-        endTimestamp: int = 0,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
 ):
-    if not startTimestamp:
-        startTimestamp = datetime.now() - timedelta(hours=24)
-        endTimestamp = datetime.now()
-
-    return assist_stats.get_averages(start_timestamp=startTimestamp, end_timestamp=endTimestamp)
+    return assist_stats.get_averages(project_id=project_id, start_timestamp=startTimestamp, end_timestamp=endTimestamp)
 
 
 @public_app.get(
@@ -886,33 +882,33 @@ def get_assist_stats_avg(
 )
 def get_assist_stats_top_members(
         project_id: int,
-        startTimestamp: int = 0,
-        endTimestamp: int = 0,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
         sortyBy: str = "count",
         sortOder: str = "desc"
 ):
-    if not startTimestamp:
-        startTimestamp = datetime.now() - timedelta(hours=24)
-        endTimestamp = datetime.now()
+    return assist_stats.get_top_members(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        sort_by=sortyBy,
+        sort_order=sortOder
+    )
 
-    return assist_stats.get_top_members()
 
-
-@public_app.get(
+@public_app.post(
     '/{project_id}/assist-stats/sessions',
     tags=["assist-stats"],
     response_model=schemas.AssistStatsSessionsResponse
 )
 def get_assist_stats_sessions(
         project_id: int,
-        startTimestamp: int = 0,
-        endTimestamp: int = 0,
-        sortyBy: str = "count",
-        sortOder: str = "desc",
-        page: int = 1,
-        limit: int = 100
+        data: schemas.AssistStatsSessionsRequest = Body(...),
 ):
-    return assist_stats.get_sessions()
+    return assist_stats.get_sessions(
+        project_id=project_id,
+        data=data
+    )
 
 
 @public_app.get('/{project_id}/assist-stats/export-csv', tags=["assist-stats"], response_class=FileResponse)
@@ -931,5 +927,3 @@ def get_assist_stats_export_csv(
     file.close()
 
     return FileResponse(fileName, media_type="text/csv", filename=fileName)
-
-
