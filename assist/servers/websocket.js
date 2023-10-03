@@ -268,7 +268,7 @@ async function postData(payload) {
     }
 
     // TODO: move to env variable
-    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
+    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8080/events';
 
     try {
         const response = await fetch(url, options)
@@ -337,6 +337,8 @@ module.exports = {
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
                     socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
+                    const tsNow = +new Date();
+                    const agentID = socket.handshake.query.agentInfo.id;
                 }
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
             }
@@ -407,7 +409,7 @@ module.exports = {
                     const tsNow = +new Date();
                     switch (eventName) {
                         case "s_call_started": {
-                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`; // sessID_agentID_eventType_TS
+                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`;
                             void postData({
                                 "project_id": socket.projectId,
                                 "session_id": socket.sessId,
@@ -421,7 +423,7 @@ module.exports = {
                             break;
                         }
                         case "s_call_ended": {
-                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`; // sessID_agentID_eventType_TS
+                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`;
                             void postData({
                                 "project_id": socket.projectId,
                                 "session_id": socket.sessId,
@@ -434,18 +436,62 @@ module.exports = {
                             console.log(`s_call_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
                             break;
                         }
-                        case "s_control_started":
+                        case "s_control_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_control_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "control",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
                             console.log(`s_control_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
                             break;
-                        case "s_control_ended":
+                        }
+                        case "s_control_ended": {
+                            const eventID = `${socket.sessId}_${args[0]}_control_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "control",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
                             console.log(`s_control_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
                             break;
-                        case "s_recording_started":
+                        }
+                        case "s_recording_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_record_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "record",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
                             console.log(`s_recording_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
                             break;
-                        case "s_recording_ended":
+                        }
+                        case "s_recording_ended": {
+                            const eventID = `${socket.sessId}_${args[0]}_record_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "record",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
                             console.log(`s_recording_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
                             break;
+                        }
                     }
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
                     let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
