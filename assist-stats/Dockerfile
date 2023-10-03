@@ -7,10 +7,7 @@ LABEL GIT_SHA=$GIT_SHA
 ARG envarg
 # Add Tini
 # Startup daemon
-ENV SOURCE_MAP_VERSION=0.7.4 \
-    APP_NAME=assist_stats \
-    LISTEN_PORT=8000 \
-    PRIVATE_ENDPOINTS=false \
+ENV APP_NAME=assist-stats \
     ENTERPRISE_BUILD=${envarg} \
     GIT_SHA=$GIT_SHA
 
