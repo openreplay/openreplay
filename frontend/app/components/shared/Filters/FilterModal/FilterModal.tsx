@@ -92,10 +92,6 @@ function FilterModal(props: Props) {
     matchingCategories.length === 0 &&
     Object.keys(matchingFilters).length === 0;
 
-  console.log(
-    filterSearchList,
-    filtersMap,
-  )
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto' }}>
       <div
