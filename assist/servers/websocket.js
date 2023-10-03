@@ -261,13 +261,6 @@ wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
 
 async function postData(payload) {
-    //This data will be sent to the server with the POST request.
-    // const todoObject = {
-    //     userId: 111,
-    //     title: "Some title",
-    //     completed: false
-    // };
-
     const options = {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -275,7 +268,7 @@ async function postData(payload) {
     }
 
     // TODO: move to env variable
-    const url = 'http://assist-stats.app.svc.cluster.local:8000/events';
+    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
 
     try {
         const response = await fetch(url, options)
