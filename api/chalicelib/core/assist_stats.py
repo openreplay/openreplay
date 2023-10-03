@@ -1,6 +1,8 @@
 import random
 from typing import List, Dict
 from datetime import datetime, timedelta
+
+from chalicelib.utils import pg_client
 from schemas import AssistStatsAverage, AssistStatsSession, schemas
 
 
@@ -48,6 +50,38 @@ def get_sessions(
         data: schemas.AssistStatsSessionsRequest,
 ) -> schemas.AssistStatsSessionsResponse:
     data = []
+
+    sql = """
+        WITH EventDurations AS (SELECT ae.session_id AS "sessionId",
+                                   ae.event_type,
+                                   SUM(CASE WHEN ae.event_state = 'start' THEN ae.timestamp ELSE 0 END) AS start_time,
+                                   SUM(CASE WHEN ae.event_state = 'end' THEN ae.timestamp ELSE 0 END)   AS end_time
+                            FROM assist_events ae
+                            WHERE ae.event_type IN ('live', 'call', 'remote')
+                            GROUP BY ae.session_id, ae.event_type)
+    
+        SELECT ed."sessionId",
+               MIN(ae.timestamp)                                                             AS "date",
+               array_agg(DISTINCT ae.agent_id)                                               AS "agentIds",
+               SUM(CASE WHEN ed.event_type = 'live' THEN end_time - start_time ELSE 0 END)   AS "liveDuration",
+               SUM(CASE WHEN ed.event_type = 'call' THEN end_time - start_time ELSE 0 END)   AS "callDuration",
+               SUM(CASE WHEN ed.event_type = 'remote' THEN end_time - start_time ELSE 0 END) AS "remoteDuration"
+        FROM EventDurations ed
+                 LEFT JOIN assist_events ae ON ed."sessionId" = ae.session_id
+        GROUP BY ed."sessionId"
+        ORDER BY "liveDuration" DESC
+        LIMIT 10 OFFSET 1;
+    """
+
+    params = {
+        "project_id": project_id,
+    }
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+
     for _ in range(5):
         data.append(AssistStatsSession(
             sessionId=f"{_}",
