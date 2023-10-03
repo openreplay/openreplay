@@ -7,7 +7,7 @@ import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
 import { Loader, Pagination } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
-import { checkForRecent, getDateFromMill } from 'App/date'
+import { checkForRecent, getDateFromMill } from 'App/date';
 
 interface Props {
   onSort: (v: string) => void;
@@ -21,28 +21,26 @@ interface Props {
 const PER_PAGE = 10;
 const sortItems = [
   {
-    key: '1',
+    key: 'timestamp',
     label: 'Newest First',
   },
   {
-    key: '2',
+    key: 'liveDuration',
     label: 'Live Duration',
   },
   {
-    key: '3',
+    key: 'callDuration',
     label: 'Call Duration',
   },
   {
-    key: '4',
+    key: 'remoteDuration',
     label: 'Remote Duration',
   },
-  {
-    key: '5',
-    label: 'Team Member',
-  },
+  // {
+  //   key: '5',
+  //   label: 'Team Member',
+  // },
 ];
-
-const total = 100;
 
 function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV }: Props) {
   const [sortValue, setSort] = React.useState(sortItems[0].label);
@@ -110,10 +108,11 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
 }
 
 function Row({ session }: { session: AssistStatsSession }) {
-
   return (
     <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
-      <Cell size={1}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, yyyy, hh:mm a')}</Cell>
+      <Cell size={1}>
+        {checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, yyyy, hh:mm a')}
+      </Cell>
       <Cell size={2}>
         <div className={'flex gap-2'}>
           {session.teamMembers.map((member) => (

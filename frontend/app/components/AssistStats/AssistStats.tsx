@@ -63,6 +63,8 @@ const Charts = [
 
 function AssistStats() {
   const [period, setPeriod] = React.useState<any>(Period({ rangeName: LAST_24_HOURS }));
+  const [membersSort, setMembersSort] = React.useState('sessionsAssisted');
+  const [tableSort, setTableSort] = React.useState('timestamp');
   const [topMembers, setTopMembers] = React.useState<{ list: Member[]; total: number }>({
     list: [],
     total: 0,
@@ -88,14 +90,16 @@ function AssistStats() {
   const updateData = async () => {
     setIsLoading(true);
     const topMembersPr = assistStatsService.getTopMembers({
-      ...period,
-      sortBy: 'count',
+      startTimestamp: period.start,
+      endTimestamp: period.end,
+      sortBy: membersSort,
       sortOrder: 'desc',
     });
     const graphsPr = assistStatsService.getGraphs(period);
     const sessionsPr = assistStatsService.getSessions({
-      ...period,
-      sortBy: 'count',
+      startTimestamp: period.start,
+      endTimestamp: period.end,
+      sortBy: tableSort,
       sortOrder: 'desc',
       page: 1,
       limit: 10,
@@ -114,24 +118,52 @@ function AssistStats() {
   const onPageChange = (page: number) => {
     setPage(page);
     assistStatsService
-      .getSessions({ start: period.start, end: period.end, sortBy: 'count', sortOrder: 'desc', page, limit: 10 })
+      .getSessions({
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        sortBy: tableSort,
+        sortOrder: 'desc',
+        page,
+        limit: 10,
+      })
       .then((sessions) => {
         setSessions(sessions);
       });
   };
 
   const onMembersSort = (sortBy: string) => {
+    setMembersSort(sortBy)
     assistStatsService
-      .getTopMembers({ start: period.start, end: period.end, sortBy, sortOrder: 'desc' })
+      .getTopMembers({ startTimestamp: period.start, endTimestamp: period.end, sortBy, sortOrder: 'desc' })
       .then((topMembers) => {
-        console.log(topMembers);
         setTopMembers(topMembers);
       });
   };
 
+  const onTableSort = (sortBy: string) => {
+    setTableSort(sortBy)
+    assistStatsService
+      .getSessions({
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        sortBy,
+        sortOrder: 'desc',
+        page: 1,
+        limit: 10,
+      })
+      .then((sessions) => {
+        setSessions(sessions);
+      });
+  };
+
   const exportCSV = () => {
-    void assistStatsService.exportCSV({ start: period.start, end: period.end, sortBy: 'count', sortOrder: 'desc' })
-  }
+    void assistStatsService.exportCSV({
+      start: period.start,
+      end: period.end,
+      sortBy: tableSort,
+      sortOrder: 'desc',
+    });
+  };
 
   return (
     <div className={'w-full'}>
@@ -187,7 +219,7 @@ function AssistStats() {
           exportCSV={exportCSV}
           sessions={sessions}
           isLoading={isLoading}
-          onSort={() => null}
+          onSort={onTableSort}
           onPageChange={onPageChange}
           page={page}
         />
@@ -201,7 +233,6 @@ export default AssistStats;
 function randomizeData(inputData: any) {
   const newData = JSON.parse(JSON.stringify(inputData));
   newData.chart = newData.chart.map((entry: any) => {
-    // Randomize the value field
     const randomFactor = Math.random() * 2 - 1;
     const variance = entry.value * 1.5;
     entry.value += randomFactor * variance;

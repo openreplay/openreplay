@@ -36,32 +36,32 @@ export default class AssistStatsService {
     this.client = client || new APIClient();
   }
 
-  fetch(path: string, body: Record<string, any>) {
-    return this.client.get('/assist-stats/' + path, body).then((r) => r.json());
+  fetch(path: string, body: Record<string, any>, method: 'get' | 'post') {
+    return this.client[method]('/assist-stats/' + path, body).then((r) => r.json());
   }
 
   getGraphs(range: { start: number; end: number }) {
-    return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end });
+    return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end }, 'get');
   }
 
   getTopMembers(filters: {
-    start: number;
-    end: number;
+    startTimestamp: number;
+    endTimestamp: number;
     sortBy: string;
     sortOrder: 'asc' | 'desc';
   }): Promise<{ list: Member[]; total: number }> {
-    return this.fetch('top-members', filters);
+    return this.fetch('top-members', filters, 'get');
   }
 
   getSessions(filters: {
-    start: number;
-    end: number;
+    startTimestamp: number;
+    endTimestamp: number;
     sortBy: string;
     sortOrder: 'asc' | 'desc';
     page: number;
     limit: number;
   }): Promise<SessionsResponse> {
-    return this.fetch('sessions', filters);
+    return this.fetch('sessions', filters, 'post');
   }
 
   exportCSV(filters: {
@@ -70,6 +70,6 @@ export default class AssistStatsService {
     sortBy: string;
     sortOrder: 'asc' | 'desc';
   }) {
-    return this.fetch('export-csv', filters)
+    return this.fetch('export-csv', filters, 'get')
   }
 }

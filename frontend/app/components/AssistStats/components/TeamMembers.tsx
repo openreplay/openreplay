@@ -8,23 +8,31 @@ import { Loader } from 'UI';
 const items = [
   {
     label: 'Sessions Assisted',
-    key: '1',
+    key: 'sessionsAssisted',
   },
   {
     label: 'Live Duration',
-    key: '2',
+    key: 'liveDuration',
   },
   {
     label: 'Call Duration',
-    key: '3',
+    key: 'callDuration',
   },
   {
     label: 'Remote Duration',
-    key: '4',
+    key: 'remoteDuration',
   },
 ];
 
-function TeamMembers({ isLoading, topMembers, onMembersSort }: { isLoading: boolean; topMembers: { list: Member[], total: number }, onMembersSort: (v: string) => void }) {
+function TeamMembers({
+  isLoading,
+  topMembers,
+  onMembersSort,
+}: {
+  isLoading: boolean;
+  topMembers: { list: Member[]; total: number };
+  onMembersSort: (v: string) => void;
+}) {
   const [dateRange, setDateRange] = React.useState(items[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = items.find((item) => item.key === key);
@@ -51,23 +59,23 @@ function TeamMembers({ isLoading, topMembers, onMembersSort }: { isLoading: bool
         </div>
       </div>
       {/*<div style={{ minHeight: 299 }}>*/}
-        <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
-          {topMembers.list.map((member) => (
-            <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
-              <div className="relative flex items-center justify-center w-10 h-10">
-                <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-                <div className="text-lg uppercase color-tealx">
-                  {getInitials(member.name)}
-                </div>
-              </div>
-              <div>{member.name}</div>
-              <div className={'ml-auto'}>{member.count}</div>
+      <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
+        {topMembers.list.map((member) => (
+          <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
+            <div className="relative flex items-center justify-center w-10 h-10">
+              <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
+              <div className="text-lg uppercase color-tealx">{getInitials(member.name)}</div>
             </div>
-          ))}
-        </Loader>
+            <div>{member.name}</div>
+            <div className={'ml-auto'}>{member.count}</div>
+          </div>
+        ))}
+      </Loader>
       {/*</div>*/}
       <div className={'flex items-center justify-center text-disabled-text pt-1'}>
-        {isLoading || topMembers.list.length === 0 ? '' : `Showing 1 to ${topMembers.total} of the total`}
+        {isLoading || topMembers.list.length === 0
+          ? ''
+          : `Showing 1 to ${topMembers.total} of the total`}
       </div>
     </div>
   );
