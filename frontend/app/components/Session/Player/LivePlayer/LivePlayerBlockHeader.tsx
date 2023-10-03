@@ -87,7 +87,6 @@ function LivePlayerBlockHeader(props: any) {
           </div>
         )}
         <UserCard className="" width={width} height={height} />
-        <AssistTabs userId={userId} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
           {_metaList.length > 0 && (
