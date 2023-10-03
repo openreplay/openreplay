@@ -4,7 +4,6 @@ LABEL Maintainer="Shekar Sirikonda<sshekarsiri@gmail.com>"
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
-RUN apk add --no-cache build-base tini
 ARG envarg
 # Add Tini
 # Startup daemon
@@ -25,6 +24,4 @@ RUN mv env.default .env
 RUN adduser -u 1001 openreplay -D
 USER 1001
 
-ENTRYPOINT ["/sbin/tini", "--"]
-CMD ./entrypoint.sh
-
+CMD ["/usr/local/bin/python", "./run.py"]
