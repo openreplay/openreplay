@@ -30,13 +30,12 @@ class CurrentContext(schemas.CurrentContext):
     permissions: List[Union[Permissions, ServicePermissions]] = Field(...)
     service_account: bool = Field(default=False)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def remove_unsupported_perms(cls, values):
         if values.get("permissions") is not None:
             perms = []
-            _perms = [item.value for item in Permissions]
             for p in values["permissions"]:
-                if p in _perms:
+                if Permissions.has_value(p):
                     perms.append(p)
             values["permissions"] = perms
         return values
