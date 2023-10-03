@@ -153,3 +153,8 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
         update_duration(event.event_id, event.timestamp, db)
     else:
         insert_event(event, db)
+
+
+@app.get("/", tags=["health"])
+def health_check():
+    return {"status": "ok"}
