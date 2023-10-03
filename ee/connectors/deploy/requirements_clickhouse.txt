@@ -9,5 +9,5 @@ pytz==2022.6
 requests==2.28.1
 SQLAlchemy==1.4.43
 tzlocal==5.0.1
-urllib3==1.26.12
+urllib3==1.26.17
 PyYAML==6.0
