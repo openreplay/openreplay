@@ -15,6 +15,7 @@ exit_err() {
   fi
 }
 
+
 app="assist-stats"  # Set the app variable to "chalice"
 environment=$1
 git_sha=$(git rev-parse --short HEAD)
