@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to build api module
+# Script to build assist-stats module
 # flags to accept:
 # envarg: build for enterprise edition.
 # Default will be OSS build.
@@ -50,22 +50,22 @@ update_helm_release() {
 }
 
 function build_api(){
-    destination="_api"
+    destination="_assist_stats"
     [[ $1 == "ee" ]] && {
-        destination="_api_ee"
+        destination="_assist_stats_ee"
     }
-    cp -R ../api ../${destination}
+    cp -R ../assist-stats ../${destination}
     cd ../${destination} || exit_err 100
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp -rf ../ee/api/* ./
+        cp -rf ../ee/assist-stats/* ./
         envarg="default-ee"
         tag="ee-"
     }
     mv Dockerfile.dockerignore .dockerignore
     docker build -f ./Dockerfile --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/$app:${image_tag} .
-    cd ../api || exit_err 100
+    cd ../assist-stats || exit_err 100
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$app:${image_tag}
@@ -75,7 +75,7 @@ function build_api(){
     [[ $SIGN_IMAGE -eq 1 ]] && {
         cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/$app:${image_tag}
     }
-    echo "api docker build completed"
+    echo "assist-stats docker build completed"
 }
 
 check_prereq
