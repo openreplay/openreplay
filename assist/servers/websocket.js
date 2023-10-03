@@ -1,5 +1,6 @@
 const _io = require('socket.io');
 const express = require('express');
+const https = require('https');
 const {
     extractRoomId,
     extractPeerId,
@@ -22,6 +23,7 @@ const {
     errorHandler,
     authorizer
 } = require('../utils/assistHelper');
+
 const wsRouter = express.Router();
 
 let io;
@@ -258,6 +260,32 @@ wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
 
+async function postData(payload) {
+    //This data will be sent to the server with the POST request.
+    // const todoObject = {
+    //     userId: 111,
+    //     title: "Some title",
+    //     completed: false
+    // };
+
+    const options = {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+    }
+
+    // TODO: move to env variable
+    const url = 'http://assist-stats.app.svc.cluster.local:8000/events';
+
+    try {
+        const response = await fetch(url, options)
+        const jsonResponse = await response.json();
+        console.log('JSON response', jsonResponse);
+    } catch(err) {
+        console.log('ERROR', err);
+    }
+}
+
 module.exports = {
     wsRouter,
     start: (server, prefix) => {
@@ -273,6 +301,8 @@ module.exports = {
             socket.roomId = extractRoomId(socket.peerId);
             connTabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
             socket.tabId = connTabId;
+            socket.sessId = connSessionId;
+            socket.projectId = socket.handshake.query.projectId;
             socket.identity = socket.handshake.query.identity;
             debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
 
@@ -381,6 +411,49 @@ module.exports = {
                     // TODO: emit message to all agents in the room (except tabs)
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
+                    const tsNow = +new Date();
+                    switch (eventName) {
+                        case "s_call_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`; // sessID_agentID_eventType_TS
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "call",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
+                            console.log(`s_call_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                            break;
+                        }
+                        case "s_call_ended": {
+                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`; // sessID_agentID_eventType_TS
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "call",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
+                            console.log(`s_call_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                            break;
+                        }
+                        case "s_control_started":
+                            console.log(`s_control_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        case "s_control_ended":
+                            console.log(`s_control_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        case "s_recording_started":
+                            console.log(`s_recording_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        case "s_recording_ended":
+                            console.log(`s_recording_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                    }
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
                     let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
                     if (socketId === null) {
