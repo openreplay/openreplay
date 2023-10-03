@@ -15,7 +15,6 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore'
 import stl from '../ReplayPlayer/playerBlockHeader.module.css';
 import AssistActions from 'Components/Assist/components/AssistActions';
-import AssistTabs from 'Components/Assist/components/AssistTabs';
 
 const ASSIST_ROUTE = assistRoute();
 
