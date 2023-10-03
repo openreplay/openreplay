@@ -75,7 +75,7 @@ class Event(Base):
     event_id = Column(String, primary_key=True)
     project_id = Column(Integer, nullable=False)
     session_id = Column(String, index=True)
-    agent_id = Column(String, nullable=True)
+    agent_id = Column(Integer, nullable=True)
     event_type = Column(Enum(EventTypeEnum), nullable=False)
     timestamp = Column(Integer, nullable=True)
     duration = Column(Integer, nullable=True)
@@ -94,7 +94,7 @@ class EventCreate(BaseModel):
     session_id: str = Field(..., description="The session ID of the event")
     event_type: EventTypeEnum = Field(..., description="The type of event")
     event_state: EventStateEnum = Field(..., description="The state of the event")
-    agent_id: str = Field(..., description="The ID of the agent")
+    agent_id: int = Field(..., description="The ID of the agent")
     timestamp: int = Field(..., description="The timestamp of the event")
 
 
