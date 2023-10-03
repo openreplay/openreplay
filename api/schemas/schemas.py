@@ -1624,7 +1624,7 @@ class AssistStatsMember(BaseModel):
 
 class AssistStatsSessionAgent(BaseModel):
     name: str
-    id: str
+    id: int
 
 
 class AssistStatsTopMembersResponse(BaseModel):
@@ -1642,10 +1642,10 @@ class AssistStatsSession(BaseModel):
     sessionId: str = Field(...)
     timestamp: int = Field(...)
     teamMembers: List[AssistStatsSessionAgent] = Field(...)
-    liveDuration: int = Field(...)
+    assistDuration: int = Field(...)
     callDuration: int = Field(...)
-    remoteDuration: int = Field(...)
-    recordings: list[AssistStatsSessionRecording] = Field(default=[])
+    controlDuration: int = Field(...)
+    # recordings: list[AssistStatsSessionRecording] = Field(default=[])
 
 
 class AssistStatsSessionsRequest(BaseModel):
@@ -1654,7 +1654,7 @@ class AssistStatsSessionsRequest(BaseModel):
     limit: Optional[int] = Field(default=10)
     page: Optional[int] = Field(default=1)
     sort: Optional[str] = Field(default="timestamp",
-                                choices=["timestamp", "liveDuration", "callDuration", "remoteDuration"])
+                                choices=["timestamp", "live_duration", "call_duration", "remote_duration"])
     order: Optional[str] = Field(default="desc", choices=["desc", "asc"])
     userId: Optional[int] = Field(default=None)
 

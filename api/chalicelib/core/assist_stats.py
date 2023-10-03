@@ -1,9 +1,8 @@
 import random
-from typing import List, Dict
 from datetime import datetime, timedelta
 
-from chalicelib.utils import pg_client
-from schemas import AssistStatsAverage, AssistStatsSession, schemas
+from chalicelib.utils import pg_client, helper
+from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, AssistStatsSessionsResponse
 
 
 def get_averages(project_id: int, start_timestamp: int, end_timestamp: int):
@@ -47,77 +46,59 @@ def get_top_members(
 
 def get_sessions(
         project_id: int,
-        data: schemas.AssistStatsSessionsRequest,
-) -> schemas.AssistStatsSessionsResponse:
-    data = []
-
-    sql = """
-        WITH EventDurations AS (SELECT ae.session_id AS "sessionId",
-                                   ae.event_type,
-                                   SUM(CASE WHEN ae.event_state = 'start' THEN ae.timestamp ELSE 0 END) AS start_time,
-                                   SUM(CASE WHEN ae.event_state = 'end' THEN ae.timestamp ELSE 0 END)   AS end_time
-                            FROM assist_events ae
-                            WHERE ae.event_type IN ('live', 'call', 'remote')
-                            GROUP BY ae.session_id, ae.event_type)
-    
-        SELECT ed."sessionId",
-               MIN(ae.timestamp)                                                             AS "date",
-               array_agg(DISTINCT ae.agent_id)                                               AS "agentIds",
-               SUM(CASE WHEN ed.event_type = 'live' THEN end_time - start_time ELSE 0 END)   AS "liveDuration",
-               SUM(CASE WHEN ed.event_type = 'call' THEN end_time - start_time ELSE 0 END)   AS "callDuration",
-               SUM(CASE WHEN ed.event_type = 'remote' THEN end_time - start_time ELSE 0 END) AS "remoteDuration"
-        FROM EventDurations ed
-                 LEFT JOIN assist_events ae ON ed."sessionId" = ae.session_id
-        GROUP BY ed."sessionId"
-        ORDER BY "liveDuration" DESC
-        LIMIT 10 OFFSET 1;
-    """
+        data: AssistStatsSessionsRequest,
+) -> AssistStatsSessionsResponse:
+    constraints = [
+        "project_id = %(project_id)s",
+        "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
+    ]
 
     params = {
         "project_id": project_id,
+        "limit": data.limit,
+        "offset": (data.page - 1) * data.limit,
+        "sort_by": data.sort,
+        "sort_order": data.order.upper(),
+        "start_timestamp": data.startTimestamp,
+        "end_timestamp": data.endTimestamp,
     }
+
+    if data.userId is not None:
+        constraints.append("agent_id = %(agent_id)s")
+        params["agent_id"] = data.userId
+
+    sql = f"""
+        SELECT
+            COUNT(1) OVER () AS count,
+            ae.session_id,
+            ae.timestamp,
+            SUM(CASE WHEN ae.event_type = 'call' THEN ae.duration ELSE 0 END) AS call_duration,
+            SUM(CASE WHEN ae.event_type = 'control' THEN ae.duration ELSE 0 END) AS control_duration,
+            SUM(CASE WHEN ae.event_type = 'assist' THEN ae.duration ELSE 0 END) AS assist_duration,
+            json_agg(json_build_object('name', u.name, 'id', u.user_id)) AS team_members
+        FROM assist_events ae
+                 JOIN users u ON u.user_id = ae.agent_id
+--         WHERE {" AND ".join(constraints)}
+        WHERE {' AND '.join(f'ae.{constraint}' for constraint in constraints)}
+        GROUP BY ae.session_id, ae.timestamp
+        ORDER BY {params['sort_by']} {params['sort_order']}
+        LIMIT %(limit)s OFFSET %(offset)s
+    """
 
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
 
-    for _ in range(5):
-        data.append(AssistStatsSession(
-            sessionId=f"{_}",
-            timestamp=1641000000,
-            teamMembers=[{"name": f"Person {_}", "id": f"{_}"}],
-            liveDuration=random.randint(1, 50),
-            callDuration=random.randint(1, 40),
-            remoteDuration=random.randint(1, 30),
-        ))
+    if len(rows) == 0:
+        return AssistStatsSessionsResponse(total=0, page=1, list=[])
 
-    data[0].recordings = [
-        {
-            "id": f"record_1",
-            "name": f"Recording {1}",
-            "duration": random.randint(1, 2000),
-        }
-    ]
+    count = rows[0]["count"]
 
-    data[1].recordings = [
-        {
-            "id": f"record_1",
-            "name": f"Recording {1}",
-            "duration": random.randint(1, 2000),
-        },
-        {
-            "id": f"record_2",
-            "name": f"Recording {2}",
-            "duration": random.randint(1, 2000),
-        }
-    ]
-
-    return schemas.AssistStatsSessionsResponse(
-        total=100,
-        page=1,
-        list=data,
-    )
+    rows = helper.list_to_camel_case(rows)
+    for row in rows:
+        row.pop("count")
+    return AssistStatsSessionsResponse(total=count, page=data.page, list=rows)
 
 
 def export_csv() -> schemas.AssistStatsSessionsResponse:
