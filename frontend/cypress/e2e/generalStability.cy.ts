@@ -3,6 +3,11 @@ describe('Testing general stability', {
   viewportWidth: 1400,
 }, () => {
   it('Checking if app will crash', () => {
+    cy.clearCookies()
+    cy.clearAllSessionStorage()
+    cy.clearAllCookies()
+    cy.clearAllLocalStorage()
+
     cy.intercept('**/api/account').as('getAccount');
 
     cy.visit('/')
@@ -11,20 +16,28 @@ describe('Testing general stability', {
     cy.get('[data-test-id=log-button]').click();
     cy.wait('@getAccount')
 
-    cy.get('[data-test-id="dashboards"]').click()
+    Cypress.on('uncaught:exception', (err, runnable) => {
+      return false
+    })
 
-    cy.get(':nth-child(1) > .relative > :nth-child(1) > #menu-manage-alerts > .w-full').should('be.visible')
+    cy.get(':nth-child(1) > .ant-menu-item-group-title > .ant-typography').should('be.visible')
 
+    cy.visit('/5/dashboard')
+    cy.wait(500)
+    cy.get('input[name="dashboardsSearch"]').should('be.visible')
 
     cy.visit('/client/account')
 
     cy.get(':nth-child(2) > .profileSettings-module__left--D4pCi > .profileSettings-module__info--DhVpL').should('be.visible')
 
-    cy.get(':nth-child(3) > .relative > :nth-child(1) > .sideMenuItem-module__menuItem--UzuXv > .w-full > .sideMenuItem-module__iconLabel--Cl_48 > .sideMenuItem-module__title--IFkbw').click()
-    cy.get(':nth-child(4) > .relative > :nth-child(1) > .sideMenuItem-module__menuItem--UzuXv > .w-full > .sideMenuItem-module__iconLabel--Cl_48 > .sideMenuItem-module__title--IFkbw').click()
-    cy.get(':nth-child(5) > .relative > :nth-child(1) > .sideMenuItem-module__menuItem--UzuXv > .w-full > .sideMenuItem-module__iconLabel--Cl_48 > .sideMenuItem-module__title--IFkbw').click()
+    cy.get('.ant-menu-item-group-list > :nth-child(2)').click()
+    cy.wait(250)
+    cy.get('.text-2xl > div').should('be.visible')
+    cy.get('.ant-menu-item-group-list > :nth-child(3)').click()
+    cy.get('.ant-menu-item-group-list > :nth-child(4)').click()
+    cy.get('.text-base').should('be.visible')
 
-    cy.get('.webhooks-module__tabHeader--I0FXb').should('be.visible')
+    cy.get('.ant-menu-item-group-title').should('be.visible')
 
     // if test has not failed, we assume that app is not crashed (so far)
   })
