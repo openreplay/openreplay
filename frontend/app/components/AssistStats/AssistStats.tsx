@@ -1,17 +1,16 @@
 import { Member, SessionsResponse } from 'App/services/AssistStatsService';
 import React from 'react';
-import { Button, Typography, Input } from 'antd';
+import { Button, Typography } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { Loader } from 'UI';
 
+import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
 import { assistStatsService } from 'App/services';
-
-const { Search } = Input;
 
 const fakeData = {
   chart: [
@@ -62,6 +61,7 @@ const Charts = [
 ];
 
 function AssistStats() {
+  const [selectedUser, setSelectedUser] = React.useState<any>(null);
   const [period, setPeriod] = React.useState<any>(Period({ rangeName: LAST_24_HOURS }));
   const [membersSort, setMembersSort] = React.useState('sessionsAssisted');
   const [tableSort, setTableSort] = React.useState('timestamp');
@@ -101,6 +101,7 @@ function AssistStats() {
       endTimestamp: period.end,
       sortBy: tableSort,
       sortOrder: 'desc',
+      userId: selectedUser ? selectedUser : undefined,
       page: 1,
       limit: 10,
     });
@@ -165,6 +166,23 @@ function AssistStats() {
     });
   };
 
+  const onUserSelect = (id: any) => {
+    setSelectedUser(id)
+    assistStatsService
+      .getSessions({
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        sortBy: tableSort,
+        userId: id,
+        sortOrder: 'desc',
+        page: 1,
+        limit: 10,
+      })
+      .then((sessions) => {
+        setSessions(sessions);
+      });
+  }
+
   return (
     <div className={'w-full'}>
       <div className={'w-full flex items-center mb-2'}>
@@ -172,14 +190,7 @@ function AssistStats() {
           Assist Stats
         </Typography.Title>
         <div className={'ml-auto flex items-center gap-2'}>
-          <Search
-            placeholder="input search text"
-            allowClear
-            size={'small'}
-            classNames={{ input: '!border-0 focus:!border-0' }}
-            onSearch={() => null}
-            style={{ width: 200 }}
-          />
+          <UserSearch onUserSelect={onUserSelect} />
 
           <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt />
           <Button shape={'default'} size={'small'} icon={<FilePdfOutlined rev={undefined} />} />

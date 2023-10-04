@@ -57,6 +57,7 @@ export default class AssistStatsService {
     startTimestamp: number;
     endTimestamp: number;
     sortBy: string;
+    userId?: number;
     sortOrder: 'asc' | 'desc';
     page: number;
     limit: number;

@@ -25,15 +25,15 @@ const sortItems = [
     label: 'Newest First',
   },
   {
-    key: 'liveDuration',
+    key: 'assist_duration',
     label: 'Live Duration',
   },
   {
-    key: 'callDuration',
+    key: 'call_duration',
     label: 'Call Duration',
   },
   {
-    key: 'remoteDuration',
+    key: 'control_duration',
     label: 'Remote Duration',
   },
   // {
