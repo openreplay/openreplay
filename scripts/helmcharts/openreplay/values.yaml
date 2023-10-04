@@ -36,6 +36,10 @@ vault: &vault
       POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
       {{- end -}}
 
+minio:
+  # Force initialize minio, even if the instance is not provisioned by OR
+  forceInit: false
+
 global:
   vault: *vault
   redis: *redis
