@@ -48,3 +48,7 @@ global:
   # If you're accessing OpenReplay with http, then update the value to http
   ORSecureAccess: true
 
+chalice:
+  env:
+    CH_COMPRESSION: "false"
+
