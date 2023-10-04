@@ -114,6 +114,7 @@ function SideMenu(props: Props) {
     [MENU.ALERTS]: () => withSiteId(routes.alerts(), siteId),
     [MENU.FEATURE_FLAGS]: () => withSiteId(routes.fflags(), siteId),
     [MENU.PREFERENCES]: () => client(CLIENT_DEFAULT_TAB),
+    [MENU.USABILITY_TESTS]: () => withSiteId(routes.usabilityTesting(), siteId),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
     [PREFERENCES_MENU.SESSION_LISTING]: () => client(CLIENT_TABS.SESSIONS_LISTING),
     [PREFERENCES_MENU.INTEGRATIONS]: () => client(CLIENT_TABS.INTEGRATIONS),
