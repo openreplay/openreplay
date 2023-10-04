@@ -44,8 +44,8 @@ export default class RemoteControl {
       if (data === socket.id) {
         if (this.store.get().remoteControl === RemoteControlStatus.Enabled) this.onEnd();
         this.toggleRemoteControl(false);
+        this.onReject();
       }
-      this.onReject();
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
       }
