@@ -2,7 +2,8 @@ import random
 from datetime import datetime, timedelta
 
 from chalicelib.utils import pg_client, helper
-from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, AssistStatsSessionsResponse
+from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, AssistStatsSessionsResponse, \
+    AssistStatsTopMembersResponse
 
 
 def get_averages(project_id: int, start_timestamp: int, end_timestamp: int):
@@ -29,19 +30,73 @@ def get_top_members(
         end_timestamp: int,
         sort_by: str,
         sort_order: str,
-) -> schemas.AssistStatsTopMembersResponse:
-    data = []
+        user_id: int = None,
+) -> AssistStatsTopMembersResponse:
+    event_type_mapping = {
+        "sessionsAssisted": "assist",
+        "assistDuration": "assist",
+        "callDuration": "call",
+        "controlDuration": "control"
+    }
 
-    for _ in range(5):  # Change the range to the desired number of data points
-        name = f"Person {_}"
-        value = random.randint(1, 10)  # Adjust the range as needed
-        data.append({"name": name, "count": value})
+    event_type = event_type_mapping.get(sort_by)
+    if event_type is None:
+        raise ValueError("Invalid sortBy option")
 
-    return schemas.AssistStatsTopMembersResponse(
-        total=100,
-        page=1,
-        list=data,
-    )
+    constraints = [
+        "project_id = %(project_id)s",
+        "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
+        "duration > 0",
+        # "event_type = %(event_type)s",
+    ]
+
+    params = {
+        "project_id": project_id,
+        "limit": 5,
+        "offset": 0,
+        "sort_by": sort_by,
+        "sort_order": sort_order.upper(),
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        # "event_type": event_type,
+    }
+
+    if user_id is not None:
+        constraints.append("agent_id = %(agent_id)s")
+        params["agent_id"] = user_id
+
+    sql = f"""
+        SELECT
+            COUNT(1) OVER () AS total,
+            ae.agent_id,
+            u.name AS name,
+            CASE WHEN '{sort_by}' = 'sessionsAssisted'
+                 THEN SUM(CASE WHEN ae.event_type = 'assist' THEN 1 ELSE 0 END)
+                 ELSE SUM(CASE WHEN ae.event_type <> 'assist' THEN ae.duration ELSE 0 END)
+            END AS count
+        FROM assist_events ae
+            JOIN users u ON u.user_id = ae.agent_id
+        WHERE {' AND '.join(f'ae.{constraint}' for constraint in constraints)}
+            AND ae.event_type = '{event_type}'
+        GROUP BY ae.agent_id, u.name
+        ORDER BY count {params['sort_order']}
+        LIMIT %(limit)s OFFSET %(offset)s
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+
+    if len(rows) == 0:
+        return AssistStatsTopMembersResponse(total=0, list=[])
+
+    count = rows[0]["total"]
+    rows = helper.list_to_camel_case(rows)
+    for row in rows:
+        row.pop("total")
+
+    return AssistStatsTopMembersResponse(total=count, list=rows)
 
 
 def get_sessions(

@@ -884,7 +884,7 @@ def get_assist_stats_top_members(
         project_id: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
-        sortyBy: str = "count",
+        sortyBy: str = "sessionsAssisted",
         sortOder: str = "desc"
 ):
     return assist_stats.get_top_members(
