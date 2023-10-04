@@ -279,16 +279,18 @@ export default class Assist {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
       }
-      this.assistDemandedRestart = true
-      this.app.stop()
-      setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false })
-          .then(() => {
+      if (this.app.active()) {
+        this.assistDemandedRestart = true
+        this.app.stop()
+        setTimeout(() => {
+          this.app.start().then(() => { this.assistDemandedRestart = false })
+            .then(() => {
               this.remoteControl?.reconnect([id,])
-          })
-          .catch(e => app.debug.error(e))
-        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-      }, 500)
+            })
+            .catch(e => app.debug.error(e))
+          // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+        }, 400)
+      }
     })
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
@@ -298,17 +300,18 @@ export default class Assist {
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         }
       })
-      this.assistDemandedRestart = true
-      this.app.stop()
-      setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false })
-          .then(() => {
-            this.remoteControl?.reconnect(ids)
-          })
-          .catch(e => app.debug.error(e))
-        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-      }, 500)
-
+      if (this.app.active()) {
+        this.assistDemandedRestart = true
+        this.app.stop()
+        setTimeout(() => {
+          this.app.start().then(() => { this.assistDemandedRestart = false })
+            .then(() => {
+              this.remoteControl?.reconnect(ids)
+            })
+            .catch(e => app.debug.error(e))
+          // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+        }, 400)
+      }
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
@@ -488,8 +491,6 @@ export default class Assist {
           return
         }
 
-        // UI
-          console.log(callUI)
         if (!callUI) {
           callUI = new CallWindow(console.log, this.options.callUITemplate)
           callUI.setVideoToggleCallback(updateVideoFeed)
