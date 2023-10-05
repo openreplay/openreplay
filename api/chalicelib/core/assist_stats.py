@@ -6,22 +6,69 @@ from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, Ass
     AssistStatsTopMembersResponse
 
 
-def get_averages(project_id: int, start_timestamp: int, end_timestamp: int):
-    if start_timestamp is None:
-        start_datetime = datetime.utcnow() - timedelta(days=1)
-    else:
-        start_datetime = datetime.utcfromtimestamp(start_timestamp)
+def get_averages(
+        project_id: int,
+        start_timestamp: int,
+        end_timestamp: int,
+        user_id: int = None,
+):
+    constraints = [
+        "project_id = %(project_id)s",
+        "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
+    ]
 
-    averages = []
-    for month in range(1, 3):  # Generate data for January and February
-        month_name = datetime(2000, month, 1).strftime('%B')
-        chart_data = [
-            {"timestamp": int((start_datetime + timedelta(hours=i)).timestamp()), "value": random.randint(20, 30)}
-            for i in range(30)
-        ]
-        averages.append(AssistStatsAverage(key=month_name, avg=22.0, chartData=chart_data))
+    params = {
+        "project_id": project_id,
+        "limit": 5,
+        "offset": 0,
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        # "event_type": event_type,
+    }
 
-    return averages
+    sql = f"""
+        WITH time_series AS (
+            SELECT generate_series(
+                           date_trunc('minute', to_timestamp(1696425654877/1000)),
+                           date_trunc('minute', to_timestamp(1696429168571/1000)),
+                           interval '1 minute'
+                       ) as time_interval
+        )
+        SELECT
+            time_series.time_interval as time,
+            ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
+            ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
+            ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg
+        FROM
+            time_series
+                LEFT JOIN
+            assist_events
+            ON
+                    time_series.time_interval = DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000))
+        WHERE {' AND '.join(f'{constraint}' for constraint in constraints)}
+        GROUP BY
+            time
+        ORDER BY
+            time;
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+
+    if len(rows) == 0:
+        return {
+            "avg": 0,
+            "list": [],
+        }
+
+    rows = helper.list_to_camel_case(rows)
+
+    return {
+        "avg": 0,
+        "list": rows,
+    }
 
 
 def get_top_members(

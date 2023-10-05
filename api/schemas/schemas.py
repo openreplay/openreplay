@@ -1642,9 +1642,9 @@ class AssistStatsSession(BaseModel):
     sessionId: str = Field(...)
     timestamp: int = Field(...)
     teamMembers: List[AssistStatsSessionAgent] = Field(...)
-    assistDuration: int = Field(...)
-    callDuration: int = Field(...)
-    controlDuration: int = Field(...)
+    assistDuration: Optional[int] = Field(default=0)
+    callDuration: Optional[int] = Field(default=0)
+    controlDuration: Optional[int] = Field(default=0)
     # recordings: list[AssistStatsSessionRecording] = Field(default=[])
 
 
