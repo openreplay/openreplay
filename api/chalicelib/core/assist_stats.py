@@ -29,6 +29,10 @@ def get_averages(
         "step_size": f"{60} seconds",
     }
 
+    if user_id is not None:
+        constraints.append("agent_id = %(agent_id)s")
+        params["agent_id"] = user_id
+
     totals = __get_all_events_totals(constraints, params, step_size)
     rows = __get_all_events_averages(constraints, params, step_size)
 
@@ -64,28 +68,28 @@ def __get_all_events_totals(constraints, params, step_size):
 def __get_all_events_averages(constraints, params, step_size):
     sql = f"""
         WITH time_series AS (
-    SELECT
-        EXTRACT(epoch FROM generate_series(
-            date_trunc('minute', to_timestamp(%(start_timestamp)s/1000)),
-            date_trunc('minute', to_timestamp(%(end_timestamp)s/1000)),
-            interval %(step_size)s
-        ))::bigint as unix_time
-)
-SELECT
-    time_series.unix_time as time,
-    ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
-    ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
-    ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg,
-    ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_total,
-    ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_total,
-    ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_total
-FROM
-    time_series
-    LEFT JOIN assist_events ON time_series.unix_time = EXTRACT(epoch FROM DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000)))
-WHERE
-    {' AND '.join(f'{constraint}' for constraint in constraints)}
-GROUP BY time
-ORDER BY time;
+            SELECT
+                EXTRACT(epoch FROM generate_series(
+                    date_trunc('minute', to_timestamp(%(start_timestamp)s/1000)),
+                    date_trunc('minute', to_timestamp(%(end_timestamp)s/1000)),
+                    interval %(step_size)s
+                ))::bigint as unix_time
+        )
+        SELECT
+            time_series.unix_time as time,
+            ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
+            ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
+            ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg,
+            ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_total,
+            ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_total,
+            ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_total
+        FROM
+            time_series
+            LEFT JOIN assist_events ON time_series.unix_time = EXTRACT(epoch FROM DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000)))
+        WHERE
+            {' AND '.join(f'{constraint}' for constraint in constraints)}
+        GROUP BY time
+        ORDER BY time;
 
     """
     with pg_client.PostgresClient() as cur:

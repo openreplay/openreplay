@@ -871,8 +871,13 @@ def get_assist_stats_avg(
         project_id: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
+        userId: str = None
 ):
-    return assist_stats.get_averages(project_id=project_id, start_timestamp=startTimestamp, end_timestamp=endTimestamp)
+    return assist_stats.get_averages(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        user_id=userId)
 
 
 @public_app.get(
