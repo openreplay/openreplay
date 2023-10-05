@@ -33,12 +33,12 @@ def get_averages(
         constraints.append("agent_id = %(agent_id)s")
         params["agent_id"] = user_id
 
-    totals = __get_all_events_totals(constraints, params, step_size)
-    rows = __get_all_events_averages(constraints, params, step_size)
+    totals = __get_all_events_totals(constraints, params)
+    rows = __get_all_events_averages(constraints, params)
 
     params["start_timestamp"] = start_timestamp - (end_timestamp - start_timestamp)
     params["end_timestamp"] = start_timestamp
-    previous_totals = __get_all_events_totals(constraints, params, step_size)
+    previous_totals = __get_all_events_totals(constraints, params)
 
     return {
         "currentPeriod": totals[0],
@@ -47,7 +47,7 @@ def get_averages(
     }
 
 
-def __get_all_events_totals(constraints, params, step_size):
+def __get_all_events_totals(constraints, params):
     sql = f"""
        SELECT ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))  as assist_total,
            ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))     as assist_avg,
@@ -65,7 +65,7 @@ def __get_all_events_totals(constraints, params, step_size):
     return helper.list_to_camel_case(rows)
 
 
-def __get_all_events_averages(constraints, params, step_size):
+def __get_all_events_averages(constraints, params):
     sql = f"""
         WITH time_series AS (
             SELECT
@@ -201,16 +201,16 @@ def get_sessions(
         SELECT
             COUNT(1) OVER () AS count,
             ae.session_id,
-            ae.timestamp,
+            MIN(ae.timestamp) as timestamp,
             SUM(CASE WHEN ae.event_type = 'call' THEN ae.duration ELSE 0 END) AS call_duration,
             SUM(CASE WHEN ae.event_type = 'control' THEN ae.duration ELSE 0 END) AS control_duration,
             SUM(CASE WHEN ae.event_type = 'assist' THEN ae.duration ELSE 0 END) AS assist_duration,
-            json_agg(json_build_object('name', u.name, 'id', u.user_id)) AS team_members
+            (SELECT json_agg(json_build_object('name', u.name, 'id', u.user_id))
+                    FROM users u
+                    WHERE u.user_id = ANY (array_agg(ae.agent_id)))                     AS team_members
         FROM assist_events ae
-                 JOIN users u ON u.user_id = ae.agent_id
---         WHERE {" AND ".join(constraints)}
         WHERE {' AND '.join(f'ae.{constraint}' for constraint in constraints)}
-        GROUP BY ae.session_id, ae.timestamp
+        GROUP BY ae.session_id
         ORDER BY {params['sort_by']} {params['sort_order']}
         LIMIT %(limit)s OFFSET %(offset)s
     """
