@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 
+from chalicelib.utils.metrics_helper import __get_step_size
 from chalicelib.utils import pg_client, helper
 from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, AssistStatsSessionsResponse, \
     AssistStatsTopMembersResponse
@@ -12,6 +13,8 @@ def get_averages(
         end_timestamp: int,
         user_id: int = None,
 ):
+    step_size = __get_step_size(start_timestamp, end_timestamp, 100, decimal=True)
+
     constraints = [
         "project_id = %(project_id)s",
         "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
@@ -23,52 +26,73 @@ def get_averages(
         "offset": 0,
         "start_timestamp": start_timestamp,
         "end_timestamp": end_timestamp,
-        # "event_type": event_type,
+        "step_size": f"{60} seconds",
     }
 
-    sql = f"""
-        WITH time_series AS (
-            SELECT generate_series(
-                           date_trunc('minute', to_timestamp(1696425654877/1000)),
-                           date_trunc('minute', to_timestamp(1696429168571/1000)),
-                           interval '1 minute'
-                       ) as time_interval
-        )
-        SELECT
-            time_series.time_interval as time,
-            ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
-            ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
-            ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg
-        FROM
-            time_series
-                LEFT JOIN
-            assist_events
-            ON
-                    time_series.time_interval = DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000))
-        WHERE {' AND '.join(f'{constraint}' for constraint in constraints)}
-        GROUP BY
-            time
-        ORDER BY
-            time;
-    """
+    totals = __get_all_events_totals(constraints, params, step_size)
+    rows = __get_all_events_averages(constraints, params, step_size)
 
+    params["start_timestamp"] = start_timestamp - (end_timestamp - start_timestamp)
+    params["end_timestamp"] = start_timestamp
+    previous_totals = __get_all_events_totals(constraints, params, step_size)
+
+    return {
+        "currentPeriod": totals[0],
+        "previousPeriod": previous_totals[0],
+        "list": rows,
+    }
+
+
+def __get_all_events_totals(constraints, params, step_size):
+    sql = f"""
+       SELECT ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))  as assist_total,
+           ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))     as assist_avg,
+           ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END))       as call_total,
+           ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END))       as call_avg,
+           ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END))    as control_total,
+           ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END))    as control_avg
+        FROM assist_events
+        WHERE {' AND '.join(f'{constraint}' for constraint in constraints)}
+    """
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)
 
-    if len(rows) == 0:
-        return {
-            "avg": 0,
-            "list": [],
-        }
 
-    rows = helper.list_to_camel_case(rows)
+def __get_all_events_averages(constraints, params, step_size):
+    sql = f"""
+        WITH time_series AS (
+    SELECT
+        EXTRACT(epoch FROM generate_series(
+            date_trunc('minute', to_timestamp(%(start_timestamp)s/1000)),
+            date_trunc('minute', to_timestamp(%(end_timestamp)s/1000)),
+            interval %(step_size)s
+        ))::bigint as unix_time
+)
+SELECT
+    time_series.unix_time as time,
+    ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
+    ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
+    ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg,
+    ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_total,
+    ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_total,
+    ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_total
+FROM
+    time_series
+    LEFT JOIN assist_events ON time_series.unix_time = EXTRACT(epoch FROM DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000)))
+WHERE
+    {' AND '.join(f'{constraint}' for constraint in constraints)}
+GROUP BY time
+ORDER BY time;
 
-    return {
-        "avg": 0,
-        "list": rows,
-    }
+    """
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)
 
 
 def get_top_members(
