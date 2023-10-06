@@ -341,8 +341,7 @@ WITH sub_sessions AS ( SELECT session_id
                                     LEAD(event_type, 1) OVER (PARTITION BY session_id ORDER BY timestamp {path_direction}) AS next_type,
                                     abs(LEAD(timestamp, 1) OVER (PARTITION BY session_id ORDER BY timestamp {path_direction}) -
                                         timestamp)                                                             AS time_to_next
-                             FROM sub_events
-                             ORDER BY session_id) AS full_ranked_events
+                             FROM sub_events) AS full_ranked_events
                         WHERE event_number_in_session < %(density)s
      ),
      start_points AS (SELECT session_id
