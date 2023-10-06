@@ -1,10 +1,143 @@
-import random
-from datetime import datetime, timedelta
+import logging
+from datetime import datetime
 
-from chalicelib.utils.metrics_helper import __get_step_size
 from chalicelib.utils import pg_client, helper
-from schemas import AssistStatsAverage, AssistStatsSessionsRequest, schemas, AssistStatsSessionsResponse, \
-    AssistStatsTopMembersResponse
+from schemas import AssistStatsSessionsRequest, AssistStatsSessionsResponse, AssistStatsTopMembersResponse
+
+
+def insert_aggregated_data():
+    try:
+        logging.info("Assist Stats: Inserting aggregated data")
+        end_timestamp = int(datetime.timestamp(datetime.now())) * 1000
+        start_timestamp = __last_run_end_timestamp_from_aggregates()
+
+        if start_timestamp is None:  # first run
+            logging.info("Assist Stats: First run, inserting data for last 7 days")
+            start_timestamp = end_timestamp - (7 * 24 * 60 * 60 * 1000)
+
+        offset = 0
+        chunk_size = 1000
+
+        while True:
+            constraints = [
+                "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s"
+            ]
+
+            params = {
+                "limit": chunk_size,
+                "offset": offset,
+                "start_timestamp": start_timestamp + 1,
+                "end_timestamp": end_timestamp,
+                "step_size": f"{60} seconds",
+            }
+
+            logging.info(f"Assist Stats: Fetching data from {start_timestamp} to {end_timestamp}")
+            aggregated_data = __get_all_events_hourly_averages(constraints, params)
+
+            if not aggregated_data:  # No more data to insert
+                logging.info("Assist Stats: No more data to insert")
+                break
+
+            logging.info(f"Assist Stats: Inserting {len(aggregated_data)} rows")
+
+            for data in aggregated_data:
+                sql = """
+                    INSERT INTO assist_events_aggregates 
+                    (timestamp, project_id, agent_id, assist_avg, call_avg, control_avg, assist_total, call_total, control_total)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                params = (
+                    data['time'],
+                    data['project_id'],
+                    data['agent_id'],
+                    data['assist_avg'],
+                    data['call_avg'],
+                    data['control_avg'],
+                    data['assist_total'],
+                    data['call_total'],
+                    data['control_total']
+                )
+
+                with pg_client.PostgresClient() as cur:
+                    cur.execute(sql, params)
+
+            offset += chunk_size
+
+        # get the first timestamp from the table assist_events based on start_timestamp
+        sql = f"""
+            SELECT MAX(timestamp) as first_timestamp
+                FROM assist_events
+            WHERE timestamp > %(start_timestamp)s AND duration > 0
+            GROUP BY timestamp
+            ORDER BY timestamp DESC LIMIT 1
+        """
+        with pg_client.PostgresClient() as cur:
+            cur.execute(sql, params)
+            result = cur.fetchone()
+            first_timestamp = result['first_timestamp'] if result else None
+
+        # insert the first timestamp into assist_events_aggregates_logs
+        if first_timestamp is not None:
+            sql = "INSERT INTO assist_events_aggregates_logs (time) VALUES (%s)"
+            params = (first_timestamp,)
+            with pg_client.PostgresClient() as cur:
+                cur.execute(sql, params)
+
+    except Exception as e:
+        logging.error(f"Error inserting aggregated data -: {e}")
+
+
+def __last_run_end_timestamp_from_aggregates():
+    sql = "SELECT MAX(time) as last_run_time FROM assist_events_aggregates_logs;"
+    with pg_client.PostgresClient() as cur:
+        cur.execute(sql)
+        result = cur.fetchone()
+        last_run_time = result['last_run_time'] if result else None
+
+    if last_run_time is None:  # first run handle all data
+        sql = "SELECT MIN(timestamp) as last_timestamp FROM assist_events;"
+        with pg_client.PostgresClient() as cur:
+            cur.execute(sql)
+            result = cur.fetchone()
+            last_run_time = result['last_timestamp'] if result else None
+
+    return last_run_time
+
+
+def __get_all_events_hourly_averages(constraints, params):
+    sql = f"""
+        WITH time_series AS (
+            SELECT
+                EXTRACT(epoch FROM generate_series(
+                    date_trunc('hour', to_timestamp(%(start_timestamp)s/1000)),
+                    date_trunc('hour', to_timestamp(%(end_timestamp)s/1000)) + interval '1 hour',
+                    interval %(step_size)s
+                ))::bigint as unix_time
+        )
+        SELECT
+            time_series.unix_time * 1000 as time,
+            project_id,
+            agent_id,
+            ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
+            ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
+            ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg,
+            ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_total,
+            ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_total,
+            ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_total
+        FROM
+            time_series
+            LEFT JOIN assist_events ON time_series.unix_time = EXTRACT(epoch FROM DATE_TRUNC('hour', to_timestamp(assist_events.timestamp/1000)))
+        WHERE
+            {' AND '.join(f'{constraint}' for constraint in constraints)}
+        GROUP BY time, project_id, agent_id
+        ORDER BY time
+        LIMIT %(limit)s OFFSET %(offset)s;
+    """
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+    return rows
 
 
 def get_averages(
@@ -13,8 +146,6 @@ def get_averages(
         end_timestamp: int,
         user_id: int = None,
 ):
-    step_size = __get_step_size(start_timestamp, end_timestamp, 100, decimal=True)
-
     constraints = [
         "project_id = %(project_id)s",
         "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
@@ -43,19 +174,20 @@ def get_averages(
     return {
         "currentPeriod": totals[0],
         "previousPeriod": previous_totals[0],
-        "list": rows,
+        "list": helper.list_to_camel_case(rows),
     }
 
 
 def __get_all_events_totals(constraints, params):
     sql = f"""
-       SELECT ROUND(SUM(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))  as assist_total,
-           ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END))     as assist_avg,
-           ROUND(SUM(CASE WHEN event_type = 'call' THEN duration ELSE 0 END))       as call_total,
-           ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END))       as call_avg,
-           ROUND(SUM(CASE WHEN event_type = 'control' THEN duration ELSE 0 END))    as control_total,
-           ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END))    as control_avg
-        FROM assist_events
+       SELECT
+           ROUND(SUM(assist_total))  as assist_total,
+           ROUND(AVG(assist_avg))    as assist_avg,
+           ROUND(SUM(call_total))    as call_total,
+           ROUND(AVG(call_avg))      as call_avg,
+           ROUND(SUM(control_total)) as control_total,
+           ROUND(AVG(control_avg))   as control_avg
+        FROM assist_events_aggregates
         WHERE {' AND '.join(f'{constraint}' for constraint in constraints)}
     """
     with pg_client.PostgresClient() as cur:
@@ -67,6 +199,28 @@ def __get_all_events_totals(constraints, params):
 
 def __get_all_events_averages(constraints, params):
     sql = f"""
+        SELECT
+            timestamp,
+            assist_avg,
+            call_avg,
+            control_avg,
+            assist_total,
+            call_total,
+            control_total
+        FROM assist_events_aggregates
+        WHERE
+            {' AND '.join(f'{constraint}' for constraint in constraints)}
+        ORDER BY timestamp;
+    """
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, params)
+        cur.execute(query)
+        rows = cur.fetchall()
+    return rows
+
+
+def __get_all_events_averagesx(constraints, params):
+    sql = f"""
         WITH time_series AS (
             SELECT
                 EXTRACT(epoch FROM generate_series(
@@ -77,6 +231,7 @@ def __get_all_events_averages(constraints, params):
         )
         SELECT
             time_series.unix_time as time,
+            project_id,
             ROUND(AVG(CASE WHEN event_type = 'assist' THEN duration ELSE 0 END)) as assist_avg,
             ROUND(AVG(CASE WHEN event_type = 'call' THEN duration ELSE 0 END)) as call_avg,
             ROUND(AVG(CASE WHEN event_type = 'control' THEN duration ELSE 0 END)) as control_avg,
@@ -88,7 +243,7 @@ def __get_all_events_averages(constraints, params):
             LEFT JOIN assist_events ON time_series.unix_time = EXTRACT(epoch FROM DATE_TRUNC('minute', to_timestamp(assist_events.timestamp/1000)))
         WHERE
             {' AND '.join(f'{constraint}' for constraint in constraints)}
-        GROUP BY time
+        GROUP BY time, project_id
         ORDER BY time;
 
     """
@@ -96,7 +251,7 @@ def __get_all_events_averages(constraints, params):
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
+    return rows
 
 
 def get_top_members(
@@ -229,8 +384,3 @@ def get_sessions(
     for row in rows:
         row.pop("count")
     return AssistStatsSessionsResponse(total=count, page=data.page, list=rows)
-
-
-def export_csv() -> schemas.AssistStatsSessionsResponse:
-    data = get_sessions()
-    return data

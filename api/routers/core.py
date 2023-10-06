@@ -914,21 +914,3 @@ def get_assist_stats_sessions(
         project_id=project_id,
         data=data
     )
-
-
-@public_app.get('/{project_id}/assist-stats/export-csv', tags=["assist-stats"], response_class=FileResponse)
-def get_assist_stats_export_csv(
-        project_id: int,
-        startTimestamp: int = 0,
-        endTimestamp: int = 0,
-        sortyBy: str = "count",
-        sortOder: str = "desc"
-):
-    fileName = 'assist_stats_sessions.csv'
-    data = assist_stats.export_csv()
-
-    file = open(fileName, 'w')
-    file.write(json.dumps(data.list))
-    file.close()
-
-    return FileResponse(fileName, media_type="text/csv", filename=fileName)
