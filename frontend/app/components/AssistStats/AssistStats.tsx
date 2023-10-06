@@ -13,8 +13,9 @@ import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { Loader } from 'UI';
-import { durationFromMsFormatted } from 'App/date'
+import { durationFromMsFormatted, formatTimeOrDate } from 'App/date'
 import withPageTitle from 'HOCs/withPageTitle';
+import { exportCSVFile } from 'App/utils';
 
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
@@ -137,12 +138,36 @@ function AssistStats() {
   };
 
   const exportCSV = () => {
-    void assistStatsService.exportCSV({
-      start: period.start,
-      end: period.end,
-      sortBy: tableSort,
-      sortOrder: 'desc',
-    });
+    assistStatsService
+      .getSessions({
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        sortBy: tableSort,
+        sortOrder: 'desc',
+        page: 1,
+        limit: 10000,
+      }).then(sessions => {
+      const data = sessions.list.map(s => ({
+          ...s,
+          members: s.teamMembers.map(m => m.name).join(', '),
+          dateStr: formatTimeOrDate(s.timestamp, undefined, true),
+          assistDuration: durationFromMsFormatted(s.assistDuration),
+          callDuration: durationFromMsFormatted(s.callDuration),
+          controlDuration: durationFromMsFormatted(s.controlDuration),
+        })
+      )
+      const headers = [
+        { label: 'Date', key: 'dateStr' },
+        { label: 'Team Members', key: 'members' },
+        { label: 'Live Duration', key: 'assistDuration' },
+        { label: 'Call Duration', key: 'callDuration' },
+        { label: 'Remote Duration', key: 'controlDuration' },
+        { label: 'Session ID', key: 'sessionId' }
+      ];
+
+      exportCSVFile(headers, data, `Assist_Stats_${new Date().toLocaleDateString()}`)
+
+    })
   };
 
   const onUserSelect = (id: any) => {
@@ -224,20 +249,3 @@ function AssistStats() {
 }
 
 export default withPageTitle('Assist Stats - Openreplay')(AssistStats);
-
-function randomizeData(inputData: any) {
-  const newData = JSON.parse(JSON.stringify(inputData));
-  newData.chart = newData.chart.map((entry: any) => {
-    const randomFactor = Math.random() * 2 - 1;
-    const variance = entry.value * 1.5;
-    entry.value += randomFactor * variance;
-
-    if (entry.value < 0) {
-      entry.value = 0;
-    }
-
-    return entry;
-  });
-
-  return newData;
-}

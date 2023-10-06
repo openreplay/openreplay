@@ -7,7 +7,7 @@ import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
 import { Loader, Pagination } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
-import {checkForRecent, durationFromMsFormatted, getDateFromMill} from 'App/date';
+import { checkForRecent, durationFromMsFormatted, getDateFromMill } from 'App/date';
 
 interface Props {
   onSort: (v: string) => void;
