@@ -1,10 +1,8 @@
 import React from 'react';
 import { Button } from 'UI';
 import SessionSearchField from 'Shared/SessionSearchField';
-// import { fetchFilterSearch } from 'Duck/search';
 import { connect } from 'react-redux';
 import { edit as editFilter, addFilterByKeyAndValue, clearSearch, fetchFilterSearch } from 'Duck/liveSearch';
-// import { clearSearch } from 'Duck/search';
 
 interface Props {
     appliedFilter: any;
