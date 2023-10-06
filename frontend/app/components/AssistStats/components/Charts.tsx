@@ -15,6 +15,7 @@ interface Props {
 }
 
 function Chart(props: Props) {
+  console.log(props.data)
   const { data, label } = props;
   const gradientDef = Styles.gradientDef();
 
@@ -22,12 +23,12 @@ function Chart(props: Props) {
     <NoContent
       size="small"
       title="No data available"
-      show={data.chart && data.chart.length === 0}
+      show={data && data.length === 0}
       style={{ height: '100px' }}
     >
       <ResponsiveContainer height={90} width="100%">
         <AreaChart
-          data={data.chart}
+          data={data}
           margin={{
             top: 0,
             right: 0,

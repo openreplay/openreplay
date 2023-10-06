@@ -51,8 +51,8 @@ export interface Graphs {
 export const generateListData = (list: any[], key: PeriodKeys) => {
   return list.map((item) => {
     return {
-      time: item.timestamp,
-      [key]: item[key],
+      timestamp: item.timestamp,
+      value: item[key],
     };
   });
 }

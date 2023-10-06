@@ -14,51 +14,12 @@ import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { Loader } from 'UI';
 import { durationFromMsFormatted } from 'App/date'
+import withPageTitle from 'HOCs/withPageTitle';
 
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
 import { assistStatsService } from 'App/services';
-
-const fakeData = {
-  chart: [
-    {
-      // time: 'Wed',
-      value: 10,
-      timestamp: 1695168000000,
-    },
-    {
-      // time: 'Thu',
-      value: 4.999194847020934,
-      timestamp: 1695268484000,
-    },
-    {
-      // time: 'Fri',
-      value: 6.515267175572519,
-      timestamp: 1695383683000,
-    },
-    {
-      // time: 'Sat',
-      value: 5.776388888888889,
-      timestamp: 1695498882000,
-    },
-    {
-      // time: 'Mon',
-      value: 8.078485181119648,
-      timestamp: 1695614081000,
-    },
-    {
-      // time: 'Tue',
-      value: 10.787750151607035,
-      timestamp: 1695729280000,
-    },
-    {
-      // time: 'Tue',
-      value: 15,
-      timestamp: 1695760456285,
-    },
-  ],
-};
 
 const chartNames = {
   assistTotal: 'Total Live Duration',
@@ -262,7 +223,7 @@ function AssistStats() {
   );
 }
 
-export default AssistStats;
+export default withPageTitle('Assist Stats - Openreplay')(AssistStats);
 
 function randomizeData(inputData: any) {
   const newData = JSON.parse(JSON.stringify(inputData));
