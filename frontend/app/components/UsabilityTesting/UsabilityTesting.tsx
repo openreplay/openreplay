@@ -5,7 +5,7 @@ import { Loader, Pagination } from 'UI';
 import { checkForRecent, getDateFromMill } from 'App/date';
 import { UnorderedListOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
-import { withSiteId, usabilityTestingEdit } from 'App/routes';
+import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
 
 const { Search } = Input;
 
@@ -113,13 +113,20 @@ function TestsTable() {
 }
 
 function Row() {
+  // @ts-ignore
+  const { siteId } = useParams();
+  const history = useHistory();
+
+  const redirect = () => {
+    history.push(withSiteId(usabilityTestingView('123'), siteId))
+  }
   return (
     <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
       <Cell size={4}>
         <div className={'flex items-center gap-2'}>
           <Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />
           <div>
-            <div className={'link'}>Very long title and add a description after</div>
+            <div className={'link'} onClick={redirect}>Very long title and add a description after</div>
             <div className={'text-disabled-text'}>
               Description is also long but not very much long but yes
             </div>
