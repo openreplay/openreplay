@@ -349,7 +349,7 @@ WITH sub_sessions AS ( SELECT session_id
                       FROM ranked_events {start_points_join}
                       WHERE {" AND ".join(start_points_conditions)}),
      {",".join(steps_query)}
-{"UNION ALL".join(projection_query)}"""
+{"UNION ALL".join(projection_query)};"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
                   "eventThresholdNumberInGroup": 8 if data.hide_excess else 6,
