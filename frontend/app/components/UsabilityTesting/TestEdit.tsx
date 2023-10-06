@@ -1,19 +1,20 @@
-import { Button, Input, Typography, Switch } from 'antd';
+import {Button, Input, Typography, Switch, Space} from 'antd';
 import React from 'react';
 import { withSiteId, usabilityTesting } from 'App/routes';
 import { useParams } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
 
 function TestEdit() {
+  const [conclusionMessage, setConclusionMessage] = React.useState('');
+  const [isConclusionEditing, setIsConclusionEditing] = React.useState(false);
+  const [overview, setOverview] = React.useState('');
+  const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
   // @ts-ignore
   const { siteId } = useParams();
   const { showModal, hideModal } = useModal();
 
-  React.useEffect(() => {
-    showModal(<StepsModal />, { right: true });
-  }, []);
   return (
     <>
       <Breadcrumb
@@ -45,7 +46,7 @@ function TestEdit() {
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
             <Typography.Text strong>Starting point</Typography.Text>
             <Input
-              addonBefore={'https://funnywebsite.com'}
+              addonBefore={'https://funnywebsite.com/'}
               style={{ width: 400 }}
               placeholder={'Think about placeholder'}
             />
@@ -54,12 +55,38 @@ function TestEdit() {
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
             <Typography.Text strong>Introduction & Guidelines</Typography.Text>
-            <Typography.Text>
-              Provide an overview of this user test to and input guidelines that can be of
-              assistance to users at any point during the test.
-            </Typography.Text>
-            <div>
-              <Button>Add</Button>
+            <Typography.Text></Typography.Text>
+            {isOverviewEditing ? (
+              <Input.TextArea
+                placeholder={'Task overview'}
+                value={overview}
+                onChange={(e) => setOverview(e.target.value)}
+              />
+            ) : (
+              <Typography.Text>
+                {overview.length
+                  ? overview
+                  : 'Provide an overview of this user test to and input guidelines that can be of assistance to users at any point during the test.'}
+              </Typography.Text>
+            )}
+            <div className={'flex gap-2'}>
+              {isOverviewEditing ? (
+                <>
+                  <Button type={'primary'} onClick={() => setIsOverviewEditing(false)}>
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setOverview('');
+                      setIsOverviewEditing(false);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsOverviewEditing(true)}>Add</Button>
+              )}
             </div>
           </div>
 
@@ -68,14 +95,43 @@ function TestEdit() {
             <Step />
             <Step />
             <div>
-              <Button>Add a task or question</Button>
+              <Button onClick={() => showModal(<StepsModal />, { right: true })}>
+                Add a task or question
+              </Button>
             </div>
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
             <Typography.Text strong>Conclusion Message</Typography.Text>
             <div>
-              <Button>Edit</Button>
+              {isConclusionEditing ? (
+                <Input.TextArea
+                  placeholder={'Thanks for participation!..'}
+                  value={conclusionMessage}
+                  onChange={(e) => setConclusionMessage(e.target.value)}
+                />
+              ) : (
+                <Typography.Text>{conclusionMessage}</Typography.Text>
+              )}
+            </div>
+            <div className={'flex gap-2'}>
+              {isConclusionEditing ? (
+                <>
+                  <Button type={'primary'} onClick={() => setIsConclusionEditing(false)}>
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setConclusionMessage('');
+                      setIsConclusionEditing(false);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsConclusionEditing(true)}>Edit</Button>
+              )}
             </div>
           </div>
         </div>
@@ -99,7 +155,7 @@ function StepsModal() {
         <Typography.Title level={5} style={{ marginBottom: 4 }}>
           Instruction
         </Typography.Title>
-        <Input placeholder={'Think about placeholder'} />
+        <Input.TextArea placeholder={'Think about placeholder'} />
         <Typography.Title level={5} style={{ marginBottom: 4 }}>
           Allow participants to type an answer
         </Typography.Title>
@@ -131,7 +187,11 @@ function SidePanel() {
         </div>
       </div>
 
-      <Button>Preview</Button>
+      <Button>
+        <Space align={'center'}>
+          Preview <ExportOutlined rev={undefined} />
+        </Space>
+      </Button>
       <Button type={'primary'}>Publish Test</Button>
     </div>
   );
@@ -150,8 +210,8 @@ function Step() {
       </div>
 
       <div className={'ml-auto'} />
-      <Button icon={<EditOutlined rev={undefined} />} />
-      <Button icon={<DeleteOutlined rev={undefined} />} />
+      <Button size={'small'} icon={<EditOutlined rev={undefined} />} />
+      <Button size={'small'} icon={<DeleteOutlined rev={undefined} />} />
     </div>
   );
 }
