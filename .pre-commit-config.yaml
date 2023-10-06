@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.14.5
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [commit]
