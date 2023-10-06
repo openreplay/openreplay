@@ -1,4 +1,10 @@
-{{- if not .Values.skipMigration}}
+{{/*
+Don't have to trigger migration if there is no version change
+Don't have to trigger migration if skipMigration is set
+Have to trigger migration if forceMigration is set
+*/}}
+{{- $versionChange := and (eq .Values.fromVersion .Chart.AppVersion) (.Release.IsUpgrade) }}
+{{- if or (not (or .Values.skipMigration $versionChange)) .Values.forceMigration }}
 ---
 apiVersion: v1
 kind: ConfigMap
