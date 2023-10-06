@@ -7,8 +7,8 @@ export interface Member {
 
 export interface AssistStatsSession {
   callDuration: number;
-  liveDuration: number;
-  remoteDuration: number;
+  assistDuration: number;
+  controlDuration: number;
   sessionId: string;
   teamMembers: { name: string; id: string }[];
   timestamp: number;
@@ -17,6 +17,64 @@ export interface AssistStatsSession {
     name: string;
     duration: number;
   }[]
+}
+export type PeriodKeys = 'assistTotal' | 'assistAvg' | 'callTotal' | 'callAvg' | 'controlTotal' | 'controlAvg';
+
+export interface Graphs {
+  currentPeriod: {
+    assistTotal: number;
+    assistAvg: number;
+    callTotal: number;
+    callAvg: number;
+    controlTotal: number;
+    controlAvg: number;
+  },
+  previousPeriod: {
+    assistTotal: number;
+    assistAvg: number;
+    callTotal: number;
+    callAvg: number;
+    controlTotal: number;
+    controlAvg: number;
+  },
+  list: {
+    time: number;
+    assistAvg: number;
+    callAvg: number;
+    controlAvg: number;
+    assistTotal: number;
+    callTotal: number;
+    controlTotal: number;
+  }[]
+}
+
+export const generateListData = (list: any[], key: PeriodKeys) => {
+  return list.map((item) => {
+    return {
+      time: item.timestamp,
+      [key]: item[key],
+    };
+  });
+}
+
+export const defaultGraphs = {
+  currentPeriod: {
+    assistTotal: 0,
+    assistAvg: 0,
+    callTotal: 0,
+    callAvg: 0,
+    controlTotal: 0,
+    controlAvg: 0,
+  },
+  previousPeriod: {
+    assistTotal: 0,
+    assistAvg: 0,
+    callTotal: 0,
+    callAvg: 0,
+    controlTotal: 0,
+    controlAvg: 0,
+  },
+  list: []
 }
 
 export interface SessionsResponse {
@@ -40,7 +98,7 @@ export default class AssistStatsService {
     return this.client[method]('/assist-stats/' + path, body).then((r) => r.json());
   }
 
-  getGraphs(range: { start: number; end: number }) {
+  getGraphs(range: { start: number; end: number }): Promise<Graphs> {
     return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end }, 'get');
   }
 

@@ -7,7 +7,7 @@ import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
 import { Loader, Pagination } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
-import { checkForRecent, getDateFromMill } from 'App/date';
+import {checkForRecent, durationFromMsFormatted, getDateFromMill} from 'App/date';
 
 interface Props {
   onSort: (v: string) => void;
@@ -120,14 +120,14 @@ function Row({ session }: { session: AssistStatsSession }) {
           ))}
         </div>
       </Cell>
-      <Cell size={1}>{session.liveDuration}</Cell>
-      <Cell size={1}>{session.callDuration}</Cell>
-      <Cell size={1}>{session.remoteDuration}</Cell>
+      <Cell size={1}>{durationFromMsFormatted(session.assistDuration)}</Cell>
+      <Cell size={1}>{durationFromMsFormatted(session.callDuration)}</Cell>
+      <Cell size={1}>{durationFromMsFormatted(session.controlDuration)}</Cell>
       <Cell size={1} />
       <Cell size={1}>
         <div className={'w-full flex justify-end gap-4'}>
-          {session.recordings.length > 0 ? (
-            session.recordings.length > 1 ? (
+          {session.recordings?.length > 0 ? (
+            session.recordings?.length > 1 ? (
               <Dropdown
                 menu={{
                   items: session.recordings.map((recording) => ({

@@ -1,11 +1,19 @@
-import { Member, SessionsResponse } from 'App/services/AssistStatsService';
+import {
+  generateListData,
+  defaultGraphs,
+  Graphs,
+  Member,
+  SessionsResponse,
+  PeriodKeys,
+} from 'App/services/AssistStatsService';
 import React from 'react';
 import { Button, Typography } from 'antd';
-import { FilePdfOutlined } from '@ant-design/icons';
+import { FilePdfOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { Loader } from 'UI';
+import { durationFromMsFormatted } from 'App/date'
 
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
@@ -51,14 +59,19 @@ const fakeData = {
     },
   ],
 };
-const Charts = [
-  'Avg Live Duration',
-  'Avg Call Duration',
-  'Avg Remote Duration',
-  'Total Live Duration',
-  'Total Call Duration',
-  'Total Remote Duration',
-];
+
+const chartNames = {
+  assistTotal: 'Total Live Duration',
+  assistAvg: 'Avg Live Duration',
+  callTotal: 'Total Call Duration',
+  callAvg: 'Avg Call Duration',
+  controlTotal: 'Total Remote Duration',
+  controlAvg: 'Avg Remote Duration',
+};
+
+function calculatePercentageDelta(currP: number, prevP: number) {
+  return ((currP - prevP) / prevP) * 100;
+}
 
 function AssistStats() {
   const [selectedUser, setSelectedUser] = React.useState<any>(null);
@@ -69,7 +82,7 @@ function AssistStats() {
     list: [],
     total: 0,
   });
-  const [graphs, setGraphs] = React.useState<any>([]);
+  const [graphs, setGraphs] = React.useState<Graphs>(defaultGraphs);
   const [sessions, setSessions] = React.useState<SessionsResponse>({
     list: [],
     total: 0,
@@ -133,16 +146,21 @@ function AssistStats() {
   };
 
   const onMembersSort = (sortBy: string) => {
-    setMembersSort(sortBy)
+    setMembersSort(sortBy);
     assistStatsService
-      .getTopMembers({ startTimestamp: period.start, endTimestamp: period.end, sortBy, sortOrder: 'desc' })
+      .getTopMembers({
+        startTimestamp: period.start,
+        endTimestamp: period.end,
+        sortBy,
+        sortOrder: 'desc',
+      })
       .then((topMembers) => {
         setTopMembers(topMembers);
       });
   };
 
   const onTableSort = (sortBy: string) => {
-    setTableSort(sortBy)
+    setTableSort(sortBy);
     assistStatsService
       .getSessions({
         startTimestamp: period.start,
@@ -167,7 +185,7 @@ function AssistStats() {
   };
 
   const onUserSelect = (id: any) => {
-    setSelectedUser(id)
+    setSelectedUser(id);
     assistStatsService
       .getSessions({
         startTimestamp: period.start,
@@ -181,7 +199,7 @@ function AssistStats() {
       .then((sessions) => {
         setSessions(sessions);
       });
-  }
+  };
 
   return (
     <div className={'w-full'}>
@@ -198,21 +216,26 @@ function AssistStats() {
       </div>
       <div className={'w-full grid grid-cols-3 gap-2'}>
         <div className={'grid grid-cols-3 gap-2 flex-2 col-span-2'}>
-          {Charts.map((i) => (
+          {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
             <div className={'bg-white rounded border'}>
               <div className={'pt-2 px-2'}>
                 <Typography.Title style={{ marginBottom: 0 }} level={5}>
-                  {i}
+                  {chartNames[i]}
                 </Typography.Title>
-                <div className={'flex gap-1 items-center'}>
+                <div className={'flex gap-2 items-center'}>
                   <Typography.Title style={{ marginBottom: 0 }} level={5}>
-                    132
+                    {graphs.currentPeriod[i] ? durationFromMsFormatted(graphs.currentPeriod[i]) : 0}
                   </Typography.Title>
-                  <Typography.Text>hrs</Typography.Text>
+                  {graphs.previousPeriod[i] ? (
+                    <div className={graphs.currentPeriod[i] > graphs.previousPeriod[i] ? 'flex items-center gap-1 text-green' : 'flex items-center gap-2 text-red'}>
+                      <ArrowUpOutlined rev={undefined} rotate={graphs.currentPeriod[i] > graphs.previousPeriod[i] ? 0 : 180} />
+                      {`${Math.round(calculatePercentageDelta(graphs.currentPeriod[i], graphs.previousPeriod[i]))}%`}
+                    </div>
+                  ) : null}
                 </div>
               </div>
-              <Loader loading style={{ minHeight: 90, height: 90 }} size={36}>
-                <Chart data={randomizeData(fakeData)} label={'Test'} />
+              <Loader loading={isLoading} style={{ minHeight: 90, height: 90 }} size={36}>
+                <Chart data={generateListData(graphs.list, i)} label={'Test'} />
               </Loader>
             </div>
           ))}
