@@ -275,7 +275,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     else:
         start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")"]
     start_points_conditions.append("event_number_in_session = 1")
-    start_points_conditions.append("next_value IS NOT NULL")
 
     steps_query = ["""n1 AS (SELECT event_number_in_session,
                                  event_type,
