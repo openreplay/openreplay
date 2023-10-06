@@ -4,7 +4,7 @@ import type { SelectProps } from 'antd/es/select';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => null }) => {
+const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
   const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined);
   const { userStore } = useStore();
   const allUsers = userStore.list.map((user) => ({
