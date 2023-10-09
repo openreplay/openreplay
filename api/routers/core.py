@@ -892,7 +892,9 @@ def get_assist_stats_top_members(
         sort: Optional[str] = Query(default="sessionsAssisted",
                                     description="Sort options: " + ", ".join(assist_stats.event_type_mapping)),
         order: str = "desc",
-        userId: int = None
+        userId: int = None,
+        page: int = 0,
+        limit: int = 5
 ):
     return assist_stats.get_top_members(
         project_id=project_id,
@@ -900,7 +902,9 @@ def get_assist_stats_top_members(
         end_timestamp=endTimestamp,
         sort_by=sort,
         sort_order=order,
-        user_id=userId
+        user_id=userId,
+        page=page,
+        limit=limit
     )
 
 
