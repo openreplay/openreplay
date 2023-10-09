@@ -12,7 +12,7 @@ const items = [
   },
   {
     label: 'Live Duration',
-    key: 'liveDuration',
+    key: 'assistDuration',
   },
   {
     label: 'Call Duration',
