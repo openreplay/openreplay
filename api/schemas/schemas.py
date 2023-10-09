@@ -1620,6 +1620,10 @@ class AssistStatsAverage(BaseModel):
 class AssistStatsMember(BaseModel):
     name: str
     count: int
+    assist_duration: Optional[int] = Field(default=0)
+    call_duration: Optional[int] = Field(default=0)
+    control_duration: Optional[int] = Field(default=0)
+    assist_count: Optional[int] = Field(default=0)
 
 
 class AssistStatsSessionAgent(BaseModel):

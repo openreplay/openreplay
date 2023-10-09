@@ -308,7 +308,11 @@ def get_top_members(
             CASE WHEN '{sort_by}' = 'sessionsAssisted'
                  THEN SUM(CASE WHEN ae.event_type = 'assist' THEN 1 ELSE 0 END)
                  ELSE SUM(CASE WHEN ae.event_type <> 'assist' THEN ae.duration ELSE 0 END)
-            END AS count
+            END AS count,
+            SUM(CASE WHEN ae.event_type = 'assist' THEN ae.duration ELSE 0 END) AS assist_duration,
+            SUM(CASE WHEN ae.event_type = 'call' THEN ae.duration ELSE 0 END) AS call_duration,
+            SUM(CASE WHEN ae.event_type = 'control' THEN ae.duration ELSE 0 END) AS control_duration,
+            SUM(CASE WHEN ae.event_type = 'assist' THEN 1 ELSE 0 END) AS assist_count
         FROM assist_events ae
             JOIN users u ON u.user_id = ae.agent_id
         WHERE {' AND '.join(f'ae.{constraint}' for constraint in constraints)}
