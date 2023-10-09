@@ -57,15 +57,14 @@ func main() {
 		messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
 		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
 		messages.MsgJSException, messages.MsgResourceTiming, messages.MsgCustomEvent, messages.MsgCustomIssue,
-		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction,
-		messages.MsgCreateDocument, messages.MsgMouseClick,
+		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction, messages.MsgMouseClick,
 		messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
-		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
+		messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
 		messages.MsgUnbindNodes,
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
-		messages.MsgIOSMetadata, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall, messages.MsgIOSScreenEnter,
-		messages.MsgIOSScreenLeave, messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
+		messages.MsgIOSMetadata, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall,
+		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
 		messages.MsgIOSCrash, messages.MsgIOSIssueEvent,
 	}
 
