@@ -105,8 +105,8 @@ export default class AssistStatsService {
   getTopMembers(filters: {
     startTimestamp: number;
     endTimestamp: number;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
+    sort: string;
+    order: 'asc' | 'desc';
     userId?: number,
   }): Promise<{ list: Member[]; total: number }> {
     return this.fetch('top-members', filters, 'get');
@@ -115,9 +115,9 @@ export default class AssistStatsService {
   getSessions(filters: {
     startTimestamp: number;
     endTimestamp: number;
-    sortBy: string;
+    sort: string;
     userId?: number;
-    sortOrder: 'asc' | 'desc';
+    order: 'asc' | 'desc';
     page: number;
     limit: number;
   }): Promise<SessionsResponse> {
@@ -127,8 +127,8 @@ export default class AssistStatsService {
   exportCSV(filters: {
     start: number;
     end: number;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
+    sort: string;
+    order: 'asc' | 'desc';
   }) {
     return this.fetch('export-csv', filters, 'get')
   }

@@ -68,16 +68,16 @@ function AssistStats() {
     const topMembersPr = assistStatsService.getTopMembers({
       startTimestamp: usedP.start,
       endTimestamp: usedP.end,
-      sortBy: membersSort,
-      sortOrder: 'desc',
+      sort: membersSort,
+      order: 'desc',
     });
 
     const graphsPr = assistStatsService.getGraphs(usedP);
     const sessionsPr = assistStatsService.getSessions({
       startTimestamp: usedP.start,
       endTimestamp: usedP.end,
-      sortBy: tableSort,
-      sortOrder: 'desc',
+      sort: tableSort,
+      order: 'desc',
       userId: selectedUser ? selectedUser : undefined,
       page: 1,
       limit: 10,
@@ -98,8 +98,8 @@ function AssistStats() {
       .getSessions({
         startTimestamp: period.start,
         endTimestamp: period.end,
-        sortBy: tableSort,
-        sortOrder: 'desc',
+        sort: tableSort,
+        order: 'desc',
         page,
         limit: 10,
       })
@@ -114,8 +114,8 @@ function AssistStats() {
       .getTopMembers({
         startTimestamp: period.start,
         endTimestamp: period.end,
-        sortBy,
-        sortOrder: 'desc',
+        sort: sortBy,
+        order: 'desc',
       })
       .then((topMembers) => {
         setTopMembers(topMembers);
@@ -128,8 +128,8 @@ function AssistStats() {
       .getSessions({
         startTimestamp: period.start,
         endTimestamp: period.end,
-        sortBy,
-        sortOrder: 'desc',
+        sort: sortBy,
+        order: 'desc',
         page: 1,
         limit: 10,
       })
@@ -143,8 +143,8 @@ function AssistStats() {
       .getSessions({
         startTimestamp: period.start,
         endTimestamp: period.end,
-        sortBy: tableSort,
-        sortOrder: 'desc',
+        sort: tableSort,
+        order: 'desc',
         page: 1,
         limit: 10000,
       }).then(sessions => {
@@ -178,18 +178,18 @@ function AssistStats() {
     const topMembersPr = assistStatsService.getTopMembers({
       startTimestamp: period.start,
       endTimestamp: period.end,
-      sortBy: membersSort,
+      sort: membersSort,
       userId: id,
-      sortOrder: 'desc',
+      order: 'desc',
     });
 
     const graphsPr = assistStatsService.getGraphs(period, id);
     const sessionsPr = assistStatsService.getSessions({
       startTimestamp: period.start,
       endTimestamp: period.end,
-      sortBy: tableSort,
+      sort: tableSort,
       userId: id,
-      sortOrder: 'desc',
+      order: 'desc',
       page: 1,
       limit: 10,
     })
