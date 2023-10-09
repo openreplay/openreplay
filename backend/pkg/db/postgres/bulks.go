@@ -18,7 +18,6 @@ type BulkSet struct {
 	requests          Bulk
 	customEvents      Bulk
 	webPageEvents     Bulk
-	webInputEvents    Bulk
 	webInputDurations Bulk
 	webGraphQL        Bulk
 	webErrors         Bulk
@@ -56,8 +55,6 @@ func (conn *BulkSet) Get(name string) Bulk {
 		return conn.customEvents
 	case "webPageEvents":
 		return conn.webPageEvents
-	case "webInputEvents":
-		return conn.webInputEvents
 	case "webInputDurations":
 		return conn.webInputDurations
 	case "webGraphQL":
@@ -118,14 +115,6 @@ func (conn *BulkSet) initBulks() {
 			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
 			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0))",
 		18, 200)
-	if err != nil {
-		log.Fatalf("can't create webPageEvents bulk: %s", err)
-	}
-	conn.webInputEvents, err = NewBulk(conn.c,
-		"events.inputs",
-		"(session_id, message_id, timestamp, label)",
-		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''))",
-		4, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
@@ -219,7 +208,6 @@ func (conn *BulkSet) Send() {
 	newTask.bulks = append(newTask.bulks, conn.requests)
 	newTask.bulks = append(newTask.bulks, conn.customEvents)
 	newTask.bulks = append(newTask.bulks, conn.webPageEvents)
-	newTask.bulks = append(newTask.bulks, conn.webInputEvents)
 	newTask.bulks = append(newTask.bulks, conn.webInputDurations)
 	newTask.bulks = append(newTask.bulks, conn.webGraphQL)
 	newTask.bulks = append(newTask.bulks, conn.webErrors)

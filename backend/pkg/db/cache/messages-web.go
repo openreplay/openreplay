@@ -172,15 +172,6 @@ func (c *PGCache) InsertWebClickEvent(e *MouseClick) error {
 	return c.Conn.InsertWebClickEvent(sessionID, session.ProjectID, e)
 }
 
-func (c *PGCache) InsertWebInputEvent(e *InputEvent) error {
-	sessionID := e.SessionID()
-	session, err := c.Cache.GetSession(sessionID)
-	if err != nil {
-		return err
-	}
-	return c.Conn.InsertWebInputEvent(sessionID, session.ProjectID, e)
-}
-
 func (c *PGCache) InsertWebInputDuration(e *InputChange) error {
 	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)

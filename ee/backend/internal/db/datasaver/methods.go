@@ -8,7 +8,6 @@ import (
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
-	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -52,8 +51,6 @@ func (s *saverImpl) handleExtraMessage(msg Message) error {
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *MouseClick:
 		return s.ch.InsertWebClickEvent(session, m)
-	case *InputEvent:
-		return s.ch.InsertWebInputEvent(session, m)
 	// Unique for Web
 	case *PageEvent:
 		return s.ch.InsertWebPageEvent(session, m)

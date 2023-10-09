@@ -65,8 +65,6 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.pg.InsertWebCustomEvent(m)
 	case *MouseClick:
 		return s.pg.InsertWebClickEvent(m)
-	case *InputEvent:
-		return s.pg.InsertWebInputEvent(m)
 	case *PageEvent:
 		return s.pg.InsertWebPageEvent(m)
 	case *NetworkRequest:

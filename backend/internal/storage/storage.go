@@ -198,7 +198,7 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 
 func (s *Storage) packSession(task *Task, tp FileType) {
 	// If encryption key is empty, pack session using better algorithm
-	if task.key == "" {
+	if task.key == "" && s.cfg.UseBrotli {
 		s.packSessionBetter(task, tp)
 		return
 	}

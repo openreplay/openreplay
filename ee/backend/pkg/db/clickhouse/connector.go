@@ -3,7 +3,6 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
@@ -25,7 +24,6 @@ type Connector interface {
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
-	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
@@ -369,26 +367,6 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error {
-	if msg.Label == "" {
-		return nil
-	}
-	if err := c.batches["inputs"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
-		msg.Label,
-		"INPUT",
-		nil,
-		nil,
-	); err != nil {
-		c.checkError("inputs", err)
-		return fmt.Errorf("can't append to inputs batch: %s", err)
 	}
 	return nil
 }

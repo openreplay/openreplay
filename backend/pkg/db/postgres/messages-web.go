@@ -76,18 +76,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Mou
 	return nil
 }
 
-func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *InputEvent) error {
-	if e.Label == "" {
-		return nil
-	}
-	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
-		log.Printf("insert web input event err: %s", err)
-	}
-	conn.updateSessionEvents(sessionID, 1, 0)
-	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
-	return nil
-}
-
 func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *InputChange) error {
 	if e.Label == "" {
 		return nil
