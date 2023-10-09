@@ -22,6 +22,9 @@ const {
     errorHandler,
     authorizer
 } = require('../utils/assistHelper');
+
+const StatsHost = process.env.STATS_HOST || 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
+
 const wsRouter = express.Router();
 
 let io;
@@ -258,6 +261,47 @@ wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
 
+async function postData(payload) {
+    const options = {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+    }
+
+    try {
+        const response = await fetch(StatsHost, options)
+        const jsonResponse = await response.json();
+        console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
+    } catch(err) {
+        console.log('ERROR', err);
+    }
+}
+
+class InMemoryCache {
+    constructor() {
+        this.cache = new Map();
+    }
+
+    set(key, value) {
+        this.cache.set(key, value);
+    }
+
+    get(key) {
+        return this.cache.get(key);
+    }
+
+    delete(key) {
+        this.cache.delete(key);
+    }
+
+    clear() {
+        this.cache.clear();
+    }
+}
+
+// Usage:
+const cache = new InMemoryCache();
+
 module.exports = {
     wsRouter,
     start: (server, prefix) => {
@@ -273,6 +317,8 @@ module.exports = {
             socket.roomId = extractRoomId(socket.peerId);
             connTabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
             socket.tabId = connTabId;
+            socket.sessId = connSessionId;
+            socket.projectId = socket.handshake.query.projectId;
             socket.identity = socket.handshake.query.identity;
             debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
 
@@ -314,6 +360,23 @@ module.exports = {
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
                     socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
+                    const tsNow = +new Date();
+                    const agentID = socket.handshake.query.agentInfo.id;
+                    socket.agentID = agentID;
+                    const eventID = `${socket.sessId}_${agentID}_assist_${tsNow}`;
+                    void postData({
+                        "project_id": socket.projectId,
+                        "session_id": socket.sessId,
+                        "agent_id": agentID,
+                        "event_id": eventID,
+                        "event_type": "assist",
+                        "event_state": "start",
+                        "timestamp": tsNow,
+                    });
+                    // Save uniq eventID to cache
+                    cache.set(`${socket.sessId}_${agentID}_assist`, eventID);
+                    // Debug logs
+                    console.log(`assist_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
                 }
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
             }
@@ -322,6 +385,24 @@ module.exports = {
                 debug && console.log(`${socket.id} disconnected from ${socket.roomId}`);
                 if (socket.identity === IDENTITIES.agent) {
                     socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
+                    const eventID = cache.get(`${socket.sessId}_${socket.agentID}_assist`);
+                    if (eventID === undefined) {
+                        console.log(`have to skip assist_ended, no eventID in the cache, agentID: ${socket.agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}`);
+                    } else {
+                        void postData({
+                            "project_id": socket.projectId,
+                            "session_id": socket.sessId,
+                            "agent_id": socket.agentID,
+                            "event_id": eventID,
+                            "event_type": "assist",
+                            "event_state": "end",
+                            "timestamp": +new Date(),
+                        })
+                        // Remove eventID from cache
+                        cache.delete(`${socket.sessId}_${socket.agentID}_assist`);
+                        // Debug logs
+                        console.log(`assist_ended, agentID: ${socket.agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}`);
+                    }
                 }
                 debug && console.log("checking for number of connected agents and sessions");
                 let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -381,6 +462,114 @@ module.exports = {
                     // TODO: emit message to all agents in the room (except tabs)
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
+                    const tsNow = +new Date();
+                    switch (eventName) {
+                        case "s_call_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_call_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "call",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
+                            // Save uniq eventID to cache
+                            cache.set(`${socket.sessId}_call`, eventID);
+                            // Debug logs
+                            console.log(`s_call_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                            break;
+                        }
+                        case "s_call_ended": {
+                            const eventID = cache.get(`${socket.sessId}_call`);
+                            if (eventID === undefined) {
+                                console.log(`have to skip s_call_ended, no eventID in the cache, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                                break;
+                            }
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "call",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
+                            cache.delete(`${socket.sessId}_call`)
+                            // Debug logs
+                            console.log(`s_call_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                            break;
+                        }
+                        case "s_control_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_control_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "control",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
+                            cache.set(`${socket.sessId}_control`, eventID)
+                            // Debug logs
+                            console.log(`s_control_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        }
+                        case "s_control_ended": {
+                            const eventID = cache.get(`${socket.sessId}_control`);
+                            if (eventID === undefined) {
+                                console.log(`have to skip s_control_ended, no eventID in the cache, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+                                break;
+                            }
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "control",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
+                            cache.delete(`${socket.sessId}_control`)
+                            // Debug logs
+                            console.log(`s_control_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        }
+                        case "s_recording_started": {
+                            const eventID = `${socket.sessId}_${args[0]}_record_${tsNow}`;
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "record",
+                                "event_state": "start",
+                                "timestamp": tsNow,
+                            });
+                            cache.set(`${socket.sessId}_record`, eventID)
+                            // Debug logs
+                            console.log(`s_recording_started, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        }
+                        case "s_recording_ended": {
+                            const eventID = cache.get(`${socket.sessId}_record`);
+                            void postData({
+                                "project_id": socket.projectId,
+                                "session_id": socket.sessId,
+                                "agent_id": args[0],
+                                "event_id": eventID,
+                                "event_type": "record",
+                                "event_state": "end",
+                                "timestamp": tsNow,
+                            });
+                            cache.delete(`${socket.sessId}_record`)
+                            // Debug logs
+                            console.log(`s_recording_ended, agentID: ${args[0]}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+                            break;
+                        }
+                    }
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
                     let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
                     if (socketId === null) {
