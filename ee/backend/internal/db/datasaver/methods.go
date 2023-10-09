@@ -50,8 +50,6 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.MouseClick:
 		return s.ch.InsertWebClickEvent(session, m)
-	case *messages.InputEvent:
-		return s.ch.InsertWebInputEvent(session, m)
 	// Unique for Web
 	case *messages.PageEvent:
 		return s.ch.InsertWebPageEvent(session, m)
