@@ -15,9 +15,31 @@ import colors from 'App/theme/colors';
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
 const customTheme = {
-  // algorithm: theme.darkAlgorithm,
+  // algorithm: theme.compactAlgorithm,
+  components: {
+    Layout: {
+      colorBgBody: colors['gray-lightest'],
+      colorBgHeader: colors['gray-lightest']
+    },
+    Menu: {
+      // algorithm: true,
+      // itemColor: colors['red'],
+      // "itemActiveBg": "rgb(242, 21, 158)",
+      // itemBgHover: colors['red'],
+
+      // colorText: colors['red'],
+      // colorIcon: colors['red'],
+      // colorBg: colors['gray-lightest'],
+      // colorItemText: '#394EFF',
+      // colorItemTextSelected: colors['teal'],
+      // colorItemBg: colors['gray-lightest']
+    },
+    Button: {
+      colorPrimary: colors.teal,
+      algorithm: true, // Enable algorithm
+    },
+  },
   token: {
-    // Seed Token
     colorPrimary: colors.teal,
     colorPrimaryActive: '#394EFF',
     colorSecondary: '#3EAAAF',
@@ -28,10 +50,9 @@ const customTheme = {
 
     borderRadius: 4,
     fontSize: 14,
-    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\''
-
-    // Alias Token
-    // colorBgContainer: '#f6ffed'
+    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
+    siderBackgroundColor: colors['gray-lightest'],
+    siderCollapsedWidth: 800
   }
 };
 
@@ -39,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('app');
   const root = createRoot(container);
 
-  const theme = window.localStorage.getItem('theme');
+  // const theme = window.localStorage.getItem('theme');
   root.render(
     <ConfigProvider theme={customTheme}>
       <Provider store={store}>

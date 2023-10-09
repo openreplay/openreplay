@@ -25,6 +25,12 @@ export enum ConnectionStatus {
   Closed,
 }
 
+type StatsEvent = 's_call_started'
+  | 's_call_ended'
+  | 's_control_started'
+  | 's_control_ended'
+  | 's_recording_started'
+  | 's_recording_ended'
 
 export function getStatusText(status: ConnectionStatus): string {
   switch(status) {
@@ -137,7 +143,7 @@ export default class AssistManager {
     this.inactiveTimeout && clearTimeout(this.inactiveTimeout)
     this.inactiveTimeout = undefined
   }
-  connect(agentToken: string) {
+  connect(agentToken: string, agentId: number) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
@@ -162,7 +168,8 @@ export default class AssistManager {
           identity: "agent",
           agentInfo: JSON.stringify({
             ...this.session.agentInfo,
-            query: document.location.search
+            id: agentId,
+            query: document.location.search,
           })
         }
       })
@@ -269,6 +276,10 @@ export default class AssistManager {
 
       document.addEventListener('visibilitychange', this.onVisChange)
     })
+  }
+
+  public ping(event: StatsEvent, id: number) {
+    this.socket?.emit(event, id)
   }
 
 

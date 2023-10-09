@@ -58,10 +58,10 @@ class ORRoute(APIRoute):
 def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
     s_p = 0
     for scope in security_scopes.scopes:
-        if isinstance(scope, schemas_ee.ServicePermissions):
+        if isinstance(scope, schemas.ServicePermissions):
             s_p += 1
-        if context.service_account and not isinstance(scope, schemas_ee.ServicePermissions) \
-                or not context.service_account and not isinstance(scope, schemas_ee.Permissions):
+        if context.service_account and not isinstance(scope, schemas.ServicePermissions) \
+                or not context.service_account and not isinstance(scope, schemas.Permissions):
             continue
         if scope not in context.permissions:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,3 +73,14 @@ def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = D
 
 def OR_scope(*scopes):
     return Security(__check, scopes=list(scopes))
+
+
+def __check_role(required_roles: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
+    if len(required_roles.scopes) > 0:
+        if context.role not in required_roles.scopes:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You need a different role to access this resource")
+
+
+def OR_role(*required_roles):
+    return Security(__check_role, scopes=list(required_roles))

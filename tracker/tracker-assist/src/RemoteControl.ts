@@ -25,7 +25,8 @@ export default class RemoteControl {
   constructor(
     private readonly options: AssistOptions,
     private readonly onGrand: (id: string) => string | undefined,
-    private readonly onRelease: (id?: string | null, isDenied?: boolean) => void) {}
+    private readonly onRelease: (id?: string | null, isDenied?: boolean) => void,
+    private readonly onBusy: (id?: string) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -38,11 +39,15 @@ export default class RemoteControl {
 
   private confirm: ConfirmWindow | null = null
   requestControl = (id: string) => {
+    if (this.status === RCStatus.Enabled) {
+      return this.onBusy(id)
+    }
+
     if (this.agentID !== null) {
       this.releaseControl()
       return
     }
-    setTimeout(() =>{
+    setTimeout(() => {
       if (this.status === RCStatus.Requesting) {
         this.releaseControl()
       }

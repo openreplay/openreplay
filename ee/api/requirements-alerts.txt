@@ -1,10 +1,10 @@
 # Keep this version to not have conflicts between requests and boto3
 urllib3==1.26.16
 requests==2.31.0
-boto3==1.28.41
+boto3==1.28.55
 pyjwt==2.8.0
 psycopg2-binary==2.9.7
-elasticsearch==8.9.0
+elasticsearch==8.10.0
 jira==3.5.2
 
 
@@ -17,4 +17,4 @@ apscheduler==3.10.4
 
 clickhouse-driver[lz4]==0.2.6
 python-multipart==0.0.6
-azure-storage-blob==12.17.0
+azure-storage-blob==12.18.2

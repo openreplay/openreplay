@@ -50,6 +50,7 @@ export function createClickMapPlayer(
 export function createLiveWebPlayer(
 	session: SessionFilesInfo,
 	config: RTCIceServer[] | null,
+	agentId: number,
 	wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore,
 	uiErrorHandler?: { error: (msg: string) => void }
 ): [IWebLivePlayer, IWebLivePlayerStore] {
@@ -60,6 +61,6 @@ export function createLiveWebPlayer(
 		store = wrapStore(store)
 	}
 
-	const player = new WebLivePlayer(store, session, config, uiErrorHandler)
+	const player = new WebLivePlayer(store, session, config, agentId, uiErrorHandler)
 	return [player, store]
 }

@@ -627,12 +627,12 @@ def get_by_invitation_token(token, pass_token=None):
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
+def auth_exists(user_id, tenant_id, jwt_iat):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT user_id,
-                           jwt_iat, 
+                           EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                            changed_at,
                            service_account,
                            basic_authentication.user_id IS NOT NULL AS has_basic_auth
@@ -648,22 +648,57 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     return r is not None \
         and (r["service_account"] and not r["has_basic_auth"]
              or r.get("jwt_iat") is not None \
-             and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1))
+             and (abs(jwt_iat - r["jwt_iat"]) <= 1))
 
 
-def change_jwt_iat(user_id):
+def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""UPDATE public.users
-                       SET jwt_iat = timezone('utc'::text, now())
-                       WHERE user_id = %(user_id)s 
-                       RETURNING jwt_iat;""",
-            {"user_id": user_id})
+        cur.execute(
+            cur.mogrify(f"""SELECT user_id 
+                            FROM public.users  
+                            WHERE user_id = %(userId)s 
+                                AND tenant_id= %(tenant_id)s
+                                AND deleted_at IS NULL
+                                AND jwt_refresh_jti = %(jwt_jti)s
+                            LIMIT 1;""",
+                        {"userId": user_id, "tenant_id": tenant_id, "jwt_jti": jwt_jti})
+        )
+        r = cur.fetchone()
+    return r is not None
+
+
+def change_jwt_iat_jti(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE public.users
+                                SET jwt_iat = timezone('utc'::text, now()),
+                                    jwt_refresh_jti = 0, 
+                                    jwt_refresh_iat = timezone('utc'::text, now()) 
+                                WHERE user_id = %(user_id)s 
+                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
+                                          jwt_refresh_jti, 
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
+                            {"user_id": user_id})
         cur.execute(query)
-        return cur.fetchone().get("jwt_iat")
+        row = cur.fetchone()
+        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def authenticate(email, password, for_change_password=False) -> dict | None:
+def refresh_jwt_iat_jti(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE public.users
+                                SET jwt_iat = timezone('utc'::text, now()),
+                                    jwt_refresh_jti = jwt_refresh_jti + 1 
+                                WHERE user_id = %(user_id)s 
+                                RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
+                                          jwt_refresh_jti, 
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat""",
+                            {"user_id": user_id})
+        cur.execute(query)
+        row = cur.fetchone()
+        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
+
+
+def authenticate(email, password, for_change_password=False) -> dict | bool | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -713,11 +748,16 @@ def authenticate(email, password, for_change_password=False) -> dict | None:
         elif config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
-        jwt_iat = change_jwt_iat(r['userId'])
-        iat = TimeUTC.datetime_to_timestamp(jwt_iat)
+        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
+        # jwt_iat = TimeUTC.datetime_to_timestamp(jwt_iat)
+        # jwt_r_iat = TimeUTC.datetime_to_timestamp(jwt_r_iat)
         return {
-            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'], iat=iat,
+            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
                                             aud=f"front:{helper.get_stage_name()}"),
+            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                             jwt_jti=jwt_r_jti),
+            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
             **r
         }
@@ -789,6 +829,28 @@ def __hard_delete_user(user_id):
                 WHERE users.user_id = %(user_id)s AND users.deleted_at IS NOT NULL ;""",
             {"user_id": user_id})
         cur.execute(query)
+
+
+def logout(user_id: int):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """UPDATE public.users
+               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
+               WHERE user_id = %(user_id)s;""",
+            {"user_id": user_id})
+        cur.execute(query)
+
+
+def refresh(user_id: int, tenant_id: int) -> dict:
+    jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
+    return {
+        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
+                                        aud=f"front:{helper.get_stage_name()}"),
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id,
+                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                         jwt_jti=jwt_r_jti),
+        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
+    }
 
 
 def authenticate_sso(email, internal_id, exp=None):

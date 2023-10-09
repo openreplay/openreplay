@@ -6,6 +6,8 @@ from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
+from fastapi.security import SecurityScopes
+from fastapi import Depends, Security
 
 import schemas
 from chalicelib.utils import helper
@@ -48,3 +50,14 @@ class ORRoute(APIRoute):
             return response
 
         return custom_route_handler
+
+
+def __check_role(required_roles: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
+    if len(required_roles.scopes) > 0:
+        if context.role not in required_roles.scopes:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You need a different role to access this resource")
+
+
+def OR_role(*required_roles):
+    return Security(__check_role, scopes=list(required_roles))

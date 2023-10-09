@@ -13,7 +13,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
-from or_dependencies import OR_context
+from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -609,7 +609,7 @@ def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayload
     return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
 
 
-@app.post('/projects', tags=['projects'])
+@app.post('/projects', tags=['projects'], dependencies=[OR_role("owner", "admin")])
 def create_project(data: schemas.CreateProjectSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
@@ -624,13 +624,13 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     return {"data": data}
 
 
-@app.put('/projects/{projectId}', tags=['projects'])
+@app.put('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
 
 
-@app.delete('/projects/{projectId}', tags=['projects'])
+@app.delete('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
 def delete_project(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
@@ -731,22 +731,22 @@ def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
-@app.get('/client/members', tags=["client"])
+@app.get('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def get_members(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": users.get_members(tenant_id=context.tenant_id)}
 
 
-@app.get('/client/members/{memberId}/reset', tags=["client"])
+@app.get('/client/members/{memberId}/reset', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
 
 
-@app.delete('/client/members/{memberId}', tags=["client"])
+@app.delete('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def delete_member(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
 
 
-@app.get('/account/new_api_key', tags=["account"])
+@app.get('/account/new_api_key', tags=["account"], dependencies=[OR_role("owner", "admin")])
 def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 

@@ -156,7 +156,7 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         """
 
     if variants_len > 0:
-        variants_query = f"""{conditions_len > 0 and "," or ""}
+        variants_query = f""",
         inserted_variants AS (
                 INSERT INTO feature_flags_variants(feature_flag_id, value, description, rollout_percentage, payload)
                 VALUES {",".join([f"((SELECT feature_flag_id FROM inserted_flag),"
@@ -455,8 +455,7 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         """
 
         with pg_client.PostgresClient() as cur:
-            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in
-                      variants]
+            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
             query = cur.mogrify(sql, params)
             cur.execute(query)
             rows = cur.fetchall()

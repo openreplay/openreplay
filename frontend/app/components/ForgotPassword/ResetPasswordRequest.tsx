@@ -32,6 +32,8 @@ function ResetPasswordRequest(props: Props) {
   };
 
   const handleSubmit = (token?: any) => {
+    if (token === null || token === undefined)  return;
+
     setError(null);
     props
       .requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })

@@ -15,7 +15,6 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore'
 import stl from '../ReplayPlayer/playerBlockHeader.module.css';
 import AssistActions from 'Components/Assist/components/AssistActions';
-import AssistTabs from 'Components/Assist/components/AssistTabs';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -87,7 +86,6 @@ function LivePlayerBlockHeader(props: any) {
           </div>
         )}
         <UserCard className="" width={width} height={height} />
-        <AssistTabs userId={userId} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
           {_metaList.length > 0 && (

@@ -72,6 +72,12 @@ ingress-nginx: &ingress-nginx
   # -- For backwards compatibility with ingress.class annotation, use ingressClass.
   # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
     ingressClass: openreplay
+    addHeaders:
+      # Enable only if you know what you're doing!!!
+      # X-Frame-Options: "DENY"
+      X-XSS-Protection: "1; mode=block"
+      X-Content-Type-Options: "nosniff"
+      Referrer-Policy: "same-origin"
     service:
       externalTrafficPolicy: "Local"
       ports:

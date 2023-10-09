@@ -27,11 +27,11 @@ ALTER TABLE IF EXISTS dashboards
 
 
 CREATE
-    INDEX IF NOT EXISTS traces_created_at_idx ON traces (created_at);
+    INDEX IF NOT EXISTS traces_created_at_idx ON public.traces (created_at);
 CREATE
-    INDEX IF NOT EXISTS traces_action_idx ON traces (action);
+    INDEX IF NOT EXISTS traces_action_idx ON public.traces (action);
 CREATE
-    INDEX IF NOT EXISTS users_name_gin_idx ON users USING GIN (name gin_trgm_ops);
+    INDEX IF NOT EXISTS users_name_gin_idx ON public.users USING GIN (name gin_trgm_ops);
 
 
 

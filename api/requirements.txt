@@ -1,10 +1,10 @@
 # Keep this version to not have conflicts between requests and boto3
 urllib3==1.26.16
 requests==2.31.0
-boto3==1.28.41
+boto3==1.28.55
 pyjwt==2.8.0
 psycopg2-binary==2.9.7
-elasticsearch==8.9.0
+elasticsearch==8.10.0
 jira==3.5.2
 
 
@@ -15,4 +15,4 @@ python-decouple==3.8
 pydantic[email]==2.3.0
 apscheduler==3.10.4
 
-redis==5.0.0
+redis==5.0.1

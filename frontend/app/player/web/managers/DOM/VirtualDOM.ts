@@ -138,9 +138,14 @@ export class VElement extends VParent<Element> {
 
 	constructor(readonly tagName: string, readonly isSVG = false) { super() }
 	protected createNode() {
-		return this.isSVG
-			? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
-			: document.createElement(this.tagName)
+		try {
+			return this.isSVG
+				? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
+				: document.createElement(this.tagName)
+		} catch (e) {
+			console.error('Openreplay: Player received invalid html tag', this.tagName, e)
+			return document.createElement(this.tagName.replace(/[^a-z]/gi, ''))
+		}
 	}
 	setAttribute(name: string, value: string) {
 		this.newAttributes.set(name, value)

@@ -161,6 +161,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     }
 
 
+# TODO: remove "table of" search from this function
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
                    metric_of: schemas.MetricOfTable, metric_value: List):
@@ -212,6 +213,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             else:
                 sessions = cur.fetchone()["count"]
         elif metric_type == schemas.MetricType.table:
+            print(">>>>>>>>>>>>>TABLE")
             if isinstance(metric_of, schemas.MetricOfTable):
                 main_col = "user_id"
                 extra_col = ""
@@ -239,7 +241,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                     extra_col = ", path"
                     distinct_on += ",path"
                 main_query = cur.mogrify(f"""{pre_query}
-                                             SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                             SELECT COUNT(*) AS count, 
+                                                    SUM(users_sessions.session_count) AS total_sessions,
+                                                    COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
                                                                  count(DISTINCT session_id)                                   AS session_count,
                                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
@@ -259,10 +263,81 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             # print(main_query)
             # print("--------------------")
             cur.execute(main_query)
-            sessions = cur.fetchone()
+            sessions = helper.dict_to_camel_case(cur.fetchone())
             for s in sessions["values"]:
                 s.pop("rn")
-            sessions["values"] = helper.list_to_camel_case(sessions["values"])
+
+        return sessions
+
+
+def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
+                  metric_of: schemas.MetricOfTable, metric_value: List):
+    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                   density=density, factor=1, decimal=True))
+    extra_event = None
+    if metric_of == schemas.MetricOfTable.visited_url:
+        extra_event = "events.pages"
+    elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
+                                                              operator=schemas.SearchEventOperator._is))
+    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+                                               favorite_only=False, issue=None, project_id=project_id,
+                                               user_id=None, extra_event=extra_event)
+    full_args["step_size"] = step_size
+    with pg_client.PostgresClient() as cur:
+        if isinstance(metric_of, schemas.MetricOfTable):
+            main_col = "user_id"
+            extra_col = ""
+            extra_where = ""
+            pre_query = ""
+            distinct_on = "s.session_id"
+            if metric_of == schemas.MetricOfTable.user_country:
+                main_col = "user_country"
+            elif metric_of == schemas.MetricOfTable.user_device:
+                main_col = "user_device"
+            elif metric_of == schemas.MetricOfTable.user_browser:
+                main_col = "user_browser"
+            elif metric_of == schemas.MetricOfTable.issues:
+                main_col = "issue"
+                extra_col = f", UNNEST(s.issue_types) AS {main_col}"
+                if len(metric_value) > 0:
+                    extra_where = []
+                    for i in range(len(metric_value)):
+                        arg_name = f"selected_issue_{i}"
+                        extra_where.append(f"{main_col} = %({arg_name})s")
+                        full_args[arg_name] = metric_value[i]
+                    extra_where = f"WHERE ({' OR '.join(extra_where)})"
+            elif metric_of == schemas.MetricOfTable.visited_url:
+                main_col = "path"
+                extra_col = ", path"
+                distinct_on += ",path"
+            main_query = cur.mogrify(f"""{pre_query}
+                                         SELECT COUNT(*) AS count,
+                                                COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
+                                                COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                                    FROM (SELECT {main_col} AS name,
+                                                             count(DISTINCT session_id)                                   AS session_count,
+                                                             ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                                        FROM (SELECT *
+                                                        FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
+                                                                    s.user_id, s.user_os, 
+                                                                    s.user_browser, s.user_device, 
+                                                                    s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                                        {query_part}
+                                                        ORDER BY s.session_id desc) AS filtred_sessions
+                                                        ) AS full_sessions
+                                                        {extra_where}
+                                                        GROUP BY {main_col}
+                                                        ORDER BY session_count DESC) AS users_sessions;""",
+                                     full_args)
+        # print("--------------------")
+        # print(main_query)
+        # print("--------------------")
+        cur.execute(main_query)
+        sessions = helper.dict_to_camel_case(cur.fetchone())
+        for s in sessions["values"]:
+            s.pop("rn")
+        # sessions["values"] = helper.list_to_camel_case(sessions["values"])
 
         return sessions
 
@@ -671,8 +746,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_where.append(
                         sh.multi_conditions(f"main.{events.EventType.REQUEST_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.EventType.ERROR_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
+            elif event_type == events.EventType.CRASH_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.CRASH_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",

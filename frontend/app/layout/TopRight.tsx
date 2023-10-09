@@ -36,7 +36,7 @@ function TopRight(props: Props) {
         </div>
       </Popover>
 
-      <ErrorGenPanel />
+      {/*<ErrorGenPanel />*/}
     </Space>
   );
 }

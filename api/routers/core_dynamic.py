@@ -3,7 +3,7 @@ from typing import Optional, Union
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
 from fastapi import HTTPException, status
-from starlette.responses import RedirectResponse, FileResponse
+from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
@@ -15,7 +15,7 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import OR_context
+from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -34,11 +34,17 @@ if not tenants.tenants_exists(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
     def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-        return signup.create_tenant(data)
+        content = signup.create_tenant(data)
+        refresh_token = content.pop("refreshToken")
+        refresh_token_max_age = content.pop("refreshTokenMaxAge")
+        response = JSONResponse(content=content)
+        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        return response
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(data: schemas.UserLoginSchema = Body(...)):
+def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,19 +64,35 @@ def login_user(data: schemas.UserLoginSchema = Body(...)):
         )
 
     r["smtp"] = smtp.has_smtp()
+    refresh_token = r.pop("refreshToken")
+    refresh_token_max_age = r.pop("refreshTokenMaxAge")
     content = {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r
         }
     }
+    response = JSONResponse(content=content)
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    return response
 
-    return content
 
-
-@app.get('/logout', tags=["login", "logout"])
-def logout_user(context: schemas.CurrentContext = Depends(OR_context)):
+@app.get('/logout', tags=["login"])
+def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
+    users.logout(user_id=context.user_id)
+    response.delete_cookie(key="refreshToken", path="/api/refresh")
     return {"data": "success"}
+
+
+@app.get('/refresh', tags=["login"])
+def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
+    r = users.refresh(user_id=context.user_id)
+    content = {"jwt": r.get("jwt")}
+    response = JSONResponse(content=content)
+    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
+                        max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
+    return response
 
 
 @app.get('/account', tags=['accounts'])
@@ -126,7 +148,7 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
                                    changes={"name": data.name, "endpoint": data.url})}
 
 
-@app.post('/client/members', tags=["client"])
+@app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
@@ -163,7 +185,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
 
 
-@app.put('/client/members/{memberId}', tags=["client"])
+@app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,

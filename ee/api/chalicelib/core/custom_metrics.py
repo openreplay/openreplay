@@ -5,7 +5,8 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite
+from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite, \
+    product_analytics
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient, extra
@@ -27,6 +28,7 @@ PIE_CHART_GROUP = 5
 # TODO: refactor this to split
 #  timeseries /
 #  table of errors / table of issues / table of browsers / table of devices / table of countries / table of URLs
+# remove "table of" calls from this function
 def __try_live(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
@@ -56,8 +58,13 @@ def __try_live(project_id, data: schemas.CardSchema):
     return results
 
 
-def __is_funnel_chart(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.funnel
+def __get_table_of_series(project_id, data: schemas.CardSchema):
+    results = []
+    for i, s in enumerate(data.series):
+        results.append(sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
+                                              metric_of=data.metric_of, metric_value=data.metric_value))
+
+    return results
 
 
 def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
@@ -69,11 +76,6 @@ def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int =
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
-def __is_errors_list(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.table \
-        and data.metric_of == schemas.MetricOfTable.errors
-
-
 def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         return {
@@ -81,11 +83,6 @@ def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
             "errors": []
         }
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
-
-
-def __is_sessions_list(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.table \
-        and data.metric_of == schemas.MetricOfTable.sessions
 
 
 def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
@@ -96,10 +93,6 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
             "sessions": []
         }
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
-
-
-def __is_predefined(data: schemas.CardSchema):
-    return data.is_template
 
 
 def __is_click_map(data: schemas.CardSchema):
@@ -129,18 +122,14 @@ def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: i
                                                                            series=data.series))
 
 
-def __get_path_analysis_chart(project_id, data: schemas.CardSchema):
+def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
-        data.series.append(schemas.CardSeriesSchema())
+        data.series.append(
+            schemas.CardPathAnalysisSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id,
-                                           data=schemas.PathAnalysisSchema(**data.series[0].filter.model_dump()))
-
-
-def __is_path_analysis(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.pathAnalysis
+    return product_analytics.path_analysis(project_id=project_id, data=data)
 
 
 def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
@@ -155,13 +144,12 @@ def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_i
     return results
 
 
-def empty(**args):
+def not_supported(**args):
     raise Exception("not supported")
 
 
 def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
-    series_charts = __try_live(project_id=project_id, data=data)
-    return series_charts
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
@@ -173,23 +161,23 @@ def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int
 
 
 def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __try_live(project_id=project_id, data=data)
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __try_live(project_id=project_id, data=data)
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __try_live(project_id=project_id, data=data)
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __try_live(project_id=project_id, data=data)
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __try_live(project_id=project_id, data=data)
+    return __get_table_of_series(project_id=project_id, data=data)
 
 
 def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
@@ -203,7 +191,7 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.user_country: __get_table_of_countries,
         schemas.MetricOfTable.visited_url: __get_table_of_urls,
     }
-    return supported.get(data.metric_of, empty)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
@@ -216,50 +204,9 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.click_map: __get_click_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
         schemas.MetricType.insights: __get_insights_chart,
-        schemas.MetricType.pathAnalysis: empty
+        schemas.MetricType.pathAnalysis: __get_path_analysis_chart
     }
-    return supported.get(data.metric_type, empty)(project_id=project_id, data=data, user_id=user_id)
-
-
-def merged_live(project_id, data: schemas.CardSchema, user_id=None):
-    return get_chart(project_id=project_id, data=data, user_id=user_id)
-    print("---1")
-    if data.is_template:
-        print("---2")
-        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.model_dump())
-    elif __is_funnel_chart(data):
-        print("---3")
-        return __get_funnel_chart(project_id=project_id, data=data)
-    elif __is_errors_list(data):
-        print("---4")
-        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_sessions_list(data):
-        print("---5")
-        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
-    elif __is_click_map(data):
-        print("---6")
-        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
-    # EE only
-    elif __is_insights(data):
-        return __get_insights_chart(project_id=project_id, user_id=user_id, data=data)
-    elif __is_path_analysis(data):
-        print("---7")
-        return __get_path_analysis_chart(project_id=project_id, data=data)
-    elif len(data.series) == 0:
-        print("---8")
-        return []
-    series_charts = __try_live(project_id=project_id, data=data)
-    print("---9")
-    if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
-        print("---10")
-        return series_charts
-    results = [{}] * len(series_charts[0])
-    print("---11")
-    for i in range(len(results)):
-        for j, series_chart in enumerate(series_charts):
-            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-                          data.series[j].name if data.series[j].name else j + 1: series_chart[i]["count"]}
-    return results
+    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def __merge_metric_with_data(metric: schemas.CardSchema,
@@ -287,10 +234,10 @@ def make_chart(project_id, user_id, data: schemas.CardSessionsSchema, metric: sc
         return None
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
 
-    return merged_live(project_id=project_id, data=metric, user_id=user_id)
+    return get_chart(project_id=project_id, data=metric, user_id=user_id)
 
 
-def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
+def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     # raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False, include_data=True)
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
@@ -344,7 +291,7 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
-def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
+def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
         return results
@@ -357,6 +304,66 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
+
+
+def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
+    if len(data.series) == 0:
+        return {"data": []}
+    data.series[0].filter.startTimestamp = data.startTimestamp
+    data.series[0].filter.endTimestamp = data.endTimestamp
+    data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+    return {"data": data}
+
+
+def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
+    if len(data.series) == 0:
+        return {"data": []}
+    card_table = schemas.CardTable(
+        startTimestamp=data.startTimestamp,
+        endTimestamp=data.endTimestamp,
+        metricType=schemas.MetricType.table,
+        metricOf=schemas.MetricOfTable.issues,
+        viewType=schemas.MetricTableViewType.table,
+        series=data.model_dump()["series"])
+    for s in data.start_point:
+        if data.start_type == "end":
+            card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                         operator=s.operator,
+                                                                                         value=s.value))
+        else:
+            card_table.series[0].filter.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                            operator=s.operator,
+                                                                                            value=s.value))
+    for s in data.exclude:
+        card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                                     operator=schemas.SearchEventOperator._not_on,
+                                                                                     value=s.value))
+
+    return __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+
+
+def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
+    if data.is_template:
+        return not_supported()
+    if data.metric_of == schemas.MetricOfTable.issues:
+        return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
+    supported = {
+        schemas.MetricType.timeseries: not_supported,
+        schemas.MetricType.table: not_supported,
+        schemas.MetricType.click_map: not_supported,
+        schemas.MetricType.funnel: __get_funnel_issues,
+        schemas.MetricType.insights: not_supported,
+        schemas.MetricType.pathAnalysis: __get_path_analysis_issues,
+    }
+    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+
+
+def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
+    r = {"start_point": [s.model_dump() for s in data.start_point],
+         "start_type": data.start_type,
+         "exclude": [e.model_dump() for e in data.exclude]}
+    print(r)
+    return r
 
 
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
@@ -388,12 +395,18 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
         params["default_config"] = json.dumps(data.default_config.model_dump())
+        params["card_info"] = None
+        if data.metric_type == schemas.MetricType.pathAnalysis:
+            params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
-                            metric_format, default_config, thumbnail, data)
+                            metric_format, default_config, thumbnail, data,
+                            card_info)
                    VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
                               %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s)
+                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s,
+                              %(card_info)s)
                    RETURNING metric_id"""
         if len(data.series) > 0:
             query = f"""WITH m AS ({query})
@@ -588,12 +601,20 @@ def delete_card(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
+def __get_path_analysis_attributes(row):
+    card_info = row.pop("cardInfo")
+    row["exclude"] = card_info.get("exclude", [])
+    row["startPoint"] = card_info.get("startPoint", [])
+    row["startType"] = card_info.get("startType", "start")
+    return row
+
+
 def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        default_config AS config,series, dashboards, owner_email
+                        default_config AS config,series, dashboards, owner_email, card_info
                         {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
@@ -630,7 +651,10 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
-    return helper.dict_to_camel_case(row)
+        row = helper.dict_to_camel_case(row)
+        if row["metricType"] == schemas.MetricType.pathAnalysis:
+            row = __get_path_analysis_attributes(row=row)
+    return row
 
 
 def get_series_for_alert(project_id, user_id):
