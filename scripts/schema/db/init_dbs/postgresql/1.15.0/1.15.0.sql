@@ -118,8 +118,11 @@ ALTER TABLE IF EXISTS events.clicks
 ALTER TABLE IF EXISTS public.metrics
     ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
+ALTER TABLE IF EXISTS public.metrics
+    ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
-CREATE TABLE IF NOT EXISTS assist_events
+
+CREATE TABLE IF NOT EXISTS public.assist_events
 (
     event_id    varchar NOT NULL PRIMARY KEY,
     project_id  integer NOT NULL,
@@ -131,7 +134,7 @@ CREATE TABLE IF NOT EXISTS assist_events
     agent_id    varchar
 );
 
-CREATE TABLE IF NOT EXISTS assist_events_aggregates
+CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
 (
     timestamp     BIGINT  not null,
     project_id    integer not null,
@@ -145,11 +148,10 @@ CREATE TABLE IF NOT EXISTS assist_events_aggregates
 );
 
 
-CREATE TABLE IF NOT EXISTS assist_events_aggregates_logs
+CREATE TABLE IF NOT EXISTS pulic.assist_events_aggregates_logs
 (
     time BIGINT not null
 );
-
 
 COMMIT;
 
