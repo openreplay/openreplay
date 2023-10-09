@@ -293,7 +293,7 @@ def get_top_members(
         "sort_order": sort_order.upper(),
         "start_timestamp": start_timestamp,
         "end_timestamp": end_timestamp,
-        # "event_type": event_type,
+        "event_type": event_type,
     }
 
     if user_id is not None:
@@ -307,7 +307,7 @@ def get_top_members(
             u.name AS name,
             CASE WHEN '{sort_by}' = 'sessionsAssisted'
                  THEN SUM(CASE WHEN ae.event_type = 'assist' THEN 1 ELSE 0 END)
-                 ELSE SUM(CASE WHEN ae.event_type <> 'assist' THEN ae.duration ELSE 0 END)
+                 ELSE SUM(CASE WHEN ae.event_type = %(event_type)s THEN ae.duration ELSE 0 END)
             END AS count,
             SUM(CASE WHEN ae.event_type = 'assist' THEN ae.duration ELSE 0 END) AS assist_duration,
             SUM(CASE WHEN ae.event_type = 'call' THEN ae.duration ELSE 0 END) AS call_duration,
@@ -361,7 +361,6 @@ def get_sessions(
         constraints.append("agent_id = %(agent_id)s")
         params["agent_id"] = data.userId
 
-    logging.info(f">>>>>>> {params}")
     sql = f"""
         SELECT
             COUNT(1) OVER () AS count,
