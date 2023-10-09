@@ -1295,11 +1295,16 @@ class CardPathAnalysis(__CardSchema):
         return values
 
     @model_validator(mode="after")
-    def __enforce_metric_value(cls, values):
+    def __clean_start_point_and_enforce_metric_value(cls, values):
+        start_point = []
         metric_value = []
         for s in values.start_point:
+            if len(s.value) == 0:
+                continue
+            start_point.append(s)
             metric_value.append(s.type)
 
+        values.start_point = start_point
         if len(metric_value) > 0:
             metric_value = remove_duplicate_values(metric_value)
             values.metric_value = metric_value
