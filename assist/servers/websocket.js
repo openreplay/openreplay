@@ -23,6 +23,8 @@ const {
     authorizer
 } = require('../utils/assistHelper');
 
+const StatsHost = process.env.STATS_HOST || 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
+
 const wsRouter = express.Router();
 
 let io;
@@ -266,11 +268,8 @@ async function postData(payload) {
         headers: { 'Content-Type': 'application/json' }
     }
 
-    // TODO: move to env variable
-    const url = 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
-
     try {
-        const response = await fetch(url, options)
+        const response = await fetch(StatsHost, options)
         const jsonResponse = await response.json();
         console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
     } catch(err) {
