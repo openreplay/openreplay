@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import Webhook, { IWebhook } from 'Types/webhook';
 import { webhookService } from 'App/services';
 import { GettingStarted } from './types/gettingStarted';
-import ModuleSettings from 'MOBX/types/moduleSettings';
+import { MENU_COLLAPSED } from 'App/constants/storageKeys';
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
@@ -16,13 +16,18 @@ export default class SettingsStore {
   webhookInst = new Webhook();
   hooksLoading = false;
   gettingStarted: GettingStarted = new GettingStarted();
-  // moduleSettings: ModuleSettings = new ModuleSettings();
+  menuCollapsed: boolean = localStorage.getItem(MENU_COLLAPSED) === 'true';
 
   constructor() {
     makeAutoObservable(this, {
-      sessionSettings: observable,
+      sessionSettings: observable
     });
   }
+
+  updateMenuCollapsed = (collapsed: boolean) => {
+    this.menuCollapsed = collapsed;
+    localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
+  };
 
   saveCaptureRate(projectId: number, data: any) {
     return sessionService
@@ -31,7 +36,7 @@ export default class SettingsStore {
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          captureAll: data.captureAll
         });
         toast.success('Settings updated successfully');
       })
@@ -47,7 +52,7 @@ export default class SettingsStore {
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          captureAll: data.captureAll
         });
         this.captureRateFetched = true;
       })
@@ -78,7 +83,7 @@ export default class SettingsStore {
         else
           this.setWebhooks([
             ...this.webhooks.filter((hook) => hook.webhookId !== data.webhookId),
-            this.webhookInst,
+            this.webhookInst
           ]);
       })
       .finally(() => {

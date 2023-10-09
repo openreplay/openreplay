@@ -8,41 +8,39 @@ import Router from './Router';
 import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
-const customTheme = {
+const customTheme: ThemeConfig = {
   // algorithm: theme.compactAlgorithm,
   components: {
     Layout: {
-      colorBgBody: colors['gray-lightest'],
-      colorBgHeader: colors['gray-lightest']
+      bodyBg: colors['gray-lightest'],
+      headerBg: colors['gray-lightest'],
+      siderBg: colors['gray-lightest'],
+
     },
     Menu: {
-      // algorithm: true,
-      // itemColor: colors['red'],
-      // "itemActiveBg": "rgb(242, 21, 158)",
-      // itemBgHover: colors['red'],
+      colorPrimary: colors.teal,
+      colorBgContainer: colors['gray-lightest'],
+      colorFillTertiary: colors['gray-lightest'],
+      colorBgLayout: colors['gray-lightest'],
+      subMenuItemBg: colors['gray-lightest'],
 
-      // colorText: colors['red'],
-      // colorIcon: colors['red'],
-      // colorBg: colors['gray-lightest'],
-      // colorItemText: '#394EFF',
-      // colorItemTextSelected: colors['teal'],
-      // colorItemBg: colors['gray-lightest']
+      itemActiveBg: colors['active-blue'],
+      itemSelectedBg: colors['active-blue'],
     },
     Button: {
-      colorPrimary: colors.teal,
-      algorithm: true, // Enable algorithm
-    },
+      colorPrimary: colors.teal
+    }
   },
   token: {
+    colorBgBase: colors['gray-lightest'],
     colorPrimary: colors.teal,
     colorPrimaryActive: '#394EFF',
-    colorSecondary: '#3EAAAF',
     colorBgLayout: colors['gray-lightest'],
     colorBgContainer: colors['white'],
     colorLink: colors['teal'],
@@ -51,8 +49,6 @@ const customTheme = {
     borderRadius: 4,
     fontSize: 14,
     fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
-    siderBackgroundColor: colors['gray-lightest'],
-    siderCollapsedWidth: 800
   }
 };
 
