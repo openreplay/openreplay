@@ -15,7 +15,6 @@ interface Props {
 }
 
 function Chart(props: Props) {
-  console.log(props.data)
   const { data, label } = props;
   const gradientDef = Styles.gradientDef();
 

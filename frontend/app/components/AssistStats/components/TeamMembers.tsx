@@ -41,7 +41,7 @@ function TeamMembers({
   };
 
   return (
-    <div className={'rounded bg-white border p-2 h-full w-full'}>
+    <div className={'rounded bg-white border p-2 h-full w-full flex flex-col'}>
       <div className={'flex items-center'}>
         <Typography.Title style={{ marginBottom: 0 }} level={4}>
           Team Members
@@ -58,7 +58,6 @@ function TeamMembers({
           <Button shape={'default'} size={'small'} icon={<TableOutlined rev={undefined} />} />
         </div>
       </div>
-      {/*<div style={{ minHeight: 299 }}>*/}
       <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
         {topMembers.list.map((member) => (
           <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
@@ -71,8 +70,7 @@ function TeamMembers({
           </div>
         ))}
       </Loader>
-      {/*</div>*/}
-      <div className={'flex items-center justify-center text-disabled-text pt-1'}>
+      <div className={'flex items-center justify-center text-disabled-text p-2 mt-auto'}>
         {isLoading || topMembers.list.length === 0
           ? ''
           : `Showing 1 to ${topMembers.total} of the total`}

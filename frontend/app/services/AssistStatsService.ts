@@ -98,8 +98,8 @@ export default class AssistStatsService {
     return this.client[method]('/assist-stats/' + path, body).then((r) => r.json());
   }
 
-  getGraphs(range: { start: number; end: number }): Promise<Graphs> {
-    return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end }, 'get');
+  getGraphs(range: { start: number; end: number }, userId?: number): Promise<Graphs> {
+    return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end, userId }, 'get');
   }
 
   getTopMembers(filters: {
@@ -107,6 +107,7 @@ export default class AssistStatsService {
     endTimestamp: number;
     sortBy: string;
     sortOrder: 'asc' | 'desc';
+    userId?: number,
   }): Promise<{ list: Member[]; total: number }> {
     return this.fetch('top-members', filters, 'get');
   }

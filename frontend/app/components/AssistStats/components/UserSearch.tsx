@@ -32,7 +32,7 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
     );
   };
 
-  const onSelect = (value: string) => {
+  const onSelect = (value?: string) => {
     onUserSelect(value)
     setSelectedValue(allUsers.find((u) => u.value === value)?.label || '');
   };
@@ -45,12 +45,18 @@ const UserSearch = ({ onUserSelect }: { onUserSelect: (id: any) => void }) => {
       onSelect={onSelect}
       onSearch={handleSearch}
       value={selectedValue}
-      onChange={(e) => setSelectedValue(e)}
+      onChange={(e) => {
+        setSelectedValue(e)
+        if (!e) onUserSelect(undefined)
+      }}
+      onClear={() => onSelect(undefined)}
+      onDeselect={() => onSelect(undefined)}
       size="small"
     >
       <Input.Search
-        placeholder="input search text"
         allowClear
+        onClear={() => onSelect(undefined)}
+        placeholder="input search text"
         size={'small'}
         classNames={{ input: '!border-0 focus:!border-0' }}
         style={{ width: 200 }}

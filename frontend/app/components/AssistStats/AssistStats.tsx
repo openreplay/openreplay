@@ -59,21 +59,23 @@ function AssistStats() {
 
   const onChangePeriod = async (period: any) => {
     setPeriod(period);
-    void updateData();
+    void updateData(period);
   };
 
-  const updateData = async () => {
+  const updateData = async (customPeriod?: any) => {
+    const usedP = customPeriod || period;
     setIsLoading(true);
     const topMembersPr = assistStatsService.getTopMembers({
-      startTimestamp: period.start,
-      endTimestamp: period.end,
+      startTimestamp: usedP.start,
+      endTimestamp: usedP.end,
       sortBy: membersSort,
       sortOrder: 'desc',
     });
-    const graphsPr = assistStatsService.getGraphs(period);
+
+    const graphsPr = assistStatsService.getGraphs(usedP);
     const sessionsPr = assistStatsService.getSessions({
-      startTimestamp: period.start,
-      endTimestamp: period.end,
+      startTimestamp: usedP.start,
+      endTimestamp: usedP.end,
       sortBy: tableSort,
       sortOrder: 'desc',
       userId: selectedUser ? selectedUser : undefined,
@@ -85,7 +87,6 @@ function AssistStats() {
         topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
         graphs.status === 'fulfilled' && setGraphs(graphs.value);
         sessions.status === 'fulfilled' && setSessions(sessions.value);
-        console.log(graphs, topMembers, sessions, '<><><><>');
       }
     );
     setIsLoading(false);
@@ -171,20 +172,37 @@ function AssistStats() {
   };
 
   const onUserSelect = (id: any) => {
+    console.log(id, period)
     setSelectedUser(id);
-    assistStatsService
-      .getSessions({
-        startTimestamp: period.start,
-        endTimestamp: period.end,
-        sortBy: tableSort,
-        userId: id,
-        sortOrder: 'desc',
-        page: 1,
-        limit: 10,
-      })
-      .then((sessions) => {
-        setSessions(sessions);
-      });
+    setIsLoading(true);
+    const topMembersPr = assistStatsService.getTopMembers({
+      startTimestamp: period.start,
+      endTimestamp: period.end,
+      sortBy: membersSort,
+      userId: id,
+      sortOrder: 'desc',
+    });
+
+    const graphsPr = assistStatsService.getGraphs(period, id);
+    const sessionsPr = assistStatsService.getSessions({
+      startTimestamp: period.start,
+      endTimestamp: period.end,
+      sortBy: tableSort,
+      userId: id,
+      sortOrder: 'desc',
+      page: 1,
+      limit: 10,
+    })
+
+    Promise.allSettled([topMembersPr, graphsPr, sessionsPr]).then(
+      ([topMembers, graphs, sessions]) => {
+        topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
+        graphs.status === 'fulfilled' && setGraphs(graphs.value);
+        sessions.status === 'fulfilled' && setSessions(sessions.value);
+      }
+    );
+    setIsLoading(false);
+
   };
 
   return (
@@ -221,7 +239,7 @@ function AssistStats() {
                 </div>
               </div>
               <Loader loading={isLoading} style={{ minHeight: 90, height: 90 }} size={36}>
-                <Chart data={generateListData(graphs.list, i)} label={'Test'} />
+                <Chart data={generateListData(graphs.list, i)} label={chartNames[i]} />
               </Loader>
             </div>
           ))}

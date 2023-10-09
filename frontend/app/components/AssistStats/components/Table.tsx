@@ -86,22 +86,18 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         </Loader>
       </div>
       <div className={'flex items-center justify-between p-4'}>
-        {isLoading || !sessions?.list?.length ? null : (
-          <>
-            <div>
-              Showing <span className="font-medium">{(page - 1) * PER_PAGE + 1}</span> to{' '}
-              <span className="font-medium">{(page - 1) * PER_PAGE + sessions.list.length}</span> of{' '}
-              <span className="font-medium">{numberWithCommas(sessions.total)}</span> sessions.
-            </div>
-            <Pagination
-              page={page}
-              totalPages={Math.ceil(100 / 10)}
-              onPageChange={onPageChange}
-              limit={10}
-              debounceRequest={200}
-            />
-          </>
-        )}
+        <div>
+          Showing <span className="font-medium">{(page - 1) * PER_PAGE + 1}</span> to{' '}
+          <span className="font-medium">{(page - 1) * PER_PAGE + sessions.list.length}</span> of{' '}
+          <span className="font-medium">{numberWithCommas(sessions.total)}</span> sessions.
+        </div>
+        <Pagination
+          page={page}
+          totalPages={Math.ceil(sessions.total / PER_PAGE)}
+          onPageChange={onPageChange}
+          limit={10}
+          debounceRequest={200}
+        />
       </div>
     </div>
   );
