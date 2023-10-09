@@ -59,11 +59,12 @@ export const TP_MAP = {
   116: MType.ResourceTiming,
   117: MType.TabChange,
   118: MType.TabData,
-  90: MType.IosSessionStart,
   93: MType.IosCustomEvent,
   96: MType.IosScreenChanges,
   100: MType.IosClickEvent,
+  101: MType.IosInputEvent,
   102: MType.IosPerformanceEvent,
   103: MType.IosLog,
   105: MType.IosNetworkCall,
+  106: MType.IosSwipeEvent,
 } as const

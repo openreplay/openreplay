@@ -43,8 +43,7 @@ class MessageCodec(Codec):
         try:
             decoded = int.from_bytes(b, "little", signed=False)
         except Exception as e:
-            print(f"Error while decoding message key (SessionID) from {b}\n{e}")
-            raise e
+            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
         return decoded
 
     def decode_detailed(self, b: bytes) -> List[Message]:
@@ -722,13 +721,6 @@ class MessageCodec(Codec):
                 partition=self.read_uint(reader)
             )
 
-        if message_id == 107:
-            return IOSBatchMeta(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                first_index=self.read_uint(reader)
-            )
-
         if message_id == 90:
             return IOSSessionStart(
                 timestamp=self.read_uint(reader),
@@ -798,19 +790,12 @@ class MessageCodec(Codec):
             )
 
         if message_id == 98:
-            return IOSScreenEnter(
+            return IOSViewComponentEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                title=self.read_string(reader),
-                view_name=self.read_string(reader)
-            )
-
-        if message_id == 99:
-            return IOSScreenLeave(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                title=self.read_string(reader),
-                view_name=self.read_string(reader)
+                screen_name=self.read_string(reader),
+                view_name=self.read_string(reader),
+                visible=self.read_boolean(reader)
             )
 
         if message_id == 100:
@@ -858,13 +843,30 @@ class MessageCodec(Codec):
             return IOSNetworkCall(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                duration=self.read_uint(reader),
-                headers=self.read_string(reader),
-                body=self.read_string(reader),
-                url=self.read_string(reader),
-                success=self.read_boolean(reader),
+                type=self.read_string(reader),
                 method=self.read_string(reader),
-                status=self.read_uint(reader)
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                duration=self.read_uint(reader)
+            )
+
+        if message_id == 106:
+            return IOSSwipeEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                label=self.read_string(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader),
+                direction=self.read_string(reader)
+            )
+
+        if message_id == 107:
+            return IOSBatchMeta(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                first_index=self.read_uint(reader)
             )
 
         if message_id == 110:

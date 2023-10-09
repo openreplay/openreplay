@@ -689,32 +689,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 90: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const projectID = this.readUint(); if (projectID === null) { return resetPointer() }
-      const trackerVersion = this.readString(); if (trackerVersion === null) { return resetPointer() }
-      const revID = this.readString(); if (revID === null) { return resetPointer() }
-      const userUUID = this.readString(); if (userUUID === null) { return resetPointer() }
-      const userOS = this.readString(); if (userOS === null) { return resetPointer() }
-      const userOSVersion = this.readString(); if (userOSVersion === null) { return resetPointer() }
-      const userDevice = this.readString(); if (userDevice === null) { return resetPointer() }
-      const userDeviceType = this.readString(); if (userDeviceType === null) { return resetPointer() }
-      const userCountry = this.readString(); if (userCountry === null) { return resetPointer() }
-      return {
-        tp: MType.IosSessionStart,
-        timestamp,
-        projectID,
-        trackerVersion,
-        revID,
-        userUUID,
-        userOS,
-        userOSVersion,
-        userDevice,
-        userDeviceType,
-        userCountry,
-      };
-    }
-
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
@@ -763,6 +737,22 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 101: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const value = this.readString(); if (value === null) { return resetPointer() }
+      const valueMasked = this.readBoolean(); if (valueMasked === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      return {
+        tp: MType.IosInputEvent,
+        timestamp,
+        length,
+        value,
+        valueMasked,
+        label,
+      };
+    }
+
     case 102: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
@@ -794,24 +784,42 @@ export default class RawMessageReader extends PrimitiveReader {
     case 105: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const headers = this.readString(); if (headers === null) { return resetPointer() }
-      const body = this.readString(); if (body === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const success = this.readBoolean(); if (success === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { return resetPointer() }
       const method = this.readString(); if (method === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const request = this.readString(); if (request === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
       const status = this.readUint(); if (status === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
         tp: MType.IosNetworkCall,
         timestamp,
         length,
-        duration,
-        headers,
-        body,
-        url,
-        success,
+        type,
         method,
+        url,
+        request,
+        response,
         status,
+        duration,
+      };
+    }
+
+    case 106: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      const x = this.readUint(); if (x === null) { return resetPointer() }
+      const y = this.readUint(); if (y === null) { return resetPointer() }
+      const direction = this.readString(); if (direction === null) { return resetPointer() }
+      return {
+        tp: MType.IosSwipeEvent,
+        timestamp,
+        length,
+        label,
+        x,
+        y,
+        direction,
       };
     }
 
