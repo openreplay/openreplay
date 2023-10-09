@@ -1,4 +1,4 @@
-import {Button, Input, Typography, Switch, Space} from 'antd';
+import { Button, Input, Typography, Switch, Space } from 'antd';
 import React from 'react';
 import { withSiteId, usabilityTesting } from 'App/routes';
 import { useParams } from 'react-router-dom';
@@ -92,8 +92,22 @@ function TestEdit() {
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
             <Typography.Text strong>Task List</Typography.Text>
-            <Step />
-            <Step />
+            <Step
+              buttons={
+                <>
+                  <Button size={'small'} icon={<EditOutlined rev={undefined} />} />
+                  <Button size={'small'} icon={<DeleteOutlined rev={undefined} />} />
+                </>
+              }
+            />
+            <Step
+              buttons={
+                <>
+                  <Button size={'small'} icon={<EditOutlined rev={undefined} />} />
+                  <Button size={'small'} icon={<DeleteOutlined rev={undefined} />} />
+                </>
+              }
+            />
             <div>
               <Button onClick={() => showModal(<StepsModal />, { right: true })}>
                 Add a task or question
@@ -197,7 +211,7 @@ function SidePanel() {
   );
 }
 
-function Step() {
+export function Step({ buttons }: { buttons?: React.ReactNode }) {
   return (
     <div className={'p-4 rounded border bg-active-blue flex items-start gap-2'}>
       <div className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
@@ -210,8 +224,7 @@ function Step() {
       </div>
 
       <div className={'ml-auto'} />
-      <Button size={'small'} icon={<EditOutlined rev={undefined} />} />
-      <Button size={'small'} icon={<DeleteOutlined rev={undefined} />} />
+      {buttons}
     </div>
   );
 }

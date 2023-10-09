@@ -1,5 +1,7 @@
+import { useModal } from 'Components/Modal';
+import { Step } from 'Components/UsabilityTesting/TestEdit';
 import React from 'react';
-import { Button, Typography, Select, Space, Popover, Dropdown } from 'antd';
+import { Button, Typography, Select, Space, Popover, Dropdown, Input, Switch } from 'antd';
 import { withSiteId, usabilityTesting } from 'App/routes';
 import { useParams } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
@@ -17,7 +19,10 @@ import {
   HourglassOutlined,
   FilePdfOutlined,
   DeleteOutlined,
+  DownOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
+import { Pagination } from 'UI';
 
 const { Option } = Select;
 
@@ -27,22 +32,23 @@ const items = [
   { value: 'ended', label: 'End Testing', icon: <StopOutlined rev={undefined} /> },
 ];
 
-const menuItems = [{
-  key: '1',
-  label: 'Download Results',
-  icon: <FilePdfOutlined rev={undefined} />
-},
+const menuItems = [
+  {
+    key: '1',
+    label: 'Download Results',
+    icon: <FilePdfOutlined rev={undefined} />,
+  },
   {
     key: '2',
     label: 'Edit',
-    icon: <EditOutlined rev={undefined} />
+    icon: <EditOutlined rev={undefined} />,
   },
   {
     key: '3',
     label: 'Delete',
-    icon: <DeleteOutlined rev={undefined} />
+    icon: <DeleteOutlined rev={undefined} />,
   },
-  ]
+];
 
 const handleChange = (value: string) => {
   console.log(`selected ${value}`);
@@ -51,6 +57,8 @@ const handleChange = (value: string) => {
 function TestOverview() {
   // @ts-ignore
   const { siteId } = useParams();
+  const { showModal, hideModal } = useModal();
+
   return (
     <>
       <Breadcrumb
@@ -91,12 +99,12 @@ function TestOverview() {
             trigger={'click'}
             title={'Participants Link'}
             content={
-            <div style={{ width: '220px' }}>
-              <div className={'p-2 bg-gray-lightest rounded border break-all mb-2'}>
-                https://openreplay.company.com/UTID128738?rjs
+              <div style={{ width: '220px' }}>
+                <div className={'p-2 bg-white rounded border break-all mb-2'}>
+                  https://openreplay.company.com/UTID128738?rjs
+                </div>
+                <Button>Copy</Button>
               </div>
-              <Button>Copy</Button>
-            </div>
             }
           >
             <Button>
@@ -106,7 +114,7 @@ function TestOverview() {
               </Space>
             </Button>
           </Popover>
-          <Dropdown menu={{ items: menuItems}}>
+          <Dropdown menu={{ items: menuItems }}>
             <Button icon={<MoreOutlined rev={undefined} />}></Button>
           </Dropdown>
         </div>
@@ -129,34 +137,35 @@ function TestOverview() {
       <div className={'p-4 rounded border bg-white mt-2'}>
         <Typography.Title level={5}>Participant Overview</Typography.Title>
         <div className={'flex gap-2'}>
-          <div className={'rounded border p-2'}>
+          <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
               <Typography.Text strong>Total Participants</Typography.Text>
             </div>
             <Typography.Title level={5}>12,864</Typography.Title>
           </div>
-          <div className={'rounded border p-2'}>
+          <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
               <Typography.Text strong>Completed all tasks</Typography.Text>
             </div>
             <Typography.Title level={5}>12,864</Typography.Title>
           </div>
-          <div className={'rounded border p-2'}>
+          <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
               <Typography.Text strong>Skipped tasks</Typography.Text>
             </div>
             <Typography.Title level={5}>12,864</Typography.Title>
           </div>
-          <div className={'rounded border p-2'}>
+          <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
               <Typography.Text strong>Aborted the test</Typography.Text>
             </div>
             <Typography.Title level={5}>12,864</Typography.Title>
           </div>
+          <div className={'flex-1'} />
         </div>
       </div>
 
@@ -167,7 +176,7 @@ function TestOverview() {
           <div className={'p-2 rounded bg-tealx-light flex items-center gap-1'}>
             <Typography.Text>Average completion time for all tasks:</Typography.Text>
             <Typography.Text strong>1min49sec</Typography.Text>
-            (icon)
+            <ClockCircleOutlined rev={undefined} />
           </div>
         </div>
       </div>
@@ -176,7 +185,7 @@ function TestOverview() {
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Open-ended task responses
         </Typography.Title>
-        <Button>
+        <Button onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}>
           <Space align={'center'}>
             Review All 10,186 Responses
             <ArrowRightOutlined rev={undefined} />
@@ -192,6 +201,49 @@ function TestOverview() {
         <div className={'flex gap-1 link'}>clear selection</div>
       </div>
     </>
+  );
+}
+
+function ResponsesOverview() {
+  return (
+    <div style={{ width: 900 }} className={'h-screen p-4 bg-white flex flex-col gap-4'}>
+      <Typography.Title style={{ marginBottom: 0 }} level={4}>
+        Open-ended task responses
+      </Typography.Title>
+      <div className={'flex flex-col gap-1'}>
+        <Typography.Text strong>Select Task / Question</Typography.Text>
+        <Step
+          buttons={
+            <div className={'self-center'}>
+              <Button icon={<DownOutlined rev={undefined} />} size={'small'} />
+            </div>
+          }
+        />
+      </div>
+      <div className={'grid grid-cols-9 border-b'}>
+        <div className={'col-span-1'}>
+          <Typography.Text strong># Response</Typography.Text>
+        </div>
+        <div className={'col-span-2'}>
+          <Typography.Text strong>Participant</Typography.Text>
+        </div>
+        <div className={'col-span-6'}>
+          <Typography.Text strong>Response (add search text)</Typography.Text>
+        </div>
+      </div>
+      <div className={'grid grid-cols-9 border-b'}>
+        <div className={'col-span-1'}>1</div>
+        <div className={'col-span-2'}>Nikita Melnikov</div>
+        <div className={'col-span-6'}>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.
+        </div>
+      </div>
+      <div className={'p-2 flex items-center justify-between'}>
+        <div className={'text-disabled-text'}>Showing 1-123 of 123123 responses</div>
+        <Pagination page={1} totalPages={2} onPageChange={() => null} />
+      </div>
+    </div>
   );
 }
 
