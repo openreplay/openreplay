@@ -362,7 +362,7 @@ ORDER BY event_number_in_session, e_value, next_value;"""
 
         _now = time()
         rows = ch.execute(query=ch_query, params=params)
-        if time() - _now > 3:
+        if time() - _now > 0:
             print(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
             print("----------------------")
             print(print(ch.format(ch_query, params)))
