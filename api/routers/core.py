@@ -1,7 +1,9 @@
-from typing import Union
-
+import json
+from datetime import datetime, timedelta
+from typing import Union, List, Dict
 from decouple import config
-from fastapi import Depends, Body
+from fastapi import Depends, Body, Query
+from starlette.responses import FileResponse
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -10,7 +12,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, assist_stats
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -862,3 +864,53 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
+
+
+@public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
+def get_assist_stats_avg(
+        project_id: int,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
+        userId: str = None
+):
+    return assist_stats.get_averages(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        user_id=userId)
+
+
+@public_app.get(
+    '/{project_id}/assist-stats/top-members',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsTopMembersResponse
+)
+def get_assist_stats_top_members(
+        project_id: int,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
+        sortyBy: str = "sessionsAssisted",
+        sortOder: str = "desc"
+):
+    return assist_stats.get_top_members(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        sort_by=sortyBy,
+        sort_order=sortOder
+    )
+
+
+@public_app.post(
+    '/{project_id}/assist-stats/sessions',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsSessionsResponse
+)
+def get_assist_stats_sessions(
+        project_id: int,
+        data: schemas.AssistStatsSessionsRequest = Body(...),
+):
+    return assist_stats.get_sessions(
+        project_id=project_id,
+        data=data
+    )
