@@ -86,9 +86,9 @@ export default class AssistManager {
     const isRecordingActive = recordingState === SessionRecordingStatus.Recording
     const isControlActive = remoteControl === RemoteControlStatus.Enabled
     // recording gets priority here
-    if (isRecordingActive) return { border: '2px dashed red' }
-    if (isControlActive) return { border: '2px dashed blue' }
-    return { border: 'unset'}
+    if (isRecordingActive) return { outline: '2px dashed red' }
+    if (isControlActive) return { outline: '2px dashed blue' }
+    return { outline: 'unset' }
   }
 
   private setStatus(status: ConnectionStatus) {
