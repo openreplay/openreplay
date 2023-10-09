@@ -14,7 +14,7 @@ from routers import core, core_dynamic
 from crons import core_crons, core_dynamic_crons
 from routers.subs import insights, metrics, v1_api, health
 
-loglevel = config("LOGLEVEL", default=logging.INFO)
+loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
 
@@ -59,8 +59,8 @@ async def or_middleware(request: Request, call_next):
     response: StreamingResponse = await call_next(request)
     if helper.TRACK_TIME:
         now = int(time.time() * 1000) - now
-        if now > 500:
-            logging.info(f"Execution time: {now} ms")
+        if now > 1500:
+            logging.warning(f"Execution time: {now} ms for {request.method}:{request.url.path}")
     return response
 
 

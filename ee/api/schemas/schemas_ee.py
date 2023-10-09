@@ -30,6 +30,16 @@ class CurrentContext(schemas.CurrentContext):
     permissions: List[Union[Permissions, ServicePermissions]] = Field(...)
     service_account: bool = Field(default=False)
 
+    @model_validator(mode="before")
+    def remove_unsupported_perms(cls, values):
+        if values.get("permissions") is not None:
+            perms = []
+            for p in values["permissions"]:
+                if Permissions.has_value(p):
+                    perms.append(p)
+            values["permissions"] = perms
+        return values
+
 
 class RolePayloadSchema(BaseModel):
     name: str = Field(..., min_length=1, max_length=40)
