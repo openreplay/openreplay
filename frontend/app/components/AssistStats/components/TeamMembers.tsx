@@ -1,9 +1,11 @@
 import { DownOutlined, TableOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Space, Typography } from 'antd';
+import { durationFromMsFormatted } from 'App/date';
 import { Member } from 'App/services/AssistStatsService';
 import { getInitials } from 'App/utils';
 import React from 'react';
 import { Loader } from 'UI';
+import { exportCSVFile } from 'App/utils';
 
 const items = [
   {
@@ -20,7 +22,7 @@ const items = [
   },
   {
     label: 'Remote Duration',
-    key: 'remoteDuration',
+    key: 'controlDuration',
   },
 ];
 
@@ -28,16 +30,39 @@ function TeamMembers({
   isLoading,
   topMembers,
   onMembersSort,
+  membersSort,
 }: {
   isLoading: boolean;
   topMembers: { list: Member[]; total: number };
   onMembersSort: (v: string) => void;
+  membersSort: string;
 }) {
   const [dateRange, setDateRange] = React.useState(items[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = items.find((item) => item.key === key);
     setDateRange(item?.label || items[0].label);
+    console.log(item.key)
     onMembersSort(item?.key || items[0].key);
+  };
+
+  const onExport = () => {
+    const headers = [
+      { label: 'Team Member', key: 'name' },
+      { label: 'Sessions Assisted', key: 'sessionsAssisted' },
+      { label: 'Live Duration', key: 'assistDuration' },
+      { label: 'Call Duration', key: 'callDuration' },
+      { label: 'Remote Duration', key: 'controlDuration' },
+    ];
+
+    const data = topMembers.list.map((member) => ({
+      name: member.name,
+      sessionsAssisted: member.assistCount,
+      assistDuration: durationFromMsFormatted(member.assistDuration),
+      callDuration: durationFromMsFormatted(member.callDuration),
+      controlDuration: durationFromMsFormatted(member.controlDuration),
+    }));
+
+    exportCSVFile(headers, data, `Team_Members_${new Date().toLocaleDateString()}`);
   };
 
   return (
@@ -55,7 +80,7 @@ function TeamMembers({
               </Space>
             </Button>
           </Dropdown>
-          <Button shape={'default'} size={'small'} icon={<TableOutlined rev={undefined} />} />
+          <Button onClick={onExport} shape={'default'} size={'small'} icon={<TableOutlined rev={undefined} />} />
         </div>
       </div>
       <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
@@ -66,7 +91,11 @@ function TeamMembers({
               <div className="text-lg uppercase color-tealx">{getInitials(member.name)}</div>
             </div>
             <div>{member.name}</div>
-            <div className={'ml-auto'}>{member.count}</div>
+            <div className={'ml-auto'}>
+              {membersSort === 'sessionsAssisted'
+                ? member.count
+                : durationFromMsFormatted(member.count)}
+            </div>
           </div>
         ))}
       </Loader>

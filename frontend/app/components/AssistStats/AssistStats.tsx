@@ -1,3 +1,6 @@
+import React from 'react';
+import { Button, Typography } from 'antd';
+import { Loader } from 'UI';
 import {
   generateListData,
   defaultGraphs,
@@ -6,21 +9,19 @@ import {
   SessionsResponse,
   PeriodKeys,
 } from 'App/services/AssistStatsService';
-import React from 'react';
-import { Button, Typography } from 'antd';
 import { FilePdfOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
-import { Loader } from 'UI';
 import { durationFromMsFormatted, formatTimeOrDate } from 'App/date'
 import withPageTitle from 'HOCs/withPageTitle';
 import { exportCSVFile } from 'App/utils';
+import { assistStatsService } from 'App/services';
 
 import UserSearch from './components/UserSearch';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
-import { assistStatsService } from 'App/services';
+import { getPdf2 } from "Components/AssistStats/pdfGenerator";
 
 const chartNames = {
   assistTotal: 'Total Live Duration',
@@ -172,7 +173,6 @@ function AssistStats() {
   };
 
   const onUserSelect = (id: any) => {
-    console.log(id, period)
     setSelectedUser(id);
     setIsLoading(true);
     const topMembersPr = assistStatsService.getTopMembers({
@@ -206,8 +206,9 @@ function AssistStats() {
   };
 
   return (
-    <div className={'w-full'}>
-      <div className={'w-full flex items-center mb-2'}>
+    <>
+    <div className={'w-full'} id={'pdf-anchor'}>
+      <div id={'pdf-ignore'} className={'w-full flex items-center mb-2'}>
         <Typography.Title style={{ marginBottom: 0 }} level={4}>
           Assist Stats
         </Typography.Title>
@@ -215,7 +216,7 @@ function AssistStats() {
           <UserSearch onUserSelect={onUserSelect} />
 
           <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt />
-          <Button shape={'default'} size={'small'} icon={<FilePdfOutlined rev={undefined} />} />
+          <Button onClick={getPdf2} shape={'default'} size={'small'} icon={<FilePdfOutlined rev={undefined} />} />
         </div>
       </div>
       <div className={'w-full grid grid-cols-3 gap-2'}>
@@ -249,6 +250,7 @@ function AssistStats() {
             isLoading={isLoading}
             topMembers={topMembers}
             onMembersSort={onMembersSort}
+            membersSort={membersSort}
           />
         </div>
       </div>
@@ -263,6 +265,8 @@ function AssistStats() {
         />
       </div>
     </div>
+      <div id={'stats-layer'} />
+    </>
   );
 }
 

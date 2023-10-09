@@ -3,6 +3,10 @@ import APIClient from 'App/api_client';
 export interface Member {
   name: string;
   count: number;
+  assistDuration: number;
+  callDuration: number;
+  controlDuration: number;
+  assistCount: number;
 }
 
 export interface AssistStatsSession {
@@ -16,9 +20,16 @@ export interface AssistStatsSession {
     recordId: number;
     name: string;
     duration: number;
-  }[]
+  }[];
 }
-export type PeriodKeys = 'assistTotal' | 'assistAvg' | 'callTotal' | 'callAvg' | 'controlTotal' | 'controlAvg';
+
+export type PeriodKeys =
+  | 'assistTotal'
+  | 'assistAvg'
+  | 'callTotal'
+  | 'callAvg'
+  | 'controlTotal'
+  | 'controlAvg';
 
 export interface Graphs {
   currentPeriod: {
@@ -28,7 +39,7 @@ export interface Graphs {
     callAvg: number;
     controlTotal: number;
     controlAvg: number;
-  },
+  };
   previousPeriod: {
     assistTotal: number;
     assistAvg: number;
@@ -36,7 +47,7 @@ export interface Graphs {
     callAvg: number;
     controlTotal: number;
     controlAvg: number;
-  },
+  };
   list: {
     time: number;
     assistAvg: number;
@@ -45,7 +56,7 @@ export interface Graphs {
     assistTotal: number;
     callTotal: number;
     controlTotal: number;
-  }[]
+  }[];
 }
 
 export const generateListData = (list: any[], key: PeriodKeys) => {
@@ -55,7 +66,7 @@ export const generateListData = (list: any[], key: PeriodKeys) => {
       value: item[key],
     };
   });
-}
+};
 
 export const defaultGraphs = {
   currentPeriod: {
@@ -74,8 +85,8 @@ export const defaultGraphs = {
     controlTotal: 0,
     controlAvg: 0,
   },
-  list: []
-}
+  list: [],
+};
 
 export interface SessionsResponse {
   total: number;
@@ -99,7 +110,11 @@ export default class AssistStatsService {
   }
 
   getGraphs(range: { start: number; end: number }, userId?: number): Promise<Graphs> {
-    return this.fetch('avg', { startTimestamp: range.start, endTimestamp: range.end, userId }, 'get');
+    return this.fetch(
+      'avg',
+      { startTimestamp: range.start, endTimestamp: range.end, userId },
+      'get'
+    );
   }
 
   getTopMembers(filters: {
@@ -107,7 +122,7 @@ export default class AssistStatsService {
     endTimestamp: number;
     sort: string;
     order: 'asc' | 'desc';
-    userId?: number,
+    userId?: number;
   }): Promise<{ list: Member[]; total: number }> {
     return this.fetch('top-members', filters, 'get');
   }
@@ -124,12 +139,7 @@ export default class AssistStatsService {
     return this.fetch('sessions', filters, 'post');
   }
 
-  exportCSV(filters: {
-    start: number;
-    end: number;
-    sort: string;
-    order: 'asc' | 'desc';
-  }) {
-    return this.fetch('export-csv', filters, 'get')
+  exportCSV(filters: { start: number; end: number; sort: string; order: 'asc' | 'desc' }) {
+    return this.fetch('export-csv', filters, 'get');
   }
 }
