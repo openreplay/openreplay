@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, timedelta
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 from decouple import config
-from fastapi import Depends, Body, Query
+from fastapi import Depends, Body, Query, HTTPException
 from starlette.responses import FileResponse
 
 import schemas
@@ -889,15 +889,18 @@ def get_assist_stats_top_members(
         project_id: int,
         startTimestamp: int = None,
         endTimestamp: int = None,
-        sortyBy: str = "sessionsAssisted",
-        sortOder: str = "desc"
+        sort: Optional[str] = Query(default="sessionsAssisted",
+                                    description="Sort options: " + ", ".join(assist_stats.event_type_mapping)),
+        order: str = "desc",
+        userId: int = None
 ):
     return assist_stats.get_top_members(
         project_id=project_id,
         start_timestamp=startTimestamp,
         end_timestamp=endTimestamp,
-        sort_by=sortyBy,
-        sort_order=sortOder
+        sort_by=sort,
+        sort_order=order,
+        user_id=userId
     )
 
 

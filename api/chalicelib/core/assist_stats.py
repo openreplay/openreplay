@@ -1,8 +1,17 @@
 import logging
 from datetime import datetime
 
+from fastapi import HTTPException
+
 from chalicelib.utils import pg_client, helper
 from schemas import AssistStatsSessionsRequest, AssistStatsSessionsResponse, AssistStatsTopMembersResponse
+
+event_type_mapping = {
+    "sessionsAssisted": "assist",
+    "assistDuration": "assist",
+    "callDuration": "call",
+    "controlDuration": "control"
+}
 
 
 def insert_aggregated_data():
@@ -261,29 +270,25 @@ def get_top_members(
         sort_by: str,
         sort_order: str,
         user_id: int = None,
+        page: int = 0,
+        limit: int = 5,
 ) -> AssistStatsTopMembersResponse:
-    event_type_mapping = {
-        "sessionsAssisted": "assist",
-        "assistDuration": "assist",
-        "callDuration": "call",
-        "controlDuration": "control"
-    }
-
     event_type = event_type_mapping.get(sort_by)
     if event_type is None:
-        raise ValueError("Invalid sortBy option")
+        raise HTTPException(status_code=400, detail="Invalid sort option provided. Supported options are: " + ", ".join(
+            event_type_mapping.keys()))
 
     constraints = [
         "project_id = %(project_id)s",
         "timestamp BETWEEN %(start_timestamp)s AND %(end_timestamp)s",
-        "duration > 0",
+        # "duration > 0",
         # "event_type = %(event_type)s",
     ]
 
     params = {
         "project_id": project_id,
-        "limit": 5,
-        "offset": 0,
+        "limit": limit,
+        "offset": page,
         "sort_by": sort_by,
         "sort_order": sort_order.upper(),
         "start_timestamp": start_timestamp,
@@ -352,6 +357,7 @@ def get_sessions(
         constraints.append("agent_id = %(agent_id)s")
         params["agent_id"] = data.userId
 
+    logging.info(f">>>>>>> {params}")
     sql = f"""
         SELECT
             COUNT(1) OVER () AS count,
