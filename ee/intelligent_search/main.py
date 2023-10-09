@@ -9,7 +9,7 @@ from utils.contexts import search_context_v2, search_context_v3
 from utils.contexts_charts import chart_context_v2, formatable_end
 from utils.sql_to_filters import filter_sql_where_statement
 from utils import parameters, declarations
-from core.llm_api import LLM_Model, LLMResponseProcessing
+from core.llm_api import LLM_Model
 from auth.auth_key import api_key_auth
 
 

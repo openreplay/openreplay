@@ -1,6 +1,7 @@
-from utils.llm_request import LLMResponseProcessing
 from llama import Llama, Dialog
+from decouple import config
 from utils.contexts import search_context_v2
+from threading import Semaphore
 
 
 class LLM_Model:
@@ -15,8 +16,12 @@ class LLM_Model:
             max_batch_size (int, optional): The maximum batch size for generating sequences. Defaults to 4.
         """
         self.generator = Llama.build(**params)
+        self.max_queue_size = config('LLM_MAX_QUEUE_SIZE', cast=int, default=1)
+        self.semaphore = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=1))
+        self.queue = list()
+        self.responses = list()
 
-    def execute_prompts(self, prompts, **params):
+    def __execute_prompts(self, prompts, **params):
         """
         Entry point of the program for generating text using a pretrained model.
 
@@ -28,4 +33,23 @@ class LLM_Model:
         """
         return self.generator.text_completion(
                 prompts, **params)
+
+    def execute_prompts(self, prompts, **params):
+        if self.semaphore.acquire(timeout=10):
+            results = self.__execute_prompts(prompts, **params)
+            self.semaphore.release()
+            return results
+        else:
+            raise TimeoutError("[Error] LLM is over-requested")
+
+    async def queue_prompt(self, prompt, force=False, **params):
+        if self.semaphore.acquire(timeout=10):
+            if force:
+                self.responses = execute_prompts(self.queue + [prompt])
+            else:
+                self.queue.append(prompt)
+                # Wait until response exists
+            self.semaphore.release()
+        else:
+            raise TimeoutError("[Error] LLM is over-requested")
 
