@@ -5,6 +5,26 @@ Expand the name of the chart.
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Get domain name with/without port */}}
+{{- define "openreplay.domainURL" -}}
+{{- $scheme := ternary "https" "http" .Values.global.ORSecureAccess -}}
+{{- $port := ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess -}}
+{{- if or (eq (toString $port) "80") (eq (toString $port) "443") -}}
+{{- printf "%s://%s" $scheme .Values.global.domainName -}}
+{{- else -}}
+{{- printf "%s://%s:%d" $scheme .Values.global.domainName $port -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Get the S3 endpoint value */}}
+{{- define "openreplay.s3Endpoint" -}}
+{{- if contains "minio" .Values.global.s3.endpoint -}}
+{{- include "openreplay.domainURL" . -}}
+{{- else -}}
+{{- .Values.global.s3.endpoint -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
