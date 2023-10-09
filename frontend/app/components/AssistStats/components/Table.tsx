@@ -75,8 +75,8 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         <div className="col-span-1">Live Duration</div>
         <div className="col-span-1">Call Duration</div>
         <div className="col-span-1">Remote Duration</div>
-        <div className="col-span-1" />
-        <div className="col-span-1">{/*  BUTTONS */}</div>
+        <div className="col-span-1" />{/* SPACER */}
+        <div className="col-span-1">{/* BUTTONS */}</div>
       </div>
       <div className={'bg-white'}>
         <Loader loading={isLoading} style={{ height: 300 }}>
