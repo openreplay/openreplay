@@ -134,7 +134,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      {{- if contains "minio" .Values.global.s3.endpoint }}
+      {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:

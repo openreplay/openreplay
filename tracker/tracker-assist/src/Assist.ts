@@ -195,7 +195,7 @@ export default class Assist {
       if (this.remoteControl){
         callUI?.showRemoteControl(this.remoteControl.releaseControl)
       }
-      this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
+      this.agents[id] = { ...this.agents[id], onControlReleased: this.options.onRemoteControlStart(this.agents[id]?.agentInfo), }
       this.emit('control_granted', id)
       annot = new AnnotationCanvas()
       annot.mount()
@@ -229,6 +229,7 @@ export default class Assist {
       this.options,
       onGrand,
       (id, isDenied) => onRelease(id, isDenied),
+      (id) => this.emit('control_busy', id),
     )
 
     const onAcceptRecording = () => {
@@ -278,16 +279,18 @@ export default class Assist {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
       }
-      this.assistDemandedRestart = true
-      this.app.stop()
-      setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false })
-          .then(() => {
+      if (this.app.active()) {
+        this.assistDemandedRestart = true
+        this.app.stop()
+        setTimeout(() => {
+          this.app.start().then(() => { this.assistDemandedRestart = false })
+            .then(() => {
               this.remoteControl?.reconnect([id,])
-          })
-          .catch(e => app.debug.error(e))
-        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-      }, 500)
+            })
+            .catch(e => app.debug.error(e))
+          // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+        }, 400)
+      }
     })
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
@@ -297,17 +300,18 @@ export default class Assist {
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         }
       })
-      this.assistDemandedRestart = true
-      this.app.stop()
-      setTimeout(() => {
-        this.app.start().then(() => { this.assistDemandedRestart = false })
-          .then(() => {
-            this.remoteControl?.reconnect(ids)
-          })
-          .catch(e => app.debug.error(e))
-        // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-      }, 500)
-
+      if (this.app.active()) {
+        this.assistDemandedRestart = true
+        this.app.stop()
+        setTimeout(() => {
+          this.app.start().then(() => { this.assistDemandedRestart = false })
+            .then(() => {
+              this.remoteControl?.reconnect(ids)
+            })
+            .catch(e => app.debug.error(e))
+          // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
+        }, 400)
+      }
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
@@ -487,9 +491,8 @@ export default class Assist {
           return
         }
 
-        // UI
         if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+          callUI = new CallWindow(console.log, this.options.callUITemplate)
           callUI.setVideoToggleCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
@@ -538,6 +541,7 @@ export default class Assist {
         sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIds))
         this.emit('UPDATE_SESSION', { agentIds: callingPeerIds, isCallActive: true, })
       }).catch(reason => { // in case of Confirm.remove() without user answer (not a error)
+        console.log(reason)
         app.debug.log(reason)
       })
     })

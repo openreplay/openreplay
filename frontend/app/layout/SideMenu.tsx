@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Typography } from 'antd';
+import { Divider, Menu, Tooltip, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
@@ -11,7 +11,6 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import SupportModal from 'App/layout/SupportModal';
 import { setActiveTab } from 'Duck/search';
-
 
 const { Text } = Typography;
 
@@ -28,14 +27,14 @@ interface Props extends RouteComponentProps {
   modules: string[];
   setActiveTab: (tab: any) => void;
   activeTab: string;
-  isAdmin: boolean;
   isEnterprise: boolean;
+  isCollapsed?: boolean;
 }
 
 
 function SideMenu(props: Props) {
   // @ts-ignore
-  const { activeTab, siteId, modules, location, account, isEnterprise } = props;
+  const { activeTab, siteId, modules, location, account, isEnterprise, isCollapsed } = props;
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
@@ -131,17 +130,29 @@ function SideMenu(props: Props) {
 
   return (
     <>
-      <Menu defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
-            style={{ backgroundColor: '#f6f6f6', border: 'none', marginTop: '8px' }}>
-        {isPreferencesActive &&
-          <Menu.Item key='exit' style={{ color: '#333', height: '32px' }} icon={<SVG name='arrow-bar-left' />}>
-            <Text className='ml-2'>Exit</Text>
-          </Menu.Item>}
+      <Menu
+        defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
+        style={{ border: 'none', marginTop: '8px' }}
+        inlineCollapsed={isCollapsed}
+      >
+        {isPreferencesActive && (
+          <Menu.ItemGroup>
+            <Menu.Item
+              key='exit'
+              // style={{ color: '#333', height: '32px' }}
+              icon={<SVG name='arrow-bar-left' size={16} />}
+            >
+              {!isCollapsed && <Text className='ml-2'>Exit</Text>}
+            </Menu.Item>
+          </Menu.ItemGroup>
+        )}
         {menu.map((category, index) => (
           <React.Fragment key={category.key}>
             {index > 0 && <Divider style={{ margin: '6px 0' }} />}
-            <Menu.ItemGroup key={category.key}
-                            title={<Text className='uppercase text-sm' type='secondary'>{category.title}</Text>}>
+            <Menu.ItemGroup
+              key={category.key}
+              title={category.title}
+            >
               {category.items.filter((item: any) => !item.hidden).map((item: any) => {
                 const isActive = isMenuItemActive(item.key);
                 return item.children ? (
@@ -157,11 +168,11 @@ function SideMenu(props: Props) {
                   <Menu.Item
                     key={item.key}
                     icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                    style={{ color: '#333', height: '32px' }}
-                    className={cn('!rounded', { 'ant-menu-item-selected !bg-active-dark-blue': isActive })}
+                    // style={{ color: '#333', height: '32px' }}
+                    className={cn('!rounded')}
                     itemIcon={item.leading ?
                       <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
-                    <Text className={cn('ml-2', { 'color-teal': isActive })}>{item.label}</Text>
+                    {item.label}
                   </Menu.Item>
                 );
               })}
@@ -177,9 +188,13 @@ function SideMenu(props: Props) {
   );
 }
 
-export default withRouter(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
-  activeTab: state.getIn(['search', 'activeTab', 'type']),
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-  account: state.getIn(['user', 'account'])
-}), { setActiveTab })(SideMenu));
+export default withRouter(
+  connect((state: any) => ({
+      modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
+      activeTab: state.getIn(['search', 'activeTab', 'type']),
+      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+      account: state.getIn(['user', 'account'])
+    }),
+    { setActiveTab }
+  )(SideMenu)
+);
