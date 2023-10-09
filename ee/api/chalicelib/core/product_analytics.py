@@ -11,20 +11,6 @@ from chalicelib.core import metadata
 from time import time
 
 
-def __transform_journey(rows):
-    nodes = []
-    links = []
-    for r in rows:
-        source = r["source_event"][r["source_event"].index("_") + 1:]
-        target = r["target_event"][r["target_event"].index("_") + 1:]
-        if source not in nodes:
-            nodes.append(source)
-        if target not in nodes:
-            nodes.append(target)
-        links.append({"source": nodes.index(source), "target": nodes.index(target), "value": r["value"]})
-    return {"nodes": nodes, "links": sorted(links, key=lambda x: x["value"], reverse=True)}
-
-
 def __transform_journey2(rows, reverse_path=False):
     # nodes should contain duplicates for different steps otherwise the UI crashes
     nodes = []
@@ -52,7 +38,7 @@ def __transform_journey2(rows, reverse_path=False):
             links.append(link)
 
     return {"nodes": nodes_values,
-            "links": sorted(links, key=lambda x: x["value"], reverse=True)}
+            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=True)}
 
 
 JOURNEY_TYPES = {
