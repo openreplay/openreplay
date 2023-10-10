@@ -291,7 +291,7 @@ def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel)
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
-        return {"data": []}
+        return {"data": {}}
     card_table = schemas.CardTable(
         startTimestamp=data.startTimestamp,
         endTimestamp=data.endTimestamp,
@@ -308,12 +308,12 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
             card_table.series[0].filter.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
                                                                                             operator=s.operator,
                                                                                             value=s.value))
-    for s in data.exclude:
+    for s in data.excludes:
         card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                                      operator=schemas.SearchEventOperator._not_on,
                                                                                      value=s.value))
-
-    return __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    return result[0] if len(result) > 0 else {}
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
@@ -335,7 +335,7 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "exclude": [e.model_dump() for e in data.exclude]}
+         "exclude": [e.model_dump() for e in data.excludes]}
     print(r)
     return r
 
