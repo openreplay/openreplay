@@ -40,7 +40,19 @@ def __transform_journey2(rows, reverse_path=False):
 
 
 def __transform_journey3(rows, reverse_path=False):
-    # nodes should contain duplicates for different steps otherwise the UI crashes
+    total_100p = 0
+    number_of_step1 = 0
+    for r in rows:
+        if r["event_number_in_session"] > 1:
+            break
+        number_of_step1 += 1
+        total_100p += r["sessions_count"]
+    for i in range(number_of_step1):
+        rows[i]["value"] = round(number=100 / number_of_step1, ndigits=2)
+
+    for i in range(number_of_step1, len(rows)):
+        rows[i]["value"] = round(number=rows[i]["sessions_count"] * 100 / total_100p, ndigits=2)
+
     nodes = []
     nodes_values = []
     links = []
@@ -54,8 +66,8 @@ def __transform_journey3(rows, reverse_path=False):
             if target not in nodes:
                 nodes.append(target)
                 nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
-            link = {"eventType": r['event_type'], "value": r["sessions_count"],
-                    "avgTimeFromPervious": r["avg_time_from_previous"]}
+            link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],
+                    "value": r["value"], "avgTimeFromPrevious": r["avg_time_from_previous"]}
             if not reverse_path:
                 link["source"] = nodes.index(source)
                 link["target"] = nodes.index(target)
