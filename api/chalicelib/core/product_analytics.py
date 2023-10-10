@@ -654,7 +654,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                  count(1) AS sessions_count
                           FROM ranked_events
                                    INNER JOIN start_points USING (session_id)
-                          WHERE event_number_in_session = 1
+                          WHERE event_number_in_session = 1 AND next_value IS NOT NULL
                           GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, time_from_previous)"""]
     projection_query = ["""(SELECT event_number_in_session,
                                    event_type,
