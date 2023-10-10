@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Optional
 
 from fastapi import Request
@@ -9,11 +10,13 @@ from starlette.exceptions import HTTPException
 import schemas
 from chalicelib.core import authorizers, users
 
+logger = logging.getLogger(__name__)
+
 
 def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
     user = users.get(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
     if user is None:
-        print("JWTAuth: User not found.")
+        logger.warning("User not found.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
     request.state.authorizer_identity = "jwt"
     request.state.currentContext = schemas.CurrentContext(tenantId=jwt_payload.get("tenantId", -1),
@@ -66,17 +69,17 @@ class JWTAuth(HTTPBearer):
                         or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
                         or not auth_exists:
                     if jwt_payload is not None:
-                        print(jwt_payload)
+                        logger.debug(jwt_payload)
                         if jwt_payload.get("iat") is None:
-                            print("JWTAuth: iat is None")
+                            logger.debug("iat is None")
                         if jwt_payload.get("aud") is None:
-                            print("JWTAuth: aud is None")
+                            logger.debug("aud is None")
                     if not auth_exists:
-                        print("JWTAuth: not users.auth_exists")
+                        logger.warning("not users.auth_exists")
 
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
                 return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
 
-        print("JWTAuth: Invalid authorization code.")
+        logger.warning("Invalid authorization code.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")

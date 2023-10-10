@@ -4,6 +4,7 @@ rm -rf ./chalicelib/core/alerts.py
 #exp rm -rf ./chalicelib/core/alerts_processor.py
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/autocomplete.py
+rm -rf ./chalicelib/core/authorizers.py
 rm -rf ./chalicelib/core/click_maps.py
 rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
