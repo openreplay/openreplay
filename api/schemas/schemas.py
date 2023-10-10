@@ -1283,7 +1283,7 @@ class CardPathAnalysis(__CardSchema):
 
     start_type: Literal["start", "end"] = Field(default="start")
     start_point: List[PathAnalysisSubFilterSchema] = Field(default=[])
-    exclude: List[PathAnalysisSubFilterSchema] = Field(default=[])
+    excludes: List[PathAnalysisSubFilterSchema] = Field(default=[])
 
     series: List[CardPathAnalysisSchema] = Field(default=[])
 
@@ -1325,7 +1325,7 @@ class CardPathAnalysis(__CardSchema):
         for f in values.start_point:
             s_e_values[f.type] = s_e_values.get(f.type, []) + f.value
 
-        for f in values.exclude:
+        for f in values.excludes:
             exclude_values[f.type] = exclude_values.get(f.type, []) + f.value
 
         assert len(

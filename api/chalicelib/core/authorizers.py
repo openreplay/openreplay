@@ -1,9 +1,14 @@
+import logging
+
 import jwt
-from chalicelib.utils import helper
-from chalicelib.utils.TimeUTC import TimeUTC
 from decouple import config
+
 from chalicelib.core import tenants
 from chalicelib.core import users
+from chalicelib.utils import helper
+from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
 
 
 def jwt_authorizer(scheme: str, token: str, leeway=0):
@@ -18,11 +23,11 @@ def jwt_authorizer(scheme: str, token: str, leeway=0):
             leeway=leeway
         )
     except jwt.ExpiredSignatureError:
-        print("! JWT Expired signature")
+        logger.debug("! JWT Expired signature")
         return None
     except BaseException as e:
-        print("! JWT Base Exception")
-        print(e)
+        logger.warning("! JWT Base Exception")
+        logger.debug(e)
         return None
     return payload
 
@@ -38,11 +43,11 @@ def jwt_refresh_authorizer(scheme: str, token: str):
             audience=[f"front:{helper.get_stage_name()}"]
         )
     except jwt.ExpiredSignatureError:
-        print("! JWT-refresh Expired signature")
+        logger.debug("! JWT-refresh Expired signature")
         return None
     except BaseException as e:
-        print("! JWT-refresh Base Exception")
-        print(e)
+        logger.warning("! JWT-refresh Base Exception")
+        logger.debug(e)
         return None
     return payload
 
