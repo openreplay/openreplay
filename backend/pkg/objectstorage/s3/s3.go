@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -100,6 +101,47 @@ func (s *storageImpl) Get(key string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return out.Body, nil
+}
+
+func (s *storageImpl) GetAll(key string) ([]io.ReadCloser, error) {
+	out, err := s.svc.GetObject(&s3.GetObjectInput{
+		Bucket: s.bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return []io.ReadCloser{out.Body}, nil
+}
+
+func downloadS3Files(bucket, prefix string) {
+	sess := _session.Must(_session.NewSession(&aws.Config{
+		Region: aws.String("us-west-1"), // Change this to your region
+	}))
+	svc := s3.New(sess)
+
+	resp, err := svc.ListObjects(&s3.ListObjectsInput{Bucket: &bucket, Prefix: &prefix})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, item := range resp.Contents {
+		file, err := os.Create(*item.Key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		downloader := s3manager.NewDownloader(sess)
+		_, err = downloader.Download(file,
+			&s3.GetObjectInput{
+				Bucket: &bucket,
+				Key:    item.Key,
+			})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func (s *storageImpl) Exists(key string) bool {

@@ -1,30 +1,17 @@
-message 107, 'IOSBatchMeta', :replayer => false  do
-    uint 'Timestamp'
-    uint 'Length'
-    uint 'FirstIndex'
-end
-
-message 90, 'IOSSessionStart',  :replayer => true  do 
+message 90, 'IOSSessionStart',  :replayer => false  do
 	uint 'Timestamp'
-	# uint 'Length'
-  
-  uint 'ProjectID'
-  string 'TrackerVersion'
-  string 'RevID'
-  string 'UserUUID'
-  # string 'UserAgent'
-  string 'UserOS'
-  string 'UserOSVersion'
-  # string 'UserBrowser'
-  # string 'UserBrowserVersion'
-  string 'UserDevice'
-  string 'UserDeviceType'
-  # uint 'UserDeviceMemorySize'
-  # uint 'UserDeviceHeapSize'
-  string 'UserCountry'
+    uint 'ProjectID'
+    string 'TrackerVersion'
+    string 'RevID'
+    string 'UserUUID'
+    string 'UserOS'
+    string 'UserOSVersion'
+    string 'UserDevice'
+    string 'UserDeviceType'
+    string 'UserCountry'
 end
 
-message 91, 'IOSSessionEnd'  do 
+message 91, 'IOSSessionEnd'  do
 	uint 'Timestamp'
 end
 
@@ -68,21 +55,15 @@ message 97, 'IOSCrash' do
     uint 'Length'
     string 'Name'
     string 'Reason'
-    string 'Stacktrace' 
+    string 'Stacktrace'
 end
 
-message 98, 'IOSScreenEnter' do
+message 98, 'IOSViewComponentEvent' do
     uint 'Timestamp'
     uint 'Length'
-    string 'Title'
+    string 'ScreenName'
     string 'ViewName'
-end
-
-message 99, 'IOSScreenLeave' do
-    uint 'Timestamp'
-    uint 'Length'
-    string 'Title'
-    string 'ViewName'
+    boolean 'Visible'
 end
 
 message 100, 'IOSClickEvent', :replayer => true do
@@ -93,7 +74,7 @@ message 100, 'IOSClickEvent', :replayer => true do
     uint 'Y'
 end
 
-message 101, 'IOSInputEvent' do
+message 101, 'IOSInputEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Value'
@@ -136,17 +117,33 @@ message 104, 'IOSInternalError' do
 end
 
 message 105, 'IOSNetworkCall', :replayer => true do
-  uint 'Timestamp'
-  uint 'Length'
-  uint 'Duration'
-  string 'Headers'
-  string 'Body'
-  string 'URL'
-  boolean 'Success'
-  string 'Method'
-  uint 'Status'
+    uint 'Timestamp'
+    uint 'Length'
+    string 'Type'
+    string 'Method'
+    string 'URL'
+    string 'Request'
+    string 'Response'
+    uint 'Status'
+    uint 'Duration'
 end
-message 110, 'IOSPerformanceAggregated', :swift => false do 
+
+message 106, 'IOSSwipeEvent', :replayer => true do
+    uint 'Timestamp'
+    uint 'Length'
+    string 'Label'
+    uint 'X'
+    uint 'Y'
+    string 'Direction'
+end
+
+message 107, 'IOSBatchMeta', :replayer => false  do
+    uint 'Timestamp'
+    uint 'Length'
+    uint 'FirstIndex'
+end
+
+message 110, 'IOSPerformanceAggregated', :swift => false do
   uint 'TimestampStart'
   uint 'TimestampEnd'
   uint 'MinFPS'

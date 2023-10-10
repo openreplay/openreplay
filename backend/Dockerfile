@@ -46,15 +46,19 @@ ENV TZ=UTC \
     REDIS_STREAMS_MAX_LEN=10000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \
+    TOPIC_RAW_IMAGES=raw-images \
     TOPIC_CACHE=cache \
     TOPIC_ANALYTICS=analytics \
     TOPIC_TRIGGER=trigger \
+    TOPIC_MOBILE_TRIGGER=mobile-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
     GROUP_ENDER=ender \
     GROUP_CACHE=cache \
     GROUP_HEURISTICS=heuristics \
+    GROUP_IMAGE_STORAGE=image-storage \
+    GROUP_VIDEO_STORAGE=video-storage \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
@@ -91,8 +95,11 @@ ENV TZ=UTC \
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
-  wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; fi
+      wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
+      wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
+    elif [ "$SERVICE_NAME" = "videostorage" ]; then \
+      apk add --no-cache ffmpeg; \
+    fi
 
 
 COPY --from=build /root/service /home/openreplay/service

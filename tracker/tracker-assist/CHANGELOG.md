@@ -1,4 +1,8 @@
-## 6.0.1 
+## 6.0.2
+
+- fix cursor position for remote control
+
+## 6.0.1
 
 - few small fixes for reconnects
 

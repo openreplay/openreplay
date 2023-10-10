@@ -26,7 +26,6 @@ type Connector interface {
 	InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
-	InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error
 	InsertWebErrorEvent(session *sessions.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
@@ -373,26 +372,6 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error {
-	if msg.Label == "" {
-		return nil
-	}
-	if err := c.batches["inputs"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
-		msg.Label,
-		"INPUT",
-		nil,
-		nil,
-	); err != nil {
-		c.checkError("inputs", err)
-		return fmt.Errorf("can't append to inputs batch: %s", err)
 	}
 	return nil
 }

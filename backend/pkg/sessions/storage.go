@@ -93,7 +93,7 @@ func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
 
 func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	sess := &Session{SessionID: sessionID}
-	var revID, userOSVersion, userBrowserVersion, userState, userCity *string
+	var revID, userOSVersion, userBrowser, userBrowserVersion, userState, userCity *string
 	var issueTypes pgtype.EnumArray
 	if err := s.db.QueryRow(`
 		SELECT platform,
@@ -117,13 +117,16 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 		&revID, &sess.TrackerVersion,
 		&sess.UserID, &sess.UserAnonymousID, &sess.Referrer,
 		&sess.PagesCount, &sess.EventsCount, &sess.ErrorsCount, &issueTypes,
-		&sess.UserBrowser, &userBrowserVersion, &sess.IssueScore,
+		&userBrowser, &userBrowserVersion, &sess.IssueScore,
 		&sess.Metadata1, &sess.Metadata2, &sess.Metadata3, &sess.Metadata4, &sess.Metadata5,
 		&sess.Metadata6, &sess.Metadata7, &sess.Metadata8, &sess.Metadata9, &sess.Metadata10); err != nil {
 		return nil, err
 	}
 	if userOSVersion != nil {
 		sess.UserOSVersion = *userOSVersion
+	}
+	if userBrowser != nil {
+		sess.UserBrowser = *userBrowser
 	}
 	if userBrowserVersion != nil {
 		sess.UserBrowserVersion = *userBrowserVersion
