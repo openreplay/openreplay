@@ -46,12 +46,12 @@ function WidgetPreview(props: Props) {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            metric.update({ hideMinorPaths: !metric.hideMinorPaths });
+                            metric.update({ hideExcess: !metric.hideExcess });
                           }}
                         >
                           <Space>
                             <Switch
-                              checked={metric.hideMinorPaths}
+                              checked={metric.hideExcess}
                               size="small"
                             />
                             <span className="mr-4 color-gray-medium">Hide Minor Paths</span>

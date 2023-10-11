@@ -18,7 +18,7 @@ function TopHeader() {
         position: 'sticky',
         top: 0,
         zIndex: 1,
-        padding: '0 15px',
+        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         height: '60px'
@@ -30,6 +30,7 @@ function TopHeader() {
           onClick={() => {
             settingsStore.updateMenuCollapsed(!settingsStore.menuCollapsed);
           }}
+          style={{ paddingTop: '4px' }}
           className='cursor-pointer'
         >
           <Icon name={settingsStore.menuCollapsed ? 'side_menu_closed' : 'side_menu_open'} size={20} />

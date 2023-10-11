@@ -70,7 +70,7 @@ export const categories: Category[] = [
     title: 'Assist',
     key: 'assist',
     items: [
-      { label: 'Live Sessions', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
+      { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
       { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true }
     ]
   },
@@ -112,7 +112,7 @@ export const preferences: Category[] = [
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
-      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'people' },
+      { label: 'Modules', key: PREFERENCES_MENU.MODULES, icon: 'puzzle' },
       { label: 'Projects', key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
       {
         label: 'Roles & Access',

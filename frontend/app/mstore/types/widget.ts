@@ -13,8 +13,9 @@ import Error from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
 import { filtersMap } from 'Types/filter/newFilter';
+import Issue from '../types/issue';
 
-export class InishtIssue {
+export class InsightIssue {
   icon: string;
   iconColor: string;
   change: number;
@@ -75,7 +76,7 @@ export default class Widget {
   sessions: [] = [];
   isPublic: boolean = true;
   owner: string = '';
-  lastModified: number = new Date().getTime();
+  lastModified: DateTime | null = new Date().getTime();
   dashboards: any[] = [];
   dashboardIds: any[] = [];
   config: any = {};
@@ -87,7 +88,7 @@ export default class Widget {
   // startPoint: FilterItem = filtersMap[FilterKey.LOCATION];
   startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
   excludes: FilterItem[] = [];
-  hideMinorPaths?: boolean = false;
+  hideExcess?: boolean = false;
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
@@ -207,10 +208,11 @@ export default class Widget {
     };
 
     if (this.metricType === USER_PATH) {
-      data.hideMinorPaths = this.hideMinorPaths;
+      data.hideExcess = this.hideExcess;
       data.startType = this.startType;
       data.startPoint = [this.startPoint.toJson()];
-      data.excludes = this.excludes.map((i) => i.toJson());
+      console.log('excludes', this.excludes);
+      data.excludes = this.series[0].filter.excludes.map((i: any) => i.toJson());
     }
     return data;
   }
@@ -245,7 +247,7 @@ export default class Widget {
         .filter((i: any) => i.change > 0 || i.change < 0)
         .map(
           (i: any) =>
-            new InishtIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
+            new InsightIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
         );
     } else if (this.metricType === FUNNEL) {
       _data.funnel = new Funnel().fromJSON(_data);
@@ -300,17 +302,30 @@ export default class Widget {
     });
   }
 
-  fetchIssues(filter: any): Promise<any> {
+
+  fetchIssues(card: any): Promise<any> {
     return new Promise((resolve) => {
-      metricService.fetchIssues(filter).then((response: any) => {
-        const significantIssues = response.issues.significant
-          ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue))
-          : [];
-        const insignificantIssues = response.issues.insignificant
-          ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue))
-          : [];
+      metricService.fetchIssues(card)
+        .then((response: any) => {
+          if (card.metricType === USER_PATH) {
+            resolve({
+              total: response.count,
+              issues: response.values.map((issue: any) => new Issue().fromJSON(issue))
+            });
+          } else {
+            const significantIssues = response.issues.significant
+              ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue))
+              : [];
+            const insignificantIssues = response.issues.insignificant
+              ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue))
+              : [];
+            resolve({
+              issues: significantIssues.length > 0 ? significantIssues : insignificantIssues
+            });
+          }
+        }).finally(() => {
         resolve({
-          issues: significantIssues.length > 0 ? significantIssues : insignificantIssues
+          issues: []
         });
       });
     });

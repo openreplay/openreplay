@@ -1,47 +1,73 @@
-import { active } from 'App/components/Alerts/alertItem.css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sankey, ResponsiveContainer } from 'recharts';
 import CustomLink from './CustomLink';
 import CustomNode from './CustomNode';
 import { NoContent } from 'UI';
 
-type Node = {
+interface Node {
   name: string;
-};
+  eventType: string;
+}
 
-type Link = {
+interface Link {
+  eventType: string;
+  value: number;
+  avgTimeFromPervious: number | null;
   source: number;
   target: number;
-  value: number;
-};
+}
 
-export interface SankeyChartData {
-  links: Link[];
+interface Data {
   nodes: Node[];
+  links: Link[];
 }
 
 interface Props {
-  data: SankeyChartData;
+  data: Data;
   nodePadding?: number;
   nodeWidth?: number;
+  onChartClick?: (data: any) => void;
 }
 
+
 function SankeyChart(props: Props) {
-  const { data, nodePadding = 50, nodeWidth = 10 } = props;
+  const { data, nodeWidth = 10 } = props;
   const [activeLink, setActiveLink] = React.useState<any>(null);
+
+  useEffect(() => {
+    if (!activeLink) return;
+    const { source, target } = activeLink.payload;
+    const filters = [];
+    if (source) {
+      filters.push({
+        operator: 'is',
+        type: source.eventType,
+        value: [source.name]
+      });
+    }
+
+    if (target) {
+      filters.push({
+        operator: 'is',
+        type: target.eventType,
+        value: [target.name]
+      });
+    }
+
+    props.onChartClick?.(filters);
+  }, [activeLink]);
 
   return (
     <NoContent show={!(data && data.nodes && data.nodes.length && data.links)}>
-      <ResponsiveContainer height={400} width='100%'>
+      <ResponsiveContainer height={500} width='100%'>
         <Sankey
-          width={960}
-          height={400}
           data={data}
-          // node={{ stroke: '#77c878', strokeWidth: 0 }}
           node={<CustomNode />}
-          nodePadding={nodePadding}
+          // nodePadding={10}
           nodeWidth={nodeWidth}
-          linkCurvature={0.5}
+          sort={false}
+          // linkCurvature={0.5}
+          // iterations={128}
           margin={{
             left: 0,
             right: 200,
