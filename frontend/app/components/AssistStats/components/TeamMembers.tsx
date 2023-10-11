@@ -1,5 +1,5 @@
 import { DownOutlined, TableOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Space, Typography } from 'antd';
+import { Button, Dropdown, Space, Typography, Tooltip } from 'antd';
 import { durationFromMsFormatted } from 'App/date';
 import { Member } from 'App/services/AssistStatsService';
 import { getInitials } from 'App/utils';
@@ -41,7 +41,6 @@ function TeamMembers({
   const updateRange = ({ key }: { key: string }) => {
     const item = items.find((item) => item.key === key);
     setDateRange(item?.label || items[0].label);
-    console.log(item.key)
     onMembersSort(item?.key || items[0].key);
   };
 
@@ -68,7 +67,7 @@ function TeamMembers({
   return (
     <div className={'rounded bg-white border p-2 h-full w-full flex flex-col'}>
       <div className={'flex items-center'}>
-        <Typography.Title style={{ marginBottom: 0 }} level={4}>
+        <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Team Members
         </Typography.Title>
         <div className={'ml-auto flex items-center gap-2'}>
@@ -80,7 +79,14 @@ function TeamMembers({
               </Space>
             </Button>
           </Dropdown>
-          <Button onClick={onExport} shape={'default'} size={'small'} icon={<TableOutlined rev={undefined} />} />
+          <Tooltip title={'Export CSV'}>
+            <Button
+              onClick={onExport}
+              shape={'default'}
+              size={'small'}
+              icon={<TableOutlined rev={undefined} />}
+            />
+          </Tooltip>
         </div>
       </div>
       <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
