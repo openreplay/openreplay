@@ -159,7 +159,7 @@ function WidgetForm(props: Props) {
                 options={[
                   { value: 'location', label: 'Pages' },
                   { value: 'click', label: 'Clicks' },
-                  { value: 'input', label: 'Input' },
+                  { value: 'input', label: 'Input' }
                   // { value: 'custom', label: 'Custom' },
                 ]}
                 defaultValue='pages'
@@ -221,6 +221,7 @@ function WidgetForm(props: Props) {
           <FilterItem
             hideDelete={true}
             filter={metric.startPoint}
+            allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
             onUpdate={(val) => {
               metric.updateStartPoint(val);
             }} onRemoveFilter={() => {

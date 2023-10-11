@@ -220,7 +220,6 @@ function WidgetChart(props: Props) {
     if (metricType === USER_PATH && data && data.links) {
       return <SankeyChart data={data} onChartClick={
         (filters: any) => {
-          console.log('filters', filters);
           dashboardStore.drillDownFilter.merge({ filters });
         }
       } />;

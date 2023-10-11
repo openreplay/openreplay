@@ -42,7 +42,8 @@ function SankeyChart(props: Props) {
       filters.push({
         operator: 'is',
         type: source.eventType,
-        value: [source.name]
+        value: [source.name],
+        isEvent: true
       });
     }
 
@@ -50,7 +51,8 @@ function SankeyChart(props: Props) {
       filters.push({
         operator: 'is',
         type: target.eventType,
-        value: [target.name]
+        value: [target.name],
+        isEvent: true
       });
     }
 
