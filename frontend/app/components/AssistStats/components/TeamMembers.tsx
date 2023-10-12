@@ -54,11 +54,11 @@ function TeamMembers({
     ];
 
     const data = topMembers.list.map((member) => ({
-      name: member.name,
-      sessionsAssisted: member.assistCount,
-      assistDuration: durationFromMsFormatted(member.assistDuration),
-      callDuration: durationFromMsFormatted(member.callDuration),
-      controlDuration: durationFromMsFormatted(member.controlDuration),
+      name: `"${member.name}"`,
+      sessionsAssisted: `"${member.assistCount}"`,
+      assistDuration: `"${durationFromMsFormatted(member.assistDuration)}"`,
+      callDuration: `"${durationFromMsFormatted(member.callDuration)}"`,
+      controlDuration: `"${durationFromMsFormatted(member.controlDuration)}"`,
     }));
 
     exportCSVFile(headers, data, `Team_Members_${new Date().toLocaleDateString()}`);
