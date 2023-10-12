@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Union
 
 from decouple import config
@@ -12,7 +13,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient, extra
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
-    print(">>> Using experimental error search")
+    logging.info(">>> Using experimental error search")
     from . import errors_exp as errors
 else:
     from . import errors as errors
@@ -22,6 +23,7 @@ if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
 else:
     from chalicelib.core import sessions
 
+logger = logging.getLogger(__name__)
 PIE_CHART_GROUP = 5
 
 
@@ -87,7 +89,7 @@ def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
 
 def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
-        print("empty series")
+        logger.debug("empty series")
         return {
             "total": 0,
             "sessions": []
@@ -106,11 +108,6 @@ def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, inclu
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
                                            include_mobs=include_mobs)
-
-
-# EE only
-def __is_insights(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.insights
 
 
 # EE only
@@ -317,7 +314,7 @@ def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel)
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
-        return {"data": []}
+        return {"data": {}}
     card_table = schemas.CardTable(
         startTimestamp=data.startTimestamp,
         endTimestamp=data.endTimestamp,
@@ -334,12 +331,12 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
             card_table.series[0].filter.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
                                                                                             operator=s.operator,
                                                                                             value=s.value))
-    for s in data.exclude:
+    for s in data.excludes:
         card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                                      operator=schemas.SearchEventOperator._not_on,
                                                                                      value=s.value))
-
-    return __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    return result[0] if len(result) > 0 else {}
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
@@ -361,8 +358,7 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "exclude": [e.model_dump() for e in data.exclude]}
-    print(r)
+         "exclude": [e.model_dump() for e in data.excludes]}
     return r
 
 
@@ -383,8 +379,8 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
                     try:
                         extra.tag_session(file_key=k, tag_value=tag)
                     except Exception as e:
-                        print(f"!!!Error while tagging: {k} to {tag} for clickMap")
-                        print(str(e))
+                        logger.warning(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                        logger.error(str(e))
                 session_data = json.dumps(session_data)
         _data = {"session_data": session_data}
         for i, s in enumerate(data.series):
@@ -596,8 +592,8 @@ def delete_card(project_id, metric_id, user_id):
                 try:
                     extra.tag_session(file_key=k, tag_value=tag)
                 except Exception as e:
-                    print(f"!!!Error while tagging: {k} to {tag} for clickMap")
-                    print(str(e))
+                    logger.warning(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                    logger.error(str(e))
     return {"state": "success"}
 
 

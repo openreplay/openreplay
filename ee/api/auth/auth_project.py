@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request
 from starlette import status
 from starlette.exceptions import HTTPException
@@ -5,6 +7,8 @@ from starlette.exceptions import HTTPException
 import schemas
 from chalicelib.core import projects
 from or_dependencies import OR_context
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectAuthorizer:
@@ -24,6 +28,6 @@ class ProjectAuthorizer:
                     and not projects.is_authorized(
                     project_id=projects.get_internal_project_id(value),
                     tenant_id=current_user.tenant_id, user_id=user_id)):
-            print("unauthorized project")
-            print(value)
+            logger.debug("unauthorized project")
+            logger.debug(value)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")

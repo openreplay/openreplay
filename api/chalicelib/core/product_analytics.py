@@ -8,38 +8,12 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import sql_helper as sh
 from time import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def __transform_journey2(rows, reverse_path=False):
-    # nodes should contain duplicates for different steps otherwise the UI crashes
-    nodes = []
-    nodes_values = []
-    links = []
-    for r in rows:
-        source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
-        if source not in nodes:
-            nodes.append(source)
-            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
-        if r['next_value']:
-            target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
-            if target not in nodes:
-                nodes.append(target)
-                nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
-            link = {"eventType": r['event_type'], "value": r["sessions_count"],
-                    "avgTimeToTarget": r["avg_time_to_target"]}
-            if not reverse_path:
-                link["source"] = nodes.index(source)
-                link["target"] = nodes.index(target)
-            else:
-                link["source"] = nodes.index(target)
-                link["target"] = nodes.index(source)
-            links.append(link)
-
-    return {"nodes": nodes_values,
-            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
-
-
-def __transform_journey3(rows, reverse_path=False):
+def __transform_journey(rows, reverse_path=False):
     total_100p = 0
     number_of_step1 = 0
     for r in rows:
@@ -48,10 +22,10 @@ def __transform_journey3(rows, reverse_path=False):
         number_of_step1 += 1
         total_100p += r["sessions_count"]
     for i in range(number_of_step1):
-        rows[i]["value"] = round(number=100 / number_of_step1, ndigits=2)
+        rows[i]["value"] = 100 / number_of_step1
 
     for i in range(number_of_step1, len(rows)):
-        rows[i]["value"] = round(number=rows[i]["sessions_count"] * 100 / total_100p, ndigits=2)
+        rows[i]["value"] = rows[i]["sessions_count"] * 100 / total_100p
 
     nodes = []
     nodes_values = []
@@ -400,20 +374,20 @@ WITH sub_sessions AS (SELECT session_id
 {"UNION ALL".join(projection_query)};"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
-                  "eventThresholdNumberInGroup": 6 if data.hide_excess else 8,
+                  "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
                   **extra_values}
         query = cur.mogrify(pg_query, params)
         _now = time()
 
         cur.execute(query)
         if time() - _now > 2:
-            print(f">>>>>>>>>PathAnalysis long query ({int(time() - _now)}s)<<<<<<<<<")
-            print("----------------------")
-            print(query)
-            print("----------------------")
+            logger.info(f">>>>>>>>>PathAnalysis long query ({int(time() - _now)}s)<<<<<<<<<")
+            logger.info("----------------------")
+            logger.info(query)
+            logger.info("----------------------")
         rows = cur.fetchall()
 
-    return __transform_journey3(rows=rows, reverse_path=reverse)
+    return __transform_journey(rows=rows, reverse_path=reverse)
 
 #
 # def __compute_weekly_percentage(rows):
