@@ -25,10 +25,50 @@ def __transform_journey2(rows, reverse_path=False):
             target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
             if target not in nodes:
                 nodes.append(target)
-                # TODO: remove this after UI supports long values
                 nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
             link = {"eventType": r['event_type'], "value": r["sessions_count"],
                     "avgTimeToTarget": r["avg_time_to_target"]}
+            if not reverse_path:
+                link["source"] = nodes.index(source)
+                link["target"] = nodes.index(target)
+            else:
+                link["source"] = nodes.index(target)
+                link["target"] = nodes.index(source)
+            links.append(link)
+
+    return {"nodes": nodes_values,
+            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
+
+
+def __transform_journey3(rows, reverse_path=False):
+    total_100p = 0
+    number_of_step1 = 0
+    for r in rows:
+        if r["event_number_in_session"] > 1:
+            break
+        number_of_step1 += 1
+        total_100p += r["sessions_count"]
+    for i in range(number_of_step1):
+        rows[i]["value"] = round(number=100 / number_of_step1, ndigits=2)
+
+    for i in range(number_of_step1, len(rows)):
+        rows[i]["value"] = round(number=rows[i]["sessions_count"] * 100 / total_100p, ndigits=2)
+
+    nodes = []
+    nodes_values = []
+    links = []
+    for r in rows:
+        source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
+        if source not in nodes:
+            nodes.append(source)
+            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
+        if r['next_value']:
+            target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
+            if target not in nodes:
+                nodes.append(target)
+                nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
+            link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],
+                    "value": r["value"], "avgTimeFromPrevious": r["avg_time_from_previous"]}
             if not reverse_path:
                 link["source"] = nodes.index(source)
                 link["target"] = nodes.index(target)
@@ -49,6 +89,9 @@ JOURNEY_TYPES = {
 }
 
 
+# query: Q3, the result is correct,
+# startPoints are computed before ranked_events to reduce the number of window functions over rows
+# replaced time_to_target by time_from_previous
 def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_conditions = []
@@ -80,7 +123,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                        + ")")
 
     exclusions = {}
-    for i, sf in enumerate(data.exclude):
+    for i, sf in enumerate(data.excludes):
         if sf.type in data.metric_value:
             f_k = f"exclude_{i}"
             extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
@@ -97,6 +140,9 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         is_undefined = sh.isUndefined_operator(f.operator)
         f_k = f"f_value_{i}"
         extra_values = {**extra_values, **sh.multi_values(f.value, value_key=f_k)}
+
+        if not is_any and len(f.value) == 0:
+            continue
 
         # ---- meta-filters
         if f.type == schemas.FilterType.user_browser:
@@ -274,23 +320,21 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             INNER JOIN events USING (session_id)"""
     if len(start_points_conditions) == 0:
         start_points_subquery = """SELECT DISTINCT session_id
-                        FROM (SELECT event_type, e_value
-                              FROM full_ranked_events
-                              WHERE event_number_in_session = 1
-                              GROUP BY event_type, e_value
-                              ORDER BY count(1) DESC
-                              LIMIT 2) AS top_start_events
-                                 INNER JOIN full_ranked_events
-                                            ON (top_start_events.event_type = full_ranked_events.event_type AND
-                                                top_start_events.e_value = full_ranked_events.e_value AND
-                                                full_ranked_events.event_number_in_session = 1 AND
-                                                isNotNull(next_value))"""
+                                   FROM (SELECT event_type, e_value
+                                         FROM pre_ranked_events
+                                         WHERE event_number_in_session = 1
+                                         GROUP BY event_type, e_value
+                                         ORDER BY count(1) DESC
+                                         LIMIT 1) AS top_start_events
+                                            INNER JOIN pre_ranked_events
+                                                       ON (top_start_events.event_type = pre_ranked_events.event_type AND
+                                                           top_start_events.e_value = pre_ranked_events.e_value)
+                                   WHERE pre_ranked_events.event_number_in_session = 1"""
     else:
         start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")",
-                                   "event_number_in_session = 1",
-                                   "isNotNull(next_value)"]
+                                   "event_number_in_session = 1"]
         start_points_subquery = f"""SELECT DISTINCT session_id
-                                    FROM full_ranked_events
+                                    FROM pre_ranked_events
                                     WHERE {" AND ".join(start_points_conditions)}"""
     del start_points_conditions
     if reverse:
@@ -298,7 +342,56 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     else:
         path_direction = ""
 
+    steps_query = ["""n1 AS (SELECT event_number_in_session,
+                                    event_type,
+                                    e_value,
+                                    next_type,
+                                    next_value,
+                                    time_from_previous,
+                                    count(1) AS sessions_count
+                             FROM ranked_events
+                             WHERE event_number_in_session = 1
+                               AND isNotNull(next_value)
+                             GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, time_from_previous
+                             LIMIT 5)"""]
+    projection_query = ["""SELECT event_number_in_session,
+                                  event_type,
+                                  e_value,
+                                  next_type,
+                                  next_value,
+                                  sessions_count,
+                                  avg(time_from_previous) AS avg_time_from_previous
+                           FROM n1
+                           GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count"""]
+    for i in range(2, data.density):
+        steps_query.append(f"""n{i} AS (SELECT *
+                                        FROM (SELECT re.event_number_in_session AS event_number_in_session,
+                                                     re.event_type AS event_type,
+                                                     re.e_value AS e_value,
+                                                     re.next_type AS next_type,
+                                                     re.next_value AS next_value,
+                                                     re.time_from_previous AS time_from_previous,
+                                                     count(1) AS sessions_count
+                                              FROM n{i - 1} INNER JOIN ranked_events AS re
+                                                    ON (n{i - 1}.next_value = re.e_value AND n{i - 1}.next_type = re.event_type)
+                                              WHERE re.event_number_in_session = {i}
+                                              GROUP BY re.event_number_in_session, re.event_type, re.e_value, re.next_type, re.next_value,
+                                                       re.time_from_previous) AS sub_level
+                                        ORDER BY sessions_count DESC
+                                        LIMIT %(eventThresholdNumberInGroup)s)""")
+        projection_query.append(f"""SELECT event_number_in_session,
+                                           event_type,
+                                           e_value,
+                                           next_type,
+                                           next_value,
+                                           sessions_count,
+                                           avg(time_from_previous) AS avg_time_from_previous
+                                    FROM n{i}
+                                    GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count""")
+
     with ch_client.ClickHouseClient(database="experimental") as ch:
+        time_key = TimeUTC.now()
+        _now = time()
         ch_query = f"""\
 WITH full_ranked_events AS (SELECT session_id,
                                    event_type,
@@ -342,19 +435,70 @@ FROM (SELECT *
 GROUP BY event_number_in_session, event_type, e_value, next_type, next_value, sessions_count
 ORDER BY event_number_in_session, e_value, next_value;"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
-                  "endTimestamp": data.endTimestamp,
-                  # **__get_constraint_values(args),
+                  "endTimestamp": data.endTimestamp, "density": data.density,
+                  "eventThresholdNumberInGroup": 6 if data.hide_excess else 8,
                   **extra_values}
 
-        _now = time()
-        rows = ch.execute(query=ch_query, params=params)
-        if time() - _now > 0:
+        ch_query1 = f"""\
+CREATE TEMPORARY TABLE pre_ranked_events_{time_key} AS
+WITH pre_ranked_events AS (SELECT *
+                           FROM (SELECT session_id,
+                                        event_type,
+                                        datetime,
+                                        {main_column} AS e_value,
+                                        row_number() OVER (PARTITION BY session_id 
+                                                           ORDER BY datetime {path_direction},
+                                                                    message_id {path_direction} ) AS event_number_in_session
+                                 FROM {main_table}
+                                 WHERE {" AND ".join(ch_sub_query)}
+                                 ) AS full_ranked_events
+                           WHERE event_number_in_session < 4)
+SELECT *
+FROM pre_ranked_events;"""
+        ch.execute(query=ch_query1, params=params)
+
+        ch_query2 = f"""\
+CREATE TEMPORARY TABLE ranked_events_{time_key} AS
+WITH pre_ranked_events AS (SELECT * 
+                       FROM pre_ranked_events_{time_key}),
+     start_points AS ({start_points_subquery}),
+     ranked_events AS (SELECT pre_ranked_events.*,
+                              leadInFrame(e_value)
+                                          OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
+                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
+                              leadInFrame(toNullable(event_type))
+                                          OVER (PARTITION BY session_id ORDER BY datetime {path_direction} 
+                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type,
+                              abs(lagInFrame(toNullable(datetime))
+                                              OVER (PARTITION BY session_id ORDER BY datetime {path_direction} 
+                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) 
+                                                - pre_ranked_events.datetime) AS time_from_previous
+                       FROM start_points INNER JOIN pre_ranked_events USING (session_id))
+SELECT *
+FROM ranked_events;"""
+        ch.execute(query=ch_query2, params=params)
+
+        ch_query3 = f"""\
+WITH ranked_events AS (SELECT * 
+                       FROM ranked_events_{time_key}), 
+    {",".join(steps_query)}
+SELECT *
+FROM ({" UNION ALL ".join(projection_query)}) AS chart_steps
+ORDER BY event_number_in_session;"""
+        rows = ch.execute(query=ch_query3, params=params)
+
+        if time() - _now > 2:
             print(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
             print("----------------------")
-            print(print(ch.format(ch_query, params)))
+            print("---------Q1-----------")
+            print(ch.format(ch_query1, params))
+            print("---------Q2-----------")
+            print(ch.format(ch_query2, params))
+            print("---------Q3-----------")
+            print(ch.format(ch_query3, params))
             print("----------------------")
 
-    return __transform_journey2(rows=rows, reverse_path=reverse)
+    return __transform_journey3(rows=rows, reverse_path=reverse)
 
 #
 # def __compute_weekly_percentage(rows):

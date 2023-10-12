@@ -1262,6 +1262,7 @@ class CardInsights(__CardSchema):
 
 # class CardPathAnalysisSchema(BaseModel):
 class CardPathAnalysisSchema(CardSessionsSchema):
+    name: Optional[str] = Field(default=None)
     filter: PathAnalysisSchema = Field(...)
     density: int = Field(default=4, ge=2, le=10)
 
