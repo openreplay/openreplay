@@ -18,8 +18,8 @@ export interface Module {
 
 export const modules = [
   {
-    label: 'Assist',
-    description: 'Record and replay user sessions to see a video of what users did on your website.',
+    label: 'Cobrowse',
+    description: 'Enable live session playing, interaction, screen sharing, and annotations over video call.',
     key: MODULES.ASSIST,
     icon: 'broadcast'
   },

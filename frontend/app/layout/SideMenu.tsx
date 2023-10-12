@@ -132,7 +132,7 @@ function SideMenu(props: Props) {
     <>
       <Menu
         defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
-        style={{ border: 'none', marginTop: '8px' }}
+        style={{ marginTop: '8px', border: 'none' }}
         inlineCollapsed={isCollapsed}
       >
         {isPreferencesActive && (
@@ -151,7 +151,7 @@ function SideMenu(props: Props) {
             {index > 0 && <Divider style={{ margin: '6px 0' }} />}
             <Menu.ItemGroup
               key={category.key}
-              title={category.title}
+              title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }} className={cn({ 'text-center' : isCollapsed })}>{category.title}</div>}
             >
               {category.items.filter((item: any) => !item.hidden).map((item: any) => {
                 const isActive = isMenuItemActive(item.key);
@@ -160,6 +160,7 @@ function SideMenu(props: Props) {
                     key={item.key}
                     title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
                     icon={<SVG name={item.icon} size={16} />}>
+                    {/*style={{ paddingLeft: '30px' }}*/}
                     {item.children.map((child: any) => <Menu.Item
                       className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
                       key={child.key}>{child.label}</Menu.Item>)}
@@ -168,7 +169,7 @@ function SideMenu(props: Props) {
                   <Menu.Item
                     key={item.key}
                     icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                    // style={{ color: '#333', height: '32px' }}
+                    style={{ paddingLeft: '20px' }}
                     className={cn('!rounded')}
                     itemIcon={item.leading ?
                       <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>

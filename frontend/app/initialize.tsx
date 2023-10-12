@@ -21,7 +21,6 @@ const customTheme: ThemeConfig = {
       bodyBg: colors['gray-lightest'],
       headerBg: colors['gray-lightest'],
       siderBg: colors['gray-lightest'],
-
     },
     Menu: {
       colorPrimary: colors.teal,

@@ -11270,10 +11270,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-equals@npm:^2.0.0":
-  version: 2.0.4
-  resolution: "fast-equals@npm:2.0.4"
-  checksum: 2867aa148c995e4ea921242ab605b157e5cbdc44793ebddf83684a5e6673be5016eb790ec4d8329317b92887e1108fb67ed3d4334529f2a7650c1338e6aa2c5f
+"fast-equals@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "fast-equals@npm:5.0.1"
+  checksum: d7077b8b681036c2840ed9860a3048e44fc268fad2b525b8f25b43458be0c8ad976152eb4b475de9617170423c5b802121ebb61ed6641c3ac035fadaf805c8c0
   languageName: node
   linkType: hard
 
@@ -17733,7 +17733,7 @@ __metadata:
     react-tippy: ^1.4.0
     react-toastify: ^9.1.1
     react-virtualized: ^9.22.3
-    recharts: ^2.1.13
+    recharts: ^2.8.0
     redux: ^4.0.5
     redux-immutable: ^4.0.0
     redux-thunk: ^2.3.0
@@ -20589,15 +20589,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resize-detector@npm:^7.1.2":
-  version: 7.1.2
-  resolution: "react-resize-detector@npm:7.1.2"
+"react-resize-detector@npm:^8.0.4":
+  version: 8.1.0
+  resolution: "react-resize-detector@npm:8.1.0"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 2285b0024bcc736c7d5e80279e819835a5e8bef0899778100d2434b1c4b10971e6ae253df073ca96a20cacc47b3c249bc675479e5fc4ec1f6652fcca7f48ec22
+  checksum: 2ae9927c6e53de460a1f216e008acd30d84d11297bbb2c38687206b998309dfc3928992141e2176a00af642ef8b1c7f56e97681cc7d1c3a4f389e29d46a443af
   languageName: node
   linkType: hard
 
@@ -20657,17 +20657,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-smooth@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "react-smooth@npm:2.0.1"
+"react-smooth@npm:^2.0.2":
+  version: 2.0.4
+  resolution: "react-smooth@npm:2.0.4"
   dependencies:
-    fast-equals: ^2.0.0
+    fast-equals: ^5.0.0
     react-transition-group: 2.9.0
   peerDependencies:
     prop-types: ^15.6.0
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 3227aecfb2c2783a53045e0b5931432fed3376c98893d1190c259ed4281182dc0b25f200f50b55733e01d9d6d1950641d1b5177d899277e3d4fe8264b6bddcc2
+  checksum: a67103136ef7f7378183dce3baecb28f1828ac71ce9901f1dfd92a4ec3a637014a7a6787f79552bb5cd2b779d27afd978d0f5eb33693b6a1210f774ab6e131cf
   languageName: node
   linkType: hard
 
@@ -20964,16 +20964,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recharts@npm:^2.1.13":
-  version: 2.3.2
-  resolution: "recharts@npm:2.3.2"
+"recharts@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "recharts@npm:2.8.0"
   dependencies:
     classnames: ^2.2.5
     eventemitter3: ^4.0.1
     lodash: ^4.17.19
     react-is: ^16.10.2
-    react-resize-detector: ^7.1.2
-    react-smooth: ^2.0.1
+    react-resize-detector: ^8.0.4
+    react-smooth: ^2.0.2
     recharts-scale: ^0.4.4
     reduce-css-calc: ^2.1.8
     victory-vendor: ^36.6.8
@@ -20981,7 +20981,7 @@ __metadata:
     prop-types: ^15.6.0
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 88e86118388df94c07dc9b39d4e0a0c47defb1a6348fdbc0e2ad457f1329e5fbc4525fbd67bb94485a7ef0e8b23320e4e9066640b18241b3e0fad80b5eabfd28
+  checksum: 9f78bdf67fd5394f472a37679d2f9c9194f1d572c5bc086caae578409fceb7bc87a4df07dd096820c103d2002d9714c8db838c99b2722950ab9edab38be2daf9
   languageName: node
   linkType: hard
 
