@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request
 from starlette import status
 from starlette.exceptions import HTTPException
@@ -5,6 +7,8 @@ from starlette.exceptions import HTTPException
 import schemas
 from chalicelib.core import projects
 from or_dependencies import OR_context
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectAuthorizer:
@@ -21,6 +25,6 @@ class ProjectAuthorizer:
                  or projects.get_project(project_id=value, tenant_id=current_user.tenant_id) is None)) \
                 or (self.project_identifier == "projectKey" \
                     and projects.get_internal_project_id(project_key=value) is None):
-            print("project not found")
-            print(value)
+            logger.debug("project not found")
+            logger.debug(value)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found.")

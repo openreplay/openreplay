@@ -118,7 +118,7 @@ def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(..
 # @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
 def try_card_issues(projectId: int, data: schemas.CardSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
+                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.get_issues(project_id=projectId, user_id=context.user_id, data=data)}
 
 
@@ -216,9 +216,9 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
 @app.post('/{projectId}/cards/{metric_id}/errors', tags=["dashboard"])
 # @app.post('/{projectId}/metrics/{metric_id}/errors', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/{metric_id}/errors', tags=["customMetrics"])
-def get_custom_metric_errors_list(projectId: int, metric_id: int,
-                                  data: schemas.CardSessionsSchema = Body(...),
-                                  context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_errors_list(projectId: int, metric_id: int,
+                         data: schemas.CardSessionsSchema = Body(...),
+                         context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id,
                                           metric_id=metric_id, data=data)
     if data is None:
@@ -241,8 +241,8 @@ def get_card_chart(projectId: int, metric_id: int, request: Request, data: schem
 # @app.put('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 # @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def update_custom_metric(projectId: int, metric_id: int, data: schemas.CardSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
+def update_card(projectId: int, metric_id: int, data: schemas.CardSchema = Body(...),
+                context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.update_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
@@ -254,9 +254,9 @@ def update_custom_metric(projectId: int, metric_id: int, data: schemas.CardSchem
 # @app.put('/{projectId}/metrics/{metric_id}/status', tags=["dashboard"])
 # @app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
 # @app.put('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
-def update_custom_metric_state(projectId: int, metric_id: int,
-                               data: schemas.UpdateCardStatusSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
+def update_card_state(projectId: int, metric_id: int,
+                      data: schemas.UpdateCardStatusSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": custom_metrics.change_state(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                             status=data.active)}
@@ -265,6 +265,6 @@ def update_custom_metric_state(projectId: int, metric_id: int,
 @app.delete('/{projectId}/cards/{metric_id}', tags=["dashboard"])
 # @app.delete('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 # @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def delete_custom_metric(projectId: int, metric_id: int, _=Body(None),
-                         context: schemas.CurrentContext = Depends(OR_context)):
+def delete_card(projectId: int, metric_id: int, _=Body(None),
+                context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.delete_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
