@@ -143,7 +143,7 @@ class UserTestManager {
 
   createDescriptionSection(description: string[]) {
     const section = createElement('div', 'description_section_or', descriptionWidgetStyle)
-    const titleContainer = createElement('div', 'descrtitle', descrtitleStyle)
+    const titleContainer = createElement('div', 'description_s_title_or', sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
     const icon = createElement('div', 'icon', symbolIcon, '-')
     const content = createElement('div', 'content', contentStyle)
@@ -176,7 +176,7 @@ class UserTestManager {
   createTasksSection(tasks: { title: string; description: string }[]) {
     let currentTaskIndex = 0
     const section = createElement('div', 'task_section_or', descriptionWidgetStyle)
-    const titleContainer = createElement('div', 'descrtitle_or', descrtitleStyle)
+    const titleContainer = createElement('div', 'description_t_title_or', sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Tasks')
     const icon = createElement('div', 'icon', symbolIcon, '-')
     const content = createElement('div', 'content', contentStyle)
@@ -391,7 +391,7 @@ const buttonStyle = {
   lineHeight: '1.5rem',
 }
 
-const descrtitleStyle = {
+const sectionTitleStyle = {
   fontFamily: 'Verdana, sans-serif',
   fontSize: '0.875rem',
   fontWeight: '500',
