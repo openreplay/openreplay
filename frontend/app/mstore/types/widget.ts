@@ -211,7 +211,6 @@ export default class Widget {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
       data.startPoint = [this.startPoint.toJson()];
-      console.log('excludes', this.excludes);
       data.excludes = this.series[0].filter.excludes.map((i: any) => i.toJson());
     }
     return data;
@@ -240,6 +239,13 @@ export default class Widget {
   setData(data: any, period: any) {
     const _data: any = { ...data };
 
+    if (this.metricType === USER_PATH) {
+      _data['links'] = data.links.map((s: any) => ({
+        ...s,
+        // value: Math.round(s.value),
+      }));
+      return _data;
+    }
     if (this.metricOf === FilterKey.ERRORS) {
       _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
     } else if (this.metricType === INSIGHTS) {

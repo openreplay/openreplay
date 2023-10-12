@@ -35,13 +35,6 @@ function SankeyChart(props: Props) {
   const { data, nodeWidth = 10, height = 240 } = props;
   const [activeLink, setActiveLink] = React.useState<any>(null);
 
-  data.nodes = data.nodes.map((node: any) => {
-    return {
-      ...node,
-      avgTimeFromPrevious: 200
-    };
-  });
-
   useEffect(() => {
     if (!activeLink) return;
     const { source, target } = activeLink.payload;
