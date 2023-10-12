@@ -7,12 +7,12 @@ import { NoContent } from 'UI';
 interface Node {
   name: string;
   eventType: string;
+  avgTimeFromPrevious: number | null;
 }
 
 interface Link {
   eventType: string;
   value: number;
-  avgTimeFromPervious: number | null;
   source: number;
   target: number;
 }
@@ -27,12 +27,20 @@ interface Props {
   nodePadding?: number;
   nodeWidth?: number;
   onChartClick?: (data: any) => void;
+  height?: number;
 }
 
 
 function SankeyChart(props: Props) {
-  const { data, nodeWidth = 10 } = props;
+  const { data, nodeWidth = 10, height = 240 } = props;
   const [activeLink, setActiveLink] = React.useState<any>(null);
+
+  data.nodes = data.nodes.map((node: any) => {
+    return {
+      ...node,
+      avgTimeFromPrevious: 200
+    };
+  });
 
   useEffect(() => {
     if (!activeLink) return;
@@ -61,11 +69,10 @@ function SankeyChart(props: Props) {
 
   return (
     <NoContent show={!(data && data.nodes && data.nodes.length && data.links)}>
-      <ResponsiveContainer height={500} width='100%'>
+      <ResponsiveContainer height={height} width='100%'>
         <Sankey
           data={data}
           node={<CustomNode />}
-          // nodePadding={10}
           nodeWidth={nodeWidth}
           sort={false}
           // linkCurvature={0.5}
@@ -73,7 +80,7 @@ function SankeyChart(props: Props) {
           margin={{
             left: 0,
             right: 200,
-            top: 40,
+            top: 0,
             bottom: 10
           }}
           link={<CustomLink onClick={(props: any) => setActiveLink(props)} activeLink={activeLink} />}
@@ -84,7 +91,6 @@ function SankeyChart(props: Props) {
               <stop offset='100%' stopColor='rgba(57, 78, 255, 0.2)' />
             </linearGradient>
           </defs>
-          {/* <Tooltip content={<CustomTooltip />} /> */}
         </Sankey>
       </ResponsiveContainer>
     </NoContent>

@@ -218,11 +218,12 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      return <SankeyChart data={data} onChartClick={
-        (filters: any) => {
+      return <SankeyChart
+        height={props.isPreview ? 500 : 240}
+        data={data}
+        onChartClick={(filters: any) => {
           dashboardStore.drillDownFilter.merge({ filters });
-        }
-      } />;
+        }} />;
     }
 
     if (metricType === RETENTION) {

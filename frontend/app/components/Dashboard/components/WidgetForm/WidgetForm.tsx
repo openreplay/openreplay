@@ -159,12 +159,12 @@ function WidgetForm(props: Props) {
                 options={[
                   { value: 'location', label: 'Pages' },
                   { value: 'click', label: 'Clicks' },
-                  { value: 'input', label: 'Input' }
-                  // { value: 'custom', label: 'Custom' },
+                  { value: 'input', label: 'Input' },
+                  { value: 'custom', label: 'Custom' },
                 ]}
-                defaultValue='pages'
-                // value={metric.metricValue}
+                defaultValue={metric.metricValue}
                 isMulti={true}
+                // value={metric.metricValue}
                 onChange={writeOption}
                 placeholder='All Issues'
               />

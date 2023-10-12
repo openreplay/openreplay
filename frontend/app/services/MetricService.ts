@@ -82,7 +82,7 @@ export default class MetricService {
     }
     const path = isWidget ? `/cards/${metric.metricId}/chart` : `/cards/try`;
     if (metric.metricType === USER_PATH) {
-      data.density = 6;
+      data.density = 4;
       data.metricOf = 'sessionCount';
     }
     try {

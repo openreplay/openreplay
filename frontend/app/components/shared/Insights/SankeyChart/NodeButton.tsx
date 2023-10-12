@@ -9,6 +9,7 @@ interface Props {
 function NodeButton(props: Props) {
   const { payload } = props;
   const [show, setShow] = React.useState(false);
+  console.log('payload', payload, props)
 
   const toggleMenu = (e: React.MouseEvent) => {
     setShow(!show);
@@ -35,7 +36,7 @@ function NodeButton(props: Props) {
               <Icon name='clock-history' size={16} />
             </div>
             <div className='ml-1 font-medium'>
-              Average time from previous step <span>{payload.avgTimeToTarget}</span>
+              Average time from previous step <span>{payload.avgTimeFromPrevious}</span>
             </div>
           </div>
         </div>
@@ -50,8 +51,8 @@ function NodeButton(props: Props) {
           }}
           onClick={toggleMenu}
         >
-          {payload.name} <span style={{ fontWeight: 'bold' }}>{payload.value + '%'}</span>{' '}
-          <span style={{}}>{payload.avgTimeFromPrevious}</span>
+          {payload.name} <span style={{ fontWeight: 'bold' }}>{payload.value + '%'}</span>
+          {/*{' '} <span style={{}}>{payload.avgTimeFromPrevious}</span>*/}
         </div>
       </Popover>
     </div>
