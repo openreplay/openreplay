@@ -18,6 +18,7 @@ interface Category {
   title: React.ReactNode;
   key: React.Key;
   items: MenuItem[];
+  hidden?: boolean;
 }
 
 export const enum PREFERENCES_MENU {
