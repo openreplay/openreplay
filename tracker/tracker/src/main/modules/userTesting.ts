@@ -485,6 +485,7 @@ const stopWidgetStyle = {
   marginTop: '2rem',
   cursor: 'pointer',
   display: 'block',
+  fontWeight: '500',
 }
 
 const paginationStyle = {
