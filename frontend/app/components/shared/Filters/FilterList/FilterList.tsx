@@ -45,7 +45,7 @@ function FilterList(props: Props) {
       {hasEvents && (
         <>
           <div className="flex items-center mb-2">
-            <div className="text-sm color-gray-medium mr-auto">EVENTS</div>
+            <div className="text-sm color-gray-medium mr-auto">{filter.eventsHeader}</div>
             {!hideEventsOrder && (
               <div className="flex items-center">
                 <div

@@ -19,7 +19,11 @@ import {
     CLICKMAP,
     FUNNEL,
     INSIGHTS,
+    USER_PATH,
+    RETENTION,
   } from 'App/constants/card';
+import CardIssues from '../CardIssues';
+import CardUserList from '../CardUserList/CardUserList';
 
 interface Props {
     history: any;
@@ -124,6 +128,9 @@ function WidgetView(props: Props) {
                             {widget.metricType === FUNNEL && <FunnelIssues />}
                         </>
                     )}
+
+                    {widget.metricType === USER_PATH && <CardIssues />}
+                    {widget.metricType === RETENTION && <CardUserList />}
                 </NoContent>
             </div>
         </Loader>

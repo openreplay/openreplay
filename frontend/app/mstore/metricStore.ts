@@ -12,7 +12,9 @@ import {
   PERFORMANCE,
   WEB_VITALS,
   INSIGHTS,
-  CLICKMAP
+  CLICKMAP,
+  USER_PATH,
+  RETENTION
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
@@ -109,8 +111,14 @@ export default class MetricStore {
       this.changeType(type);
     }
 
-    if (obj.hasOwnProperty('metricOf') && obj.metricOf !== this.instance.metricOf && (obj.metricOf === 'sessions' || obj.metricOf === 'jsErrors')) {
-      obj.viewType = 'table'
+    if (obj.hasOwnProperty('metricOf') && obj.metricOf !== this.instance.metricOf) {
+      if (obj.metricOf === 'sessions' || obj.metricOf === 'jsErrors') {
+        obj.viewType = 'table'
+      }
+
+      if (this.instance.metricType === USER_PATH) {
+        this.instance.series[0].filter.eventsHeader = obj.metricOf === 'start-point' ? 'START POINT' : 'END POINT';
+      }
     }
 
     // handle metricValue change
@@ -140,6 +148,9 @@ export default class MetricStore {
     if (value === TIMESERIES) {
       obj['viewType'] = 'lineChart';
     }
+    if (value === RETENTION) {
+      obj['viewType'] = 'cohort';
+    }
     if (
       value === ERRORS ||
       value === RESOURCE_MONITORING ||
@@ -156,9 +167,19 @@ export default class MetricStore {
       obj.series[0].filter.eventsOrderSupport = ['then']
     }
 
+    if (value === USER_PATH) {
+      obj.series[0].filter.eventsHeader = 'START POINT';
+    } else {
+      obj.series[0].filter.eventsHeader = 'EVENTS'
+    }
+
     if (value === INSIGHTS) {
       obj['metricOf'] = 'issueCategories';
       obj['viewType'] = 'list';
+    }
+
+    if (value === USER_PATH) {
+      // obj['startType'] = 'start';
     }
 
     if (value === CLICKMAP) {
@@ -174,6 +195,8 @@ export default class MetricStore {
         });
       }
     }
+
+    console.log('obj', obj);
     this.instance.update(obj);
   }
 
