@@ -44,22 +44,28 @@ function SideMenu(props: Props) {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
 
     return sourceMenu.map(category => {
+      const updatedItems = category.items.map(item => {
+        if (item.hidden) return item;
+
+        const isHidden = [
+          (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
+          (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST),
+          (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
+          (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
+          (item.isAdmin && !isAdmin),
+          (item.isEnterprise && !isEnterprise)
+        ].some(cond => cond);
+
+        return { ...item, hidden: isHidden };
+      });
+
+      // Check if all items are hidden in this category
+      const allItemsHidden = updatedItems.every(item => item.hidden);
+
       return {
         ...category,
-        items: category.items.map(item => {
-          if (item.hidden) return item; // Guard clause to early return if the item is already hidden.
-
-          const isHidden = [
-            (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
-            (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS) && modules.includes(MODULES.ASSIST),
-            (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
-            (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
-            (item.isAdmin && !isAdmin),
-            (item.isEnterprise && !isEnterprise)
-          ].some(cond => cond);
-
-          return { ...item, hidden: isHidden };
-        })
+        items: updatedItems,
+        hidden: allItemsHidden // Set the hidden flag for the category
       };
     });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules]);
@@ -148,36 +154,41 @@ function SideMenu(props: Props) {
         )}
         {menu.map((category, index) => (
           <React.Fragment key={category.key}>
-            {index > 0 && <Divider style={{ margin: '6px 0' }} />}
-            <Menu.ItemGroup
-              key={category.key}
-              title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }} className={cn({ 'text-center' : isCollapsed })}>{category.title}</div>}
-            >
-              {category.items.filter((item: any) => !item.hidden).map((item: any) => {
-                const isActive = isMenuItemActive(item.key);
-                return item.children ? (
-                  <Menu.SubMenu
-                    key={item.key}
-                    title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
-                    icon={<SVG name={item.icon} size={16} />}>
-                    {/*style={{ paddingLeft: '30px' }}*/}
-                    {item.children.map((child: any) => <Menu.Item
-                      className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
-                      key={child.key}>{child.label}</Menu.Item>)}
-                  </Menu.SubMenu>
-                ) : (
-                  <Menu.Item
-                    key={item.key}
-                    icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                    style={{ paddingLeft: '20px' }}
-                    className={cn('!rounded')}
-                    itemIcon={item.leading ?
-                      <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
-                    {item.label}
-                  </Menu.Item>
-                );
-              })}
-            </Menu.ItemGroup>
+            {!category.hidden && (
+              <>
+                {index > 0 && <Divider style={{ margin: '6px 0' }} />}
+                <Menu.ItemGroup
+                  key={category.key}
+                  title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }}
+                              className={cn({ 'text-center': isCollapsed })}>{category.title}</div>}
+                >
+                  {category.items.filter((item: any) => !item.hidden).map((item: any) => {
+                    const isActive = isMenuItemActive(item.key);
+                    return item.children ? (
+                      <Menu.SubMenu
+                        key={item.key}
+                        title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
+                        icon={<SVG name={item.icon} size={16} />}>
+                        {/*style={{ paddingLeft: '30px' }}*/}
+                        {item.children.map((child: any) => <Menu.Item
+                          className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
+                          key={child.key}>{child.label}</Menu.Item>)}
+                      </Menu.SubMenu>
+                    ) : (
+                      <Menu.Item
+                        key={item.key}
+                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                        style={{ paddingLeft: '20px' }}
+                        className={cn('!rounded')}
+                        itemIcon={item.leading ?
+                          <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
+                        {item.label}
+                      </Menu.Item>
+                    );
+                  })}
+                </Menu.ItemGroup>
+              </>
+            )}
           </React.Fragment>
         ))}
       </Menu>

@@ -5,9 +5,11 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { connect } from 'react-redux';
 import { userService } from 'App/services';
 import { toast } from 'react-toastify';
+import { updateModule } from 'Duck/user';
 
 interface Props {
   modules: string[];
+  updateModule: (moduleKey: string) => void;
 }
 
 function Modules(props: Props) {
@@ -24,6 +26,7 @@ function Modules(props: Props) {
         status: isEnabled
       });
       toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
+      props.updateModule(module.key);
     } catch (err) {
       toast.error(`Failed to ${module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
       module.isEnabled = !module.isEnabled;
@@ -63,4 +66,4 @@ function Modules(props: Props) {
 
 export default withPageTitle('Modules - OpenReplay Preferences')(connect((state: any) => ({
   modules: state.getIn(['user', 'account', 'settings', 'modules']) || []
-}))(Modules));
+}), { updateModule })(Modules));
