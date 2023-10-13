@@ -10,7 +10,7 @@ type Callback<T> = (o: T) => void
 /**
  * Virtual Node base class.
  * Implements common abstract methods and lazy node creation logic.
- * 
+ *
  * @privateRemarks
  * Would be better to export type-only, but didn't find a nice way to do that.
  */
@@ -19,7 +19,7 @@ export abstract class VNode<T extends Node = Node> {
 	private _node: T | null
 	/**
 	 * JS DOM Node getter with lazy node creation
-	 * 
+	 *
 	 * @returns underneath JS DOM Node
 	 * @remarks should not be called unless the real node is required since creation might be expensive
 	 * 	It is better to use `onNode` callback applicator unless in the `applyChanges` implementation
@@ -102,11 +102,13 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		/* Removing in-between */
 		const node = this.node
 		const realChildren = node.childNodes
-		for(let j = 0; j < this.children.length; j++) {
-			while (realChildren[j] !== this.children[j].node) {
-				if (isNode(realChildren[j])) {
-					node.removeChild(realChildren[j])
-				}
+    if (realChildren.length > 0 && this.children.length > 0) {
+		  for(let j = 0; j < this.children.length; j++) {
+        while (realChildren[j] !== this.children[j].node) {
+          if (isNode(realChildren[j])) {
+            node.removeChild(realChildren[j])
+          }
+        }
 			}
 		}
 		/* Removing tail */
@@ -182,7 +184,7 @@ export class VElement extends VParent<Element> {
 	}
 
 	/** Insertion Prioritization
-	 * Made for styles that should be inserted as prior, 
+	 * Made for styles that should be inserted as prior,
 	 * otherwise it will show visual styling lag if there is a transition CSS property)
 	 */
 	prioritized = false
@@ -307,7 +309,7 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
 export type StyleElement = HTMLStyleElement | SVGStyleElement
 
 /**
- * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls 
+ * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls
  * and then applies them when the sheet is ready
  */
 export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
@@ -324,7 +326,7 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
 		}))
 	}
 	static fromVRootContext(vRoot: OnloadVRoot) {
-		return new OnloadStyleSheet(new Promise((resolve, reject) => 
+		return new OnloadStyleSheet(new Promise((resolve, reject) =>
 			vRoot.onNode(node => {
 				let context: typeof globalThis | null
 				if (isRootNode(node)) {
