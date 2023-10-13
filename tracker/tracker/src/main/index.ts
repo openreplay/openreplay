@@ -28,6 +28,8 @@ import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
+import UserTestManager from './modules/userTesting/index.js'
+
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
 import type { Options as AppOptions } from './app/index.js'
@@ -95,6 +97,8 @@ function processOptions(obj: any): obj is Options {
 
 export default class API {
   public featureFlags: FeatureFlags
+  private readonly userTestManager = new UserTestManager()
+
   private readonly app: App | null = null
 
   constructor(private readonly options: Options) {
@@ -372,5 +376,9 @@ export default class API {
         this.app.send(msg)
       }
     }
+  }
+
+  createTestingWidget() {
+    this.userTestManager.createGreeting('Test name goes here,', false, false)
   }
 }
