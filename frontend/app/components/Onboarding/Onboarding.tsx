@@ -40,7 +40,7 @@ const Onboarding = (props: Props) => {
       <div className="side-menu-margined w-full">
         <div
           className="bg-white w-full rounded-lg mx-auto mb-8 border"
-          style={{ maxWidth: '1300px' }}
+          style={{ maxWidth: '1360px' }}
         >
           <Switch>
             <Route exact strict path={route(OB_TABS.INSTALLING)} component={InstallOpenReplayTab} />
