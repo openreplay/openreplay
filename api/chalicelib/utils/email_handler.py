@@ -10,9 +10,7 @@ from decouple import config
 
 from chalicelib.utils import smtp
 
-loglevel = config("LOGLEVEL", default=logging.INFO)
-print(f">Loglevel set to: {loglevel}")
-logging.basicConfig(level=loglevel)
+logger = logging.getLogger(__name__)
 
 
 def __get_subject(subject):

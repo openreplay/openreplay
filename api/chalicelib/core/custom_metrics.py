@@ -314,8 +314,11 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                                      operator=schemas.SearchEventOperator._not_on,
                                                                                      value=s.value))
-    result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
-    return result[0] if len(result) > 0 else {}
+    # result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    result = sessions.search_table_of_individual_issues(project_id=project_id,
+                                                        metric_value=card_table.metric_value,
+                                                        data=card_table)
+    return result
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
