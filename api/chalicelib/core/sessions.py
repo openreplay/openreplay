@@ -24,6 +24,7 @@ s.errors_count,
 s.user_anonymous_id,
 s.platform,
 s.issue_score,
+s.timezone,
 to_jsonb(s.issue_types) AS issue_types,
 favorite_sessions.session_id NOTNULL            AS favorite,
 COALESCE((SELECT TRUE
