@@ -7,8 +7,7 @@ import psycopg2.extras
 from decouple import config
 from psycopg2 import pool
 
-logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
-logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
+logger = logging.getLogger(__name__)
 
 _PG_CONFIG = {"host": config("pg_host"),
               "database": config("pg_dbname"),
@@ -41,8 +40,8 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
             self._semaphore.release()
         except psycopg2.pool.PoolError as e:
             if str(e) == "trying to put unkeyed connection":
-                print("!!! trying to put unkeyed connection")
-                print(f"env-PG_POOL:{config('PG_POOL', default=None)}")
+                logger.warning("!!! trying to put unkeyed connection")
+                logger.warning(f"env-PG_POOL:{config('PG_POOL', default=None)}")
                 return
             raise e
 

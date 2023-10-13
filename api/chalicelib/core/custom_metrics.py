@@ -1,5 +1,6 @@
 import json
-from typing import Union, List
+import logging
+from typing import Union
 
 from decouple import config
 from fastapi import HTTPException, status
@@ -10,6 +11,7 @@ from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient
 
+logger = logging.getLogger(__name__)
 PIE_CHART_GROUP = 5
 
 
@@ -75,7 +77,7 @@ def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
 
 def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
-        print("empty series")
+        logger.debug("empty series")
         return {
             "total": 0,
             "sessions": []
@@ -312,8 +314,11 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                                      operator=schemas.SearchEventOperator._not_on,
                                                                                      value=s.value))
-    result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
-    return result[0] if len(result) > 0 else {}
+    # result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
+    result = sessions.search_table_of_individual_issues(project_id=project_id,
+                                                        metric_value=card_table.metric_value,
+                                                        data=card_table)
+    return result
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
@@ -336,7 +341,6 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
          "exclude": [e.model_dump() for e in data.excludes]}
-    print(r)
     return r
 
 

@@ -2,6 +2,9 @@ from functools import wraps
 from time import time
 import inspect
 from chalicelib.utils import helper
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def timed(f):
@@ -13,7 +16,7 @@ def timed(f):
         result = f(*args, **kwds)
         elapsed = time() - start
         if inspect.stack()[1][3] == "_view_func":
-            print("DEBUG: %s: took %d s to finish" % (f.__name__, elapsed))
+            logging.debug("%s: took %d s to finish" % (f.__name__, elapsed))
         else:
             call_stack = [i[3] for i in inspect.stack()[1:] if i[3] != "wrapper"]
             call_stack = [c for c in call_stack if
@@ -22,7 +25,7 @@ def timed(f):
                                     '_bootstrap', '_main_rest_api_handler', '_user_handler',
                                     '_get_view_function_response', 'wrapped_event', 'handle_one_request',
                                     '_global_error_handler', 'openreplay_middleware']]
-            print("DEBUG: %s > %s took %d s to finish" % (" > ".join(call_stack), f.__name__, elapsed))
+            logger.debug("%s > %s took %d s to finish" % (" > ".join(call_stack), f.__name__, elapsed))
         return result
 
     return wrapper
