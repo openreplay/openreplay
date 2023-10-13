@@ -1,6 +1,10 @@
 import { insertRule, deleteRule } from './safeCSSRules';
 import { isRootNode } from 'App/player/guards'
 
+function isNode(sth: any): sth is Node {
+	return !!sth && sth.nodeType != null
+}
+
 type Callback<T> = (o: T) => void
 
 /**
@@ -100,7 +104,9 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		const realChildren = node.childNodes
 		for(let j = 0; j < this.children.length; j++) {
 			while (realChildren[j] !== this.children[j].node) {
-				node.removeChild(realChildren[j])
+				if (isNode(realChildren[j])) {
+					node.removeChild(realChildren[j])
+				}
 			}
 		}
 		/* Removing tail */
