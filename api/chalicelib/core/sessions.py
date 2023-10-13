@@ -1,9 +1,12 @@
+import logging
 from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, sessions_favorite
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
+
+logger = logging.getLogger(__name__)
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
@@ -121,17 +124,17 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
-        # print("--------------------")
-        # print(main_query)
-        # print("--------------------")
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
         try:
             cur.execute(main_query)
         except Exception as err:
-            print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            print(main_query.decode('UTF-8'))
-            print("--------- PAYLOAD -----------")
-            print(data.model_dump_json())
-            print("--------------------")
+            logging.warning("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
+            logging.warning(main_query.decode('UTF-8'))
+            logging.warning("--------- PAYLOAD -----------")
+            logging.warning(data.model_dump_json())
+            logging.warning("--------------------")
             raise err
         if errors_only or ids_only:
             return helper.list_to_camel_case(cur.fetchall())
@@ -197,24 +200,23 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
 
-            # print("--------------------")
-            # print(main_query)
-            # print("--------------------")
+            logging.debug("--------------------")
+            logging.debug(main_query)
+            logging.debug("--------------------")
             try:
                 cur.execute(main_query)
             except Exception as err:
-                print("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
-                print(main_query.decode('UTF-8'))
-                print("--------- PAYLOAD -----------")
-                print(data.model_dump_json())
-                print("--------------------")
+                logging.warning("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
+                logging.warning(main_query.decode('UTF-8'))
+                logging.warning("--------- PAYLOAD -----------")
+                logging.warning(data.model_dump_json())
+                logging.warning("--------------------")
                 raise err
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 sessions = cur.fetchall()
             else:
                 sessions = cur.fetchone()["count"]
         elif metric_type == schemas.MetricType.table:
-            print(">>>>>>>>>>>>>TABLE")
             if isinstance(metric_of, schemas.MetricOfTable):
                 main_col = "user_id"
                 extra_col = ""
@@ -260,9 +262,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                             GROUP BY {main_col}
                                                             ORDER BY session_count DESC) AS users_sessions;""",
                                          full_args)
-            # print("--------------------")
-            # print(main_query)
-            # print("--------------------")
+            logging.debug("--------------------")
+            logging.debug(main_query)
+            logging.debug("--------------------")
             cur.execute(main_query)
             sessions = helper.dict_to_camel_case(cur.fetchone())
             for s in sessions["values"]:
@@ -331,14 +333,54 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                         GROUP BY {main_col}
                                                         ORDER BY session_count DESC) AS users_sessions;""",
                                      full_args)
-        # print("--------------------")
-        # print(main_query)
-        # print("--------------------")
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
         cur.execute(main_query)
         sessions = helper.dict_to_camel_case(cur.fetchone())
         for s in sessions["values"]:
             s.pop("rn")
-        # sessions["values"] = helper.list_to_camel_case(sessions["values"])
+
+        return sessions
+
+
+def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int,
+                                      metric_value: List):
+    if len(metric_value) > 0:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
+                                                              operator=schemas.SearchEventOperator._is))
+    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+                                               favorite_only=False, issue=None, project_id=project_id,
+                                               user_id=None)
+
+    with pg_client.PostgresClient() as cur:
+        full_args["issues_limit"] = data.limit
+        full_args["issues_limit_s"] = (data.page - 1) * data.limit
+        full_args["issues_limit_e"] = data.page * data.limit
+        main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
+                                            COALESCE(SUM(session_count), 0) AS total_sessions,
+                                            COALESCE(JSONB_AGG(ranked_issues) 
+                                                FILTER ( WHERE rn>= %(issues_limit_s)s 
+                                                            AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
+                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
+                                            FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS session_count
+                                                  FROM (SELECT session_id
+                                                        {query_part}) AS filtered_sessions
+                                                     INNER JOIN events_common.issues USING (session_id)
+                                                     INNER JOIN public.issues USING (issue_id)
+                                                  WHERE project_id = %(project_id)s
+                                                    AND timestamp >= %(startDate)s
+                                                    AND timestamp <= %(endDate)s
+                                                  GROUP BY type, context_string
+                                                  ORDER BY session_count DESC) AS filtered_issues
+                                            ) AS ranked_issues;""", full_args)
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
+        cur.execute(main_query)
+        sessions = helper.dict_to_camel_case(cur.fetchone())
+        for s in sessions["values"]:
+            s.pop("rn")
 
         return sessions
 
@@ -843,7 +885,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                                 value_key=e_k_f))
                         apply = True
                     else:
-                        print(f"undefined FETCH filter: {f.type}")
+                        logging.warning(f"undefined FETCH filter: {f.type}")
                 if not apply:
                     continue
             elif event_type == schemas.EventType.graphql:
@@ -870,7 +912,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         event_where.append(
                             sh.multi_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     else:
-                        print(f"undefined GRAPHQL filter: {f.type}")
+                        logging.warning(f"undefined GRAPHQL filter: {f.type}")
             else:
                 continue
             if event_index == 0 or or_events:

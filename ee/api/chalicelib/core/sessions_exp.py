@@ -4,7 +4,9 @@ from typing import List, Union
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
+import logging
 
+logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
 s.project_id,
 s.session_id AS session_id,
@@ -79,17 +81,6 @@ def __reverse_sql_operator(op):
     return "=" if op == "!=" else "!=" if op == "=" else "ILIKE" if op == "NOT ILIKE" else "NOT ILIKE"
 
 
-def __get_sql_operator_multiple(op: schemas.SearchEventOperator):
-    return " IN " if op not in [schemas.SearchEventOperator._is_not, schemas.SearchEventOperator._not_on,
-                                schemas.SearchEventOperator._not_contains] else " NOT IN "
-
-
-def __get_sql_value_multiple(values):
-    if isinstance(values, tuple):
-        return values
-    return tuple(values) if isinstance(values, list) else (values,)
-
-
 def _multiple_conditions(condition, values, value_key="value", is_not=False):
     query = []
     for i in range(len(values)):
@@ -135,9 +126,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     meta_keys = []
     with ch_client.ClickHouseClient() as cur:
         if errors_only:
-            # print("--------------------QP")
-            # print(cur.format(query_part, full_args))
-            # print("--------------------")
+            logging.debug("--------------------QP")
+            logging.debug(cur.format(query_part, full_args))
+            logging.debug("--------------------")
             main_query = cur.format(f"""SELECT DISTINCT er.error_id,
                                         COALESCE((SELECT TRUE
                                                  FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
@@ -214,28 +205,24 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                         ORDER BY sort_key {data.order}
                                         LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
                                     full_args)
-        # print("--------------------")
-        # print(main_query)
-        # print("--------------------")
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
         try:
             sessions = cur.execute(main_query)
         except Exception as err:
-            print("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
-            print(main_query)
-            print("--------- PAYLOAD -----------")
-            print(data.json())
-            print("--------------------")
+            logging.warning("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
+            logging.warning(main_query)
+            logging.warning("--------- PAYLOAD -----------")
+            logging.warning(data.json())
+            logging.warning("--------------------")
             raise err
         if errors_only or ids_only:
             return helper.list_to_camel_case(sessions)
 
         if len(sessions) > 0:
             sessions = sessions[0]
-        # if count_only:
-        #     return helper.dict_to_camel_case(sessions)
-        # for s in sessions:
-        #     print(s)
-        #     s["session_id"] = str(s["session_id"])
+
         total = sessions["count"]
         sessions = sessions["sessions"]
 
@@ -296,9 +283,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 main_query = cur.format(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
 
-            # print("--------------------")
-            # print(main_query)
-            # print("--------------------")
+            logging.debug("--------------------")
+            logging.debug(main_query)
+            logging.debug("--------------------")
             sessions = cur.execute(main_query)
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
@@ -348,9 +335,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                             ORDER BY session_count DESC
                                             LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
                                         full_args)
-            print("--------------------")
-            print(main_query)
-            print("--------------------")
+            logging.debug("--------------------")
+            logging.debug(main_query)
+            logging.debug("--------------------")
             sessions = cur.execute(main_query)
             # cur.fetchone()
             count = 0
@@ -1037,7 +1024,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     else:
-                        print(f"undefined FETCH filter: {f.type}")
+                        logging.warning(f"undefined FETCH filter: {f.type}")
                 if not apply:
                     continue
                 else:
@@ -1074,7 +1061,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     else:
-                        print(f"undefined GRAPHQL filter: {f.type}")
+                        logging.warning(f"undefined GRAPHQL filter: {f.type}")
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             else:
                 continue
@@ -1426,12 +1413,6 @@ def get_session_user(project_id, user_id):
         cur.execute(query=query)
         data = cur.fetchone()
     return helper.dict_to_camel_case(data)
-
-
-def count_all():
-    with ch_client.ClickHouseClient() as cur:
-        row = cur.execute(query=f"SELECT COUNT(session_id) AS count FROM {exp_ch_helper.get_main_sessions_table()}")
-    return row.get("count", 0)
 
 
 def session_exists(project_id, session_id):
