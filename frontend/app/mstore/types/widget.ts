@@ -191,6 +191,8 @@ export default class Widget {
       name: this.name,
       series: this.series.map((series: any) => series.toJson()),
       thumbnail: this.thumbnail,
+      page: this.page,
+      limit: this.limit,
       config: {
         ...this.config,
         col:

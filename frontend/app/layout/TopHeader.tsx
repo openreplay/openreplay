@@ -6,6 +6,7 @@ import { Layout, Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
+import { INDEXES } from 'App/constants/zindex';
 
 const { Header } = Layout;
 
@@ -17,7 +18,7 @@ function TopHeader() {
       style={{
         position: 'sticky',
         top: 0,
-        zIndex: 1,
+        zIndex: INDEXES.HEADER,
         padding: '0 20px',
         display: 'flex',
         alignItems: 'center',

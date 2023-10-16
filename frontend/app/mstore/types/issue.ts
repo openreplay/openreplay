@@ -21,6 +21,7 @@ export default class Issue {
   sessionCount: number = 0;
   icon: string = '';
   source: string = '';
+  color: string = '';
 
   constructor() {
     this.type = '';
@@ -28,6 +29,7 @@ export default class Issue {
     this.sessionCount = 0;
     this.icon = '';
     this.source = '';
+    this.color = '';
   }
 
   fromJSON(json: any) {
@@ -35,7 +37,8 @@ export default class Issue {
     this.name = ISSUE_MAP[json.name].name || '';
     this.sessionCount = json.sessionCount;
     this.icon = ISSUE_MAP[json.name].icon || '';
-    this.source = json.source;
+    this.source = json.value || json.source || '';
+    this.color = ISSUE_MAP[json.name].color || '';
     return this;
   }
 }
