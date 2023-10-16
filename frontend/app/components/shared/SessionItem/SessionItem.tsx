@@ -73,7 +73,7 @@ interface Props {
 
 function SessionItem(props: RouteComponentProps & Props) {
   const { settingsStore } = useStore();
-  const { timezone } = settingsStore.sessionSettings;
+  const { timezone, shownTimezone } = settingsStore.sessionSettings;
 
   const {
     session,
@@ -210,7 +210,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                           User's Time:{' '}
                           {formatTimeOrDate(
                             startedAt,
-                            { label: userTimezone.split('+').join(' +'), value: userTimezone.split(':')[0] },
+                            {
+                              label: userTimezone.split('+').join(' +'),
+                              value: userTimezone.split(':')[0],
+                            },
                             true
                           )}{' '}
                           {userTimezone}
@@ -221,7 +224,15 @@ function SessionItem(props: RouteComponentProps & Props) {
                   className="w-fit !block"
                 >
                   <TextEllipsis
-                    text={formatTimeOrDate(startedAt, timezone)}
+                    text={formatTimeOrDate(
+                      startedAt,
+                      shownTimezone === 'user' && userTimezone
+                        ? {
+                            label: userTimezone.split('+').join(' +'),
+                            value: userTimezone.split(':')[0],
+                          }
+                        : timezone
+                    )}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
                 </Tooltip>
