@@ -1,3 +1,5 @@
+import App from '../../app/index.js'
+
 export const Quality = {
   Standard: { width: 1280, height: 720 },
   High: { width: 1920, height: 1080 },
@@ -7,8 +9,13 @@ export default class Recorder {
   private mediaRecorder: MediaRecorder | null = null
   private recordedChunks: Blob[] = []
   private stream: MediaStream | null = null
+  private recStartTs: number | null = null
+
+  constructor(private readonly app: App) {}
 
   async startRecording(fps: number, quality: (typeof Quality)[keyof typeof Quality]) {
+    this.recStartTs = this.app.timestamp()
+
     const videoConstraints: MediaTrackConstraints = quality
 
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -50,6 +57,7 @@ export default class Recorder {
     const blob = await this.stopRecording()
     const formData = new FormData()
     formData.append('file', blob, 'record.webm')
+    formData.append('start', this.recStartTs?.toString() ?? '')
 
     fetch('https://testapi.com/save-file', {
       method: 'POST',
@@ -70,7 +78,6 @@ export default class Recorder {
     document.body.appendChild(a)
     a.click()
 
-    // Cleanup
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
   }
