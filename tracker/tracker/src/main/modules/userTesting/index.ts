@@ -24,6 +24,7 @@ import {
   taskButtonBorderedStyle,
   taskButtonsRow,
 } from './styles.js'
+import Recorder, { Quality } from './recorder.js'
 
 function createElement(tag: string, className: string, styles: any, textContent?: string) {
   const element = document.createElement(tag)
@@ -36,6 +37,7 @@ function createElement(tag: string, className: string, styles: any, textContent?
 }
 
 export default class UserTestManager {
+  private readonly userRecorder = new Recorder()
   private readonly bg = createElement('div', 'bg', bgStyle)
   private readonly container = createElement('div', 'container', containerStyle)
   private widgetGuidelinesVisible = true
@@ -68,6 +70,7 @@ export default class UserTestManager {
 
     buttonElement.onclick = () => {
       this.container.innerHTML = ''
+      void this.userRecorder.startRecording(30, Quality.Standard)
       this.showWidget(
         [
           'Please be honest and open with your feedback. We want to hear your thoughts, both positive and negative, about your experience using Product Name.',
@@ -124,6 +127,7 @@ export default class UserTestManager {
     this.descriptionSection = descriptionSection
     this.stopButton = stopButton
     stopButton.onclick = () => {
+      this.userRecorder.discard()
       document.body.removeChild(this.bg)
     }
     this.hideTaskSection()
@@ -208,7 +212,12 @@ export default class UserTestManager {
     return section
   }
 
-  createTasksSection(tasks: { title: string; description: string }[]) {
+  createTasksSection(
+    tasks: {
+      title: string
+      description: string
+    }[],
+  ) {
     let currentTaskIndex = 0
     const section = createElement('div', 'task_section_or', descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_t_title_or', sectionTitleStyle)
@@ -304,6 +313,7 @@ export default class UserTestManager {
   }
 
   showEndSection() {
+    void this.userRecorder.saveToFile()
     const section = createElement('div', 'end_section_or', endSectionStyle)
     const title = createElement(
       'div',
