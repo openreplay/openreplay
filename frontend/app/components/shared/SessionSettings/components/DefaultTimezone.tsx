@@ -72,8 +72,8 @@ function DefaultTimezone() {
           }}
           value={shownTimezone}
         >
-          <Radio value={'local'}>Local Timezone</Radio>
-          <Radio value={'user'}>End User's Timezone</Radio>
+          <Radio.Button value={'local'}>Local Timezone</Radio.Button>
+          <Radio.Button value={'user'}>End User's Timezone</Radio.Button>
         </Radio.Group>
       </div>
       {shownTimezone === 'local' ?
