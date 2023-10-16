@@ -233,7 +233,7 @@ function AssistStats() {
                   <Typography.Text strong style={{ marginBottom: 0 }}>
                     {chartNames[i]}
                   </Typography.Text>
-                  <div className={'flex gap-2 items-center'}>
+                  <div className={'flex gap-1 items-center'}>
                     <Typography.Title style={{ marginBottom: 0 }} level={5}>
                       {graphs.currentPeriod[i]
                         ? durationFromMsFormatted(graphs.currentPeriod[i])
