@@ -38,7 +38,7 @@ export const getPdf2 = async () => {
 
           doc.addImage(imgData, 'PNG', 3, 10, imgWidth, imgHeight);
 
-          doc.addImage('/assets/img/report-head.png', 'png', A4Height / 2 - headerW / 2, 2, 45, 5);
+          doc.addImage('/assets/img/cobrowising-report-head.png', 'png', A4Height / 2 - headerW / 2, 2, 45, 5);
           if (position === 0 && heightLeft === 0)
             doc.addImage(
               '/assets/img/report-head.png',
