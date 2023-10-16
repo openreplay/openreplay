@@ -29,7 +29,7 @@ function NodeButton(props: Props) {
             <div className='w-6 shrink-0'>
               <Icon name='arrow-right-short' size={18} color='green' />
             </div>
-            <div className='ml-1 font-medium'>Continuing {payload.value}</div>
+            <div className='ml-1 font-medium'>Continuing {Math.round(payload.value)}%</div>
           </div>
           <div className='border-b py-1 px-2 flex items-center'>
             <div className='w-6 shrink-0'>
@@ -51,7 +51,7 @@ function NodeButton(props: Props) {
           }}
           onClick={toggleMenu}
         >
-          {payload.name} <span style={{ fontWeight: 'bold' }}>{payload.value + '%'}</span>
+          {payload.name} <span style={{ fontWeight: 'bold' }}>{Math.round(payload.value) + '%'}</span>
           {/*{' '} <span style={{}}>{payload.avgTimeFromPrevious}</span>*/}
         </div>
       </Popover>

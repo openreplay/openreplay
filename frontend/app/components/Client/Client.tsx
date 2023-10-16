@@ -52,7 +52,7 @@ export default class Client extends React.PureComponent {
       }
     } = this.props;
     return (
-      <div className='w-full mx-auto mb-8' style={{ maxWidth: '1300px' }}>
+      <div className='w-full mx-auto mb-8' style={{ maxWidth: '1360px' }}>
         {activeTab && this.renderActiveTab()}
       </div>
     );

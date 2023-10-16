@@ -143,7 +143,7 @@ export default class AssistManager {
     this.inactiveTimeout && clearTimeout(this.inactiveTimeout)
     this.inactiveTimeout = undefined
   }
-  connect(agentToken: string, agentId: number) {
+  connect(agentToken: string, agentId: number, projectId: number) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
@@ -165,6 +165,7 @@ export default class AssistManager {
         },
         query: {
           peerId: this.peerID,
+          projectId,
           identity: "agent",
           agentInfo: JSON.stringify({
             ...this.session.agentInfo,

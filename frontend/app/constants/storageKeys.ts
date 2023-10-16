@@ -1,5 +1,6 @@
 export const SKIP_TO_ISSUE = "__$session-skipToIssue$__"
 export const TIMEZONE = "__$session-timezone$__"
+export const SHOWN_TIMEZONE = "__$session-shownTimezone$__"
 export const DURATION_FILTER = "__$session-durationFilter$__"
 export const SESSION_FILTER = "__$session-filter$__"
 export const GLOBAL_DESTINATION_PATH = "__$global-destinationPath$__"

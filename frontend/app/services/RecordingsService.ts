@@ -49,7 +49,7 @@ export default class RecordingsService {
       method: 'PUT',
       headers: { 'Content-Type': 'video/webm' },
       body: file,
-    }).then((r) => {
+    }).then(() => {
         return true;
     });
   }
@@ -66,7 +66,7 @@ export default class RecordingsService {
     });
   }
 
-  fetchRecording(id: number): Promise<IRecord> {
+  fetchRecording(id: number | string): Promise<IRecord> {
     return this.client.get(`/assist/records/${id}`).then((r) => {
         return r.json().then((j) => j.data);
     });

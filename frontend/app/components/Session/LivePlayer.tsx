@@ -26,6 +26,7 @@ interface Props {
   query?: Record<string, (key: string) => any>;
   request: () => void;
   userId: number;
+  siteId: number;
 }
 
 let playerInst: ILivePlayerContext['player'] | undefined;
@@ -39,6 +40,7 @@ function LivePlayer({
   query,
   isEnterprise,
   userId,
+  siteId,
 }: Props) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
@@ -67,6 +69,7 @@ function LivePlayer({
             sessionWithAgentData,
             data,
             userId,
+            siteId,
             (state) => makeAutoObservable(state),
             toast
           );
@@ -78,6 +81,7 @@ function LivePlayer({
         sessionWithAgentData,
         null,
         userId,
+        siteId,
         (state) => makeAutoObservable(state),
         toast
       );
@@ -140,6 +144,7 @@ export default withPermissions(
 )(
   connect((state: any) => {
     return {
+      siteId: state.getIn([ 'site', 'siteId' ]),
       session: state.getIn(['sessions', 'current']),
       showAssist: state.getIn(['sessions', 'showChatWindow']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',

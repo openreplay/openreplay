@@ -90,7 +90,7 @@ export default class Nodes {
   clear(): void {
     for (let id = 0; id < this.nodes.length; id++) {
       const node = this.nodes[id]
-      if (node === undefined) {
+      if (!node) {
         continue
       }
       this.unregisterNode(node)

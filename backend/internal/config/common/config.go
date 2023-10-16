@@ -42,10 +42,18 @@ func (cfg *Postgres) String() string {
 // Redshift config
 
 type Redshift struct {
-	ConnectioString string `env:"REDSHIFT_STRING"`
-	Host            string `env:"REDSHIFT_HOST"`
-	Port            int    `env:"REDSHIFT_PORT"`
-	User            string `env:"REDSHIFT_USER"`
-	Password        string `env:"REDSHIFT_PASSWORD"`
-	Database        string `env:"REDSHIFT_DATABASE"`
+	ConnectionString string `env:"REDSHIFT_STRING"`
+	Host             string `env:"REDSHIFT_HOST"`
+	Port             int    `env:"REDSHIFT_PORT"`
+	User             string `env:"REDSHIFT_USER"`
+	Password         string `env:"REDSHIFT_PASSWORD"`
+	Database         string `env:"REDSHIFT_DATABASE"`
+}
+
+// Clickhouse config
+
+type Clickhouse struct {
+	URL      string `env:"CLICKHOUSE_STRING"`
+	UserName string `env:"CLICKHOUSE_USERNAME,default=default"`
+	Password string `env:"CLICKHOUSE_PASSWORD,default="`
 }

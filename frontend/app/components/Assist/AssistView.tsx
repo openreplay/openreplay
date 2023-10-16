@@ -5,7 +5,7 @@ import AssistSearchField from './AssistSearchField';
 
 function AssistView() {
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1300px'}}>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px'}}>
       <AssistSearchField />
       <LiveSessionSearch />
       <div className="my-4" />

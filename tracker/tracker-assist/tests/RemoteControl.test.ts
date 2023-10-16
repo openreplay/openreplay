@@ -6,6 +6,7 @@ describe('RemoteControl', () => {
   let remoteControl
   let options
   let onGrand
+  let onBusy
   let onRelease
   let confirmWindowMountMock
   let confirmWindowRemoveMock
@@ -16,6 +17,7 @@ describe('RemoteControl', () => {
     }
     onGrand = jest.fn()
     onRelease = jest.fn()
+    onBusy = jest.fn()
     confirmWindowMountMock = jest.fn(() => Promise.resolve(true))
     confirmWindowRemoveMock = jest.fn()
 
@@ -36,7 +38,7 @@ describe('RemoteControl', () => {
       .spyOn(ConfirmWindow.prototype, 'remove')
       .mockImplementation(confirmWindowRemoveMock)
 
-    remoteControl = new RemoteControl(options, onGrand, onRelease)
+    remoteControl = new RemoteControl(options, onGrand, onRelease, onBusy)
   })
 
   afterEach(() => {

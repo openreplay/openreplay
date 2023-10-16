@@ -28,7 +28,7 @@ function Recordings(props: Props) {
   };
 
   return (
-    <div style={{ maxWidth: '1300px', margin: 'auto' }} className='bg-white rounded py-4 border'>
+    <div style={{ maxWidth: '1360px', margin: 'auto' }} className='bg-white rounded py-4 border'>
       <div className='flex items-center mb-4 justify-between px-6'>
         <div className='flex items-baseline mr-3'>
           <PageTitle title='Recordings' />

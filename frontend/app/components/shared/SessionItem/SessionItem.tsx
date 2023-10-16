@@ -36,7 +36,7 @@ interface Props {
     userDisplayName: string;
     userCountry: string;
     userCity: string;
-    usetState: string;
+    userState: string;
     startedAt: number;
     duration: Duration;
     eventsCount: number;
@@ -53,6 +53,7 @@ interface Props {
     active: boolean;
     isCallActive?: boolean;
     agentIds?: string[];
+    timezone: string;
   };
   onUserClick?: (userId: string, userAnonymousId: string) => void;
   hasUserFilter?: boolean;
@@ -72,7 +73,7 @@ interface Props {
 
 function SessionItem(props: RouteComponentProps & Props) {
   const { settingsStore } = useStore();
-  const { timezone } = settingsStore.sessionSettings;
+  const { timezone, shownTimezone } = settingsStore.sessionSettings;
 
   const {
     session,
@@ -107,6 +108,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     metadata,
     issueTypes,
     active,
+    timezone: userTimezone,
   } = session;
 
   const location = props.location;
@@ -198,11 +200,39 @@ function SessionItem(props: RouteComponentProps & Props) {
                 <Tooltip
                   delay={0}
                   disabled={props.isDisabled}
-                  title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
+                  title={
+                    <div className={'flex flex-col gap-1'}>
+                      <span>
+                        Local Time: {formatTimeOrDate(startedAt, timezone, true)} {timezone.label}
+                      </span>
+                      {userTimezone ? (
+                        <span>
+                          User's Time:{' '}
+                          {formatTimeOrDate(
+                            startedAt,
+                            {
+                              label: userTimezone.split('+').join(' +'),
+                              value: userTimezone.split(':')[0],
+                            },
+                            true
+                          )}{' '}
+                          {userTimezone}
+                        </span>
+                      ) : null}
+                    </div>
+                  }
                   className="w-fit !block"
                 >
                   <TextEllipsis
-                    text={formatTimeOrDate(startedAt, timezone)}
+                    text={formatTimeOrDate(
+                      startedAt,
+                      shownTimezone === 'user' && userTimezone
+                        ? {
+                            label: userTimezone.split('+').join(' +'),
+                            value: userTimezone.split(':')[0],
+                          }
+                        : timezone
+                    )}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
                 </Tooltip>
@@ -222,7 +252,12 @@ function SessionItem(props: RouteComponentProps & Props) {
             </div>
             <div style={{ width: '30%' }} className="px-2 flex flex-col justify-between">
               <div style={{ height: '21px' }}>
-                <CountryFlag userCity={userCity} userState={userState} country={userCountry} showLabel={true} />
+                <CountryFlag
+                  userCity={userCity}
+                  userState={userState}
+                  country={userCountry}
+                  showLabel={true}
+                />
               </div>
               <div className="color-gray-medium flex items-center py-1">
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
