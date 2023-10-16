@@ -24,7 +24,7 @@ func NewClickHouse(cfg *connector.Config) (*ClickHouse, error) {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: "default",
+			Database: cfg.Clickhouse.Database,
 			Username: cfg.Clickhouse.UserName,
 			Password: cfg.Clickhouse.Password,
 		},
@@ -49,10 +49,10 @@ func NewClickHouse(cfg *connector.Config) (*ClickHouse, error) {
 	return c, nil
 }
 
-const eventsSQL = "INSERT INTO default.connector_events (sessionid, consolelog_level, consolelog_value, customevent_name, customevent_payload, jsexception_message, jsexception_name, jsexception_payload, jsexception_metadata, networkrequest_type, networkrequest_method, networkrequest_url, networkrequest_request, networkrequest_response, networkrequest_status, networkrequest_timestamp, networkrequest_duration, issueevent_message_id, issueevent_timestamp, issueevent_type, issueevent_context_string, issueevent_context, issueevent_payload, issueevent_url, customissue_name, customissue_payload, received_at, batch_order_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+const eventsSQL = "INSERT INTO connector_events_buffer (sessionid, consolelog_level, consolelog_value, customevent_name, customevent_payload, jsexception_message, jsexception_name, jsexception_payload, jsexception_metadata, networkrequest_type, networkrequest_method, networkrequest_url, networkrequest_request, networkrequest_response, networkrequest_status, networkrequest_timestamp, networkrequest_duration, issueevent_message_id, issueevent_timestamp, issueevent_type, issueevent_context_string, issueevent_context, issueevent_payload, issueevent_url, customissue_name, customissue_payload, received_at, batch_order_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
-	bulk, err := c.conn.PrepareBatch(nil, eventsSQL)
+	bulk, err := c.conn.PrepareBatch(context.Background(), eventsSQL)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
 			nullableString(event["networkrequest_url"]),
 			nullableString(event["networkrequest_request"]),
 			nullableString(event["networkrequest_response"]),
-			nullableString(event["networkrequest_status"]),
+			nullableUint64(event["networkrequest_status"]),
 			nullableUint64(event["networkrequest_timestamp"]),
 			nullableUint64(event["networkrequest_duration"]),
 			nullableString(event["issueevent_message_id"]),
@@ -93,10 +93,10 @@ func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
 	return bulk.Send()
 }
 
-const sessionsSQL = "INSERT INTO default.connector_user_sessions (sessionid, user_agent, user_browser, user_browser_version, user_country, user_device, user_device_heap_size, user_device_memory_size, user_device_type, user_os, user_os_version, user_uuid, connection_effective_bandwidth, connection_type, metadata_key, metadata_value, referrer, user_anonymous_id, user_id, session_start_timestamp, session_end_timestamp, session_duration, first_contentful_paint, speed_index, visually_complete, timing_time_to_interactive, avg_cpu, avg_fps, max_cpu, max_fps, max_total_js_heap_size, max_used_js_heap_size, js_exceptions_count, inputs_count, clicks_count, issues_count, urls_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+const sessionsSQL = "INSERT INTO connector_user_sessions_buffer (sessionid, user_agent, user_browser, user_browser_version, user_country, user_device, user_device_heap_size, user_device_memory_size, user_device_type, user_os, user_os_version, user_uuid, connection_effective_bandwidth, connection_type, referrer, user_anonymous_id, user_id, session_start_timestamp, session_end_timestamp, session_duration, first_contentful_paint, speed_index, visually_complete, timing_time_to_interactive, avg_cpu, avg_fps, max_cpu, max_fps, max_total_js_heap_size, max_used_js_heap_size, js_exceptions_count, inputs_count, clicks_count, issues_count, pages_count, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 func (c *ClickHouse) InsertSessions(batch []map[string]string) error {
-	bulk, err := c.conn.PrepareBatch(nil, sessionsSQL)
+	bulk, err := c.conn.PrepareBatch(context.Background(), sessionsSQL)
 	if err != nil {
 		return err
 	}
@@ -116,8 +116,6 @@ func (c *ClickHouse) InsertSessions(batch []map[string]string) error {
 			nullableString(sess["user_uuid"]),
 			nullableUint64(sess["connection_effective_bandwidth"]),
 			nullableString(sess["connection_type"]),
-			nullableString(sess["metadata_key"]),
-			nullableString(sess["metadata_value"]),
 			nullableString(sess["referrer"]),
 			nullableString(sess["user_anonymous_id"]),
 			nullableString(sess["user_id"]),
@@ -138,7 +136,17 @@ func (c *ClickHouse) InsertSessions(batch []map[string]string) error {
 			nullableUint64(sess["inputs_count"]),
 			nullableUint64(sess["clicks_count"]),
 			nullableUint64(sess["issues_count"]),
-			nullableUint64(sess["urls_count"]),
+			nullableUint64(sess["pages_count"]),
+			nullableString(sess["metadata_1"]),
+			nullableString(sess["metadata_2"]),
+			nullableString(sess["metadata_3"]),
+			nullableString(sess["metadata_4"]),
+			nullableString(sess["metadata_5"]),
+			nullableString(sess["metadata_6"]),
+			nullableString(sess["metadata_7"]),
+			nullableString(sess["metadata_8"]),
+			nullableString(sess["metadata_9"]),
+			nullableString(sess["metadata_10"]),
 		); err != nil {
 			log.Printf("can't append value set to batch, err: %s", err)
 		}
@@ -178,7 +186,8 @@ func nullableUint64(v string) *uint64 {
 			log.Printf("can't convert string to uint64, err: %s", err)
 			return nil
 		}
-		*p = uint64(res)
+		a := uint64(res)
+		return &a
 	}
 	return p
 }

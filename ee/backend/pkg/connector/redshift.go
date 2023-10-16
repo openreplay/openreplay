@@ -5,13 +5,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
-
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	"log"
+	"openreplay/backend/pkg/objectstorage"
 
 	"openreplay/backend/internal/config/connector"
-	"openreplay/backend/pkg/objectstorage"
+
+	_ "github.com/lib/pq"
 )
 
 type Redshift struct {

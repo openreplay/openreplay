@@ -61,7 +61,7 @@ func main() {
 	sessManager := sessions.New(pgConn, projManager, redisClient)
 
 	// Saves messages to Redshift
-	dataSaver := saver.New(cfg, db, sessManager)
+	dataSaver := saver.New(cfg, db, sessManager, projManager)
 
 	// Message filter
 	msgFilter := []int{messages.MsgConsoleLog, messages.MsgCustomEvent, messages.MsgJSException,

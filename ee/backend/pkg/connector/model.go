@@ -17,8 +17,6 @@ var sessionColumns = []string{
 	"user_uuid",
 	"connection_effective_bandwidth",
 	"connection_type",
-	"metadata_key",
-	"metadata_value",
 	"referrer",
 	"user_anonymous_id",
 	"user_id",
@@ -39,7 +37,17 @@ var sessionColumns = []string{
 	"inputs_count",
 	"clicks_count",
 	"issues_count",
-	"urls_count",
+	"pages_count",
+	"metadata_1",
+	"metadata_2",
+	"metadata_3",
+	"metadata_4",
+	"metadata_5",
+	"metadata_6",
+	"metadata_7",
+	"metadata_8",
+	"metadata_9",
+	"metadata_10",
 }
 
 var sessionInts = []string{
@@ -60,7 +68,7 @@ var sessionInts = []string{
 	"inputs_count",
 	"clicks_count",
 	"issues_count",
-	"urls_count",
+	"pages_count",
 }
 
 var eventColumns = []string{

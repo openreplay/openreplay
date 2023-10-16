@@ -3,13 +3,14 @@ package connector
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"time"
 
 	config "openreplay/backend/internal/config/connector"
-	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/sessions"
 )
 
 // Saver collect sessions and events and saves them to Redshift
@@ -17,6 +18,7 @@ type Saver struct {
 	cfg              *config.Config
 	db               Database
 	sessModule       sessions.Sessions
+	projModule       projects.Projects
 	sessions         map[uint64]map[string]string
 	updatedSessions  map[uint64]bool
 	lastUpdate       map[uint64]time.Time
@@ -24,7 +26,7 @@ type Saver struct {
 	events           []map[string]string
 }
 
-func New(cfg *config.Config, db Database, sessions sessions.Sessions) *Saver {
+func New(cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects) *Saver {
 	if cfg == nil {
 		log.Fatal("connector config is empty")
 	}
@@ -40,6 +42,7 @@ func New(cfg *config.Config, db Database, sessions sessions.Sessions) *Saver {
 		cfg:             cfg,
 		db:              db,
 		sessModule:      sessions,
+		projModule:      projects,
 		updatedSessions: make(map[uint64]bool, 0),
 		lastUpdate:      make(map[uint64]time.Time, 0),
 	}
@@ -91,6 +94,106 @@ func handleEvent(msg messages.Message) map[string]string {
 	return event
 }
 
+func (s *Saver) updateSessionInfoFromCache(sessID uint64, sess map[string]string) error {
+	info, err := s.sessModule.Get(sessID)
+	if err != nil {
+		return err
+	}
+	// Check all required fields are present
+	if info.Duration != nil {
+		sess["session_duration"] = fmt.Sprintf("%d", *info.Duration)
+	}
+	if sess["session_start_timestamp"] == "" {
+		sess["session_start_timestamp"] = fmt.Sprintf("%d", info.Timestamp)
+	}
+	if sess["session_end_timestamp"] == "" && info.Duration != nil {
+		sess["session_end_timestamp"] = fmt.Sprintf("%d", info.Timestamp+*info.Duration)
+	}
+	if sess["session_duration"] == "" && sess["session_start_timestamp"] != "" && sess["session_end_timestamp"] != "" {
+		start, err := strconv.Atoi(sess["session_start_timestamp"])
+		if err != nil {
+			log.Printf("Error parsing session_start_timestamp: %v", err)
+		}
+		end, err := strconv.Atoi(sess["session_end_timestamp"])
+		if err != nil {
+			log.Printf("Error parsing session_end_timestamp: %v", err)
+		}
+		if start != 0 && end != 0 {
+			sess["session_duration"] = fmt.Sprintf("%d", end-start)
+		}
+	}
+	if sess["user_agent"] == "" && info.UserAgent != "" {
+		sess["user_agent"] = QUOTES(info.UserAgent)
+	}
+	if sess["user_browser"] == "" && info.UserBrowser != "" {
+		sess["user_browser"] = QUOTES(info.UserBrowser)
+	}
+	if sess["user_browser_version"] == "" && info.UserBrowserVersion != "" {
+		sess["user_browser_version"] = QUOTES(info.UserBrowserVersion)
+	}
+	if sess["user_os"] == "" && info.UserOS != "" {
+		sess["user_os"] = QUOTES(info.UserOS)
+	}
+	if sess["user_os_version"] == "" && info.UserOSVersion != "" {
+		sess["user_os_version"] = QUOTES(info.UserOSVersion)
+	}
+	if sess["user_device"] == "" && info.UserDevice != "" {
+		sess["user_device"] = QUOTES(info.UserDevice)
+	}
+	if sess["user_device_type"] == "" && info.UserDeviceType != "" {
+		sess["user_device_type"] = QUOTES(info.UserDeviceType)
+	}
+	if sess["user_device_memory_size"] == "" && info.UserDeviceMemorySize != 0 {
+		sess["user_device_memory_size"] = fmt.Sprintf("%d", info.UserDeviceMemorySize)
+	}
+	if sess["user_device_heap_size"] == "" && info.UserDeviceHeapSize != 0 {
+		sess["user_device_heap_size"] = fmt.Sprintf("%d", info.UserDeviceHeapSize)
+	}
+	if sess["user_country"] == "" && info.UserCountry != "" {
+		sess["user_country"] = QUOTES(info.UserCountry)
+	}
+	if sess["user_city"] == "" && info.UserCity != "" {
+		sess["user_city"] = QUOTES(info.UserCity)
+	}
+	if sess["user_state"] == "" && info.UserState != "" {
+		sess["user_state"] = QUOTES(info.UserState)
+	}
+	if sess["user_uuid"] == "" && info.UserUUID != "" {
+		sess["user_uuid"] = QUOTES(info.UserUUID)
+	}
+	if sess["session_start_timestamp"] == "" && info.Timestamp != 0 {
+		sess["session_start_timestamp"] = fmt.Sprintf("%d", info.Timestamp)
+	}
+	if sess["user_anonymous_id"] == "" && info.UserAnonymousID != nil {
+		sess["user_anonymous_id"] = QUOTES(*info.UserAnonymousID)
+	}
+	if sess["user_id"] == "" && info.UserID != nil {
+		sess["user_id"] = QUOTES(*info.UserID)
+	}
+	if sess["pages_count"] == "" && info.PagesCount != 0 {
+		sess["pages_count"] = fmt.Sprintf("%d", info.PagesCount)
+	}
+	if sess["tracker_version"] == "" && info.TrackerVersion != "" {
+		sess["tracker_version"] = QUOTES(info.TrackerVersion)
+	}
+	if sess["rev_id"] == "" && info.RevID != "" {
+		sess["rev_id"] = QUOTES(info.RevID)
+	}
+	if info.ErrorsCount != 0 {
+		sess["errors_count"] = fmt.Sprintf("%d", info.ErrorsCount)
+	}
+	if info.IssueScore != 0 {
+		sess["issue_score"] = fmt.Sprintf("%d", info.IssueScore)
+	}
+	// Check int fields
+	for _, field := range sessionInts {
+		if sess[field] == "" {
+			sess[field] = fmt.Sprintf("%d", 0)
+		}
+	}
+	return nil
+}
+
 func (s *Saver) handleSession(msg messages.Message) {
 	// Filter out messages that are not related to session table
 	switch msg.(type) {
@@ -139,85 +242,47 @@ func (s *Saver) handleSession(msg messages.Message) {
 		sess["user_device_type"] = QUOTES(m.UserDeviceType)
 		sess["user_device_memory_size"] = fmt.Sprintf("%d", m.UserDeviceMemorySize)
 		sess["user_device_heap_size"] = fmt.Sprintf("%d", m.UserDeviceHeapSize)
+		sess["tracker_version"] = QUOTES(m.TrackerVersion)
+		sess["rev_id"] = QUOTES(m.RevID)
 		geoInfo := geoip.UnpackGeoRecord(m.UserCountry)
 		sess["user_country"] = QUOTES(geoInfo.Country)
+		sess["user_city"] = QUOTES(geoInfo.City)
+		sess["user_state"] = QUOTES(geoInfo.State)
 	case *messages.SessionEnd:
 		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		info, err := s.sessModule.Get(msg.SessionID())
-		if err != nil {
-			log.Printf("Error getting session info: %v", err)
-			break
-		}
-		// Check all required fields are present
-		sess["session_duration"] = fmt.Sprintf("%d", *info.Duration)
-		if sess["user_agent"] == "" && info.UserAgent != "" {
-			sess["user_agent"] = QUOTES(info.UserAgent)
-		}
-		if sess["user_browser"] == "" && info.UserBrowser != "" {
-			sess["user_browser"] = QUOTES(info.UserBrowser)
-		}
-		if sess["user_browser_version"] == "" && info.UserBrowserVersion != "" {
-			sess["user_browser_version"] = QUOTES(info.UserBrowserVersion)
-		}
-		if sess["user_os"] == "" && info.UserOS != "" {
-			sess["user_os"] = QUOTES(info.UserOS)
-		}
-		if sess["user_os_version"] == "" && info.UserOSVersion != "" {
-			sess["user_os_version"] = QUOTES(info.UserOSVersion)
-		}
-		if sess["user_device"] == "" && info.UserDevice != "" {
-			sess["user_device"] = QUOTES(info.UserDevice)
-		}
-		if sess["user_device_type"] == "" && info.UserDeviceType != "" {
-			sess["user_device_type"] = QUOTES(info.UserDeviceType)
-		}
-		if sess["user_device_memory_size"] == "" && info.UserDeviceMemorySize != 0 {
-			sess["user_device_memory_size"] = fmt.Sprintf("%d", info.UserDeviceMemorySize)
-		}
-		if sess["user_device_heap_size"] == "" && info.UserDeviceHeapSize != 0 {
-			sess["user_device_heap_size"] = fmt.Sprintf("%d", info.UserDeviceHeapSize)
-		}
-		if sess["user_country"] == "" && info.UserCountry != "" {
-			sess["user_country"] = QUOTES(info.UserCountry)
-		}
-		if sess["user_uuid"] == "" && info.UserUUID != "" {
-			sess["user_uuid"] = QUOTES(info.UserUUID)
-		}
-		if sess["session_start_timestamp"] == "" && info.Timestamp != 0 {
-			sess["session_start_timestamp"] = fmt.Sprintf("%d", info.Timestamp)
-		}
-		if sess["user_anonymous_id"] == "" && info.UserAnonymousID != nil {
-			sess["user_anonymous_id"] = QUOTES(*info.UserAnonymousID)
-		}
-		if sess["user_id"] == "" && info.UserID != nil {
-			sess["user_id"] = QUOTES(*info.UserID)
-		}
-		if sess["urls_count"] == "" && info.PagesCount != 0 {
-			sess["urls_count"] = fmt.Sprintf("%d", info.PagesCount)
-		}
-		// Check int fields
-		for _, field := range sessionInts {
-			if sess[field] == "" {
-				sess[field] = fmt.Sprintf("%d", 0)
-			}
+		if err := s.updateSessionInfoFromCache(msg.SessionID(), sess); err != nil {
+			log.Printf("Error updating session info from cache: %v", err)
 		}
 	case *messages.ConnectionInformation:
 		sess["connection_effective_bandwidth"] = fmt.Sprintf("%d", m.Downlink)
 		sess["connection_type"] = QUOTES(m.Type)
 	case *messages.Metadata:
-		sess["metadata_key"] = QUOTES(m.Key)
-		sess["metadata_value"] = QUOTES(m.Value)
+		session, err := s.sessModule.Get(msg.SessionID())
+		if err != nil {
+			log.Printf("Error getting session info: %v", err)
+			break
+		}
+		project, err := s.projModule.GetProject(session.ProjectID)
+		if err != nil {
+			log.Printf("Error getting project info: %v", err)
+			break
+		}
+		keyNo := project.GetMetadataNo(m.Key)
+		if keyNo == 0 {
+			break
+		}
+		sess[fmt.Sprintf("metadata_%d", keyNo)] = QUOTES(m.Value)
 	case *messages.PageEvent:
 		sess["referrer"] = QUOTES(m.Referrer)
 		sess["first_contentful_paint"] = fmt.Sprintf("%d", m.FirstContentfulPaint)
 		sess["speed_index"] = fmt.Sprintf("%d", m.SpeedIndex)
 		sess["timing_time_to_interactive"] = fmt.Sprintf("%d", m.TimeToInteractive)
 		sess["visually_complete"] = fmt.Sprintf("%d", m.VisuallyComplete)
-		currUrlsCount, err := strconv.Atoi(sess["urls_count"])
+		currUrlsCount, err := strconv.Atoi(sess["pages_count"])
 		if err != nil {
 			currUrlsCount = 0
 		}
-		sess["urls_count"] = fmt.Sprintf("%d", currUrlsCount+1)
+		sess["pages_count"] = fmt.Sprintf("%d", currUrlsCount+1)
 	case *messages.PerformanceTrackAggr:
 		sess["avg_cpu"] = fmt.Sprintf("%d", m.AvgCPU)
 		sess["avg_fps"] = fmt.Sprintf("%d", m.AvgFPS)
@@ -315,6 +380,9 @@ func (s *Saver) commitSessions() {
 			toSend = append(toSend, sessionID)
 		}
 	}
+	if err := s.db.InsertSessions(sessions); err != nil {
+		log.Printf("can't insert sessions: %s", err)
+	}
 	log.Printf("finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
 	// Clear current list of finished sessions
 	for _, sessionID := range toSend {
@@ -354,6 +422,24 @@ func (s *Saver) checkZombieSessions() {
 			continue
 		}
 		if s.lastUpdate[sessionID].Add(time.Minute * 5).Before(now) {
+			// Check that session is not in progress, check all critical values (startTs, endTs, etc)
+			// If session has been finished more than 5 minutes ago, send it to Redshift
+			// Else update last update timestamp and try to wait for session end.
+			// Do that several times (save attempts number) after last attempt delete session from memory to avoid sessions with not filled fields
+			zombieSession := s.sessions[sessionID]
+			if zombieSession["session_start_timestamp"] == "" || zombieSession["session_end_timestamp"] == "" {
+				// Let's try to load session from cache
+				if err := s.updateSessionInfoFromCache(sessionID, zombieSession); err != nil {
+					log.Printf("Error updating zombie session info from cache: %v", err)
+				} else {
+					s.sessions[sessionID] = zombieSession
+					log.Printf("Updated zombie session info from cache: %v", zombieSession)
+				}
+			}
+			if zombieSession["session_start_timestamp"] == "" || zombieSession["session_end_timestamp"] == "" {
+				s.lastUpdate[sessionID] = now
+				continue
+			}
 			s.finishedSessions = append(s.finishedSessions, sessionID)
 			zombieSessionsCount++
 		}
