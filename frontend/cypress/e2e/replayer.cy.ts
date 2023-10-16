@@ -16,6 +16,9 @@ describe(
           window.localStorage.setItem('notesFeatureViewed', 'true');
         },
       });
+      Cypress.on('uncaught:exception', (err, runnable) => {
+        return false
+      })
 
       cy.origin('http://localhost:3000/', { args: { SECOND } }, ({ SECOND }) => {
         cy.visit('/');

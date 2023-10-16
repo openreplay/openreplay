@@ -24,7 +24,7 @@ export default function Pagination(props: Props) {
     }
   };
 
-  const isFirstPage = currentPage === 1;
+  const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage === totalPages;
   return (
     <div className="flex items-center">
