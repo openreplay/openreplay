@@ -35,7 +35,7 @@ export const getPdf2 = async () => {
           let position = 0;
           const A4Height = 295;
           const headerW = 40;
-
+          const logoWidth = 55;
           doc.addImage(imgData, 'PNG', 3, 10, imgWidth, imgHeight);
 
           doc.addImage('/assets/img/cobrowising-report-head.png', 'png', A4Height / 2 - headerW / 2, 2, 45, 5);
@@ -45,7 +45,7 @@ export const getPdf2 = async () => {
               'png',
               imgWidth / 2 - headerW / 2,
               pageHeight - 5,
-              45,
+              logoWidth,
               5
             );
 
@@ -58,7 +58,7 @@ export const getPdf2 = async () => {
               'png',
               A4Height / 2 - headerW / 2,
               pageHeight - 5,
-              45,
+              logoWidth,
               5
             );
             heightLeft -= pageHeight;
