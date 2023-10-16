@@ -1,45 +1,35 @@
-import {
-  bgStyle,
-  containerStyle,
-  containerWidgetStyle,
-  titleStyle,
-  descriptionStyle,
-  noticeStyle,
-  buttonStyle,
-  sectionTitleStyle,
-  contentStyle,
-  titleWidgetStyle,
-  descriptionWidgetStyle,
-  endSectionStyle,
-  symbolIcon,
-  buttonWidgetStyle,
-  stopWidgetStyle,
-  paginationStyle,
-  taskNumberActive,
-  taskNumberDone,
-  taskDescriptionCard,
-  taskTextStyle,
-  taskDescriptionStyle,
-  taskButtonStyle,
-  taskButtonBorderedStyle,
-  taskButtonsRow,
-} from './styles.js'
+import * as styles from './styles.js'
 import Recorder, { Quality } from './recorder.js'
 
-function createElement(tag: string, className: string, styles: any, textContent?: string) {
+function createElement(
+  tag: string,
+  className: string,
+  styles: any,
+  textContent?: string,
+  id?: string,
+) {
   const element = document.createElement(tag)
   element.className = className
   Object.assign(element.style, styles)
   if (textContent) {
     element.textContent = textContent
   }
+  if (id) {
+    element.id = id
+  }
   return element
 }
 
 export default class UserTestManager {
   private readonly userRecorder = new Recorder()
-  private readonly bg = createElement('div', 'bg', bgStyle)
-  private readonly container = createElement('div', 'container', containerStyle)
+  private readonly bg = createElement('div', 'bg', styles.bgStyle, undefined, '__or_ut_bg')
+  private readonly container = createElement(
+    'div',
+    'container',
+    styles.containerStyle,
+    undefined,
+    '__or_ut_ct',
+  )
   private widgetGuidelinesVisible = true
   private widgetTasksVisible = false
   private widgetVisible = true
@@ -53,20 +43,25 @@ export default class UserTestManager {
   collapseWidget = () => false
 
   createGreeting(title: string, micRequired: boolean, cameraRequired: boolean) {
-    const titleElement = createElement('div', 'title', titleStyle, title)
+    const titleElement = createElement('div', 'title', styles.titleStyle, title)
     const descriptionElement = createElement(
       'div',
       'description',
-      descriptionStyle,
+      styles.descriptionStyle,
       'Welcome, this session will be recorded. You have complete control, and can stop the session at any time.',
     )
     const noticeElement = createElement(
       'div',
       'notice',
-      noticeStyle,
+      styles.noticeStyle,
       'Please note that your audio, video, and screen will be recorded for research purposes during this test.',
     )
-    const buttonElement = createElement('div', 'button', buttonStyle, 'Read guidelines to begin')
+    const buttonElement = createElement(
+      'div',
+      'button',
+      styles.buttonStyle,
+      'Read guidelines to begin',
+    )
 
     buttonElement.onclick = () => {
       this.container.innerHTML = ''
@@ -117,10 +112,10 @@ export default class UserTestManager {
     })
     // Create title section
     const titleSection = this.createTitleSection()
-    Object.assign(this.container.style, containerWidgetStyle)
+    Object.assign(this.container.style, styles.containerWidgetStyle)
     const descriptionSection = this.createDescriptionSection(description)
     const tasksSection = this.createTasksSection(tasks)
-    const stopButton = createElement('div', 'stop_bn_or', stopWidgetStyle, 'Abort Session')
+    const stopButton = createElement('div', 'stop_bn_or', styles.stopWidgetStyle, 'Abort Session')
 
     this.container.append(titleSection, descriptionSection, tasksSection, stopButton)
     this.taskSection = tasksSection
@@ -134,7 +129,7 @@ export default class UserTestManager {
   }
 
   createTitleSection() {
-    const title = createElement('div', 'title', titleWidgetStyle)
+    const title = createElement('div', 'title', styles.titleWidgetStyle)
     const leftIcon = createElement('div', 'left_icon', {}, '(icn)')
     const titleText = createElement('div', 'title_text', {}, 'Test name goes here')
     const rightIcon = createElement('div', 'right_icon', { marginLeft: 'auto' }, '(icn)')
@@ -146,31 +141,31 @@ export default class UserTestManager {
       Object.assign(
         this.container.style,
         this.widgetVisible
-          ? containerWidgetStyle
+          ? styles.containerWidgetStyle
           : { border: 'none', background: 'none', padding: 0 },
       )
       if (this.taskSection) {
         Object.assign(
           this.taskSection.style,
-          this.widgetVisible ? descriptionWidgetStyle : { display: 'none' },
+          this.widgetVisible ? styles.descriptionWidgetStyle : { display: 'none' },
         )
       }
       if (this.descriptionSection) {
         Object.assign(
           this.descriptionSection.style,
-          this.widgetVisible ? descriptionWidgetStyle : { display: 'none' },
+          this.widgetVisible ? styles.descriptionWidgetStyle : { display: 'none' },
         )
       }
       if (this.endSection) {
         Object.assign(
           this.endSection.style,
-          this.widgetVisible ? descriptionWidgetStyle : { display: 'none' },
+          this.widgetVisible ? styles.descriptionWidgetStyle : { display: 'none' },
         )
       }
       if (this.stopButton) {
         Object.assign(
           this.stopButton.style,
-          this.widgetVisible ? stopWidgetStyle : { display: 'none' },
+          this.widgetVisible ? styles.stopWidgetStyle : { display: 'none' },
         )
       }
       return isVisible
@@ -181,14 +176,14 @@ export default class UserTestManager {
   }
 
   createDescriptionSection(description: string[]) {
-    const section = createElement('div', 'description_section_or', descriptionWidgetStyle)
-    const titleContainer = createElement('div', 'description_s_title_or', sectionTitleStyle)
+    const section = createElement('div', 'description_section_or', styles.descriptionWidgetStyle)
+    const titleContainer = createElement('div', 'description_s_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
-    const icon = createElement('div', 'icon', symbolIcon, '-')
-    const content = createElement('div', 'content', contentStyle)
+    const icon = createElement('div', 'icon', styles.symbolIcon, '-')
+    const content = createElement('div', 'content', styles.contentStyle)
     const ul = document.createElement('ul')
     ul.innerHTML = description.map((item) => `<li>${item}</li>`).join('')
-    const button = createElement('div', 'button_begin_or', buttonWidgetStyle, 'Begin Test')
+    const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
 
     titleContainer.append(title, icon)
     content.append(ul, button)
@@ -199,7 +194,7 @@ export default class UserTestManager {
       icon.textContent = this.widgetGuidelinesVisible ? '-' : '+'
       Object.assign(
         content.style,
-        this.widgetGuidelinesVisible ? contentStyle : { display: 'none' },
+        this.widgetGuidelinesVisible ? styles.contentStyle : { display: 'none' },
       )
     }
 
@@ -219,25 +214,30 @@ export default class UserTestManager {
     }[],
   ) {
     let currentTaskIndex = 0
-    const section = createElement('div', 'task_section_or', descriptionWidgetStyle)
-    const titleContainer = createElement('div', 'description_t_title_or', sectionTitleStyle)
+    const section = createElement('div', 'task_section_or', styles.descriptionWidgetStyle)
+    const titleContainer = createElement('div', 'description_t_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Tasks')
-    const icon = createElement('div', 'icon', symbolIcon, '-')
-    const content = createElement('div', 'content', contentStyle)
-    const pagination = createElement('div', 'pagination', paginationStyle)
+    const icon = createElement('div', 'icon', styles.symbolIcon, '-')
+    const content = createElement('div', 'content', styles.contentStyle)
+    const pagination = createElement('div', 'pagination', styles.paginationStyle)
     const leftArrow = createElement('span', 'leftArrow', {}, '<')
     const rightArrow = createElement('span', 'rightArrow', {}, '>')
-    const taskCard = createElement('div', 'taskCard', taskDescriptionCard)
-    const taskText = createElement('div', 'taskText', taskTextStyle)
-    const taskDescription = createElement('div', 'taskDescription', taskDescriptionStyle)
-    const taskButtons = createElement('div', 'taskButtons', taskButtonsRow)
+    const taskCard = createElement('div', 'taskCard', styles.taskDescriptionCard)
+    const taskText = createElement('div', 'taskText', styles.taskTextStyle)
+    const taskDescription = createElement('div', 'taskDescription', styles.taskDescriptionStyle)
+    const taskButtons = createElement('div', 'taskButtons', styles.taskButtonsRow)
     const closePanelButton = createElement(
       'div',
       'closePanelButton',
-      taskButtonStyle,
+      styles.taskButtonStyle,
       'Collapse panel',
     )
-    const nextButton = createElement('div', 'nextButton', taskButtonBorderedStyle, 'Done, next')
+    const nextButton = createElement(
+      'div',
+      'nextButton',
+      styles.taskButtonBorderedStyle,
+      'Done, next',
+    )
 
     titleContainer.append(title, icon)
     taskCard.append(taskText, taskDescription)
@@ -262,7 +262,10 @@ export default class UserTestManager {
     const toggleTasksVisibility = () => {
       this.widgetTasksVisible = !this.widgetTasksVisible
       icon.textContent = this.widgetTasksVisible ? '-' : '+'
-      Object.assign(content.style, this.widgetTasksVisible ? contentStyle : { display: 'none' })
+      Object.assign(
+        content.style,
+        this.widgetTasksVisible ? styles.contentStyle : { display: 'none' },
+      )
     }
     this.hideTaskSection = () => {
       icon.textContent = '+'
@@ -274,7 +277,7 @@ export default class UserTestManager {
     }
     this.showTaskSection = () => {
       icon.textContent = '-'
-      Object.assign(content.style, contentStyle)
+      Object.assign(content.style, styles.contentStyle)
       this.widgetTasksVisible = true
       return true
     }
@@ -288,12 +291,12 @@ export default class UserTestManager {
         updateTaskContent()
         const activeTaskEl = document.getElementById(`or_task_${currentTaskIndex}`)
         if (activeTaskEl) {
-          Object.assign(activeTaskEl.style, taskNumberActive)
+          Object.assign(activeTaskEl.style, styles.taskNumberActive)
         }
         for (let i = 0; i < currentTaskIndex; i++) {
           const taskEl = document.getElementById(`or_task_${i}`)
           if (taskEl) {
-            Object.assign(taskEl.style, taskNumberDone)
+            Object.assign(taskEl.style, styles.taskNumberDone)
           }
         }
       } else {
@@ -304,9 +307,9 @@ export default class UserTestManager {
     updateTaskContent()
     setTimeout(() => {
       const firstTaskEl = document.getElementById('or_task_0')
-      console.log(firstTaskEl, taskNumberActive)
+      console.log(firstTaskEl, styles.taskNumberActive)
       if (firstTaskEl) {
-        Object.assign(firstTaskEl.style, taskNumberActive)
+        Object.assign(firstTaskEl.style, styles.taskNumberActive)
       }
     }, 1)
     return section
@@ -314,7 +317,7 @@ export default class UserTestManager {
 
   showEndSection() {
     void this.userRecorder.saveToFile()
-    const section = createElement('div', 'end_section_or', endSectionStyle)
+    const section = createElement('div', 'end_section_or', styles.endSectionStyle)
     const title = createElement(
       'div',
       'end_title_or',
@@ -332,7 +335,7 @@ export default class UserTestManager {
         '\n' +
         'We appreciate your time and valuable input.',
     )
-    const button = createElement('div', 'end_button_or', buttonWidgetStyle, 'End Session')
+    const button = createElement('div', 'end_button_or', styles.buttonWidgetStyle, 'End Session')
 
     if (this.taskSection) {
       this.container.removeChild(this.taskSection)
