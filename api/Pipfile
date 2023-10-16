@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 requests = "==2.31.0"
-boto3 = "==1.28.62"
+boto3 = "==1.28.63"
 pyjwt = "==2.8.0"
 psycopg2-binary = "==2.9.9"
-elasticsearch = "==8.10.0"
+elasticsearch = "==8.10.1"
 jira = "==3.5.2"
 fastapi = "==0.103.2"
 python-decouple = "==3.8"

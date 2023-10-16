@@ -300,7 +300,10 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         metricType=schemas.MetricType.table,
         metricOf=schemas.MetricOfTable.issues,
         viewType=schemas.MetricTableViewType.table,
-        series=data.model_dump()["series"])
+        series=data.model_dump()["series"],
+        limit=data.limit,
+        page=data.page
+    )
     for s in data.start_point:
         if data.start_type == "end":
             card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
