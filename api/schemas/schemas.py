@@ -10,7 +10,6 @@ from .overrides import transform_email, remove_whitespace, remove_duplicate_valu
     single_to_list, ORUnion
 
 
-# def transform_old_FilterType(cls, values):
 def transform_old_filter_type(cls, values):
     if values.get("type") is None:
         return values
@@ -103,12 +102,6 @@ class EditUserPasswordSchema(BaseModel):
     new_password: SecretStr = Field(...)
 
 
-# class UpdateTenantSchema(BaseModel):
-#     name: Optional[str] = Field(default=None)
-#     opt_out: Optional[bool] = Field(default=None)
-#     tenant_name: Optional[str] = Field(default=None)
-
-
 class CreateProjectSchema(BaseModel):
     name: str = Field(default="my first project")
     platform: Literal["web", "ios"] = Field(default="web")
@@ -153,11 +146,6 @@ class AddCollaborationSchema(BaseModel):
 
 class EditCollaborationSchema(AddCollaborationSchema):
     name: Optional[str] = Field(default=None)
-
-
-# class CreateNotificationSchema(BaseModel):
-#     token: str = Field(...)
-#     notifications: List = Field(...)
 
 
 class _TimedSchema(BaseModel):
@@ -345,10 +333,6 @@ class MetadataSchema(BaseModel):
     key: str = Field(...)
 
     _transform_key = field_validator('key', mode='before')(remove_whitespace)
-
-
-# class MetadataListSchema(BaseModel):
-#     list: List[MetadataSchema] = Field(...)
 
 
 class EmailPayloadSchema(BaseModel):
@@ -588,19 +572,19 @@ class HttpMethod(str, Enum):
 
 
 class FetchFilterType(str, Enum):
-    _url = "fetchUrl"  # FETCH_URL
-    _status_code = "fetchStatusCode"  # FETCH_STATUS_CODE
-    _method = "fetchMethod"  # FETCH_METHOD
-    _duration = "fetchDuration"  # FETCH_DURATION
-    _request_body = "fetchRequestBody"  # FETCH_REQUEST_BODY
-    _response_body = "fetchResponseBody"  # FETCH_RESPONSE_BODY
+    _url = "fetchUrl"
+    _status_code = "fetchStatusCode"
+    _method = "fetchMethod"
+    _duration = "fetchDuration"
+    _request_body = "fetchRequestBody"
+    _response_body = "fetchResponseBody"
 
 
 class GraphqlFilterType(str, Enum):
-    _name = "graphqlName"  # GRAPHQL_NAME
-    _method = "graphqlMethod"  # GRAPHQL_METHOD
-    _request_body = "graphqlRequestBody"  # GRAPHQL_REQUEST_BODY
-    _response_body = "graphqlResponseBody"  # GRAPHQL_RESPONSE_BODY
+    _name = "graphqlName"
+    _method = "graphqlMethod"
+    _request_body = "graphqlRequestBody"
+    _response_body = "graphqlResponseBody"
 
 
 class RequestGraphqlFilterSchema(BaseModel):
@@ -609,9 +593,7 @@ class RequestGraphqlFilterSchema(BaseModel):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
-# class SessionSearchEventRaw(BaseModel):
 class SessionSearchEventSchema2(BaseModel):
-    # is_event: bool = Field(default=True, const=True)
     is_event: Literal[True] = True
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
@@ -653,11 +635,7 @@ class SessionSearchEventSchema2(BaseModel):
         return values
 
 
-# class _SessionSearchEventSchema(SessionSearchEventRaw):
-#     value: Union[List[Union[SessionSearchEventRaw, str]], str] = Field(...)
 class SessionSearchFilterSchema(BaseModel):
-    # class SessionSearchFilterSchema(ORBaseModel):
-    # is_event: bool = Field(False, const=False)
     is_event: Literal[False] = False
     value: List[Union[IssueType, PlatformType, int, str]] = Field(default=[])
     type: FilterType = Field(...)
@@ -675,21 +653,17 @@ class SessionSearchFilterSchema(BaseModel):
                 "must specify a valid 'source' for metadata filter"
         elif values.type == FilterType.issue:
             for v in values.value:
-                # assert isinstance(v, IssueType), f"value should be of type IssueType for {values.type} filter"
                 if IssueType.has_value(v):
                     v = IssueType(v)
                 else:
                     raise ValueError(f"value should be of type IssueType for {values.type} filter")
         elif values.type == FilterType.platform:
             for v in values.value:
-                # assert isinstance(v, PlatformType), f"value should be of type PlatformType for {values.type} filter"
                 if PlatformType.has_value(v):
                     v = PlatformType(v)
                 else:
                     raise ValueError(f"value should be of type PlatformType for {values.type} filter")
         elif values.type == FilterType.events_count:
-            # assert isinstance(values.operator, MathOperator), \
-            #     f"operator should be of type MathOperator for {values.type} filter"
             if values.operator in MathOperator.has_value(values.operator):
                 values.operator = MathOperator(values.operator)
             else:
@@ -698,8 +672,6 @@ class SessionSearchFilterSchema(BaseModel):
             for v in values.value:
                 assert isinstance(v, int), f"value should be of type int for {values.type} filter"
         else:
-            # assert isinstance(values.operator, SearchEventOperator), \
-            #     f"operator should be of type SearchEventOperator for {values.type} filter"
             if SearchEventOperator.has_value(values.operator):
                 values.operator = SearchEventOperator(values.operator)
             else:
@@ -745,7 +717,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def add_missing_attributes(cls, values):
-        # in case the old search body was passed
+        # in case the old search payload was passed
         if len(values.get("events", [])) > 0:
             for v in values["events"]:
                 v["isEvent"] = True
@@ -759,7 +731,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="after")
     def split_filters_events(cls, values):
-        # in case the old search body was passed
+        # in case the old search payload was passed
         n_filters = []
         n_events = []
         for v in values.filters:
@@ -771,69 +743,6 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         values.filters = n_filters
         return values
 
-
-# class FlatSessionsSearch(BaseModel):
-#     events: Optional[List[_SessionSearchEventSchema]] = Field([])
-#     filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
-#
-#     @root_validator(pre=True)
-#     def flat_to_original(cls, values):
-#         # in case the old search body was passed
-#         if len(values.get("events", [])) > 0:
-#             for v in values["events"]:
-#                 v["isEvent"] = True
-#             for v in values.get("filters", []):
-#                 v["isEvent"] = False
-#         else:
-#             n_filters = []
-#             n_events = []
-#             for v in values.get("filters", []):
-#                 if v.get("isEvent"):
-#                     n_events.append(v)
-#                 else:
-#                     v["isEvent"] = False
-#                     n_filters.append(v)
-#             values["events"] = n_events
-#             values["filters"] = n_filters
-#         return values
-
-
-# class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
-#     # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
-#     sort: Optional[str] = Field(default=None)
-#     order: Optional[str] = Field(default=None)
-
-#
-# # class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
-# class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
-#     range_value: Optional[str] = Field(default=None)
-#     sort: Optional[str] = Field(default=None)
-#     order: Optional[str] = Field(default=None)
-#     events_order: Literal[SearchEventOrder._then] = SearchEventOrder._then
-#     group_by_user: Literal[False] = False
-#
-#     @model_validator(mode="before")
-#     def __enforce_default_values(cls, values):
-#         values["eventsOrder"] = SearchEventOrder._then
-#         values["groupByUser"] = False
-#         return values
-
-
-#
-# class FunnelSchema(BaseModel):
-#     name: str = Field(...)
-#     filter: FunnelSearchPayloadSchema = Field([])
-
-
-#
-# # class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
-# class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
-#     sort: Optional[str] = Field(None)
-#     order: Optional[str] = Field(None)
-#     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
-#     group_by_user: Optional[bool] = Field(default=False, const=True)
-#     rangeValue: Optional[str] = Field(None)
-#
 
 class ErrorStatus(str, Enum):
     all = 'all'
@@ -848,7 +757,6 @@ class ErrorSort(str, Enum):
     sessions_count = 'sessions'
 
 
-# class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
     sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(default=7)
@@ -875,7 +783,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
 class ProductAnalyticsFilter(BaseModel):
     type: FilterType
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
-    # TODO: support session metadat filters
+    # TODO: support session metadata filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
@@ -936,60 +844,60 @@ class MetricType(str, Enum):
 
 
 class MetricOfErrors(str, Enum):
-    calls_errors = "callsErrors"  # calls_errors
-    domains_errors_4xx = "domainsErrors4xx"  # domains_errors_4xx
-    domains_errors_5xx = "domainsErrors5xx"  # domains_errors_5xx
-    errors_per_domains = "errorsPerDomains"  # errors_per_domains
-    errors_per_type = "errorsPerType"  # errors_per_type
-    impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"  # impacted_sessions_by_js_errors
-    resources_by_party = "resourcesByParty"  # resources_by_party
+    calls_errors = "callsErrors"
+    domains_errors_4xx = "domainsErrors4xx"
+    domains_errors_5xx = "domainsErrors5xx"
+    errors_per_domains = "errorsPerDomains"
+    errors_per_type = "errorsPerType"
+    impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"
+    resources_by_party = "resourcesByParty"
 
 
 class MetricOfPerformance(str, Enum):
-    cpu = "cpu"  # cpu
-    crashes = "crashes"  # crashes
-    fps = "fps"  # fps
-    impacted_sessions_by_slow_pages = "impactedSessionsBySlowPages"  # impacted_sessions_by_slow_pages
-    memory_consumption = "memoryConsumption"  # memory_consumption
-    pages_dom_buildtime = "pagesDomBuildtime"  # pages_dom_buildtime
-    pages_response_time = "pagesResponseTime"  # pages_response_time
-    pages_response_time_distribution = "pagesResponseTimeDistribution"  # pages_response_time_distribution
-    resources_vs_visually_complete = "resourcesVsVisuallyComplete"  # resources_vs_visually_complete
-    sessions_per_browser = "sessionsPerBrowser"  # sessions_per_browser
-    slowest_domains = "slowestDomains"  # slowest_domains
-    speed_location = "speedLocation"  # speed_location
-    time_to_render = "timeToRender"  # time_to_render
+    cpu = "cpu"
+    crashes = "crashes"
+    fps = "fps"
+    impacted_sessions_by_slow_pages = "impactedSessionsBySlowPages"
+    memory_consumption = "memoryConsumption"
+    pages_dom_buildtime = "pagesDomBuildtime"
+    pages_response_time = "pagesResponseTime"
+    pages_response_time_distribution = "pagesResponseTimeDistribution"
+    resources_vs_visually_complete = "resourcesVsVisuallyComplete"
+    sessions_per_browser = "sessionsPerBrowser"
+    slowest_domains = "slowestDomains"
+    speed_location = "speedLocation"
+    time_to_render = "timeToRender"
 
 
 class MetricOfResources(str, Enum):
-    missing_resources = "missingResources"  # missing_resources
-    resources_count_by_type = "resourcesCountByType"  # resources_count_by_type
-    resources_loading_time = "resourcesLoadingTime"  # resources_loading_time
-    resource_type_vs_response_end = "resourceTypeVsResponseEnd"  # resource_type_vs_response_end
-    slowest_resources = "slowestResources"  # slowest_resources
+    missing_resources = "missingResources"
+    resources_count_by_type = "resourcesCountByType"
+    resources_loading_time = "resourcesLoadingTime"
+    resource_type_vs_response_end = "resourceTypeVsResponseEnd"
+    slowest_resources = "slowestResources"
 
 
 class MetricOfWebVitals(str, Enum):
-    avg_cpu = "avgCpu"  # avg_cpu
-    avg_dom_content_loaded = "avgDomContentLoaded"  # avg_dom_content_loaded
-    avg_dom_content_load_start = "avgDomContentLoadStart"  # avg_dom_content_load_start
-    avg_first_contentful_pixel = "avgFirstContentfulPixel"  # avg_first_contentful_pixel
-    avg_first_paint = "avgFirstPaint"  # avg_first_paint
-    avg_fps = "avgFps"  # avg_fps
-    avg_image_load_time = "avgImageLoadTime"  # avg_image_load_time
-    avg_page_load_time = "avgPageLoadTime"  # avg_page_load_time
-    avg_pages_dom_buildtime = "avgPagesDomBuildtime"  # avg_pages_dom_buildtime
-    avg_pages_response_time = "avgPagesResponseTime"  # avg_pages_response_time
-    avg_request_load_time = "avgRequestLoadTime"  # avg_request_load_time
-    avg_response_time = "avgResponseTime"  # avg_response_time
-    avg_session_duration = "avgSessionDuration"  # avg_session_duration
-    avg_till_first_byte = "avgTillFirstByte"  # avg_till_first_byte
-    avg_time_to_interactive = "avgTimeToInteractive"  # avg_time_to_interactive
-    avg_time_to_render = "avgTimeToRender"  # avg_time_to_render
-    avg_used_js_heap_size = "avgUsedJsHeapSize"  # avg_used_js_heap_size
-    avg_visited_pages = "avgVisitedPages"  # avg_visited_pages
-    count_requests = "countRequests"  # count_requests
-    count_sessions = "countSessions"  # count_sessions
+    avg_cpu = "avgCpu"
+    avg_dom_content_loaded = "avgDomContentLoaded"
+    avg_dom_content_load_start = "avgDomContentLoadStart"
+    avg_first_contentful_pixel = "avgFirstContentfulPixel"
+    avg_first_paint = "avgFirstPaint"
+    avg_fps = "avgFps"
+    avg_image_load_time = "avgImageLoadTime"
+    avg_page_load_time = "avgPageLoadTime"
+    avg_pages_dom_buildtime = "avgPagesDomBuildtime"
+    avg_pages_response_time = "avgPagesResponseTime"
+    avg_request_load_time = "avgRequestLoadTime"
+    avg_response_time = "avgResponseTime"
+    avg_session_duration = "avgSessionDuration"
+    avg_till_first_byte = "avgTillFirstByte"
+    avg_time_to_interactive = "avgTimeToInteractive"
+    avg_time_to_render = "avgTimeToRender"
+    avg_used_js_heap_size = "avgUsedJsHeapSize"
+    avg_visited_pages = "avgVisitedPages"
+    count_requests = "countRequests"
+    count_sessions = "countSessions"
 
 
 class MetricOfTable(str, Enum):
@@ -1022,7 +930,6 @@ class MetricOfPathAnalysis(str, Enum):
     session_count = MetricOfTimeseries.session_count.value
 
 
-# class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
 class CardSessionsSchema(SessionsSearchPayloadSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(defautl=TimeUTC.now())
@@ -1057,33 +964,20 @@ class CardSessionsSchema(SessionsSearchPayloadSchema):
         return values
 
 
-#
-#
-# class CardChartSchema(CardSessionsSchema):
-#     density: int = Field(default=7)
-
-
 class CardConfigSchema(BaseModel):
     col: Optional[int] = Field(default=None)
     row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
-# class CardSchema(CardChartSchema):
 class __CardSchema(CardSessionsSchema):
     name: Optional[str] = Field(default=None)
     is_public: bool = Field(default=True)
     default_config: CardConfigSchema = Field(default=CardConfigSchema(), alias="config")
     thumbnail: Optional[str] = Field(default=None)
     metric_format: Optional[MetricFormatType] = Field(default=None)
-
-    # view_type: Union[MetricTimeseriesViewType, \
-    #     MetricTableViewType, MetricOtherViewType] = Field(...)
     view_type: Any
     metric_type: MetricType = Field(...)
-    # metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-    #     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-    #     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_of: Any
     metric_value: List[IssueType] = Field(default=[])
 
@@ -1260,7 +1154,6 @@ class CardInsights(__CardSchema):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
-# class CardPathAnalysisSchema(BaseModel):
 class CardPathAnalysisSchema(CardSessionsSchema):
     name: Optional[str] = Field(default=None)
     filter: PathAnalysisSchema = Field(...)
@@ -1312,15 +1205,8 @@ class CardPathAnalysis(__CardSchema):
 
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(cls, values):
-    #     # values.metric_of = MetricOfClickMap(values.metric_of)
-    #     return values
     @model_validator(mode='after')
     def __validator(cls, values):
-        # Path analysis should have only 1 start-point with multiple values OR 1 end-point with multiple values
-        # start-point's value and end-point's value should not be excluded
-
         s_e_values = {}
         exclude_values = {}
         for f in values.start_point:
@@ -1347,7 +1233,6 @@ __cards_union_base = Union[
 CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
 
 
-# class UpdateCustomMetricsStatusSchema(BaseModel):
 class UpdateCardStatusSchema(BaseModel):
     active: bool = Field(...)
 
@@ -1515,7 +1400,6 @@ class _ClickMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.location] = Field(...)
 
 
-# class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
 class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
     events: Optional[List[_ClickMapSearchEventRaw]] = Field(default=[])
     filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field(default=[])
@@ -1530,21 +1414,6 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
                                   "operator": SearchEventOperator._is, "filters": []})
         return values
 
-    # @model_validator(mode='after')
-    # def flat_to_original(cls, values):
-    #     if len(values.events) > 0:
-    #         return values
-    #     n_filters = []
-    #     n_events = []
-    #     for v in values.filters:
-    #         if isinstance(v, _ClickMapSearchEventRaw):
-    #             n_events.append(v)
-    #         else:
-    #             n_filters.append(v)
-    #     values.events = n_events
-    #     values.filters = n_filters
-    #     return values
-
 
 class ClickMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
@@ -1554,7 +1423,6 @@ class ClickMapFilterSchema(BaseModel):
 
 class GetHeatmapPayloadSchema(_TimedSchema):
     url: str = Field(...)
-    # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
 
