@@ -7,6 +7,7 @@ ENV ENTERPRISE_BUILD=${envarg} \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     PRIVATE_ENDPOINTS=false \
     LISTEN_PORT=9001 \
+    ERROR=1 \
     NODE_ENV=production
 WORKDIR /work
 COPY package.json .
