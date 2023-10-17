@@ -741,7 +741,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values["filters"]:
+        for v in values.get("filters", []):
             if v.get("isEvent") is None:
                 v["isEvent"] = EventType.has_value(v["type"]) or PerformanceEventType.has_value(v["type"])
         return values
@@ -797,7 +797,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values["filters"]:
+        for v in values.get("filters"):
             if v.get("isEvent") is None:
                 v["isEvent"] = True
         return values
@@ -835,7 +835,7 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values["filters"]:
+        for v in values.get("filters"):
             if v.get("isEvent") is None:
                 v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
         return values
