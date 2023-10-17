@@ -231,6 +231,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         return response
       })
     }
+    // @ts-ignore
     context.fetch = trackFetch
 
     /* ====== <> ====== */
