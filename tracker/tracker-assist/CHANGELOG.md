@@ -1,3 +1,7 @@
+## 6.0.3
+
+- expose assist version to window as `__OR_ASSIST_VERSION`
+
 ## 6.0.2
 
 - fix cursor position for remote control
