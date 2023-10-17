@@ -1,0 +1,57 @@
+import { describe, test, expect, beforeEach, jest } from '@jest/globals'
+import UserTestManager from '../main/modules/userTesting/index'
+import mockApp from '../main/app/index'
+
+jest.mock('../main/app/index')
+jest.mock('../main/modules/userTesting/recorder.js')
+jest.mock('../main/modules/userTesting/styles.js')
+jest.mock('../main/modules/userTesting/dnd.js')
+
+describe('UserTestManager', () => {
+  let userTestManager: UserTestManager
+  let mockAppInstance
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    mockAppInstance = jest.fn()
+    userTestManager = new UserTestManager(mockAppInstance as unknown as mockApp)
+  })
+
+  test('should create a greeting', () => {
+    userTestManager.createGreeting('Hello', true, true)
+    expect(document.body.innerHTML).toContain('Hello')
+    expect(document.body.innerHTML).toContain('Welcome, this session will be recorded.')
+  })
+
+  test('should show a widget with descriptions and tasks', () => {
+    userTestManager.createGreeting('Hello', true, true)
+    userTestManager.showWidget(['Desc1'], [{ title: 'Task1', description: 'Task1 Description' }])
+    expect(document.body.innerHTML).toContain('Desc1')
+    expect(document.body.innerHTML).toContain('Task1')
+  })
+
+  test('should create a title section', () => {
+    const titleSection = userTestManager.createTitleSection()
+    expect(titleSection).toBeDefined()
+  })
+
+  test('should create a description section', () => {
+    const descriptionSection = userTestManager.createDescriptionSection(['Desc1'])
+    expect(descriptionSection).toBeDefined()
+    expect(descriptionSection.innerHTML).toContain('Desc1')
+  })
+
+  test('should create tasks section', () => {
+    const tasksSection = userTestManager.createTasksSection([
+      { title: 'Task1', description: 'Desc1' },
+    ])
+    expect(tasksSection).toBeDefined()
+    expect(tasksSection.innerHTML).toContain('Task1')
+    expect(tasksSection.innerHTML).toContain('Desc1')
+  })
+
+  test('should show end section', () => {
+    userTestManager.createGreeting('Hello', true, true)
+    userTestManager.showEndSection()
+    expect(document.body.innerHTML).toContain('Thank you!')
+  })
+})
