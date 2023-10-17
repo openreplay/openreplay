@@ -92,7 +92,7 @@ function renderSize(r: any) {
     content = (
       <ul>
         {showTransferred && (
-          <li>{`${formatBytes(r.encodedBodySize + headerSize)} transfered over network`}</li>
+          <li>{`${formatBytes(r.encodedBodySize + headerSize)} transferred over network`}</li>
         )}
         <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
       </ul>

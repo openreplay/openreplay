@@ -30,7 +30,7 @@ export default class NetworkMessage {
   readyState?: RequestState = 0
   header: { [key: string]: string } = {}
   responseType: XMLHttpRequest['responseType'] = ''
-  requestType: 'xhr' | 'fetch' | 'ping' | 'custom'
+  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon'
   requestHeader: HeadersInit = {}
   response: any
   responseSize = 0 // bytes
@@ -72,6 +72,7 @@ export default class NetworkMessage {
       messageInfo.status,
       this.startTime + getTimeOrigin(),
       this.duration,
+      this.responseSize,
     )
   }
 

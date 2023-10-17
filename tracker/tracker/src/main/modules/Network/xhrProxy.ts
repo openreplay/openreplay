@@ -226,8 +226,6 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
 }
 
 export default class XHRProxy {
-  public static origXMLHttpRequest = XMLHttpRequest
-
   public static create(
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,

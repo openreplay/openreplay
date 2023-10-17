@@ -268,7 +268,7 @@ cdef class MouseMove(PyMessage):
         self.y = y
 
 
-cdef class NetworkRequest(PyMessage):
+cdef class NetworkRequestDeprecated(PyMessage):
     cdef public int __id__
     cdef public str type
     cdef public str method
@@ -1042,6 +1042,31 @@ cdef class PartitionedMessage(PyMessage):
         self.__id__ = 82
         self.part_no = part_no
         self.part_total = part_total
+
+
+cdef class NetworkRequest(PyMessage):
+    cdef public int __id__
+    cdef public str type
+    cdef public str method
+    cdef public str url
+    cdef public str request
+    cdef public str response
+    cdef public unsigned long status
+    cdef public unsigned long timestamp
+    cdef public unsigned long duration
+    cdef public unsigned long transferred_body_size
+
+    def __init__(self, str type, str method, str url, str request, str response, unsigned long status, unsigned long timestamp, unsigned long duration, unsigned long transferred_body_size):
+        self.__id__ = 83
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+        self.transferred_body_size = transferred_body_size
 
 
 cdef class InputChange(PyMessage):

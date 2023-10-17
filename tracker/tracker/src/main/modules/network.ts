@@ -222,6 +222,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
                 r.status,
                 startTime + getTimeOrigin(),
                 duration,
+                0,
               ),
             )
           })
@@ -230,6 +231,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         return response
       })
     }
+    // @ts-ignore
     context.fetch = trackFetch
 
     /* ====== <> ====== */
@@ -293,6 +295,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
               xhr.status,
               startTime + getTimeOrigin(),
               duration,
+              0,
             ),
           )
         }),

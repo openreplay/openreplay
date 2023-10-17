@@ -1,3 +1,8 @@
+# 10.0.0
+
+- networkRequest message changed to include `TransferredBodySize`
+- tracker now attempts to create proxy for beacon api as well (if its in scope)
+
 # 9.0.9
 
 - Fix for `{disableStringDict: true}` behavior

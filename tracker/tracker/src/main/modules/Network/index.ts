@@ -1,5 +1,6 @@
 import FetchProxy from './fetchProxy.js'
 import XHRProxy from './xhrProxy.js'
+import BeaconProxy from './beaconProxy.js'
 import { RequestResponseData } from './types.js'
 import { NetworkRequest } from '../../../common/messages.gen.js'
 
@@ -39,5 +40,14 @@ export default function setProxy(
     )
   } else {
     getWarning('fetch')
+  }
+  if (context?.navigator?.sendBeacon) {
+    context.navigator.sendBeacon = BeaconProxy.create(
+      ignoredHeaders,
+      setSessionTokenHeader,
+      sanitize,
+      sendMessage,
+      isServiceUrl,
+    )
   }
 }

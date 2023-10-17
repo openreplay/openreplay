@@ -3,6 +3,7 @@ import type { ResourceTiming, NetworkRequest, Fetch } from '../messages'
 export const enum ResourceType {
   XHR = 'xhr',
   FETCH = 'fetch',
+  BEACON = 'beacon',
   SCRIPT = 'script',
   CSS = 'css',
   IMG = 'img',
@@ -10,17 +11,19 @@ export const enum ResourceType {
   OTHER = 'other',
 }
 
-function getURLExtention(url: string): string {
+export function getURLExtention(url: string): string {
   const pts = url.split("?")[0].split(".")
   return pts[pts.length-1] || ""
 }
 
 // maybe move this thing to the tracker
-function getResourceType(initiator: string, url: string): ResourceType {
+export function getResourceType(initiator: string, url: string): ResourceType {
   switch (initiator) {
   case "xmlhttprequest":
   case "fetch":
       return ResourceType.FETCH
+  case "beacon":
+    return ResourceType.BEACON
   case "img":
     return ResourceType.IMG
   default:
@@ -48,7 +51,7 @@ function getResourceType(initiator: string, url: string): ResourceType {
   }
 }
 
-function getResourceName(url: string) {
+export function getResourceName(url: string) {
   return url
     .split('/')
     .filter((s) => s !== '')
@@ -104,10 +107,11 @@ export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch, sessS
   return Resource({
     ...msg,
     // @ts-ignore
-    type: msg?.type === "xhr" ? ResourceType.XHR : ResourceType.FETCH,
+    type: msg?.type ? msg?.type : ResourceType.XHR,
     success: msg.status < 400,
     status: String(msg.status),
     time: Math.max(0, msg.timestamp - sessStart),
+    decodedBodySize: 'transferredBodySize' in msg ? msg.transferredBodySize : undefined
   })
 }
 
