@@ -399,6 +399,7 @@ WITH sub_sessions AS (SELECT session_id
 def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_from = "pre_ranked_events"
+    sub_sessions_extra_projection = ""
     start_points_conditions = []
     sessions_conditions = ["start_ts>=%(startTimestamp)s", "start_ts<%(endTimestamp)s",
                            "project_id=%(project_id)s", "events_count > 1", "duration>0"]
