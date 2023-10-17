@@ -790,13 +790,29 @@ class PathAnalysisSubFilterSchema(BaseModel):
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
 
-class ProductAnalyticsFilter(BaseModel):
+class _ProductAnalyticsFilter(BaseModel):
+    is_event: Literal[False] = False
     type: FilterType
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
     # TODO: support session metadata filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+
+
+class _ProductAnalyticsEventFilter(BaseModel):
+    is_event: Literal[True] = True
+    type: ProductAnalyticsSelectedEventType
+    operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
+    # TODO: support session metadata filters
+    value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
+
+    _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
+
+
+# this type is created to allow mixing events&filters and specifying a discriminator for PathAnalysis series filter
+ProductAnalyticsFilter = Annotated[Union[_ProductAnalyticsFilter, _ProductAnalyticsEventFilter], \
+    Field(discriminator='is_event')]
 
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
@@ -1164,7 +1180,7 @@ class CardInsights(__CardSchema):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
-class CardPathAnalysisSchema(CardSessionsSchema):
+class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     name: Optional[str] = Field(default=None)
     filter: PathAnalysisSchema = Field(...)
     density: int = Field(default=4, ge=2, le=10)
@@ -1182,14 +1198,14 @@ class CardPathAnalysis(__CardSchema):
     metric_type: Literal[MetricType.pathAnalysis]
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
-    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
+    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[])
     density: int = Field(default=4, ge=2, le=10)
 
     start_type: Literal["start", "end"] = Field(default="start")
     start_point: List[PathAnalysisSubFilterSchema] = Field(default=[])
     excludes: List[PathAnalysisSubFilterSchema] = Field(default=[])
 
-    series: List[CardPathAnalysisSchema] = Field(default=[])
+    series: List[CardPathAnalysisSeriesSchema] = Field(default=[])
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
@@ -1201,17 +1217,14 @@ class CardPathAnalysis(__CardSchema):
     @model_validator(mode="after")
     def __clean_start_point_and_enforce_metric_value(cls, values):
         start_point = []
-        metric_value = []
         for s in values.start_point:
             if len(s.value) == 0:
                 continue
             start_point.append(s)
-            metric_value.append(s.type)
+            values.metric_value.append(s.type)
 
         values.start_point = start_point
-        if len(metric_value) > 0:
-            metric_value = remove_duplicate_values(metric_value)
-            values.metric_value = metric_value
+        values.metric_value = remove_duplicate_values(values.metric_value)
 
         return values
 
