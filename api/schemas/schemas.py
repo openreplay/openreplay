@@ -1182,7 +1182,7 @@ class CardPathAnalysis(__CardSchema):
     metric_type: Literal[MetricType.pathAnalysis]
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
-    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[ProductAnalyticsSelectedEventType.location])
+    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[])
     density: int = Field(default=4, ge=2, le=10)
 
     start_type: Literal["start", "end"] = Field(default="start")
