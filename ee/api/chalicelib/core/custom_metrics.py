@@ -122,7 +122,7 @@ def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: i
 def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         data.series.append(
-            schemas.CardPathAnalysisSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
+            schemas.CardPathAnalysisSeriesSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
@@ -315,28 +315,29 @@ def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel)
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         return {"data": {}}
-    card_table = schemas.CardTable(
+    search_data = schemas.SessionsSearchPayloadSchema(
         startTimestamp=data.startTimestamp,
         endTimestamp=data.endTimestamp,
-        metricType=schemas.MetricType.table,
-        metricOf=schemas.MetricOfTable.issues,
-        viewType=schemas.MetricTableViewType.table,
-        series=data.model_dump()["series"])
+        limit=data.limit,
+        page=data.page,
+        filters=data.series[0].filter.model_dump(by_alias=True)["filters"]
+    )
+
     for s in data.start_point:
         if data.start_type == "end":
-            card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                                         operator=s.operator,
-                                                                                         value=s.value))
+            search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                         operator=s.operator,
+                                                                         value=s.value))
         else:
-            card_table.series[0].filter.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
-                                                                                            operator=s.operator,
-                                                                                            value=s.value))
+            search_data.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
+                                                                            operator=s.operator,
+                                                                            value=s.value))
     for s in data.excludes:
-        card_table.series[0].filter.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                                     operator=schemas.SearchEventOperator._not_on,
-                                                                                     value=s.value))
-    result = __get_table_of_issues(project_id=project_id, user_id=user_id, data=card_table)
-    return result[0] if len(result) > 0 else {}
+        search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                     operator=schemas.SearchEventOperator._not_on,
+                                                                     value=s.value))
+    result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
+    return result
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):

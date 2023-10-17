@@ -344,11 +344,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         return sessions
 
 
-def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int,
-                                      metric_value: List):
-    if len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
-                                                              operator=schemas.SearchEventOperator._is))
+def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None)
