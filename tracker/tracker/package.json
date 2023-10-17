@@ -26,7 +26,7 @@
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run test && bun run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
