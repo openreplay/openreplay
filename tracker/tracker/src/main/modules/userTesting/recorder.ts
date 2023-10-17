@@ -17,25 +17,28 @@ export default class Recorder {
     this.recStartTs = this.app.timestamp()
 
     const videoConstraints: MediaTrackConstraints = quality
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { ...videoConstraints, frameRate: { ideal: fps } },
+        audio: true,
+      })
 
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      video: { ...videoConstraints, frameRate: { ideal: fps } },
-      audio: true,
-    })
+      this.mediaRecorder = new MediaRecorder(this.stream, {
+        mimeType: 'video/webm;codecs=vp9',
+      })
 
-    this.mediaRecorder = new MediaRecorder(this.stream, {
-      mimeType: 'video/webm;codecs=vp9',
-    })
+      this.recordedChunks = []
 
-    this.recordedChunks = []
-
-    this.mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        this.recordedChunks.push(event.data)
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.recordedChunks.push(event.data)
+        }
       }
-    }
 
-    this.mediaRecorder.start()
+      this.mediaRecorder.start()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   async stopRecording() {

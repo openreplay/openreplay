@@ -1,5 +1,7 @@
+import App from '../../app/index.js'
 import * as styles from './styles.js'
 import Recorder, { Quality } from './recorder.js'
+import attachDND from './dnd.js'
 
 function createElement(
   tag: string,
@@ -21,7 +23,7 @@ function createElement(
 }
 
 export default class UserTestManager {
-  private readonly userRecorder = new Recorder()
+  private readonly userRecorder: Recorder
   private readonly bg = createElement('div', 'bg', styles.bgStyle, undefined, '__or_ut_bg')
   private readonly container = createElement(
     'div',
@@ -37,6 +39,14 @@ export default class UserTestManager {
   private taskSection: HTMLElement | null = null
   private endSection: HTMLElement | null = null
   private stopButton: HTMLElement | null = null
+  private initialX = 0
+  private initialY = 0
+  private currentX = 0
+  private currentY = 0
+
+  constructor(app: App) {
+    this.userRecorder = new Recorder(app)
+  }
 
   hideTaskSection = () => false
   showTaskSection = () => true
@@ -132,7 +142,12 @@ export default class UserTestManager {
     const title = createElement('div', 'title', styles.titleWidgetStyle)
     const leftIcon = createElement('div', 'left_icon', {}, '(icn)')
     const titleText = createElement('div', 'title_text', {}, 'Test name goes here')
-    const rightIcon = createElement('div', 'right_icon', { marginLeft: 'auto' }, '(icn)')
+    const rightIcon = createElement(
+      'div',
+      'right_icon',
+      { marginLeft: 'auto', cursor: 'pointer' },
+      '(icn)',
+    )
 
     title.append(leftIcon, titleText, rightIcon)
 
@@ -170,7 +185,10 @@ export default class UserTestManager {
       }
       return isVisible
     }
-    title.onclick = () => toggleWidget(!this.widgetVisible)
+
+    rightIcon.onclick = () => toggleWidget(!this.widgetVisible)
+    attachDND(this.bg, leftIcon)
+
     this.collapseWidget = () => toggleWidget(false)
     return title
   }

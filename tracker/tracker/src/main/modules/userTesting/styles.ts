@@ -116,6 +116,7 @@ export const titleWidgetStyle = {
   borderRadius: '0.375rem',
   background: 'rgba(0, 0, 0, 0.60)',
   boxSizing: 'border-box',
+  cursor: 'grab',
 }
 
 export const descriptionWidgetStyle = {
