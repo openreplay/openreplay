@@ -400,6 +400,7 @@ async function onAny(socket, eventName, ...args) {
         // TODO: emit message to all agents in the room (except tabs)
         socket.to(socket.roomId).emit(eventName, args[0]);
     } else {
+        // Stats
         handleEvent(eventName, socket, args[0]);
         debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
         let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);

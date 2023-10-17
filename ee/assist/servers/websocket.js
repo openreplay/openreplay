@@ -24,6 +24,12 @@ const {
     getCompressionConfig,
     getAvailableRooms
 } = require('../utils/helper-ee');
+const {
+    startAssist,
+    endAssist,
+    handleEvent
+} = require('../utils/stats');
+
 const wsRouter = express.Router();
 
 let io;
@@ -336,6 +342,9 @@ module.exports = {
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
                     socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
+                    socket.agentID = socket.handshake.query.agentInfo.id;
+                    // Stats
+                    startAssist(socket, socket.agentID);
                 }
                 socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
             }
@@ -344,6 +353,8 @@ module.exports = {
                 debug_log && console.log(`${socket.id} disconnected from ${socket.roomId}`);
                 if (socket.identity === IDENTITIES.agent) {
                     socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
+                    // Stats
+                    endAssist(socket, socket.agentID);
                 }
                 debug_log && console.log("checking for number of connected agents and sessions");
                 let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -402,6 +413,8 @@ module.exports = {
                     debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.roomId).emit(eventName, args[0]);
                 } else {
+                    // Stats
+                    handleEvent(eventName, socket, args[0]);
                     debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
                     let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
                     if (socketId === null) {
