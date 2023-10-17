@@ -21,7 +21,7 @@ import type {
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
-  RawNetworkRequest,
+  RawNetworkRequestDeprecated,
   RawConsoleLog,
   RawCssInsertRule,
   RawCssDeleteRule,
@@ -55,6 +55,7 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
+  RawNetworkRequest,
   RawSelectionChange,
   RawMouseThrashing,
   RawResourceTiming,
@@ -107,7 +108,7 @@ export type SetInputChecked = RawSetInputChecked & Timed
 
 export type MouseMove = RawMouseMove & Timed
 
-export type NetworkRequest = RawNetworkRequest & Timed
+export type NetworkRequestDeprecated = RawNetworkRequestDeprecated & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
 
@@ -174,6 +175,8 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
+
+export type NetworkRequest = RawNetworkRequest & Timed
 
 export type SelectionChange = RawSelectionChange & Timed
 

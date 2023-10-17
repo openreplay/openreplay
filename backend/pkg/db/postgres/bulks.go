@@ -193,9 +193,9 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.webNetworkRequest, err = NewBulk(conn.c,
 		"events_common.requests",
-		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
-		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
-		13, 200)
+		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, transfer_size)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d, $%d)",
+		14, 200)
 	if err != nil {
 		log.Fatalf("can't create webNetworkRequest bulk: %s", err)
 	}

@@ -291,8 +291,6 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
 }
 
 export default class FetchProxy {
-  public static origFetch = fetch
-
   public static create(
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,

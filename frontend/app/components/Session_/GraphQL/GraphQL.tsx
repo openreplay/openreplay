@@ -1,12 +1,31 @@
+import {Duration} from "luxon";
 import React, { useEffect } from 'react';
 import { NoContent, Input, SlideModal, CloseButton, Button } from 'UI';
 import { getRE } from 'App/utils';
 import BottomBlock from '../BottomBlock';
 import TimeTable from '../TimeTable';
 import GQLDetails from './GQLDetails';
-import { renderStart } from 'Components/Session_/Network/NetworkContent';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+
+export function renderStart(r) {
+  return (
+    <div className="flex justify-between items-center grow-0 w-full">
+      <span>{Duration.fromMillis(r.time).toFormat('mm:ss.SSS')}</span>
+      {/* <Button
+        variant="text"
+        className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
+        onClick={(e) => {
+          e.stopPropagation();
+          jump(r.time);
+        }}
+      >
+        Jump
+    </Button> */}
+    </div>
+  );
+}
+
 
 function renderDefaultStatus() {
   return '2xx-3xx';
