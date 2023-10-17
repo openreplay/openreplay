@@ -61,15 +61,16 @@ function SankeyChart(props: Props) {
   }, [activeLink]);
 
   return (
-    <NoContent show={!(data && data.nodes && data.nodes.length && data.links)}>
+    <NoContent
+      style={{ paddingTop: '80px' }}
+      show={!(data && data.nodes && data.nodes.length && data.links)}
+      title={'No data for the selected time period.'}>
       <ResponsiveContainer height={height} width='100%'>
         <Sankey
           data={data}
           node={<CustomNode />}
           nodeWidth={nodeWidth}
           sort={false}
-          // linkCurvature={0.5}
-          // iterations={128}
           margin={{
             left: 0,
             right: 200,
