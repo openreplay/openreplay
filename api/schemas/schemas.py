@@ -1164,7 +1164,8 @@ class CardInsights(__CardSchema):
         raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
 
 
-class CardPathAnalysisSchema(CardSessionsSchema):
+# class CardPathAnalysisSchema(CardSessionsSchema):
+class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     name: Optional[str] = Field(default=None)
     filter: PathAnalysisSchema = Field(...)
     density: int = Field(default=4, ge=2, le=10)
@@ -1189,7 +1190,7 @@ class CardPathAnalysis(__CardSchema):
     start_point: List[PathAnalysisSubFilterSchema] = Field(default=[])
     excludes: List[PathAnalysisSubFilterSchema] = Field(default=[])
 
-    series: List[CardPathAnalysisSchema] = Field(default=[])
+    series: List[CardPathAnalysisSeriesSchema] = Field(default=[])
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):

@@ -101,7 +101,7 @@ def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, inclu
 def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         data.series.append(
-            schemas.CardPathAnalysisSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
+            schemas.CardPathAnalysisSeriesSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
