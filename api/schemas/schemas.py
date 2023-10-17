@@ -739,9 +739,15 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             f["value"] = vals
         return values
 
+    @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        for v in values["filters"]:
+            if v.get("isEvent") is None:
+                v["isEvent"] = EventType.has_value(v["type"]) or PerformanceEventType.has_value(v["type"])
+        return values
+
     @model_validator(mode="after")
     def split_filters_events(cls, values):
-        # in case the old search payload was passed
         n_filters = []
         n_events = []
         for v in values.filters:
@@ -789,6 +795,13 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
+    @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        for v in values["filters"]:
+            if v.get("isEvent") is None:
+                v["isEvent"] = True
+        return values
+
 
 class _ProductAnalyticsFilter(BaseModel):
     is_event: Literal[False] = False
@@ -819,6 +832,13 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     density: int = Field(default=7)
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
+
+    @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        for v in values["filters"]:
+            if v.get("isEvent") is None:
+                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
+        return values
 
 
 class MobileSignPayloadSchema(BaseModel):
@@ -1465,6 +1485,11 @@ class FeatureFlagConditionFilterSchema(BaseModel):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[str] = Field(default=None)
     sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
+
+    @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        values["isEvent"] = False
+        return values
 
 
 class FeatureFlagCondition(BaseModel):
