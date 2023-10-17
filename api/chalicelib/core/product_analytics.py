@@ -717,7 +717,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
         _now = time()
 
         cur.execute(query)
-        if True or time() - _now > 2:
+        if time() - _now > 2:
             logger.info(f">>>>>>>>>PathAnalysis long query ({int(time() - _now)}s)<<<<<<<<<")
             logger.info("----------------------")
             logger.info(query)
