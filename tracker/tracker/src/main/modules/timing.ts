@@ -83,6 +83,7 @@ export interface Options {
   captureResourceTimings: boolean
   capturePageLoadTimings: boolean
   capturePageRenderTimings: boolean
+  excludedResourceUrls?: Array<string>
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -91,6 +92,7 @@ export default function (app: App, opts: Partial<Options>): void {
       captureResourceTimings: true,
       capturePageLoadTimings: true,
       capturePageRenderTimings: true,
+      excludedResourceUrls: [],
     },
     opts,
   )
@@ -108,6 +110,12 @@ export default function (app: App, opts: Partial<Options>): void {
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration
     }
+
+    options.excludedResourceUrls?.forEach((url) => {
+      if (entry.name.startsWith(url)) {
+        return
+      }
+    })
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),
