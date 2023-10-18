@@ -264,31 +264,34 @@ wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
 
-async function onConnect(socket) {
-    socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
-    debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+function processNewSocket(socket) {
     socket._connectedAt = new Date();
-
-    let {projectKey: connProjectKey, sessionId: connSessionId, tabId:connTabId} = extractPeerId(socket.handshake.query.peerId);
-    socket.peerId = socket.handshake.query.peerId;
-    socket.roomId = extractRoomId(socket.peerId);
-    connTabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
-    socket.tabId = connTabId;
-    socket.sessId = connSessionId;
-    socket.projectId = socket.handshake.query.projectId;
     socket.identity = socket.handshake.query.identity;
+    socket.peerId = socket.handshake.query.peerId;
+    let {projectKey: connProjectKey, sessionId: connSessionId, tabId:connTabId} = extractPeerId(socket.peerId);
+    socket.roomId = extractRoomId(socket.peerId);
+    socket.projectId = socket.handshake.query.projectId;
+    socket.projectKey = connProjectKey;
+    socket.sessId = connSessionId;
+    socket.tabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
     debug && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
+}
+
+async function onConnect(socket) {
+    debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+    processNewSocket(socket);
 
     let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
     if (socket.identity === IDENTITIES.session) {
+        // Check if session already connected, if so, refuse new connexion
         if (c_sessions > 0) {
             const rooms = await getAvailableRooms(io);
             for (let roomId of rooms.keys()) {
                 let {projectKey} = extractPeerId(roomId);
-                if (projectKey === connProjectKey) {
+                if (projectKey === socket.projectKey) {
                     const connected_sockets = await io.in(roomId).fetchSockets();
                     for (let item of connected_sockets) {
-                        if (item.tabId === connTabId) {
+                        if (item.tabId === socket.tabId) {
                             debug && console.log(`session already connected, refusing new connexion`);
                             io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
                             return socket.disconnect();
@@ -298,6 +301,7 @@ async function onConnect(socket) {
             }
         }
         extractSessionInfo(socket);
+        // Inform all connected agents about reconnected session
         if (c_agents > 0) {
             debug && console.log(`notifying new session about agent-existence`);
             let agents_ids = await get_all_agents_ids(io, socket);
@@ -327,14 +331,15 @@ async function onConnect(socket) {
     // Set disconnect handler
     socket.on('disconnect', () => onDisconnect(socket));
 
-    //
+    // Handle update event
     socket.on(EVENTS_DEFINITION.listen.UPDATE_EVENT, (...args) => onUpdateEvent(socket, ...args));
 
-    //
+    // Handle errors
+    socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
     socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
     socket.on(EVENTS_DEFINITION.listen.CONNECT_FAILED, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_FAILED, err));
 
-    //
+    // Handle all other events
     socket.onAny((eventName, ...args) => onAny(socket, eventName, ...args));
 }
 
