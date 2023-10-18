@@ -42,7 +42,7 @@ service:
     frontend: 8080
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   additionalLabels:
     release: observability
   scrapeConfigs:
@@ -50,7 +50,7 @@ serviceMonitor:
       honorLabels: true
       interval: 15s
       path: /metrics
-      scheme: frontend
+      scheme: http
       scrapeTimeout: 10s
 
 ingress:
