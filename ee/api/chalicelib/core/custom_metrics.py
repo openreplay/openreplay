@@ -360,7 +360,8 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "exclude": [e.model_dump() for e in data.excludes]}
+         "excludes": [e.model_dump() for e in data.excludes],
+         "hideExcess": data.hide_excess}
     return r
 
 
@@ -601,9 +602,10 @@ def delete_card(project_id, metric_id, user_id):
 
 def __get_path_analysis_attributes(row):
     card_info = row.pop("cardInfo")
-    row["exclude"] = card_info.get("exclude", [])
+    row["excludes"] = card_info.get("excludes", [])
     row["startPoint"] = card_info.get("startPoint", [])
     row["startType"] = card_info.get("startType", "start")
+    row["hideExcess"] = card_info.get("hideExcess", False)
     return row
 
 
