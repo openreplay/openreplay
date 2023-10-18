@@ -3,6 +3,10 @@
 - networkRequest message changed to include `TransferredBodySize`
 - tracker now attempts to create proxy for beacon api as well (if its in scope)
 
+# 9.0.10
+
+- added `excludedResourceUrls` to timings options to better sanitize network data
+
 # 9.0.9
 
 - Fix for `{disableStringDict: true}` behavior
