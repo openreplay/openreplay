@@ -96,10 +96,6 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_click_map(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.click_map
-
-
 def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
@@ -368,7 +364,7 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
-        if __is_click_map(data):
+        if data.metric_type == schemas.MetricType.click_map:
             session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
                                                  data=data, include_mobs=False)
             if session_data is not None:
@@ -458,6 +454,9 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
         if i not in u_series_ids:
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
+    params["card_info"] = None
+    if data.metric_type == schemas.MetricType.pathAnalysis:
+        params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
     with pg_client.PostgresClient() as cur:
         sub_queries = []
@@ -490,7 +489,8 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
                 metric_format= %(metric_format)s,
                 edited_at = timezone('utc'::text, now()),
                 default_config = %(config)s,
-                thumbnail = %(thumbnail)s
+                thumbnail = %(thumbnail)s,
+                card_info = %(card_info)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -744,7 +744,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
-    elif __is_click_map(metric):
+    elif metric.metric_type == schemas.MetricType.click_map:
         if raw_metric["data"]:
             keys = sessions_mobs. \
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
