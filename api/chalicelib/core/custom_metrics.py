@@ -1,12 +1,12 @@
 import json
 import logging
-from typing import Union
 
 from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import sessions, funnels, errors, issues, metrics, click_maps, sessions_mobs, product_analytics
+from chalicelib.core import sessions, funnels, errors, issues, click_maps, sessions_mobs, product_analytics, \
+    custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient
@@ -83,10 +83,6 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
             "sessions": []
         }
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
-
-
-def __is_click_map(data: schemas.CardSchema):
-    return data.metric_type == schemas.MetricType.click_map
 
 
 def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
@@ -171,8 +167,10 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
 
 
 def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
-    if data.is_template:
-        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.model_dump())
+    if data.is_predefined:
+        return custom_metrics_predefined.get_metric(key=data.metric_of,
+                                                    project_id=project_id,
+                                                    data=data.model_dump())
 
     supported = {
         schemas.MetricType.timeseries: __get_timeseries_chart,
@@ -320,7 +318,7 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
 
 
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
-    if data.is_template:
+    if data.is_predefined:
         return not_supported()
     if data.metric_of == schemas.MetricOfTable.issues:
         return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
@@ -338,14 +336,15 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "exclude": [e.model_dump() for e in data.excludes]}
+         "excludes": [e.model_dump() for e in data.excludes],
+         "hideExcess": data.hide_excess}
     return r
 
 
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
-        if __is_click_map(data):
+        if data.metric_type == schemas.MetricType.click_map:
             session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
                                                  data=data, include_mobs=False)
             if session_data is not None:
@@ -423,6 +422,9 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
         if i not in u_series_ids:
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
+    params["card_info"] = None
+    if data.metric_type == schemas.MetricType.pathAnalysis:
+        params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
     with pg_client.PostgresClient() as cur:
         sub_queries = []
@@ -455,7 +457,8 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
                 metric_format= %(metric_format)s,
                 edited_at = timezone('utc'::text, now()),
                 default_config = %(config)s,
-                thumbnail = %(thumbnail)s
+                thumbnail = %(thumbnail)s,
+                card_info = %(card_info)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -553,9 +556,10 @@ def delete_card(project_id, metric_id, user_id):
 
 def __get_path_analysis_attributes(row):
     card_info = row.pop("cardInfo")
-    row["exclude"] = card_info.get("exclude", [])
+    row["excludes"] = card_info.get("excludes", [])
     row["startPoint"] = card_info.get("startPoint", [])
     row["startType"] = card_info.get("startType", "start")
+    row["hideExcess"] = card_info.get("hideExcess", False)
     return row
 
 
@@ -690,9 +694,11 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
     raw_metric["startTimestamp"] = data.startTimestamp
     raw_metric["endTimestamp"] = data.endTimestamp
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    if metric.is_template:
-        return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.model_dump())
-    elif __is_click_map(metric):
+    if metric.is_predefined:
+        return custom_metrics_predefined.get_metric(key=metric.metric_of,
+                                                    project_id=project_id,
+                                                    data=data.model_dump())
+    elif metric.metric_type == schemas.MetricType.click_map:
         if raw_metric["data"]:
             keys = sessions_mobs. \
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
@@ -709,54 +715,3 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
                 return raw_metric["data"]
 
     return make_chart(project_id=project_id, user_id=user_id, data=data, metric=metric)
-
-
-def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
-        schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
-    supported = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
-                 schemas.MetricOfWebVitals.avg_image_load_time: metrics.get_application_activity_avg_image_load_time,
-                 schemas.MetricOfWebVitals.avg_page_load_time: metrics.get_application_activity_avg_page_load_time,
-                 schemas.MetricOfWebVitals.avg_request_load_time: metrics.get_application_activity_avg_request_load_time,
-                 schemas.MetricOfWebVitals.avg_dom_content_load_start: metrics.get_page_metrics_avg_dom_content_load_start,
-                 schemas.MetricOfWebVitals.avg_first_contentful_pixel: metrics.get_page_metrics_avg_first_contentful_pixel,
-                 schemas.MetricOfWebVitals.avg_visited_pages: metrics.get_user_activity_avg_visited_pages,
-                 schemas.MetricOfWebVitals.avg_session_duration: metrics.get_user_activity_avg_session_duration,
-                 schemas.MetricOfWebVitals.avg_pages_dom_buildtime: metrics.get_pages_dom_build_time,
-                 schemas.MetricOfWebVitals.avg_pages_response_time: metrics.get_pages_response_time,
-                 schemas.MetricOfWebVitals.avg_response_time: metrics.get_top_metrics_avg_response_time,
-                 schemas.MetricOfWebVitals.avg_first_paint: metrics.get_top_metrics_avg_first_paint,
-                 schemas.MetricOfWebVitals.avg_dom_content_loaded: metrics.get_top_metrics_avg_dom_content_loaded,
-                 schemas.MetricOfWebVitals.avg_till_first_byte: metrics.get_top_metrics_avg_till_first_bit,
-                 schemas.MetricOfWebVitals.avg_time_to_interactive: metrics.get_top_metrics_avg_time_to_interactive,
-                 schemas.MetricOfWebVitals.count_requests: metrics.get_top_metrics_count_requests,
-                 schemas.MetricOfWebVitals.avg_time_to_render: metrics.get_time_to_render,
-                 schemas.MetricOfWebVitals.avg_used_js_heap_size: metrics.get_memory_consumption,
-                 schemas.MetricOfWebVitals.avg_cpu: metrics.get_avg_cpu,
-                 schemas.MetricOfWebVitals.avg_fps: metrics.get_avg_fps,
-                 schemas.MetricOfErrors.impacted_sessions_by_js_errors: metrics.get_impacted_sessions_by_js_errors,
-                 schemas.MetricOfErrors.domains_errors_4xx: metrics.get_domains_errors_4xx,
-                 schemas.MetricOfErrors.domains_errors_5xx: metrics.get_domains_errors_5xx,
-                 schemas.MetricOfErrors.errors_per_domains: metrics.get_errors_per_domains,
-                 schemas.MetricOfErrors.calls_errors: metrics.get_calls_errors,
-                 schemas.MetricOfErrors.errors_per_type: metrics.get_errors_per_type,
-                 schemas.MetricOfErrors.resources_by_party: metrics.get_resources_by_party,
-                 schemas.MetricOfPerformance.speed_location: metrics.get_speed_index_location,
-                 schemas.MetricOfPerformance.slowest_domains: metrics.get_slowest_domains,
-                 schemas.MetricOfPerformance.sessions_per_browser: metrics.get_sessions_per_browser,
-                 schemas.MetricOfPerformance.time_to_render: metrics.get_time_to_render,
-                 schemas.MetricOfPerformance.impacted_sessions_by_slow_pages: metrics.get_impacted_sessions_by_slow_pages,
-                 schemas.MetricOfPerformance.memory_consumption: metrics.get_memory_consumption,
-                 schemas.MetricOfPerformance.cpu: metrics.get_avg_cpu,
-                 schemas.MetricOfPerformance.fps: metrics.get_avg_fps,
-                 schemas.MetricOfPerformance.crashes: metrics.get_crashes,
-                 schemas.MetricOfPerformance.resources_vs_visually_complete: metrics.get_resources_vs_visually_complete,
-                 schemas.MetricOfPerformance.pages_dom_buildtime: metrics.get_pages_dom_build_time,
-                 schemas.MetricOfPerformance.pages_response_time: metrics.get_pages_response_time,
-                 schemas.MetricOfPerformance.pages_response_time_distribution: metrics.get_pages_response_time_distribution,
-                 schemas.MetricOfResources.missing_resources: metrics.get_missing_resources_trend,
-                 schemas.MetricOfResources.slowest_resources: metrics.get_slowest_resources,
-                 schemas.MetricOfResources.resources_loading_time: metrics.get_resources_loading_time,
-                 schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
-                 schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
-
-    return supported.get(key, lambda *args: None)(project_id=project_id, **data)

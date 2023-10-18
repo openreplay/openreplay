@@ -1029,7 +1029,7 @@ class __CardSchema(CardSessionsSchema):
 
     @computed_field
     @property
-    def is_template(self) -> bool:
+    def is_predefined(self) -> bool:
         return self.metric_type in [MetricType.errors, MetricType.performance,
                                     MetricType.resources, MetricType.web_vital]
 

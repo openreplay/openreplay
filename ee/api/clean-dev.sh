@@ -10,6 +10,7 @@ rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
+rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/feature_flags.py
 #exp rm -rf ./chalicelib/core/errors.py
 rm -rf ./chalicelib/core/errors_favorite.py
@@ -72,6 +73,7 @@ rm -rf ./crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
+rm -rf ./chalicelib/core/assist_stats.py
 rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh

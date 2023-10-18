@@ -64,15 +64,17 @@ JOURNEY_TYPES = {
 }
 
 
-# query: Q4, the result is correct,
+# query: Q5, the result is correct,
 # startPoints are computed before ranked_events to reduce the number of window functions over rows
 # replaced time_to_target by time_from_previous
 # compute avg_time_from_previous at the same level as sessions_count
 # sort by top 5 according to sessions_count at the CTE level
 # final part project data without grouping
+# if start-point is selected, the selected event is ranked n°1
 def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_conditions = []
+    start_point_conditions = []
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.location)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"],
@@ -89,24 +91,33 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             ','.join([f"event_type='{s['eventType']}',{s['column']}" for s in sub_events[:-1]]),
             sub_events[-1]["column"])
     extra_values = {}
+    start_join = []
+    initial_event_cte = ""
     reverse = data.start_type == "end"
     for i, sf in enumerate(data.start_point):
         f_k = f"start_point_{i}"
         op = sh.get_sql_operator(sf.operator)
         is_not = sh.is_negation_operator(sf.operator)
-        extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
-        start_points_conditions.append(f"(event_type='{JOURNEY_TYPES[sf.type]['eventType']}' AND " +
+        event_column = JOURNEY_TYPES[sf.type]['column']
+        event_type = JOURNEY_TYPES[sf.type]['eventType']
+        extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k),
+                        f"start_event_type_{i}": event_type}
+        start_points_conditions.append(f"(event_type=%(start_event_type_{i})s AND " +
                                        sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
                                                            value_key=f_k)
                                        + ")")
+        start_point_conditions.append(f"(event_type=%(start_event_type_{i})s AND " +
+                                      sh.multi_conditions(f'{event_column} {op} %({f_k})s', sf.value, is_not=is_not,
+                                                          value_key=f_k)
+                                      + ")")
 
     exclusions = {}
-    for i, sf in enumerate(data.excludes):
-        if sf.type in data.metric_value:
+    for i, ef in enumerate(data.excludes):
+        if ef.type in data.metric_value:
             f_k = f"exclude_{i}"
-            extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k)}
-            exclusions[sf.type] = [
-                sh.multi_conditions(f'{JOURNEY_TYPES[sf.type]["column"]} != %({f_k})s', sf.value, is_not=True,
+            extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}
+            exclusions[ef.type] = [
+                sh.multi_conditions(f'{JOURNEY_TYPES[ef.type]["column"]} != %({f_k})s', ef.value, is_not=True,
                                     value_key=f_k)]
 
     sessions_conditions = []
@@ -275,6 +286,11 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sh.multi_conditions(f"events_count {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))
 
+    if reverse:
+        path_direction = "DESC"
+    else:
+        path_direction = ""
+
     # ch_sub_query = __get_basic_constraints(table_name="experimental.events", data=data.model_dump())
     ch_sub_query = __get_basic_constraints(table_name="events")
     selected_event_type_sub_query = []
@@ -287,7 +303,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
 
     main_table = exp_ch_helper.get_main_events_table(data.startTimestamp)
     if len(sessions_conditions) > 0:
-        sessions_conditions.append(f"sessions.project_id = %(project_id)s")
+        sessions_conditions.append(f"sessions.project_id = toUInt16(%(project_id)s)")
         sessions_conditions.append(f"sessions.datetime >= toDateTime(%(startTimestamp)s / 1000)")
         sessions_conditions.append(f"sessions.datetime < toDateTime(%(endTimestamp)s / 1000)")
         sessions_conditions.append("sessions.events_count>1")
@@ -311,14 +327,21 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     else:
         start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")",
                                    "event_number_in_session = 1"]
+        start_point_conditions = ["(" + " OR ".join(start_point_conditions) + ")",
+                                  "events.project_id = toUInt16(%(project_id)s)",
+                                  "events.datetime >= toDateTime(%(startTimestamp)s / 1000)",
+                                  "events.datetime < toDateTime(%(endTimestamp)s / 1000)"]
         start_points_subquery = f"""SELECT DISTINCT session_id
                                     FROM pre_ranked_events
                                     WHERE {" AND ".join(start_points_conditions)}"""
+        initial_event_cte = f"""\
+            initial_event AS (SELECT session_id, MIN(datetime) AS start_event_timestamp
+                       FROM {main_table}
+                       WHERE {" AND ".join(start_point_conditions)}
+                       GROUP BY session_id),"""
+        ch_sub_query.append("events.datetime>=initial_event.start_event_timestamp")
+        main_table += " INNER JOIN initial_event USING (session_id)"
     del start_points_conditions
-    if reverse:
-        path_direction = "DESC"
-    else:
-        path_direction = ""
 
     steps_query = ["""n1 AS (SELECT event_number_in_session,
                                     event_type,
@@ -370,12 +393,13 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         _now = time()
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
-                  "eventThresholdNumberInGroup": 6 if data.hide_excess else 8,
+                  "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
                   **extra_values}
 
         ch_query1 = f"""\
 CREATE TEMPORARY TABLE pre_ranked_events_{time_key} AS
-WITH pre_ranked_events AS (SELECT *
+WITH {initial_event_cte}
+     pre_ranked_events AS (SELECT *
                            FROM (SELECT session_id,
                                         event_type,
                                         datetime,
@@ -390,11 +414,11 @@ WITH pre_ranked_events AS (SELECT *
 SELECT *
 FROM pre_ranked_events;"""
         ch.execute(query=ch_query1, params=params)
-        if time() - _now > 2:
-            logger.info(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.info("---------Q1-----------")
-            logger.info(ch.format(ch_query1, params))
-            logger.info("----------------------")
+        if True or time() - _now > 2:
+            logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
+            logger.warning("---------Q1-----------")
+            logger.warning(ch.format(ch_query1, params))
+            logger.warning("----------------------")
         _now = time()
 
         ch_query2 = f"""\
@@ -417,11 +441,11 @@ WITH pre_ranked_events AS (SELECT *
 SELECT *
 FROM ranked_events;"""
         ch.execute(query=ch_query2, params=params)
-        if time() - _now > 2:
-            logger.info(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.info("---------Q2-----------")
-            logger.info(ch.format(ch_query2, params))
-            logger.info("----------------------")
+        if True or time() - _now > 2:
+            logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
+            logger.warning("---------Q2-----------")
+            logger.warning(ch.format(ch_query2, params))
+            logger.warning("----------------------")
         _now = time()
 
         ch_query3 = f"""\
@@ -433,11 +457,11 @@ FROM ({" UNION ALL ".join(projection_query)}) AS chart_steps
 ORDER BY event_number_in_session;"""
         rows = ch.execute(query=ch_query3, params=params)
 
-        if time() - _now > 2:
-            logger.info(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.info("---------Q3-----------")
-            logger.info(ch.format(ch_query3, params))
-            logger.info("----------------------")
+        if True or time() - _now > 2:
+            logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
+            logger.warning("---------Q3-----------")
+            logger.warning(ch.format(ch_query3, params))
+            logger.warning("----------------------")
 
     return __transform_journey(rows=rows, reverse_path=reverse)
 
