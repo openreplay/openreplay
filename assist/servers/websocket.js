@@ -203,6 +203,7 @@ module.exports = {
     wsRouter,
     start: (server, prefix) => {
         io = createSocketIOServer(server, prefix);
+        console.log(`ws.start: ${io}`)
         io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', (socket) => onConnect(socket));
 
