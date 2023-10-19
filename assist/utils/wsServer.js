@@ -4,12 +4,10 @@ const {getCompressionConfig} = require("./helper");
 let io;
 
 const getServer = function () {
-    console.log(`getServer: ${io}`);
     return io;
 }
 
 const createSocketIOServer = function (server, prefix) {
-    console.log(`createServer: ${io}`);
     if (io) {
         return io;
     }
@@ -22,7 +20,6 @@ const createSocketIOServer = function (server, prefix) {
         path: (prefix ? prefix : '') + '/socket',
         ...getCompressionConfig()
     });
-    console.log(`createServer return: ${io}`);
     return io;
 }
 
