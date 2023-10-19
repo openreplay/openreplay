@@ -22,7 +22,7 @@ colima start --with-kubernetes --cpu 2 --memory 8 -p openreplay
 ```yaml
 git clone https://github.com/openreplay/openreplay -b dev
 cd openreplay/scripts/helmcharts
-SKIP_K8S_INSTALL=true SKIP_K8S_TOOLS=true DOMAIN_NAME=openreplay.local bash -x init.sh
+SKIP_K8S_INSTALL=1 SKIP_K8S_TOOLS=1 DOMAIN_NAME=openreplay.local bash -x init.sh
 ```
 
 ## Updating DNS
@@ -45,28 +45,28 @@ For more information, refer [here](https://docs.openreplay.com/installation/java
 ## Troubleshoot
 
 1. Colima error for copying context
-    
+
     <aside>
     💡 If you’re getting error `error at 'updating config': error fetching kubeconfig on guest: exit status 1`
-    
+
     </aside>
-    
+
     **Solution**
-    
+
     ```yaml
     colima ssh -p openreplay
     cat echo;/etc/rancher/k3s/k3s.yaml;echo
     # copy output and exit from the shell
-    
+
     # In your local machine
     cd ~/.kube || ( mkdir ~/.kube && cd ~/.kube)
     # past from buffer and save file
     vim openreplay-local.yaml
     export KUBECONFIG=~/.kube/openreplay-local.yaml
     ```
-    
+
 2. if minio is crashlooping
-    
+
     ```yaml
     # in vars.yaml
     minio:
@@ -74,5 +74,5 @@ For more information, refer [here](https://docs.openreplay.com/installation/java
         limits:
           cpu: 512m
     ```
-    
+
 Having trouble setting up this plugin? Please connect to our [Slack](https://slack.openreplay.com/) and get help from our community.
