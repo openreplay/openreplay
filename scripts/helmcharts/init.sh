@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 # Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 RED='\033[0;31m'
