@@ -8,7 +8,7 @@ import json
 
 
 from time import time, sleep
-
+QUICKWIT_PORT = config('QUICKWIT_PORT', default=7280, cast=int)
 
 #decryption = config('encrypted', cast=bool)
 decryption = False
@@ -22,12 +22,12 @@ if decryption:
 
 def _quickwit_ingest(index, data_list, retry=0):
     try:
-        res = requests.post(f'http://localhost:7280/api/v1/{index}/ingest', data=__jsonify_data(data_list, index))
+        res = requests.post(f'http://localhost:{QUICKWIT_PORT}/api/v1/{index}/ingest', data=__jsonify_data(data_list, index))
     except requests.exceptions.ConnectionError as e:
         retry += 1
-        assert retry <= max_retry, f'[ENDPOINT CONNECTION FAIL] Failed to connect to endpoint http://localhost:7280/api/v1/{index}/ingest\n{e}\n'
+        assert retry <= max_retry, f'[ENDPOINT CONNECTION FAIL] Failed to connect to endpoint http://localhost:{QUICKWIT_PORT}/api/v1/{index}/ingest\n{e}\n'
         sleep(5*retry)
-        print(f"[ENDPOINT ERROR] Failed to connect to endpoint http://localhost:7280/api/v1/{index}/ingest, retrying in {5*retry} seconds..\n")
+        print(f"[ENDPOINT ERROR] Failed to connect to endpoint http://localhost:{QUICKWIT_PORT}/api/v1/{index}/ingest, retrying in {5*retry} seconds..\n")
         return _quickwit_ingest(index, data_list, retry=retry)
     return res
 
