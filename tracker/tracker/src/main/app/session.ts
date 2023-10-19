@@ -141,14 +141,18 @@ export default class Session {
     return this.tabId
   }
 
+  public regenerateTabId() {
+    const randomId = generateRandomId(12)
+    this.app.sessionStorage.setItem(this.options.session_tabid_key, randomId)
+    this.tabId = randomId
+  }
+
   private createTabId() {
     const localId = this.app.sessionStorage.getItem(this.options.session_tabid_key)
     if (localId) {
       this.tabId = localId
     } else {
-      const randomId = generateRandomId(12)
-      this.app.sessionStorage.setItem(this.options.session_tabid_key, randomId)
-      this.tabId = randomId
+      this.regenerateTabId()
     }
   }
 

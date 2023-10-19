@@ -1,7 +1,6 @@
-# 10.0.0
+# 9.0.11
 
-- networkRequest message changed to include `TransferredBodySize`
-- tracker now attempts to create proxy for beacon api as well (if its in scope)
+- new `resetTabOnWindowOpen` option to fix window.open issue with sessionStorage being inherited (replicating tabId bug), users still should use 'noopener=true' in window.open to prevent it in general...
 
 # 9.0.10
 

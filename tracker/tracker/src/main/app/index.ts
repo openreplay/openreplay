@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
-import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
+import { now, adjustTimeOrigin, deprecationWarn, inIframe } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -39,6 +39,7 @@ interface OnStartInfo {
   sessionToken: string
   userUUID: string
 }
+
 const CANCELED = 'canceled' as const
 const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & { success: true }
@@ -47,9 +48,10 @@ type UnsuccessfulStart = {
   success: false
 }
 
-type RickRoll = { source: string } & (
+type RickRoll = { source: string; context: string } & (
   | { line: 'never-gonna-give-you-up' }
   | { line: 'never-gonna-let-you-down'; token: string }
+  | { line: 'never-gonna-run-around-and-desert-you'; token: string }
 )
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
@@ -58,6 +60,7 @@ export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
 
 type StartCallback = (i: OnStartInfo) => void
 type CommitCallback = (messages: Array<Message>) => void
+
 enum ActivityState {
   NotActive,
   Starting,
@@ -114,7 +117,8 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
-  /* private */ readonly observer: Observer // non-privat for attachContextCallback
+  /* private */
+  readonly observer: Observer // non-privat for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -128,13 +132,14 @@ export default class App {
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
   private readonly bc: BroadcastChannel | null = null
+  private readonly contextId
   public attributeSender: AttributeSender
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
-
+    this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
     this.networkOptions = options.network
     this.options = Object.assign(
@@ -160,7 +165,7 @@ export default class App {
     )
 
     if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
-      this.bc = new BroadcastChannel('rick')
+      this.bc = inIframe() ? null : new BroadcastChannel('rick')
     }
 
     this.revID = this.options.revID
@@ -243,24 +248,45 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    if (!this.session.getSessionToken() && this.bc) {
-      this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
-    }
+    const proto = {
+      // ask if there are any tabs alive
+      ask: 'never-gonna-give-you-up',
+      // yes, there are someone out there
+      resp: 'never-gonna-let-you-down',
+      // you stole someone's identity
+      reg: 'never-gonna-run-around-and-desert-you',
+    } as const
 
     if (this.bc) {
+      this.bc.postMessage({
+        line: proto.ask,
+        source: thisTab,
+        context: this.contextId,
+      })
+    }
+
+    if (this.bc !== null) {
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
-        if (ev.data.source === thisTab) return
-        if (ev.data.line === 'never-gonna-let-you-down') {
+        if (ev.data.context === this.contextId) {
+          return
+        }
+        if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
         }
-        if (ev.data.line === 'never-gonna-give-you-up') {
+        if (ev.data.line === proto.reg) {
+          const sessionToken = ev.data.token
+          this.session.regenerateTabId()
+          this.session.setSessionToken(sessionToken)
+        }
+        if (ev.data.line === proto.ask) {
           const token = this.session.getSessionToken()
           if (token && this.bc) {
             this.bc.postMessage({
-              line: 'never-gonna-let-you-down',
+              line: ev.data.source === thisTab ? proto.reg : proto.resp,
               token,
               source: thisTab,
+              context: this.contextId,
             })
           }
         }
@@ -284,6 +310,7 @@ export default class App {
   }
 
   private _usingOldFetchPlugin = false
+
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
@@ -309,6 +336,7 @@ export default class App {
       this.commit()
     }
   }
+
   private commit(): void {
     if (this.worker && this.messages.length) {
       this.messages.unshift(TabData(this.session.getTabId()))
@@ -320,6 +348,7 @@ export default class App {
   }
 
   private delay = 0
+
   timestamp(): number {
     return now() + this.delay
   }
@@ -342,18 +371,21 @@ export default class App {
   attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
   }
+
   attachStartCallback(cb: StartCallback, useSafe = false): void {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.startCallbacks.push(cb)
   }
+
   attachStopCallback(cb: () => any, useSafe = false): void {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.stopCallbacks.push(cb)
   }
+
   // Use  app.nodes.attachNodeListener for registered nodes instead
   attachEventListener(
     target: EventTarget,
@@ -396,15 +428,18 @@ export default class App {
       isSnippet: this.options.__is_snippet,
     }
   }
+
   getSessionInfo() {
     return {
       ...this.session.getInfo(),
       ...this.getTrackerInfo(),
     }
   }
+
   getSessionToken(): string | undefined {
     return this.session.getSessionToken()
   }
+
   getSessionID(): string | undefined {
     return this.session.getInfo().sessionID || undefined
   }
@@ -433,9 +468,11 @@ export default class App {
   getHost(): string {
     return new URL(this.options.ingestPoint).host
   }
+
   getProjectKey(): string {
     return this.projectKey
   }
+
   getBaseHref(): string {
     if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
@@ -451,6 +488,7 @@ export default class App {
       location.origin + location.pathname
     )
   }
+
   resolveResourceURL(resourceURL: string): string {
     const base = new URL(this.getBaseHref())
     base.pathname += '/' + new URL(resourceURL).pathname
@@ -654,7 +692,7 @@ export default class App {
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve(this._start(...args))
-        }, 10)
+        }, 25)
       })
     } else {
       return new Promise((resolve) => {
@@ -663,7 +701,7 @@ export default class App {
             document.removeEventListener('visibilitychange', onVisibilityChange)
             setTimeout(() => {
               resolve(this._start(...args))
-            }, 10)
+            }, 25)
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
@@ -678,6 +716,7 @@ export default class App {
   getTabId() {
     return this.session.getTabId()
   }
+
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
