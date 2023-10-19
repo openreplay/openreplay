@@ -18,7 +18,6 @@ const {
     getServer
 } = require('../utils/wsServer');
 
-const io = getServer();
 const debug_log = process.env.debug === "1";
 const error_log = process.env.ERROR === "1";
 
@@ -88,6 +87,7 @@ async function onConnect(socket) {
     debug_log && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
 
+    const io = getServer();
     let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
     if (socket.identity === IDENTITIES.session) {
         // Check if session already connected, if so, refuse new connexion
@@ -151,6 +151,7 @@ async function onConnect(socket) {
 }
 
 async function onDisconnect(socket) {
+    const io = getServer();
     debug_log && console.log(`${socket.id} disconnected from ${socket.roomId}`);
     if (socket.identity === IDENTITIES.agent) {
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
@@ -173,6 +174,7 @@ async function onDisconnect(socket) {
 }
 
 async function onUpdateEvent(socket, ...args) {
+    const io = getServer();
     debug_log && console.log(`${socket.id} sent update event.`);
     if (socket.identity !== IDENTITIES.session) {
         debug_log && console.log('Ignoring update event.');
@@ -199,6 +201,7 @@ async function onUpdateEvent(socket, ...args) {
 }
 
 async function onAny(socket, eventName, ...args) {
+    const io = getServer();
     if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
         debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
