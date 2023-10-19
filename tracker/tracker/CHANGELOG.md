@@ -1,3 +1,7 @@
+# 9.0.11
+
+- new `resetTabOnWindowOpen` option to fix window.open issue with sessionStorage being inherited (replicating tabId bug), users still should use 'noopener=true' in window.open to prevent it in general...
+
 # 9.0.10
 
 - added `excludedResourceUrls` to timings options to better sanitize network data
