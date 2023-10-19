@@ -1,6 +1,7 @@
 # 9.0.11
 
 - new `resetTabOnWindowOpen` option to fix window.open issue with sessionStorage being inherited (replicating tabId bug), users still should use 'noopener=true' in window.open to prevent it in general...
+- do not create BC channel in iframe context, add regeneration of tabid incase of duplication
 
 # 9.0.10
 
