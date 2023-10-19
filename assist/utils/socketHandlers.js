@@ -122,8 +122,9 @@ async function onConnect(socket) {
     }
     await socket.join(socket.roomId);
     const rooms = await getAvailableRooms(io);
-    if (rooms.get(socket.roomId)) {
-        debug_log && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${rooms.get(socket.roomId).size}`);
+    if (rooms.has(socket.roomId)) {
+        let connectedSockets = await io.in(socket.roomId).fetchSockets();
+        debug_log && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
     }
     if (socket.identity === IDENTITIES.agent) {
         if (socket.handshake.query.agentInfo !== undefined) {
