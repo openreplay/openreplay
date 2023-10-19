@@ -3,7 +3,13 @@ const {getCompressionConfig} = require("./helper");
 
 let io;
 
+const getServer = function () {
+    console.log(io);
+    return io;
+}
+
 const createSocketIOServer = function (server, prefix) {
+    console.log(io);
     if (io) {
         return io;
     }
@@ -21,5 +27,5 @@ const createSocketIOServer = function (server, prefix) {
 
 module.exports = {
     createSocketIOServer,
-    io
+    getServer,
 }

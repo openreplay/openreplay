@@ -15,9 +15,10 @@ const {
     handleEvent
 } = require("./stats");
 const {
-    io
+    getServer
 } = require('../utils/wsServer');
 
+const io = getServer();
 const debug_log = process.env.debug === "1";
 const error_log = process.env.ERROR === "1";
 

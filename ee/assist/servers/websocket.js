@@ -381,7 +381,7 @@ async function onDisconnect(socket) {
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
     if (c_agents === 0) {
-        debug_log && console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
+        debug_log && console.log(`notifying everyone in ${socket.roomId} about no AGENTS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_AGENTS);
     }
 }
@@ -422,12 +422,12 @@ async function onAny(socket, eventName, ...args) {
         args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
     }
     if (socket.identity === IDENTITIES.session) {
-        debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
+        debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.roomId}`);
         socket.to(socket.roomId).emit(eventName, args[0]);
     } else {
         // Stats
         handleEvent(eventName, socket, args[0]);
-        debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
+        debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
         let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
             debug_log && console.log(`session not found for:${socket.roomId}`);
@@ -444,7 +444,7 @@ module.exports = {
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
         io.use(async (socket, next) => await authorizer.check(socket, next));
-        io.on('connection', async (socket) => onConnect(socket));
+        io.on('connection', (socket) => onConnect(socket));
 
         console.log("WS server started");
         setInterval(async (io) => {
