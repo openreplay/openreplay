@@ -17,12 +17,6 @@ const getBodyFromUWSResponse = async function (res) {
                     json = JSON.parse(buffer);
                 } catch (e) {
                     console.error(e);
-                    /* res.close calls onAborted */
-                    // try {
-                    //     res.close();
-                    // } catch (e2) {
-                    //     console.error(e2);
-                    // }
                     json = {};
                 }
                 resolve(json);
