@@ -9,7 +9,6 @@ interface Props {
 function NodeButton(props: Props) {
   const { payload } = props;
   const [show, setShow] = React.useState(false);
-  console.log('payload', payload, props)
 
   const toggleMenu = (e: React.MouseEvent) => {
     setShow(!show);

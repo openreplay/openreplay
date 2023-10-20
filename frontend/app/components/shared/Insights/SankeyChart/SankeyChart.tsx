@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Sankey, ResponsiveContainer } from 'recharts';
 import CustomLink from './CustomLink';
 import CustomNode from './CustomNode';
 import { NoContent } from 'UI';
 
 interface Node {
+  id: number;  // Assuming you missed this from your interface
   name: string;
   eventType: string;
   avgTimeFromPrevious: number | null;
@@ -24,60 +25,69 @@ interface Data {
 
 interface Props {
   data: Data;
-  nodePadding?: number;
   nodeWidth?: number;
-  onChartClick?: (data: any) => void;
   height?: number;
 }
 
+const SankeyChart: React.FC<Props> = ({
+                                        data,
+                                        height = 240
+                                      }: Props) => {
+  const [highlightedLinks, setHighlightedLinks] = useState<number[]>([]);
 
-function SankeyChart(props: Props) {
-  const { data, nodeWidth = 10, height = 240 } = props;
-  const [activeLink, setActiveLink] = React.useState<any>(null);
+  const handleLinkMouseEnter = (linkData: any) => {
+    const { payload } = linkData;
+    const fullPathArray: Node[] = [];
 
-  useEffect(() => {
-    if (!activeLink) return;
-    const { source, target } = activeLink.payload;
-    const filters = [];
-    if (source) {
-      filters.push({
-        operator: 'is',
-        type: source.eventType,
-        value: [source.name],
-        isEvent: true
-      });
+    console.log('linkData', linkData.index);
+
+    // Add the source node of the current link
+    fullPathArray.push(payload.source);
+    fullPathArray.push(payload.target);
+
+
+    if (payload.source.sourceLinks.length > 0) {
+      let prevLink = data.links[payload.source.sourceLinks[0]];
+      // fullPathArray.unshift(prevLink);
+      fullPathArray.unshift(data.nodes[prevLink.source]);
+
+      if (prevLink.source) {
+        let prevLinkPrev = data.links[prevLink.source];
+        // fullPathArray.unshift(prevLinkPrev);
+        fullPathArray.unshift(data.nodes[prevLinkPrev.source]);
+      }
     }
 
-    if (target) {
-      filters.push({
-        operator: 'is',
-        type: target.eventType,
-        value: [target.name],
-        isEvent: true
-      });
-    }
+    setHighlightedLinks(fullPathArray);
 
-    props.onChartClick?.(filters);
-  }, [activeLink]);
+    console.log('fullPathArray', fullPathArray.map(node => node));
+  };
+
 
   return (
     <NoContent
       style={{ paddingTop: '80px' }}
-      show={!(data && data.nodes && data.nodes.length && data.links)}
-      title={'No data for the selected time period.'}>
+      show={!data.nodes.length || !data.links.length}
+      title={'No data for the selected time period.'}
+    >
       <ResponsiveContainer height={height} width='100%'>
         <Sankey
           data={data}
+          iterations={128}
           node={<CustomNode />}
-          nodeWidth={nodeWidth}
-          sort={false}
-          margin={{
-            left: 0,
-            right: 200,
-            top: 0,
-            bottom: 10
+          sort={true}
+          onClick={(data) => {
+
           }}
-          link={<CustomLink onClick={(props: any) => setActiveLink(props)} activeLink={activeLink} />}
+          link={({ source, target, ...linkProps }, index) => (
+            <CustomLink
+              {...linkProps}
+              strokeOpacity={highlightedLinks.includes(index) ? 1 : 0.2}
+              onMouseEnter={() => handleLinkMouseEnter(linkProps)}
+              onMouseLeave={() => setHighlightedLinks([])}
+            />
+          )}
+          margin={{ right: 200 }}
         >
           <defs>
             <linearGradient id={'linkGradient'}>
@@ -89,6 +99,6 @@ function SankeyChart(props: Props) {
       </ResponsiveContainer>
     </NoContent>
   );
-}
+};
 
 export default SankeyChart;

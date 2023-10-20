@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layer } from 'recharts';
+import { Layer, Rectangle } from 'recharts';
 
 function CustomLink(props: any) {
   const [fill, setFill] = React.useState('url(#linkGradient)');
@@ -11,12 +11,17 @@ function CustomLink(props: any) {
 
   const onClick = () => {
     if (props.onClick) {
-      props.onClick(props);
+      props.onClick(props.payload);
     }
   };
 
   return (
-    <Layer key={`CustomLink${index}`} onClick={onClick}>
+    <Layer
+      key={`CustomLink${index}`}
+      onClick={onClick}
+      onMouseEnter={props.onMouseEnter}
+      onMouseLeave={props.onMouseLeave}
+    >
       <path
         d={`
             M${sourceX},${sourceY + linkWidth / 2}
@@ -30,7 +35,8 @@ function CustomLink(props: any) {
             Z
           `}
         fill={isActive ? 'rgba(57, 78, 255, 0.5)' : fill}
-        strokeWidth='0'
+        strokeWidth='1'
+        strokeOpacity={props.strokeOpacity}
         onMouseEnter={() => {
           setFill('rgba(57, 78, 255, 0.5)');
         }}
