@@ -68,8 +68,8 @@ def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
                                                         dashboard_id=dashboardId, data=data)}
 
 
-@app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
-# @app.put('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
+# @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
+@app.put('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
 def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId: int,
                                data: schemas.UpdateWidgetPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
