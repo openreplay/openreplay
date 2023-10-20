@@ -797,7 +797,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values.get("filters"):
+        for v in values.get("filters", []):
             if v.get("isEvent") is None:
                 v["isEvent"] = True
         return values
