@@ -109,8 +109,15 @@ class CreateProjectSchema(BaseModel):
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
+class CurrentProjectContext(BaseModel):
+    project_id: int = Field(...)
+    project_key: str = Field(...)
+    platform: str = Field(...)
+
+
 class CurrentAPIContext(BaseModel):
     tenant_id: int = Field(...)
+    project: Optional[CurrentProjectContext] = Field(default=None)
 
 
 class CurrentContext(CurrentAPIContext):

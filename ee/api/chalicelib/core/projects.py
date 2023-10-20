@@ -236,9 +236,11 @@ def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
         return row
 
 
-def get_internal_project_id(project_key):
+def get_by_project_key(project_key):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT project_id
+        query = cur.mogrify("""SELECT project_id,
+                                      project_key,
+                                      platform
                                FROM public.projects
                                WHERE project_key =%(project_key)s 
                                     AND deleted_at ISNULL;""",

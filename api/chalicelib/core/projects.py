@@ -119,35 +119,14 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         query = cur.mogrify(f"""SELECT s.project_id,
                                        s.project_key,
                                        s.name,
-                                       s.save_request_payloads
+                                       s.save_request_payloads,
+                                       s.platform
                                        {extra_select}
                                 FROM public.projects AS s
                                 WHERE s.project_id =%(project_id)s
                                     AND s.deleted_at IS NULL
                                 LIMIT 1;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        row = cur.fetchone()
-        return helper.dict_to_camel_case(row)
-
-
-def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
-    with pg_client.PostgresClient() as cur:
-        extra_select = ""
-        if include_last_session:
-            extra_select += """,(SELECT max(ss.start_ts) 
-                                 FROM public.sessions AS ss 
-                                 WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at"""
-        if include_gdpr:
-            extra_select += ",s.gdpr"
-        query = cur.mogrify(f"""SELECT s.project_key,
-                                       s.name
-                                       {extra_select}
-                                FROM public.projects AS s
-                                WHERE s.project_key =%(project_key)s
-                                    AND s.deleted_at IS NULL
-                                LIMIT 1;""",
-                            {"project_key": project_key})
         cur.execute(query=query)
         row = cur.fetchone()
         return helper.dict_to_camel_case(row)
@@ -218,16 +197,18 @@ def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
         return row
 
 
-def get_internal_project_id(project_key):
+def get_by_project_key(project_key):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT project_id
+        query = cur.mogrify("""SELECT project_id,
+                                      project_key,
+                                      platform
                                FROM public.projects
                                WHERE project_key =%(project_key)s 
                                     AND deleted_at ISNULL;""",
                             {"project_key": project_key})
         cur.execute(query=query)
         row = cur.fetchone()
-        return row["project_id"] if row else None
+        return helper.dict_to_camel_case(row)
 
 
 def get_project_key(project_id):

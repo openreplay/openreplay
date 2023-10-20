@@ -10,7 +10,7 @@ public_app, app, app_apikey = get_routers()
 
 @app_apikey.get('/v1/{projectKey}/users/{userId}/sessions', tags=["api"])
 def get_user_sessions(projectKey: str, userId: str, start_date: int = None, end_date: int = None):
-    projectId = projects.get_internal_project_id(projectKey)
+    projectId = projects.get_by_project_key(project_key=projectKey)["projectId"]
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
@@ -25,7 +25,7 @@ def get_user_sessions(projectKey: str, userId: str, start_date: int = None, end_
 
 @app_apikey.get('/v1/{projectKey}/sessions/{sessionId}/events', tags=["api"])
 def get_session_events(projectKey: str, sessionId: int):
-    projectId = projects.get_internal_project_id(projectKey)
+    projectId = projects.get_by_project_key(project_key=projectKey)["projectId"]
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
@@ -38,7 +38,7 @@ def get_session_events(projectKey: str, sessionId: int):
 
 @app_apikey.get('/v1/{projectKey}/users/{userId}', tags=["api"])
 def get_user_details(projectKey: str, userId: str):
-    projectId = projects.get_internal_project_id(projectKey)
+    projectId = projects.get_by_project_key(project_key=projectKey)["projectId"]
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
@@ -51,7 +51,7 @@ def get_user_details(projectKey: str, userId: str):
 
 @app_apikey.delete('/v1/{projectKey}/users/{userId}', tags=["api"])
 def schedule_to_delete_user_data(projectKey: str, userId: str, _=Body(None)):
-    projectId = projects.get_internal_project_id(projectKey)
+    projectId = projects.get_by_project_key(project_key=projectKey)["projectId"]
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     record = jobs.create(project_id=projectId, user_id=userId)
@@ -60,7 +60,7 @@ def schedule_to_delete_user_data(projectKey: str, userId: str, _=Body(None)):
 
 @app_apikey.get('/v1/{projectKey}/jobs', tags=["api"])
 def get_jobs(projectKey: str):
-    projectId = projects.get_internal_project_id(projectKey)
+    projectId = projects.get_by_project_key(project_key=projectKey)["projectId"]
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {"data": jobs.get_all(project_id=projectId)}
@@ -97,7 +97,7 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 @app_apikey.get('/v1/projects/{projectKey}', tags=["api"])
 def get_project(projectKey: str, context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": projects.get_project_by_key(tenant_id=context.tenant_id, project_key=projectKey)
+        "data": projects.get_by_project_key(tenant_id=context.tenant_id, project_key=projectKey)
     }
 
 
