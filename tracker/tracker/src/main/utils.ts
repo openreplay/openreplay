@@ -105,3 +105,11 @@ export function generateRandomId(len?: number) {
   safeCrypto.getRandomValues(arr)
   return Array.from(arr, dec2hex).join('')
 }
+
+export function inIframe() {
+  try {
+    return window.self !== window.top
+  } catch (e) {
+    return true
+  }
+}

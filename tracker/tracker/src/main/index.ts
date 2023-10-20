@@ -1,8 +1,10 @@
 import App, { DEFAULT_INGEST_POINT } from './app/index.js'
+
 export { default as App } from './app/index.js'
 
 import { UserAnonymousID, CustomEvent, CustomIssue } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
+
 export const Messages = _Messages
 export { SanitizeLevel } from './app/sanitizer.js'
 
@@ -49,6 +51,7 @@ export type Options = Partial<
   sessionToken?: string
   respectDoNotTrack?: boolean
   autoResetOnWindowOpen?: boolean
+  resetTabOnWindowOpen?: boolean
   network?: Partial<NetworkOptions>
   mouse?: Partial<MouseHandlerOptions>
   flags?: {
@@ -93,6 +96,7 @@ function processOptions(obj: any): obj is Options {
 export default class API {
   public featureFlags: FeatureFlags
   private readonly app: App | null = null
+
   constructor(private readonly options: Options) {
     if (!IN_BROWSER || !processOptions(options)) {
       return
@@ -151,14 +155,22 @@ export default class API {
         }
         void this.featureFlags.reloadFlags()
       })
-      if (options.autoResetOnWindowOpen) {
-        const wOpen = window.open
+      const wOpen = window.open
+      if (options.autoResetOnWindowOpen || options.resetTabOnWindowOpen) {
         app.attachStartCallback(() => {
+          const tabId = app.getTabId()
+          const sessStorage = app.sessionStorage ?? window.sessionStorage
           // @ts-ignore ?
           window.open = function (...args) {
-            app.resetNextPageSession(true)
+            if (options.autoResetOnWindowOpen) {
+              app.resetNextPageSession(true)
+            }
+            if (options.resetTabOnWindowOpen) {
+              sessStorage.removeItem(options.session_tabid_key || '__openreplay_tabid')
+            }
             wOpen.call(window, ...args)
             app.resetNextPageSession(false)
+            sessStorage.setItem(options.session_tabid_key || '__openreplay_tabid', tabId)
           }
         })
         app.attachStopCallback(() => {
@@ -255,6 +267,7 @@ export default class API {
     }
     return this.app.getSessionToken()
   }
+
   getSessionID(): string | null | undefined {
     if (this.app === null) {
       return null
@@ -268,6 +281,7 @@ export default class API {
     }
     return this.app.getTabId()
   }
+
   sessionID(): string | null | undefined {
     deprecationWarn("'sessionID' method", "'getSessionID' method", '/')
     return this.getSessionID()
@@ -285,6 +299,7 @@ export default class API {
       this.app.session.setUserID(id)
     }
   }
+
   userID(id: string): void {
     deprecationWarn("'userID' method", "'setUserID' method", '/')
     this.setUserID(id)
@@ -295,6 +310,7 @@ export default class API {
       this.app.send(UserAnonymousID(id))
     }
   }
+
   userAnonymousID(id: string): void {
     deprecationWarn("'userAnonymousID' method", "'setUserAnonymousID' method", '/')
     this.setUserAnonymousID(id)
@@ -305,6 +321,7 @@ export default class API {
       this.app.session.setMetadata(key, value)
     }
   }
+
   metadata(key: string, value: string): void {
     deprecationWarn("'metadata' method", "'setMetadata' method", '/')
     this.setMetadata(key, value)

@@ -72,6 +72,8 @@ jobs:
         images=("assist-stats")
         for image in ${images[*]};do
           docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+          docker tag $DOCKER_REPO/$image:$IMAGE_TAG $DOCKER_REPO/$image:${IMAGE_TAG}-ee
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG $DOCKER_REPO/$image:${IMAGE_TAG}-ee
         done
     - name: Creating old image input
       run: |

@@ -2,9 +2,10 @@
 # Index config file for gh-archive dataset.
 #
 
-version: 0.4
+version: 0.6
 
-index_id: graphql
+index_id: "graphql"
+index_uri: "s3://openreplay-quickwit/quickwit-indexes/graphql"
 
 doc_mapping:
   mode: dynamic
@@ -44,7 +45,7 @@ doc_mapping:
   timestamp_field: insertion_timestamp
 
 search_settings:
-  default_search_fields: [project_id, session_id, operation_kind, operation_name, variables]
+  default_search_fields: [project_id, session_id, operation_kind, operation_name]
 
 retention:
   period: 30 days
