@@ -189,7 +189,7 @@ class Router extends React.Component {
       destinationPath !== routes.login() &&
       destinationPath !== '/'
     ) {
-      this.props.history.push(destinationPath);
+      history.push(destinationPath + window.location.search);
     }
 
     if (!prevProps.isLoggedIn && this.props.isLoggedIn) {
@@ -232,9 +232,6 @@ class Router extends React.Component {
                 <Switch key='content'>
                   <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
                   <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
-                  <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                         render={(props) => <Session {...props} live />} />
-
                   <Route path='*' render={NotFoundPage} />
                 </Switch>
               </Suspense>
