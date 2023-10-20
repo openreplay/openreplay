@@ -185,7 +185,7 @@ const Router: React.FC<RouterProps> = (props) => {
       destinationPath !== routes.login() &&
       destinationPath !== '/'
     ) {
-      history.push(destinationPath);
+      history.push(destinationPath + window.location.search);
     }
 
     if (!prevIsLoggedIn && props.isLoggedIn) {
@@ -292,14 +292,8 @@ const Router: React.FC<RouterProps> = (props) => {
                   component={enhancedComponents.SessionsOverview}
                 />
                 <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={enhancedComponents.Session} />
-                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                       component={enhancedComponents.LiveSession} />
-                <Route
-                  exact
-                  strict
-                  path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                  render={(props) => <enhancedComponents.Session {...props} live />}
-                />
+                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={enhancedComponents.LiveSession} />
+
                 {Object.entries(routes.redirects).map(([fr, to]) => (
                   <Redirect key={fr} exact strict from={fr} to={to} />
                 ))}
