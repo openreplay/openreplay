@@ -224,7 +224,7 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
 
     if data.name is None or len(data.name) == 0:
         data.name = data.email
-    role_id = data.get("roleId")
+    role_id = data.roleId
     if role_id is None:
         role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
     invitation_token = __generate_invitation_token()
@@ -237,11 +237,11 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=data.name, role_id=role_id)
     else:
-        new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=data.name, role_id=role_id)
+        new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
+                                       admin=data.admin, name=data.name, role_id=role_id)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     background_tasks.add_task(email_helper.send_team_invitation, **{
-        "recipient": data["email"],
+        "recipient": data.email,
         "invitation_link": new_member["invitationLink"],
         "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
         "sender_name": admin["name"]
