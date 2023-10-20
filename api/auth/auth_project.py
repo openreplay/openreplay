@@ -20,11 +20,19 @@ class ProjectAuthorizer:
             return
         current_user: schemas.CurrentContext = await OR_context(request)
         value = request.path_params[self.project_identifier]
-        if (self.project_identifier == "projectId" \
-            and (not (isinstance(value, int) or isinstance(value, str) and value.isnumeric())
-                 or projects.get_project(project_id=value, tenant_id=current_user.tenant_id) is None)) \
-                or (self.project_identifier == "projectKey" \
-                    and projects.get_internal_project_id(project_key=value) is None):
+        current_project = None
+        if self.project_identifier == "projectId" \
+                and isinstance(value, int) or isinstance(value, str) and value.isnumeric():
+            current_project = projects.get_project(project_id=value, tenant_id=current_user.tenant_id)
+        elif self.project_identifier == "projectKey":
+            current_project = projects.get_by_project_key(project_key=value)
+
+        if current_project is None:
             logger.debug("project not found")
             logger.debug(value)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found.")
+        else:
+            current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],
+                                                            projectKey=current_project["projectKey"],
+                                                            platform=current_project["platform"])
+            request.state.currentContext.project = current_project

@@ -21,13 +21,26 @@ class ProjectAuthorizer:
         current_user: schemas.CurrentContext = await OR_context(request)
         value = request.path_params[self.project_identifier]
         user_id = current_user.user_id if request.state.authorizer_identity == "jwt" else None
+        current_project = None
         if (self.project_identifier == "projectId" \
-            and not projects.is_authorized(project_id=value, tenant_id=current_user.tenant_id,
-                                           user_id=user_id)) \
-                or (self.project_identifier == "projectKey" \
-                    and not projects.is_authorized(
-                    project_id=projects.get_internal_project_id(value),
-                    tenant_id=current_user.tenant_id, user_id=user_id)):
+                and isinstance(value, int) or (isinstance(value, str) and value.isnumeric()) \
+                and projects.is_authorized(project_id=value, tenant_id=current_user.tenant_id,
+                                           user_id=user_id)):
+            current_project = projects.get_project(tenant_id=current_user.tenant_id, project_id=value)
+        elif self.project_identifier == "projectKey":
+            current_project = projects.get_by_project_key(value)
+            if current_project is not None \
+                    and projects.is_authorized(project_id=current_project["projectId"],
+                                               tenant_id=current_user.tenant_id,
+                                               user_id=user_id):
+                current_project = None
+
+        if current_project is None:
             logger.debug("unauthorized project")
             logger.debug(value)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")
+        else:
+            current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],
+                                                            projectKey=current_project["projectKey"],
+                                                            platform=current_project["platform"])
+            request.state.currentContext.project = current_project
