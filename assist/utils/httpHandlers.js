@@ -15,6 +15,9 @@ const {
 const {
     IDENTITIES
 } = require("./assistHelper");
+const {
+    getServer
+} = require('../utils/wsServer');
 
 const debug_log = process.env.debug === "1";
 
@@ -30,6 +33,7 @@ const respond = function (res, data) {
 }
 
 const socketsList = async function (req, res) {
+    let io = getServer();
     debug_log && console.log("[WS]looking for all available sessions");
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
@@ -60,6 +64,7 @@ const socketsList = async function (req, res) {
 }
 
 const socketsListByProject = async function (req, res) {
+    let io = getServer();
     debug_log && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
@@ -90,6 +95,7 @@ const socketsListByProject = async function (req, res) {
 }
 
 const socketsLiveByProject = async function (req, res) {
+    let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
@@ -127,6 +133,7 @@ const socketsLiveByProject = async function (req, res) {
 }
 
 const autocomplete = async function (req, res) {
+    let io = getServer();
     debug_log && console.log("[WS]autocomplete");
     let _projectKey = extractProjectKeyFromRequest(req);
     let filters = await extractPayloadFromRequest(req);
