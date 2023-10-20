@@ -20,7 +20,7 @@ import styles from 'Components/Session_/Player/Controls/controls.module.css';
 function Controls(props: any) {
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
-  const [noMulti, setNoMulti] = React.useState(false);
+  const [noControls, setNoControls] = React.useState(false);
   const { search } = useLocation();
 
   const { jumpToLive } = player;
@@ -64,7 +64,7 @@ function Controls(props: any) {
     if (
       (queryParams.has('noFooter') && queryParams.get('noFooter') === 'true')
     ) {
-      setNoMulti(true);
+      setNoControls(true);
     }
     return () => {
       document.removeEventListener('keydown', onKeyDown.bind(this));
@@ -88,7 +88,7 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       <Timeline />
-      {!noMulti ?
+      {!noControls ?
         <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live>
           <div className="flex items-center">
             {!closedLive && (
