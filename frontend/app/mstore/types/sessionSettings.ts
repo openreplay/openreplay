@@ -74,7 +74,6 @@ export default class SessionSettings {
 
 
     constructor() {
-        console.log(localStorage.getItem(SHOWN_TIMEZONE))
         // compatibility fix for old timezone storage
         // TODO: remove after a while (1.7.1?)
         const userTimezoneOffset = moment().format('Z');
