@@ -1,5 +1,5 @@
 requests==2.31.0
-urllib3==1.26.16
+urllib3==1.26.18
 boto3==1.26.148
 pyjwt==2.7.0
 psycopg2-binary==2.9.6
