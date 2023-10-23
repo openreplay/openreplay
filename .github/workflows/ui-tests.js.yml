@@ -52,7 +52,7 @@ jobs:
       - name: Build tracker inst
         run: |
           cd tracker/tracker
-          yarn build
+          bun run build
       - name: Setup Testing UI Env
         run: |
           cd tracker/tracker-testing-playground
