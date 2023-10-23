@@ -29,10 +29,10 @@ def handle_normal_message(message: Message) -> Optional[Event]:
         return n
 
     if isinstance(message, MouseClick):
-        n.mouseclick_hesitationtime = message.hesitation_time
-        n.mouseclick_id = message.id
-        n.mouseclick_label = message.label
-        n.mouseclick_selector = message.selector
+        n.clickevent_hesitationtime = message.hesitation_time
+        n.clickevent_messageid = message.id
+        n.clickevent_label = message.label
+        n.clickevent_selector = message.selector
         return n
 
     if isinstance(message, NetworkRequest):
