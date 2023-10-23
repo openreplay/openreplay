@@ -1,0 +1,23 @@
+FROM public.ecr.aws/p1t3u8a3/connectors/redshift:base
+
+ENV CLOUD_SERVICE=redshift \
+    CONNECTION_STRING=postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME} \
+    # Keep postgres connection
+    PG_MINCONN=3 \
+    PG_MAXCONN=10
+RUN apk add --no-cache postgresql-libs lz4-libs zstd-libs
+COPY deploy/requirements_redshift.txt .
+COPY msgcodec msgcodec
+COPY build_modules.sh .
+RUN apk add --no-cache --virtual .build-deps gcc g++ musl-dev postgresql-dev && \
+ ./build_modules.sh && python3 -m pip install -r requirements_redshift.txt --no-cache-dir && \
+ apk --purge del .build-deps
+COPY utils utils
+COPY db db
+COPY sql sql
+COPY handler.py .
+COPY consumer_pool.py .
+COPY fill_from_db.py .
+COPY entrypoint.sh .
+ENV replace_interval=300
+ENTRYPOINT ./entrypoint.sh
