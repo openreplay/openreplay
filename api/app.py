@@ -2,6 +2,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
+import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI, Request
@@ -15,9 +16,13 @@ from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic, additional_routes
 from routers.subs import insights, metrics, v1_api, health
 
+import base
+
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
+
+
 
 
 @asynccontextmanager
@@ -38,8 +43,11 @@ async def lifespan(app: FastAPI):
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-    # App listening
-    yield
+    base.app.set(app)
+    async with httpx.AsyncClient() as http:
+        app.http = http
+        # Applistening
+        yield
 
     # Shutdown
     logging.info(">>>>> shutting down <<<<<")
