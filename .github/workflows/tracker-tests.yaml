@@ -47,7 +47,7 @@ jobs:
         run: |
           cd tracker/tracker
           bun install
-      - name: Setup Testing packages
+      - name: [TA] Setup Testing packages
         run: |
           cd tracker/tracker-assist
           bun install
@@ -55,10 +55,18 @@ jobs:
         run: |
           cd tracker/tracker
           bun run test:ci
-      - name: Jest tests
+      - name: Building test
+        run: |
+          cd tracker/tracker
+          bun run build
+      - name: [TA] Jest tests
         run: |
           cd tracker/tracker-assist
           bun run test:ci
+      - name: [TA] Building test
+        run: |
+          cd tracker/tracker-assist
+          bun run build
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
