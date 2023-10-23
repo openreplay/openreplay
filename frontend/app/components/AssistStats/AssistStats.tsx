@@ -205,8 +205,8 @@ function AssistStats() {
   };
 
   return (
-    <>
-      <div className={'w-full'} id={'pdf-anchor'}>
+    <div className={'w-full'}>
+      <div className={'mx-auto'} style={{ maxWidth: 1360 }} id={'pdf-anchor'}>
         <div id={'pdf-ignore'} className={'w-full flex items-center mb-2'}>
           <Typography.Title style={{ marginBottom: 0 }} level={4}>
             Assist Stats
@@ -288,7 +288,7 @@ function AssistStats() {
         </div>
       </div>
       <div id={'stats-layer'} />
-    </>
+    </div>
   );
 }
 
