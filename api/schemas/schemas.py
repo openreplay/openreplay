@@ -728,12 +728,10 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         if len(values.get("events", [])) > 0:
             for v in values["events"]:
                 v["isEvent"] = True
-            for v in values.get("filters", []):
+
+        for v in values.get("filters", []):
+            if v.get("isEvent") is None:
                 v["isEvent"] = False
-        else:
-            for v in values.get("filters", []):
-                if v.get("isEvent") is None:
-                    v["isEvent"] = False
         return values
 
     @model_validator(mode="before")
@@ -744,13 +742,6 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                 if v is not None:
                     vals.append(v)
             f["value"] = vals
-        return values
-
-    @model_validator(mode="before")
-    def __force_is_event(cls, values):
-        for v in values.get("filters", []):
-            if v.get("isEvent") is None:
-                v["isEvent"] = EventType.has_value(v["type"]) or PerformanceEventType.has_value(v["type"])
         return values
 
     @model_validator(mode="after")
@@ -983,14 +974,35 @@ class MetricOfPathAnalysis(str, Enum):
     session_count = MetricOfTimeseries.session_count.value
 
 
-class CardSessionsSchema(SessionsSearchPayloadSchema):
+# class CardSessionsSchema(SessionsSearchPayloadSchema):
+class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(defautl=TimeUTC.now())
     density: int = Field(default=7, ge=1, le=200)
     series: List[CardSeriesSchema] = Field(default=[])
 
+    # events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
+    filters: List[GroupedFilterType] = Field(default=[])
+
     # Used mainly for PathAnalysis, and could be used by other cards
     hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
+
+    @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        for v in values.get("filters"):
+            if v.get("isEvent") is None:
+                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
+        return values
+
+    @model_validator(mode="before")
+    def remove_wrong_filter_values(cls, values):
+        for f in values.get("filters", []):
+            vals = []
+            for v in f.get("value", []):
+                if v is not None:
+                    vals.append(v)
+            f["value"] = vals
+        return values
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
