@@ -3,7 +3,7 @@ urllib3==1.26.16
 httpx==0.25.0
 boto3==1.28.67
 pyjwt==2.8.0
-psycopg2-binary==2.9.9
+asyncpg==0.28.0
 elasticsearch==8.10.1
 jira==3.5.2
 
