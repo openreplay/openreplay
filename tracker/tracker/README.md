@@ -2,6 +2,10 @@
 
 The main package of the [OpenReplay](https://openreplay.com/) tracker.
 
+## Development & Contribution
+
+Please use [bun](https://bun.sh/) to install and build this library. Any submitted pull request must pass **all tests** and should have positive test coverage diff %.
+
 ## Documentation
 
 For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/installation/javascript-sdk#options)

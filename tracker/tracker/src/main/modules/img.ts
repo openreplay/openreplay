@@ -1,11 +1,5 @@
 import type App from '../app/index.js'
-import {
-  isURL,
-  IS_FIREFOX,
-  MAX_STR_LEN,
-  ngSafeBrowserMethod,
-  createMutationObserver,
-} from '../utils.js'
+import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils.js'
 import { ResourceTiming, SetNodeAttributeURLBased } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
