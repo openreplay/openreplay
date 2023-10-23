@@ -79,7 +79,7 @@ const SankeyChart: React.FC<Props> = ({
     const { payload } = linkData;
 
     const pathFromLinkId = findPathFromLinkId(payload.id);
-    setHoveredLinks(pathFromLinkId);
+    setHoveredLinks(pathFromLinkId.reverse());
 
 
   };
@@ -125,7 +125,7 @@ const SankeyChart: React.FC<Props> = ({
         <Sankey
           data={data}
           iterations={128}
-          node={<CustomNode />}
+          node={<CustomNode activeNodes={highlightedLinks.map(index => data.nodes[data.links[index].target])} />}
           sort={true}
           onClick={clickHandler}
           link={({ source, target, ...linkProps }, index) => (
