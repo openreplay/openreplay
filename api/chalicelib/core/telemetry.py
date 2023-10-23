@@ -1,5 +1,5 @@
 from chalicelib.utils import pg_client
-import requests
+
 from chalicelib.core import license
 
 
@@ -37,7 +37,8 @@ def compute():
                     (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
         data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
+        http = orpy.orpy.get().httpx
+        await http.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
 
 
 def new_client():
@@ -48,4 +49,5 @@ def new_client():
                 FROM public.tenants
                 LIMIT 1;""")
         data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/signup', json=process_data(data))
+        http = orpy.orpy.get().httpx
+        await http.post('https://api.openreplay.com/os/signup', json=process_data(data))

@@ -2,11 +2,12 @@ import logging
 import time
 from datetime import datetime
 
-import requests
+import httpx
+import orpy
 from fastapi import HTTPException, status
 from jira import JIRA
 from jira.exceptions import JIRAError
-from requests.auth import HTTPBasicAuth
+
 
 logger = logging.getLogger(__name__)
 fields = "id, summary, description, creator, reporter, created, assignee, status, updated, comment, issuetype, labels"
@@ -91,11 +92,12 @@ class JiraManager:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         return self.__parser_issue_info(issue)
 
-    def get_issue_v3(self, issue_id: str):
+    async def get_issue_v3(self, issue_id: str):
+        http = orpy.orpy.get().httpx
         try:
             url = f"{self._config['JIRA_URL']}/rest/api/3/issue/{issue_id}?fields={fields}"
-            auth = HTTPBasicAuth(self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
-            issue = requests.get(
+            auth = (self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
+            issue = await http.get(
                 url,
                 headers={
                     "Accept": "application/json"
@@ -106,7 +108,8 @@ class JiraManager:
             self.retries -= 1
             if self.retries > 0:
                 time.sleep(1)
-                return self.get_issue_v3(issue_id)
+                out = await self.get_issue_v3(issue_id)
+                return out
             logger.error(f"=>Exception {e}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: get issue error")
         return self.__parser_issue_info(issue.json())
@@ -159,11 +162,12 @@ class JiraManager:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         return self.__parser_comment_info(comment)
 
-    def add_comment_v3(self, issue_id: str, comment: str):
+    async def add_comment_v3(self, issue_id: str, comment: str):
+        http = orpy.orpy.get().httpx
         try:
             url = f"{self._config['JIRA_URL']}/rest/api/3/issue/{issue_id}/comment"
-            auth = HTTPBasicAuth(self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
-            comment_response = requests.post(
+            auth = (self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
+            comment_response = await httpx.post(
                 url,
                 headers={
                     "Accept": "application/json"
@@ -191,7 +195,8 @@ class JiraManager:
             self.retries -= 1
             if self.retries > 0:
                 time.sleep(1)
-                return self.add_comment_v3(issue_id, comment)
+                out = await self.add_comment_v3(issue_id, comment)
+                return out
             logger.error(f"=>Exception {e}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: comment error")
         return self.__parser_comment_info(comment_response.json())

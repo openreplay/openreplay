@@ -73,14 +73,18 @@ async def integration_notify(projectId: int, integration: str, webhookId: int, s
             "integration_id": webhookId}
     if integration == schemas.WebhookType.slack:
         if source == "sessions":
-            return Slack.share_session(session_id=sourceId, **args)
+            out = await Slack.share_session(session_id=sourceId, **args)
+            return out
         elif source == "errors":
-            return Slack.share_error(error_id=sourceId, **args)
+            out = await Slack.share_error(error_id=sourceId, **args)
+            return out
     elif integration == schemas.WebhookType.msteams:
         if source == "sessions":
-            return MSTeams.share_session(session_id=sourceId, **args)
+            out = await MSTeams.share_session(session_id=sourceId, **args)
+            return out
         elif source == "errors":
-            return MSTeams.share_error(error_id=sourceId, **args)
+            out = await MSTeams.share_error(error_id=sourceId, **args)
+            return out
     return {"data": None}
 
 
@@ -107,7 +111,8 @@ async def delete_sentry(projectId: int, _=Body(None), context: schemas.CurrentCo
 
 @app.get('/{projectId}/integrations/sentry/events/{eventId}', tags=["integrations"])
 async def proxy_sentry(projectId: int, eventId: str, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)}
+    data = await log_tool_sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)
+    return {"data": data}
 
 
 @app.get('/integrations/datadog', tags=["integrations"])
@@ -197,7 +202,8 @@ async def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentC
 @app.post('/integrations/bugsnag/list_projects', tags=["integrations"])
 async def list_projects_bugsnag(data: schemas.IntegrationBugsnagBasicSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorization_token)}
+    data = await log_tool_bugsnag.list_projects(auth_token=data.authorization_token)
+    return {"data": data}
 
 
 @app.get('/integrations/bugsnag', tags=["integrations"])

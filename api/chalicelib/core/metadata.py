@@ -13,7 +13,7 @@ def column_names():
     return [f"metadata_{i}" for i in range(1, MAX_INDEXES + 1)]
 
 
-def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -> bool:
+async def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         constraints = column_names()
         if exclude_index:
@@ -32,7 +32,7 @@ def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -
     return row["exists"]
 
 
-def get(project_id):
+async def get(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT {",".join(column_names())}
                                 FROM public.projects
@@ -49,7 +49,7 @@ def get(project_id):
         return results
 
 
-def get_batch(project_ids):
+async def get_batch(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return []
     with pg_client.PostgresClient() as cur:
@@ -90,7 +90,7 @@ def __get_available_index(project_id):
     return i
 
 
-def __edit(project_id, col_index, colname, new_name):
+async def __edit(project_id, col_index, colname, new_name):
     if new_name is None or len(new_name) == 0:
         return {"errors": ["key value invalid"]}
     old_metas = get(project_id)
@@ -112,13 +112,14 @@ def __edit(project_id, col_index, colname, new_name):
     return {"data": old_metas[col_index]}
 
 
-def edit(tenant_id, project_id, index: int, new_name: str):
-    if __exists_by_name(project_id=project_id, name=new_name, exclude_index=index):
+async def edit(tenant_id, project_id, index: int, new_name: str):
+    nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=index)
+    if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     return __edit(project_id=project_id, col_index=index, colname=index_to_colname(index), new_name=new_name)
 
 
-def delete(tenant_id, project_id, index: int):
+async def delete(tenant_id, project_id, index: int):
     index = int(index)
     old_segments = get(project_id)
     old_segments = [k["index"] for k in old_segments]
@@ -143,11 +144,12 @@ def delete(tenant_id, project_id, index: int):
     return {"data": get(project_id)}
 
 
-def add(tenant_id, project_id, new_name):
+async def add(tenant_id, project_id, new_name):
     index = __get_available_index(project_id=project_id)
     if index < 1:
         return {"errors": ["maximum allowed metadata reached"]}
-    if __exists_by_name(project_id=project_id, name=new_name, exclude_index=None):
+    nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=None)
+    if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     with pg_client.PostgresClient() as cur:
         colname = index_to_colname(index)
@@ -194,12 +196,12 @@ def search(tenant_id, project_id, key, value):
         return {"data": [k[key] for k in value]}
 
 
-def get_available_keys(project_id):
+async def get_available_keys(project_id):
     all_metas = get(project_id=project_id)
     return [k["key"] for k in all_metas]
 
 
-def get_by_session_id(project_id, session_id):
+async def get_by_session_id(project_id, session_id):
     all_metas = get(project_id=project_id)
     if len(all_metas) == 0:
         return []
@@ -221,7 +223,7 @@ def get_by_session_id(project_id, session_id):
         return results
 
 
-def get_keys_by_projects(project_ids):
+async def get_keys_by_projects(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return {}
     with pg_client.PostgresClient() as cur:
@@ -284,7 +286,7 @@ def get_keys_by_projects(project_ids):
 #     return {"data": get(project_id)}
 
 
-def get_remaining_metadata_with_count(tenant_id):
+async def get_remaining_metadata_with_count(tenant_id):
     all_projects = projects.get_projects(tenant_id=tenant_id)
     results = []
     used_metas = get_batch([p["projectId"] for p in all_projects])

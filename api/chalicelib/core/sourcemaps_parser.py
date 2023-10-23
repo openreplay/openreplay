@@ -1,5 +1,5 @@
-import requests
-
+import httpx
+import orpy
 from decouple import config
 
 SMR_URL = config("sourcemaps_reader")
@@ -11,7 +11,8 @@ if '%s' in SMR_URL:
         SMR_URL = SMR_URL % "smr"
 
 
-def get_original_trace(key, positions, is_url=False):
+async def get_original_trace(key, positions, is_url=False):
+    http = orpy.orpy.get().httpx
     payload = {
         "key": key,
         "positions": positions,
@@ -20,12 +21,12 @@ def get_original_trace(key, positions, is_url=False):
         "isURL": is_url
     }
     try:
-        r = requests.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
+        r = await http.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:
             print(f"Issue getting sourcemap status_code:{r.status_code}")
             return None
         return r.json()
-    except requests.exceptions.Timeout:
+    except httpx.Timeout:
         print("Timeout getting sourcemap")
         return None
     except Exception as e:

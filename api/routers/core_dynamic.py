@@ -219,7 +219,7 @@ async def get_session(projectId: int, sessionId: Union[int, str], background_tas
         return {"errors": ["session not found"]}
     else:
         sessionId = int(sessionId)
-    data = sessions_replay.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+    data = await sessions_replay.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
                                          include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
         return {"errors": ["session not found"]}
@@ -254,7 +254,7 @@ async def get_session_events(projectId: int, sessionId: Union[int, str], backgro
         return {"errors": ["session not found"]}
     else:
         sessionId = int(sessionId)
-    data = sessions_replay.get_replay(project_id=projectId, session_id=sessionId, full_data=True,
+    data = await sessions_replay.get_replay(project_id=projectId, session_id=sessionId, full_data=True,
                                       include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
         return {"errors": ["session not found"]}
@@ -285,7 +285,7 @@ async def get_session_events(projectId: int, sessionId: Union[int, str],
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 async def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_trace(project_id=projectId, error_id=errorId)
+    data = await errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
         return data
     return {
@@ -307,7 +307,7 @@ async def errors_get_details(projectId: int, errorId: str, background_tasks: Bac
 @app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
 async def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_trace(project_id=projectId, error_id=errorId)
+    data = await errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
         return data
     return {
@@ -336,9 +336,9 @@ async def add_remove_favorite_error(projectId: int, errorId: str, action: str, s
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
 async def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
                      context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
+    data = await assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
+        data = await sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
                                           full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}

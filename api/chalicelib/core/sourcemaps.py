@@ -1,6 +1,6 @@
+import orpy
 from urllib.parse import urlparse
 
-import requests
 from decouple import config
 
 from chalicelib.core import sourcemaps_parser
@@ -67,9 +67,10 @@ def format_payload(p, truncate_to_first=False):
     return []
 
 
-def url_exists(url):
+async def url_exists(url):
+    http = orpy.orpy.get().httpx
     try:
-        r = requests.head(url, allow_redirects=False)
+        r = await http.head(url, follow_redirects=False)
         return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
         print(f"!! Issue checking if URL exists: {url}")
@@ -77,7 +78,7 @@ def url_exists(url):
         return False
 
 
-def get_traces_group(project_id, payload):
+async def get_traces_group(project_id, payload):
     frames = format_payload(payload)
 
     results = [{}] * len(frames)

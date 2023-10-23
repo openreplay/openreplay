@@ -28,3 +28,19 @@ cd openreplay-dev/openreplay/scripts/helmcharts
 # bash local_deploy.sh help
 bash local_deploy.sh api
 ```
+
+
+## CheatSheet
+
+### `import contextvars`
+
+```python
+import contextvars
+
+my_variable: contextvars.ContextVar[str] = contextvars.ContextVar('my_variable')
+my_variable.set('foobar')
+assert my_variable.get() == 'foobar'
+```
+
+### `import httpx`
+

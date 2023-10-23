@@ -1,6 +1,7 @@
 import logging
 
-import requests
+import orpy
+import httpx
 from decouple import config
 
 from chalicelib.utils import helper

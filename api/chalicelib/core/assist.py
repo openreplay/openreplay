@@ -2,7 +2,8 @@ from os import access, R_OK
 from os.path import exists as path_exists, getsize
 
 import jwt
-import requests
+import orpy
+import httpx
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -50,17 +51,18 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
     return __get_live_sessions_ws(project_id=project_id, data=data)
 
 
-def __get_live_sessions_ws(project_id, data):
+async def __get_live_sessions_ws(project_id, data):
+    http = orpy.orpy.get().httpx
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
+        results = await http.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
             print(results.text)
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
-    except requests.exceptions.Timeout:
+    except httpx.Timeout:
         print("!! Timeout getting Assist response")
         live_peers = {"total": 0, "sessions": []}
     except Exception as e:
@@ -100,10 +102,11 @@ def __get_agent_token(project_id, project_key, session_id):
     )
 
 
-def get_live_session_by_id(project_id, session_id):
+async def get_live_session_by_id(project_id, session_id):
+    http = orpy.orpy.get().httpx
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+        results = await http.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
@@ -114,7 +117,7 @@ def get_live_session_by_id(project_id, session_id):
             return None
         results["live"] = True
         results["agentToken"] = __get_agent_token(project_id=project_id, project_key=project_key, session_id=session_id)
-    except requests.exceptions.Timeout:
+    except httpx.Timeout:
         print("!! Timeout getting Assist response")
         return None
     except Exception as e:

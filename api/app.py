@@ -16,7 +16,7 @@ from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic, additional_routes
 from routers.subs import insights, metrics, v1_api, health
 
-import base
+import orpy
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -43,10 +43,10 @@ async def lifespan(app: FastAPI):
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-    base.app.set(app)
-    async with httpx.AsyncClient() as http:
-        app.http = http
-        # Applistening
+    orpy.orpy.set(app)
+    async with httpx.AsyncClient() as httpx:
+        app.httpx = httpx
+        # Yield, and let APP listen.
         yield
 
     # Shutdown

@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
 import redis
-import requests
 from decouple import config
 
 from chalicelib.utils import pg_client
@@ -77,21 +76,27 @@ def __always_healthy(*_):
 
 
 def __check_be_service(service_name):
-    def fn(*_):
+    import httpx
+
+    http = orpy.orpy.get().httpx
+
+    async def fn(*_):
         fail_response = {
             "health": False,
             "details": {
                 "errors": ["server health-check failed"]
             }
         }
+
+
         try:
-            results = requests.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
+            results = await http.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
             if results.status_code != 200:
                 print(f"!! issue with the {service_name}-health code:{results.status_code}")
                 print(results.text)
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
-        except requests.exceptions.Timeout:
+        except httpx.Timeout:
             print(f"!! Timeout getting {service_name}-health")
             # fail_response["details"]["errors"].append("timeout")
             return fail_response
@@ -139,7 +144,8 @@ def __check_redis(*_):
     }
 
 
-def __check_SSL(*_):
+async def __check_SSL(*_):
+    http = orpy.orpy.get().httpx
     fail_response = {
         "health": False,
         "details": {
@@ -147,8 +153,9 @@ def __check_SSL(*_):
         }
     }
     try:
-        requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
+        httpx.get(config("SITE_URL"), verify=True, follow_redirects=True)
     except Exception as e:
+        # TODO: Exception is too broad? Is a 404 ok?
         print("!! health failed: SSL Certificate")
         print(str(e))
         return fail_response
@@ -174,7 +181,7 @@ def __get_sessions_stats(*_):
     }
 
 
-def get_health():
+async def get_health():
     health_map = {
         "databases": {
             "postgres": __check_database_pg
@@ -202,10 +209,11 @@ def get_health():
         "details": __get_sessions_stats,
         "ssl": __check_SSL
     }
-    return __process_health(health_map=health_map)
+    out = await __process_health(health_map=health_map)
+    return out
 
 
-def __process_health(health_map):
+async def __process_health(health_map):
     response = dict(health_map)
     for parent_key in health_map.keys():
         if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
@@ -217,7 +225,7 @@ def __process_health(health_map):
                 else:
                     response[parent_key][element_key] = health_map[parent_key][element_key]()
         else:
-            response[parent_key] = health_map[parent_key]()
+            response[parent_key] = await health_map[parent_key]()
     return response
 
 

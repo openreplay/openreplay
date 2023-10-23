@@ -15,7 +15,7 @@ def __group_metadata(session, project_metadata):
 
 
 # for backward compatibility
-def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
+async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                   group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
@@ -84,12 +84,13 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             data["inDB"] = True
             return data
         elif live:
-            return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            out = await assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            return out
         else:
             return None
 
 
-def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
+async def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
@@ -139,7 +140,8 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data["inDB"] = True
             return data
         elif live:
-            return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            out = await assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            return out
         else:
             return None
 

@@ -9,7 +9,7 @@ from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
+async def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.projects
@@ -23,7 +23,7 @@ def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
         return row["exists"]
 
 
-def __update(tenant_id, project_id, changes):
+async def __update(tenant_id, project_id, changes):
     if len(changes.keys()) == 0:
         return None
 
@@ -41,7 +41,7 @@ def __update(tenant_id, project_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __create(tenant_id, data):
+async def __create(tenant_id, data):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.projects (name, platform, active)
                                 VALUES (%(name)s,%(platform)s,TRUE)
@@ -52,7 +52,7 @@ def __create(tenant_id, data):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
+async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
     with pg_client.PostgresClient() as cur:
         extra_projection = ""
         if gdpr:
@@ -107,7 +107,7 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
         return helper.list_to_camel_case(rows)
 
 
-def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
+async def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
     with pg_client.PostgresClient() as cur:
         extra_select = ""
         if include_last_session:
@@ -132,8 +132,9 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         return helper.dict_to_camel_case(row)
 
 
-def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
-    if __exists_by_name(name=data.name, exclude_id=None):
+async def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
+    nok = await __exists_by_name(name=data.name, exclude_id=None)
+    if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if not skip_authorization:
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
@@ -142,8 +143,9 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
     return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
-def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
-    if __exists_by_name(name=data.name, exclude_id=project_id):
+async def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
+    nok = await __exists_by_name(name=data.name, exclude_id=project_id)
+    if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
     if not admin["admin"] and not admin["superAdmin"]:
@@ -152,7 +154,7 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
                              changes=data.model_dump())}
 
 
-def delete(tenant_id, user_id, project_id):
+async def delete(tenant_id, user_id, project_id):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
@@ -167,7 +169,7 @@ def delete(tenant_id, user_id, project_id):
     return {"data": {"state": "success"}}
 
 
-def get_gdpr(project_id):
+async def get_gdpr(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT gdpr
                                FROM public.projects AS s
@@ -180,7 +182,7 @@ def get_gdpr(project_id):
         return row
 
 
-def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
+async def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
                                SET gdpr = gdpr|| %(gdpr)s::jsonb
@@ -197,7 +199,7 @@ def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
         return row
 
 
-def get_by_project_key(project_key):
+async def get_by_project_key(project_key):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_id,
                                       project_key,
@@ -211,7 +213,7 @@ def get_by_project_key(project_key):
         return helper.dict_to_camel_case(row)
 
 
-def get_project_key(project_id):
+async def get_project_key(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_key
                                FROM public.projects
@@ -223,7 +225,7 @@ def get_project_key(project_id):
         return project["project_key"] if project is not None else None
 
 
-def get_capture_status(project_id):
+async def get_capture_status(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all
                                FROM public.projects
@@ -234,7 +236,7 @@ def get_capture_status(project_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_capture_status(project_id, changes: schemas.SampleRateSchema):
+async def update_capture_status(project_id, changes: schemas.SampleRateSchema):
     sample_rate = changes.rate
     if changes.capture_all:
         sample_rate = 100
@@ -249,7 +251,7 @@ def update_capture_status(project_id, changes: schemas.SampleRateSchema):
     return changes
 
 
-def get_projects_ids(tenant_id):
+async def get_projects_ids(tenant_id):
     with pg_client.PostgresClient() as cur:
         query = f"""SELECT s.project_id
                     FROM public.projects AS s

@@ -95,7 +95,7 @@ def update(id, data: schemas.AlertSchema):
     return {"data": helper.custom_alert_to_front(__process_circular(a))}
 
 
-def process_notifications(data):
+async def process_notifications(data):
     full = {}
     for n in data:
         if "message" in n["options"]:
@@ -140,7 +140,7 @@ def process_notifications(data):
                     logging.error(str(e))
             elif t == "webhook":
                 try:
-                    webhook.trigger_batch(data_list=notifications_list)
+                    await webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending webhook notifications batch")
                     logging.error(str(e))

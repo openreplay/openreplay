@@ -211,7 +211,7 @@ def process():
                                 SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
-        alerts.process_notifications(notifications)
+        await alerts.process_notifications(notifications)
 
 
 def __format_value(x):

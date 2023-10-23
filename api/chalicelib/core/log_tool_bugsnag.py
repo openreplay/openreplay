@@ -1,13 +1,15 @@
 from chalicelib.core import log_tools
-import requests
+import httpx
+import orpy
 
 from schemas import schemas
 
 IN_TY = "bugsnag"
 
 
-def list_projects(auth_token):
-    r = requests.get(url="https://api.bugsnag.com/user/organizations",
+async def list_projects(auth_token):
+    http = orpy.orpy.get().httpx
+    r = await http.get(url="https://api.bugsnag.com/user/organizations",
                      params={"per_page": "100"},
                      headers={"Authorization": "token " + auth_token, "X-Version": "2"})
     if r.status_code != 200:
@@ -20,7 +22,7 @@ def list_projects(auth_token):
     orgs = []
     for i in r.json():
 
-        pr = requests.get(url="https://api.bugsnag.com/organizations/%s/projects" % i["id"],
+        pr = await http.get(url="https://api.bugsnag.com/organizations/%s/projects" % i["id"],
                           params={"per_page": "100"},
                           headers={"Authorization": "token " + auth_token, "X-Version": "2"})
         if pr.status_code != 200:

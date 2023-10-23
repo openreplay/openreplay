@@ -11,7 +11,8 @@ public_app, app, app_apikey = get_routers()
 async def get_global_health_status():
     if config("LOCAL_DEV", cast=bool, default=False):
         return {"data": ""}
-    return {"data": health.get_health()}
+    out = await health.get_health()
+    return {"data": data}
 
 
 if not tenants.tenants_exists(use_pool=False):
@@ -20,4 +21,5 @@ if not tenants.tenants_exists(use_pool=False):
         if tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
 
-        return {"data": health.get_health()}
+        data = await health.get_health()
+        return {"data": data}

@@ -1,6 +1,7 @@
 import json
 
-import requests
+import orpy
+import httpx
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -11,9 +12,10 @@ from chalicelib.core.collaboration_base import BaseCollaboration
 
 class MSTeams(BaseCollaboration):
     @classmethod
-    def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
-        if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
-                                  webhook_type=schemas.WebhookType.msteams):
+    async def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
+        nok = await webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
+                                           webhook_type=schemas.WebhookType.msteams)
+        if nok:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
@@ -25,8 +27,9 @@ class MSTeams(BaseCollaboration):
     # https://messagecardplayground.azurewebsites.net
     # https://adaptivecards.io/designer/
     @classmethod
-    def say_hello(cls, url):
-        r = requests.post(
+    async def say_hello(cls, url):
+        http = orpy.orpy.get().httpx
+        r = await http.post(
             url=url,
             json={
                 "@type": "MessageCard",
@@ -41,12 +44,13 @@ class MSTeams(BaseCollaboration):
         return True
 
     @classmethod
-    def send_raw(cls, tenant_id, webhook_id, body):
+    async def send_raw(cls, tenant_id, webhook_id, body):
+        http = orpy.orpy.get().httpx
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["msteams integration not found"]}
         try:
-            r = requests.post(
+            r = await http.post(
                 url=integration["endpoint"],
                 json=body,
                 timeout=5)
@@ -54,7 +58,7 @@ class MSTeams(BaseCollaboration):
                 print(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
                 print(r.text)
                 return None
-        except requests.exceptions.Timeout:
+        except httpx.TimeoutException:
             print(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
             return None
         except Exception as e:
@@ -64,7 +68,8 @@ class MSTeams(BaseCollaboration):
         return {"data": r.text}
 
     @classmethod
-    def send_batch(cls, tenant_id, webhook_id, attachments):
+    async def send_batch(cls, tenant_id, webhook_id, attachments):
+        http = orpy.orpy.get().httpx
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["msteams integration not found"]}
@@ -80,7 +85,7 @@ class MSTeams(BaseCollaboration):
                                        "version": "1.2",
                                        "body": attachments[i:i + 100]}}
                               ]}))
-            r = requests.post(
+            r = await http.post(
                 url=integration["endpoint"],
                 json={"type": "message",
                       "attachments": [
@@ -98,11 +103,12 @@ class MSTeams(BaseCollaboration):
                 print(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, attachement):
+    async def __share(cls, tenant_id, integration_id, attachement):
+        http = orpy.orpy.get().httpx
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["Microsoft Teams integration not found"]}
-        r = requests.post(
+        r = await http.post(
             url=integration["endpoint"],
             json={"type": "message",
                   "attachments": [
@@ -119,7 +125,7 @@ class MSTeams(BaseCollaboration):
         return r.text
 
     @classmethod
-    def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
+    async def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
         title = f"[{user}](mailto:{user}) has shared the below session!"
         link = f"{config('SITE_URL')}/{project_id}/session/{session_id}"
         link = f"[{link}]({link})"
@@ -145,13 +151,13 @@ class MSTeams(BaseCollaboration):
                 "spacing": "small",
                 "text": comment
             })
-        data = cls.__share(tenant_id, integration_id, attachement=args)
+        data = await cls.__share(tenant_id, integration_id, attachement=args)
         if "errors" in data:
             return data
         return {"data": data}
 
     @classmethod
-    def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
+    async def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
         title = f"[{user}](mailto:{user}) has shared the below error!"
         link = f"{config('SITE_URL')}/{project_id}/errors/{error_id}"
         link = f"[{link}]({link})"
@@ -177,7 +183,7 @@ class MSTeams(BaseCollaboration):
                 "spacing": "small",
                 "text": comment
             })
-        data = cls.__share(tenant_id, integration_id, attachement=args)
+        data = await cls.__share(tenant_id, integration_id, attachement=args)
         if "errors" in data:
             return data
         return {"data": data}
@@ -185,10 +191,11 @@ class MSTeams(BaseCollaboration):
     @classmethod
     def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
-            return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
+            out = await webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
                                        webhook_type=schemas.WebhookType.msteams)
+            return out
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.msteams)
+        integrations = await webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.msteams)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]

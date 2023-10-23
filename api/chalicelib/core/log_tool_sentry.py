@@ -1,4 +1,3 @@
-import requests
 from chalicelib.core import log_tools
 from schemas import schemas
 
@@ -51,11 +50,11 @@ def add_edit(tenant_id, project_id, data: schemas.IntegrationSentrySchema):
                    token=data.token)
 
 
-def proxy_get(tenant_id, project_id, event_id):
+async def proxy_get(tenant_id, project_id, event_id):
     i = get(project_id)
     if i is None:
         return {}
-    r = requests.get(
+    r = await orpy.orpy.get().httpx.get(
         url="https://sentry.io/api/0/projects/%(organization_slug)s/%(project_slug)s/events/%(event_id)s/" % {
             "organization_slug": i["organizationSlug"], "project_slug": i["projectSlug"], "event_id": event_id},
         headers={"Authorization": "Bearer " + i["token"]})

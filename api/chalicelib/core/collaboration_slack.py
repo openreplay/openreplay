@@ -1,6 +1,7 @@
 from datetime import datetime
 
-import requests
+import orpy
+import httpx
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -10,10 +11,13 @@ from chalicelib.core.collaboration_base import BaseCollaboration
 
 
 class Slack(BaseCollaboration):
+
     @classmethod
-    def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
-        if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
-                                  webhook_type=schemas.WebhookType.slack):
+    async def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
+        nok = await webhook.exists_by_name(
+            tenant_id=tenant_id, name=data.name, exclude_id=None,
+            webhook_type=schemas.WebhookType.slack)
+        if nok:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
@@ -23,8 +27,9 @@ class Slack(BaseCollaboration):
         return None
 
     @classmethod
-    def say_hello(cls, url):
-        r = requests.post(
+    async def say_hello(cls, url):
+        http = orpy.orpy.get().httpx
+        r = await http.post(
             url=url,
             json={
                 "attachments": [
@@ -41,12 +46,13 @@ class Slack(BaseCollaboration):
         return True
 
     @classmethod
-    def send_raw(cls, tenant_id, webhook_id, body):
+    async def send_raw(cls, tenant_id, webhook_id, body):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         try:
-            r = requests.post(
+            http = orpy.orpy.get().httpx
+            r = await http.post(
                 url=integration["endpoint"],
                 json=body,
                 timeout=5)
@@ -54,7 +60,7 @@ class Slack(BaseCollaboration):
                 print(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
                 print(r.text)
                 return None
-        except requests.exceptions.Timeout:
+        except httpx.Timeout:
             print(f"!! Timeout sending slack raw webhookId:{webhook_id}")
             return None
         except Exception as e:
@@ -64,13 +70,14 @@ class Slack(BaseCollaboration):
         return {"data": r.text}
 
     @classmethod
-    def send_batch(cls, tenant_id, webhook_id, attachments):
+    async def send_batch(cls, tenant_id, webhook_id, attachments):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         print(f"====> sending slack batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 100):
-            r = requests.post(
+            http = orpy.orpy.get().httpx
+            r = http.post(
                 url=integration["endpoint"],
                 json={"attachments": attachments[i:i + 100]})
             if r.status_code != 200:
@@ -80,16 +87,17 @@ class Slack(BaseCollaboration):
                 print(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, attachement):
+    async def __share(cls, tenant_id, integration_id, attachement):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         attachement["ts"] = datetime.now().timestamp()
-        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement]})
+        http = orpy.orpy.get().httpx
+        r = await http.post(url=integration["endpoint"], json={"attachments": [attachement]})
         return r.text
 
     @classmethod
-    def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
+    async def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
         args = {"fallback": f"{user} has shared the below session!",
                 "pretext": f"{user} has shared the below session!",
                 "title": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
@@ -101,7 +109,7 @@ class Slack(BaseCollaboration):
         return {"data": data}
 
     @classmethod
-    def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
+    async def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
         args = {"fallback": f"{user} has shared the below error!",
                 "pretext": f"{user} has shared the below error!",
                 "title": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
@@ -113,7 +121,7 @@ class Slack(BaseCollaboration):
         return {"data": data}
 
     @classmethod
-    def get_integration(cls, tenant_id, integration_id=None):
+    async def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
             return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
                                        webhook_type=schemas.WebhookType.slack)

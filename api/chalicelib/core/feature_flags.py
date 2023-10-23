@@ -22,7 +22,7 @@ feature_flag_columns = (
 )
 
 
-def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
+async def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.feature_flags
@@ -36,7 +36,7 @@ def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) ->
         return row["exists"]
 
 
-def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
+async def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
     try:
         with pg_client.PostgresClient() as cur:
             query = cur.mogrify(f"""UPDATE feature_flags
@@ -53,7 +53,7 @@ def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active:
                             detail="Failed to update feature flag status")
 
 
-def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
+async def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
     """
     Get all feature flags and their total count.
     """
@@ -110,7 +110,7 @@ def prepare_constraints_params_to_search(data, project_id, user_id):
     return constraints, params
 
 
-def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
+async def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
     if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant and len(feature_flag_data.variants) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Variants are required for multi variant flag")
@@ -184,11 +184,13 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
         if row is None:
             return None
 
-    return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+    out = await get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+    return out
 
 
-def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
-    if exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
+async def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
+    nok = await exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id)
+    if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
 
 
@@ -238,7 +240,7 @@ def prepare_conditions_values(feature_flag_data):
     return conditions_data
 
 
-def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
+async def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
     conditions_query = """
             SELECT COALESCE(jsonb_agg(ffc ORDER BY condition_id), '[]'::jsonb) AS conditions
             FROM feature_flags_conditions AS ffc
@@ -275,7 +277,7 @@ def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str
     return {"data": helper.dict_to_camel_case(row)}
 
 
-def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> List[Dict[str, Any]]:
+async def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> List[Dict[str, Any]]:
     """
     Create new feature flag conditions and return their data.
     """
@@ -308,12 +310,12 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
     return rows
 
 
-def update_feature_flag(project_id: int, feature_flag_id: int,
+async def update_feature_flag(project_id: int, feature_flag_id: int,
                         feature_flag: schemas.FeatureFlagSchema, user_id: int):
     """
     Update an existing feature flag and return its updated data.
     """
-    validate_unique_flag_key(feature_flag_data=feature_flag, project_id=project_id, exclude_id=feature_flag_id)
+    await validate_unique_flag_key(feature_flag_data=feature_flag, project_id=project_id, exclude_id=feature_flag_id)
     validate_multi_variant_flag(feature_flag_data=feature_flag)
 
     columns = (
@@ -358,7 +360,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
     return {"data": helper.dict_to_camel_case(row)}
 
 
-def get_conditions(feature_flag_id: int):
+async def get_conditions(feature_flag_id: int):
     """
     Get all conditions for a feature flag.
     """
@@ -410,7 +412,7 @@ def check_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVaria
     return get_variants(feature_flag_id)
 
 
-def get_variants(feature_flag_id: int):
+async def get_variants(feature_flag_id: int):
     sql = """
         SELECT
             variant_id,
@@ -431,7 +433,7 @@ def get_variants(feature_flag_id: int):
     return rows
 
 
-def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> List[Dict[str, Any]]:
+async def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> List[Dict[str, Any]]:
     """
     Create new feature flag variants and return their data.
     """
@@ -463,7 +465,7 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
     return rows
 
 
-def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
+async def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
     """
     Update existing feature flag variants and return their updated data.
     """
@@ -490,7 +492,7 @@ def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         cur.execute(query)
 
 
-def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
+async def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
     """
     Delete existing feature flag variants and return their data.
     """
@@ -505,7 +507,7 @@ def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
         cur.execute(query)
 
 
-def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
+async def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
     existing_ids = [ec.get("condition_id") for ec in get_conditions(feature_flag_id)]
     to_be_deleted = []
     to_be_updated = []
@@ -530,10 +532,11 @@ def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagC
     if len(to_be_deleted) > 0:
         delete_conditions(feature_flag_id=feature_flag_id, ids=to_be_deleted)
 
-    return get_conditions(feature_flag_id)
+    out = await get_conditions(feature_flag_id)
+    return out
 
 
-def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
+async def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
     """
     Update existing feature flag conditions and return their updated data.
     """
@@ -560,7 +563,7 @@ def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
         cur.execute(query)
 
 
-def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
+async def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
     """
     Delete feature flag conditions.
     """
@@ -575,7 +578,7 @@ def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
         cur.execute(query)
 
 
-def delete_feature_flag(project_id: int, feature_flag_id: int):
+async def delete_feature_flag(project_id: int, feature_flag_id: int):
     """
     Delete a feature flag.
     """
