@@ -1,3 +1,4 @@
+import { createMutationObserver, ngSafeBrowserMethod } from '../../utils.js'
 import {
   RemoveNodeAttribute,
   SetNodeAttributeURLBased,
@@ -66,8 +67,11 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
-  constructor(protected readonly app: App, protected readonly isTopContext = false) {
-    this.observer = new MutationObserver(
+  constructor(
+    protected readonly app: App,
+    protected readonly isTopContext = false,
+  ) {
+    this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
           // mutations order is sequential
@@ -114,7 +118,7 @@ export default abstract class Observer {
           }
         }
         this.commitNodes()
-      }),
+      }) as MutationCallback,
     )
   }
   private clear(): void {

@@ -1,3 +1,5 @@
+import { createEventListener, deleteEventListener } from '../utils.js'
+
 type NodeCallback = (node: Node, isStart: boolean) => void
 type ElementListener = [string, EventListener, boolean]
 
@@ -19,7 +21,7 @@ export default class Nodes {
     if (id === undefined) {
       return
     }
-    node.addEventListener(type, listener, useCapture)
+    createEventListener(node, type, listener, useCapture)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
@@ -49,7 +51,7 @@ export default class Nodes {
       if (listeners !== undefined) {
         this.elementListeners.delete(id)
         listeners.forEach((listener) =>
-          node.removeEventListener(listener[0], listener[1], listener[2]),
+          deleteEventListener(node, listener[0], listener[1], listener[2]),
         )
       }
       this.totalNodeAmount--
