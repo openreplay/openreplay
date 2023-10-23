@@ -3,11 +3,23 @@ import { Layer, Rectangle } from 'recharts';
 
 function CustomLink(props: any) {
   const [fill, setFill] = React.useState('url(#linkGradient)');
-  const { payload, sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index, activeLink } =
+  const {
+    hoveredLinks,
+    activeLinks,
+    payload,
+    sourceX,
+    targetX,
+    sourceY,
+    targetY,
+    sourceControlX,
+    targetControlX,
+    linkWidth,
+    index,
+    activeLink
+  } =
     props;
-  const activeSource = activeLink?.payload.source;
-  const activeTarget = activeLink?.payload.target;
-  const isActive = activeSource?.name === payload.source.name && activeTarget?.name === payload.target.name;
+  const isActive = activeLinks.length > 1 && activeLinks.includes(payload.id);
+  const isHover = hoveredLinks.length > 1 && hoveredLinks.includes(payload.id);
 
   const onClick = () => {
     if (props.onClick) {
@@ -34,7 +46,7 @@ function CustomLink(props: any) {
               ${sourceX},${sourceY - linkWidth / 2}
             Z
           `}
-        fill={isActive ? 'rgba(57, 78, 255, 0.5)' : fill}
+        fill={isActive ? 'rgba(57, 78, 255, 1)' : (isHover ? 'rgba(57, 78, 255, 0.5)' : fill)}
         strokeWidth='1'
         strokeOpacity={props.strokeOpacity}
         onMouseEnter={() => {

@@ -261,8 +261,13 @@ export default class Widget {
     const _data: any = { ...data };
 
     if (this.metricType === USER_PATH) {
+      _data['nodes'] = data.nodes.map((s: any) => ({
+        ...s,
+        idd: Math.random().toString(36).substring(7),
+      }));
       _data['links'] = data.links.map((s: any) => ({
-        ...s
+        ...s,
+        id: Math.random().toString(36).substring(7),
         // value: Math.round(s.value),
       }));
 

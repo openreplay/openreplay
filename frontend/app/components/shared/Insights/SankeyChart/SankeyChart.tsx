@@ -27,40 +27,91 @@ interface Props {
   data: Data;
   nodeWidth?: number;
   height?: number;
+  onChartClick?: (filters: any[]) => void;
 }
 
 const SankeyChart: React.FC<Props> = ({
                                         data,
-                                        height = 240
+                                        height = 240,
+                                        onChartClick
                                       }: Props) => {
   const [highlightedLinks, setHighlightedLinks] = useState<number[]>([]);
+  const [hoveredLinks, setHoveredLinks] = useState<number[]>([]);
+
+  function buildReversedAdjacencyList(nodes, links) {
+    const adjList = Array(nodes.length).fill(null).map(() => []);
+
+    for (const link of links) {
+      adjList[link.target].push(link.source);
+    }
+
+    return adjList;
+  }
+
+  function dfs(adjList, start, target, visited, path) {
+    if (start === target) return [...path, start];
+
+    if (visited[start]) return null;
+
+    visited[start] = true;
+
+    for (const neighbor of adjList[start]) {
+      const newPath = dfs(adjList, neighbor, target, visited, [...path, start]);
+      if (newPath) return newPath;
+    }
+
+    return null;
+  }
+
+  function findPathFromLinkId(linkId) {
+    const startNodeIndex = data.links.findIndex(link => link.id === linkId);
+
+    if (startNodeIndex === -1) {
+      return null;
+    }
+
+    const adjList = buildReversedAdjacencyList(data.nodes, data.links);
+    const visited = Array(data.nodes.length).fill(false);
+    return dfs(adjList, startNodeIndex, 0, visited, []);
+  }
 
   const handleLinkMouseEnter = (linkData: any) => {
     const { payload } = linkData;
-    const fullPathArray: Node[] = [];
 
-    console.log('linkData', linkData.index);
-
-    // Add the source node of the current link
-    fullPathArray.push(payload.source);
-    fullPathArray.push(payload.target);
+    const pathFromLinkId = findPathFromLinkId(payload.id);
+    setHoveredLinks(pathFromLinkId);
 
 
-    if (payload.source.sourceLinks.length > 0) {
-      let prevLink = data.links[payload.source.sourceLinks[0]];
-      // fullPathArray.unshift(prevLink);
-      fullPathArray.unshift(data.nodes[prevLink.source]);
+  };
 
-      if (prevLink.source) {
-        let prevLinkPrev = data.links[prevLink.source];
-        // fullPathArray.unshift(prevLinkPrev);
-        fullPathArray.unshift(data.nodes[prevLinkPrev.source]);
-      }
+  const clickHandler = () => {
+    setHighlightedLinks(hoveredLinks);
+
+    const targetLink = data.links[hoveredLinks[0]];
+    const sourceLink = data.links[hoveredLinks[hoveredLinks.length - 1]];
+    const targetNode = data.nodes[targetLink.source];
+    const sourceNode = data.nodes[sourceLink.target];
+
+    const filters = [];
+    if (sourceNode) {
+      filters.push({
+        operator: 'is',
+        type: sourceNode.eventType,
+        value: [sourceNode.name],
+        isEvent: true
+      });
     }
 
-    setHighlightedLinks(fullPathArray);
+    if (targetNode) {
+      filters.push({
+        operator: 'is',
+        type: targetNode.eventType,
+        value: [targetNode.name],
+        isEvent: true
+      });
+    }
 
-    console.log('fullPathArray', fullPathArray.map(node => node));
+    onChartClick?.(filters);
   };
 
 
@@ -76,15 +127,15 @@ const SankeyChart: React.FC<Props> = ({
           iterations={128}
           node={<CustomNode />}
           sort={true}
-          onClick={(data) => {
-
-          }}
+          onClick={clickHandler}
           link={({ source, target, ...linkProps }, index) => (
             <CustomLink
               {...linkProps}
+              hoveredLinks={hoveredLinks.map(linkId => data.links[linkId].id)}
+              activeLinks={highlightedLinks.map(linkId => data.links[linkId].id)}
               strokeOpacity={highlightedLinks.includes(index) ? 1 : 0.2}
               onMouseEnter={() => handleLinkMouseEnter(linkProps)}
-              onMouseLeave={() => setHighlightedLinks([])}
+              onMouseLeave={() => setHoveredLinks([])}
             />
           )}
           margin={{ right: 200 }}
