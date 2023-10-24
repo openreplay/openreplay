@@ -106,7 +106,7 @@ jobs:
       - name: Setup packages
         run: |
           cd frontend
-          yarn
+          yarn install --frozen-lockfile
       - name: Run unit tests
         run: |
           cd frontend
