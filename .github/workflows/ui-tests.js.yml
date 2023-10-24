@@ -69,6 +69,7 @@ jobs:
       - name: Setup Testing packages
         run: |
           cd tracker/tracker-testing-playground
+          npm install -g wait-on
           yarn
       - name: Run testing frontend
         run: |
@@ -127,7 +128,7 @@ jobs:
       - name: Wait for frontend
         run: |
           cd frontend
-          npx wait-on http://0.0.0.0:3333
+          wait-on http://0.0.0.0:3333
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
