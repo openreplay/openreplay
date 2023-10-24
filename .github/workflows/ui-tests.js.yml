@@ -106,7 +106,7 @@ jobs:
       - name: Setup packages
         run: |
           cd frontend
-          yarn install --immutable
+          yarn install
       - name: Run unit tests
         run: |
           cd frontend
