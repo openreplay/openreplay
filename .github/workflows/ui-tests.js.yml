@@ -110,7 +110,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd frontend
-          yarn test:ci
+          npm run test:ci
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -131,7 +131,7 @@ jobs:
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
-          yarn cy:test
+          npm run cy:test
 #        firefox have different viewport somehow
 #      - name: (Firefox) Run visual tests
 #        run: yarn cy:test-firefox
