@@ -757,6 +757,22 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         values.filters = n_filters
         return values
 
+    @field_validator("filters", mode="after")
+    def merge_identical_filters(cls, values):
+        i = 0
+        while i < len(values):
+            j = i + 1
+            while j < len(values):
+                if values[i].type == values[j].type:
+                    values[i].value += values[j].value
+                    del values[j]
+                else:
+                    j += 1
+            values[i] = remove_duplicate_values(values[i])
+            i += 1
+
+        return values
+
 
 class ErrorStatus(str, Enum):
     all = 'all'
