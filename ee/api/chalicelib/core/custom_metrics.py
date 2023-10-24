@@ -310,25 +310,32 @@ def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel)
 
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
-    if len(data.series) == 0:
+    if len(data.filters) > 0 or len(data.series) > 0:
+        filters = [f.model_dump(by_alias=True) for f in data.filters] \
+                  + [f.model_dump(by_alias=True) for f in data.series[0].filter.filters]
+    else:
         return {"data": {}}
+
     search_data = schemas.SessionsSearchPayloadSchema(
         startTimestamp=data.startTimestamp,
         endTimestamp=data.endTimestamp,
         limit=data.limit,
         page=data.page,
-        filters=data.series[0].filter.model_dump(by_alias=True)["filters"]
+        filters=filters
     )
 
-    for s in data.start_point:
-        if data.start_type == "end":
-            search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                         operator=s.operator,
-                                                                         value=s.value))
-        else:
-            search_data.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
-                                                                            operator=s.operator,
-                                                                            value=s.value))
+    if len(search_data.events) == 0:
+        return {"data": {}}
+
+    # for s in data.start_point:
+    #     if data.start_type == "end":
+    #         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
+    #                                                                      operator=s.operator,
+    #                                                                      value=s.value))
+    #     else:
+    #         search_data.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
+    #                                                                         operator=s.operator,
+    #                                                                         value=s.value))
     for s in data.excludes:
         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                      operator=schemas.SearchEventOperator._not_on,

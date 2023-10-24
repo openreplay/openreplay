@@ -1,5 +1,6 @@
 import logging
 import queue
+import time
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -71,13 +72,18 @@ async def or_middleware(request: Request, call_next):
         return JSONResponse(content={"errors": ["expired license"]}, status_code=status.HTTP_403_FORBIDDEN)
 
     if helper.TRACK_TIME:
-        import time
-        now = int(time.time() * 1000)
-    response: StreamingResponse = await call_next(request)
+        now = time.time()
+    try:
+        response: StreamingResponse = await call_next(request)
+    except:
+        logging.error(f"{request.method}: {request.url.path} FAILED!")
+        raise
+    if response.status_code // 100 != 2:
+        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
     if helper.TRACK_TIME:
-        now = int(time.time() * 1000) - now
-        if now > 1500:
-            logging.warning(f"Execution time: {now} ms for {request.method}:{request.url.path}")
+        now = time.time() - now
+        if now > 2:
+            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
     return response
 
 
