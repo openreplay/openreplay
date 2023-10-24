@@ -116,7 +116,7 @@ jobs:
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
-          yarn start &> ui.log &
+          yarn start
       - name: Wait for Testing Frontend
         run: |
           netstat -anv | grep 3000 &&
