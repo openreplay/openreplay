@@ -1,4 +1,4 @@
-### Prerequisites
+## Prerequisites
 
 - [Vagrant](../scripts/vagrant/README.md)
 - Python 3.9
@@ -44,3 +44,8 @@ assert my_variable.get() == 'foobar'
 
 ### `import httpx`
 
+Mostly like requests. Look at the doc at: https://www.python-httpx.org/asynpg/
+
+### `import psycopg3`
+
+[Basic connection pool usage](https://www.psycopg.org/psycopg3/docs/advanced/pool.html#basic-connection-pool-usage)
