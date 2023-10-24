@@ -64,8 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <Provider store={store}>
                 <StoreProvider store={new RootStore()}>
                     <DndProvider backend={HTML5Backend}>
-                        {/*@ts-ignore*/}
-                        <Router additionalRoutes={<AdditionalRoutes/>}/>
+                        <Router additionalRoutes={<AdditionalRoutes />}/>
                     </DndProvider>
                 </StoreProvider>
             </Provider>
