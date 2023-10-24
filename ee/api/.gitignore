@@ -273,3 +273,4 @@ Pipfile.lock
 /schemas/overrides.py
 /schemas/schemas.py
 /chalicelib/core/authorizers.py
+/schemas/transformers_validators.py
