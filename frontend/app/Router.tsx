@@ -302,7 +302,7 @@ const Router: React.FC<RouterProps> = (props) => {
                                        component={enhancedComponents.Session}/>
                                 <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
                                        component={enhancedComponents.LiveSession}/>
-                                {additionalRoutes}
+                                {additionalRoutes && additionalRoutes}
 
                                 {Object.entries(routes.redirects).map(([fr, to]) => (
                                     <Redirect key={fr} exact strict from={fr} to={to}/>
