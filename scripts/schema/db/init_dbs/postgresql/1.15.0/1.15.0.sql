@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
 );
 
 
-CREATE TABLE IF NOT EXISTS pulic.assist_events_aggregates_logs
+CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
 (
     time BIGINT not null
 );
