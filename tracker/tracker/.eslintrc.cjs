@@ -38,7 +38,6 @@ module.exports = {
     'no-useless-escape': 'warn',
     'no-control-regex': 'warn',
     '@typescript-eslint/restrict-template-expressions': 'warn',
-    '@typescript-eslint/no-useless-constructor': 'warn',
     '@typescript-eslint/no-this-alias': 'off',
     '@typescript-eslint/no-floating-promises': 'warn',
     '@typescript-eslint/no-unsafe-argument': 'warn',

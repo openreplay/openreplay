@@ -40,7 +40,7 @@ if ssl_protocol:
 
 session_messages = [1, 25, 28, 29, 30, 31, 32, 54, 56, 62, 69, 78, 125, 126]
 if EVENT_TYPE == 'normal':
-    events_messages = [21, 22, 25, 27, 64, 78, 125]
+    events_messages = [21, 22, 25, 27, 64, 69, 78, 125]
 elif EVENT_TYPE == 'detailed':
     events_messages = [1, 4, 21, 22, 25, 27, 31, 32, 39, 48, 59, 64, 69, 78, 125, 126]
 allowed_messages = list(set(session_messages + events_messages))
