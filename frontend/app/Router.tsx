@@ -107,6 +107,7 @@ interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connect
   };
   mstore: any;
   setJwt: (jwt: string) => any;
+  additionalRoutes?: React.ReactElement | null;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
@@ -125,7 +126,8 @@ const Router: React.FC<RouterProps> = (props) => {
     setSessionPath,
     fetchSiteList,
     history,
-    match: { params: { siteId: siteIdFromPath } }
+    match: { params: { siteId: siteIdFromPath } },
+    additionalRoutes = null
   } = props;
 
   const checkJWT = () => {
@@ -298,6 +300,7 @@ const Router: React.FC<RouterProps> = (props) => {
                   <Redirect key={fr} exact strict from={fr} to={to} />
                 ))}
                 <Redirect to={withSiteId(SESSIONS_PATH, siteId)} />
+                {additionalRoutes && additionalRoutes}
               </Switch>
             </Suspense>
           </Loader>
