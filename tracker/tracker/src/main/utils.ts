@@ -162,12 +162,13 @@ export function deleteEventListener(
  * */
 export function requestIdleCb(callback: () => void) {
   const taskTimeout = 3000
-  if ('requestIdleCallback' in window) {
+  if (window.requestIdleCallback) {
     return window.requestIdleCallback(callback, { timeout: taskTimeout })
   } else {
     const channel = new MessageChannel()
     const incoming = channel.port1
     const outgoing = channel.port2
+
     incoming.onmessage = (): void => {
       callback()
     }
