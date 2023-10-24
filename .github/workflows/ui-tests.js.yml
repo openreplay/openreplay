@@ -70,10 +70,6 @@ jobs:
         run: |
           cd tracker/tracker-testing-playground
           yarn
-      - name: Run testing frontend
-        run: |
-          cd tracker/tracker-testing-playground
-          yarn start &> ui.log &
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -117,9 +113,13 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ui
           name: ui
+      - name: Run testing frontend
+        run: |
+          cd tracker/tracker-testing-playground
+          yarn start &> ui.log &
       - name: Wait for Testing Frontend
         run: |
-          netstat -anv | grep 3000
+          netstat -anv | grep 3000 &&
           curl http://localhost:3000
       - name: Run Frontend
         run: |
