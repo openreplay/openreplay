@@ -5,9 +5,9 @@ from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
 from pydantic import field_validator, model_validator, computed_field
 
 from chalicelib.utils.TimeUTC import TimeUTC
-from .overrides import BaseModel, Enum
-from .overrides import transform_email, remove_whitespace, remove_duplicate_values, \
-    single_to_list, ORUnion
+from .overrides import BaseModel, Enum, ORUnion
+from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
+    force_is_event
 
 
 def transform_old_filter_type(cls, values):
@@ -795,9 +795,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values.get("filters", []):
-            if v.get("isEvent") is None:
-                v["isEvent"] = True
+        values["isEvent"] = True
         return values
 
 
@@ -831,12 +829,15 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     filters: List[ProductAnalyticsFilter] = Field(default=[])
     type: Optional[str] = Field(default=None)
 
-    @model_validator(mode="before")
-    def __force_is_event(cls, values):
-        for v in values.get("filters"):
-            if v.get("isEvent") is None:
-                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-        return values
+    _transform_filters = field_validator('filters', mode='before') \
+        (force_is_event(events_enum=[ProductAnalyticsSelectedEventType]))
+
+    # @model_validator(mode="before")
+    # def __force_is_event_for_filters(cls, values):
+    #     for v in values.get("filters"):
+    #         if v.get("isEvent") is None:
+    #             v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
+    #     return values
 
 
 class MobileSignPayloadSchema(BaseModel):
@@ -987,12 +988,15 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     # Used mainly for PathAnalysis, and could be used by other cards
     hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
 
-    @model_validator(mode="before")
-    def __force_is_event(cls, values):
-        for v in values.get("filters"):
-            if v.get("isEvent") is None:
-                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-        return values
+    _transform_filters = field_validator('filters', mode='before') \
+        (force_is_event(events_enum=[EventType, PerformanceEventType]))
+
+    # @model_validator(mode="before")
+    # def __force_is_event(cls, values):
+    #     for v in values.get("filters"):
+    #         if v.get("isEvent") is None:
+    #             v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
+    #     return values
 
     @model_validator(mode="before")
     def remove_wrong_filter_values(cls, values):
