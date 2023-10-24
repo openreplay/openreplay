@@ -119,6 +119,7 @@ jobs:
           name: ui
       - name: Wait for Testing Frontend
         run: |
+          netstat -anv | grep 3000
           curl http://localhost:3000
       - name: Run Frontend
         run: |
@@ -127,6 +128,7 @@ jobs:
       - name: Wait for frontend
         run: |
           cd frontend
+          netstat -anv | grep 3000
           curl http://0.0.0.0:3333
       - name: (Chrome) Run visual tests
         run: |
