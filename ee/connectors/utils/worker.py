@@ -450,14 +450,18 @@ class WorkerPool:
         kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
         kafka_reader_process.start()
         current_loop_number = 0
+        n_kafka_restarts = 0
         while signal_handler.KEEP_PROCESSING:
             current_loop_number = (current_loop_number + 1) % self.n_of_loops
             # Setup of parameters for workers
             if not kafka_reader_process.is_alive():
+                if n_kafka_restarts > 3:
+                    break
                 print('[WORKER-INFO] Restarting reader task')
                 del kafka_reader_process
                 kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
                 kafka_reader_process.start()
+                n_kafka_restarts += 1
             decoding_params = [{'flag': 'decoder',
                                 'message': list(),
                                 'memory': dict()} for _ in range(self.n_workers)
