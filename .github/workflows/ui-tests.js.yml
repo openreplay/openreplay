@@ -106,7 +106,7 @@ jobs:
       - name: Setup packages
         run: |
           cd frontend
-          npm install
+          npm install --legacy-peer-deps
       - name: Run unit tests
         run: |
           cd frontend
