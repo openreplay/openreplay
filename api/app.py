@@ -57,7 +57,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),
               redoc_url=config("redoc_url", default=""), lifespan=lifespan)
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 app.add_middleware(
