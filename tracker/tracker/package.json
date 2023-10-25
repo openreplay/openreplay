@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "10.0.0",
+  "version": "10.0.1-1",
   "keywords": [
     "logging",
     "replay"
@@ -19,13 +19,13 @@
     "tscRun": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
-    "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
+    "build": "bun run clean && bun run tscRun && bun run rollup && bun run compile",
     "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
-    "postversion": "npm run build",
-    "prepublishOnly": "npm run build"
+    "postversion": "bun run build",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
