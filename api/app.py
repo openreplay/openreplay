@@ -60,25 +60,6 @@ app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("do
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-@app.middleware('http')
-async def or_middleware(request: Request, call_next):
-    if helper.TRACK_TIME:
-        now = time.time()
-    try:
-        response: StreamingResponse = await call_next(request)
-    except:
-        logging.error(f"{request.method}: {request.url.path} FAILED!")
-        raise
-    if response.status_code // 100 != 2:
-        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
-    if helper.TRACK_TIME:
-        now = time.time() - now
-        if now > 2:
-            now = round(now, 2)
-            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
-    return response
-
-
 origins = [
     "*",
 ]
