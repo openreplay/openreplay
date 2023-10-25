@@ -128,7 +128,7 @@ jobs:
       - name: Run Frontend
         run: |
           cd frontend
-          yarn start &> frontend.log &
+          bun start &> frontend.log &
           echo "Started"
           sleep 30
           cat frontend.log
