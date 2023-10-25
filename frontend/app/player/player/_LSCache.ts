@@ -38,7 +38,7 @@ type Entries<T> = {
     [K in keyof T]: [K, T[K]];
 }[keyof T][];
 
-export default class LSCache<G extends Record<string, boolean | number | string> {
+export default class LSCache<G extends Record<string, boolean | number | string>> {
 	constructor(private state: SimpleState<G>, private keyMap: Record<keyof Partial<G>, string>) {
 	}
 	update(newState: Partial<G>) {

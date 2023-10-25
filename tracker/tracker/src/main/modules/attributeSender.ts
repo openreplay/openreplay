@@ -18,7 +18,10 @@ export class StringDictionary {
 export default class AttributeSender {
   private dict = new StringDictionary()
 
-  constructor(private readonly app: App, private readonly isDictDisabled: boolean) {}
+  constructor(
+    private readonly app: App,
+    private readonly isDictDisabled: boolean,
+  ) {}
 
   public sendSetAttribute(id: number, name: string, value: string) {
     if (this.isDictDisabled) {

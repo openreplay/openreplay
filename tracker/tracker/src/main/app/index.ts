@@ -1,6 +1,14 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
-import { now, adjustTimeOrigin, deprecationWarn, inIframe } from '../utils.js'
+import {
+  now,
+  adjustTimeOrigin,
+  deprecationWarn,
+  inIframe,
+  createEventListener,
+  deleteEventListener,
+  requestIdleCb,
+} from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -338,12 +346,15 @@ export default class App {
   }
 
   private commit(): void {
-    if (this.worker && this.messages.length) {
-      this.messages.unshift(TabData(this.session.getTabId()))
-      this.messages.unshift(Timestamp(this.timestamp()))
-      this.worker.postMessage(this.messages)
-      this.commitCallbacks.forEach((cb) => cb(this.messages))
-      this.messages.length = 0
+    if (this.worker !== undefined && this.messages.length) {
+      requestIdleCb(() => {
+        this.messages.unshift(TabData(this.session.getTabId()))
+        this.messages.unshift(Timestamp(this.timestamp()))
+        // ? why I need to do this?
+        this.worker!.postMessage(this.messages)
+        this.commitCallbacks.forEach((cb) => cb(this.messages))
+        this.messages.length = 0
+      })
     }
   }
 
@@ -397,8 +408,14 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
-    this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
+    this.attachStartCallback(
+      () => (target ? createEventListener(target, type, listener, useCapture) : null),
+      useSafe,
+    )
+    this.attachStopCallback(
+      () => (target ? deleteEventListener(target, type, listener, useCapture) : null),
+      useSafe,
+    )
   }
 
   // TODO: full correct semantic

@@ -180,6 +180,7 @@ export default class Assist {
         }),
       },
       transports: ['websocket',],
+      withCredentials: true,
     })
     socket.onAny((...args) => {
       if (args[0] === 'messages' || args[0] === 'UPDATE_SESSION') {
