@@ -60,13 +60,9 @@ app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("do
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-origins = [
-    "*",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
