@@ -116,6 +116,7 @@ jobs:
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
+          export NODE_OPTIONS=--openssl-legacy-provider
           yarn start
       - name: Wait for Testing Frontend
         run: |
