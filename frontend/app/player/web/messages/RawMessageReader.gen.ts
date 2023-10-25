@@ -211,7 +211,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: MType.NetworkRequest,
+        tp: MType.NetworkRequestDeprecated,
         type,
         method,
         url,
@@ -624,6 +624,30 @@ export default class RawMessageReader extends PrimitiveReader {
         tp: MType.Zustand,
         mutation,
         state,
+      };
+    }
+
+    case 83: {
+      const type = this.readString(); if (type === null) { return resetPointer() }
+      const method = this.readString(); if (method === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const request = this.readString(); if (request === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
+      const status = this.readUint(); if (status === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const transferredBodySize = this.readUint(); if (transferredBodySize === null) { return resetPointer() }
+      return {
+        tp: MType.NetworkRequest,
+        type,
+        method,
+        url,
+        request,
+        response,
+        status,
+        timestamp,
+        duration,
+        transferredBodySize,
       };
     }
 

@@ -331,7 +331,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 21:
-            return NetworkRequest(
+            return NetworkRequestDeprecated(
                 type=self.read_string(reader),
                 method=self.read_string(reader),
                 url=self.read_string(reader),
@@ -743,6 +743,19 @@ cdef class MessageCodec:
             return PartitionedMessage(
                 part_no=self.read_uint(reader),
                 part_total=self.read_uint(reader)
+            )
+
+        if message_id == 83:
+            return NetworkRequest(
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                transferred_body_size=self.read_uint(reader)
             )
 
         if message_id == 112:

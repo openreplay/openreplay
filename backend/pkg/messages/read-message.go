@@ -300,9 +300,9 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+func DecodeNetworkRequestDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &NetworkRequest{}
+	msg := &NetworkRequestDeprecated{}
 	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1221,6 +1221,39 @@ func DecodePartitionedMessage(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NetworkRequest{}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TransferredBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeInputChange(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
@@ -1792,7 +1825,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 20:
 		return DecodeMouseMove(reader)
 	case 21:
-		return DecodeNetworkRequest(reader)
+		return DecodeNetworkRequestDeprecated(reader)
 	case 22:
 		return DecodeConsoleLog(reader)
 	case 23:
@@ -1899,6 +1932,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
+	case 83:
+		return DecodeNetworkRequest(reader)
 	case 112:
 		return DecodeInputChange(reader)
 	case 113:

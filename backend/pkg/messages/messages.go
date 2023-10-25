@@ -22,7 +22,7 @@ const (
 	MsgSetInputValue               = 18
 	MsgSetInputChecked             = 19
 	MsgMouseMove                   = 20
-	MsgNetworkRequest              = 21
+	MsgNetworkRequestDeprecated    = 21
 	MsgConsoleLog                  = 22
 	MsgPageLoadTiming              = 23
 	MsgPageRenderTiming            = 24
@@ -76,6 +76,7 @@ const (
 	MsgBatchMeta                   = 80
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
+	MsgNetworkRequest              = 83
 	MsgInputChange                 = 112
 	MsgSelectionChange             = 113
 	MsgMouseThrashing              = 114
@@ -602,7 +603,7 @@ func (msg *MouseMove) TypeID() int {
 	return 20
 }
 
-type NetworkRequest struct {
+type NetworkRequestDeprecated struct {
 	message
 	Type      string
 	Method    string
@@ -614,7 +615,7 @@ type NetworkRequest struct {
 	Duration  uint64
 }
 
-func (msg *NetworkRequest) Encode() []byte {
+func (msg *NetworkRequestDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
 	buf[0] = 21
 	p := 1
@@ -629,11 +630,11 @@ func (msg *NetworkRequest) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *NetworkRequest) Decode() Message {
+func (msg *NetworkRequestDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *NetworkRequest) TypeID() int {
+func (msg *NetworkRequestDeprecated) TypeID() int {
 	return 21
 }
 
@@ -2024,6 +2025,43 @@ func (msg *PartitionedMessage) Decode() Message {
 
 func (msg *PartitionedMessage) TypeID() int {
 	return 82
+}
+
+type NetworkRequest struct {
+	message
+	Type                string
+	Method              string
+	URL                 string
+	Request             string
+	Response            string
+	Status              uint64
+	Timestamp           uint64
+	Duration            uint64
+	TransferredBodySize uint64
+}
+
+func (msg *NetworkRequest) Encode() []byte {
+	buf := make([]byte, 91+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
+	buf[0] = 83
+	p := 1
+	p = WriteString(msg.Type, buf, p)
+	p = WriteString(msg.Method, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Request, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Status, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.TransferredBodySize, buf, p)
+	return buf[:p]
+}
+
+func (msg *NetworkRequest) Decode() Message {
+	return msg
+}
+
+func (msg *NetworkRequest) TypeID() int {
+	return 83
 }
 
 type InputChange struct {
