@@ -141,7 +141,8 @@ $$
                 jwt_refresh_jti integer                     NULL     DEFAULT NULL,
                 jwt_refresh_iat timestamp without time zone NULL     DEFAULT NULL,
                 data            jsonb                       NOT NULL DEFAULT '{}'::jsonb,
-                weekly_report   boolean                     NOT NULL DEFAULT TRUE
+                weekly_report   boolean                     NOT NULL DEFAULT TRUE,
+                settings        jsonb                                DEFAULT NULL
             );
 
             CREATE TABLE public.basic_authentication
