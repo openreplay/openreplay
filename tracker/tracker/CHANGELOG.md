@@ -2,6 +2,8 @@
 
 - networkRequest message changed to include `TransferredBodySize`
 - tracker now attempts to create proxy for beacon api as well (if its in scope)
+- safe wrapper for angular apps
+- better browser lag handling
 
 # 9.0.11
 
