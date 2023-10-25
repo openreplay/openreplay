@@ -119,6 +119,9 @@ ALTER TABLE IF EXISTS events.clicks
 ALTER TABLE IF EXISTS public.metrics
     ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next
