@@ -8,11 +8,11 @@ Expand the name of the chart.
 {{/* Get domain name with/without port */}}
 {{- define "openreplay.domainURL" -}}
 {{- $scheme := ternary "https" "http" .Values.global.ORSecureAccess -}}
-{{- $port := ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess -}}
-{{- if or (eq (toString $port) "80") (eq (toString $port) "443") -}}
+{{- $port := toString (ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess) -}}
+{{- if or (eq $port "80") (eq  $port "443") -}}
 {{- printf "%s://%s" $scheme .Values.global.domainName -}}
 {{- else -}}
-{{- printf "%s://%s:%d" $scheme .Values.global.domainName $port -}}
+{{- printf "%s://%s:%s" $scheme .Values.global.domainName $port -}}
 {{- end -}}
 {{- end -}}
 
