@@ -242,7 +242,8 @@ def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+                                    platform=context.project.platform)
     return {'data': data}
 
 

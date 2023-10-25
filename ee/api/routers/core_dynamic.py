@@ -250,7 +250,8 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
           dependencies=[OR_scope(Permissions.session_replay)])
 def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+                                    platform=context.project.platform)
     return {'data': data}
 
 
@@ -258,7 +259,8 @@ def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = 
           dependencies=[OR_scope(Permissions.session_replay)])
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+                                    platform=context.project.platform)
     return {'data': data}
 
 

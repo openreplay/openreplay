@@ -1,4 +1,5 @@
 import json
+import logging
 
 import schemas
 from chalicelib.core import users, telemetry, tenants
@@ -7,15 +8,17 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+logger = logging.getLogger(__name__)
+
 
 def create_tenant(data: schemas.UserSignupSchema):
-    print(f"===================== SIGNUP STEP 1 AT {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
+    logger.info(f"==== Signup started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
     if tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
     email = data.email
-    print(f"=====================> {email}")
+    logger.debug(f"email: {email}")
     password = data.password.get_secret_value()
 
     if email is None or len(email) < 5:
@@ -41,8 +44,9 @@ def create_tenant(data: schemas.UserSignupSchema):
         errors.append("Invalid organization name.")
 
     if len(errors) > 0:
-        print(f"==> error for email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
-        print(errors)
+        logger.warning(
+            f"==> signup error for:\n email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
+        logger.warning(errors)
         return {"errors": errors}
 
     project_name = "my first project"
