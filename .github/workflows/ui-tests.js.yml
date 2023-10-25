@@ -119,8 +119,8 @@ jobs:
           yarn start &> frontend.log &
       - name: Wait for Testing Frontend
         run: |
-          npm i -g wait-on
-          wait-on http://localhost:3000
+          cd tracker/tracker-testing-playground
+          npm i -g wait-on && npx wait-on http://localhost:3000
           echo "Done"
         timeout-minutes: 2
       - name: Run Frontend
@@ -130,7 +130,7 @@ jobs:
       - name: Wait for frontend
         run: |
           cd frontend
-          wait-on http://0.0.0.0:3333
+          npx wait-on http://0.0.0.0:3333
           echo "Done"
         timeout-minutes: 3
       - name: (Chrome) Run visual tests
