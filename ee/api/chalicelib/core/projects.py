@@ -132,7 +132,8 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         query = cur.mogrify(f"""SELECT s.project_id,
                                        s.project_key,
                                        s.name,
-                                       s.save_request_payloads
+                                       s.save_request_payloads,
+                                       s.platform
                                        {extra_select}
                                 FROM public.projects AS s
                                 WHERE s.tenant_id =%(tenant_id)s 

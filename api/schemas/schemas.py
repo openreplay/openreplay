@@ -75,8 +75,8 @@ class UserLoginSchema(_GRecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(..., le=0)
-    organizationName: str = Field(..., le=0)
+    fullname: str = Field(..., min_length=1)
+    organizationName: str = Field(..., min_length=1)
 
     _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
     _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
@@ -110,9 +110,9 @@ class CreateProjectSchema(BaseModel):
 
 
 class CurrentProjectContext(BaseModel):
-    project_id: int = Field(...)
+    project_id: int = Field(..., gt=0)
     project_key: str = Field(...)
-    platform: str = Field(...)
+    platform: Literal["web", "ios"] = Field(...)
 
 
 class CurrentAPIContext(BaseModel):
