@@ -16,7 +16,8 @@ const createSocketIOServer = function (server, prefix) {
             maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
-                methods: ["GET", "POST", "PUT"]
+                methods: ["GET", "POST", "PUT"],
+                credentials: true
             },
             path: (prefix ? prefix : '') + '/socket',
             ...getCompressionConfig()
@@ -26,7 +27,8 @@ const createSocketIOServer = function (server, prefix) {
             maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
-                methods: ["GET", "POST", "PUT"]
+                methods: ["GET", "POST", "PUT"],
+                credentials: true
             },
             path: (prefix ? prefix : '') + '/socket',
             ...getCompressionConfig()
