@@ -153,6 +153,7 @@ export default class AssistManager {
 
       const socket: Socket = this.socket = io(urlObject.origin, {
         multiplex: true,
+        transports: ['websocket'],
         path: '/ws-assist/socket',
         auth: {
           token: agentToken
