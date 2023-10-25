@@ -121,6 +121,8 @@ jobs:
         run: |
           npm i -g wait-on
           wait-on http://localhost:3000
+          echo "Done"
+        timeout-minutes: 2
       - name: Run Frontend
         run: |
           cd frontend
@@ -129,6 +131,8 @@ jobs:
         run: |
           cd frontend
           wait-on http://0.0.0.0:3333
+          echo "Done"
+        timeout-minutes: 3
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
