@@ -116,12 +116,11 @@ jobs:
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
-          export NODE_OPTIONS=--openssl-legacy-provider
           yarn start &> frontend.log &
       - name: Wait for Testing Frontend
         run: |
-          netstat -anv | grep 3000 &&
-          curl http://localhost:3000
+          npm i -g wait-on
+          wait-on http://localhost:3000
       - name: Run Frontend
         run: |
           cd frontend
@@ -129,8 +128,7 @@ jobs:
       - name: Wait for frontend
         run: |
           cd frontend
-          netstat -anv | grep 3000
-          curl http://0.0.0.0:3333
+          wait-on http://0.0.0.0:3333
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
