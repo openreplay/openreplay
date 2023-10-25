@@ -38,20 +38,21 @@ COALESCE((SELECT TRUE
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False,
+                    platform="web"):
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
-                                               user_id=user_id)
+                                               user_id=user_id, platform=platform)
     if data.limit is not None and data.page is not None:
         full_args["sessions_limit"] = data.limit
         full_args["sessions_limit_s"] = (data.page - 1) * data.limit
         full_args["sessions_limit_e"] = data.page * data.limit
     else:
         full_args["sessions_limit"] = 200
-        full_args["sessions_limit_s"] = 1
+        full_args["sessions_limit_s"] = 0
         full_args["sessions_limit_e"] = 200
 
     meta_keys = []
@@ -113,6 +114,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
+
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
@@ -129,6 +131,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         logging.debug("--------------------")
         try:
             cur.execute(main_query)
+            sessions = cur.fetchone()
         except Exception as err:
             logging.warning("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
             logging.warning(main_query.decode('UTF-8'))
@@ -139,7 +142,6 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         if errors_only or ids_only:
             return helper.list_to_camel_case(cur.fetchall())
 
-        sessions = cur.fetchone()
         if count_only:
             return helper.dict_to_camel_case(sessions)
 
@@ -396,7 +398,7 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                       project_id, user_id, extra_event=None):
+                       project_id, user_id, platform="web", extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
@@ -687,32 +689,61 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                          **sh.multi_values(event.source, value_key=s_k)}
 
             if event_type == events.EventType.CLICK.ui_type:
-                event_from = event_from % f"{events.EventType.CLICK.table} AS main "
-                if not is_any:
-                    if event.operator == schemas.ClickEventExtraOperator._on_selector:
+                if platform == "web":
+                    event_from = event_from % f"{events.EventType.CLICK.table} AS main "
+                    if not is_any:
+                        if event.operator == schemas.ClickEventExtraOperator._on_selector:
+                            event_where.append(
+                                sh.multi_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
+                        else:
+                            event_where.append(
+                                sh.multi_conditions(f"main.{events.EventType.CLICK.column} {op} %({e_k})s", event.value,
+                                                    value_key=e_k))
+                else:
+                    event_from = event_from % f"{events.EventType.CLICK_IOS.table} AS main "
+                    if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
-                    else:
-                        event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.CLICK.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.CLICK_IOS.column} {op} %({e_k})s", event.value,
                                                 value_key=e_k))
 
             elif event_type == events.EventType.INPUT.ui_type:
-                event_from = event_from % f"{events.EventType.INPUT.table} AS main "
-                if not is_any:
-                    event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.INPUT.column} {op} %({e_k})s", event.value,
-                                            value_key=e_k))
-                if event.source is not None and len(event.source) > 0:
-                    event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
-                                                           value_key=f"custom{i}"))
-                    full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
+                if platform == "web":
+                    event_from = event_from % f"{events.EventType.INPUT.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            sh.multi_conditions(f"main.{events.EventType.INPUT.column} {op} %({e_k})s", event.value,
+                                                value_key=e_k))
+                    if event.source is not None and len(event.source) > 0:
+                        event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                               value_key=f"custom{i}"))
+                        full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
+
+                else:
+                    event_from = event_from % f"{events.EventType.INPUT_IOS.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            sh.multi_conditions(f"main.{events.EventType.INPUT_IOS.column} {op} %({e_k})s", event.value,
+                                                value_key=e_k))
+
 
             elif event_type == events.EventType.LOCATION.ui_type:
-                event_from = event_from % f"{events.EventType.LOCATION.table} AS main "
+                if platform == "web":
+                    event_from = event_from % f"{events.EventType.LOCATION.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            sh.multi_conditions(f"main.{events.EventType.LOCATION.column} {op} %({e_k})s",
+                                                event.value, value_key=e_k))
+                else:
+                    event_from = event_from % f"{events.EventType.VIEW_IOS.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            sh.multi_conditions(f"main.{events.EventType.VIEW_IOS.column} {op} %({e_k})s",
+                                                event.value, value_key=e_k))
+            elif event_type == events.EventType.SWIPE_IOS.ui_type and platform == "ios":
+                event_from = event_from % f"{events.EventType.SWIPE_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.LOCATION.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.SWIPE_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{events.EventType.CUSTOM.table} AS main "
