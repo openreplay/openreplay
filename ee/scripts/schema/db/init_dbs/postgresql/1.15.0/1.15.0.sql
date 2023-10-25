@@ -19,7 +19,7 @@ $fn_def$, :'next_version')
 
 --
 ALTER TABLE IF EXISTS events_common.requests
-    ADD COLUMN transfer_size bigint NULL;
+    ADD COLUMN IF NOT EXISTS transfer_size bigint NULL;
 
 ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS timezone text NULL;
