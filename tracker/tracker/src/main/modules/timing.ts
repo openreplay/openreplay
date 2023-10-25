@@ -110,12 +110,16 @@ export default function (app: App, opts: Partial<Options>): void {
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration
     }
-
+    let shouldSkip = false
     options.excludedResourceUrls?.forEach((url) => {
       if (entry.name.startsWith(url)) {
+        shouldSkip = true
         return
       }
     })
+    if (shouldSkip) {
+      return
+    }
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),

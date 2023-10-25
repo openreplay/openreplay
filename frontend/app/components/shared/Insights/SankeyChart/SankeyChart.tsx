@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Sankey, ResponsiveContainer } from 'recharts';
 import CustomLink from './CustomLink';
 import CustomNode from './CustomNode';
 import { NoContent } from 'UI';
 
 interface Node {
+  id: number;  // Assuming you missed this from your interface
   name: string;
   eventType: string;
   avgTimeFromPrevious: number | null;
@@ -24,59 +25,120 @@ interface Data {
 
 interface Props {
   data: Data;
-  nodePadding?: number;
   nodeWidth?: number;
-  onChartClick?: (data: any) => void;
   height?: number;
+  onChartClick?: (filters: any[]) => void;
 }
 
+const SankeyChart: React.FC<Props> = ({
+                                        data,
+                                        height = 240,
+                                        onChartClick
+                                      }: Props) => {
+  const [highlightedLinks, setHighlightedLinks] = useState<number[]>([]);
+  const [hoveredLinks, setHoveredLinks] = useState<number[]>([]);
 
-function SankeyChart(props: Props) {
-  const { data, nodeWidth = 10, height = 240 } = props;
-  const [activeLink, setActiveLink] = React.useState<any>(null);
+  function buildReversedAdjacencyList(nodes, links) {
+    const adjList = Array(nodes.length).fill(null).map(() => []);
 
-  useEffect(() => {
-    if (!activeLink) return;
-    const { source, target } = activeLink.payload;
+    for (const link of links) {
+      adjList[link.target].push(link.source);
+    }
+
+    return adjList;
+  }
+
+  function dfs(adjList, start, target, visited, path) {
+    if (start === target) return [...path, start];
+
+    if (visited[start]) return null;
+
+    visited[start] = true;
+
+    for (const neighbor of adjList[start]) {
+      const newPath = dfs(adjList, neighbor, target, visited, [...path, start]);
+      if (newPath) return newPath;
+    }
+
+    return null;
+  }
+
+  function findPathFromLinkId(linkId) {
+    const startNodeIndex = data.links.findIndex(link => link.id === linkId);
+
+    if (startNodeIndex === -1) {
+      return null;
+    }
+
+    const adjList = buildReversedAdjacencyList(data.nodes, data.links);
+    const visited = Array(data.nodes.length).fill(false);
+    return dfs(adjList, startNodeIndex, 0, visited, []);
+  }
+
+  const handleLinkMouseEnter = (linkData: any) => {
+    const { payload } = linkData;
+
+    const pathFromLinkId = findPathFromLinkId(payload.id);
+    setHoveredLinks(pathFromLinkId.reverse());
+
+
+  };
+
+  const clickHandler = () => {
+    setHighlightedLinks(hoveredLinks);
+
+    const targetLink = data.links[hoveredLinks[0]];
+    const sourceLink = data.links[hoveredLinks[hoveredLinks.length - 1]];
+    const targetNode = data.nodes[targetLink.source];
+    const sourceNode = data.nodes[sourceLink.target];
+
     const filters = [];
-    if (source) {
+    if (sourceNode) {
       filters.push({
         operator: 'is',
-        type: source.eventType,
-        value: [source.name],
+        type: sourceNode.eventType,
+        value: [sourceNode.name],
         isEvent: true
       });
     }
 
-    if (target) {
+    if (targetNode) {
       filters.push({
         operator: 'is',
-        type: target.eventType,
-        value: [target.name],
+        type: targetNode.eventType,
+        value: [targetNode.name],
         isEvent: true
       });
     }
 
-    props.onChartClick?.(filters);
-  }, [activeLink]);
+    onChartClick?.(filters);
+  };
+
 
   return (
-    <NoContent show={!(data && data.nodes && data.nodes.length && data.links)}>
+    <NoContent
+      style={{ paddingTop: '80px' }}
+      show={!data.nodes.length || !data.links.length}
+      title={'No data for the selected time period.'}
+    >
       <ResponsiveContainer height={height} width='100%'>
         <Sankey
           data={data}
-          node={<CustomNode />}
-          nodeWidth={nodeWidth}
-          sort={false}
-          // linkCurvature={0.5}
-          // iterations={128}
-          margin={{
-            left: 0,
-            right: 200,
-            top: 0,
-            bottom: 10
-          }}
-          link={<CustomLink onClick={(props: any) => setActiveLink(props)} activeLink={activeLink} />}
+          iterations={128}
+          node={<CustomNode activeNodes={highlightedLinks.map(index => data.nodes[data.links[index].target])} />}
+          sort={true}
+          onClick={clickHandler}
+          link={({ source, target, ...linkProps }, index) => (
+            <CustomLink
+              {...linkProps}
+              hoveredLinks={hoveredLinks.map(linkId => data.links[linkId].id)}
+              activeLinks={highlightedLinks.map(linkId => data.links[linkId].id)}
+              strokeOpacity={highlightedLinks.includes(index) ? 1 : 0.2}
+              onMouseEnter={() => handleLinkMouseEnter(linkProps)}
+              onMouseLeave={() => setHoveredLinks([])}
+            />
+          )}
+          margin={{ right: 200 }}
         >
           <defs>
             <linearGradient id={'linkGradient'}>
@@ -88,6 +150,6 @@ function SankeyChart(props: Props) {
       </ResponsiveContainer>
     </NoContent>
   );
-}
+};
 
 export default SankeyChart;

@@ -557,7 +557,12 @@ export default class App {
     const sessionToken = this.session.getSessionToken()
     const isNewSession = needNewSessionID || !sessionToken
 
-    console.log('OpenReplay: starting session', needNewSessionID, sessionToken)
+    console.log(
+      'OpenReplay: starting session; need new session id?',
+      needNewSessionID,
+      'session token: ',
+      sessionToken,
+    )
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',

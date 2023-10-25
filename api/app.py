@@ -12,7 +12,7 @@ from starlette.responses import StreamingResponse
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from crons import core_crons, core_dynamic_crons
-from routers import core, core_dynamic
+from routers import core, core_dynamic, additional_routes
 from routers.subs import insights, metrics, v1_api, health
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
@@ -93,6 +93,10 @@ app.include_router(v1_api.app_apikey)
 app.include_router(health.public_app)
 app.include_router(health.app)
 app.include_router(health.app_apikey)
+
+app.include_router(additional_routes.public_app)
+app.include_router(additional_routes.app)
+app.include_router(additional_routes.app_apikey)
 
 # @app.get('/private/shutdown', tags=["private"])
 # async def stop_server():

@@ -3,7 +3,7 @@ import FilterSeries from './filterSeries';
 import { DateTime } from 'luxon';
 import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
-import { issueOptions, issueCategories, issueCategoriesMap } from 'App/constants/filterOptions';
+import { issueOptions, issueCategories, issueCategoriesMap, pathAnalysisEvents } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import Funnel from '../types/funnel';
@@ -69,7 +69,7 @@ export default class Widget {
   name: string = 'Untitled Card';
   metricType: string = 'timeseries';
   metricOf: string = 'sessionCount';
-  metricValue: string = '';
+  metricValue: any = '';
   viewType: string = 'lineChart';
   metricFormat: string = 'sessionCount';
   series: FilterSeries[] = [];
@@ -85,7 +85,6 @@ export default class Widget {
   thumbnail?: string;
   params: any = { density: 70 };
   startType: string = 'start';
-  // startPoint: FilterItem = filtersMap[FilterKey.LOCATION];
   startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
   excludes: FilterItem[] = [];
   hideExcess?: boolean = false;
@@ -160,6 +159,25 @@ export default class Widget {
       if (this.metricType === FUNNEL) {
         this.series[0].filter.eventsOrder = 'then';
         this.series[0].filter.eventsOrderSupport = ['then'];
+      }
+
+      if (this.metricType === USER_PATH) {
+        this.hideExcess = json.hideExcess;
+        this.startType = json.startType;
+        if (json.startPoint) {
+          if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
+            this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
+          }
+
+          if (json.startPoint == typeof Object) {
+            this.startPoint = json.startPoint;
+          }
+        }
+
+        // TODO change this to excludes after the api change
+        if (json.exclude) {
+          this.series[0].filter.excludes = json.exclude.map((i: any) => new FilterItem().fromJson(i));
+        }
       }
 
       if (period) {
@@ -238,14 +256,22 @@ export default class Widget {
     return this.metricId !== undefined;
   }
 
+
   setData(data: any, period: any) {
     const _data: any = { ...data };
 
     if (this.metricType === USER_PATH) {
+      _data['nodes'] = data.nodes.map((s: any) => ({
+        ...s,
+        idd: Math.random().toString(36).substring(7),
+      }));
       _data['links'] = data.links.map((s: any) => ({
         ...s,
+        id: Math.random().toString(36).substring(7),
         // value: Math.round(s.value),
       }));
+
+      Object.assign(this.data, _data);
       return _data;
     }
     if (this.metricOf === FilterKey.ERRORS) {
@@ -311,33 +337,32 @@ export default class Widget {
   }
 
 
-  fetchIssues(card: any): Promise<any> {
-    return new Promise((resolve) => {
-      metricService.fetchIssues(card)
-        .then((response: any) => {
-          if (card.metricType === USER_PATH) {
-            resolve({
-              total: response.count,
-              issues: response.values.map((issue: any) => new Issue().fromJSON(issue))
-            });
-          } else {
-            const significantIssues = response.issues.significant
-              ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue))
-              : [];
-            const insignificantIssues = response.issues.insignificant
-              ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue))
-              : [];
-            resolve({
-              issues: significantIssues.length > 0 ? significantIssues : insignificantIssues
-            });
-          }
-        }).finally(() => {
-        resolve({
-          issues: []
-        });
-      });
-    });
+  async fetchIssues(card: any): Promise<any> {
+    try {
+      const response = await metricService.fetchIssues(card);
+
+      if (card.metricType === USER_PATH) {
+        return {
+          total: response.count,
+          issues: response.values.map((issue: any) => new Issue().fromJSON(issue))
+        };
+      } else {
+        const mapIssue = (issue: any) => new Funnelissue().fromJSON(issue);
+        const significantIssues = response.issues.significant?.map(mapIssue) || [];
+        const insignificantIssues = response.issues.insignificant?.map(mapIssue) || [];
+
+        return {
+          issues: significantIssues.length > 0 ? significantIssues : insignificantIssues
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching issues:', error);
+      return {
+        issues: []
+      };
+    }
   }
+
 
   fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -361,6 +386,8 @@ export default class Widget {
       return issueOptions.filter((i: any) => metricValue.includes(i.value));
     } else if (metricType === INSIGHTS) {
       return issueCategories.filter((i: any) => metricValue.includes(i.value));
+    } else if (metricType === USER_PATH) {
+      return pathAnalysisEvents.filter((i: any) => metricValue.includes(i.value));
     }
   }
 
