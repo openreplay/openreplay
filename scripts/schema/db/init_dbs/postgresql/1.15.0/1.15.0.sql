@@ -153,6 +153,10 @@ CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
     time BIGINT not null
 );
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT NULL;
+
+
 COMMIT;
 
 \elif :is_next
