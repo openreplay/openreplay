@@ -117,7 +117,7 @@ jobs:
         run: |
           cd tracker/tracker-testing-playground
           export NODE_OPTIONS=--openssl-legacy-provider
-          yarn start
+          yarn start &> frontend.log &
       - name: Wait for Testing Frontend
         run: |
           netstat -anv | grep 3000 &&
