@@ -1,3 +1,6 @@
+.venv
+__pycache__
+*~
 public
 .cache
 node_modules
