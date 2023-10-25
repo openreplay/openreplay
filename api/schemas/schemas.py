@@ -110,9 +110,9 @@ class CreateProjectSchema(BaseModel):
 
 
 class CurrentProjectContext(BaseModel):
-    project_id: int = Field(...)
+    project_id: int = Field(..., gt=0)
     project_key: str = Field(...)
-    platform: str = Field(...)
+    platform: Literal["web", "ios"] = Field(...)
 
 
 class CurrentAPIContext(BaseModel):
