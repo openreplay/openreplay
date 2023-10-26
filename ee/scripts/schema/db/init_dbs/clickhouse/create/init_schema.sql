@@ -440,6 +440,8 @@ CREATE TABLE IF NOT EXISTS experimental.ios_events
     transfer_size Nullable(UInt32),
     coordinate Tuple(x Nullable(UInt16), y Nullable(UInt16)),
     direction Nullable(String),
+    reason Nullable(String),
+    stacktrace Nullable(String),
     message_id                    UInt64       DEFAULT 0,
     _timestamp                    DateTime     DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
