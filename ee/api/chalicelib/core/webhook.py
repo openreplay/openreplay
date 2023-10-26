@@ -132,17 +132,17 @@ def exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int],
 
 def add_edit(tenant_id, data: schemas.WebhookSchema, replace_none=None):
     if len(data.name) > 0 \
-            and exists_by_name(name=data.name, exclude_id=data.webhook_id):
+            and exists_by_name(name=data.name, exclude_id=data.webhook_id, tenant_id=tenant_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if data.webhook_id is not None:
         return update(tenant_id=tenant_id, webhook_id=data.webhook_id,
-                      changes={"endpoint": data.endpoint,
+                      changes={"endpoint": data.endpoint.unicode_string(),
                                "authHeader": data.auth_header,
                                "name": data.name},
                       replace_none=replace_none)
     else:
         return add(tenant_id=tenant_id,
-                   endpoint=data.endpoint,
+                   endpoint=data.endpoint.unicode_string(),
                    auth_header=data.auth_header,
                    name=data.name,
                    replace_none=replace_none)
