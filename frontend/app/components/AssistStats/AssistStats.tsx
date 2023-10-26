@@ -237,7 +237,7 @@ function AssistStats() {
                     <Typography.Title style={{ marginBottom: 0 }} level={5}>
                       {graphs.currentPeriod[i]
                         ? durationFromMsFormatted(graphs.currentPeriod[i])
-                        : 0}
+                        : null}
                     </Typography.Title>
                     {graphs.previousPeriod[i] ? (
                       <div
