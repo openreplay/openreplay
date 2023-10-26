@@ -65,6 +65,10 @@ minio:
       secretKey: "changeMeMinioPassword"
 
 ingress-nginx: &ingress-nginx
+  # If you're using an external proxy in front of OpenReplay, update the proxy ports below.
+  # externalProxyPorts:
+  #   http: 80
+  #   https: 443
   controller:
     ingressClassResource:
       # -- Name of the ingressClass

@@ -5,7 +5,7 @@ export const LogLevel = {
   Errors: 2,
   Silent: 0,
 } as const
-type LogLevel = typeof LogLevel[keyof typeof LogLevel]
+type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
 type CustomLevel = {
   error: boolean

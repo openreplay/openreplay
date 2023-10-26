@@ -22,7 +22,7 @@
     "zustand": "^4.1.1"
   },
   "scripts": {
-    "start": "HOST=0.0.0.0 react-scripts start",
+    "start": "HOST=0.0.0.0 react-scripts --openssl-legacy-provider start",
     "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

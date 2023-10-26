@@ -8,10 +8,13 @@ if config("EXP_7D_MV", cast=bool, default=True):
     print(">>> Using experimental last 7 days materialized views")
 
 
-def get_main_events_table(timestamp=0):
-    return "experimental.events_l7d_mv" \
-        if config("EXP_7D_MV", cast=bool, default=True) \
-           and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.events"
+def get_main_events_table(timestamp=0, platform="web"):
+    if platform == "web":
+        return "experimental.events_l7d_mv" \
+            if config("EXP_7D_MV", cast=bool, default=True) \
+               and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.events"
+    else:
+        return "experimental.ios_events"
 
 
 def get_main_sessions_table(timestamp=0):

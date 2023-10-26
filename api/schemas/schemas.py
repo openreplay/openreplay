@@ -75,8 +75,8 @@ class UserLoginSchema(_GRecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(..., le=0)
-    organizationName: str = Field(..., le=0)
+    fullname: str = Field(..., min_length=1)
+    organizationName: str = Field(..., min_length=1)
 
     _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
     _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
@@ -1026,7 +1026,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values.get("filters"):
+        for v in values.get("filters", []):
             if v.get("isEvent") is None:
                 v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
         return values
