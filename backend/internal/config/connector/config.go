@@ -13,6 +13,7 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	common.Redshift
+	common.Clickhouse
 	objectstorage.ObjectsConfig
 	SessionsTableName  string        `env:"SESSIONS_TABLE_NAME,default=connector_user_sessions"`
 	EventsTableName    string        `env:"EVENTS_TABLE_NAME,default=connector_events"`
