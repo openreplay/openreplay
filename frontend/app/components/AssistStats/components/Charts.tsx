@@ -21,7 +21,7 @@ function Chart(props: Props) {
   return (
     <NoContent
       size="small"
-      title="No data available"
+      title={<div className={'text-base font-normal'}>No data available</div>}
       show={data && data.length === 0}
       style={{ height: '100px' }}
     >
