@@ -1025,6 +1025,23 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="before")
+    def __force_is_event(cls, values):
+        for v in values.get("filters"):
+            if v.get("isEvent") is None:
+                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
+        return values
+
+    @model_validator(mode="before")
+    def remove_wrong_filter_values(cls, values):
+        for f in values.get("filters", []):
+            vals = []
+            for v in f.get("value", []):
+                if v is not None:
+                    vals.append(v)
+            f["value"] = vals
+        return values
+
+    @model_validator(mode="before")
     def __enforce_default(cls, values):
         if values.get("startTimestamp") is None:
             values["startTimestamp"] = TimeUTC.now(-7)

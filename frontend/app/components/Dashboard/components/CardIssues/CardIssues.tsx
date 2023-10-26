@@ -21,30 +21,37 @@ function CardIssues() {
   const isMounted = useIsMounted();
   const { showModal } = useModal();
 
-  const fetchIssues = (filter: any) => {
+  const fetchIssues = async (filter: any) => {
     if (!isMounted()) return;
+
     setLoading(true);
+
+    const mapSeries = (item: any) => {
+      const filters = item.filter.filters
+        .map((f: any) => f.toJson());
+
+      return {
+        ...item,
+        filter: {
+          ...item.filter,
+          filters
+        }
+      };
+    };
 
     const newFilter = {
       ...filter,
-      series: filter.series.map((item: any) => {
-        return {
-          ...item,
-          filter: {
-            ...item.filter,
-            filters: item.filter.filters.filter((filter: any, index: any) => {
-              const stage = widget.data.funnel.stages[index];
-              return stage && stage.isActive;
-            }).map((f: any) => f.toJson())
-          }
-        };
-      })
+      series: filter.series.map(mapSeries)
     };
-    widget.fetchIssues(newFilter).then((res: any) => {
+
+    try {
+      const res = await widget.fetchIssues(newFilter);
       setData(res);
-    }).finally(() => {
+    } catch (error) {
+      console.error('Error fetching issues:', error);
+    } finally {
       setLoading(false);
-    });
+    }
   };
 
   const handleClick = (issue: any) => {
@@ -77,7 +84,7 @@ function CardIssues() {
       </div>
 
       <Loader loading={loading}>
-        <NoContent show={data.issues.length == 0} title="No data!">
+        <NoContent show={data.issues.length == 0} title='No data!'>
           {data.issues.map((item: any, index: any) => (
             <div onClick={() => handleClick(item)} key={index}>
               <CardIssueItem issue={item} />

@@ -19,7 +19,7 @@ $fn_def$, :'next_version')
 
 --
 ALTER TABLE IF EXISTS events_common.requests
-    ADD COLUMN transfer_size bigint NULL;
+    ADD COLUMN IF NOT EXISTS transfer_size bigint NULL;
 
 ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS timezone text NULL;
@@ -115,8 +115,6 @@ ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS x integer DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS y integer DEFAULT NULL;
 
-ALTER TABLE IF EXISTS public.metrics
-    ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
 ALTER TABLE IF EXISTS public.metrics
     ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
@@ -148,10 +146,14 @@ CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
 );
 
 
-CREATE TABLE IF NOT EXISTS pulic.assist_events_aggregates_logs
+CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
 (
     time BIGINT not null
 );
+
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT NULL;
+
 
 COMMIT;
 

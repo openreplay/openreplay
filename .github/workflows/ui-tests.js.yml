@@ -27,8 +27,11 @@ jobs:
     name: Build and test Tracker plus Replayer
     strategy:
       matrix:
-        node-version: [ 16.x ]
+        node-version: [ 18.x ]
     steps:
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
@@ -38,18 +41,18 @@ jobs:
         uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/yarn.lock') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/bun.lockb') }}
           restore-keys: |
             test_tracker_build-{{ runner.OS }}-build-
             test_tracker_build-{{ runner.OS }}-
       - name: Setup Testing packages
         run: |
           cd tracker/tracker
-          yarn
+          bun install
       - name: Build tracker inst
         run: |
           cd tracker/tracker
-          yarn build
+          bun run build
       - name: Setup Testing UI Env
         run: |
           cd tracker/tracker-testing-playground
@@ -67,10 +70,6 @@ jobs:
         run: |
           cd tracker/tracker-testing-playground
           yarn
-      - name: Run testing frontend
-        run: |
-          cd tracker/tracker-testing-playground
-          yarn start &> ui.log &
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -96,39 +95,50 @@ jobs:
           echo "MINIO_USE_SSL = ''" >> .env
           echo "MINIO_ACCESS_KEY = ''" >> .env
           echo "MINIO_SECRET_KEY = ''" >> .env
-          echo "VERSION = '1.9.0'" >> .env
-          echo "TRACKER_VERSION = '4.0.0'" >> .env
+          echo "VERSION = '1.15.0'" >> .env
+          echo "TRACKER_VERSION = '10.0.0'" >> .env
           echo "COMMIT_HASH = 'dev'" >> .env
           echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
       - name: Setup packages
         run: |
           cd frontend
-          yarn
+          npm install --legacy-peer-deps
       - name: Run unit tests
         run: |
           cd frontend
-          yarn test
+          npm run test:ci
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ui
           name: ui
-      - name: Wait for Testing Frontend
+      - name: Run testing frontend
         run: |
+          cd tracker/tracker-testing-playground
+          yarn start &> testing.log &
+          echo "Started"
+          npm i -g wait-on
+          echo "Got wait on"
+          sleep 30
+          cat testing.log
           npx wait-on http://localhost:3000
+          echo "Done"
+        timeout-minutes: 4
       - name: Run Frontend
         run: |
           cd frontend
-          yarn start &> frontend.log &
-      - name: Wait for frontend
-        run: |
-          cd frontend
+          bun start &> frontend.log &
+          echo "Started"
+          sleep 30
+          cat frontend.log
           npx wait-on http://0.0.0.0:3333
+          echo "Done"
+        timeout-minutes: 4
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
-          yarn cy:test
+          npm run cy:test
 #        firefox have different viewport somehow
 #      - name: (Firefox) Run visual tests
 #        run: yarn cy:test-firefox

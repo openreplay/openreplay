@@ -4,7 +4,7 @@ import NodeButton from './NodeButton';
 import NodeDropdown from './NodeDropdown';
 
 function CustomNode(props: any) {
-  const { x, y, width, height, index, payload, containerWidth } = props;
+  const { x, y, width, height, index, payload, containerWidth, activeNodes } = props;
   const isOut = x + width + 6 > containerWidth;
 
   return (

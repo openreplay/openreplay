@@ -86,10 +86,6 @@ class Event(Base):
     consolelog_value = Column(VARCHAR(5000))
     customevent_name = Column(VARCHAR(5000))
     customevent_payload = Column(VARCHAR(5000))
-    clickevent_hesitationtime =	Column(BigInteger)
-    clickevent_messageid = Column(BigInteger)
-    clickevent_label = Column(VARCHAR(5000))
-    clickevent_selector = Column(VARCHAR(5000))
     jsexception_message = Column(VARCHAR(5000))
     jsexception_name = Column(VARCHAR(5000))
     jsexception_payload = Column(VARCHAR(5000))
@@ -113,6 +109,10 @@ class Event(Base):
     customissue_payload = Column(VARCHAR(5000))
     received_at = Column(BigInteger)
     batch_order_number = Column(BigInteger)
+    clickevent_hesitationtime =	Column(BigInteger)
+    clickevent_label = Column(VARCHAR(5000))
+    clickevent_messageid = Column(BigInteger)
+    clickevent_selector = Column(VARCHAR(5000))
 
 
 class DetailedEvent(Base):

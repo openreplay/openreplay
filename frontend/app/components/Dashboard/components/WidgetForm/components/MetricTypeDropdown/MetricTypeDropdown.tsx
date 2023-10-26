@@ -37,7 +37,7 @@ function MetricTypeDropdown(props: Props) {
       }
       setTimeout(() => onChange(type.value), 0);
     }
-    setTimeout(() => onChange(USER_PATH), 0);
+    // setTimeout(() => onChange(USER_PATH), 0);
   }, []);
 
   const onChange = (type: string) => {
