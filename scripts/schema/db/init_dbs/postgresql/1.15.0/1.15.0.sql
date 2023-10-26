@@ -115,8 +115,6 @@ ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS x integer DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS y integer DEFAULT NULL;
 
-ALTER TABLE IF EXISTS public.metrics
-    ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
 ALTER TABLE IF EXISTS public.metrics
     ADD COLUMN IF NOT EXISTS card_info jsonb NULL;

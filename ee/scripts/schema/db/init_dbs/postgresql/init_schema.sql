@@ -136,7 +136,10 @@ $$
                                             ('feature_flags'),
                                             ('feature_flags_conditions'),
                                             ('sessions_feature_flags'),
-                                            ('crashes_ios'))
+                                            ('crashes_ios'),
+                                            ('assist_events'),
+                                            ('assist_events_aggregates'),
+                                            ('assist_events_aggregates_logs'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'public'
@@ -966,6 +969,38 @@ $$
             );
             CREATE INDEX IF NOT EXISTS crashes_ios_project_id_crash_id_idx ON public.crashes_ios (project_id, crash_ios_id);
             CREATE INDEX IF NOT EXISTS crashes_ios_project_id_idx ON public.crashes_ios (project_id);
+
+
+            CREATE TABLE IF NOT EXISTS public.assist_events
+            (
+                event_id    varchar NOT NULL PRIMARY KEY,
+                project_id  integer NOT NULL,
+                session_id  varchar NOT NULL,
+                event_type  varchar NOT NULL,
+                event_state varchar NOT NULL,
+                timestamp   integer NOT NULL,
+                user_id     varchar,
+                agent_id    varchar
+            );
+
+            CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
+            (
+                timestamp     BIGINT  not null,
+                project_id    integer not null,
+                agent_id      integer not null,
+                assist_avg    BIGINT,
+                call_avg      BIGINT,
+                control_avg   BIGINT,
+                assist_total  BIGINT,
+                call_total    BIGINT,
+                control_total BIGINT
+            );
+
+
+            CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
+            (
+                time BIGINT not null
+            );
 
             RAISE NOTICE 'Created missing public schema tables';
         END IF;
