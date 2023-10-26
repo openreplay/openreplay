@@ -79,7 +79,7 @@ function TopHeader(props: Props) {
         </div>
 
         <div className='flex items-center'>
-          <Logo siteId={1} />
+          <Logo siteId={siteId} />
         </div>
       </Space>
 
