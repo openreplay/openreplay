@@ -1026,7 +1026,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def __force_is_event(cls, values):
-        for v in values.get("filters"):
+        for v in values.get("filters", []):
             if v.get("isEvent") is None:
                 v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
         return values
