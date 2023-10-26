@@ -232,6 +232,7 @@ export default class Widget {
       data.startType = this.startType;
       data.startPoint = [this.startPoint.toJson()];
       data.excludes = this.series[0].filter.excludes.map((i: any) => i.toJson());
+      data.metricOf = 'sessionCount';
     }
     return data;
   }
