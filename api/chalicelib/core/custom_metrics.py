@@ -273,8 +273,8 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     for s in data.series:
         if len(data.filters) > 0:
             s.filter.filters += data.filters
-        if len(data.events) > 0:
-            s.filter.events += data.events
+        # if len(data.events) > 0:
+        #     s.filter.events += data.events
         results.append({"seriesId": None, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
