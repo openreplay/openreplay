@@ -300,8 +300,7 @@ const Router: React.FC<RouterProps> = (props) => {
                                 />
                                 <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)}
                                        component={enhancedComponents.Session}/>
-                                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                                       component={enhancedComponents.LiveSession}/>
+                                <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={enhancedComponents.LiveSession}/>
                                 {additionalRoutes && additionalRoutes}
 
                                 {Object.entries(routes.redirects).map(([fr, to]) => (
