@@ -73,6 +73,22 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return s.ch.InsertWebInputDuration(session, m)
 	case *messages.MouseThrashing:
 		return s.ch.InsertMouseThrashing(session, m)
+
+	// Mobile messages
+	case *messages.IOSSessionEnd:
+		return s.ch.InsertMobileSession(session)
+	case *messages.IOSCustomEvent:
+		return s.ch.InsertMobileCustom(session, m)
+	case *messages.IOSClickEvent:
+		return s.ch.InsertMobileClick(session, m)
+	case *messages.IOSSwipeEvent:
+		return s.ch.InsertMobileSwipe(session, m)
+	case *messages.IOSInputEvent:
+		return s.ch.InsertMobileInput(session, m)
+	case *messages.IOSNetworkCall:
+		return s.ch.InsertMobileRequest(session, m, session.SaveRequestPayload)
+	case *messages.IOSCrash:
+		return s.ch.InsertMobileCrash(session, m)
 	}
 	return nil
 }

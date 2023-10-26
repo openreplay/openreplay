@@ -109,11 +109,6 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
-	case *IOSIssueEvent:
-		if err = s.pg.InsertIOSIssueEvent(session, m); err != nil {
-			return err
-		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m.Type))
 	}
 	return nil
 }
