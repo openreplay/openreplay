@@ -1,3 +1,4 @@
+import { Segmented } from 'antd';
 import React from 'react';
 import CircleNumber from '../CircleNumber';
 import MetadataList from '../MetadataList/MetadataList';
@@ -10,6 +11,32 @@ import withPageTitle from 'App/components/hocs/withPageTitle';
 interface Props extends WithOnboardingProps {}
 
 function IdentifyUsersTab(props: Props) {
+  const platforms = [
+    {
+      label: (
+        <div className={'font-semibold flex gap-2 items-center'}>
+          <Icon name="browser/browser" size={16} /> Web
+        </div>
+      ),
+      value: 'web',
+    } as const,
+    {
+      label: (
+        <div className={'font-semibold flex gap-2 items-center'}>
+          <Icon name="mobile" size={16} /> Mobile
+        </div>
+      ),
+      value: 'mobile',
+    } as const,
+  ];
+  const [platform, setPlatform] = React.useState(platforms[0]);
+  const { site } = props;
+
+  React.useEffect(() => {
+    if (site.platform)
+      setPlatform(platforms.find(({ value }) => value === site.platform) || platforms[0]);
+  }, [site]);
+
   return (
     <>
       <h1 className="flex items-center px-4 py-3 border-b justify-between">
@@ -18,12 +45,25 @@ function IdentifyUsersTab(props: Props) {
           <div className="ml-3">Identify Users</div>
         </div>
 
-        <a href="https://docs.openreplay.com/en/v1.10.0/installation/identify-user/" target="_blank">
+        <a
+          href="https://docs.openreplay.com/en/v1.10.0/installation/identify-user/"
+          target="_blank"
+        >
           <Button variant="text-primary" icon="question-circle" className="ml-2">
             See Documentation
           </Button>
         </a>
       </h1>
+      <div className="p-4 flex gap-2 items-center">
+        <span className="font-medium">Your platform</span>
+        <Segmented
+          options={platforms}
+          value={platform.value}
+          onChange={(value) =>
+            setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])
+          }
+        />
+      </div>
       <div className="grid grid-cols-6 gap-4 w-full p-4">
         <div className="col-span-4">
           <div>
@@ -34,12 +74,17 @@ function IdentifyUsersTab(props: Props) {
             </div>
           </div>
 
-          <div className="flex items-center my-2">
-            <Icon name="info-circle" color="gray-darkest" />
-            <span className="ml-2">OpenReplay keeps the last communicated user ID.</span>
-          </div>
-
-          <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
+          {platform.value === 'web' ? (
+            <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
+          ) : (
+            <HighlightCode className="swift" text={`ORTracker.shared.setUserID('john@doe.com');`} />
+          )}
+          {platform.value === 'web' ? (
+            <div className="flex items-center my-2">
+              <Icon name="info-circle" color="gray-darkest" />
+              <span className="ml-2">OpenReplay keeps the last communicated user ID.</span>
+            </div>
+          ) : null}
         </div>
         <div className="col-span-2">
           <DocCard
@@ -78,7 +123,9 @@ function IdentifyUsersTab(props: Props) {
                   Use the <span className="highlight-blue">setMetadata</span> method in your code to
                   inject custom user data in the form of a key/value pair (string).
                 </div>
-                <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
+                {platform.value === 'web' ? (
+                  <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
+                  ) : <HighlightCode className="swift" text={`ORTracker.shared.setMetadata('plan', 'premium');`} />}
               </div>
             </div>
           </div>
@@ -109,4 +156,4 @@ function IdentifyUsersTab(props: Props) {
   );
 }
 
-export default withOnboarding(withPageTitle("Identify Users - OpenReplay")(IdentifyUsersTab));
+export default withOnboarding(withPageTitle('Identify Users - OpenReplay')(IdentifyUsersTab));

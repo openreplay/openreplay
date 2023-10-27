@@ -3,7 +3,8 @@
 
 import { MType } from './raw.gen'
 
-const DOM_TYPES = [<%= $messages.select { |msg| msg.replayer == true }.map { |msg| "#{msg.id}" }.join "," %>]
+const IOS_TYPES = [<%= $messages.select { |msg| msg.context == :ios }.map{ |msg| "#{msg.id}" }.join(",") %>]
+const DOM_TYPES = [<%= $messages.select { |msg| msg.replayer == true && msg.context != :ios }.map { |msg| "#{msg.id}" }.join "," %>]
 export function isDOMType(t: MType) {
 	return DOM_TYPES.includes(t)
 }

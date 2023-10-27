@@ -12,6 +12,7 @@ import SessionInfoItem from 'Components/Session_/SessionInfoItem';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
 import { IFRAME } from 'App/constants/storageKeys';
+import { capitalize } from "App/utils";
 
 function UserCard({ className, request, session, width, height, similarSessions, loading }) {
     const { settingsStore } = useStore();
@@ -48,70 +49,81 @@ function UserCard({ className, request, session, width, height, similarSessions,
     };
 
     const avatarbgSize = '38px';
+
+    const safeOs = userOs === 'IOS' ? 'iOS' : userOs;
     return (
-        <div className={cn('bg-white flex items-center w-full', className)}>
-            <div className="flex items-center">
-                <Avatar iconSize="23" width={avatarbgSize} height={avatarbgSize} seed={userNumericHash} />
-                <div className="ml-3 overflow-hidden leading-tight">
-                    <TextEllipsis
-                        noHint
-                        className={cn('font-medium', { 'color-teal cursor-pointer': hasUserDetails })}
-                        // onClick={hasUserDetails ? showSimilarSessions : undefined}
-                    >
-                        <UserName name={userDisplayName} userId={userId} hash={userNumericHash} />
-                    </TextEllipsis>
+      <div className={cn('bg-white flex items-center w-full', className)}>
+        <div className="flex items-center">
+          <Avatar iconSize="23" width={avatarbgSize} height={avatarbgSize} seed={userNumericHash} />
+          <div className="ml-3 overflow-hidden leading-tight">
+            <TextEllipsis
+              noHint
+              className={cn('font-medium', { 'color-teal cursor-pointer': hasUserDetails })}
+              // onClick={hasUserDetails ? showSimilarSessions : undefined}
+            >
+              <UserName name={userDisplayName} userId={userId} hash={userNumericHash} />
+            </TextEllipsis>
 
-                    <div className="text-sm color-gray-medium flex items-center">
+            <div className="text-sm color-gray-medium flex items-center">
+              <span style={{ whiteSpace: 'nowrap' }}>
+                <Tooltip
+                  title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
+                  className="w-fit !block"
+                >
+                  {formatTimeOrDate(startedAt, timezone)}
+                </Tooltip>
+              </span>
+              <span className="mx-1 font-bold text-xl">&#183;</span>
+              {userCity && <span className="mr-1">{userCity},</span>}
+              <span>{countries[userCountry]}</span>
+              <span className="mx-1 font-bold text-xl">&#183;</span>
+              <span>
+                {userBrowser ? `${capitalize(userBrowser)}, ` : ''}
+                {`${/ios/i.test(userOs) ? 'iOS ' : capitalize(userOs) + ','} `}
+                {capitalize(userDevice)}
+              </span>
+              <span className="mx-1 font-bold text-xl">&#183;</span>
+              <Popover
+                render={() => (
+                  <div className="text-left bg-white rounded">
+                    <SessionInfoItem
+                      comp={<CountryFlag country={userCountry} height={11} />}
+                      label={countries[userCountry]}
+                      value={
                         <span style={{ whiteSpace: 'nowrap' }}>
-                        <Tooltip
-                            title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
-                            className="w-fit !block"
-                        >
-                            {formatTimeOrDate(startedAt, timezone)}
-                        </Tooltip>
-
+                          {
+                            <>
+                              {userCity && <span className="mr-1">{userCity},</span>}
+                              {userState && <span className="mr-1">{userState}</span>}
+                            </>
+                          }
                         </span>
-                        <span className="mx-1 font-bold text-xl">&#183;</span>
-                        {userCity && (
-                            <span className="mr-1">{userCity},</span>
-                        )}
-                        <span>{countries[userCountry]}</span>
-                        <span className="mx-1 font-bold text-xl">&#183;</span>
-                        <span className="capitalize">
-                            {userBrowser}, {userOs}, {userDevice}
-                        </span>
-                        <span className="mx-1 font-bold text-xl">&#183;</span>
-                        <Popover
-                            render={() => (
-                                <div className="text-left bg-white rounded">
-                                    <SessionInfoItem
-                                        comp={<CountryFlag country={userCountry} height={11} />}
-                                        label={countries[userCountry]}
-                                        value={<span style={{ whiteSpace: 'nowrap' }}>{
-                                            <>
-                                            {userCity && <span className="mr-1">{userCity},</span>}
-                                            {userState && <span className="mr-1">{userState}</span>}
-                                            </>
-                                        }</span>}
-                                    />
-                                    <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={`v${userBrowserVersion}`} />
-                                    <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={userOsVersion} />
-                                    <SessionInfoItem
-                                        icon={deviceTypeIcon(userDeviceType)}
-                                        label={userDeviceType}
-                                        value={getDimension(width, height)}
-                                        isLast={!revId}
-                                    />
-                                    {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
-                                </div>
-                            )}
-                        >
-                            <span className="link">More</span>
-                        </Popover>
-                    </div>
-                </div>
+                      }
+                    />
+                    {userBrowser &&
+                      <SessionInfoItem
+                        icon={browserIcon(userBrowser)}
+                        label={userBrowser}
+                        value={`v${userBrowserVersion}`}
+                      />
+                    }
+                    <SessionInfoItem icon={osIcon(userOs)} label={safeOs} value={userOsVersion} />
+                    <SessionInfoItem
+                      icon={deviceTypeIcon(userDeviceType)}
+                      label={userDeviceType}
+                      value={getDimension(width, height)}
+                      isLast={!revId}
+                    />
+                    {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
+                  </div>
+                )}
+              >
+                <span className="link">More</span>
+              </Popover>
             </div>
+          </div>
         </div>
+      </div>
     );
 }
 

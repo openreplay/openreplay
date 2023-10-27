@@ -14,7 +14,7 @@ import {
 import { error as errorRoute } from 'App/routes';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
 interface IProps {
@@ -23,7 +23,52 @@ interface IProps {
   errorStack: Record<string, any>;
 }
 
-function Exceptions({ errorStack, sourcemapUploaded, loading }: IProps) {
+function MobileExceptionsCont() {
+  const { player, store } = React.useContext(MobilePlayerContext);
+  const { exceptionsList: exceptions = [] } = store.get();
+  const [filter, setFilter] = React.useState('');
+
+  const onFilterChange = ({ target: { value } }: any) => setFilter(value);
+
+  const filterRE = getRE(filter, 'i');
+  const filtered = exceptions.filter((e: any) => filterRE.test(e.name) || filterRE.test(e.message));
+
+  return (
+    <>
+      <BottomBlock>
+        <BottomBlock.Header>
+          <div className="flex items-center">
+            <span className="font-semibold color-gray-medium mr-4">Exceptions</span>
+          </div>
+
+          <div className={'flex items-center justify-between'}>
+            <Input
+              className="input-small"
+              placeholder="Filter by name or message"
+              icon="search"
+              name="filter"
+              onChange={onFilterChange}
+              height={28}
+            />
+          </div>
+        </BottomBlock.Header>
+        <BottomBlock.Content>
+          <NoContent size="small" show={filtered.length === 0} title="No recordings found">
+            <Autoscroll>
+              {filtered.map((e: any, index) => (
+                <React.Fragment key={e.key}>
+                  <ErrorItem onJump={() => player.jump(e.time)} error={e} />
+                </React.Fragment>
+              ))}
+            </Autoscroll>
+          </NoContent>
+        </BottomBlock.Content>
+      </BottomBlock>
+    </>
+  );
+}
+
+function ExceptionsCont({ errorStack, sourcemapUploaded, loading }: IProps) {
   const { player, store } = React.useContext(PlayerContext);
   const { tabStates, currentTab } = store.get();
   const { logListNow: logs = [], exceptionsList: exceptions = [] } = tabStates[currentTab]
@@ -119,8 +164,10 @@ function Exceptions({ errorStack, sourcemapUploaded, loading }: IProps) {
   );
 }
 
-export default connect((state: any) => ({
+export const Exceptions = connect((state: any) => ({
   errorStack: state.getIn(['sessions', 'errorStack']),
   sourcemapUploaded: state.getIn(['sessions', 'sourcemapUploaded']),
   loading: state.getIn(['sessions', 'fetchErrorStackList', 'loading']),
-}))(observer(Exceptions));
+}))(observer(ExceptionsCont));
+
+export const MobileExceptions = observer(MobileExceptionsCont)

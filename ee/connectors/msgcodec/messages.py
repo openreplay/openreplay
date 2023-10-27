@@ -850,7 +850,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSCustomEvent(Message):
+class IOSEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name, payload):
@@ -863,19 +863,19 @@ class IOSCustomEvent(Message):
 class IOSUserID(Message):
     __id__ = 94
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSUserAnonymousID(Message):
     __id__ = 95
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSScreenChanges(Message):

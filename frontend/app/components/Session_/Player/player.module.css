@@ -19,6 +19,13 @@
               50% / 10px 10px;
 }
 
+.mobileScreenWrapper {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  background: #F6F6F6;
+}
+
 .disconnected {
   font-size: 40px;
   font-weight: 200;

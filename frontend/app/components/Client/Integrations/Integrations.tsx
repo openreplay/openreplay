@@ -113,7 +113,7 @@ function Integrations(props: Props) {
       <div className='mb-4' />
 
       {filteredIntegrations.map((cat: any) => (
-        <div className='grid grid-cols-3 mt-4 gap-3 auto-cols-max'>
+        <div className={cn('grid grid-cols-3 gap-3 auto-cols-max', cat.integrations.length > 0 ? 'p-2' : '')}>
           {cat.integrations.map((integration: any) => (
             <IntegrationItem
               integrated={integratedList.includes(integration.slug)}

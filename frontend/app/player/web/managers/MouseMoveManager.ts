@@ -9,7 +9,7 @@ import { MOUSE_TRAIL } from "App/constants/storageKeys";
 export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = []
   private mouseTrail: MouseTrail | undefined
-  private removeMouseTrail = false
+  private readonly removeMouseTrail: boolean = false
 
 	constructor(private screen: Screen) {
     super()

@@ -31,7 +31,7 @@ function SubHeader(props) {
         }
 
         return integrations.some((i) => i.token);
-    });
+    }, [props.integrations]);
 
     const { showModal, hideModal } = useModal();
 

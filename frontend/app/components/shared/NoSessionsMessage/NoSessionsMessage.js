@@ -15,7 +15,7 @@ const NoSessionsMessage = (props) => {
   const activeSite = sites.find((s) => s.id === siteId);
   const showNoSessions = !!activeSite && !activeSite.recorded;
   const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
-  console.log('onboardingPath', onboardingPath, siteId);
+
   return (
     <>
       {showNoSessions && (

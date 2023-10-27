@@ -4,8 +4,13 @@ const INPUT = 'INPUT';
 const LOCATION = 'LOCATION';
 const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
+const TAPRAGE = 'tap_rage'
 const IOS_VIEW = 'VIEW';
-export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW };
+
+const TOUCH = 'TAP';
+const SWIPE = 'SWIPE';
+
+export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE, TAPRAGE };
 
 export type EventType =
   | typeof CONSOLE
@@ -13,7 +18,10 @@ export type EventType =
   | typeof INPUT
   | typeof LOCATION
   | typeof CUSTOM
-  | typeof CLICKRAGE;
+  | typeof CLICKRAGE
+  | typeof IOS_VIEW
+  | typeof TOUCH
+  | typeof SWIPE;
 
 interface IEvent {
   time: number;
@@ -39,6 +47,16 @@ interface ClickEvent extends IEvent {
   targetContent: string;
   count: number;
   hesitation: number;
+}
+
+interface TouchEvent extends IEvent {
+  targetContent: string;
+  count: number;
+}
+
+interface SwipeEvent extends IEvent {
+  direction: 'left' | 'right' | 'up' | 'down';
+  label: string
 }
 
 interface InputEvent extends IEvent {
@@ -86,6 +104,19 @@ class Event {
   }
 }
 
+class Swipe extends Event {
+    readonly type = SWIPE;
+    readonly name = 'Swipe';
+    readonly label: string;
+    readonly direction: string;
+
+    constructor(evt: SwipeEvent) {
+        super(evt);
+        this.label = evt.label;
+        this.direction = evt.direction;
+    }
+}
+
 class Console extends Event {
   readonly type = CONSOLE;
   readonly name = 'Console';
@@ -114,6 +145,20 @@ export class Click extends Event {
     if (isClickRage) {
       this.type = CLICKRAGE;
     }
+  }
+}
+
+export class Touch extends Event {
+  readonly type: typeof TOUCH = TOUCH;
+  readonly name = 'Tap';
+  targetContent = '';
+  count: number;
+  hesitation: number = 0;
+
+  constructor(evt: TouchEvent) {
+    super(evt);
+    this.targetContent = evt.targetContent;
+    this.count = evt.count;
   }
 }
 
@@ -156,27 +201,28 @@ export class Location extends Event {
   }
 }
 
-export type InjectedEvent = Console | Click | Input | Location;
+export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe;
 
 export default function (event: EventData) {
-  if (event.type && event.type === CONSOLE) {
-    return new Console(event as ConsoleEvent);
+  if (!event.type) {
+    return console.error('Unknown event type: ', event)
   }
-  if (event.type && event.type === CLICK) {
-    return new Click(event as ClickEvent);
+  switch (event.type) {
+    case CONSOLE:
+      return new Console(event as ConsoleEvent);
+    case TOUCH:
+      return new Touch(event as TouchEvent)
+    case CLICK:
+        return new Click(event as ClickEvent);
+    case INPUT:
+        return new Input(event as InputEvent);
+    case LOCATION:
+        return new Location(event as LocationEvent);
+    case CLICKRAGE:
+        return new Click(event as ClickEvent, true);
+    case SWIPE:
+        return new Swipe(event as SwipeEvent);
+    default:
+      return console.error(`Unknown event type: ${event.type}`);
   }
-  if (event.type && event.type === INPUT) {
-    return new Input(event as InputEvent);
-  }
-  if (event.type && event.type === LOCATION) {
-    return new Location(event as LocationEvent);
-  }
-  if (event.type && event.type === CLICKRAGE) {
-    return new Click(event as ClickEvent, true);
-  }
-  // not used right now?
-  // if (event.type === CUSTOM || !event.type) {
-  //   return new Event(event)
-  // }
-  console.error(`Unknown event type: ${event.type}`);
 }

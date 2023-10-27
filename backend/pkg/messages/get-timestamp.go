@@ -13,7 +13,7 @@ func GetTimestamp(message Message) uint64 {
 	case *IOSMetadata:
 		return msg.Timestamp
 
-	case *IOSCustomEvent:
+	case *IOSEvent:
 		return msg.Timestamp
 
 	case *IOSUserID:

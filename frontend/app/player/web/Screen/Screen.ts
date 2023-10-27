@@ -84,6 +84,15 @@ export default class Screen {
     this.cursor = new Cursor(this.overlay, isMobile) // TODO: move outside
   }
 
+  addMobileStyles() {
+   this.iframe.className = styles.mobileIframe
+   this.screen.className = styles.mobileScreen
+  }
+
+  addFullscreenBoundary() {
+    this.screen.className = styles.mobileScreenFullview
+  }
+
   clean() {
     this.iframe?.remove?.();
     this.overlay?.remove?.();
@@ -98,6 +107,13 @@ export default class Screen {
 
     parentElement.appendChild(this.screen);
     this.parentElement = parentElement;
+  }
+
+  addToBody(el: HTMLElement) {
+    if (this.document) {
+      this.document.body.style.margin = '0';
+      this.document.body.appendChild(el)
+    }
   }
 
   getParentElement():  HTMLElement | null {
@@ -236,7 +252,7 @@ export default class Screen {
     })
 
     this.boundingRect = this.screen.getBoundingClientRect();
-    this.onUpdateHook(width, height)
+    this.onUpdateHook?.(width, height)
   }
 
   setOnUpdate(cb: any) {
@@ -253,6 +269,10 @@ export default class Screen {
       start.className = styles.highlightoff
       end.className = styles.highlightoff
     }, 750)
+  }
+
+  public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
+    Object.assign(this.overlay.style, style)
   }
 
   public clearSelection() {

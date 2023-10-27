@@ -90,7 +90,7 @@ const (
 	MsgIOSSessionStart             = 90
 	MsgIOSSessionEnd               = 91
 	MsgIOSMetadata                 = 92
-	MsgIOSCustomEvent              = 93
+	MsgIOSEvent                    = 93
 	MsgIOSUserID                   = 94
 	MsgIOSUserAnonymousID          = 95
 	MsgIOSScreenChanges            = 96
@@ -2411,7 +2411,7 @@ func (msg *IOSMetadata) TypeID() int {
 	return 92
 }
 
-type IOSCustomEvent struct {
+type IOSEvent struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2419,7 +2419,7 @@ type IOSCustomEvent struct {
 	Payload   string
 }
 
-func (msg *IOSCustomEvent) Encode() []byte {
+func (msg *IOSEvent) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Name)+len(msg.Payload))
 	buf[0] = 93
 	p := 1
@@ -2430,11 +2430,11 @@ func (msg *IOSCustomEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSCustomEvent) Decode() Message {
+func (msg *IOSEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSCustomEvent) TypeID() int {
+func (msg *IOSEvent) TypeID() int {
 	return 93
 }
 
@@ -2442,16 +2442,16 @@ type IOSUserID struct {
 	message
 	Timestamp uint64
 	Length    uint64
-	Value     string
+	ID        string
 }
 
 func (msg *IOSUserID) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Value))
+	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 94
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Value, buf, p)
+	p = WriteString(msg.ID, buf, p)
 	return buf[:p]
 }
 
@@ -2467,16 +2467,16 @@ type IOSUserAnonymousID struct {
 	message
 	Timestamp uint64
 	Length    uint64
-	Value     string
+	ID        string
 }
 
 func (msg *IOSUserAnonymousID) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Value))
+	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 95
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Length, buf, p)
-	p = WriteString(msg.Value, buf, p)
+	p = WriteString(msg.ID, buf, p)
 	return buf[:p]
 }
 

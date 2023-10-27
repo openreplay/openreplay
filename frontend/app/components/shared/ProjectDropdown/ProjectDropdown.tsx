@@ -12,12 +12,14 @@ import { useModal } from 'Components/Modal';
 import { init as initProject } from 'Duck/site';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { withStore } from 'App/mstore';
+import { Icon } from 'UI'
 
 const { Text } = Typography;
 
 interface Site {
   id: string;
   host: string;
+  platform: 'web' | 'mobile';
 }
 
 interface Props extends RouteComponentProps {
@@ -66,7 +68,7 @@ function ProjectDropdown(props: Props) {
 
       {sites.map((site) => (
         <Menu.Item
-          icon={<FolderOutlined />}
+          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} />}
           key={site.id}
           onClick={() => handleSiteChange(site.id)}
           className='!py-2'
