@@ -21,4 +21,5 @@ RUN mv env.default .env
 RUN adduser -u 1001 openreplay -D
 USER 1001
 
+EXPOSE 8000
 CMD ["/usr/local/bin/python", "./run.py"]
