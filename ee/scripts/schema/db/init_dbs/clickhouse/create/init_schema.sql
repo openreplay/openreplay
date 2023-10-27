@@ -416,7 +416,7 @@ CREATE TABLE IF NOT EXISTS experimental.ios_events
 (
     session_id                    UInt64,
     project_id                    UInt16,
-    event_type Enum8('TAP'=0, 'INPUT'=1, 'SWIP'=2, 'VIEW'=3,'REQUEST'=4,'CRASH'=5,'CUSTOM'=6, 'STATEACTION'=8, 'ISSUE'=9),
+    event_type Enum8('TAP'=0, 'INPUT'=1, 'SWIPE'=2, 'VIEW'=3,'REQUEST'=4,'CRASH'=5,'CUSTOM'=6, 'STATEACTION'=8, 'ISSUE'=9),
     datetime                      DateTime,
     label Nullable(String),
     name Nullable(String),

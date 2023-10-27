@@ -130,8 +130,6 @@ const Router: React.FC<RouterProps> = (props) => {
         additionalRoutes = null
     } = props;
 
-    console.log('additionalRoutes', additionalRoutes)
-
     const checkJWT = () => {
         const urlJWT = new URLSearchParams(window.location.search).get('jwt');
         if (urlJWT && !props.isLoggedIn) {

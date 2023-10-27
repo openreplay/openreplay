@@ -28,8 +28,7 @@ class ProjectAuthorizer:
             current_project = projects.get_by_project_key(project_key=value)
 
         if current_project is None:
-            logger.debug("project not found")
-            logger.debug(value)
+            logger.debug(f"unauthorized project {self.project_identifier}:{value}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found.")
         else:
             current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],

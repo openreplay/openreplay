@@ -30,14 +30,14 @@ class ProjectAuthorizer:
         elif self.project_identifier == "projectKey":
             current_project = projects.get_by_project_key(value)
             if current_project is not None \
+                    and request.state.authorizer_identity == "jwt" \
                     and projects.is_authorized(project_id=current_project["projectId"],
                                                tenant_id=current_user.tenant_id,
                                                user_id=user_id):
                 current_project = None
 
         if current_project is None:
-            logger.debug("unauthorized project")
-            logger.debug(value)
+            logger.debug(f"unauthorized project {self.project_identifier}:{value}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")
         else:
             current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],
