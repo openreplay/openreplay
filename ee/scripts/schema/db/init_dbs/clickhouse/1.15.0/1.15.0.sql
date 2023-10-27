@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS experimental.ios_events
     response_end Nullable(UInt16),
     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
     status Nullable(UInt16),
+    duration Nullable(UInt16),
     success Nullable(UInt8),
     request_body Nullable(String),
     response_body Nullable(String),
