@@ -140,7 +140,6 @@ function SideMenu(props: Props) {
       <Menu
         defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
         style={{ marginTop: '8px', border: 'none' }}
-        inlineCollapsed={isCollapsed}
       >
         {isPreferencesActive && (
           <Menu.ItemGroup>

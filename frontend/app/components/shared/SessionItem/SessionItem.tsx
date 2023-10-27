@@ -260,22 +260,21 @@ function SessionItem(props: RouteComponentProps & Props) {
                   showLabel={true}
                 />
               </div>
-              <div className='color-gray-medium flex items-center py-1'>
-                {userBrowser && (
-                  <>
-                    <span className='capitalize' style={{ maxWidth: '70px' }}>
-                      <TextEllipsis
-                        text={capitalize(userBrowser)}
-                        popupProps={{ inverted: true, size: 'tiny' }}
-                      />
-                    </span>
-                    <Icon name='circle-fill' size={3} className='mx-4' />
-                  </>
-                )}
-
-                <span className='capitalize' style={{ maxWidth: '70px' }}>
+              <div className="color-gray-medium flex items-center py-1">
+                {userBrowser ? (
+                  <span className="capitalize" style={{ maxWidth: '70px' }}>
+                    <TextEllipsis
+                      text={capitalize(userBrowser)}
+                      popupProps={{ inverted: true, size: 'tiny' }}
+                    />
+                  </span>
+                ) : null}
+                {userOs && userBrowser ? (
+                  <Icon name="circle-fill" size={3} className="mx-4" />
+                ) : null}
+                <span className={/ios/i.test(userOs) ? '' : 'capitalize'} style={{ maxWidth: '70px' }}>
                   <TextEllipsis
-                    text={capitalize(userOs)}
+                    text={/ios/i.test(userOs) ? 'iOS' : capitalize(userOs)}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
                 </span>

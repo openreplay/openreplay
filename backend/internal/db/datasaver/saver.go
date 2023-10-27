@@ -72,21 +72,21 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 	case *IOSSessionEnd:
 		return s.pg.InsertIOSSessionEnd(m.SessionID(), m)
 	case *IOSUserID:
-		if err = s.sessions.UpdateUserID(session.SessionID, m.Value); err != nil {
+		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_IOS", m.Value)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_IOS", m.ID)
 		return nil
 	case *IOSUserAnonymousID:
-		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.Value); err != nil {
+		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.Value)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.ID)
 		return nil
 	case *IOSMetadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
-	case *IOSCustomEvent:
-		return s.pg.InsertIOSCustomEvent(session, m)
+	case *IOSEvent:
+		return s.pg.InsertIOSEvent(session, m)
 	case *IOSClickEvent:
 		if err := s.pg.InsertIOSClickEvent(session, m); err != nil {
 			return err
@@ -109,11 +109,6 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
-	case *IOSIssueEvent:
-		if err = s.pg.InsertIOSIssueEvent(session, m); err != nil {
-			return err
-		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m.Type))
 	}
 	return nil
 }

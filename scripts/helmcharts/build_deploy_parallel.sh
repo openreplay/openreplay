@@ -15,7 +15,7 @@ export PUSH_IMAGE=1
 export AWS_DEFAULT_REGION="eu-central-1"
 export SIGN_KEY="awskms:///alias/openreplay-container-sign"
 echo $DOCKER_REPO
-[[ -z DOCKER_REPO ]] && {
+[[ -z $DOCKER_REPO ]] && {
     echo Set DOCKER_REPO="your docker registry"
     exit 1
 } || {
@@ -30,7 +30,8 @@ echo $DOCKER_REPO
     tmux split-window "cd ../../sourcemap-reader && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../api && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@ \
       && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build_alerts.sh $@ \
-      && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build_crons.sh $@"
+      && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build_crons.sh $@ \
+      && cd ../assist-stats && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
 
 }

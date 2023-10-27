@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
 import Issue from "Types/session/issue";
-import EventsList from './EventsList';
+import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList'
 import TimelineTracker from "Components/Session_/Player/Controls/TimelineTracker";
@@ -23,6 +23,7 @@ interface IProps {
   startedAt: number
   tooltipVisible: boolean
   timezone?: string
+  isMobile?: boolean
 }
 
 function Timeline(props: IProps) {
@@ -125,52 +126,51 @@ function Timeline(props: IProps) {
 
   return (
     <div
-        className="flex items-center absolute w-full"
-        style={{
-          top: '-4px',
-          zIndex: 100,
-          maxWidth: 'calc(100% - 1rem)',
-          left: '0.5rem',
-        }}
+      className="flex items-center absolute w-full"
+      style={{
+        top: '-4px',
+        zIndex: 100,
+        maxWidth: 'calc(100% - 1rem)',
+        left: '0.5rem',
+      }}
+    >
+      <div
+        className={stl.progress}
+        onClick={ready ? jumpToTime : undefined}
+        ref={progressRef}
+        role="button"
+        onMouseMoveCapture={showTimeTooltip}
+        onMouseEnter={showTimeTooltip}
+        onMouseLeave={hideTimeTooltip}
       >
-        <div
-          className={stl.progress}
-          onClick={ready ? jumpToTime : undefined }
-          ref={progressRef}
-          role="button"
-          onMouseMoveCapture={showTimeTooltip}
-          onMouseEnter={showTimeTooltip}
-          onMouseLeave={hideTimeTooltip}
-        >
-          <TooltipContainer />
-          <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
-          <CustomDragLayer
-            onDrag={onDrag}
-            minX={0}
-            maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
-          />
+        <TooltipContainer />
+        <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
+        <CustomDragLayer
+          onDrag={onDrag}
+          minX={0}
+          maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
+        />
 
-
-          <div className={stl.timeline} ref={timelineRef}>
-            {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
-          </div>
-
-          <EventsList scale={scale} />
-          <NotesList scale={scale} />
-          <SkipIntervalsList scale={scale} />
-
-          {/* TODO: refactor and make any sense out of this */}
-
-          {/*  {issues.map((i: Issue) => (*/}
-          {/*  <div*/}
-          {/*    key={i.key}*/}
-          {/*    className={stl.redEvent}*/}
-          {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
-          {/*  />*/}
-          {/*))}*/}
+        <div className={stl.timeline} ref={timelineRef}>
+          {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
         </div>
+
+        {props.isMobile ? <MobEventsList scale={scale} /> : <WebEventsList scale={scale} />}
+        <NotesList scale={scale} />
+        <SkipIntervalsList scale={scale} />
+
+        {/* TODO: refactor and make any sense out of this */}
+
+        {/*  {issues.map((i: Issue) => (*/}
+        {/*  <div*/}
+        {/*    key={i.key}*/}
+        {/*    className={stl.redEvent}*/}
+        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
+        {/*  />*/}
+        {/*))}*/}
       </div>
-  )
+    </div>
+  );
 }
 
 export default connect(

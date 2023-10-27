@@ -54,6 +54,7 @@ type Redshift struct {
 
 type Clickhouse struct {
 	URL      string `env:"CLICKHOUSE_STRING"`
+	Database string `env:"CLICKHOUSE_DATABASE,default=default"`
 	UserName string `env:"CLICKHOUSE_USERNAME,default=default"`
 	Password string `env:"CLICKHOUSE_PASSWORD,default="`
 }

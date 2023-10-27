@@ -1,20 +1,6 @@
 const StatsHost = process.env.STATS_HOST || 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
 
-async function postData(payload) {
-    const options = {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' }
-    }
-
-    try {
-        const response = await fetch(StatsHost, options)
-        const jsonResponse = await response.json();
-        console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
-    } catch(err) {
-        console.log('ERROR', err);
-    }
-}
+const debug = process.env.debug === "1";
 
 class InMemoryCache {
     constructor() {
@@ -40,7 +26,21 @@ class InMemoryCache {
 
 const cache = new InMemoryCache();
 
-const debug = process.env.debug === "1";
+async function postData(payload) {
+    const options = {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+    }
+
+    try {
+        const response = await fetch(StatsHost, options)
+        const jsonResponse = await response.json();
+        debug && console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
+    } catch(err) {
+        debug && console.log('ERROR', err);
+    }
+}
 
 function startAssist(socket, agentID) {
     const tsNow = +new Date();
@@ -96,14 +96,14 @@ function startCall(socket, agentID) {
     // Save uniq eventID to cache
     cache.set(`${socket.sessId}_call`, eventID);
     // Debug logs
-    console.log(`s_call_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+    debug && console.log(`s_call_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
 }
 
 function endCall(socket, agentID) {
     const tsNow = +new Date();
     const eventID = cache.get(`${socket.sessId}_call`);
     if (eventID === undefined) {
-        console.log(`have to skip s_call_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+        debug && console.log(`have to skip s_call_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
         return
     }
     void postData({
@@ -117,7 +117,7 @@ function endCall(socket, agentID) {
     });
     cache.delete(`${socket.sessId}_call`)
     // Debug logs
-    console.log(`s_call_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+    debug && console.log(`s_call_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
 }
 
 function startControl(socket, agentID) {
@@ -134,14 +134,14 @@ function startControl(socket, agentID) {
     });
     cache.set(`${socket.sessId}_control`, eventID)
     // Debug logs
-    console.log(`s_control_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+    debug && console.log(`s_control_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
 }
 
 function endControl(socket, agentID) {
     const tsNow = +new Date();
     const eventID = cache.get(`${socket.sessId}_control`);
     if (eventID === undefined) {
-        console.log(`have to skip s_control_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
+        debug && console.log(`have to skip s_control_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${tsNow}`);
         return
     }
     void postData({
@@ -155,7 +155,7 @@ function endControl(socket, agentID) {
     });
     cache.delete(`${socket.sessId}_control`)
     // Debug logs
-    console.log(`s_control_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+    debug && console.log(`s_control_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
 }
 
 function startRecord(socket, agentID) {
@@ -172,7 +172,7 @@ function startRecord(socket, agentID) {
     });
     cache.set(`${socket.sessId}_record`, eventID)
     // Debug logs
-    console.log(`s_recording_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+    debug && console.log(`s_recording_started, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
 }
 
 function endRecord(socket, agentID) {
@@ -189,7 +189,7 @@ function endRecord(socket, agentID) {
     });
     cache.delete(`${socket.sessId}_record`)
     // Debug logs
-    console.log(`s_recording_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
+    debug && console.log(`s_recording_ended, agentID: ${agentID}, sessID: ${socket.sessId}, projID: ${socket.projectId}, time: ${+new Date()}`);
 }
 
 function handleEvent(eventName, socket, agentID) {

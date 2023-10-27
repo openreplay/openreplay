@@ -1107,6 +1107,8 @@ $$
                 seq_index  integer NOT NULL,
                 label      text    NOT NULL,
                 direction  text    NOT NULL,
+                x          integer DEFAULT NULL,
+                y          integer DEFAULT NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX swipes_session_id_idx ON events_ios.swipes (session_id);
@@ -1122,8 +1124,8 @@ $$
                 event_type  varchar NOT NULL,
                 event_state varchar NOT NULL,
                 timestamp   integer NOT NULL,
-                user_id     varchar,
-                agent_id    varchar
+                duration    integer,
+                agent_id    integer
             );
 
             CREATE TABLE IF NOT EXISTS public.assist_events_aggregates

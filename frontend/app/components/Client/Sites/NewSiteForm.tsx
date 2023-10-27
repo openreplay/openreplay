@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Form, Input, Button, Icon } from 'UI';
+import { Form, Input, Button, Icon, SegmentSelection } from 'UI';
 import { save, edit, update, fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
@@ -113,6 +113,20 @@ const NewSiteForm = ({
               value={site.name}
               onChange={handleEdit}
               className={styles.input}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Project Type</label>
+            <SegmentSelection
+              name={"platform"}
+              value={{ name: site.platform, value: site.platform }}
+              list={[
+                { name: 'Web', value: 'web' },
+                { name: 'iOS', value: 'ios' },
+              ]}
+              onSelect={(_, { value }) => {
+                edit({ platform: value });
+              }}
             />
           </Form.Field>
           <div className="mt-6 flex justify-between">

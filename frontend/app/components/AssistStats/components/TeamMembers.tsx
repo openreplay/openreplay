@@ -4,7 +4,7 @@ import { durationFromMsFormatted } from 'App/date';
 import { Member } from 'App/services/AssistStatsService';
 import { getInitials } from 'App/utils';
 import React from 'react';
-import { Loader } from 'UI';
+import { Loader, NoContent } from 'UI';
 import { exportCSVFile } from 'App/utils';
 
 const items = [
@@ -90,20 +90,27 @@ function TeamMembers({
         </div>
       </div>
       <Loader loading={isLoading} style={{ minHeight: 150, height: 300 }} size={48}>
-        {topMembers.list.map((member) => (
-          <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
-            <div className="relative flex items-center justify-center w-10 h-10">
-              <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-              <div className="text-lg uppercase color-tealx">{getInitials(member.name)}</div>
+        <NoContent
+          size={'small'}
+          title={<div className={'text-base font-normal'}>No data available</div>}
+          show={topMembers.list && topMembers.list.length === 0}
+          style={{ height: '100px' }}
+        >
+          {topMembers.list.map((member) => (
+            <div key={member.name} className={'w-full flex items-center gap-2 border-b pt-2 pb-1'}>
+              <div className="relative flex items-center justify-center w-10 h-10">
+                <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
+                <div className="text-lg uppercase color-tealx">{getInitials(member.name)}</div>
+              </div>
+              <div>{member.name}</div>
+              <div className={'ml-auto'}>
+                {membersSort === 'sessionsAssisted'
+                  ? member.count
+                  : durationFromMsFormatted(member.count)}
+              </div>
             </div>
-            <div>{member.name}</div>
-            <div className={'ml-auto'}>
-              {membersSort === 'sessionsAssisted'
-                ? member.count
-                : durationFromMsFormatted(member.count)}
-            </div>
-          </div>
-        ))}
+          ))}
+        </NoContent>
       </Loader>
       <div className={'flex items-center justify-center text-disabled-text p-2 mt-auto'}>
         {isLoading || topMembers.list.length === 0

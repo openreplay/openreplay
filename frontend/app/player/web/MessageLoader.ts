@@ -1,4 +1,5 @@
 import type { Store, SessionFilesInfo } from 'Player';
+import {IMessageManager} from "Player/player/Animator";
 import { decryptSessionBytes } from './network/crypto';
 import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
@@ -6,7 +7,6 @@ import type {
   Message,
 } from './messages';
 import logger from 'App/logger';
-import MessageManager from "Player/web/MessageManager";
 
 
 interface State {
@@ -27,7 +27,7 @@ export default class MessageLoader {
   constructor(
     private readonly session: SessionFilesInfo,
     private store: Store<State>,
-    private messageManager: MessageManager,
+    private messageManager: IMessageManager,
     private isClickmap: boolean,
     private uiErrorHandler?: { error: (msg: string) => void }
   ) {}

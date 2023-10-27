@@ -29,6 +29,7 @@ function ConsoleRow(props: Props) {
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
+
   return (
     <div
       style={style}
@@ -52,14 +53,14 @@ function ConsoleRow(props: Props) {
             {canExpand && (
               <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
             )}
-            <span>{renderWithNL(lines.pop())}</span>
+            <span style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{renderWithNL(lines.pop())}</span>
           </div>
-          {log.errorId && <TextEllipsis className="ml-2 overflow-hidden" text={log.message }></TextEllipsis>}
+          {log.errorId && <TextEllipsis className="ml-2 overflow-hidden" text={log.message}></TextEllipsis>}
         </div>
         {canExpand &&
           expanded &&
           lines.map((l: string, i: number) => (
-            <div key={l.slice(0, 4) + i} className="ml-4 mb-1">
+            <div key={l.slice(0, 4) + i} className="ml-4 mb-1" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
               {l}
             </div>
           ))}

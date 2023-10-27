@@ -93,6 +93,10 @@ ${icons.map(icon => {
     .replace(/fill-rule/g, 'fillRule')
     .replace(/fill-opacity/g, 'fillOpacity')
     .replace(/stop-color/g, 'stopColor')
+    .replace(/stroke-width/g, 'strokeWidth')
+    .replace(/stroke-linecap/g, 'strokeLinecap')
+    .replace(/stroke-linejoin/g, 'strokeLinejoin')
+    .replace(/stroke-miterlimit/g, 'strokeMiterlimit')
     .replace(/xml:space="preserve"/g, '')};`;
 })
   .join('\n')}

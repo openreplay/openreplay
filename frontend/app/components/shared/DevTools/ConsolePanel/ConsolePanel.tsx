@@ -13,7 +13,6 @@ import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
-import { toJS } from 'mobx'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -60,7 +59,7 @@ const getIconProps = (level: any) => {
 
 const INDEX_KEY = 'console';
 
-function ConsolePanel({ isLive }: { isLive: boolean }) {
+function ConsolePanel({ isLive }: { isLive?: boolean }) {
   const {
     sessionStore: { devTools },
   } = useStore()

@@ -4,7 +4,7 @@ import { numberWithCommas } from 'App/utils';
 import React from 'react';
 import { Button, Dropdown, Space, Typography, Tooltip } from 'antd';
 import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
-import { Loader, Pagination } from 'UI';
+import { Loader, Pagination, NoContent } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
 import { checkForRecent, durationFromMsFormatted, getDateFromMill } from 'App/date';
@@ -80,11 +80,18 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         <Cell size={1}>{/* BUTTONS */}</Cell>
       </div>
       <div className={'bg-white'}>
-        <Loader loading={isLoading} style={{ height: 300 }}>
-          {sessions.list.map((session) => (
-            <Row session={session} />
-          ))}
-        </Loader>
+            <Loader loading={isLoading} style={{ height: 300 }}>
+          <NoContent
+            size={'small'}
+            title={<div className={'text-base font-normal'}>No data available</div>}
+            show={sessions.list && sessions.list.length === 0}
+            style={{ height: '100px' }}
+          >
+              {sessions.list.map((session) => (
+                <Row session={session} />
+              ))}
+          </NoContent>
+            </Loader>
       </div>
       <div className={'flex items-center justify-between p-4'}>
         {sessions.total > 0 ? (

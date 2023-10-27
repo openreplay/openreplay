@@ -48,11 +48,14 @@ const BASE_sessionInfo = {
     "projectId": 0
 };
 
-
+/**
+ * extracts and populate socket with information
+ * @Param {socket} used socket
+ * */
 const extractSessionInfo = function (socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
-        debug && console.log("received headers");
-        debug && console.log(socket.handshake.headers);
+        debug && console.log(`received headers: ${socket.handshake.headers}`);
+
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = {...BASE_sessionInfo, ...socket.handshake.query.sessionInfo};
 
@@ -106,15 +109,12 @@ function socketConnexionTimeout(io) {
 }
 
 function errorHandler(listenerName, error) {
-    console.error(`Error detected from ${listenerName}`);
-    console.error(error);
+    console.error(`Error detected from ${listenerName}\n${error}`);
 }
-
 
 function generateAccessToken(payload) {
     return jwt.sign(payload, process.env.ASSIST_JWT_SECRET, {expiresIn: process.env.ASSIST_JWT_EXPIRATION || '30m'});
 }
-
 
 const JWT_TOKEN_PREFIX = "Bearer ";
 

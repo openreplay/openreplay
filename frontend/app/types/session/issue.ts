@@ -7,6 +7,7 @@ export const types = {
   CRASH: 'crash',
   CLICK_RAGE: 'click_rage',
   MOUSE_THRASHING: 'mouse_thrashing',
+  TAP_RAGE: 'tap_rage',
 } as const
 
 type TypeKeys = keyof typeof types
@@ -23,6 +24,7 @@ export const issues_types = [
   { 'type': types.CLICK_RAGE, 'visible': true, 'order': 3, 'name': 'Click Rage', 'icon': 'funnel/emoji-angry' },
   { 'type': types.CRASH, 'visible': true, 'order': 4, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' },
   { 'type': types.MOUSE_THRASHING, 'visible': true, 'order': 5, 'name': 'Mouse Thrashing', 'icon': 'cursor-trash' },
+  { 'type': types.TAP_RAGE, 'visible': true, 'order': 6, 'name': 'Click Rage', 'icon': 'funnel/emoji-angry' },
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
   // { 'type': 'bookmark', 'visible': true, 'order': 5, 'name': 'Bookmarks', 'icon': 'safe' },

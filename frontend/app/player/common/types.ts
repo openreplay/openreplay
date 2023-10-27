@@ -1,5 +1,7 @@
 export interface Timed { 
   time: number
+  /** present in mobile events and in db events */
+  timestamp?: number
 }
 
 export interface Indexed {

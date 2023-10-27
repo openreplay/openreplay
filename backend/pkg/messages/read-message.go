@@ -1479,9 +1479,9 @@ func DecodeIOSMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSCustomEvent(reader BytesReader) (Message, error) {
+func DecodeIOSEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSCustomEvent{}
+	msg := &IOSEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1506,7 +1506,7 @@ func DecodeIOSUserID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1521,7 +1521,7 @@ func DecodeIOSUserAnonymousID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2006,7 +2006,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 92:
 		return DecodeIOSMetadata(reader)
 	case 93:
-		return DecodeIOSCustomEvent(reader)
+		return DecodeIOSEvent(reader)
 	case 94:
 		return DecodeIOSUserID(reader)
 	case 95:

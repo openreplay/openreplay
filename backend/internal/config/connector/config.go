@@ -13,11 +13,13 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	common.Redshift
+	common.Clickhouse
 	objectstorage.ObjectsConfig
+	ConnectorType      string        `env:"CONNECTOR_TYPE,default=redshift"`
 	SessionsTableName  string        `env:"SESSIONS_TABLE_NAME,default=connector_user_sessions"`
 	EventsTableName    string        `env:"EVENTS_TABLE_NAME,default=connector_events"`
 	EventLevel         string        `env:"EVENT_LEVEL,default=normal"`
-	GroupConnector     string        `env:"GROUP_REDSHIFT_CONNECTOR,default=redshift-connector"`
+	GroupConnector     string        `env:"GROUP_CONNECTOR,default=connector"`
 	TopicRawWeb        string        `env:"TOPIC_RAW_WEB,required"`
 	TopicAnalytics     string        `env:"TOPIC_ANALYTICS,required"`
 	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=5s"`
