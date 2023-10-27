@@ -296,7 +296,7 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         filters = [f.model_dump(by_alias=True) for f in data.filters] \
                   + [f.model_dump(by_alias=True) for f in data.series[0].filter.filters]
     else:
-        return {"data": {}}
+        return []
 
     search_data = schemas.SessionsSearchPayloadSchema(
         startTimestamp=data.startTimestamp,
