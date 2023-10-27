@@ -38,7 +38,7 @@ type Connector interface {
 	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
 	// Mobile
 	InsertMobileSession(session *sessions.Session) error
-	InsertMobileCustom(session *sessions.Session, msg *messages.IOSCustomEvent) error
+	InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error
 	InsertMobileClick(session *sessions.Session, msg *messages.IOSClickEvent) error
 	InsertMobileSwipe(session *sessions.Session, msg *messages.IOSSwipeEvent) error
 	InsertMobileInput(session *sessions.Session, msg *messages.IOSInputEvent) error
@@ -581,7 +581,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.IOSCustomEvent) error {
+func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error {
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
