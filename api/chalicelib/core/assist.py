@@ -46,7 +46,7 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
             data["filter"][f.source] = {"values": f.value, "operator": f.operator}
 
         else:
-            data["filter"][f.type.value] = {"values": f.value, "operator": f.operator}
+            data["filter"][f.type] = {"values": f.value, "operator": f.operator}
     return __get_live_sessions_ws(project_id=project_id, data=data)
 
 

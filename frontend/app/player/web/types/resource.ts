@@ -3,6 +3,7 @@ import type {ResourceTiming, NetworkRequest, Fetch, IosNetworkCall} from '../mes
 export const enum ResourceType {
   XHR = 'xhr',
   FETCH = 'fetch',
+  IOS = 'request',
   BEACON = 'beacon',
   SCRIPT = 'script',
   CSS = 'css',

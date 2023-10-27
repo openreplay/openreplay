@@ -1,9 +1,7 @@
-import json
-from datetime import datetime, timedelta
-from typing import Union, List, Dict, Optional
+from typing import Union, Optional
+
 from decouple import config
-from fastapi import Depends, Body, Query, HTTPException
-from starlette.responses import FileResponse
+from fastapi import Depends, Body, Query
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
