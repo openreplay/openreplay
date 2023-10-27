@@ -9,6 +9,7 @@ from sqlalchemy import Enum
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker, Session
+from auth import api_key_auth
 
 pg_dbname = config("pg_dbname")
 pg_host = config("pg_host")
@@ -23,7 +24,7 @@ MAX_OVERFLOW = config("MAX_OVERFLOW", default=10, cast=int)
 POOL_TIMEOUT = config("POOL_TIMEOUT", default=30, cast=int)
 POOL_RECYCLE = config("POOL_RECYCLE", default=3600, cast=int)
 
-app = FastAPI()
+app = FastAPI(root_path=config("root_path", default="/assist-stats"))
 
 engine = create_engine(
     DATABASE_URL,
@@ -147,7 +148,7 @@ def insert_event(event: EventCreate, db: Session):
         db.close()
 
 
-@app.post("/events")
+@app.post("/assist-stats/events", dependencies=[Depends(api_key_auth)])
 def create_event(event: EventCreate, db: Session = Depends(get_db)):
     if event.event_state == EventStateEnum.end:
         update_duration(event.event_id, event.timestamp, db)
