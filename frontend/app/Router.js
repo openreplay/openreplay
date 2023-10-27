@@ -18,9 +18,10 @@ import Signup from 'Components/Signup';
 import { fetchTenants, setJwt } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
-import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS, IFRAME } from 'App/constants/storageKeys';
+import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS, IFRAME, JWT_PARAM } from 'App/constants/storageKeys';
 import SupportCallout from 'Shared/SupportCallout';
 import NotFoundPage from 'Shared/NotFoundPage';
+import { checkParam } from 'App/utils';
 
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
@@ -130,29 +131,16 @@ class Router extends React.Component {
       this.fetchInitialData();
     }
 
-    const urlJWT = new URLSearchParams(window.location.search).get('jwt');
-
-    if (urlJWT && !props.isLoggedIn) {
-      props.setJwt(urlJWT)
-    }
-
     this.state = {
-      isIframe: this.checkIframe(),
+      isIframe: checkParam('iframe', IFRAME),
+      isJwt: checkParam('jwt', JWT_PARAM)
     };
-  }
 
-  checkIframe = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const iframe = urlParams.get('iframe');
-
-    if (iframe && iframe === 'true') {
-      localStorage.setItem(IFRAME, true);
-      return true;
-    } else {
-      localStorage.removeItem(IFRAME);
-      return false;
+    const urlJWT = new URLSearchParams(window.location.search).get('jwt');
+    if (urlJWT && !props.isLoggedIn) {
+      props.setJwt(urlJWT);
     }
-  };
+  }
 
   fetchInitialData = async () => {
     const siteIdFromPath = parseInt(window.location.pathname.split('/')[1]);
@@ -189,7 +177,7 @@ class Router extends React.Component {
       destinationPath !== routes.login() &&
       destinationPath !== '/'
     ) {
-      history.push(destinationPath + window.location.search);
+      this.props.history.push(destinationPath + window.location.search);
     }
 
     if (!prevProps.isLoggedIn && this.props.isLoggedIn) {
@@ -221,28 +209,44 @@ class Router extends React.Component {
       || isRoute(MULTIVIEW_INDEX_PATH, location.pathname);
 
     const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
-    const { isIframe } = this.state;
+    const { isIframe, isJwt } = this.state;
+
+    const renderAuthenticatedIframeRoutes = () => (
+      <ModalProvider>
+        <Loader loading={loading} className='flex-1'>
+          <Suspense fallback={<Loader loading={true} className='flex-1' />}>
+            <Switch key='content'>
+              <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
+              <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
+              <Route path='*' render={NotFoundPage} />
+            </Switch>
+          </Suspense>
+        </Loader>
+      </ModalProvider>
+    );
+
+    const renderUnauthenticatedIframeRoutes = () => (
+      <Suspense fallback={<Loader loading={true} className='flex-1' />}>
+        <Switch>
+          <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
+          <Route exact strict path={LOGIN_PATH} component={changePassword ? UpdatePassword : Login} />
+          <Route exact strict path={SIGNUP_PATH} component={Signup} />
+          <Redirect to={LOGIN_PATH} />
+        </Switch>
+        {!isEnterprise && <SupportCallout />}
+      </Suspense>
+    );
 
     if (isIframe) {
       if (isLoggedIn) {
-        return (
-          <ModalProvider>
-            <Loader loading={loading} className='flex-1'>
-              <Suspense fallback={<Loader loading={true} className='flex-1' />}>
-                <Switch key='content'>
-                  <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
-                  <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
-                  <Route path='*' render={NotFoundPage} />
-                </Switch>
-              </Suspense>
-            </Loader>
-          </ModalProvider>
-        );
-      } else {
-        return (
-          <NotFoundPage />
-        );
+        return renderAuthenticatedIframeRoutes();
       }
+
+      if (isJwt) {
+        return <NotFoundPage />;
+      }
+
+      return renderUnauthenticatedIframeRoutes();
     }
 
     return isLoggedIn ? (
