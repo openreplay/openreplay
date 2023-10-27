@@ -23,7 +23,7 @@ MAX_OVERFLOW = config("MAX_OVERFLOW", default=10, cast=int)
 POOL_TIMEOUT = config("POOL_TIMEOUT", default=30, cast=int)
 POOL_RECYCLE = config("POOL_RECYCLE", default=3600, cast=int)
 
-app = FastAPI()
+app = FastAPI(root_path=config("root_path", default="/assist-stats"))
 
 engine = create_engine(
     DATABASE_URL,
