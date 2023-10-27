@@ -59,6 +59,10 @@ function build_api(){
     [[ $1 == "ee" ]] && {
         destination="_backend_ee"
     }
+    [[ -d ../${destination} ]] && {
+      echo "Removing previous build cache"
+      rm -rf ../${destination}
+    }
     cp -R ../backend ../${destination}
     cd ../${destination}
     # Copy enterprise code
