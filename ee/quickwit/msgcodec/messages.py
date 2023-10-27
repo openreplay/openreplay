@@ -752,19 +752,19 @@ class IOSEvent(Message):
 class IOSUserID(Message):
     __id__ = 94
 
-    def __init__(self, timestamp, length, value: str):
+    def __init__(self, timestamp, length, id: str):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSUserAnonymousID(Message):
     __id__ = 95
 
-    def __init__(self, timestamp, length, value: str):
+    def __init__(self, timestamp, length, id: str):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSScreenChanges(Message):

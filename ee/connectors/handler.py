@@ -705,13 +705,13 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
     if isinstance(message, IOSUserID):
         n.iosuserid_timestamp = message.timestamp
         n.iosuserid_length = message.length
-        n.iosuserid_value = message.value
+        n.iosuserid_id = message.id
         return n
 
     if isinstance(message, IOSUserAnonymousID):
         n.iosuseranonymousid_timestamp = message.timestamp
         n.iosuseranonymousid_length = message.length
-        n.iosuseranonymousid_value = message.value
+        n.iosuseranonymousid_id = message.id
         return n
 
     if isinstance(message, IOSScreenEnter):
