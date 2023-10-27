@@ -10,7 +10,6 @@ from starlette.background import BackgroundTask
 
 import app as main_app
 import schemas
-import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext

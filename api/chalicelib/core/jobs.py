@@ -14,13 +14,14 @@ class JobStatus:
     CANCELLED = "cancelled"
 
 
-def get(job_id):
+def get(job_id, project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT *
                FROM public.jobs
-               WHERE job_id = %(job_id)s;""",
-            {"job_id": job_id}
+               WHERE job_id = %(job_id)s
+                    AND project_id= %(project_id)s;""",
+            {"job_id": job_id, "project_id": project_id}
         )
         cur.execute(query=query)
         data = cur.fetchone()

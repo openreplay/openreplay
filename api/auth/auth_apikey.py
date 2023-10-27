@@ -27,5 +27,5 @@ class APIKeyAuth(APIKeyHeader):
         r["authorizer_identity"] = "api_key"
         logger.debug(r)
         request.state.authorizer_identity = "api_key"
-        request.state.currentContext = CurrentAPIContext(tenant_id=r["tenantId"])
+        request.state.currentContext = CurrentAPIContext(tenantId=r["tenantId"])
         return request.state.currentContext
