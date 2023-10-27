@@ -97,6 +97,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     for i, sf in enumerate(data.start_point):
         f_k = f"start_point_{i}"
         op = sh.get_sql_operator(sf.operator)
+        sf.value = helper.values_for_operator(value=sf.value, op=sf.operator)
         is_not = sh.is_negation_operator(sf.operator)
         event_column = JOURNEY_TYPES[sf.type]['column']
         event_type = JOURNEY_TYPES[sf.type]['eventType']
