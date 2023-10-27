@@ -1248,7 +1248,7 @@ class CardInsights(__CardSchema):
 
     @model_validator(mode="after")
     def __transform(cls, values):
-        values.metric_of = MetricOtherViewType(values.metric_of)
+        values.metric_of = MetricOfInsights(values.metric_of)
         return values
 
     @model_validator(mode='after')
