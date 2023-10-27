@@ -762,7 +762,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 93:
-            return IOSCustomEvent(
+            return IOSEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -773,14 +773,14 @@ class MessageCodec(Codec):
             return IOSUserID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                value=self.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 95:
             return IOSUserAnonymousID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
-                value=self.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 96:

@@ -31,7 +31,7 @@ const TrackingCodeModal = (props: Props) => {
         return (
           <div className="grid grid-cols-6 gap-4">
             <div className="col-span-4">
-              <ProjectCodeSnippet />
+              <ProjectCodeSnippet site={site} />
             </div>
 
             <div className="col-span-2">
@@ -43,7 +43,7 @@ const TrackingCodeModal = (props: Props) => {
               <DocCard title="Project Key">
                 <div className="rounded bg-white px-2 py-1 flex items-center justify-between">
                   <span>{site.projectKey}</span>
-                  <CopyButton content={''} className="capitalize" />
+                  <CopyButton content={site.projectKey} className="capitalize" />
                 </div>
               </DocCard>
               <DocCard title="Other ways to install">
@@ -63,7 +63,7 @@ const TrackingCodeModal = (props: Props) => {
         return (
           <div className="grid grid-cols-6 gap-4">
             <div className="col-span-4">
-              <InstallDocs />
+              <InstallDocs site={site} />
             </div>
 
             <div className="col-span-2">
@@ -71,6 +71,13 @@ const TrackingCodeModal = (props: Props) => {
                 <a className="link" onClick={showUserModal}>
                   Invite and Collaborate
                 </a>
+              </DocCard>
+
+              <DocCard title="Project Key">
+                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
+                  {site.projectKey}
+                  <CopyButton content={site.projectKey} />
+                </div>
               </DocCard>
             </div>
           </div>

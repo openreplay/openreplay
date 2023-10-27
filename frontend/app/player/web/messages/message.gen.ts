@@ -61,14 +61,16 @@ import type {
   RawResourceTiming,
   RawTabChange,
   RawTabData,
-  RawIosCustomEvent,
+  RawIosEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
   RawIosInputEvent,
   RawIosPerformanceEvent,
   RawIosLog,
+  RawIosInternalError,
   RawIosNetworkCall,
   RawIosSwipeEvent,
+  RawIosIssueEvent,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -188,7 +190,7 @@ export type TabChange = RawTabChange & Timed
 
 export type TabData = RawTabData & Timed
 
-export type IosCustomEvent = RawIosCustomEvent & Timed
+export type IosEvent = RawIosEvent & Timed
 
 export type IosScreenChanges = RawIosScreenChanges & Timed
 
@@ -200,7 +202,11 @@ export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 
 export type IosLog = RawIosLog & Timed
 
+export type IosInternalError = RawIosInternalError & Timed
+
 export type IosNetworkCall = RawIosNetworkCall & Timed
 
 export type IosSwipeEvent = RawIosSwipeEvent & Timed
+
+export type IosIssueEvent = RawIosIssueEvent & Timed
 

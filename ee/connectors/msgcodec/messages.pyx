@@ -1258,7 +1258,7 @@ cdef class IOSMetadata(PyMessage):
         self.value = value
 
 
-cdef class IOSCustomEvent(PyMessage):
+cdef class IOSEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1277,26 +1277,26 @@ cdef class IOSUserID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 94
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSUserAnonymousID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
-    cdef public str value
+    cdef public str id
 
-    def __init__(self, unsigned long timestamp, unsigned long length, str value):
+    def __init__(self, unsigned long timestamp, unsigned long length, str id):
         self.__id__ = 95
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 cdef class IOSScreenChanges(PyMessage):

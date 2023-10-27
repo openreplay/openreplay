@@ -22,7 +22,7 @@ message 92, 'IOSMetadata' do
     string 'Value'
 end
 
-message 93, 'IOSCustomEvent', :replayer => true do
+message 93, 'IOSEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Name'
@@ -32,13 +32,13 @@ end
 message 94, 'IOSUserID' do
     uint 'Timestamp'
     uint 'Length'
-    string 'Value'
+    string 'ID'
 end
 
 message 95, 'IOSUserAnonymousID' do
     uint 'Timestamp'
     uint 'Length'
-    string 'Value'
+    string 'ID'
 end
 
 message 96, 'IOSScreenChanges', :replayer => true do
@@ -86,15 +86,16 @@ end
 Name/Value may be :
 "physicalMemory": Total memory in bytes
 "processorCount": Total processors in device
-?"activeProcessorCount": Number of currently used processors
+"activeProcessorCount": Number of currently used processors
 "systemUptime": Elapsed time (in seconds) since last boot
-?"isLowPowerModeEnabled": Possible values (1 or 0)
-2/3!"thermalState": Possible values (0:nominal 1:fair 2:serious 3:critical)
-!"batteryLevel": Possible values (0 .. 100)
+"isLowPowerModeEnabled": Possible values (1 or 0)
+"thermalState": Possible values (0:nominal 1:fair 2:serious 3:critical)
+"batteryLevel": Possible values (0 .. 100)
 "batteryState": Possible values (0:unknown 1:unplugged 2:charging 3:full)
 "orientation": Possible values (0unknown 1:portrait 2:portraitUpsideDown 3:landscapeLeft 4:landscapeRight 5:faceUp 6:faceDown)
 "mainThreadCPU": Possible values (0 .. 100)
 "memoryUsage": Used memory in bytes
+"fps": Frames per second
 =end
 message 102, 'IOSPerformanceEvent', :replayer => true do
   uint 'Timestamp'
@@ -110,22 +111,22 @@ message 103, 'IOSLog', :replayer => true do
   string 'Content'
 end
 
-message 104, 'IOSInternalError' do
+message 104, 'IOSInternalError', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   string 'Content'
 end
 
 message 105, 'IOSNetworkCall', :replayer => true do
-    uint 'Timestamp'
-    uint 'Length'
-    string 'Type'
-    string 'Method'
-    string 'URL'
-    string 'Request'
-    string 'Response'
-    uint 'Status'
-    uint 'Duration'
+   uint 'Timestamp'
+   uint 'Length'
+   string 'Type'
+   string 'Method'
+   string 'URL'
+   string 'Request'
+   string 'Response'
+   uint 'Status'
+   uint 'Duration'
 end
 
 message 106, 'IOSSwipeEvent', :replayer => true do
@@ -137,13 +138,13 @@ message 106, 'IOSSwipeEvent', :replayer => true do
     string 'Direction'
 end
 
-message 107, 'IOSBatchMeta', :replayer => false  do
+message 107, 'IOSBatchMeta' do
     uint 'Timestamp'
     uint 'Length'
     uint 'FirstIndex'
 end
 
-message 110, 'IOSPerformanceAggregated', :swift => false do
+message 110, 'IOSPerformanceAggregated', :swift => false do 
   uint 'TimestampStart'
   uint 'TimestampEnd'
   uint 'MinFPS'
@@ -160,7 +161,7 @@ message 110, 'IOSPerformanceAggregated', :swift => false do
   uint 'MaxBattery'
 end
 
-message 111, 'IOSIssueEvent' do
+message 111, 'IOSIssueEvent', :replayer => true do
   uint 'Timestamp'
   string 'Type'
   string 'ContextString'

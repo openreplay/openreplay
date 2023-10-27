@@ -1,10 +1,29 @@
 import React from 'react';
 import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
+import {IconNames} from "UI/SVG";
 import styles from './segmentSelection.module.css';
 
-class SegmentSelection extends React.Component {
-  setActiveItem = (item) => {
+type Entry = { value: string, name: string, disabled?: boolean, icon?: IconNames };
+
+interface Props<T extends Entry> {
+    className?: string;
+    name: string;
+    value: T;
+    list: T[];
+    onSelect: (_: null, data: { name: string, value: T['value']}) => void;
+    small?: boolean;
+    extraSmall?: boolean;
+    primary?: boolean;
+    size?: 'normal' | 'small' | 'extraSmall';
+    icons?: boolean;
+    disabled?: boolean;
+    disabledMessage?: string;
+    outline?: boolean;
+}
+
+class SegmentSelection<T extends Entry> extends React.Component<Props<T>> {
+  setActiveItem = (item: T) => {
     this.props.onSelect(null, { name: this.props.name, value: item.value });
   };
 
@@ -49,7 +68,7 @@ class SegmentSelection extends React.Component {
                 <Icon
                   name={item.icon}
                   size={size === 'extraSmall' || size === 'small'  || icons  ? 14 : 20}
-                  marginRight={item.name ? '6' : ''}
+                  marginRight={item.name ? 6 : undefined}
                 />
               )}
               <div className="leading-none">{item.name}</div>

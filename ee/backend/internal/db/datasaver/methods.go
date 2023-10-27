@@ -77,7 +77,7 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 	// Mobile messages
 	case *messages.IOSSessionEnd:
 		return s.ch.InsertMobileSession(session)
-	case *messages.IOSCustomEvent:
+	case *messages.IOSEvent:
 		return s.ch.InsertMobileCustom(session, m)
 	case *messages.IOSClickEvent:
 		return s.ch.InsertMobileClick(session, m)

@@ -23,7 +23,7 @@ type Props = {
 };
 
 const isFrustrationEvent = (evt: any): boolean => {
-  if (evt.type === 'mouse_thrashing' || evt.type === TYPES.CLICKRAGE) {
+  if (evt.type === 'mouse_thrashing' || evt.type === TYPES.CLICKRAGE || evt.type === TYPES.TAPRAGE) {
     return true;
   }
   if (evt.type === TYPES.CLICK || evt.type === TYPES.INPUT) {
@@ -73,12 +73,22 @@ const Event: React.FC<Props> = ({
       case TYPES.LOCATION:
         title = 'Visited';
         body = event.url;
-        icon = 'location';
+        icon = 'event/location';
+        break;
+      case TYPES.SWIPE:
+        title = 'Swipe';
+        body = event.direction;
+        icon = `chevron-${event.direction}`
+        break;
+      case TYPES.TOUCH:
+        title = 'Tapped';
+        body = event.label;
+        icon = 'event/click';
         break;
       case TYPES.CLICK:
         title = 'Clicked';
         body = event.label;
-        icon = isFrustration ? 'click_hesitation' : 'click';
+        icon = isFrustration ? 'event/click_hesitation' : 'event/click';
         isFrustration
           ? Object.assign(tooltip, {
             disabled: false,
@@ -89,7 +99,7 @@ const Event: React.FC<Props> = ({
       case TYPES.INPUT:
         title = 'Input';
         body = event.value;
-        icon = isFrustration ? 'input_hesitation' : 'input';
+        icon = isFrustration ? 'event/input_hesitation' : 'event/input';
         isFrustration
           ? Object.assign(tooltip, {
             disabled: false,
@@ -98,18 +108,19 @@ const Event: React.FC<Props> = ({
           : null;
         break;
       case TYPES.CLICKRAGE:
-        title = `${event.count} Clicks`;
+      case TYPES.TAPRAGE:
+        title = event.count ? `${event.count} Clicks` : 'Click Rage';
         body = event.label;
-        icon = 'clickrage';
+        icon = 'event/clickrage';
         break;
       case TYPES.IOS_VIEW:
         title = 'View';
         body = event.name;
-        icon = 'ios_view';
+        icon = 'event/ios_view';
         break;
       case 'mouse_thrashing':
         title = 'Mouse Thrashing';
-        icon = 'mouse_thrashing';
+        icon = 'event/mouse_thrashing';
         break;
     }
 
@@ -123,7 +134,7 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div className={cn('flex items-center w-full', { 'px-4': isLocation })}>
-            {event.type && <Icon name={`event/${icon}`} size='16' color={'gray-dark'} />}
+            {event.type && <Icon name={icon} size='16' color={'gray-dark'} />}
             <div className='ml-3 w-full'>
               <div className='flex w-full items-first justify-between'>
                 <div className='flex items-center w-full' style={{ minWidth: '0' }}>
@@ -160,6 +171,7 @@ const Event: React.FC<Props> = ({
 
   const isFrustration = isFrustrationEvent(event);
 
+  const mobileTypes = [TYPES.TOUCH, TYPES.SWIPE, TYPES.TAPRAGE]
   return (
     <div
       ref={wrapperRef}
@@ -172,12 +184,13 @@ const Event: React.FC<Props> = ({
         [cls.selected]: selected,
         [cls.showSelection]: showSelection,
         [cls.red]: isRed,
-        [cls.clickType]: event.type === TYPES.CLICK,
+        [cls.clickType]: event.type === TYPES.CLICK || event.type === TYPES.SWIPE,
         [cls.inputType]: event.type === TYPES.INPUT,
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION
+        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION,
+        ['border-0 border-l-0 ml-0']: mobileTypes.includes(event.type),
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}
