@@ -210,12 +210,13 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     # TODO: try to refactor this
     metric: schemas.CardSchema = schemas.CardSchema(**{**data.model_dump(by_alias=True),
                                                        **metric.model_dump(by_alias=True)})
-    if len(data.filters) > 0 or len(data.events) > 0:
+    # if len(data.filters) > 0 or len(data.events) > 0:
+    if len(data.filters) > 0:
         for s in metric.series:
-            if len(data.filters) > 0:
-                s.filter.filters += data.filters
-            if len(data.events) > 0:
-                s.filter.events += data.events
+            # if len(data.filters) > 0:
+            s.filter.filters += data.filters
+            # if len(data.events) > 0:
+            #     s.filter.events += data.events
     # metric.limit = data.limit
     # metric.page = data.page
     # metric.startTimestamp = data.startTimestamp
