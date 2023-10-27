@@ -1207,6 +1207,42 @@ cdef class SessionSearch(PyMessage):
         self.partition = partition
 
 
+cdef class IOSSessionStart(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+    cdef public unsigned long project_id
+    cdef public str tracker_version
+    cdef public str rev_id
+    cdef public str user_uuid
+    cdef public str user_os
+    cdef public str user_os_version
+    cdef public str user_device
+    cdef public str user_device_type
+    cdef public str user_country
+
+    def __init__(self, unsigned long timestamp, unsigned long project_id, str tracker_version, str rev_id, str user_uuid, str user_os, str user_os_version, str user_device, str user_device_type, str user_country):
+        self.__id__ = 90
+        self.timestamp = timestamp
+        self.project_id = project_id
+        self.tracker_version = tracker_version
+        self.rev_id = rev_id
+        self.user_uuid = user_uuid
+        self.user_os = user_os
+        self.user_os_version = user_os_version
+        self.user_device = user_device
+        self.user_device_type = user_device_type
+        self.user_country = user_country
+
+
+cdef class IOSSessionEnd(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long timestamp
+
+    def __init__(self, unsigned long timestamp):
+        self.__id__ = 91
+        self.timestamp = timestamp
+
+
 cdef class IOSMetadata(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp

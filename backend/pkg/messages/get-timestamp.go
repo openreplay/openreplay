@@ -4,6 +4,12 @@ package messages
 func GetTimestamp(message Message) uint64 {
 	switch msg := message.(type) {
 
+	case *IOSSessionStart:
+		return msg.Timestamp
+
+	case *IOSSessionEnd:
+		return msg.Timestamp
+
 	case *IOSMetadata:
 		return msg.Timestamp
 

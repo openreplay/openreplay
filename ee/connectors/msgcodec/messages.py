@@ -817,6 +817,29 @@ class SessionSearch(Message):
         self.partition = partition
 
 
+class IOSSessionStart(Message):
+    __id__ = 90
+
+    def __init__(self, timestamp, project_id, tracker_version, rev_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country):
+        self.timestamp = timestamp
+        self.project_id = project_id
+        self.tracker_version = tracker_version
+        self.rev_id = rev_id
+        self.user_uuid = user_uuid
+        self.user_os = user_os
+        self.user_os_version = user_os_version
+        self.user_device = user_device
+        self.user_device_type = user_device_type
+        self.user_country = user_country
+
+
+class IOSSessionEnd(Message):
+    __id__ = 91
+
+    def __init__(self, timestamp):
+        self.timestamp = timestamp
+
+
 class IOSMetadata(Message):
     __id__ = 92
 

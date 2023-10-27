@@ -87,6 +87,8 @@ const (
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
+	MsgIOSSessionStart             = 90
+	MsgIOSSessionEnd               = 91
 	MsgIOSMetadata                 = 92
 	MsgIOSEvent                    = 93
 	MsgIOSUserID                   = 94
@@ -2320,6 +2322,66 @@ func (msg *SessionSearch) Decode() Message {
 
 func (msg *SessionSearch) TypeID() int {
 	return 127
+}
+
+type IOSSessionStart struct {
+	message
+	Timestamp      uint64
+	ProjectID      uint64
+	TrackerVersion string
+	RevID          string
+	UserUUID       string
+	UserOS         string
+	UserOSVersion  string
+	UserDevice     string
+	UserDeviceType string
+	UserCountry    string
+}
+
+func (msg *IOSSessionStart) Encode() []byte {
+	buf := make([]byte, 101+len(msg.TrackerVersion)+len(msg.RevID)+len(msg.UserUUID)+len(msg.UserOS)+len(msg.UserOSVersion)+len(msg.UserDevice)+len(msg.UserDeviceType)+len(msg.UserCountry))
+	buf[0] = 90
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.ProjectID, buf, p)
+	p = WriteString(msg.TrackerVersion, buf, p)
+	p = WriteString(msg.RevID, buf, p)
+	p = WriteString(msg.UserUUID, buf, p)
+	p = WriteString(msg.UserOS, buf, p)
+	p = WriteString(msg.UserOSVersion, buf, p)
+	p = WriteString(msg.UserDevice, buf, p)
+	p = WriteString(msg.UserDeviceType, buf, p)
+	p = WriteString(msg.UserCountry, buf, p)
+	return buf[:p]
+}
+
+func (msg *IOSSessionStart) Decode() Message {
+	return msg
+}
+
+func (msg *IOSSessionStart) TypeID() int {
+	return 90
+}
+
+type IOSSessionEnd struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *IOSSessionEnd) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 91
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *IOSSessionEnd) Decode() Message {
+	return msg
+}
+
+func (msg *IOSSessionEnd) TypeID() int {
+	return 91
 }
 
 type IOSMetadata struct {

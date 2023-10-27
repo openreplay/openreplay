@@ -1,3 +1,20 @@
+message 90, 'IOSSessionStart',  :replayer => false  do
+	uint 'Timestamp'
+    uint 'ProjectID'
+    string 'TrackerVersion'
+    string 'RevID'
+    string 'UserUUID'
+    string 'UserOS'
+    string 'UserOSVersion'
+    string 'UserDevice'
+    string 'UserDeviceType'
+    string 'UserCountry'
+end
+
+message 91, 'IOSSessionEnd'  do
+	uint 'Timestamp'
+end
+
 message 92, 'IOSMetadata' do
     uint 'Timestamp'
     uint 'Length'
