@@ -563,11 +563,7 @@ def delete_alert(projectId: int, alertId: int, _=Body(None),
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
 def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
-    project_id = projects.get_by_project_key(project_key=projectKey)["projectId"]
-    if project_id is None:
-        return {"errors": ["Project not found."]}
-
-    return {"data": sourcemaps.presign_upload_urls(project_id=project_id, urls=data.urls)}
+    return {"data": sourcemaps.presign_upload_urls(project_id=context.project.project_id, urls=data.urls)}
 
 
 @app.get('/config/weekly_report', tags=["weekly report config"])
