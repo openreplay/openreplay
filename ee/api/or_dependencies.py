@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Callable
 
 from fastapi import HTTPException, Depends
@@ -11,8 +12,10 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 import schemas
-from chalicelib.utils import helper
 from chalicelib.core import traces
+from chalicelib.utils import helper
+
+logger = logging.getLogger(__name__)
 
 
 async def OR_context(request: Request) -> schemas.CurrentContext:
@@ -27,6 +30,7 @@ class ORRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
+            logger.debug(f"call processed by: {self.methods} {self.path_format}")
             try:
                 response: Response = await original_route_handler(request)
             except HTTPException as e:

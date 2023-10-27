@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS public.assist_events
     event_state varchar NOT NULL,
     timestamp   integer NOT NULL,
     user_id     varchar,
+    duration    integer,
     agent_id    varchar
 );
 
