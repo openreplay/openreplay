@@ -13,6 +13,7 @@ import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 import ScreenRecordingState from './ScreenRecordingState.js'
+import { pkgVersion, } from './version.js'
 
 // TODO: fully specified strict check with no-any (everywhere)
 // @ts-ignore
@@ -63,7 +64,7 @@ type Agent = {
 
 
 export default class Assist {
-  readonly version = 'PACKAGE_VERSION'
+  readonly version = pkgVersion
 
   private socket: Socket | null = null
   private peer: Peer | null = null
