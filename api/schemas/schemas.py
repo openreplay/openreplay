@@ -848,13 +848,6 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     _transform_filters = field_validator('filters', mode='before') \
         (force_is_event(events_enum=[ProductAnalyticsSelectedEventType]))
 
-    # @model_validator(mode="before")
-    # def __force_is_event_for_filters(cls, values):
-    #     for v in values.get("filters"):
-    #         if v.get("isEvent") is None:
-    #             v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-    #     return values
-
 
 class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
