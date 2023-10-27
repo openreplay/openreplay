@@ -646,7 +646,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 93:
-            return IOSCustomEvent(
+            return IOSEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),

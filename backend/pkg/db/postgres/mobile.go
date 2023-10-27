@@ -18,7 +18,7 @@ func (conn *Conn) InsertIOSSessionEnd(sessionID uint64, e *messages.IOSSessionEn
 	return nil
 }
 
-func (conn *Conn) InsertIOSCustomEvent(session *sessions.Session, e *messages.IOSCustomEvent) error {
+func (conn *Conn) InsertIOSEvent(session *sessions.Session, e *messages.IOSEvent) error {
 	if err := conn.InsertCustomEvent(session.SessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload); err != nil {
 		return err
 	}

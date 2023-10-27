@@ -85,8 +85,8 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		return nil
 	case *IOSMetadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
-	case *IOSCustomEvent:
-		return s.pg.InsertIOSCustomEvent(session, m)
+	case *IOSEvent:
+		return s.pg.InsertIOSEvent(session, m)
 	case *IOSClickEvent:
 		if err := s.pg.InsertIOSClickEvent(session, m); err != nil {
 			return err

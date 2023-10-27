@@ -739,7 +739,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSCustomEvent(Message):
+class IOSEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name: str, payload: str):

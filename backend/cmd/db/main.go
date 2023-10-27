@@ -63,7 +63,7 @@ func main() {
 		messages.MsgUnbindNodes,
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
-		messages.MsgIOSMetadata, messages.MsgIOSCustomEvent, messages.MsgIOSNetworkCall,
+		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,
 		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
 		messages.MsgIOSCrash, messages.MsgIOSIssueEvent,
 	}
