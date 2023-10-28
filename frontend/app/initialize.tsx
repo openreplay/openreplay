@@ -11,6 +11,7 @@ import {DndProvider} from 'react-dnd';
 import {ConfigProvider, theme, ThemeConfig} from 'antd';
 import colors from 'App/theme/colors';
 import AdditionalRoutes from './AdditionalRoutes';
+import { BrowserRouter } from 'react-router-dom';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -64,7 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <Provider store={store}>
                 <StoreProvider store={new RootStore()}>
                     <DndProvider backend={HTML5Backend}>
-                        <Router additionalRoutes={<AdditionalRoutes />}/>
+                        <BrowserRouter>
+                            <Router additionalRoutes={<AdditionalRoutes />}/>
+                        </BrowserRouter>
                     </DndProvider>
                 </StoreProvider>
             </Provider>

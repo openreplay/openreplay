@@ -14,26 +14,18 @@ import { fetchListActive as fetchMetadata } from 'Duck/customField';
 const { Header } = Layout;
 
 interface Props {
-  sites: any[];
   account: any;
   siteId: string;
-  boardingCompletion?: number;
-  showAlerts?: boolean;
-  fetchMetadata: () => void;
+  fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
 }
 
 function TopHeader(props: Props) {
   const { settingsStore } = useStore();
 
-  const { sites, account, siteId, boardingCompletion = 100, showAlerts = false } = props;
-
-  const name = account.get('name');
-  const [hideDiscover, setHideDiscover] = useState(false);
+  const { account, siteId } = props;
   const { userStore, notificationStore } = useStore();
   const initialDataFetched = useObserver(() => userStore.initialDataFetched);
-  let activeSite = null;
-  const isPreferences = window.location.pathname.includes('/client/');
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
@@ -42,17 +34,12 @@ function TopHeader(props: Props) {
       Promise.all([
         userStore.fetchLimits(),
         notificationStore.fetchNotificationsCount()
-        // props.fetchMetadata() // TODO check for this
+
       ]).then(() => {
         userStore.updateKey('initialDataFetched', true);
       });
     }, 0);
   }, [account]);
-
-  useEffect(() => {
-    activeSite = sites.find((s) => s.id == siteId);
-    props.initSite(activeSite);
-  }, [siteId]);
 
   return (
     <Header
@@ -90,9 +77,7 @@ function TopHeader(props: Props) {
 
 const mapStateToProps = (state: any) => ({
   account: state.getIn(['user', 'account']),
-  siteId: state.getIn(['site', 'siteId']),
-  sites: state.getIn(['site', 'list']),
-  boardingCompletion: state.getIn(['dashboard', 'boardingCompletion'])
+  siteId: state.getIn(['site', 'siteId'])
 });
 
 const mapDispatchToProps = {
