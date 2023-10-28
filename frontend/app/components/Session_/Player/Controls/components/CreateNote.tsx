@@ -236,7 +236,7 @@ function CreateNote({
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
             <Checkbox checked={useSlack} />
-            <span className="ml-1 mr-3"> Send to slack? </span>
+            <span className="ml-1 mr-3"> Send to Slack? </span>
           </div>
 
           {useSlack && (
