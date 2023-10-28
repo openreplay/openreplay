@@ -89,7 +89,7 @@ function CreateNote({
     const note: WriteNote = {
       message: text,
       tag,
-      timestamp: useTimestamp ? (isEdit ? editNote.timestamp : time) : -1,
+      timestamp: useTimestamp ? Math.floor((isEdit ? editNote.timestamp : time)) : -1,
       isPublic,
     };
     const onSuccess = (noteId: string) => {
