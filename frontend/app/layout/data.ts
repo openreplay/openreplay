@@ -134,8 +134,8 @@ export const preferences: Category[] = [
       },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true },
       { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
-      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' },
-      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell', hidden: true }
+      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper' },
+      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true }
     ]
   }
 ];
