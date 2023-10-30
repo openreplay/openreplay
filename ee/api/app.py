@@ -83,6 +83,7 @@ async def or_middleware(request: Request, call_next):
     if helper.TRACK_TIME:
         now = time.time() - now
         if now > 2:
+            now = round(now, 2)
             logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
     return response
 
