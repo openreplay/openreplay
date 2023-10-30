@@ -1,193 +1,253 @@
 /* Auto-generated, DO NOT EDIT */
 
 /* fill */
-.fill-main { fill: $main }
-.fill-gray-light-shade { fill: $gray-light-shade }
-.fill-gray-lightest { fill: $gray-lightest }
-.fill-gray-light { fill: $gray-light }
-.fill-gray-bg { fill: $gray-bg }
-.fill-gray-medium { fill: $gray-medium }
-.fill-gray-dark { fill: $gray-dark }
-.fill-gray-darkest { fill: $gray-darkest }
-.fill-teal { fill: $teal }
-.fill-teal-dark { fill: $teal-dark }
-.fill-teal-light { fill: $teal-light }
-.fill-tealx { fill: $tealx }
-.fill-tealx-light { fill: $tealx-light }
-.fill-tealx-light-border { fill: $tealx-light-border }
-.fill-tealx-lightest { fill: $tealx-lightest }
-.fill-orange { fill: $orange }
-.fill-yellow { fill: $yellow }
-.fill-yellow2 { fill: $yellow2 }
-.fill-orange-dark { fill: $orange-dark }
-.fill-green { fill: $green }
-.fill-green2 { fill: $green2 }
-.fill-green-dark { fill: $green-dark }
-.fill-red { fill: $red }
-.fill-red2 { fill: $red2 }
-.fill-red-lightest { fill: $red-lightest }
-.fill-blue { fill: $blue }
-.fill-blue2 { fill: $blue2 }
-.fill-active-blue { fill: $active-blue }
-.fill-active-dark-blue { fill: $active-dark-blue }
-.fill-bg-blue { fill: $bg-blue }
-.fill-active-blue-border { fill: $active-blue-border }
-.fill-pink { fill: $pink }
-.fill-light-blue-bg { fill: $light-blue-bg }
-.fill-white { fill: $white }
-.fill-borderColor { fill: $borderColor }
-.fill-transparent { fill: $transparent }
-.fill-figmaColors { fill: $figmaColors }
-.hover-fill-main:hover svg { fill: $main }
-.hover-fill-gray-light-shade:hover svg { fill: $gray-light-shade }
-.hover-fill-gray-lightest:hover svg { fill: $gray-lightest }
-.hover-fill-gray-light:hover svg { fill: $gray-light }
-.hover-fill-gray-bg:hover svg { fill: $gray-bg }
-.hover-fill-gray-medium:hover svg { fill: $gray-medium }
-.hover-fill-gray-dark:hover svg { fill: $gray-dark }
-.hover-fill-gray-darkest:hover svg { fill: $gray-darkest }
-.hover-fill-teal:hover svg { fill: $teal }
-.hover-fill-teal-dark:hover svg { fill: $teal-dark }
-.hover-fill-teal-light:hover svg { fill: $teal-light }
-.hover-fill-tealx:hover svg { fill: $tealx }
-.hover-fill-tealx-light:hover svg { fill: $tealx-light }
-.hover-fill-tealx-light-border:hover svg { fill: $tealx-light-border }
-.hover-fill-tealx-lightest:hover svg { fill: $tealx-lightest }
-.hover-fill-orange:hover svg { fill: $orange }
-.hover-fill-yellow:hover svg { fill: $yellow }
-.hover-fill-yellow2:hover svg { fill: $yellow2 }
-.hover-fill-orange-dark:hover svg { fill: $orange-dark }
-.hover-fill-green:hover svg { fill: $green }
-.hover-fill-green2:hover svg { fill: $green2 }
-.hover-fill-green-dark:hover svg { fill: $green-dark }
-.hover-fill-red:hover svg { fill: $red }
-.hover-fill-red2:hover svg { fill: $red2 }
-.hover-fill-red-lightest:hover svg { fill: $red-lightest }
-.hover-fill-blue:hover svg { fill: $blue }
-.hover-fill-blue2:hover svg { fill: $blue2 }
-.hover-fill-active-blue:hover svg { fill: $active-blue }
-.hover-fill-active-dark-blue:hover svg { fill: $active-dark-blue }
-.hover-fill-bg-blue:hover svg { fill: $bg-blue }
-.hover-fill-active-blue-border:hover svg { fill: $active-blue-border }
-.hover-fill-pink:hover svg { fill: $pink }
-.hover-fill-light-blue-bg:hover svg { fill: $light-blue-bg }
-.hover-fill-white:hover svg { fill: $white }
-.hover-fill-borderColor:hover svg { fill: $borderColor }
-.hover-fill-transparent:hover svg { fill: $transparent }
-.hover-fill-figmaColors:hover svg { fill: $figmaColors }
+.fill-main { fill: #394EFF }
+.fill-gray-light-shade { fill: #EEEEEE }
+.fill-gray-lightest { fill: #f6f6f6 }
+.fill-gray-light { fill: #ddd }
+.fill-gray-bg { fill: #CCC }
+.fill-gray-medium { fill: #888 }
+.fill-gray-dark { fill: #666 }
+.fill-gray-darkest { fill: #333 }
+.fill-teal { fill: #394EFF }
+.fill-teal-dark { fill: #2331A8 }
+.fill-teal-light { fill: rgba(57, 78, 255, 0.1) }
+.fill-tealx { fill: #3EAAAF }
+.fill-tealx-light { fill: #E2F0EE }
+.fill-tealx-light-border { fill: #C6DCDA }
+.fill-tealx-lightest { fill: rgba(62, 170, 175, 0.1) }
+.fill-orange { fill: #E28940 }
+.fill-yellow { fill: #FFFBE5 }
+.fill-yellow2 { fill: #F5A623 }
+.fill-orange-dark { fill: #C26822 }
+.fill-green { fill: #42AE5E }
+.fill-green2 { fill: #00dc69 }
+.fill-green-dark { fill: #2C9848 }
+.fill-red { fill: #cc0000 }
+.fill-red2 { fill: #F5A623 }
+.fill-red-lightest { fill: rgba(204, 0, 0, 0.1) }
+.fill-blue { fill: #366CD9 }
+.fill-blue2 { fill: #0076FF }
+.fill-active-blue { fill: #F6F7FF }
+.fill-active-dark-blue { fill: #E2E4F6 }
+.fill-bg-blue { fill: #e3e6ff }
+.fill-active-blue-border { fill: #D0D4F2 }
+.fill-pink { fill: #ffb9b9 }
+.fill-light-blue-bg { fill: #E5F7F7 }
+.fill-white { fill: #fff }
+.fill-borderColor-default { fill: #DDDDDD }
+.fill-borderColor-gray-light-shade { fill: #EEEEEE }
+.fill-borderColor-primary { fill: #3490dc }
+.fill-borderColor-transparent { fill: transparent }
+.fill-transparent { fill: transparent }
+.fill-figmaColors-accent-secondary { fill: rgba(62, 170, 175, 1) }
+.fill-figmaColors-main { fill: rgba(57, 78, 255, 1) }
+.fill-figmaColors-primary-outlined-hover-background { fill: rgba(62, 170, 175, 0.08) }
+.fill-figmaColors-primary-outlined-resting-border { fill: rgba(62, 170, 175, 0.5) }
+.fill-figmaColors-secondary-outlined-hover-background { fill: rgba(63, 81, 181, 0.08) }
+.fill-figmaColors-secondary-outlined-resting-border { fill: rgba(63, 81, 181, 0.5) }
+.fill-figmaColors-text-disabled { fill: rgba(0,0,0, 0.38) }
+.fill-figmaColors-text-primary { fill: rgba(0,0,0, 0.87) }
+.fill-figmaColors-outlined-border { fill: rgba(0,0,0, 0.23) }
+.fill-figmaColors-divider { fill: rgba(0, 0, 0, 0.12) }
+.hover-fill-main:hover svg { fill: #394EFF }
+.hover-fill-gray-light-shade:hover svg { fill: #EEEEEE }
+.hover-fill-gray-lightest:hover svg { fill: #f6f6f6 }
+.hover-fill-gray-light:hover svg { fill: #ddd }
+.hover-fill-gray-bg:hover svg { fill: #CCC }
+.hover-fill-gray-medium:hover svg { fill: #888 }
+.hover-fill-gray-dark:hover svg { fill: #666 }
+.hover-fill-gray-darkest:hover svg { fill: #333 }
+.hover-fill-teal:hover svg { fill: #394EFF }
+.hover-fill-teal-dark:hover svg { fill: #2331A8 }
+.hover-fill-teal-light:hover svg { fill: rgba(57, 78, 255, 0.1) }
+.hover-fill-tealx:hover svg { fill: #3EAAAF }
+.hover-fill-tealx-light:hover svg { fill: #E2F0EE }
+.hover-fill-tealx-light-border:hover svg { fill: #C6DCDA }
+.hover-fill-tealx-lightest:hover svg { fill: rgba(62, 170, 175, 0.1) }
+.hover-fill-orange:hover svg { fill: #E28940 }
+.hover-fill-yellow:hover svg { fill: #FFFBE5 }
+.hover-fill-yellow2:hover svg { fill: #F5A623 }
+.hover-fill-orange-dark:hover svg { fill: #C26822 }
+.hover-fill-green:hover svg { fill: #42AE5E }
+.hover-fill-green2:hover svg { fill: #00dc69 }
+.hover-fill-green-dark:hover svg { fill: #2C9848 }
+.hover-fill-red:hover svg { fill: #cc0000 }
+.hover-fill-red2:hover svg { fill: #F5A623 }
+.hover-fill-red-lightest:hover svg { fill: rgba(204, 0, 0, 0.1) }
+.hover-fill-blue:hover svg { fill: #366CD9 }
+.hover-fill-blue2:hover svg { fill: #0076FF }
+.hover-fill-active-blue:hover svg { fill: #F6F7FF }
+.hover-fill-active-dark-blue:hover svg { fill: #E2E4F6 }
+.hover-fill-bg-blue:hover svg { fill: #e3e6ff }
+.hover-fill-active-blue-border:hover svg { fill: #D0D4F2 }
+.hover-fill-pink:hover svg { fill: #ffb9b9 }
+.hover-fill-light-blue-bg:hover svg { fill: #E5F7F7 }
+.hover-fill-white:hover svg { fill: #fff }
+.hover-fill-borderColor-default:hover svg { fill: #DDDDDD }
+.hover-fill-borderColor-gray-light-shade:hover svg { fill: #EEEEEE }
+.hover-fill-borderColor-primary:hover svg { fill: #3490dc }
+.hover-fill-borderColor-transparent:hover svg { fill: transparent }
+.hover-fill-transparent:hover svg { fill: transparent }
+.hover-fill-figmaColors-accent-secondary:hover svg { fill: rgba(62, 170, 175, 1) }
+.hover-fill-figmaColors-main:hover svg { fill: rgba(57, 78, 255, 1) }
+.hover-fill-figmaColors-primary-outlined-hover-background:hover svg { fill: rgba(62, 170, 175, 0.08) }
+.hover-fill-figmaColors-primary-outlined-resting-border:hover svg { fill: rgba(62, 170, 175, 0.5) }
+.hover-fill-figmaColors-secondary-outlined-hover-background:hover svg { fill: rgba(63, 81, 181, 0.08) }
+.hover-fill-figmaColors-secondary-outlined-resting-border:hover svg { fill: rgba(63, 81, 181, 0.5) }
+.hover-fill-figmaColors-text-disabled:hover svg { fill: rgba(0,0,0, 0.38) }
+.hover-fill-figmaColors-text-primary:hover svg { fill: rgba(0,0,0, 0.87) }
+.hover-fill-figmaColors-outlined-border:hover svg { fill: rgba(0,0,0, 0.23) }
+.hover-fill-figmaColors-divider:hover svg { fill: rgba(0, 0, 0, 0.12) }
 
 /* color */
-.color-main { color: $main }
-.color-gray-light-shade { color: $gray-light-shade }
-.color-gray-lightest { color: $gray-lightest }
-.color-gray-light { color: $gray-light }
-.color-gray-bg { color: $gray-bg }
-.color-gray-medium { color: $gray-medium }
-.color-gray-dark { color: $gray-dark }
-.color-gray-darkest { color: $gray-darkest }
-.color-teal { color: $teal }
-.color-teal-dark { color: $teal-dark }
-.color-teal-light { color: $teal-light }
-.color-tealx { color: $tealx }
-.color-tealx-light { color: $tealx-light }
-.color-tealx-light-border { color: $tealx-light-border }
-.color-tealx-lightest { color: $tealx-lightest }
-.color-orange { color: $orange }
-.color-yellow { color: $yellow }
-.color-yellow2 { color: $yellow2 }
-.color-orange-dark { color: $orange-dark }
-.color-green { color: $green }
-.color-green2 { color: $green2 }
-.color-green-dark { color: $green-dark }
-.color-red { color: $red }
-.color-red2 { color: $red2 }
-.color-red-lightest { color: $red-lightest }
-.color-blue { color: $blue }
-.color-blue2 { color: $blue2 }
-.color-active-blue { color: $active-blue }
-.color-active-dark-blue { color: $active-dark-blue }
-.color-bg-blue { color: $bg-blue }
-.color-active-blue-border { color: $active-blue-border }
-.color-pink { color: $pink }
-.color-light-blue-bg { color: $light-blue-bg }
-.color-white { color: $white }
-.color-borderColor { color: $borderColor }
-.color-transparent { color: $transparent }
-.color-figmaColors { color: $figmaColors }
+.color-main { color: #394EFF }
+.color-gray-light-shade { color: #EEEEEE }
+.color-gray-lightest { color: #f6f6f6 }
+.color-gray-light { color: #ddd }
+.color-gray-bg { color: #CCC }
+.color-gray-medium { color: #888 }
+.color-gray-dark { color: #666 }
+.color-gray-darkest { color: #333 }
+.color-teal { color: #394EFF }
+.color-teal-dark { color: #2331A8 }
+.color-teal-light { color: rgba(57, 78, 255, 0.1) }
+.color-tealx { color: #3EAAAF }
+.color-tealx-light { color: #E2F0EE }
+.color-tealx-light-border { color: #C6DCDA }
+.color-tealx-lightest { color: rgba(62, 170, 175, 0.1) }
+.color-orange { color: #E28940 }
+.color-yellow { color: #FFFBE5 }
+.color-yellow2 { color: #F5A623 }
+.color-orange-dark { color: #C26822 }
+.color-green { color: #42AE5E }
+.color-green2 { color: #00dc69 }
+.color-green-dark { color: #2C9848 }
+.color-red { color: #cc0000 }
+.color-red2 { color: #F5A623 }
+.color-red-lightest { color: rgba(204, 0, 0, 0.1) }
+.color-blue { color: #366CD9 }
+.color-blue2 { color: #0076FF }
+.color-active-blue { color: #F6F7FF }
+.color-active-dark-blue { color: #E2E4F6 }
+.color-bg-blue { color: #e3e6ff }
+.color-active-blue-border { color: #D0D4F2 }
+.color-pink { color: #ffb9b9 }
+.color-light-blue-bg { color: #E5F7F7 }
+.color-white { color: #fff }
+.color-borderColor-default { color: #DDDDDD }
+.color-borderColor-gray-light-shade { color: #EEEEEE }
+.color-borderColor-primary { color: #3490dc }
+.color-borderColor-transparent { color: transparent }
+.color-transparent { color: transparent }
+.color-figmaColors-accent-secondary { color: rgba(62, 170, 175, 1) }
+.color-figmaColors-main { color: rgba(57, 78, 255, 1) }
+.color-figmaColors-primary-outlined-hover-background { color: rgba(62, 170, 175, 0.08) }
+.color-figmaColors-primary-outlined-resting-border { color: rgba(62, 170, 175, 0.5) }
+.color-figmaColors-secondary-outlined-hover-background { color: rgba(63, 81, 181, 0.08) }
+.color-figmaColors-secondary-outlined-resting-border { color: rgba(63, 81, 181, 0.5) }
+.color-figmaColors-text-disabled { color: rgba(0,0,0, 0.38) }
+.color-figmaColors-text-primary { color: rgba(0,0,0, 0.87) }
+.color-figmaColors-outlined-border { color: rgba(0,0,0, 0.23) }
+.color-figmaColors-divider { color: rgba(0, 0, 0, 0.12) }
 
 /* hover color */
-.hover-main:hover { color: $main }
-.hover-gray-light-shade:hover { color: $gray-light-shade }
-.hover-gray-lightest:hover { color: $gray-lightest }
-.hover-gray-light:hover { color: $gray-light }
-.hover-gray-bg:hover { color: $gray-bg }
-.hover-gray-medium:hover { color: $gray-medium }
-.hover-gray-dark:hover { color: $gray-dark }
-.hover-gray-darkest:hover { color: $gray-darkest }
-.hover-teal:hover { color: $teal }
-.hover-teal-dark:hover { color: $teal-dark }
-.hover-teal-light:hover { color: $teal-light }
-.hover-tealx:hover { color: $tealx }
-.hover-tealx-light:hover { color: $tealx-light }
-.hover-tealx-light-border:hover { color: $tealx-light-border }
-.hover-tealx-lightest:hover { color: $tealx-lightest }
-.hover-orange:hover { color: $orange }
-.hover-yellow:hover { color: $yellow }
-.hover-yellow2:hover { color: $yellow2 }
-.hover-orange-dark:hover { color: $orange-dark }
-.hover-green:hover { color: $green }
-.hover-green2:hover { color: $green2 }
-.hover-green-dark:hover { color: $green-dark }
-.hover-red:hover { color: $red }
-.hover-red2:hover { color: $red2 }
-.hover-red-lightest:hover { color: $red-lightest }
-.hover-blue:hover { color: $blue }
-.hover-blue2:hover { color: $blue2 }
-.hover-active-blue:hover { color: $active-blue }
-.hover-active-dark-blue:hover { color: $active-dark-blue }
-.hover-bg-blue:hover { color: $bg-blue }
-.hover-active-blue-border:hover { color: $active-blue-border }
-.hover-pink:hover { color: $pink }
-.hover-light-blue-bg:hover { color: $light-blue-bg }
-.hover-white:hover { color: $white }
-.hover-borderColor:hover { color: $borderColor }
-.hover-transparent:hover { color: $transparent }
-.hover-figmaColors:hover { color: $figmaColors }
+.hover-main:hover { color: #394EFF }
+.hover-gray-light-shade:hover { color: #EEEEEE }
+.hover-gray-lightest:hover { color: #f6f6f6 }
+.hover-gray-light:hover { color: #ddd }
+.hover-gray-bg:hover { color: #CCC }
+.hover-gray-medium:hover { color: #888 }
+.hover-gray-dark:hover { color: #666 }
+.hover-gray-darkest:hover { color: #333 }
+.hover-teal:hover { color: #394EFF }
+.hover-teal-dark:hover { color: #2331A8 }
+.hover-teal-light:hover { color: rgba(57, 78, 255, 0.1) }
+.hover-tealx:hover { color: #3EAAAF }
+.hover-tealx-light:hover { color: #E2F0EE }
+.hover-tealx-light-border:hover { color: #C6DCDA }
+.hover-tealx-lightest:hover { color: rgba(62, 170, 175, 0.1) }
+.hover-orange:hover { color: #E28940 }
+.hover-yellow:hover { color: #FFFBE5 }
+.hover-yellow2:hover { color: #F5A623 }
+.hover-orange-dark:hover { color: #C26822 }
+.hover-green:hover { color: #42AE5E }
+.hover-green2:hover { color: #00dc69 }
+.hover-green-dark:hover { color: #2C9848 }
+.hover-red:hover { color: #cc0000 }
+.hover-red2:hover { color: #F5A623 }
+.hover-red-lightest:hover { color: rgba(204, 0, 0, 0.1) }
+.hover-blue:hover { color: #366CD9 }
+.hover-blue2:hover { color: #0076FF }
+.hover-active-blue:hover { color: #F6F7FF }
+.hover-active-dark-blue:hover { color: #E2E4F6 }
+.hover-bg-blue:hover { color: #e3e6ff }
+.hover-active-blue-border:hover { color: #D0D4F2 }
+.hover-pink:hover { color: #ffb9b9 }
+.hover-light-blue-bg:hover { color: #E5F7F7 }
+.hover-white:hover { color: #fff }
+.hover-borderColor-default:hover { color: #DDDDDD }
+.hover-borderColor-gray-light-shade:hover { color: #EEEEEE }
+.hover-borderColor-primary:hover { color: #3490dc }
+.hover-borderColor-transparent:hover { color: transparent }
+.hover-transparent:hover { color: transparent }
+.hover-figmaColors-accent-secondary:hover { color: rgba(62, 170, 175, 1) }
+.hover-figmaColors-main:hover { color: rgba(57, 78, 255, 1) }
+.hover-figmaColors-primary-outlined-hover-background:hover { color: rgba(62, 170, 175, 0.08) }
+.hover-figmaColors-primary-outlined-resting-border:hover { color: rgba(62, 170, 175, 0.5) }
+.hover-figmaColors-secondary-outlined-hover-background:hover { color: rgba(63, 81, 181, 0.08) }
+.hover-figmaColors-secondary-outlined-resting-border:hover { color: rgba(63, 81, 181, 0.5) }
+.hover-figmaColors-text-disabled:hover { color: rgba(0,0,0, 0.38) }
+.hover-figmaColors-text-primary:hover { color: rgba(0,0,0, 0.87) }
+.hover-figmaColors-outlined-border:hover { color: rgba(0,0,0, 0.23) }
+.hover-figmaColors-divider:hover { color: rgba(0, 0, 0, 0.12) }
 
-.border-main { border-color: $main }
-.border-gray-light-shade { border-color: $gray-light-shade }
-.border-gray-lightest { border-color: $gray-lightest }
-.border-gray-light { border-color: $gray-light }
-.border-gray-bg { border-color: $gray-bg }
-.border-gray-medium { border-color: $gray-medium }
-.border-gray-dark { border-color: $gray-dark }
-.border-gray-darkest { border-color: $gray-darkest }
-.border-teal { border-color: $teal }
-.border-teal-dark { border-color: $teal-dark }
-.border-teal-light { border-color: $teal-light }
-.border-tealx { border-color: $tealx }
-.border-tealx-light { border-color: $tealx-light }
-.border-tealx-light-border { border-color: $tealx-light-border }
-.border-tealx-lightest { border-color: $tealx-lightest }
-.border-orange { border-color: $orange }
-.border-yellow { border-color: $yellow }
-.border-yellow2 { border-color: $yellow2 }
-.border-orange-dark { border-color: $orange-dark }
-.border-green { border-color: $green }
-.border-green2 { border-color: $green2 }
-.border-green-dark { border-color: $green-dark }
-.border-red { border-color: $red }
-.border-red2 { border-color: $red2 }
-.border-red-lightest { border-color: $red-lightest }
-.border-blue { border-color: $blue }
-.border-blue2 { border-color: $blue2 }
-.border-active-blue { border-color: $active-blue }
-.border-active-dark-blue { border-color: $active-dark-blue }
-.border-bg-blue { border-color: $bg-blue }
-.border-active-blue-border { border-color: $active-blue-border }
-.border-pink { border-color: $pink }
-.border-light-blue-bg { border-color: $light-blue-bg }
-.border-white { border-color: $white }
-.border-borderColor { border-color: $borderColor }
-.border-transparent { border-color: $transparent }
-.border-figmaColors { border-color: $figmaColors }
+.border-main { border-color: #394EFF }
+.border-gray-light-shade { border-color: #EEEEEE }
+.border-gray-lightest { border-color: #f6f6f6 }
+.border-gray-light { border-color: #ddd }
+.border-gray-bg { border-color: #CCC }
+.border-gray-medium { border-color: #888 }
+.border-gray-dark { border-color: #666 }
+.border-gray-darkest { border-color: #333 }
+.border-teal { border-color: #394EFF }
+.border-teal-dark { border-color: #2331A8 }
+.border-teal-light { border-color: rgba(57, 78, 255, 0.1) }
+.border-tealx { border-color: #3EAAAF }
+.border-tealx-light { border-color: #E2F0EE }
+.border-tealx-light-border { border-color: #C6DCDA }
+.border-tealx-lightest { border-color: rgba(62, 170, 175, 0.1) }
+.border-orange { border-color: #E28940 }
+.border-yellow { border-color: #FFFBE5 }
+.border-yellow2 { border-color: #F5A623 }
+.border-orange-dark { border-color: #C26822 }
+.border-green { border-color: #42AE5E }
+.border-green2 { border-color: #00dc69 }
+.border-green-dark { border-color: #2C9848 }
+.border-red { border-color: #cc0000 }
+.border-red2 { border-color: #F5A623 }
+.border-red-lightest { border-color: rgba(204, 0, 0, 0.1) }
+.border-blue { border-color: #366CD9 }
+.border-blue2 { border-color: #0076FF }
+.border-active-blue { border-color: #F6F7FF }
+.border-active-dark-blue { border-color: #E2E4F6 }
+.border-bg-blue { border-color: #e3e6ff }
+.border-active-blue-border { border-color: #D0D4F2 }
+.border-pink { border-color: #ffb9b9 }
+.border-light-blue-bg { border-color: #E5F7F7 }
+.border-white { border-color: #fff }
+.border-borderColor-default { border-color: #DDDDDD }
+.border-borderColor-gray-light-shade { border-color: #EEEEEE }
+.border-borderColor-primary { border-color: #3490dc }
+.border-borderColor-transparent { border-color: transparent }
+.border-transparent { border-color: transparent }
+.border-figmaColors-accent-secondary { border-color: rgba(62, 170, 175, 1) }
+.border-figmaColors-main { border-color: rgba(57, 78, 255, 1) }
+.border-figmaColors-primary-outlined-hover-background { border-color: rgba(62, 170, 175, 0.08) }
+.border-figmaColors-primary-outlined-resting-border { border-color: rgba(62, 170, 175, 0.5) }
+.border-figmaColors-secondary-outlined-hover-background { border-color: rgba(63, 81, 181, 0.08) }
+.border-figmaColors-secondary-outlined-resting-border { border-color: rgba(63, 81, 181, 0.5) }
+.border-figmaColors-text-disabled { border-color: rgba(0,0,0, 0.38) }
+.border-figmaColors-text-primary { border-color: rgba(0,0,0, 0.87) }
+.border-figmaColors-outlined-border { border-color: rgba(0,0,0, 0.23) }
+.border-figmaColors-divider { border-color: rgba(0, 0, 0, 0.12) }
