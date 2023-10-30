@@ -156,6 +156,13 @@ CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
 ALTER TABLE IF EXISTS public.users
     ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT NULL;
 
+--To fix array-gdpr
+UPDATE public.projects
+SET gdpr=(SELECT *
+          FROM (SELECT jsonb_array_elements(gdpr) AS g) AS ra
+          WHERE jsonb_typeof(g) = 'object'
+          LIMIT 1)
+WHERE jsonb_typeof(gdpr) = 'array';
 
 COMMIT;
 
