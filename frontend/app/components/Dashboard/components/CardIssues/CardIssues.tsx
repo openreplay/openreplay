@@ -19,6 +19,7 @@ function CardIssues() {
   const [loading, setLoading] = useState(false);
   const widget: any = useObserver(() => metricStore.instance);
   const isMounted = useIsMounted();
+  const pageSize = 5;
   const { showModal } = useModal();
 
   const fetchIssues = async (filter: any) => {
@@ -41,6 +42,8 @@ function CardIssues() {
 
     const newFilter = {
       ...filter,
+      limit: pageSize,
+      page: metricStore.sessionsPage,
       series: filter.series.map(mapSeries)
     };
 
@@ -66,21 +69,20 @@ function CardIssues() {
   useEffect(() => {
     const newPayload = {
       ...widget,
-      page: metricStore.sessionsPage,
-      limit: metricStore.sessionsPageSize,
+      page: filter.page,
+      limit: filter.limit,
       filters: filter.filters
     };
-    console.log('drillDownPeriod', newPayload);
     debounceRequest(newPayload);
-  }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
+  }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
 
   return useObserver(() => (
     <div className='my-8 bg-white rounded p-4 border'>
       <div className='flex justify-between'>
         <h1 className='font-medium text-2xl'>Issues</h1>
-        {/*<div>*/}
-        {/*  <Button variant='text-primary'>All Sessions</Button>*/}
-        {/*</div>*/}
+        <div>
+          <Button variant='text-primary'>All Sessions</Button>
+        </div>
       </div>
 
       <Loader loading={loading}>
@@ -94,16 +96,22 @@ function CardIssues() {
       </Loader>
 
       <div className='w-full flex items-center justify-between pt-4'>
+
         <div className='text-disabled-text'>
-          Showing <span
-          className='font-semibold'>{Math.min(data.issues.length, metricStore.sessionsPageSize)}</span> out of{' '}
-          <span className='font-semibold'>{data.total}</span> Issues
+          {data.total && (
+            <>
+              Showing < span className='font-medium'>{(filter.page - 1) * pageSize + 1}</span> to{' '}
+              <span className='font-medium'>{(filter.page - 1) * pageSize + pageSize}</span> of{' '}
+              <span className='font-medium'>{data.total}</span> issues.
+            </>
+          )}
         </div>
+
         <Pagination
-          page={metricStore.sessionsPage}
-          totalPages={Math.ceil(data.issues.length / metricStore.sessionsPageSize)}
-          onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
-          limit={metricStore.sessionsPageSize}
+          page={filter.page}
+          totalPages={Math.ceil(data.total / pageSize)}
+          onPageChange={(page: any) => filter.updateKey('page', page)}
+          limit={pageSize}
           debounceRequest={500}
         />
       </div>
