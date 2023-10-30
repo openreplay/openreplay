@@ -223,11 +223,11 @@ def get_gdpr(project_id):
 def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
-                               SET gdpr = gdpr|| %(gdpr)s
+                               SET gdpr = gdpr|| %(gdpr)s::jsonb
                                WHERE project_id = %(project_id)s
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
-                            {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump_json())})
+                            {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump())})
         cur.execute(query=query)
         row = cur.fetchone()
         if not row:
