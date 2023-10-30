@@ -79,7 +79,15 @@ function CardIssues() {
   return useObserver(() => (
     <div className='my-8 bg-white rounded p-4 border'>
       <div className='flex justify-between'>
-        <h1 className='font-medium text-2xl'>Issues</h1>
+        <div className='flex items-center'>
+          <h1 className='font-medium text-2xl'>Issues</h1>
+          {filter.filters.length > 0 && (
+            <div className='text-disabled-text ml-3'>
+              Showing issues of <span className='font-medium'>{filter.filters[0].value}</span> to
+              <span className='font-medium'>{filter.filters[1].value}</span>
+            </div>
+          )}
+        </div>
         <div>
           <Button variant='text-primary'>All Sessions</Button>
         </div>
