@@ -12,9 +12,9 @@ export const getPdf2 = async () => {
       const now = new Date().toISOString();
 
       doc.addMetadata('Author', 'OpenReplay');
-      doc.addMetadata('Title', 'OpenReplay Assist Stats');
-      doc.addMetadata('Subject', 'OpenReplay Assist Stats');
-      doc.addMetadata('Keywords', 'OpenReplay Assist Stats');
+      doc.addMetadata('Title', 'OpenReplay Cobrowsing Report');
+      doc.addMetadata('Subject', 'OpenReplay Cobrowsing Report');
+      doc.addMetadata('Keywords', 'OpenReplay Cobrowsing Report');
       doc.addMetadata('Creator', 'OpenReplay');
       doc.addMetadata('Producer', 'OpenReplay');
       doc.addMetadata('CreationDate', now);

@@ -1,21 +1,42 @@
 const fs = require('fs');
+const colors = require('../app/theme/colors.js');
 
+// Helper function to flatten the nested color objects
+const flattenColors = (colors) => {
+  let flatColors = {};
 
-const colors = Object.keys(require('../app/theme/colors.js'));
+  for (const [key, value] of Object.entries(colors)) {
+    if (typeof value === 'object') {
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        flatColors[`${key}-${nestedKey}`] = nestedValue;
+      }
+    } else {
+      flatColors[key] = value;
+    }
+  }
 
+  return flatColors;
+};
 
-fs.writeFileSync('app/styles/colors-autogen.css', `/* Auto-generated, DO NOT EDIT */
+const flatColors = flattenColors(colors);
+
+const generatedCSS = `/* Auto-generated, DO NOT EDIT */
 
 /* fill */
-${ colors.map(color => `.fill-${ color } { fill: $${ color } }`).join('\n') }
-${ colors.map(color => `.hover-fill-${ color }:hover svg { fill: $${ color } }`).join('\n') }
+${ Object.entries(flatColors).map(([name, value]) => `.fill-${ name.replace(/ /g, '-') } { fill: ${ value } }`).join('\n') }
+${ Object.entries(flatColors).map(([name, value]) => `.hover-fill-${ name.replace(/ /g, '-') }:hover svg { fill: ${ value } }`).join('\n') }
 
 /* color */
-${ colors.map(color => `.color-${ color } { color: $${ color } }`).join('\n') }
+${ Object.entries(flatColors).map(([name, value]) => `.color-${ name.replace(/ /g, '-') } { color: ${ value } }`).join('\n') }
 
 /* hover color */
-${ colors.map(color => `.hover-${ color }:hover { color: $${ color } }`).join('\n') }
+${ Object.entries(flatColors).map(([name, value]) => `.hover-${ name.replace(/ /g, '-') }:hover { color: ${ value } }`).join('\n') }
 
-${ colors.map(color => `.border-${ color } { border-color: $${ color } }`).join('\n') }
-`)
+${ Object.entries(flatColors).map(([name, value]) => `.border-${ name.replace(/ /g, '-') } { border-color: ${ value } }`).join('\n') }
+`;
 
+// Log the generated CSS to the console
+console.log(generatedCSS);
+
+// Write the generated CSS to a file
+fs.writeFileSync('app/styles/colors-autogen.css', generatedCSS);

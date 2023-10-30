@@ -54,6 +54,7 @@ export const enum MENU {
   FEATURE_FLAGS = 'feature-flags',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
+  EXIT = 'exit',
 }
 
 export const categories: Category[] = [
@@ -74,7 +75,7 @@ export const categories: Category[] = [
     items: [
       { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
       { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true },
-      { label: 'Stats', key: MENU.STATS, icon: 'file-bar-graph' },
+      { label: 'Cobrowsing Report', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
     ]
   },
   {
@@ -107,6 +108,13 @@ export const categories: Category[] = [
 
 export const preferences: Category[] = [
   {
+    title: '',
+    key: 'exit',
+    items: [
+      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' }
+    ]
+  },
+  {
     title: 'Preferences',
     key: 'preferences',
     items: [
@@ -126,8 +134,8 @@ export const preferences: Category[] = [
       },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true },
       { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
-      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' },
-      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell', hidden: true }
+      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper' },
+      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true }
     ]
   }
 ];

@@ -1,3 +1,6 @@
+## this plugin is deprecated, all network tracking apis are moved into the main tracker codebase
+______
+
 # Fetch plugin for OpenReplay
 
 This plugin allows you to capture `fetch` payloads and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.

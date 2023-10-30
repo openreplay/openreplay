@@ -14,7 +14,9 @@ import { fetchList as fetchTeams, sendMsTeamsMsg } from 'Duck/integrations/teams
   (state) => ({
     sessionId: state.getIn(['sessions', 'current']).sessionId,
     channels: state.getIn(['slack', 'list']),
+    slackLoaded: state.getIn(['slack', 'loaded']),
     msTeamsChannels: state.getIn(['teams', 'list']),
+    msTeamsLoaded: state.getIn(['teams', 'loaded']),
     tenantId: state.getIn(['user', 'account', 'tenantId']),
   }),
   { fetchSlack, fetchTeams, sendSlackMsg, sendMsTeamsMsg }
@@ -31,10 +33,10 @@ export default class SharePopup extends React.PureComponent {
 
   componentDidUpdate() {
     if (this.state.isOpen) {
-      if (this.props.channels.size === 0) {
+      if (this.props.channels.size === 0 && !this.props.slackLoaded) {
         this.props.fetchSlack();
       }
-      if (this.props.msTeamsChannels.size === 0) {
+      if (this.props.msTeamsChannels.size === 0 && !this.props.msTeamsLoaded) {
         this.props.fetchTeams();
       }
     }

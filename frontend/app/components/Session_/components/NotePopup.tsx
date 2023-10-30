@@ -16,7 +16,7 @@ function NotePopup({
   const toggleNotePopup = () => {
     if (tooltipActive) return;
     player.pause();
-    setCreateNoteTooltip({ time: store.get().time, isVisible: true });
+    setCreateNoteTooltip({ time: Math.round(store.get().time), isVisible: true });
   };
 
   React.useEffect(() => {

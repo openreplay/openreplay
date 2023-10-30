@@ -173,7 +173,7 @@ func main() {
 						}
 					}
 				}
-				if sess.Platform == "ios" {
+				if sess != nil && sess.Platform == "ios" {
 					msg := &messages.IOSSessionEnd{Timestamp: timestamp}
 					if err := producer.Produce(cfg.TopicRawIOS, sessionID, msg.Encode()); err != nil {
 						log.Printf("can't send iOSSessionEnd to topic: %s; sessID: %d", err, sessionID)

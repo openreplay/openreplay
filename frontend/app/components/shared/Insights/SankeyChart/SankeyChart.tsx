@@ -93,20 +93,21 @@ const SankeyChart: React.FC<Props> = ({
     const sourceNode = data.nodes[sourceLink.target];
 
     const filters = [];
-    if (sourceNode) {
-      filters.push({
-        operator: 'is',
-        type: sourceNode.eventType,
-        value: [sourceNode.name],
-        isEvent: true
-      });
-    }
 
     if (targetNode) {
       filters.push({
         operator: 'is',
         type: targetNode.eventType,
         value: [targetNode.name],
+        isEvent: true
+      });
+    }
+
+    if (sourceNode) {
+      filters.push({
+        operator: 'is',
+        type: sourceNode.eventType,
+        value: [sourceNode.name],
         isEvent: true
       });
     }
@@ -138,7 +139,7 @@ const SankeyChart: React.FC<Props> = ({
               onMouseLeave={() => setHoveredLinks([])}
             />
           )}
-          margin={{ right: 200 }}
+          margin={{ right: 200, bottom: 50 }}
         >
           <defs>
             <linearGradient id={'linkGradient'}>

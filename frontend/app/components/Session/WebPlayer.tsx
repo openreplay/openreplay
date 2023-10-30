@@ -137,7 +137,7 @@ function WebPlayer(props: any) {
         tabs={TABS}
         fullscreen={fullscreen}
       />
-      {/* @ts-ignore  */}
+    {/* @ts-ignore  */}
       {contextValue.player ? (
         <PlayerContent
           activeTab={activeTab}
