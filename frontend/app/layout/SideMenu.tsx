@@ -138,8 +138,9 @@ function SideMenu(props: Props) {
   return (
     <>
       <Menu
-        defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
+        mode='inline' onClick={handleClick}
         style={{ marginTop: '8px', border: 'none' }}
+        selectedKeys={menu.flatMap(category => category.items.filter((item: any) => isMenuItemActive(item.key)).map(item => item.key))}
       >
         {isPreferencesActive && (
           <Menu.ItemGroup>
