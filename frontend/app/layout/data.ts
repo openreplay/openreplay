@@ -54,6 +54,7 @@ export const enum MENU {
   FEATURE_FLAGS = 'feature-flags',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
+  EXIT = 'exit',
 }
 
 export const categories: Category[] = [
@@ -74,7 +75,7 @@ export const categories: Category[] = [
     items: [
       { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
       { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true },
-      { label: 'Cobrowsing Report', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true },
+      { label: 'Cobrowsing Report', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
     ]
   },
   {
@@ -106,6 +107,13 @@ export const categories: Category[] = [
 ];
 
 export const preferences: Category[] = [
+  {
+    title: '',
+    key: 'exit',
+    items: [
+      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' }
+    ]
+  },
   {
     title: 'Preferences',
     key: 'preferences',

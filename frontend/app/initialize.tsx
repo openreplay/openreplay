@@ -35,7 +35,12 @@ const customTheme: ThemeConfig = {
 
       itemActiveBg: colors['active-blue'],
       itemSelectedBg: colors['active-blue'],
-      itemSelectedColor: colors['teal']
+      itemSelectedColor: colors['teal'],
+
+      itemMarginBlock: 0,
+      itemPaddingInline: 50,
+      iconMarginInlineEnd: 14,
+      collapsedWidth: 180,
     },
     Button: {
       colorPrimary: colors.teal
