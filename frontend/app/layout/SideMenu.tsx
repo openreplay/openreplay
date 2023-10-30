@@ -180,7 +180,7 @@ function SideMenu(props: Props) {
                         key={item.key}
                         icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} className={"hover-fill-teal"} />}
                         style={{ paddingLeft: '20px' }}
-                        className={cn('!rounded')}
+                        className={cn('!rounded hover-fill-teal')}
                         itemIcon={item.leading ?
                           <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
                         {item.label}
