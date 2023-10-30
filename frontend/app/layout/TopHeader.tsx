@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Logo from 'App/layout/Logo';
 import TopRight from 'App/layout/TopRight';
-import { Layout, Space } from 'antd';
+import { Layout, Space, Tooltip } from 'antd';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 import { observer, useObserver } from 'mobx-react-lite';
@@ -62,7 +62,9 @@ function TopHeader(props: Props) {
           style={{ paddingTop: '4px' }}
           className='cursor-pointer'
         >
-          <Icon name={settingsStore.menuCollapsed ? 'side_menu_closed' : 'side_menu_open'} size={20} />
+          <Tooltip title={settingsStore.menuCollapsed ? 'Show Menu' : 'Hide Menu'} mouseEnterDelay={1}>
+            <Icon name={settingsStore.menuCollapsed ? 'side_menu_closed' : 'side_menu_open'} size={20} />
+          </Tooltip>
         </div>
 
         <div className='flex items-center'>
