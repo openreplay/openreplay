@@ -75,6 +75,7 @@ function SessionList(props: Props) {
     activeTab,
     isEnterprise = false,
     sites,
+    isLoggedIn,
     siteId
   } = props;
   const _filterKeys = filters.map((i: any) => i.key);
@@ -118,7 +119,7 @@ function SessionList(props: Props) {
 
 
   useEffect(() => {
-    if (!hasNoRecordings || !activeSite) {
+    if (!hasNoRecordings || !activeSite || !isLoggedIn) {
       return;
     }
 
@@ -129,7 +130,7 @@ function SessionList(props: Props) {
     }, STATUS_FREQUENCY);
 
     return () => clearInterval(sessionStatusTimeOut);
-  }, [hasNoRecordings, activeSite]);
+  }, [hasNoRecordings, activeSite, isLoggedIn]);
 
 
   useEffect(() => {
@@ -292,7 +293,8 @@ export default connect(
     pageSize: state.getIn(['search', 'pageSize']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list'])
+    sites: state.getIn(['site', 'list']),
+    isLoggedIn: Boolean(state.getIn(['user', 'jwt'])),
   }),
   {
     updateCurrentPage,
