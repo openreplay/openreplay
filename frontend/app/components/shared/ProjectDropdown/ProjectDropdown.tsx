@@ -69,7 +69,7 @@ function ProjectDropdown(props: Props) {
 
       {sites.map((site) => (
         <Menu.Item
-          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} />}
+          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} color={activeSite?.host === site.host ? 'main' : undefined} />}
           key={site.id}
           onClick={() => handleSiteChange(site.id)}
           className={cn('!py-2', activeSite?.host === site.host ? 'bg-active-blue' : '')}
