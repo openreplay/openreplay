@@ -68,7 +68,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
       sessionTokenHeader: false,
       captureInIframes: true,
       axiosInstances: undefined,
-      useProxy: false,
+      useProxy: true,
     },
     opts,
   )
