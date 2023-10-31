@@ -53,7 +53,8 @@ const Router: React.FC<RouterProps> = (props) => {
     fetchUserInfo,
     fetchSiteList,
     history,
-    match: { params: { siteId: siteIdFromPath } }
+    match: { params: { siteId: siteIdFromPath } },
+    setSessionPath,
   } = props;
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
@@ -69,8 +70,6 @@ const Router: React.FC<RouterProps> = (props) => {
     if (!isLoggedIn && location.pathname !== routes.login()) {
       localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
     }
-
-    setSessionPath(location);
   };
 
   const handleUserLogin = async () => {
@@ -98,6 +97,9 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     handleJwtFromUrl();
     handleDestinationPath();
+
+
+    setSessionPath(previousLocation ? previousLocation : location);
   }, [location]);
 
   useEffect(() => {
@@ -126,6 +128,7 @@ const Router: React.FC<RouterProps> = (props) => {
   }
 
   const prevIsLoggedIn = usePrevious(isLoggedIn);
+  const previousLocation = usePrevious(location);
 
   const hideHeader = (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') || location.pathname.includes('multiview');
