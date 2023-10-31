@@ -38,7 +38,6 @@ interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connect
   };
   mstore: any;
   setJwt: (jwt: string) => any;
-  additionalRoutes?: React.ReactElement | null;
   fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
 }
@@ -54,7 +53,7 @@ const Router: React.FC<RouterProps> = (props) => {
     fetchSiteList,
     history,
     match: { params: { siteId: siteIdFromPath } },
-    additionalRoutes = null
+    setSessionPath,
   } = props;
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
@@ -70,11 +69,14 @@ const Router: React.FC<RouterProps> = (props) => {
     if (!isLoggedIn && location.pathname !== routes.login()) {
       localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
     }
-
-    setSessionPath(location);
   };
 
   const handleUserLogin = async () => {
+    await fetchUserInfo();
+    const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
+    await fetchSiteList(siteIdFromPath);
+    props.mstore.initClient();
+
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
       destinationPath &&
@@ -84,11 +86,6 @@ const Router: React.FC<RouterProps> = (props) => {
       history.push(destinationPath + location.search);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
-
-    await fetchUserInfo();
-    const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
-    await fetchSiteList(siteIdFromPath);
-    props.mstore.initClient();
   };
 
   useEffect(() => {
@@ -99,6 +96,9 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     handleJwtFromUrl();
     handleDestinationPath();
+
+
+    setSessionPath(previousLocation ? previousLocation : location);
   }, [location]);
 
   useEffect(() => {
@@ -127,6 +127,7 @@ const Router: React.FC<RouterProps> = (props) => {
   }
 
   const prevIsLoggedIn = usePrevious(isLoggedIn);
+  const previousLocation = usePrevious(location);
 
   const hideHeader = (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') || location.pathname.includes('multiview');
@@ -137,12 +138,12 @@ const Router: React.FC<RouterProps> = (props) => {
 
   return isLoggedIn ? (
     <ModalProvider>
-      <Layout hideHeader={hideHeader} siteId={siteId}>
-        <Loader loading={loading || !siteId} className='flex-1'>
+      <Loader loading={loading || !siteId} className='flex-1'>
+        <Layout hideHeader={hideHeader} siteId={siteId}>
           <Notification />
           <PrivateRoutes />
-        </Loader>
-      </Layout>
+        </Layout>
+      </Loader>
     </ModalProvider>
   ) : <PublicRoutes />;
 };
@@ -152,13 +153,14 @@ const mapStateToProps = (state: Map<string, any>) => {
   const jwt = state.getIn(['user', 'jwt']);
   const changePassword = state.getIn(['user', 'account', 'changePassword']);
   const userInfoLoading = state.getIn(['user', 'fetchUserInfoRequest', 'loading']);
+  const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
 
   return {
     siteId,
     changePassword,
     sites: state.getIn(['site', 'list']),
     isLoggedIn: jwt !== null && !changePassword,
-    loading: siteId === null || userInfoLoading,
+    loading: siteId === null || userInfoLoading || sitesLoading,
     email: state.getIn(['user', 'account', 'email']),
     account: state.getIn(['user', 'account']),
     organisation: state.getIn(['user', 'account', 'name']),

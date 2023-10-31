@@ -128,11 +128,9 @@ CREATE TABLE IF NOT EXISTS public.assist_events
     project_id  integer NOT NULL,
     session_id  varchar NOT NULL,
     event_type  varchar NOT NULL,
-    event_state varchar NOT NULL,
-    timestamp   integer NOT NULL,
-    user_id     varchar,
+    timestamp   bigint NOT NULL,
     duration    integer,
-    agent_id    varchar
+    agent_id    integer
 );
 
 CREATE TABLE IF NOT EXISTS public.assist_events_aggregates

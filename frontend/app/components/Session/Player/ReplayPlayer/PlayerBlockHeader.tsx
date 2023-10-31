@@ -51,7 +51,6 @@ function PlayerBlockHeader(props: any) {
   }, []);
 
   const backHandler = () => {
-    history.goBack();
     if (
       sessionPath.pathname === history.location.pathname ||
       sessionPath.pathname.includes('/session/')

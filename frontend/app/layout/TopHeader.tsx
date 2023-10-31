@@ -29,16 +29,13 @@ function TopHeader(props: Props) {
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
+    Promise.all([
+      userStore.fetchLimits(),
+      notificationStore.fetchNotificationsCount()
 
-    setTimeout(() => {
-      Promise.all([
-        userStore.fetchLimits(),
-        notificationStore.fetchNotificationsCount()
-
-      ]).then(() => {
-        userStore.updateKey('initialDataFetched', true);
-      });
-    }, 0);
+    ]).then(() => {
+      userStore.updateKey('initialDataFetched', true);
+    });
   }, [account]);
 
   return (

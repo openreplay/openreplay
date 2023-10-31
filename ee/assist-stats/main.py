@@ -41,16 +41,6 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-@app.on_event("startup")
-def startup_db_client():
-    Base.metadata.create_all(bind=engine)
-
-
-@app.on_event("shutdown")
-def shutdown_db_client():
-    engine.dispose()
-
-
 def get_db():
     db = SessionLocal()
     try:

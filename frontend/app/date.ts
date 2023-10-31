@@ -3,20 +3,41 @@
 import { DateTime, Duration } from 'luxon'; // TODO
 import { Timezone } from 'MOBX/types/sessionSettings';
 
-export const durationFormatted = (duration: Duration):string => {
-  if (duration.as('minutes') < 1) { // show in seconds
-    duration = duration.toFormat('s\'s\'');
-  } else if (duration.as('hours') < 1) { // show in minutes
-    duration = duration.toFormat('m\'m\'s\'s');
-  } else if (duration.as('days') < 1) { // show in hours and minutes
-    duration = duration.toFormat('h\'h\'m\'m');
-  } else if (duration.as('months') < 1) { // show in days and hours
-    duration = duration.toFormat('d\'d\'h\'h');
+/**
+ * Formats a given duration.
+ *
+ * @param {Duration | number} inputDuration - The duration to format. Can be a Duration object or a number representing milliseconds.
+ * @returns {string} - Formatted duration string.
+ *
+ * @example
+ *
+ * // Format a duration from a Duration object
+ * const duration1 = Duration.fromObject({ hours: 2, minutes: 30 });
+ * console.log(durationFormatted(duration1)); // Outputs: "2h30m"
+ *
+ * // Format a duration from milliseconds
+ * console.log(durationFormatted(55000)); // Outputs: "55s"
+ */
+export const durationFormatted = (inputDuration: Duration | number): string => {
+  let duration: Duration;
+
+  if (inputDuration instanceof Duration) {
+    duration = inputDuration;
   } else {
-    duration = duration.toFormat('m\'m\'s\'s\'');
+    duration = Duration.fromMillis(inputDuration);
   }
 
-  return duration;
+  if (duration.as('minutes') < 1) { // show in seconds
+    return duration.toFormat('s\'s\'');
+  } else if (duration.as('hours') < 1) { // show in minutes
+    return duration.toFormat('m\'m\'s\'s\'');
+  } else if (duration.as('days') < 1) { // show in hours and minutes
+    return duration.toFormat('h\'h\'m\'m\'');
+  } else if (duration.as('months') < 1) { // show in days and hours
+    return duration.toFormat('d\'d\'h\'h\'');
+  } else {
+    return duration.toFormat('m\'m\'s\'s\'');
+  }
 };
 
 export function durationFromMsFormatted(ms: number): string {
@@ -44,7 +65,7 @@ export const durationFormattedFull = (duration: Duration): string => {
     duration = d + (d > 1 ? ' days' : ' day');
   } else {
     let d = Math.trunc(duration.as('months'));
-    duration = d + (d > 1 ? ' months' : ' month');;
+    duration = d + (d > 1 ? ' months' : ' month');
   }
 
   return duration;

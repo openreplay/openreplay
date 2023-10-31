@@ -1116,37 +1116,6 @@ $$
             CREATE INDEX swipes_timestamp_idx ON events_ios.swipes (timestamp);
             CREATE INDEX swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
 
-            CREATE TABLE IF NOT EXISTS public.assist_events
-            (
-                event_id    varchar NOT NULL PRIMARY KEY,
-                project_id  integer NOT NULL,
-                session_id  varchar NOT NULL,
-                event_type  varchar NOT NULL,
-                event_state varchar NOT NULL,
-                timestamp   integer NOT NULL,
-                duration    integer,
-                agent_id    integer
-            );
-
-            CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
-            (
-                timestamp     BIGINT  not null,
-                project_id    integer not null,
-                agent_id      integer not null,
-                assist_avg    BIGINT,
-                call_avg      BIGINT,
-                control_avg   BIGINT,
-                assist_total  BIGINT,
-                call_total    BIGINT,
-                control_total BIGINT
-            );
-
-
-            CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
-            (
-                time BIGINT not null
-            );
-
             raise notice 'DB created';
         END IF;
     END;
