@@ -152,6 +152,7 @@ export default class AssistManager {
       const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
       const socket: Socket = this.socket = io(urlObject.origin, {
+        withCredentials: true,
         multiplex: true,
         transports: ['websocket'],
         path: '/ws-assist/socket',
