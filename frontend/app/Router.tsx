@@ -38,7 +38,6 @@ interface RouterProps extends RouteComponentProps, ConnectedProps<typeof connect
   };
   mstore: any;
   setJwt: (jwt: string) => any;
-  additionalRoutes?: React.ReactElement | null;
   fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
 }

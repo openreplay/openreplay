@@ -32,12 +32,6 @@ const siteIdRequiredPaths: string[] = [
   '/check-recording-status'
 ];
 
-const noStoringFetchPathStarts: string[] = [
-  '/account/password',
-  '/password',
-  '/login'
-];
-
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
   const keys = Array.isArray(obj)
     ? new Array(obj.length).fill().map((_, i) => i)
