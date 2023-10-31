@@ -156,3 +156,6 @@ class CardInsights(schemas.CardInsights):
 
 
 CardSchema = ORUnion(Union[schemas.__cards_union_base, CardInsights], discriminator='metric_type')
+
+
+
