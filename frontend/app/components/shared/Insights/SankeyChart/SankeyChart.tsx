@@ -5,7 +5,7 @@ import CustomNode from './CustomNode';
 import { NoContent } from 'UI';
 
 interface Node {
-  id: number;  // Assuming you missed this from your interface
+  idd: number;
   name: string;
   eventType: string;
   avgTimeFromPrevious: number | null;

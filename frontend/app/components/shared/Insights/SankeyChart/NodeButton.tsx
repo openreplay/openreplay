@@ -17,7 +17,7 @@ function NodeButton(props: Props) {
   return (
     <div className='relative'>
       <Popover content={
-        <div className='bg-white rounded w-fit mt-1 text-xs'>
+        <div className='bg-white rounded mt-1 text-xs'>
           <div className='border-b py-1 px-2 flex items-center'>
             <div className='w-6 shrink-0'>
               <Icon name='link-45deg' size={18} />
@@ -30,14 +30,17 @@ function NodeButton(props: Props) {
             </div>
             <div className='ml-1 font-medium'>Continuing {Math.round(payload.value)}%</div>
           </div>
-          <div className='border-b py-1 px-2 flex items-center'>
-            <div className='w-6 shrink-0'>
-              <Icon name='clock-history' size={16} />
+          {payload.avgTimeFromPrevious && (
+            <div className='border-b py-1 px-2 flex items-center'>
+              <div className='w-6 shrink-0'>
+                <Icon name='clock-history' size={16} />
+              </div>
+
+              <div className='ml-1 font-medium'>
+                Average time from previous step <span>{payload.avgTimeFromPrevious}</span>
+              </div>
             </div>
-            <div className='ml-1 font-medium'>
-              Average time from previous step <span>{payload.avgTimeFromPrevious}</span>
-            </div>
-          </div>
+          )}
         </div>
       } title={<div className='text-sm'>Title</div>}>
         <div

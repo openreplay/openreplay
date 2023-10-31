@@ -57,7 +57,7 @@ function CardIssues() {
     }
   };
 
-  const handleClick = (issue: any) => {
+  const handleClick = (issue?: any) => {
     showModal(<SessionsModal issue={issue} list={[]} />, { right: true, width: 900 });
   };
 
@@ -89,7 +89,7 @@ function CardIssues() {
           )}
         </div>
         <div>
-          <Button variant='text-primary'>All Sessions</Button>
+          <Button variant='text-primary' onClick={() => handleClick()}>All Sessions</Button>
         </div>
       </div>
 

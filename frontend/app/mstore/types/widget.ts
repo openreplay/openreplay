@@ -14,6 +14,7 @@ import { getChartFormatter } from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
 import { filtersMap } from 'Types/filter/newFilter';
 import Issue from '../types/issue';
+import { durationFormatted } from 'App/date';
 
 export class InsightIssue {
   icon: string;
@@ -264,12 +265,12 @@ export default class Widget {
     if (this.metricType === USER_PATH) {
       _data['nodes'] = data.nodes.map((s: any) => ({
         ...s,
+        avgTimeFromPrevious: s.avgTimeFromPrevious ? durationFormatted(s.avgTimeFromPrevious) : null,
         idd: Math.random().toString(36).substring(7),
       }));
       _data['links'] = data.links.map((s: any) => ({
         ...s,
         id: Math.random().toString(36).substring(7),
-        // value: Math.round(s.value),
       }));
 
       Object.assign(this.data, _data);
