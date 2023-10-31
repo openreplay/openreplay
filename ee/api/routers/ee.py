@@ -1,6 +1,8 @@
+from typing import Optional
+
 from chalicelib.core import roles, traces, assist_records, sessions
-from chalicelib.core import unlock, signals
 from chalicelib.core import sessions_insights, assist_stats
+from chalicelib.core import unlock, signals
 from chalicelib.utils import assist_helper
 
 unlock.check()
@@ -8,7 +10,7 @@ unlock.check()
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 import schemas
-from fastapi import Depends, Body
+from fastapi import Depends, Body, Query
 
 public_app, app, app_apikey = get_routers()
 
