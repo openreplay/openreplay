@@ -75,6 +75,11 @@ const Router: React.FC<RouterProps> = (props) => {
 
   const handleUserLogin = async () => {
     props.mstore.initClient();
+    await fetchUserInfo();
+
+    const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
+    await fetchSiteList(siteIdFromPath);
+
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
       destinationPath &&
@@ -84,9 +89,6 @@ const Router: React.FC<RouterProps> = (props) => {
       history.push(destinationPath + location.search);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
-    await fetchUserInfo();
-    const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
-    await fetchSiteList(siteIdFromPath);
   };
 
   useEffect(() => {
@@ -135,12 +137,12 @@ const Router: React.FC<RouterProps> = (props) => {
 
   return isLoggedIn ? (
     <ModalProvider>
-      <Layout hideHeader={hideHeader} siteId={siteId}>
-        <Loader loading={loading || !siteId} className='flex-1'>
+      <Loader loading={loading || !siteId} className='flex-1'>
+        <Layout hideHeader={hideHeader} siteId={siteId}>
           <Notification />
           <PrivateRoutes />
-        </Loader>
-      </Layout>
+        </Layout>
+      </Loader>
     </ModalProvider>
   ) : <PublicRoutes />;
 };
@@ -150,13 +152,14 @@ const mapStateToProps = (state: Map<string, any>) => {
   const jwt = state.getIn(['user', 'jwt']);
   const changePassword = state.getIn(['user', 'account', 'changePassword']);
   const userInfoLoading = state.getIn(['user', 'fetchUserInfoRequest', 'loading']);
+  const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
 
   return {
     siteId,
     changePassword,
     sites: state.getIn(['site', 'list']),
     isLoggedIn: jwt !== null && !changePassword,
-    loading: siteId === null || userInfoLoading,
+    loading: siteId === null || userInfoLoading || sitesLoading,
     email: state.getIn(['user', 'account', 'email']),
     account: state.getIn(['user', 'account']),
     organisation: state.getIn(['user', 'account', 'name']),

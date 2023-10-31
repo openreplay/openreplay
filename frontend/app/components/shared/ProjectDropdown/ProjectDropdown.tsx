@@ -5,7 +5,7 @@ import { CaretDownOutlined, FolderAddOutlined, FolderOutlined } from '@ant-desig
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { setSiteId } from 'Duck/site';
-import { fetchListActive as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { useModal } from 'Components/Modal';
@@ -27,7 +27,7 @@ interface Props extends RouteComponentProps {
   sites: Site[];
   siteId: string;
   setSiteId: (siteId: string) => void;
-  fetchIntegrationVariables: () => void;
+  fetchMetadata: () => void;
   clearSearch: (isSession: boolean) => void;
   clearSearchLive: () => void;
   initProject: (data: any) => void;
@@ -44,7 +44,7 @@ function ProjectDropdown(props: Props) {
 
   const handleSiteChange = (newSiteId: string) => {
     props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    props.fetchIntegrationVariables();
+    props.fetchMetadata();
     props.clearSearch(location.pathname.includes('/sessions'));
     props.clearSearchLive();
 
@@ -106,7 +106,7 @@ const mapStateToProps = (state: any) => ({
 export default withRouter(
   connect(mapStateToProps, {
     setSiteId,
-    fetchIntegrationVariables,
+    fetchMetadata,
     clearSearch,
     clearSearchLive,
     initProject
