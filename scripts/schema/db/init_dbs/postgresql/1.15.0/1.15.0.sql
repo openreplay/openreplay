@@ -121,37 +121,6 @@ ALTER TABLE IF EXISTS events.clicks
 ALTER TABLE IF EXISTS public.metrics
     ADD COLUMN IF NOT EXISTS card_info jsonb NULL;
 
-
-CREATE TABLE IF NOT EXISTS public.assist_events
-(
-    event_id    varchar NOT NULL PRIMARY KEY,
-    project_id  integer NOT NULL,
-    session_id  varchar NOT NULL,
-    event_type  varchar NOT NULL,
-    timestamp   bigint NOT NULL,
-    duration    integer,
-    agent_id    integer
-);
-
-CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
-(
-    timestamp     BIGINT  not null,
-    project_id    integer not null,
-    agent_id      integer not null,
-    assist_avg    BIGINT,
-    call_avg      BIGINT,
-    control_avg   BIGINT,
-    assist_total  BIGINT,
-    call_total    BIGINT,
-    control_total BIGINT
-);
-
-
-CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
-(
-    time BIGINT not null
-);
-
 ALTER TABLE IF EXISTS public.users
     ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT NULL;
 
