@@ -104,7 +104,7 @@ function LiveSessionList(props: Props) {
                   options={sortOptions}
                   onChange={onSortChange}
                   value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                />
+              />
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => props.applyFilter({ order: state })}
