@@ -53,8 +53,7 @@ const Router: React.FC<RouterProps> = (props) => {
     fetchUserInfo,
     fetchSiteList,
     history,
-    match: { params: { siteId: siteIdFromPath } },
-    additionalRoutes = null
+    match: { params: { siteId: siteIdFromPath } }
   } = props;
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
