@@ -128,8 +128,7 @@ CREATE TABLE IF NOT EXISTS public.assist_events
     project_id  integer NOT NULL,
     session_id  varchar NOT NULL,
     event_type  varchar NOT NULL,
-    event_state varchar NOT NULL,
-    timestamp   integer NOT NULL,
+    timestamp   bigint NOT NULL,
     duration    integer,
     agent_id    integer
 );

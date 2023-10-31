@@ -1122,8 +1122,7 @@ $$
                 project_id  integer NOT NULL,
                 session_id  varchar NOT NULL,
                 event_type  varchar NOT NULL,
-                event_state varchar NOT NULL,
-                timestamp   integer NOT NULL,
+                timestamp   bigint NOT NULL,
                 duration    integer,
                 agent_id    integer
             );
@@ -1140,7 +1139,6 @@ $$
                 call_total    BIGINT,
                 control_total BIGINT
             );
-
 
             CREATE TABLE IF NOT EXISTS public.assist_events_aggregates_logs
             (
