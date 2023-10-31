@@ -23,6 +23,10 @@ function FunnelIssues() {
         
         const newFilter = {
             ...filter,
+            metricType: widget.metricType,
+            metricFormat: widget.metricFormat,
+            metricOf: widget.metricOf,
+            metricValue: widget.metricValue,
             series: filter.series.map((item: any) => {
                 return {
                     ...item,
