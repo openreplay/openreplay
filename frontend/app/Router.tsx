@@ -74,6 +74,7 @@ const Router: React.FC<RouterProps> = (props) => {
   };
 
   const handleUserLogin = async () => {
+    props.mstore.initClient();
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
       destinationPath &&
@@ -83,7 +84,6 @@ const Router: React.FC<RouterProps> = (props) => {
       history.push(destinationPath + location.search);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
-    props.mstore.initClient();
     await fetchUserInfo();
     const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
     await fetchSiteList(siteIdFromPath);
