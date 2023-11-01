@@ -132,6 +132,43 @@ const socketsLiveByProject = async function (req, res) {
     respond(res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
+const socketsLiveBySession = async function (req, res) {
+    let io = getServer();
+    debug_log && console.log("[WS]looking for LIVE session");
+    let _projectKey = extractProjectKeyFromRequest(req);
+    let _sessionId = extractSessionIdFromRequest(req);
+    if (_sessionId === undefined) {
+        return respond(res, null);
+    }
+    let filters = await extractPayloadFromRequest(req, res);
+    let withFilters = hasFilters(filters);
+    let liveSessions = new Set();
+    const sessIDs = new Set();
+
+    let connected_sockets = await io.in(_projectKey + '-' + _sessionId).fetchSockets();
+    for (let item of connected_sockets) {
+        if (item.handshake.query.identity === IDENTITIES.session) {
+            if (withFilters) {
+                if (item.handshake.query.sessionInfo &&
+                    isValidSession(item.handshake.query.sessionInfo, filters.filter) &&
+                    !sessIDs.has(item.handshake.query.sessionInfo.sessionID)
+                ) {
+                    liveSessions.add(item.handshake.query.sessionInfo);
+                    sessIDs.add(item.handshake.query.sessionInfo.sessionID);
+                }
+            } else {
+                if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
+                    liveSessions.add(item.handshake.query.sessionInfo);
+                    sessIDs.add(item.handshake.query.sessionInfo.sessionID);
+                }
+            }
+        }
+
+    }
+    let sessions = Array.from(liveSessions);
+    respond(res, sessions.length > 0 ? sessions[0] : null);
+}
+
 const autocomplete = async function (req, res) {
     let io = getServer();
     debug_log && console.log("[WS]autocomplete");
@@ -160,5 +197,6 @@ module.exports = {
     socketsList,
     socketsListByProject,
     socketsLiveByProject,
+    socketsLiveBySession,
     autocomplete
 }

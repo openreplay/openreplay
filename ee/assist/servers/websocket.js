@@ -25,6 +25,7 @@ const {
     socketsList,
     socketsListByProject,
     socketsLiveByProject,
+    socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
 
@@ -76,7 +77,7 @@ wsRouter.post(`/sockets-live`, socketsLive);
 wsRouter.get(`/sockets-live/:projectKey/autocomplete`, autocomplete);
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
-wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
+wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveBySession);
 
 module.exports = {
     wsRouter,
@@ -86,29 +87,6 @@ module.exports = {
         io.on('connection', (socket) => onConnect(socket));
 
         console.log("WS server started");
-        setInterval(async (io) => {
-            try {
-                let count = 0;
-                const rooms = await getAvailableRooms(io);
-                console.log(` ====== Rooms: ${rooms.size} ====== `);
-                const arr = Array.from(rooms);
-                const filtered = arr.filter(room => !room[1].has(room[0]));
-                for (let i of filtered) {
-                    let {projectKey, sessionId} = extractPeerId(i[0]);
-                    if (projectKey !== null && sessionId !== null) {
-                        count++;
-                    }
-                }
-                console.log(` ====== Valid Rooms: ${count} ====== `);
-                if (debug_log) {
-                    for (let item of filtered) {
-                        console.log(`Room: ${item[0]} connected: ${item[1].size}`);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }, 30000, io);
 
         socketConnexionTimeout(io);
     },
@@ -117,6 +95,7 @@ module.exports = {
         socketsListByProject,
         socketsLive,
         socketsLiveByProject,
+        socketsLiveBySession,
         autocomplete
     }
 };
