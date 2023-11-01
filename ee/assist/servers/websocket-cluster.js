@@ -25,6 +25,7 @@ const {
     socketsList,
     socketsListByProject,
     socketsLiveByProject,
+    socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
 
@@ -89,7 +90,7 @@ wsRouter.post(`/sockets-live`, socketsLive);
 wsRouter.get(`/sockets-live/:projectKey/autocomplete`, autocomplete);
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
-wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
+wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveBySession);
 
 module.exports = {
     wsRouter,
@@ -99,34 +100,13 @@ module.exports = {
         io.on('connection', (socket) => onConnect(socket));
 
         console.log("WS server started");
-        setInterval(async (io) => {
-            try {
-                const rooms = await getAvailableRooms(io);
-                let validRooms = [];
-                console.log(` ====== Rooms: ${rooms.size} ====== `);
-                for (let i of rooms) {
-                    let {projectKey, sessionId} = extractPeerId(i);
-                    if (projectKey !== undefined && sessionId !== undefined) {
-                        validRooms.push(i);
-                    }
-                }
-                console.log(` ====== Valid Rooms: ${validRooms.length} ====== `);
-                if (debug_log) {
-                    for (let item of validRooms) {
-                        let connectedSockets = await io.in(item).fetchSockets();
-                        console.log(`Room: ${item} connected: ${connectedSockets.length}`);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }, 30000, io);
 
         socketConnexionTimeout(io);
 
         Promise.all([pubClient.connect(), subClient.connect()])
             .then(() => {
-                io.adapter(createAdapter(pubClient, subClient));
+                io.adapter(createAdapter(pubClient, subClient,
+                    {requestsTimeout: process.env.REDIS_REQUESTS_TIMEOUT || 5000}));
                 console.log("> redis connected.");
             })
             .catch((err) => {
@@ -140,6 +120,7 @@ module.exports = {
         socketsListByProject,
         socketsLive,
         socketsLiveByProject,
+        socketsLiveBySession,
         autocomplete
     }
 };

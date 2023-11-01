@@ -15,5 +15,7 @@ servers/sourcemaps-server.js
 /utils/HeapSnapshot.js
 /utils/helper.js
 /utils/assistHelper.js
+/utils/httpHandlers.js
+/utils/socketHandlers.js
 .local
 *.mmdb
