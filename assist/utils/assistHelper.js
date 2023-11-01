@@ -11,6 +11,10 @@ const EVENTS_DEFINITION = {
         CONNECT_ERROR: "connect_error",
         CONNECT_FAILED: "connect_failed",
         ERROR: "error"
+    },
+    //The following list of events will be only emitted by the server
+    server: {
+        UPDATE_SESSION: "SERVER_UPDATE_SESSION"
     }
 };
 EVENTS_DEFINITION.emit = {
