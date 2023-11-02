@@ -1,4 +1,12 @@
 <p align="center">
+  <a href="/README_FR">Français</a>
+  &nbsp;|&nbsp;
+  <a href="/README_ESP">Español</a>
+  &nbsp;|&nbsp;
+  <a href="/README_RU">Русский</a>
+</p>
+
+<p align="center">
   <a href="https://openreplay.com/#gh-light-mode-only">
     <img src="static/openreplay-git-banner-light.png" width="100%">
   </a>
