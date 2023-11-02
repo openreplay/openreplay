@@ -3,7 +3,6 @@
   background: $white;
   /* padding-right: 10px; */
   /* border: solid thin $gray-light; */
-  height: 300px;
-  
+  height: 100%;
   border-top: thin dashed #cccccc;
 }

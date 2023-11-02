@@ -143,12 +143,6 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   scroller = React.createRef<List>();
   autoScroll = true;
 
-  // componentDidMount() {
-  //   if (this.scroller.current) {
-  //     this.scroller.current.scrollToRow(this.props.activeIndex);
-  //   }
-  // }
-
   adjustScroll(prevActiveIndex: number) {
     if (
       this.props.activeIndex &&
