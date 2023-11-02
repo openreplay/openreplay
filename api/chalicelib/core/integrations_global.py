@@ -3,7 +3,7 @@ from chalicelib.utils import pg_client
 
 
 def get_global_integrations_status(tenant_id, user_id, project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                     SELECT EXISTS((SELECT 1

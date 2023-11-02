@@ -5,7 +5,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_all(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     SELECT notifications.*,
@@ -26,7 +26,7 @@ def get_all(tenant_id, user_id):
 
 
 def get_all_count(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     SELECT COALESCE(COUNT(notifications.*),0) AS count
@@ -47,7 +47,7 @@ def view_notification(user_id, notification_ids=[], tenant_id=None, startTimesta
     if startTimestamp is None:
         startTimestamp = 0
     notification_ids = [(user_id, id) for id in notification_ids]
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if len(notification_ids) > 0:
             cur.executemany(
                 "INSERT INTO public.user_viewed_notifications(user_id, notification_id) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
@@ -71,7 +71,7 @@ def view_notification(user_id, notification_ids=[], tenant_id=None, startTimesta
 def create(notifications):
     if len(notifications) == 0:
         return []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         values = []
         for n in notifications:
             clone = dict(n)

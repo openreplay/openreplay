@@ -43,7 +43,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
 
     # TODO: remove this once jira-oauth is done
     def get(self):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify(
                     """SELECT username, token, url
@@ -69,7 +69,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
         return integration
 
     def update(self, changes, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
             cur.execute(
                 cur.mogrify(f"""\
@@ -91,7 +91,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
         return
 
     def add(self, username, token, url):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify("""\
                         INSERT INTO public.jira_cloud(username, token, user_id,url)
@@ -104,7 +104,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
         return self.get()
 
     def delete(self):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify("""\
                         DELETE FROM public.jira_cloud

@@ -56,7 +56,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         full_args["sessions_limit_e"] = 200
 
     meta_keys = []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if errors_only:
             main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id,
                                          COALESCE((SELECT TRUE
@@ -184,7 +184,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
     sessions = []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
@@ -289,7 +289,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if isinstance(metric_of, schemas.MetricOfTable):
             main_col = "user_id"
             extra_col = ""
@@ -351,7 +351,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         full_args["issues_limit"] = data.limit
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
@@ -1076,7 +1076,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
             results[i] = {"total": 0, "sessions": [], "missingMetadata": True}
     project_ids = list(available_keys.keys())
     if len(project_ids) > 0:
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             sub_queries = []
             for i in project_ids:
                 col_name = list(available_keys[i].keys())[list(available_keys[i].values()).index(m_key)]
@@ -1118,7 +1118,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
 
 
 def get_user_sessions(project_id, user_id, start_date, end_date):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
         if start_date is not None:
             constraints.append("s.start_ts >= %(startDate)s")
@@ -1157,7 +1157,7 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
 
 
 def get_session_user(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """\
             SELECT
@@ -1181,14 +1181,14 @@ def get_session_user(project_id, user_id):
 
 
 def count_all():
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
+    async with pg_client.PostgresClient(unlimited_query=True) as cur:
         cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
         row = cur.fetchone()
     return row.get("count", 0) if row else 0
 
 
 def session_exists(project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT 1 
                              FROM public.sessions 
                              WHERE session_id=%(session_id)s 
@@ -1217,7 +1217,7 @@ def check_recording_status(project_id: int) -> dict:
         FROM project_sessions;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(query, {"project_id": project_id})
         cur.execute(query)
         row = cur.fetchone()

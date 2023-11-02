@@ -9,7 +9,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 async def get_by_id(webhook_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     SELECT w.*
@@ -24,7 +24,7 @@ async def get_by_id(webhook_id):
 
 
 async def get_webhook(tenant_id, webhook_id, webhook_type='webhook'):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""SELECT w.*
                             FROM public.webhooks AS w 
@@ -39,7 +39,7 @@ async def get_webhook(tenant_id, webhook_id, webhook_type='webhook'):
 
 
 async def get_by_type(tenant_id, webhook_type):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""SELECT w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
                             FROM public.webhooks AS w 
@@ -53,7 +53,7 @@ async def get_by_type(tenant_id, webhook_type):
 
 
 async def get_by_tenant(tenant_id, replace_none=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute("""SELECT w.*
                         FROM public.webhooks AS w 
                         WHERE deleted_at ISNULL;""")
@@ -65,7 +65,7 @@ async def get_by_tenant(tenant_id, replace_none=False):
 
 async def update(tenant_id, webhook_id, changes, replace_none=False):
     allow_update = ["name", "index", "authHeader", "endpoint"]
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys() if k in allow_update]
         cur.execute(
             cur.mogrify(f"""\
@@ -87,7 +87,7 @@ async def update(tenant_id, webhook_id, changes, replace_none=False):
 
 
 async def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", replace_none=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                     INSERT INTO public.webhooks(endpoint,auth_header,type,name)
                     VALUES (%(endpoint)s, %(auth_header)s, %(type)s,%(name)s)
@@ -108,7 +108,7 @@ async def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', nam
 
 async def exists_by_name(name: str, exclude_id: Optional[int], webhook_type: str = schemas.WebhookType.webhook,
                    tenant_id: Optional[int] = None) -> bool:
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 
                                 FROM public.webhooks
                                 WHERE name ILIKE %(name)s
@@ -140,7 +140,7 @@ async def add_edit(tenant_id, data: schemas.WebhookSchema, replace_none=None):
 
 
 async def delete(tenant_id, webhook_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     UPDATE public.webhooks

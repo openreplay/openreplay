@@ -11,7 +11,7 @@ from chalicelib.utils.metrics_helper import __get_step_size
 def get(error_id, family=False):
     if family:
         return get_batch([error_id])
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             "SELECT * FROM events.errors AS e INNER JOIN public.errors AS re USING(error_id) WHERE error_id = %(error_id)s;",
             {"error_id": error_id})
@@ -25,7 +25,7 @@ def get(error_id, family=False):
 def get_batch(error_ids):
     if len(error_ids) == 0:
         return []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """
             WITH RECURSIVE error_family AS (
@@ -101,7 +101,7 @@ def get_details(project_id, error_id, user_id, **data):
     pg_sub_query30.append("error_id = %(error_id)s")
     pg_basic_query = __get_basic_constraints(time_constraint=False)
     pg_basic_query.append("error_id = %(error_id)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         data["startDate24"] = TimeUTC.now(-1)
         data["endDate24"] = TimeUTC.now()
         data["startDate30"] = TimeUTC.now(-30)
@@ -299,7 +299,7 @@ def get_details_chart(project_id, error_id, user_id, **data):
     pg_sub_query.append("error_id = %(error_id)s")
     pg_sub_query_chart = __get_basic_constraints(time_constraint=False, chart=True)
     pg_sub_query_chart.append("error_id = %(error_id)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if data.get("startDate") is None:
             data["startDate"] = TimeUTC.now(-7)
         else:
@@ -465,7 +465,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         if len(statuses) == 0:
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
@@ -585,7 +585,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
 
 def __save_stacktrace(error_id, data):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.errors 
                 SET stacktrace=%(data)s::jsonb, stacktrace_parsed_at=timezone('utc'::text, now())
@@ -630,7 +630,7 @@ def get_sessions(start_date, end_date, project_id, user_id, error_id):
         "project_id": project_id,
         "userId": user_id,
         "error_id": error_id}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT s.project_id,
                        s.session_id::text AS session_id,
@@ -696,7 +696,7 @@ def change_state(project_id, user_id, error_id, action):
         "userId": user_id,
         "error_ids": tuple([e["errorId"] for e in errors]),
         "status": status}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.errors
                 SET status = %(status)s

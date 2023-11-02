@@ -72,7 +72,7 @@ def create_tenant(data: schemas.UserSignupSchema):
                  VALUES (%(projectName)s, TRUE)
                  RETURNING project_id, (SELECT api_key FROM t) AS api_key;"""
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
         data = cur.fetchone()
         project_id = data["project_id"]

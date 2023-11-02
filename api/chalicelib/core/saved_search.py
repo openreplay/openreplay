@@ -6,7 +6,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def create(project_id, user_id, data: schemas.SavedSearchSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify("""\
@@ -24,7 +24,7 @@ def create(project_id, user_id, data: schemas.SavedSearchSchema):
 
 
 def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify(f"""\
@@ -47,7 +47,7 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
 
 
 def get_all(project_id, user_id, details=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""\
@@ -73,7 +73,7 @@ def get_all(project_id, user_id, details=False):
 
 
 def delete(project_id, search_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
             UPDATE public.searches 
@@ -88,7 +88,7 @@ def delete(project_id, search_id, user_id):
 
 
 def get(search_id, project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """SELECT

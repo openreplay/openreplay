@@ -2,7 +2,7 @@ from chalicelib.utils import pg_client
 
 
 def add_viewed_error(project_id, user_id, error_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""INSERT INTO public.user_viewed_errors(user_id, error_id) 
                             VALUES (%(userId)s,%(error_id)s);""",
@@ -11,7 +11,7 @@ def add_viewed_error(project_id, user_id, error_id):
 
 
 def viewed_error_exists(user_id, error_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT 
                     errors.error_id AS hydrated,

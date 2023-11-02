@@ -7,7 +7,7 @@ def get_customs_by_session_id(session_id, project_id):
 
 
 def get_by_sessionId(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
             SELECT 
                 c.*,
@@ -55,7 +55,7 @@ def get_by_sessionId(session_id, project_id):
 
 
 def get_crashes_by_session_id(session_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
                     FROM {events.EventType.CRASH_IOS.table} AS cr 

@@ -6,7 +6,7 @@ LOWEST_BAR_VALUE = 3
 
 
 def get_config(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             SELECT users.weekly_report
             FROM public.users
@@ -17,7 +17,7 @@ def get_config(user_id):
 
 
 def edit_config(user_id, weekly_report):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             UPDATE public.users
             SET weekly_report= %(weekly_report)s
@@ -33,7 +33,7 @@ def cron():
         print("!!! No SMTP configuration found, ignoring weekly report")
         return
     _now = TimeUTC.now()
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
+    async with pg_client.PostgresClient(unlimited_query=True) as cur:
         params = {"tomorrow": TimeUTC.midnight(delta_days=1),
                   "3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),

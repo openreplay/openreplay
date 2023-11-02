@@ -17,7 +17,7 @@ def __group_metadata(session, project_metadata):
 # for backward compatibility
 async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                   group_metadata=False, live=True):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
             extra_query.append("""COALESCE((SELECT TRUE
@@ -92,7 +92,7 @@ async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext,
 
 async def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                group_metadata=False, live=True):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
             extra_query.append("""COALESCE((SELECT TRUE
@@ -147,7 +147,7 @@ async def get_replay(project_id, session_id, context: schemas.CurrentContext, fu
 
 
 def get_events(project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT session_id, platform, start_ts, duration
                 FROM public.sessions AS s

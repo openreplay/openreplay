@@ -52,7 +52,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         q_count += ",COALESCE(bool_or(mis.type = 'click_rage'), FALSE) AS click_rage"
         query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
                        LEFT JOIN issues AS mis USING (issue_id)"""
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT selector, {q_count}
                                 FROM {query_from}
                                 WHERE {" AND ".join(constraints)}

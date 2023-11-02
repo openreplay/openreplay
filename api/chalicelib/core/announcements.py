@@ -5,7 +5,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_all(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""
         SELECT a.*, u.last >= (EXTRACT(EPOCH FROM a.created_at)*1000) AS viewed
         FROM public.announcements AS a,
@@ -27,7 +27,7 @@ def get_all(user_id):
 
 
 def view(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""
         UPDATE public.users
         SET data=data ||

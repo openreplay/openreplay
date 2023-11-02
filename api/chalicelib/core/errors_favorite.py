@@ -2,7 +2,7 @@ from chalicelib.utils import pg_client
 
 
 def add_favorite_error(project_id, user_id, error_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""INSERT INTO public.user_favorite_errors(user_id, error_id) 
                             VALUES (%(userId)s,%(error_id)s);""",
@@ -12,7 +12,7 @@ def add_favorite_error(project_id, user_id, error_id):
 
 
 def remove_favorite_error(project_id, user_id, error_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""DELETE FROM public.user_favorite_errors                          
                             WHERE 
@@ -33,7 +33,7 @@ def favorite_error(project_id, user_id, error_id):
 
 
 def error_exists_and_favorite(user_id, error_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """SELECT errors.error_id AS exists, ufe.error_id AS favorite

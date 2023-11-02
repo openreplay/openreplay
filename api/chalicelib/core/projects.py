@@ -10,7 +10,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 async def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.projects
                                 WHERE deleted_at IS NULL
@@ -30,7 +30,7 @@ async def __update(tenant_id, project_id, changes):
     sub_query = []
     for key in changes.keys():
         sub_query.append(f"{helper.key_to_snake_case(key)} = %({key})s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.projects 
                                 SET {" ,".join(sub_query)} 
                                 WHERE project_id = %(project_id)s
@@ -42,7 +42,7 @@ async def __update(tenant_id, project_id, changes):
 
 
 async def __create(tenant_id, data):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.projects (name, platform, active)
                                 VALUES (%(name)s,%(platform)s,TRUE)
                                 RETURNING project_id;""",
@@ -53,7 +53,7 @@ async def __create(tenant_id, data):
 
 
 async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         extra_projection = ""
         if gdpr:
             extra_projection += ',s.gdpr'
@@ -108,7 +108,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
 
 
 async def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         extra_select = ""
         if include_last_session:
             extra_select += """,(SELECT max(ss.start_ts) 
@@ -159,7 +159,7 @@ async def delete(tenant_id, user_id, project_id):
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
                                SET deleted_at = timezone('utc'::text, now()),
                                    active = FALSE
@@ -170,7 +170,7 @@ async def delete(tenant_id, user_id, project_id):
 
 
 async def get_gdpr(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT gdpr
                                FROM public.projects AS s
                                WHERE s.project_id =%(project_id)s
@@ -183,7 +183,7 @@ async def get_gdpr(project_id):
 
 
 async def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
                                SET gdpr = gdpr|| %(gdpr)s::jsonb
                                WHERE project_id = %(project_id)s 
@@ -200,7 +200,7 @@ async def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
 
 
 async def get_by_project_key(project_key):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_id,
                                       project_key,
                                       platform
@@ -214,7 +214,7 @@ async def get_by_project_key(project_key):
 
 
 async def get_project_key(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_key
                                FROM public.projects
                                WHERE project_id =%(project_id)s
@@ -226,7 +226,7 @@ async def get_project_key(project_id):
 
 
 async def get_capture_status(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all
                                FROM public.projects
                                WHERE project_id =%(project_id)s 
@@ -240,7 +240,7 @@ async def update_capture_status(project_id, changes: schemas.SampleRateSchema):
     sample_rate = changes.rate
     if changes.capture_all:
         sample_rate = 100
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects
                                SET sample_rate= %(sample_rate)s
                                WHERE project_id =%(project_id)s
@@ -252,7 +252,7 @@ async def update_capture_status(project_id, changes: schemas.SampleRateSchema):
 
 
 async def get_projects_ids(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = f"""SELECT s.project_id
                     FROM public.projects AS s
                     WHERE s.deleted_at IS NULL

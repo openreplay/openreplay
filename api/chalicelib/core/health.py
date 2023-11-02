@@ -40,7 +40,7 @@ def __check_database_pg(*_):
             "errors": ["Postgres health-check failed"]
         }
     }
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         try:
             cur.execute("SHOW server_version;")
             server_version = cur.fetchone()
@@ -166,7 +166,7 @@ async def __check_SSL(*_):
 
 
 def __get_sessions_stats(*_):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         constraints = ["projects.deleted_at IS NULL"]
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
                                        COALESCE(SUM(events_count),0) AS e_c
@@ -230,7 +230,7 @@ async def __process_health(health_map):
 
 
 def cron():
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT projects.project_id,
                                       projects.created_at,
                                       projects.sessions_last_check_at,
@@ -296,7 +296,7 @@ def cron():
 
 # this cron is used to correct the sessions&events count every week
 def weekly_cron():
-    with pg_client.PostgresClient(long_query=True) as cur:
+    async with pg_client.PostgresClient(long_query=True) as cur:
         query = cur.mogrify("""SELECT project_id,
                                       projects_stats.last_update_at
                                FROM public.projects

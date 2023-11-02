@@ -4,7 +4,7 @@ from chalicelib.utils import pg_client
 
 
 def get_by_tenant_id(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT tenants.tenant_id,
                                        tenants.name,
                                        tenants.api_key,
@@ -20,7 +20,7 @@ def get_by_tenant_id(tenant_id):
 
 
 def get_by_api_key(api_key):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT 1 AS tenant_id,
                                        tenants.name,
                                        tenants.created_at                       
@@ -33,7 +33,7 @@ def get_by_api_key(api_key):
 
 
 def generate_new_api_key(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
                                 SET api_key=generate_api_key(20)
                                 RETURNING api_key;""",
@@ -43,7 +43,7 @@ def generate_new_api_key(tenant_id):
 
 
 def edit_tenant(tenant_id, changes):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants 
                                 SET {", ".join([f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()])}  
                                 RETURNING name, opt_out;""",
@@ -53,6 +53,6 @@ def edit_tenant(tenant_id, changes):
 
 
 def tenants_exists(use_pool=True):
-    with pg_client.PostgresClient(use_pool=use_pool) as cur:
+    async with pg_client.PostgresClient(use_pool=use_pool) as cur:
         cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
         return cur.fetchone()["exists"]

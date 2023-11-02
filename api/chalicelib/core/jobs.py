@@ -14,8 +14,9 @@ class JobStatus:
     CANCELLED = "cancelled"
 
 
-def get(job_id, project_id):
-    with pg_client.PostgresClient() as cur:
+
+async def get(job_id, project_id):
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT *
                FROM public.jobs
@@ -34,7 +35,7 @@ def get(job_id, project_id):
 
 
 def get_all(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT *
                FROM public.jobs
@@ -49,7 +50,7 @@ def get_all(project_id):
 
 
 def create(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         job = {"status": "scheduled",
                "project_id": project_id,
                "action": Actions.DELETE_USER_DATA,
@@ -76,7 +77,7 @@ def cancel_job(job_id, job):
 
 
 def update(job_id, job):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         job_data = {
             "job_id": job_id,
             "errors": job.get("errors"),
@@ -106,7 +107,7 @@ def format_datetime(r):
 
 
 def __get_session_ids_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT session_id 
                FROM public.sessions
@@ -120,7 +121,7 @@ def __get_session_ids_by_user_ids(project_id, user_ids):
 
 
 def __delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
+    async with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """DELETE FROM public.sessions
                WHERE session_id IN %(session_ids)s""",
@@ -135,7 +136,7 @@ def __delete_session_mobs_by_session_ids(session_ids, project_id):
 
 
 def get_scheduled_jobs():
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT * 
                FROM public.jobs

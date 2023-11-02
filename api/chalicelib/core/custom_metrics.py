@@ -351,7 +351,7 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
 
 
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         session_data = None
         if data.metric_type == schemas.MetricType.click_map:
             session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
@@ -435,7 +435,7 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     if data.metric_type == schemas.MetricType.pathAnalysis:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         sub_queries = []
         if len(n_series) > 0:
             sub_queries.append(f"""\
@@ -493,7 +493,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         constraints.append("(name ILIKE %(query)s OR owner.owner_email ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator._contains)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         sub_join = ""
         if include_series:
             sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
@@ -549,7 +549,7 @@ def get_all(project_id, user_id):
 
 
 def delete_card(project_id, metric_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 
@@ -573,7 +573,7 @@ def __get_path_analysis_attributes(row):
 
 
 def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
@@ -621,7 +621,7 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
 
 
 def get_series_for_alert(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """SELECT series_id AS value,
@@ -645,7 +645,7 @@ def get_series_for_alert(project_id, user_id):
 
 
 def change_state(project_id, metric_id, user_id, status):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 

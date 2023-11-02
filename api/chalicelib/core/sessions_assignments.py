@@ -7,7 +7,7 @@ import json
 
 
 def __get_saved_data(project_id, session_id, issue_id, tool):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     SELECT *
                     FROM public.assigned_sessions
@@ -43,7 +43,7 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
         return integration_base_issue.proxy_issues_handler(e)
     if issue is None or "id" not in issue:
         return {"errors": ["something went wrong while creating the issue"]}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                 INSERT INTO public.assigned_sessions(session_id, issue_id, created_by, provider,provider_data) 
                 VALUES (%(session_id)s, %(issue_id)s, %(creator_id)s, %(provider)s,%(provider_data)s);\
@@ -67,7 +67,7 @@ def get_all(project_id, user_id):
     extra_query = ["sessions.project_id = %(project_id)s"]
     if not all_integrations:
         extra_query.append("provider IN %(providers)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                 SELECT assigned_sessions.*
                 FROM public.assigned_sessions
@@ -90,7 +90,7 @@ def get_by_session(tenant_id, user_id, project_id, session_id):
     if not any(available_integrations.values()):
         return []
     extra_query = ["session_id = %(session_id)s", "provider IN %(providers)s"]
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                 SELECT *
                 FROM public.assigned_sessions

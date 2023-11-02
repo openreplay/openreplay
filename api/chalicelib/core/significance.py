@@ -230,7 +230,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
               "endTimestamp": filter_d.endTimestamp,
               "issueTypes": tuple(filter_issues), **values}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(n_stages_query, params)
         # print("---------------------------------------------------")
         # print(query)

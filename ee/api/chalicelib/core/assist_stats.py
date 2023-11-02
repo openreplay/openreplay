@@ -67,7 +67,7 @@ def insert_aggregated_data():
                     data['control_total']
                 )
 
-                with pg_client.PostgresClient() as cur:
+                async with pg_client.PostgresClient() as cur:
                     cur.execute(sql, params)
 
             offset += chunk_size
@@ -80,7 +80,7 @@ def insert_aggregated_data():
             GROUP BY timestamp
             ORDER BY timestamp DESC LIMIT 1
         """
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(sql, params)
             result = cur.fetchone()
             first_timestamp = result['first_timestamp'] if result else None
@@ -89,7 +89,7 @@ def insert_aggregated_data():
         if first_timestamp is not None:
             sql = "INSERT INTO assist_events_aggregates_logs (time) VALUES (%s)"
             params = (first_timestamp,)
-            with pg_client.PostgresClient() as cur:
+            async with pg_client.PostgresClient() as cur:
                 cur.execute(sql, params)
 
     except Exception as e:
@@ -98,14 +98,14 @@ def insert_aggregated_data():
 
 def __last_run_end_timestamp_from_aggregates():
     sql = "SELECT MAX(time) as last_run_time FROM assist_events_aggregates_logs;"
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(sql)
         result = cur.fetchone()
         last_run_time = result['last_run_time'] if result else None
 
     if last_run_time is None:  # first run handle all data
         sql = "SELECT MIN(timestamp) as last_timestamp FROM assist_events;"
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(sql)
             result = cur.fetchone()
             last_run_time = result['last_timestamp'] if result else None
@@ -142,7 +142,7 @@ def __get_all_events_hourly_averages(constraints, params):
         ORDER BY time
         LIMIT %(limit)s OFFSET %(offset)s;
     """
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -199,7 +199,7 @@ def __get_all_events_totals(constraints, params):
         FROM assist_events_aggregates
         WHERE {' AND '.join(f'{constraint}' for constraint in constraints)}
     """
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -221,7 +221,7 @@ def __get_all_events_averages(constraints, params):
             {' AND '.join(f'{constraint}' for constraint in constraints)}
         ORDER BY timestamp;
     """
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -256,7 +256,7 @@ def __get_all_events_averagesx(constraints, params):
         ORDER BY time;
 
     """
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -322,7 +322,7 @@ def get_top_members(
         LIMIT %(limit)s OFFSET %(offset)s
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -379,7 +379,7 @@ def get_sessions(
         LIMIT %(limit)s OFFSET %(offset)s
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()

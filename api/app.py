@@ -1,5 +1,6 @@
 import logging
-import time
+import psycopg
+
 from contextlib import asynccontextmanager
 
 import httpx
@@ -33,7 +34,6 @@ async def lifespan(app: FastAPI):
     ap_logger.setLevel(loglevel)
 
     app.schedule = AsyncIOScheduler()
-    await pg_client.init()
     app.schedule.start()
 
     for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
@@ -44,15 +44,17 @@ async def lifespan(app: FastAPI):
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
     orpy.orpy.set(app)
-    async with httpx.AsyncClient() as httpx:
-        app.httpx = httpx
-        # Yield, and let APP listen.
-        yield
+
+    async with AsyncConnectionPool(**pg_client.configuration()) as pool:
+        async with httpx.AsyncClient() as httpx:
+            app.httpx = httpx
+            app.pgsql = pool
+            # Yield, and let APP listen.
+            yield
 
     # Shutdown
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
-    await pg_client.terminate()
 
 
 app = FastAPI(root_path=config("root_path", default="/api"), docs_url=config("docs_url", default=""),

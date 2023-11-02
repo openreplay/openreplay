@@ -10,7 +10,7 @@ from chalicelib.utils.event_filter_definition import SupportedFilter, Event
 
 
 def get_customs_by_session_id(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             SELECT 
                 c.*,
@@ -53,7 +53,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
 
 
 def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         rows = []
         if event_type is None or event_type == schemas.EventType.click:
             cur.execute(cur.mogrify("""\
@@ -165,7 +165,7 @@ SUPPORTED_TYPES = {
 
 
 def get_errors_by_session_id(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
                     FROM {EventType.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)

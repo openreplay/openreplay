@@ -19,7 +19,7 @@ def __generate_invitation_token():
 
 def get_user_settings(user_id):
     #     read user settings from users.settings:jsonb column
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -57,7 +57,7 @@ def update_user_module(user_id, data: schemas.ModuleStatus):
 
 def update_user_settings(user_id, settings):
     #     update user settings from users.settings:jsonb column
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""UPDATE public.users
@@ -71,7 +71,7 @@ def update_user_settings(user_id, settings):
 
 
 def create_new_member(email, invitation_token, admin, name, owner=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH u AS (INSERT INTO public.users (email, role, name, data)
                                 VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
@@ -102,7 +102,7 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
 
 
 def restore_member(user_id, email, invitation_token, admin, name, owner=False):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH ua AS (UPDATE public.basic_authentication
                                 SET invitation_token = %(invitation_token)s,
@@ -140,7 +140,7 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
 
 def generate_new_invitation(user_id):
     invitation_token = __generate_invitation_token()
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                         UPDATE public.basic_authentication
                         SET invitation_token = %(invitation_token)s,
@@ -183,7 +183,7 @@ def update(tenant_id, user_id, changes, output=True):
         else:
             sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
             cur.execute(
                 cur.mogrify(f"""\
@@ -259,7 +259,7 @@ def __get_invitation_link(invitation_token):
 
 def allow_password_change(user_id, delta_min=10):
     pass_token = secrets.token_urlsafe(8)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.basic_authentication 
                                 SET change_pwd_expire_at =  timezone('utc'::text, now()+INTERVAL '%(delta)s MINUTES'),
                                     change_pwd_token = %(pass_token)s
@@ -272,7 +272,7 @@ def allow_password_change(user_id, delta_min=10):
 
 
 def get(user_id, tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -297,7 +297,7 @@ def get(user_id, tenant_id):
 
 
 def generate_new_api_key(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""UPDATE public.users
@@ -312,7 +312,7 @@ def generate_new_api_key(user_id):
 
 
 def __get_account_info(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT users.name, 
@@ -376,7 +376,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
 
 
 def get_by_email_only(email):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -400,7 +400,7 @@ def get_by_email_only(email):
 
 
 def get_member(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -433,7 +433,7 @@ def get_member(tenant_id, user_id):
 
 
 def get_members(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             f"""SELECT 
                         users.user_id,
@@ -481,7 +481,7 @@ def delete_member(user_id, tenant_id, id_to_delete):
     if to_delete["superAdmin"]:
         return {"errors": ["cannot delete super admin"]}
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.users
                            SET deleted_at = timezone('utc'::text, now()) 
@@ -541,7 +541,7 @@ def set_password_invitation(user_id, new_password):
 
 
 def email_exists(email):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -558,7 +558,7 @@ def email_exists(email):
 
 
 def get_deleted_user_by_email(email):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -575,7 +575,7 @@ def get_deleted_user_by_email(email):
 
 
 def get_by_invitation_token(token, pass_token=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
@@ -594,7 +594,7 @@ def get_by_invitation_token(token, pass_token=None):
 
 
 def auth_exists(user_id, jwt_iat):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat 
                             FROM public.users  
@@ -610,7 +610,7 @@ def auth_exists(user_id, jwt_iat):
 
 
 def refresh_auth_exists(user_id, jwt_jti=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id 
                             FROM public.users  
@@ -625,7 +625,7 @@ def refresh_auth_exists(user_id, jwt_jti=None):
 
 
 def change_jwt_iat_jti(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
                                     jwt_refresh_jti = 0, 
@@ -641,7 +641,7 @@ def change_jwt_iat_jti(user_id):
 
 
 def refresh_jwt_iat_jti(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
                                     jwt_refresh_jti = jwt_refresh_jti + 1 
@@ -656,7 +656,7 @@ def refresh_jwt_iat_jti(user_id):
 
 
 def authenticate(email, password, for_change_password=False) -> dict | bool | None:
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
                     users.user_id,
@@ -695,7 +695,7 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
 
 
 def logout(user_id: int):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.users
                SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
@@ -717,7 +717,7 @@ def refresh(user_id: int, tenant_id: int = -1) -> dict:
 
 
 def get_user_role(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 

@@ -42,7 +42,7 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                                                                favorite_only=data.bookmarked, issue=None,
                                                                project_id=project_id, user_id=user_id)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         data.order = schemas.SortOrderType.desc
         data.sort = 'duration'
 

@@ -5,7 +5,7 @@ SUPPORTED_TOOLS = [integration_github.PROVIDER, integration_jira_cloud.PROVIDER]
 
 
 def get_available_integrations(user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                     SELECT EXISTS((SELECT 1

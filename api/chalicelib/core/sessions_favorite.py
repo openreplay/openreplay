@@ -3,7 +3,7 @@ from chalicelib.utils import pg_client
 
 
 def add_favorite_session(context: schemas.CurrentContext, project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                 INSERT INTO public.user_favorite_sessions(user_id, session_id) 
@@ -18,7 +18,7 @@ def add_favorite_session(context: schemas.CurrentContext, project_id, session_id
 
 
 def remove_favorite_session(context: schemas.CurrentContext, project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                         DELETE FROM public.user_favorite_sessions                          
@@ -42,7 +42,7 @@ def favorite_session(context: schemas.CurrentContext, project_id, session_id):
 
 
 def favorite_session_exists(session_id, user_id=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT session_id                                                
@@ -57,7 +57,7 @@ def favorite_session_exists(session_id, user_id=None):
 
 
 def get_start_end_timestamp(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """SELECT max(start_ts) AS max_start_ts, min(start_ts) AS min_start_ts                                                

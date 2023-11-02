@@ -20,7 +20,7 @@ def process_data(data):
 
 
 def compute():
-    with pg_client.PostgresClient(long_query=True) as cur:
+    async with pg_client.PostgresClient(long_query=True) as cur:
         cur.execute(
             f"""UPDATE public.tenants
                 SET t_integrations = COALESCE((SELECT COUNT(DISTINCT provider) FROM public.integrations) +
@@ -42,7 +42,7 @@ def compute():
 
 
 def new_client():
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             f"""SELECT *, openreplay_version() AS version_number,
                 (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email

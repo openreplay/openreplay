@@ -48,7 +48,7 @@ def __get_autocomplete_table(value, project_id):
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(" UNION DISTINCT ".join(sub_queries) + ";",
                             {"project_id": project_id,
                              "value": helper.string_to_sql_like(value),
@@ -111,7 +111,7 @@ def __generic_query(typename, value_length=None):
 
 def __generic_autocomplete(event: Event):
     def f(project_id, value, key=None, source=None):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             query = __generic_query(event.ui_type, value_length=len(value))
             params = {"project_id": project_id, "value": helper.string_to_sql_like(value),
                       "svalue": helper.string_to_sql_like("^" + value)}
@@ -123,7 +123,7 @@ def __generic_autocomplete(event: Event):
 
 def __generic_autocomplete_metas(typename):
     def f(project_id, text):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
                       "svalue": helper.string_to_sql_like("^" + text)}
 
@@ -215,7 +215,7 @@ def __errors_query(source=None, value_length=None):
 
 
 def __search_errors(project_id, value, key=None, source=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(__errors_query(source,
                                        value_length=len(value)),
@@ -287,7 +287,7 @@ def __search_errors_ios(project_id, value, key=None, source=None):
                           AND lg.project_id = %(project_id)s
                           AND lg.name ILIKE %(svalue)s
                         LIMIT 5);"""
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
                                         "svalue": helper.string_to_sql_like("^" + value)}))
         results = helper.list_to_camel_case(cur.fetchall())
@@ -321,7 +321,7 @@ def __search_metadata(project_id, value, key=None, source=None):
                                 FROM public.sessions 
                                 WHERE project_id = %(project_id)s 
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)""")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT key, value, 'METADATA' AS TYPE
                     FROM({" UNION ALL ".join(sub_from)}) AS all_metas

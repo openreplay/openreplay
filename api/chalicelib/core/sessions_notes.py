@@ -11,7 +11,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_note(tenant_id, project_id, user_id, note_id, share=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
                                 {",(SELECT name FROM users WHERE user_id=%(share)s AND deleted_at ISNULL) AS share_name" if share else ""}
                                 FROM sessions_notes INNER JOIN users USING (user_id)
@@ -31,7 +31,7 @@ def get_note(tenant_id, project_id, user_id, note_id, share=None):
 
 
 def get_session_notes(tenant_id, project_id, session_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE sessions_notes.project_id = %(project_id)s
@@ -52,7 +52,7 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
 
 
 def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL"]
         extra_params = {}
         if data.tags and len(data.tags) > 0:
@@ -82,7 +82,7 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
 
 
 def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
                             VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
                             RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
@@ -104,7 +104,7 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         sub_query.append("is_public = %(is_public)s")
     if data.timestamp is not None:
         sub_query.append("timestamp = %(timestamp)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.sessions_notes
                             SET 
@@ -124,7 +124,7 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
 
 
 def delete(tenant_id, user_id, project_id, note_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(""" UPDATE public.sessions_notes 
                             SET deleted_at = timezone('utc'::text, now())

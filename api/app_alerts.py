@@ -1,4 +1,5 @@
 import logging
+import psycopg
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -13,7 +14,6 @@ from chalicelib.utils import pg_client
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
-    await pg_client.init()
     app.schedule.start()
     app.schedule.add_job(id="alerts_processor", **{"func": alerts_processor.process, "trigger": "interval",
                                                    "minutes": config("ALERTS_INTERVAL", cast=int, default=5),
@@ -23,13 +23,16 @@ async def lifespan(app: FastAPI):
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-    # App listening
-    yield
+    async with AsyncConnectionPool(**pg_client.configuration()) as pool:
+        async with httpx.AsyncClient() as httpx:
+            app.httpx = httpx
+            app.pgsql = pool
+            # Yield, and let APP listen.
+            yield
 
     # Shutdown
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
-    await pg_client.terminate()
 
 
 app = FastAPI(root_path=config("root_path", default="/alerts"), docs_url=config("docs_url", default=""),

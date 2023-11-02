@@ -27,7 +27,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
         return {"token": helper.obfuscate(text=integration["token"]), "provider": self.provider.lower()}
 
     def update(self, changes, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
             cur.execute(
                 cur.mogrify(f"""\
@@ -47,7 +47,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
         pass
 
     def add(self, token, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify("""\
                         INSERT INTO public.oauth_authentication(user_id, provider, provider_user_id, token)
@@ -63,7 +63,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
 
     # TODO: make a revoke token call
     def delete(self):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify("""\
                         DELETE FROM public.oauth_authentication

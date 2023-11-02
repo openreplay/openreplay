@@ -6,7 +6,7 @@ from chalicelib.core import users
 
 def get_state(tenant_id):
     pids = projects.get_projects_ids(tenant_id=tenant_id)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         recorded = False
         meta = False
 
@@ -58,7 +58,7 @@ def get_state(tenant_id):
 
 def get_state_installing(tenant_id):
     pids = projects.get_projects_ids(tenant_id=tenant_id)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         recorded = False
 
         if len(pids) > 0:
@@ -76,7 +76,7 @@ def get_state_installing(tenant_id):
 
 
 def get_state_identify_users(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute("""SELECT EXISTS((SELECT 1
                                        FROM public.projects AS p
                                                 LEFT JOIN LATERAL ( SELECT 1

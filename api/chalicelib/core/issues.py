@@ -47,7 +47,7 @@ def get(project_id, issue_id):
 
 
 def get_by_session_id(session_id, project_id, issue_type=None):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                     SELECT *
@@ -63,7 +63,7 @@ def get_by_session_id(session_id, project_id, issue_type=None):
 
 
 def get_types_by_project(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT type,
                                {ORDER_QUERY}>=0 AS visible,

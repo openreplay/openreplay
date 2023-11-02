@@ -6,7 +6,7 @@ EXCEPT = ["jira_server", "jira_cloud"]
 
 def search(project_id):
     result = []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """\
@@ -30,7 +30,7 @@ def search(project_id):
 
 def add(project_id, integration, options):
     options = json.dumps(options)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """\
@@ -44,7 +44,7 @@ def add(project_id, integration, options):
 
 
 def get(project_id, integration):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """\
@@ -61,7 +61,7 @@ def get(project_id, integration):
 
 
 def get_all_by_type(integration):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """\
@@ -81,7 +81,7 @@ def edit(project_id, integration, changes):
         changes.pop("integration")
     if len(changes.keys()) == 0:
         return None
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     UPDATE public.integrations
@@ -94,7 +94,7 @@ def edit(project_id, integration, changes):
 
 
 def delete(project_id, integration):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     DELETE FROM public.integrations
@@ -105,7 +105,7 @@ def delete(project_id, integration):
 
 
 def get_all_by_tenant(tenant_id, integration):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 """SELECT integrations.* 

@@ -23,7 +23,7 @@ feature_flag_columns = (
 
 
 async def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.feature_flags
                                 WHERE deleted_at IS NULL
@@ -38,7 +38,7 @@ async def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[in
 
 async def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
     try:
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             query = cur.mogrify(f"""UPDATE feature_flags
                                 SET is_active = %(is_active)s, updated_at=NOW()
                                 WHERE feature_flag_id=%(feature_flag_id)s AND project_id=%(project_id)s
@@ -67,7 +67,7 @@ async def search_feature_flags(project_id: int, user_id: int, data: schemas.Sear
         LIMIT %(limit)s OFFSET %(offset)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         rows = cur.fetchall()
@@ -176,7 +176,7 @@ async def create_feature_flag(project_id: int, user_id: int, feature_flag_data: 
             SELECT feature_flag_id FROM inserted_flag;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(query, params)
         cur.execute(query)
         row = cur.fetchone()
@@ -263,7 +263,7 @@ async def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Di
                 AND ff.deleted_at IS NULL;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "project_id": project_id})
         cur.execute(query)
         row = cur.fetchone()
@@ -299,7 +299,7 @@ async def create_conditions(feature_flag_id: int, conditions: List[schemas.Featu
             RETURNING condition_id, {", ".join(columns)}
         """
 
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             params = [
                 (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.model_dump() for filter_ in c.filters]))
                 for c in conditions]
@@ -344,7 +344,7 @@ async def update_feature_flag(project_id: int, feature_flag_id: int,
         RETURNING feature_flag_id, {", ".join(columns)}, created_at, updated_at
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
         row = cur.fetchone()
@@ -376,7 +376,7 @@ async def get_conditions(feature_flag_id: int):
         ORDER BY condition_id;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id})
         cur.execute(query)
         rows = cur.fetchall()
@@ -425,7 +425,7 @@ async def get_variants(feature_flag_id: int):
         ORDER BY variant_id;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id})
         cur.execute(query)
         rows = cur.fetchall()
@@ -456,7 +456,7 @@ async def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFl
             RETURNING variant_id, {", ".join(columns)}
         """
 
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
             query = cur.mogrify(sql, params)
             cur.execute(query)
@@ -487,7 +487,7 @@ async def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFl
         WHERE c.variant_id = feature_flags_variants.variant_id AND feature_flag_id = %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
 
@@ -502,7 +502,7 @@ async def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
                 AND feature_flag_id= %(feature_flag_id)s;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "ids": tuple(ids)})
         cur.execute(query)
 
@@ -558,7 +558,7 @@ async def update_conditions(feature_flag_id: int, conditions: List[schemas.Featu
         WHERE c.condition_id = feature_flags_conditions.condition_id AND feature_flag_id = %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, params)
         cur.execute(query)
 
@@ -573,7 +573,7 @@ async def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
             AND feature_flag_id= %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "ids": tuple(ids)})
         cur.execute(query)
 
@@ -587,7 +587,7 @@ async def delete_feature_flag(project_id: int, feature_flag_id: int):
         "feature_flags.feature_flag_id=%(feature_flag_id)s"
     ]
     params = {"project_id": project_id, "feature_flag_id": feature_flag_id}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE feature_flags
                                 SET deleted_at= (now() at time zone 'utc'), is_active=false
                                 WHERE {" AND ".join(conditions)};""", params)

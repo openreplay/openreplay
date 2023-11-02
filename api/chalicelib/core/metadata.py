@@ -14,7 +14,7 @@ def column_names():
 
 
 async def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -> bool:
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         constraints = column_names()
         if exclude_index:
             del constraints[exclude_index - 1]
@@ -33,7 +33,7 @@ async def __exists_by_name(project_id: int, name: str, exclude_index: Optional[i
 
 
 async def get(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT {",".join(column_names())}
                                 FROM public.projects
                                 WHERE project_id = %(project_id)s 
@@ -52,7 +52,7 @@ async def get(project_id):
 async def get_batch(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT project_id, {",".join(column_names())}
                                 FROM public.projects
                                 WHERE project_id IN %(project_ids)s 
@@ -98,7 +98,7 @@ async def __edit(project_id, col_index, colname, new_name):
     if col_index not in list(old_metas.keys()):
         return {"errors": ["custom field not found"]}
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         if old_metas[col_index]["key"] != new_name:
             query = cur.mogrify(f"""UPDATE public.projects 
                                     SET {colname} = %(value)s 
@@ -126,7 +126,7 @@ async def delete(tenant_id, project_id, index: int):
     if index not in old_segments:
         return {"errors": ["custom field not found"]}
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         colname = index_to_colname(index)
         query = cur.mogrify(f"""UPDATE public.projects 
                                 SET {colname}= NULL
@@ -151,7 +151,7 @@ async def add(tenant_id, project_id, new_name):
     nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=None)
     if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         colname = index_to_colname(index)
         query = cur.mogrify(f"""UPDATE public.projects 
                                 SET {colname}= %(key)s 
@@ -169,7 +169,7 @@ def search(tenant_id, project_id, key, value):
     for f in column_names():
         s_query.append(f"CASE WHEN {f}=%(key)s THEN TRUE ELSE FALSE END AS {f}")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT {",".join(s_query)}
                                 FROM public.projects
                                 WHERE project_id = %(project_id)s 
@@ -206,7 +206,7 @@ async def get_by_session_id(project_id, session_id):
     if len(all_metas) == 0:
         return []
     keys = {index_to_colname(k["index"]): k["key"] for k in all_metas}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT {",".join(keys.keys())}
                                 FROM public.sessions
                                 WHERE project_id= %(project_id)s 
@@ -226,7 +226,7 @@ async def get_by_session_id(project_id, session_id):
 async def get_keys_by_projects(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return {}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT project_id,{",".join(column_names())}
                                 FROM public.projects
                                 WHERE project_id IN %(project_ids)s 
@@ -272,7 +272,7 @@ async def get_keys_by_projects(project_ids):
 #         return {"errors": ["duplicate keys"]}
 #     to_delete = list(set(old_indexes) - set(new_indexes))
 #
-#     with pg_client.PostgresClient() as cur:
+#     async with pg_client.PostgresClient() as cur:
 #         for d in to_delete:
 #             delete(tenant_id=tenant_id, project_id=project_id, index=d)
 #

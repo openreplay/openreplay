@@ -14,7 +14,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get(id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     SELECT *
@@ -27,7 +27,7 @@ def get(id):
 
 
 def get_all(project_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                     SELECT alerts.*,
                            COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
@@ -59,7 +59,7 @@ def create(project_id, data: schemas.AlertSchema):
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
                     INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id, change)
@@ -76,7 +76,7 @@ def update(id, data: schemas.AlertSchema):
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                     UPDATE public.alerts
                     SET name = %(name)s,
@@ -215,7 +215,7 @@ def send_to_msteams_batch(notifications_list):
 
 
 def delete(project_id, alert_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(""" UPDATE public.alerts 
                             SET deleted_at = timezone('utc'::text, now()),

@@ -8,7 +8,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description) 
                         VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s)
                         RETURNING *"""
@@ -33,7 +33,7 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
 
 
 def get_dashboards(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT *
                         FROM dashboards
                         WHERE deleted_at ISNULL
@@ -46,7 +46,7 @@ def get_dashboards(project_id, user_id):
 
 
 def get_dashboard(project_id, user_id, dashboard_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """SELECT dashboards.*, all_metric_widgets.widgets AS widgets
                         FROM dashboards
                                  LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(raw_metrics), '[]') AS widgets
@@ -93,7 +93,7 @@ def get_dashboard(project_id, user_id, dashboard_id):
 
 
 def delete_dashboard(project_id, user_id, dashboard_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboards
                       SET deleted_at = timezone('utc'::text, now())
                         WHERE dashboards.project_id = %(projectId)s
@@ -105,7 +105,7 @@ def delete_dashboard(project_id, user_id, dashboard_id):
 
 
 def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashboardSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """SELECT COALESCE(COUNT(*),0) AS count
                     FROM dashboard_widgets
                     WHERE dashboard_id = %(dashboard_id)s;"""
@@ -145,7 +145,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
 
 
 def get_widget(project_id, user_id, dashboard_id, widget_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """SELECT metrics.*, metric_series.series
                         FROM dashboard_widgets
                                  INNER JOIN dashboards USING (dashboard_id)
@@ -169,7 +169,7 @@ def get_widget(project_id, user_id, dashboard_id, widget_id):
 
 
 def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashboardPayloadSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
                           SELECT %(dashboard_id)s AS dashboard_id, %(metric_id)s AS metric_id, 
                                  %(userId)s AS user_id, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id)s)||%(config)s::jsonb AS config
@@ -186,7 +186,7 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
 
 
 def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.UpdateWidgetPayloadSchema):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboard_widgets
                       SET config= %(config)s
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s
@@ -200,7 +200,7 @@ def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.Up
 
 
 def remove_widget(project_id, user_id, dashboard_id, widget_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """DELETE FROM dashboard_widgets
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, "widget_id": widget_id}
@@ -209,7 +209,7 @@ def remove_widget(project_id, user_id, dashboard_id, widget_id):
 
 
 def pin_dashboard(project_id, user_id, dashboard_id):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboards
                       SET is_pinned = FALSE
                       WHERE project_id=%(project_id)s;

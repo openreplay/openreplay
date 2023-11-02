@@ -133,7 +133,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                                COALESCE(COUNT(sessions), 0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -183,7 +183,7 @@ def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimesta
     pg_sub_query_subset.append("m_errors.source = 'js_exception'")
     pg_sub_query_subset.append("errors.timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("errors.timestamp<%(endTimestamp)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH errors AS (SELECT DISTINCT session_id, timestamp
                                         FROM events.errors
                                                  INNER JOIN public.errors AS m_errors USING (error_id)
@@ -244,7 +244,7 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     pg_sub_query_chart.append("errors_subsest.error_id = top_errors.error_id")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH errors_subsest AS (SELECT session_id, error_id, timestamp
                                         FROM events.errors
                                                  INNER JOIN public.errors AS m_errors USING (error_id)
@@ -294,7 +294,7 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         rows = __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
@@ -330,7 +330,7 @@ def __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args):
 
 def get_application_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         diff = endTimestamp - startTimestamp
@@ -381,7 +381,7 @@ def __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **
 
 def get_user_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                       endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_user_activity(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         diff = endTimestamp - startTimestamp
@@ -429,7 +429,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset.append("resources.duration IS NOT NULL")
     pg_sub_query_subset.append("resources.type='img'")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT *
                         FROM (SELECT resources.url_hostpath,
                                      COALESCE(AVG(resources.duration), 0) AS avg_duration,
@@ -495,7 +495,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
                                                 chart=False, data=args)
         pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
@@ -625,7 +625,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
 
     if resource_type == "ALL" and not pages_only and not events_only:
         pg_sub_query.append("url_hostpath ILIKE %(value)s")
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_query = f"""SELECT key, value
                             FROM ( SELECT DISTINCT ON (url_hostpath) ROW_NUMBER() OVER (PARTITION BY type ORDER BY url_hostpath) AS r,
                                               url_hostpath AS value,
@@ -638,7 +638,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
             rows = cur.fetchall()
             rows = [{"value": i["value"], "type": __get_resource_type_from_db_type(i["key"])} for i in rows]
     elif resource_type == "ALL" and events_only:
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_query = f"""(SELECT DISTINCT label AS value, 'INPUT' AS key
                              FROM events.inputs INNER JOIN public.sessions USING(session_id)
                              WHERE {" AND ".join(pg_sub_query)} AND positionUTF8(lowerUTF8(label), %(value)s) != 0
@@ -662,7 +662,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
         pg_sub_query.append("url_hostpath ILIKE %(value)s")
         pg_sub_query.append(f"resources.type = '{__get_resource_db_type_from_type(resource_type)}'")
 
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_query = f"""SELECT 
                               DISTINCT url_hostpath AS value,
                               %(resource_type)s AS type
@@ -675,7 +675,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                                "platform_0": platform}))
             rows = cur.fetchall()
     elif resource_type == 'LOCATION':
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_sub_query.append("path ILIKE %(value)s")
             pg_query = f"""SELECT 
                              DISTINCT path AS value,
@@ -688,7 +688,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                                "platform_0": platform}))
             rows = cur.fetchall()
     elif resource_type == "INPUT":
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_sub_query.append("label ILIKE %(value)s")
             pg_query = f"""SELECT DISTINCT label AS value, 'INPUT' AS type
                              FROM events.inputs INNER JOIN public.sessions USING (session_id)
@@ -699,7 +699,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                                "platform_0": platform}))
             rows = cur.fetchall()
     elif resource_type == "CLICK":
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             pg_sub_query.append("label ILIKE %(value)s")
             pg_query = f"""SELECT DISTINCT label AS value, 'CLICK' AS key
                              FROM events.clicks INNER JOIN public.sessions USING (session_id)
@@ -717,7 +717,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
             else:
                 column = SESSIONS_META_FIELDS[key]
                 pg_sub_query.append(f"{SESSIONS_META_FIELDS[key]} ILIKE %(value)s")
-            with pg_client.PostgresClient() as cur:
+            async with pg_client.PostgresClient() as cur:
                 pg_query = f"""SELECT  DISTINCT {column} AS value,
                                           %(key)s AS key
                                       FROM sessions
@@ -728,7 +728,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                          "platform_0": platform}))
                 rows = cur.fetchall()
         else:
-            with pg_client.PostgresClient() as cur:
+            async with pg_client.PostgresClient() as cur:
                 pg_query = []
                 for k in METADATA_FIELDS.keys():
                     pg_query.append(f"""(SELECT DISTINCT sessions.{METADATA_FIELDS[k]} AS value,
@@ -768,7 +768,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     pg_sub_query.append("resources.type = 'img'")
     pg_sub_query_chart.append("resources.type = 'img'")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT 
                              resources.url_hostpath AS url,
                              COUNT(resources.session_id) AS sessions
@@ -823,7 +823,7 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT resources.session_id,
                                                   resources.url_hostpath,
                                                   timestamp
@@ -895,7 +895,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
     if url is not None:
         pg_sub_query_subset.append(f"resources.url_hostpath = %(value)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT resources.duration, timestamp
                                            FROM events.resources
                                                     INNER JOIN public.sessions USING (session_id)
@@ -941,7 +941,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
     pg_sub_query_subset.append("pages.dom_building_time>0")
     pg_sub_query_subset.append("pages.dom_building_time IS NOT NULL")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH pages AS ( SELECT pages.dom_building_time, timestamp 
                                     FROM public.sessions
                                              INNER JOIN events.pages USING (session_id)
@@ -992,7 +992,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset.append(sq)
     pg_sub_query_chart.append("resources.url_hostpath ILIKE '%%' || main_list.name")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (
                                             SELECT resources.duration, url_hostpath, timestamp
                                             FROM events.resources
@@ -1048,7 +1048,7 @@ def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT user_country, COUNT(session_id) AS count
                         FROM public.sessions
                         WHERE {" AND ".join(pg_sub_query)} 
@@ -1068,7 +1068,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     pg_sub_query.append("pages.speed_index IS NOT NULL")
     pg_sub_query.append("pages.speed_index>0")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS value
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)} 
@@ -1103,7 +1103,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
 
     if url is not None:
         pg_sub_query_chart.append(f"url = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                                 COALESCE(AVG(pages.response_time),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -1137,7 +1137,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
     pg_sub_query.append("pages.response_time IS NOT NULL")
     pg_sub_query.append("pages.response_time>0")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT pages.response_time AS response_time,
                               COUNT(pages.session_id) AS count
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
@@ -1253,7 +1253,7 @@ def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                             endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
                             (EXTRACT(HOUR FROM TO_TIMESTAMP(sessions.start_ts))::INTEGER / 2) * 2 AS hour,
                             COUNT(sessions.session_id) AS count
@@ -1274,7 +1274,7 @@ def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH pages AS (SELECT pages.response_time,
                               pages.first_paint_time,
                               pages.dom_content_loaded_time,
@@ -1329,7 +1329,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     if url is not None:
         pg_sub_query_subset.append("pages.path = %(value)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH pages AS(SELECT pages.visually_complete,pages.timestamp 
                                     FROM events.pages INNER JOIN public.sessions USING (session_id)
                                     WHERE {" AND ".join(pg_sub_query_subset)})
@@ -1370,7 +1370,7 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
         pg_sub_query_chart.append("pages.path = %(value)s")
     pg_sub_query_chart.append("avg_response_time>0")
     pg_sub_query_chart.append("pages.response_time>avg_response_time*2")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                               COUNT(pages.session_id) AS count
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -1400,7 +1400,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                             COALESCE(AVG(performance.avg_used_js_heap_size),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -1432,7 +1432,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                             COALESCE(AVG(performance.avg_cpu),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -1466,7 +1466,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                            chart=True, data=args)
     pg_sub_query.append("performance.avg_fps>0")
     pg_sub_query_chart.append("performance.avg_fps>0")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                               COALESCE(AVG(performance.avg_fps),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp 
@@ -1499,7 +1499,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query_chart.append("m_issues.type = 'crash'")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
                                COUNT(sessions) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
@@ -1586,7 +1586,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
     pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH requests AS(SELECT requests.host, timestamp 
                                          FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
@@ -1634,7 +1634,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
                                            duration=False)
     pg_sub_query_subset.append("requests.status_code/100 = %(status_code)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH requests AS (SELECT host, timestamp 
                                          FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
@@ -1691,7 +1691,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query.append("resources.duration IS NOT NULL")
     pg_sub_query.append("resources.duration>0")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
                             resources.url_host AS domain,
                             AVG(resources.duration) AS value
@@ -1721,7 +1721,7 @@ def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("requests.success = FALSE")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
                             requests.host AS domain,
                             COUNT(requests.session_id) AS errors_count
@@ -1742,7 +1742,7 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query2 = pg_sub_query[:]
     pg_sub_query2.append("sessions.user_browser = b.user_browser")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT b.user_browser AS browser,
                                b.count,
                                jsonb_agg(bv)  AS versions
@@ -1786,7 +1786,7 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
     pg_sub_query.append("resources.method IS NOT NULL")
     pg_sub_query.append("resources.status/100 != 2")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT  resources.method,
                                resources.url_hostpath,
                                COUNT(resources.session_id)                       AS all_requests,
@@ -1812,7 +1812,7 @@ def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now
     pg_sub_query.append("requests.method IS NOT NULL")
     pg_sub_query.append(f"requests.status_code/100 = {status}")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT  requests.method,
                                requests.host,
                                requests.path,
@@ -1862,7 +1862,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     pg_sub_query_subset_e.append("timestamp>=%(startTimestamp)s")
     pg_sub_query_subset_e.append("timestamp<%(endTimestamp)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH requests AS (SELECT status_code AS status, timestamp
                                        FROM events_common.requests
                                                 INNER JOIN public.sessions USING (session_id)
@@ -1922,7 +1922,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
               "project_id": project_id,
               "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS(SELECT resources.type, resources.timestamp 
                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
                                         WHERE {" AND ".join(pg_sub_query_subset)})
@@ -1986,7 +1986,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
     pg_sub_query_subset.append("errors.timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("errors.timestamp<%(endTimestamp)s")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH errors AS (SELECT DISTINCT ON (session_id,timestamp) session_id, timestamp
                                         FROM events.errors
                                                  INNER JOIN public.errors AS m_errors USING (error_id)
@@ -2052,7 +2052,7 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                                            duration=False)
     pg_sub_query_subset.append("timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("timestamp<%(endTimestamp)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT resources.type, timestamp, session_id
                                            FROM events.resources
                                                     INNER JOIN public.sessions USING (session_id)
@@ -2101,7 +2101,7 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
                                            data=args, main_table="resources", time_column="timestamp", project=False,
                                            duration=False)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT  resources.type, timestamp 
                                             FROM events.resources INNER JOIN public.sessions USING (session_id)
                                             WHERE {" AND ".join(pg_sub_query_subset)} 
@@ -2142,7 +2142,7 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     # pg_sub_query_subset.append("resources.type IN ('fetch', 'script')")
     pg_sub_query_subset.append("requests.success = FALSE")
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH requests AS (
                             SELECT requests.host, timestamp
                             FROM events_common.requests
@@ -2200,7 +2200,7 @@ def __get_application_activity_avg_image_load_time(cur, project_id, startTimesta
 
 def get_application_activity_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                  endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
         results["chart"] = get_performance_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
@@ -2275,7 +2275,7 @@ def __get_application_activity_avg_page_load_time(cur, project_id, startTimestam
 
 def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
         results["chart"] = get_performance_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
@@ -2344,7 +2344,7 @@ def __get_application_activity_avg_request_load_time(cur, project_id, startTimes
 
 def get_application_activity_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                    endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
         results["chart"] = get_performance_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
@@ -2400,7 +2400,7 @@ def get_performance_avg_request_load_time(cur, project_id, startTimestamp=TimeUT
 
 def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         results["chart"] = __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp,
@@ -2468,7 +2468,7 @@ def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTi
 
 def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
@@ -2538,7 +2538,7 @@ def __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTi
 
 def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         results["chart"] = __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
@@ -2601,7 +2601,7 @@ def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
 
 def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                            endTimestamp=TimeUTC.now(), **args):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         results["chart"] = __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp,
@@ -2673,7 +2673,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.response_time), 0) AS value
                        FROM events.pages
                                 INNER JOIN public.sessions USING (session_id)
@@ -2714,7 +2714,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.first_paint_time), 0) AS value
                        FROM events.pages
                                 INNER JOIN public.sessions USING (session_id)
@@ -2756,7 +2756,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.dom_content_loaded_time), 0) AS value
                        FROM events.pages
                                 INNER JOIN public.sessions USING (session_id)
@@ -2799,7 +2799,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.ttfb), 0) AS value
                        FROM events.pages
                                 INNER JOIN public.sessions USING (session_id)
@@ -2842,7 +2842,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.time_to_interactive), 0) AS value
                        FROM events.pages
                                 INNER JOIN public.sessions USING (session_id)
@@ -2885,7 +2885,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
         pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COUNT(pages.session_id) AS value
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)};"""

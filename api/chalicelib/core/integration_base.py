@@ -28,7 +28,7 @@ class BaseIntegration(ABC):
         return integration["token"]
 
     def get(self):
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify(
                     """SELECT *
