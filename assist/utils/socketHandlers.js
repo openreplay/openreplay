@@ -38,8 +38,6 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 
 async function sessions_agents_count(io, socket) {
     let c_sessions = 0, c_agents = 0;
-    // const rooms = await getAvailableRooms(io);
-    // if (rooms.get(socket.roomId)) {
     const connected_sockets = await io.in(socket.roomId).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let item of connected_sockets) {
@@ -58,15 +56,12 @@ async function sessions_agents_count(io, socket) {
 
 async function get_all_agents_ids(io, socket) {
     let agents = [];
-    // const rooms = await getAvailableRooms(io);
-    // if (rooms.get(socket.roomId)) {
     const connected_sockets = await io.in(socket.roomId).fetchSockets();
     for (let item of connected_sockets) {
         if (item.handshake.query.identity === IDENTITIES.agent) {
             agents.push(item.id);
         }
     }
-    // }
     return agents;
 }
 
@@ -121,14 +116,12 @@ async function onConnect(socket) {
         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
     await socket.join(socket.roomId);
-    // const rooms = await getAvailableRooms(io);
-    // if (rooms.has(socket.roomId)) {
-    //     let connectedSockets = await io.in(socket.roomId).fetchSockets();
-    //     debug_log && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
-    // }
-    let connectedSockets = await io.in(socket.roomId).fetchSockets();
-    if (connectedSockets.length > 0) {
-        debug_log && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
+
+    if (debug_log) {
+        let connectedSockets = await io.in(socket.roomId).fetchSockets();
+        if (connectedSockets.length > 0) {
+            console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
+        }
     }
 
     if (socket.identity === IDENTITIES.agent) {
@@ -189,26 +182,21 @@ async function onUpdateEvent(socket, ...args) {
         debug_log && console.log('Ignoring update event.');
         return
     }
+
     // Back compatibility (add top layer with meta information)
     if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
         args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
     }
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
-    // socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
     socket.to(socket.roomId).emit(EVENTS_DEFINITION.server.UPDATE_SESSION, args[0]);
+
     // Update sessionInfo for all sessions in room
-    // const rooms = await getAvailableRooms(io);
-    // for (let roomId of rooms.keys()) {
-    //     if (roomId === socket.roomId) {
-    //         const connected_sockets = await io.in(roomId).fetchSockets();
     const connected_sockets = await io.in(socket.roomId).fetchSockets();
     for (let item of connected_sockets) {
         if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
             Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
         }
     }
-    //     }
-    // }
 }
 
 async function onUpdateServerEvent(socket, ...args) {
