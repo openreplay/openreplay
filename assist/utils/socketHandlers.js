@@ -169,21 +169,18 @@ async function onDisconnect(socket) {
 }
 
 async function onUpdateEvent(socket, ...args) {
-    const io = getServer();
     debug_log && console.log(`${socket.id} sent update event.`);
     if (socket.identity !== IDENTITIES.session) {
         debug_log && console.log('Ignoring update event.');
         return
     }
 
-    // Back compatibility (add top layer with meta information)
-    if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
-        args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
-    }
+    args[0] = updateSessionData(socket, args[0])
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
     socket.to(socket.roomId).emit(EVENTS_DEFINITION.server.UPDATE_SESSION, args[0]);
 
     // Update sessionInfo for all sessions in room
+    const io = getServer();
     const connected_sockets = await io.in(socket.roomId).fetchSockets();
     for (let item of connected_sockets) {
         if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
@@ -198,10 +195,7 @@ async function onUpdateServerEvent(socket, ...args) {
         debug_log && console.log('Ignoring server update event.');
         return
     }
-    // Back compatibility (add top layer with meta information)
-    if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
-        args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
-    }
+    args[0] = updateSessionData(socket, args[0])
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
 }
 
@@ -210,10 +204,7 @@ async function onAny(socket, eventName, ...args) {
         debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
     }
-    // Back compatibility (add top layer with meta information)
-    if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
-        args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
-    }
+    args[0] = updateSessionData(socket, args[0])
     if (socket.identity === IDENTITIES.session) {
         debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.roomId}`);
         socket.to(socket.roomId).emit(eventName, args[0]);
@@ -231,6 +222,14 @@ async function onAny(socket, eventName, ...args) {
             io.to(socketId).emit(eventName, socket.id, args[0]);
         }
     }
+}
+
+// Back compatibility (add top layer with meta information)
+function updateSessionData(socket, sessionData) {
+    if (sessionData?.meta === undefined && socket.identity === IDENTITIES.session) {
+        sessionData = {meta: {tabId: socket.tabId, version: 1}, data: sessionData};
+    }
+    return sessionData
 }
 
 module.exports = {
