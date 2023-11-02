@@ -8,9 +8,9 @@ import ListView from './ListView';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function MetricsList({
-  siteId,
-  onSelectionChange,
-}: {
+                       siteId,
+                       onSelectionChange
+                     }: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
 }) {
@@ -18,7 +18,7 @@ function MetricsList({
   const metricsSearch = metricStore.filter.query;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
-  
+
   const dashboard = dashboardStore.selectedDashboard;
   const existingCardIds = useMemo(() => dashboard?.widgets?.map(i => parseInt(i.metricId)), [dashboard]);
   const cards = useMemo(() => !!onSelectionChange ? metricStore.filteredCards.filter(i => !existingCardIds?.includes(parseInt(i.metricId))) : metricStore.filteredCards, [metricStore.filteredCards]);
@@ -54,14 +54,14 @@ function MetricsList({
       <NoContent
         show={lenth === 0}
         title={
-          <div className="flex flex-col items-center justify-center">
+          <div className='flex flex-col items-center justify-center'>
             <AnimatedSVG name={ICONS.NO_CARDS} size={180} />
-            <div className="text-center mt-4">
-              {metricsSearch !== '' ? 'No matching results' : "You haven't created any cards yet"}
+            <div className='text-center mt-4'>
+              {metricsSearch !== '' ? 'No matching results' : 'You haven\'t created any cards yet'}
             </div>
           </div>
         }
-        subtext="Utilize cards to visualize key user interactions or product performance metrics."
+        subtext='Utilize cards to visualize key user interactions or product performance metrics.'
       >
         {listView ? (
           <ListView
@@ -85,11 +85,11 @@ function MetricsList({
           />
         )}
 
-        <div className="w-full flex items-center justify-between py-4 px-6 border-t">
-          <div className="text-disabled-text">
+        <div className='w-full flex items-center justify-between py-4 px-6 border-t'>
+          <div className='text-disabled-text'>
             Showing{' '}
-            <span className="font-semibold">{Math.min(cards.length, metricStore.pageSize)}</span> out
-            of <span className="font-semibold">{cards.length}</span> cards
+            <span className='font-semibold'>{Math.min(cards.length, metricStore.pageSize)}</span> out
+            of <span className='font-semibold'>{cards.length}</span> cards
           </div>
           <Pagination
             page={metricStore.page}
