@@ -206,8 +206,7 @@ async function onUpdateServerEvent(socket, ...args) {
 }
 
 async function onAny(socket, eventName, ...args) {
-    const io = getServer();
-    if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
+    if ((Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) || (Object.values(EVENTS_DEFINITION.server).indexOf(eventName) >= 0)){
         debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
     }
@@ -222,6 +221,7 @@ async function onAny(socket, eventName, ...args) {
         // Stats
         handleEvent(eventName, socket, args[0]);
         debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
+        const io = getServer();
         let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
             debug_log && console.log(`session not found for:${socket.roomId}`);
