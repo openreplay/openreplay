@@ -125,7 +125,7 @@ function FilterModal(props: Props) {
         })}
       </div>
       {showSearchList && (
-        <Loader size='small' loading={fetchingFilterSearchList}>
+        <Loader loading={fetchingFilterSearchList}>
           <div className='-mx-6 px-6'>
             {isResultEmpty && !fetchingFilterSearchList ? (
               <div className='flex items-center flex-col'>
