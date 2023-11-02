@@ -1,9 +1,9 @@
 <p align="center">
-  <a href="/README_FR">Français</a>
+  <a href="/README_FR.md">Français</a>
   &nbsp;|&nbsp;
-  <a href="/README_ESP">Español</a>
+  <a href="/README_ESP.md">Español</a>
   &nbsp;|&nbsp;
-  <a href="/README_RU">Русский</a>
+  <a href="/README_RU.md">Русский</a>
 </p>
 
 <p align="center">
