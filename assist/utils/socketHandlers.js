@@ -1,7 +1,6 @@
 const {
     extractPeerId,
     extractRoomId,
-    getAvailableRooms
 } = require("./helper");
 const {
     IDENTITIES,
@@ -87,18 +86,12 @@ async function onConnect(socket) {
     if (socket.identity === IDENTITIES.session) {
         // Check if session already connected, if so, refuse new connexion
         if (c_sessions > 0) {
-            const rooms = await getAvailableRooms(io);
-            for (let roomId of rooms.keys()) {
-                let {projectKey} = extractPeerId(roomId);
-                if (projectKey === socket.projectKey) {
-                    const connected_sockets = await io.in(roomId).fetchSockets();
-                    for (let item of connected_sockets) {
-                        if (item.tabId === socket.tabId) {
-                            error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
-                            io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
-                            return socket.disconnect();
-                        }
-                    }
+            const connected_sockets = await io.in(roomId).fetchSockets();
+            for (let item of connected_sockets) {
+                if (item.tabId === socket.tabId) {
+                    error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
+                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
+                    return socket.disconnect();
                 }
             }
         }
