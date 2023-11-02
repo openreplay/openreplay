@@ -200,7 +200,7 @@ async function onUpdateServerEvent(socket, ...args) {
 }
 
 async function onAny(socket, eventName, ...args) {
-    if ((Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) || (Object.values(EVENTS_DEFINITION.server).indexOf(eventName) >= 0)){
+    if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
         debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
     }
