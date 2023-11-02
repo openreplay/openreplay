@@ -86,7 +86,7 @@ async function onConnect(socket) {
     if (socket.identity === IDENTITIES.session) {
         // Check if session already connected, if so, refuse new connexion
         if (c_sessions > 0) {
-            const connected_sockets = await io.in(roomId).fetchSockets();
+            const connected_sockets = await io.in(socket.roomId).fetchSockets();
             for (let item of connected_sockets) {
                 if (item.tabId === socket.tabId) {
                     error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
