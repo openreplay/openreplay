@@ -39,7 +39,7 @@ function Modules(props: Props) {
     list.forEach((module) => {
       module.isEnabled = modules.includes(module.key);
     });
-    setModulesState(list);
+    setModulesState(list.filter((module) => !module.hidden));
   }, [modules]);
 
 

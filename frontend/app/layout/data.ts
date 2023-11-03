@@ -44,7 +44,7 @@ export const enum MENU {
   NOTES = 'notes',
   LIVE_SESSIONS = 'live-sessions',
   RECORDINGS = 'recordings',
-  STATS = 'stats',
+  STATS = 'assist-stats',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
   FUNNELS = 'funnels',
@@ -63,8 +63,8 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      // { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic' },
-      // { label: 'Vault', key: MENU.VAULT, icon: 'safe' },
+      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
+      { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
     ]
@@ -119,7 +119,7 @@ export const preferences: Category[] = [
     key: 'preferences',
     items: [
       { label: 'Account', key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
-      { label: 'Session Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
+      { label: 'Sessions Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },

@@ -69,6 +69,7 @@ function AssistStats() {
     const topMembersPr = assistStatsService.getTopMembers({
       startTimestamp: usedP.start,
       endTimestamp: usedP.end,
+      userId: selectedUser ? selectedUser : undefined,
       sort: membersSort,
       order: 'desc',
     });

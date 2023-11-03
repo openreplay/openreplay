@@ -48,7 +48,7 @@ export class GettingStarted {
     makeObservable(this, {
       steps: observable,
       completeStep: action,
-      status: observable,
+      // status: observable,
       fetchData: action,
       numCompleted: computed,
       numPending: computed,
