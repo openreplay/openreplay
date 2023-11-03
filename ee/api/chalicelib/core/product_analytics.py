@@ -129,6 +129,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
 
     exclusions = {}
     for i, ef in enumerate(data.excludes):
+        if len(ef.value) == 0:
+            continue
         if ef.type in data.metric_value:
             f_k = f"exclude_{i}"
             extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}
