@@ -18,7 +18,7 @@
 </p>
 
 <h3 align="center">Relecture de session pour développeurs</h3>
-<p align="center">La relecture de session open source la plus avancée sur le marché pour des applications perfectionnées.</p>
+<p align="center">La relecture de session la plus avancée sur le marché pour des applications perfectionnées.</p>
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
