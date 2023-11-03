@@ -8,9 +8,9 @@ export default function App() {
 
   const start = () => {
     Openreplay.tracker.startSession(
-      'IRnAP8qCRER6RL024Qlg',
+      process.env.REACT_APP_KEY!,
       {},
-      'https://or-release-foss.rjsh.me/ingest'
+      process.env.REACT_APP_INGEST
     );
     console.log('test', Openreplay.tracker, 123123);
   };

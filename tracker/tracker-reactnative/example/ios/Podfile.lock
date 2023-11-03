@@ -629,7 +629,7 @@ SPEC CHECKSUMS:
   hermes-engine: 81191603c4eaa01f5e4ae5737a9efcf64756c7b2
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   openreplay-reactnative: 195b9e120d1aed7bdde7d4728a2f23b37b8d5266
-  ORTracker: bf0aa2b693d5f8d200de584b1f6f85d38120d4d2
+  ORTracker: 5b993fad6248d9e5605c28f4af6454022f43934f
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: c0569ecc035894e4a68baecb30fe6a7ea6e399f9
   RCTTypeSafety: e90354072c21236e0bcf1699011e39acd25fea2f
