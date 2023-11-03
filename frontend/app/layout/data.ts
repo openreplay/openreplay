@@ -63,8 +63,8 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      // { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic' },
-      // { label: 'Vault', key: MENU.VAULT, icon: 'safe' },
+      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
+      { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
     ]

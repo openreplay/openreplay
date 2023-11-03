@@ -48,6 +48,9 @@ function SideMenu(props: Props) {
         if (item.hidden) return item;
 
         const isHidden = [
+          (item.key === MENU.STATS && modules.includes(MODULES.ASSIST_STATS)),
+          (item.key === MENU.RECOMMENDATIONS && modules.includes(MODULES.RECOMMENDATIONS)),
+          (item.key === MENU.FEATURE_FLAGS && modules.includes(MODULES.FEATURE_FLAGS)),
           (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
           (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS || item.key === MENU.STATS) && modules.includes(MODULES.ASSIST),
           (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
