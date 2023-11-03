@@ -105,8 +105,8 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
-        t.pop("createdAt")
-        t["tenantName"] = t.pop("name")
+        t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
+        t["tenantName"] = t.get("name")
     return {
         'data': {
             **r,
