@@ -1,0 +1,32 @@
+{
+  "pins" : [
+    {
+      "identity" : "bitbytedata",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tsolomko/BitByteData",
+      "state" : {
+        "revision" : "36df26fe4586b4f23d76cfd8b47076998343a2b2",
+        "version" : "2.0.3"
+      }
+    },
+    {
+      "identity" : "devicekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/devicekit/DeviceKit.git",
+      "state" : {
+        "revision" : "d37e70cb2646666dcf276d7d3d4a9760a41ff8a6",
+        "version" : "4.9.0"
+      }
+    },
+    {
+      "identity" : "swcompression",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tsolomko/SWCompression.git",
+      "state" : {
+        "revision" : "cd39ca0a3b269173bab06f68b182b72fa690765c",
+        "version" : "4.8.5"
+      }
+    }
+  ],
+  "version" : 2
+}
