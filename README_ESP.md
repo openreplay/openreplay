@@ -18,7 +18,7 @@
 </p>
 
 <h3 align="center">Reproducción de sesiones para desarrolladores</h3>
-<p align="center">La reproducción de sesiones de código abierto más avanzada para crear aplicaciones web encantadoras.</p>
+<p align="center">La reproducción de sesiones más avanzada para crear aplicaciones web encantadoras.</p>
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
