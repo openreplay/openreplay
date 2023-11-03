@@ -642,7 +642,7 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
 @app.post('/users/modules', tags=['users'])
 def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
                        data: schemas.ModuleStatus = Body(...)):
-    return users.update_user_module(context.user_id, data)
+    return {"data": users.update_user_module(context.user_id, data)}
 
 
 @app.get('/notifications', tags=['notifications'])
@@ -859,4 +859,3 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
-
