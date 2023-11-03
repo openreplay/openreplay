@@ -1464,13 +1464,7 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
 
     @model_validator(mode='after')
     def __validator(cls, values):
-        assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
-        c = 0
-        for v in values.values():
-            if v is not None and (not isinstance(v, str) or len(v) > 0):
-                c += 1
-                break
-        assert c > 0, "at least 1 value should be provided for update"
+        assert values.message is not None or values.timestamp is not None or values.is_public is not None, "at least 1 attribute should be provided for update"
         return values
 
 
@@ -1578,6 +1572,6 @@ class FeatureFlagSchema(BaseModel):
 
 class ModuleStatus(BaseModel):
     module: Literal["assist", "notes", "bug-reports",
-    "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(..., description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
+    "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(...,
+                                                                                                 description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
     status: bool = Field(...)
-
