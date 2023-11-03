@@ -936,3 +936,56 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def get_user_settings(user_id):
+    #     read user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        settings
+                    FROM public.users 
+                    WHERE users.deleted_at IS NULL 
+                        AND users.user_id=%(user_id)s
+                    LIMIT 1""",
+                {"user_id": user_id})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_user_module(user_id, data: schemas.ModuleStatus):
+    # example data = {"settings": {"modules": ['ASSIST', 'METADATA']}
+    #     update user settings from users.settings:jsonb column only update settings.modules
+    #   if module property is not exists, it will be created
+    #  if module property exists, it will be updated, modify here and call update_user_settings
+    # module is a single element to be added or removed
+    settings = get_user_settings(user_id)["settings"]
+    if settings is None:
+        settings = {}
+
+    if settings.get("modules") is None:
+        settings["modules"] = []
+
+    if data.status and data.module not in settings["modules"]:
+        settings["modules"].append(data.module)
+
+    elif not data.status and data.module in settings["modules"]:
+        settings["modules"].remove(data.module)
+
+    return update_user_settings(user_id, settings)
+
+
+def update_user_settings(user_id, settings):
+    #     update user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""UPDATE public.users
+                    SET settings = %(settings)s
+                    WHERE users.user_id = %(user_id)s
+                            AND deleted_at IS NULL
+                    RETURNING settings;""",
+                {"user_id": user_id, "settings": json.dumps(settings)})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
