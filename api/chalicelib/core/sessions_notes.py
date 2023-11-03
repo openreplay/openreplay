@@ -86,7 +86,8 @@ def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNote
         query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
                             VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
                             RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
-                            {"user_id": user_id, "project_id": project_id, "session_id": session_id, **data.model_dump()})
+                            {"user_id": user_id, "project_id": project_id, "session_id": session_id,
+                             **data.model_dump()})
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if result:
@@ -120,7 +121,8 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         row = helper.dict_to_camel_case(cur.fetchone())
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
-        return row
+            return row
+        return {"errors": ["Note not found"]}
 
 
 def delete(tenant_id, user_id, project_id, note_id):
