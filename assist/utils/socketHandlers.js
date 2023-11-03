@@ -123,9 +123,6 @@ async function onConnect(socket) {
     // Handle update event
     socket.on(EVENTS_DEFINITION.listen.UPDATE_EVENT, (...args) => onUpdateEvent(socket, ...args));
 
-    // Handle server update event
-    socket.on(EVENTS_DEFINITION.server.UPDATE_SESSION, (...args) => onUpdateServerEvent(socket, ...args));
-
     // Handle errors
     socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
     socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
@@ -168,26 +165,17 @@ async function onUpdateEvent(socket, ...args) {
 
     args[0] = updateSessionData(socket, args[0])
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
-    socket.to(socket.roomId).emit(EVENTS_DEFINITION.server.UPDATE_SESSION, args[0]);
 
-    // Update sessionInfo for all sessions in room
+    // Update sessionInfo for all agents in the room
     const io = getServer();
     const connected_sockets = await io.in(socket.roomId).fetchSockets();
     for (let item of connected_sockets) {
         if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
             Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
+        } else if (item.handshake.query.identity === IDENTITIES.agent) {
+            socket.to(item.id).emit(EVENTS_DEFINITION.listen.UPDATE_EVENT, args[0]);
         }
     }
-}
-
-async function onUpdateServerEvent(socket, ...args) {
-    debug_log && console.log(`Server sent update event through ${socket.id}.`);
-    if (socket.identity !== IDENTITIES.session) {
-        debug_log && console.log('Ignoring server update event.');
-        return
-    }
-    args[0] = updateSessionData(socket, args[0])
-    Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
 }
 
 async function onAny(socket, eventName, ...args) {
