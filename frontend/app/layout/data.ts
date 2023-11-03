@@ -119,7 +119,7 @@ export const preferences: Category[] = [
     key: 'preferences',
     items: [
       { label: 'Account', key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
-      { label: 'Session Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
+      { label: 'Sessions Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
