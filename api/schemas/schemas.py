@@ -1578,6 +1578,6 @@ class FeatureFlagSchema(BaseModel):
 
 class ModuleStatus(BaseModel):
     module: Literal["assist", "notes", "bug-reports",
-    "offline-recordings", "alerts"] = Field(..., description="Possible values: notes, bugs, live")
+    "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(..., description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
     status: bool = Field(...)
 
