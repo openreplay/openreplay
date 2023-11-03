@@ -4,15 +4,17 @@ from schemas import schemas
 IN_TY = "sentry"
 
 
-def get_all(tenant_id):
-    return log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
+async def get_all(tenant_id):
+    out = await log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
+    return out
 
 
-def get(project_id):
-    return log_tools.get(project_id=project_id, integration=IN_TY)
+async def get(project_id):
+    out = await log_tools.get(project_id=project_id, integration=IN_TY)
+    return out
 
 
-def update(tenant_id, project_id, changes):
+async def update(tenant_id, project_id, changes):
     options = {}
     if "organizationSlug" in changes:
         options["organizationSlug"] = changes["organizationSlug"]
@@ -21,34 +23,37 @@ def update(tenant_id, project_id, changes):
     if "token" in changes:
         options["token"] = changes["token"]
 
-    return log_tools.edit(project_id=project_id, integration=IN_TY, changes=changes)
+    out = await log_tools.edit(project_id=project_id, integration=IN_TY, changes=changes)
+    return out
 
 
-def add(tenant_id, project_id, project_slug, organization_slug, token):
+async def add(tenant_id, project_id, project_slug, organization_slug, token):
     options = {
         "organizationSlug": organization_slug, "projectSlug": project_slug, "token": token
     }
-    return log_tools.add(project_id=project_id, integration=IN_TY, options=options)
+    out = await log_tools.add(project_id=project_id, integration=IN_TY, options=options)
+    return out
 
 
-def delete(tenant_id, project_id):
-    return log_tools.delete(project_id=project_id, integration=IN_TY)
+async def delete(tenant_id, project_id):
+    out = await log_tools.delete(project_id=project_id, integration=IN_TY)
+    return out
 
-
-def add_edit(tenant_id, project_id, data: schemas.IntegrationSentrySchema):
-    s = get(project_id)
+async def add_edit(tenant_id, project_id, data: schemas.IntegrationSentrySchema):
+    s = await get(project_id)
     if s is not None:
-        return update(tenant_id=tenant_id, project_id=project_id,
+        out = await update(tenant_id=tenant_id, project_id=project_id,
                       changes={"projectSlug": data.project_slug,
                                "organizationSlug": data.organization_slug,
                                "token": data.token})
+        return out
     else:
-        return add(tenant_id=tenant_id,
+        out = await add(tenant_id=tenant_id,
                    project_id=project_id,
                    project_slug=data.project_slug,
                    organization_slug=data.organization_slug,
                    token=data.token)
-
+        return out
 
 async def proxy_get(tenant_id, project_id, event_id):
     i = get(project_id)

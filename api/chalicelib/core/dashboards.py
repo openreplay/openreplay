@@ -25,8 +25,8 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
                 # params[f"config_{i}"]["position"] = i
                 # params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
                 params[f"config_{i}"] = json.dumps({"position": i})
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
     if row is None:
         return {"errors": ["something went wrong while creating the dashboard"]}
     return {"data": get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=row["dashboard_id"])}
@@ -40,8 +40,8 @@ def get_dashboards(project_id, user_id):
                           AND project_id = %(projectId)s
                           AND (user_id = %(userId)s OR is_public);"""
         params = {"userId": user_id, "projectId": project_id}
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
+        await cur.execute(cur.mogrify(pg_query, params))
+        rows = await cur.fetchall()
     return helper.list_to_camel_case(rows)
 
 
@@ -77,8 +77,8 @@ def get_dashboard(project_id, user_id, dashboard_id):
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public);"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id}
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
         if row is not None:
             row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
             for w in row["widgets"]:
@@ -100,7 +100,7 @@ def delete_dashboard(project_id, user_id, dashboard_id):
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public);"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id}
-        cur.execute(cur.mogrify(pg_query, params))
+        await cur.execute(cur.mogrify(pg_query, params))
     return {"data": {"success": True}}
 
 
@@ -110,8 +110,8 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                     FROM dashboard_widgets
                     WHERE dashboard_id = %(dashboard_id)s;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.model_dump()}
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
         offset = row["count"]
         pg_query = f"""UPDATE dashboards
                        SET name = %(name)s,
@@ -137,8 +137,8 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                 # params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
                 params[f"config_{i}"] = json.dumps({"position": i + offset})
 
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
         if row:
             row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     return helper.dict_to_camel_case(row)
@@ -163,8 +163,8 @@ def get_widget(project_id, user_id, dashboard_id, widget_id):
                           AND (metrics.project_id = %(projectId)s OR metrics.project_id ISNULL)
                           AND (metrics.is_public OR metrics.user_id = %(userId)s);"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, "widget_id": widget_id}
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 
@@ -180,8 +180,8 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
                       RETURNING *;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.model_dump()}
         params["config"] = json.dumps(data.config)
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 
@@ -194,8 +194,8 @@ def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.Up
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id,
                   "widget_id": widget_id, **data.model_dump()}
         params["config"] = json.dumps(data.config)
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 
@@ -204,7 +204,7 @@ def remove_widget(project_id, user_id, dashboard_id, widget_id):
         pg_query = """DELETE FROM dashboard_widgets
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, "widget_id": widget_id}
-        cur.execute(cur.mogrify(pg_query, params))
+        await cur.execute(cur.mogrify(pg_query, params))
     return {"data": {"success": True}}
 
 
@@ -218,8 +218,8 @@ def pin_dashboard(project_id, user_id, dashboard_id):
                       WHERE dashboard_id=%(dashboard_id)s AND project_id=%(project_id)s AND deleted_at ISNULL
                       RETURNING *;"""
         params = {"userId": user_id, "project_id": project_id, "dashboard_id": dashboard_id}
-        cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(pg_query, params))
+        row = await cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 

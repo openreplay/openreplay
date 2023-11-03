@@ -15,8 +15,8 @@ def get(error_id, family=False):
         query = cur.mogrify(
             "SELECT * FROM events.errors AS e INNER JOIN public.errors AS re USING(error_id) WHERE error_id = %(error_id)s;",
             {"error_id": error_id})
-        cur.execute(query=query)
-        result = cur.fetchone()
+        await cur.execute(query=query)
+        result = await cur.fetchone()
         if result is not None:
             result["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(result["stacktrace_parsed_at"])
         return helper.dict_to_camel_case(result)
@@ -40,8 +40,8 @@ def get_batch(error_ids):
             SELECT *
             FROM error_family;""",
             {"error_ids": tuple(error_ids)})
-        cur.execute(query=query)
-        errors = cur.fetchall()
+        await cur.execute(query=query)
+        errors = await cur.fetchall()
         for e in errors:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
         return helper.list_to_camel_case(errors)
@@ -81,7 +81,7 @@ def __process_tags(row):
     ]
 
 
-def get_details(project_id, error_id, user_id, **data):
+async def get_details(project_id, error_id, user_id, **data):
     pg_sub_query24 = __get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
     pg_sub_query30_session = __get_basic_constraints(time_constraint=True, chart=False,
@@ -253,8 +253,8 @@ def get_details(project_id, error_id, user_id, **data):
         # print("--------------------")
         # print(cur.mogrify(main_pg_query, params))
         # print("--------------------")
-        cur.execute(cur.mogrify(main_pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(main_pg_query, params))
+        row = await cur.fetchone()
         if row is None:
             return {"errors": ["error not found"]}
         row["tags"] = __process_tags(row)
@@ -274,8 +274,8 @@ def get_details(project_id, error_id, user_id, **data):
                                 ORDER BY start_ts DESC
                                 LIMIT 1;""",
             {"project_id": project_id, "error_id": error_id, "user_id": user_id})
-        cur.execute(query=query)
-        status = cur.fetchone()
+        await cur.execute(query=query)
+        status = await cur.fetchone()
 
     if status is not None:
         row["stack"] = errors_helper.format_first_stack_frame(status).pop("stack")
@@ -398,8 +398,8 @@ def get_details_chart(project_id, error_id, user_id, **data):
                                    GROUP BY generated_timestamp
                                    ORDER BY generated_timestamp) AS chart_details) AS chart_details ON (TRUE);"""
 
-        cur.execute(cur.mogrify(main_pg_query, params))
-        row = cur.fetchone()
+        await cur.execute(cur.mogrify(main_pg_query, params))
+        row = await cur.fetchone()
     if row is None:
         return {"errors": ["error not found"]}
     row["tags"] = __process_tags(row)
@@ -434,7 +434,7 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+async def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     empty_response = {
         'total': 0,
         'errors': []
@@ -547,8 +547,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         # print(cur.mogrify(main_pg_query, params))
         # print("--------------------")
 
-        cur.execute(cur.mogrify(main_pg_query, params))
-        rows = cur.fetchall()
+        await cur.execute(cur.mogrify(main_pg_query, params))
+        rows = await cur.fetchall()
         total = 0 if len(rows) == 0 else rows[0]["full_count"]
 
         if total == 0:
@@ -565,8 +565,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
                      "user_id": user_id})
-                cur.execute(query=query)
-                statuses = helper.list_to_camel_case(cur.fetchall())
+                await cur.execute(query=query)
+                statuses = await cur.fetchall()
+                statuses = helper.list_to_camel_case(statuses)
     statuses = {
         s["errorId"]: s for s in statuses
     }
@@ -584,18 +585,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     }
 
 
-def __save_stacktrace(error_id, data):
+async def __save_stacktrace(error_id, data):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.errors 
                 SET stacktrace=%(data)s::jsonb, stacktrace_parsed_at=timezone('utc'::text, now())
                 WHERE error_id = %(error_id)s;""",
             {"error_id": error_id, "data": json.dumps(data)})
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
 
 async def get_trace(project_id, error_id):
-    error = get(error_id=error_id, family=False)
+    error = await get(error_id=error_id, family=False)
     if error is None:
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":
@@ -608,13 +609,13 @@ async def get_trace(project_id, error_id):
                 "preparsed": True}
     trace, all_exists = await sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
     if all_exists:
-        __save_stacktrace(error_id=error_id, data=trace)
+        await __save_stacktrace(error_id=error_id, data=trace)
     return {"sourcemapUploaded": all_exists,
             "trace": trace,
             "preparsed": False}
 
 
-def get_sessions(start_date, end_date, project_id, user_id, error_id):
+async def get_sessions(start_date, end_date, project_id, user_id, error_id):
     extra_constraints = ["s.project_id = %(project_id)s",
                          "s.start_ts >= %(startDate)s",
                          "s.start_ts <= %(endDate)s",
@@ -659,13 +660,13 @@ def get_sessions(start_date, end_date, project_id, user_id, error_id):
                 WHERE {" AND ".join(extra_constraints)}
                 ORDER BY s.start_ts DESC;""",
             params)
-        cur.execute(query=query)
+        await cur.execute(query=query)
         sessions_list = []
         total = cur.rowcount
-        row = cur.fetchone()
+        row = await cur.fetchone()
         while row is not None and len(sessions_list) < 100:
             sessions_list.append(row)
-            row = cur.fetchone()
+            row = await cur.fetchone()
 
     return {
         'total': total,
@@ -680,7 +681,7 @@ ACTION_STATE = {
 }
 
 
-def change_state(project_id, user_id, error_id, action):
+async def change_state(project_id, user_id, error_id, action):
     errors = get(error_id, family=True)
     print(len(errors))
     status = ACTION_STATE.get(action)
@@ -703,8 +704,8 @@ def change_state(project_id, user_id, error_id, action):
                 WHERE error_id IN %(error_ids)s
                 RETURNING status""",
             params)
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
     if row is not None:
         for e in errors:
             e["status"] = row["status"]

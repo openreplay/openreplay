@@ -42,15 +42,15 @@ def __check_database_pg(*_):
     }
     async with pg_client.PostgresClient() as cur:
         try:
-            cur.execute("SHOW server_version;")
-            server_version = cur.fetchone()
+            await cur.execute("SHOW server_version;")
+            server_version = await cur.fetchone()
         except Exception as e:
             print("!! health failed: postgres not responding")
             print(str(e))
             return fail_response
         try:
-            cur.execute("SELECT openreplay_version() AS version;")
-            schema_version = cur.fetchone()
+            await cur.execute("SELECT openreplay_version() AS version;")
+            schema_version = await cur.fetchone()
         except Exception as e:
             print("!! health failed: openreplay_version not defined")
             print(str(e))
@@ -173,8 +173,8 @@ def __get_sessions_stats(*_):
                                 FROM public.projects_stats
                                      INNER JOIN public.projects USING(project_id)
                                 WHERE {" AND ".join(constraints)};""")
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
     return {
         "numberOfSessionsCaptured": row["s_c"],
         "numberOfEventCaptured": row["e_c"]
@@ -240,7 +240,7 @@ def cron():
                                      LEFT JOIN public.projects_stats USING (project_id)
                                 WHERE projects.deleted_at IS NULL
                                 ORDER BY project_id;""")
-        cur.execute(query)
+        await cur.execute(query)
         rows = cur.fetchall()
         for r in rows:
             insert = False
@@ -274,8 +274,8 @@ def cron():
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
                                 params)
-            cur.execute(query)
-            row = cur.fetchone()
+            await cur.execute(query)
+            row = await cur.fetchone()
             if row is not None:
                 params["sessions_count"] = row["sessions_count"]
                 params["events_count"] = row["events_count"]
@@ -291,7 +291,7 @@ def cron():
                                            last_update_at=(now() AT TIME ZONE 'utc'::text)
                                        WHERE project_id=%(project_id)s;""",
                                     params)
-            cur.execute(query)
+            await cur.execute(query)
 
 
 # this cron is used to correct the sessions&events count every week
@@ -303,7 +303,7 @@ def weekly_cron():
                                     LEFT JOIN public.projects_stats USING (project_id)
                                WHERE projects.deleted_at IS NULL
                                ORDER BY project_id;""")
-        cur.execute(query)
+        await cur.execute(query)
         rows = cur.fetchall()
         for r in rows:
             if r["last_update_at"] is None:
@@ -321,8 +321,8 @@ def weekly_cron():
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
                                 params)
-            cur.execute(query)
-            row = cur.fetchone()
+            await cur.execute(query)
+            row = await cur.fetchone()
             if row is not None:
                 params["sessions_count"] = row["sessions_count"]
                 params["events_count"] = row["events_count"]
@@ -333,4 +333,4 @@ def weekly_cron():
                                        last_update_at=(now() AT TIME ZONE 'utc'::text)
                                    WHERE project_id=%(project_id)s;""",
                                 params)
-            cur.execute(query)
+            await cur.execute(query)

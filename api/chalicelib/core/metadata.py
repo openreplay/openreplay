@@ -26,8 +26,8 @@ async def __exists_by_name(project_id: int, name: str, exclude_index: Optional[i
                                   AND deleted_at ISNULL
                                   AND ({" OR ".join(constraints)})) AS exists;""",
                             {"project_id": project_id, "name": name})
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
 
     return row["exists"]
 
@@ -39,8 +39,8 @@ async def get(project_id):
                                 WHERE project_id = %(project_id)s 
                                     AND deleted_at ISNULL
                                 LIMIT 1;""", {"project_id": project_id})
-        cur.execute(query=query)
-        metas = cur.fetchone()
+        await cur.execute(query=query)
+        metas = await cur.fetchone()
         results = []
         if metas is not None:
             for i, k in enumerate(metas.keys()):
@@ -58,8 +58,8 @@ async def get_batch(project_ids):
                                 WHERE project_id IN %(project_ids)s 
                                     AND deleted_at ISNULL;""",
                             {"project_ids": tuple(project_ids)})
-        cur.execute(query=query)
-        full_metas = cur.fetchall()
+        await cur.execute(query=query)
+        full_metas = await cur.fetchall()
     results = {}
     if full_metas is not None and len(full_metas) > 0:
         for metas in full_metas:
@@ -79,8 +79,8 @@ def index_to_colname(index):
     return f"metadata_{index}"
 
 
-def __get_available_index(project_id):
-    used_indexs = get(project_id)
+async def __get_available_index(project_id):
+    used_indexs = await get(project_id)
     used_indexs = [i["index"] for i in used_indexs]
     if len(used_indexs) >= MAX_INDEXES:
         return -1
@@ -93,7 +93,7 @@ def __get_available_index(project_id):
 async def __edit(project_id, col_index, colname, new_name):
     if new_name is None or len(new_name) == 0:
         return {"errors": ["key value invalid"]}
-    old_metas = get(project_id)
+    old_metas = await get(project_id)
     old_metas = {k["index"]: k for k in old_metas}
     if col_index not in list(old_metas.keys()):
         return {"errors": ["custom field not found"]}
@@ -106,8 +106,8 @@ async def __edit(project_id, col_index, colname, new_name):
                                         AND deleted_at ISNULL
                                     RETURNING {colname};""",
                                 {"project_id": project_id, "value": new_name})
-            cur.execute(query=query)
-            new_name = cur.fetchone()[colname]
+            await cur.execute(query=query)
+            new_name = await cur.fetchone()[colname]
             old_metas[col_index]["key"] = new_name
     return {"data": old_metas[col_index]}
 
@@ -116,12 +116,12 @@ async def edit(tenant_id, project_id, index: int, new_name: str):
     nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=index)
     if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-    return __edit(project_id=project_id, col_index=index, colname=index_to_colname(index), new_name=new_name)
+    return await __edit(project_id=project_id, col_index=index, colname=index_to_colname(index), new_name=new_name)
 
 
 async def delete(tenant_id, project_id, index: int):
     index = int(index)
-    old_segments = get(project_id)
+    old_segments = await get(project_id)
     old_segments = [k["index"] for k in old_segments]
     if index not in old_segments:
         return {"errors": ["custom field not found"]}
@@ -132,20 +132,20 @@ async def delete(tenant_id, project_id, index: int):
                                 SET {colname}= NULL
                                 WHERE project_id = %(project_id)s AND deleted_at ISNULL;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
+        await cur.execute(query=query)
         query = cur.mogrify(f"""UPDATE public.sessions 
                                 SET {colname}= NULL
                                 WHERE project_id = %(project_id)s
                                     AND {colname} IS NOT NULL
                                 """,
                             {"project_id": project_id})
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-    return {"data": get(project_id)}
+    return {"data": await get(project_id)}
 
 
 async def add(tenant_id, project_id, new_name):
-    index = __get_available_index(project_id=project_id)
+    index = await __get_available_index(project_id=project_id)
     if index < 1:
         return {"errors": ["maximum allowed metadata reached"]}
     nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=None)
@@ -158,12 +158,12 @@ async def add(tenant_id, project_id, new_name):
                                 WHERE project_id =%(project_id)s 
                                 RETURNING {colname};""",
                             {"key": new_name, "project_id": project_id})
-        cur.execute(query=query)
-        col_val = cur.fetchone()[colname]
+        await cur.execute(query=query)
+        col_val = await cur.fetchone()[colname]
     return {"data": {"key": col_val, "index": index}}
 
 
-def search(tenant_id, project_id, key, value):
+async def search(tenant_id, project_id, key, value):
     value = value + "%"
     s_query = []
     for f in column_names():
@@ -176,8 +176,8 @@ def search(tenant_id, project_id, key, value):
                                     AND deleted_at ISNULL
                                 LIMIT 1;""",
                             {"key": key, "project_id": project_id})
-        cur.execute(query=query)
-        all_metas = cur.fetchone()
+        await cur.execute(query=query)
+        all_metas = await cur.fetchone()
         key = None
         for c in all_metas:
             if all_metas[c]:
@@ -191,8 +191,8 @@ def search(tenant_id, project_id, key, value):
                                 ORDER BY "{key}"
                                 LIMIT 20;""",
                             {"value": value, "project_id": project_id})
-        cur.execute(query=query)
-        value = cur.fetchall()
+        await cur.execute(query=query)
+        value = await cur.fetchall()
         return {"data": [k[key] for k in value]}
 
 
@@ -212,8 +212,8 @@ async def get_by_session_id(project_id, session_id):
                                 WHERE project_id= %(project_id)s 
                                     AND session_id=%(session_id)s;""",
                             {"session_id": session_id, "project_id": project_id})
-        cur.execute(query=query)
-        session_metas = cur.fetchall()
+        await cur.execute(query=query)
+        session_metas = await cur.fetchall()
         results = []
         for m in session_metas:
             r = {}
@@ -233,8 +233,8 @@ async def get_keys_by_projects(project_ids):
                                     AND deleted_at ISNULL;""",
                             {"project_ids": tuple(project_ids)})
 
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
         results = {}
         for r in rows:
             project_id = r.pop("project_id")
@@ -287,9 +287,9 @@ async def get_keys_by_projects(project_ids):
 
 
 async def get_remaining_metadata_with_count(tenant_id):
-    all_projects = projects.get_projects(tenant_id=tenant_id)
+    all_projects = await projects.get_projects(tenant_id=tenant_id)
     results = []
-    used_metas = get_batch([p["projectId"] for p in all_projects])
+    used_metas = await get_batch([p["projectId"] for p in all_projects])
     for p in all_projects:
         if MAX_INDEXES < 0:
             remaining = -1

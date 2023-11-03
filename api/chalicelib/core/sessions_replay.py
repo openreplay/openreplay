@@ -41,9 +41,9 @@ async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext,
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        data = cur.fetchone()
+        data = await cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
@@ -116,9 +116,9 @@ async def get_replay(project_id, session_id, context: schemas.CurrentContext, fu
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        data = cur.fetchone()
+        data = await cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
@@ -146,7 +146,7 @@ async def get_replay(project_id, session_id, context: schemas.CurrentContext, fu
             return None
 
 
-def get_events(project_id, session_id):
+async def get_events(project_id, session_id):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT session_id, platform, start_ts, duration
@@ -155,35 +155,35 @@ def get_events(project_id, session_id):
                     AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        s_data = cur.fetchone()
+        s_data = await cur.fetchone()
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
             if s_data["platform"] == 'ios':
-                data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
+                data['events'] = await events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
-                data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                data['crashes'] = await events_ios.get_crashes_by_session_id(session_id=session_id)
+                data['userEvents'] = await events_ios.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
             else:
-                data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
+                data['events'] = await events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
-                all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
+                all_errors = await events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                 data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                 # to keep only the first stack
                 # limit the number of errors to reduce the response-body size
                 data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                   if e['source'] == "js_exception"][:500]
-                data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
+                data['userEvents'] = await events.get_customs_by_session_id(project_id=project_id,
                                                                       session_id=session_id)
-                data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
+                data['resources'] = await resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                 start_ts=s_data["startTs"], duration=s_data["duration"])
 
-            data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
+            data['issues'] = await issues.get_by_session_id(session_id=session_id, project_id=project_id)
             data['issues'] = reduce_issues(data['issues'])
             return data
         else:

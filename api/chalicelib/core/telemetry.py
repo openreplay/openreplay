@@ -21,7 +21,7 @@ def process_data(data):
 
 def compute():
     async with pg_client.PostgresClient(long_query=True) as cur:
-        cur.execute(
+        await cur.execute(
             f"""UPDATE public.tenants
                 SET t_integrations = COALESCE((SELECT COUNT(DISTINCT provider) FROM public.integrations) +
                                               (SELECT COUNT(*) FROM public.webhooks WHERE type = 'slack') +
@@ -36,18 +36,18 @@ def compute():
                 RETURNING name,t_integrations,t_projects,t_sessions,t_users,tenant_key,opt_out,
                     (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
-        data = cur.fetchone()
+        data = await cur.fetchone()
         http = orpy.orpy.get().httpx
         await http.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
 
 
 def new_client():
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             f"""SELECT *, openreplay_version() AS version_number,
                 (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email
                 FROM public.tenants
                 LIMIT 1;""")
-        data = cur.fetchone()
+        data = await cur.fetchone()
         http = orpy.orpy.get().httpx
         await http.post('https://api.openreplay.com/os/signup', json=process_data(data))

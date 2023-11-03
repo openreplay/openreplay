@@ -35,8 +35,8 @@ async def list_projects(auth_token):
     return orgs
 
 
-def get_all(tenant_id):
-    return log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
+async def get_all(tenant_id):
+    return await log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
 
 
 def get(project_id):
@@ -52,16 +52,16 @@ def update(tenant_id, project_id, changes):
     return log_tools.edit(project_id=project_id, integration=IN_TY, changes=options)
 
 
-def add(tenant_id, project_id, authorization_token, bugsnag_project_id):
+async def add(tenant_id, project_id, authorization_token, bugsnag_project_id):
     options = {
         "bugsnagProjectId": bugsnag_project_id,
         "authorizationToken": authorization_token,
     }
-    return log_tools.add(project_id=project_id, integration=IN_TY, options=options)
+    return await log_tools.add(project_id=project_id, integration=IN_TY, options=options)
 
 
 def delete(tenant_id, project_id):
-    return log_tools.delete(project_id=project_id, integration=IN_TY)
+    return await log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
 def add_edit(tenant_id, project_id, data:schemas.IntegrationBugsnagSchema ):

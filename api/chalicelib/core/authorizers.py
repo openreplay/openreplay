@@ -52,8 +52,8 @@ def jwt_refresh_authorizer(scheme: str, token: str):
     return payload
 
 
-def jwt_context(context):
-    user = users.get(user_id=context["userId"], tenant_id=context["tenantId"])
+async def jwt_context(context):
+    user = await users.get(user_id=context["userId"], tenant_id=context["tenantId"])
     if user is None:
         return None
     return {
@@ -96,8 +96,8 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
     return token
 
 
-def api_key_authorizer(token):
-    t = tenants.get_by_api_key(token)
+async def api_key_authorizer(token):
+    t = await tenants.get_by_api_key(token)
     if t is not None:
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
     return t

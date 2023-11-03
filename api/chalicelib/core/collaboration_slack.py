@@ -20,7 +20,7 @@ class Slack(BaseCollaboration):
         if nok:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
-            return webhook.add(tenant_id=tenant_id,
+            return await webhook.add(tenant_id=tenant_id,
                                endpoint=data.url,
                                webhook_type=schemas.WebhookType.slack,
                                name=data.name)
@@ -123,10 +123,10 @@ class Slack(BaseCollaboration):
     @classmethod
     async def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
-            return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
+            return await webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
                                        webhook_type=schemas.WebhookType.slack)
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.slack)
+        integrations = await webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.slack)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]

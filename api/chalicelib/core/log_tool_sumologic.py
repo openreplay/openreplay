@@ -4,8 +4,8 @@ from schemas import schemas
 IN_TY = "sumologic"
 
 
-def get_all(tenant_id):
-    return log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
+async def get_all(tenant_id):
+    return await log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
 
 
 def get(project_id):
@@ -35,8 +35,8 @@ def add(tenant_id, project_id, access_id, access_key, region):
     return log_tools.add(project_id=project_id, integration=IN_TY, options=options)
 
 
-def delete(tenant_id, project_id):
-    return log_tools.delete(project_id=project_id, integration=IN_TY)
+async def delete(tenant_id, project_id):
+    return await log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
 def add_edit(tenant_id, project_id, data: schemas.IntegrationSumologicSchema):

@@ -194,8 +194,8 @@ def process():
                 logging.debug(alert)
                 logging.debug(query)
                 try:
-                    cur.execute(query)
-                    result = cur.fetchone()
+                    await cur.execute(query)
+                    result = await cur.fetchone()
                     if result["valid"]:
                         logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
@@ -206,7 +206,7 @@ def process():
                     logging.error(e)
                     cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""UPDATE public.alerts 
                                 SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))

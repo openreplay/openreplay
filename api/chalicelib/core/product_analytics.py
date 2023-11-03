@@ -411,7 +411,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
             logger.warning("----------------------")
             logger.warning(query)
             logger.warning("----------------------")
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
 
     return __transform_journey(rows=rows, reverse_path=reverse)
 
@@ -537,7 +537,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
 #         print(cur.mogrify(pg_query, params))
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
 #     return {
@@ -584,7 +584,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
 #         print(cur.mogrify(pg_query, params))
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
 #     return {
@@ -632,7 +632,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                         LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -672,7 +672,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         print(cur.mogrify(pg_query, params))
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
 #     return {
@@ -722,7 +722,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                         LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -764,7 +764,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         print(cur.mogrify(pg_query, params))
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
 #     return {
@@ -801,7 +801,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         all_user_count = cur.fetchone()["count"]
 #         if all_user_count == 0:
 #             return []
@@ -818,7 +818,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         # TODO: solve full scan
 #         print(cur.mogrify(pg_query, params))
 #         print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         popularity = cur.fetchall()
 #         pg_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
 #                         FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
@@ -827,7 +827,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         # TODO: solve full scan
 #         print(cur.mogrify(pg_query, params))
 #         print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         frequencies = cur.fetchall()
 #         total_usage = sum([f["count"] for f in frequencies])
 #         frequencies = {f["value"]: f["count"] for f in frequencies}
@@ -867,7 +867,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         all_user_count = cur.fetchone()["count"]
 #         if all_user_count == 0:
 #             return {"adoption": 0, "target": 0, "filters": [{"type": "EVENT_TYPE", "value": event_type},
@@ -885,7 +885,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                         LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -901,7 +901,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         adoption = cur.fetchone()["count"] / all_user_count
 #     return {"target": all_user_count, "adoption": adoption,
 #             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
@@ -941,7 +941,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                         LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -960,7 +960,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #     return {"users": helper.list_to_camel_case(rows),
 #             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
@@ -1003,7 +1003,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                         LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -1024,7 +1024,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         print(cur.mogrify(pg_query, params))
 #         print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #     return {"chart": helper.list_to_camel_case(rows),
 #             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
@@ -1060,7 +1060,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         # TODO: solve full scan issue
 #         print(cur.mogrify(pg_query, params))
 #         print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #
 #     return rows
@@ -1101,7 +1101,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   **extra_values}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         row_users = cur.fetchone()
 #
 #     return row_users
@@ -1125,7 +1125,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                   "startTimestamp": startTimestamp, "endTimestamp": endTimestamp, **__get_constraint_values(args)}
 #         # print(cur.mogrify(pg_query, params))
 #         # print("---------------------")
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         row_users = cur.fetchone()
 #
 #     return helper.dict_to_camel_case(row_users)
@@ -1167,7 +1167,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                             LIMIT 1;"""
 #             params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             row = cur.fetchone()
 #             if row is not None:
 #                 event_value = row["value"]
@@ -1186,7 +1186,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         params = {"project_id": project_id, "startTimestamp": startTimestamp,
 #                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
 #         # print(cur.mogrify(pg_query, params))
-#         cur.execute(cur.mogrify(pg_query, params))
+#         await cur.execute(cur.mogrify(pg_query, params))
 #         rows = cur.fetchall()
 #     return {
 #         "startTimestamp": startTimestamp,
@@ -1219,7 +1219,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                              LIMIT 10)""")
 #             pg_query = "UNION ALL".join(sub_queries)
 #             # print(cur.mogrify(pg_query, params))
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             rows = cur.fetchall()
 #     elif JOURNEY_TYPES.get(feature_type) is not None:
 #         async with pg_client.PostgresClient() as cur:
@@ -1228,7 +1228,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                              WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[feature_type]["column"]} ILIKE %(value)s
 #                              LIMIT 10;"""
 #             # print(cur.mogrify(pg_query, params))
-#             cur.execute(cur.mogrify(pg_query, params))
+#             await cur.execute(cur.mogrify(pg_query, params))
 #             rows = cur.fetchall()
 #     else:
 #         return []

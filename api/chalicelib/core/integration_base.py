@@ -29,14 +29,15 @@ class BaseIntegration(ABC):
 
     def get(self):
         async with pg_client.PostgresClient() as cur:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(
                     """SELECT *
                         FROM public.oauth_authentication 
                         WHERE user_id=%(user_id)s AND provider=%(provider)s;""",
                     {"user_id": self._user_id, "provider": self.provider.lower()})
             )
-            return helper.dict_to_camel_case(cur.fetchone())
+            out = await cur.fetchone()
+            return helper.dict_to_camel_case(out)
 
     @abstractmethod
     def get_obfuscated(self):

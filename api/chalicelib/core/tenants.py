@@ -3,7 +3,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
 
-def get_by_tenant_id(tenant_id):
+async def get_by_tenant_id(tenant_id):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT tenants.tenant_id,
                                        tenants.name,
@@ -15,11 +15,12 @@ def get_by_tenant_id(tenant_id):
                                 FROM public.tenants
                                 LIMIT 1;""",
                             {"tenantId": tenant_id})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        r = await cur.fetchone()
+        return helper.dict_to_camel_case(r)
 
 
-def get_by_api_key(api_key):
+async def get_by_api_key(api_key):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT 1 AS tenant_id,
                                        tenants.name,
@@ -28,31 +29,35 @@ def get_by_api_key(api_key):
                                 WHERE tenants.api_key = %(api_key)s
                                 LIMIT 1;""",
                             {"api_key": api_key})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        r = await cur.fetchone()
+        return helper.dict_to_camel_case(r)
 
 
-def generate_new_api_key(tenant_id):
+async def generate_new_api_key(tenant_id):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
                                 SET api_key=generate_api_key(20)
                                 RETURNING api_key;""",
                             {"tenant_id": tenant_id})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        r = await cur.fetchone()
+        return helper.dict_to_camel_case(r)
 
 
-def edit_tenant(tenant_id, changes):
+async def edit_tenant(tenant_id, changes):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants 
                                 SET {", ".join([f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()])}  
                                 RETURNING name, opt_out;""",
                             {"tenant_id": tenant_id, **changes})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        r = await cur.fetchone()
+        return helper.dict_to_camel_case(r)
 
 
-def tenants_exists(use_pool=True):
+async def tenants_exists(use_pool=True):
     async with pg_client.PostgresClient(use_pool=use_pool) as cur:
-        cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
-        return cur.fetchone()["exists"]
+        await cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        r = await cur.fetchone()
+        return r["exists"]

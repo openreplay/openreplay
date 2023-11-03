@@ -24,7 +24,7 @@ T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.36
             21: 2.080, 22: 2.074, 23: 2.069, 25: 2.064, 26: 2.060, 27: 2.056, 28: 2.052, 29: 2.045, 30: 2.042}
 
 
-def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
+async def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
     """
     Add minimal timestamp
     :param filter_d: dict contains events&filters&...
@@ -236,8 +236,8 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
         # print(query)
         # print("---------------------------------------------------")
         try:
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
         except Exception as err:
             print("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
             print(query.decode('UTF-8'))
@@ -580,7 +580,7 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         return get_stages(stages, []), 0
     # Obtain the first part of the output
@@ -593,11 +593,11 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     return stages_list, total_drop_due_to_issues
 
 
-def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
+async def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
     output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
     stages = filter_d.events
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     # print(json.dumps(rows[0],indent=4))
     # return
     if len(rows) == 0:
@@ -611,7 +611,7 @@ def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_
     return output
 
 
-def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
+async def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
     output = dict()
     stages = filter_d["events"]
     # TODO: handle 1 stage alone
@@ -629,7 +629,7 @@ def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
         }]
         return output
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         # PS: not sure what to return if rows are empty
         output["stages"] = [{

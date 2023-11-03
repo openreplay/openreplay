@@ -23,7 +23,7 @@ public_app, app, app_apikey = get_routers()
 
 @public_app.get('/signup', tags=['signup'])
 async def get_all_signup():
-    return {"data": {"tenants": tenants.tenants_exists(),
+    return {"data": {"tenants": await tenants.tenants_exists(),
                      "sso": None,
                      "ssoProvider": None,
                      "enforceSSO": None,
@@ -34,7 +34,7 @@ if not tenants.tenants_exists(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
     async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-        content = signup.create_tenant(data)
+        content = await signup.create_tenant(data)
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
         response = JSONResponse(content=content)
@@ -51,7 +51,7 @@ async def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Bod
             detail="Invalid captcha."
         )
 
-    r = users.authenticate(data.email, data.password.get_secret_value())
+    r = await users.authenticate(data.email, data.password.get_secret_value())
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -80,7 +80,7 @@ async def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Bod
 
 @app.get('/logout', tags=["login"])
 async def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
-    users.logout(user_id=context.user_id)
+    await users.logout(user_id=context.user_id)
     response.delete_cookie(key="refreshToken", path="/api/refresh")
     return {"data": "success"}
 
@@ -97,8 +97,8 @@ async def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/account', tags=['accounts'])
 async def get_account(context: schemas.CurrentContext = Depends(OR_context)):
-    r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
-    t = tenants.get_by_tenant_id(context.tenant_id)
+    r = await users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    t = await tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
         t.pop("createdAt")
         t["tenantName"] = t.pop("name")
@@ -116,14 +116,14 @@ async def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 @app.post('/account', tags=["account"])
 async def edit_account(data: schemas.EditAccountSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
+    return await users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
 
 
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
 async def add_slack_integration(data: schemas.AddCollaborationSchema,
                           context: schemas.CurrentContext = Depends(OR_context)):
-    n = Slack.add(tenant_id=context.tenant_id, data=data)
+    n = await Slack.add(tenant_id=context.tenant_id, data=data)
     if n is None:
         return {
             "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
@@ -135,7 +135,7 @@ async def add_slack_integration(data: schemas.AddCollaborationSchema,
 async def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
-        old = Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)
+        old = await Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)
         if not old:
             return {"errors": ["Slack integration not found."]}
         if old["endpoint"] != data.url:
@@ -144,14 +144,14 @@ async def edit_slack_integration(integrationId: int, data: schemas.EditCollabora
                     "errors": [
                         "We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
                 }
-    return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=integrationId,
+    return {"data": await webhook.update(tenant_id=context.tenant_id, webhook_id=integrationId,
                                    changes={"name": data.name, "endpoint": data.url})}
 
 
 @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
 async def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
+    return await users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
                                background_tasks=background_tasks)
 
 
@@ -159,7 +159,7 @@ async def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemb
 async def process_invitation_link(token: str):
     if token is None or len(token) < 64:
         return {"errors": ["please provide a valid invitation"]}
-    user = users.get_by_invitation_token(token)
+    user = await users.get_by_invitation_token(token)
     if user is None:
         return {"errors": ["invitation not found"]}
     if user["expiredInvitation"]:
@@ -168,7 +168,7 @@ async def process_invitation_link(token: str):
             and user["changePwdToken"] is not None and user["changePwdAge"] < -5 * 60:
         pass_token = user["changePwdToken"]
     else:
-        pass_token = users.allow_password_change(user_id=user["userId"])
+        pass_token = await users.allow_password_change(user_id=user["userId"])
     return RedirectResponse(url=config("SITE_URL") + config("change_password_link") % (token, pass_token))
 
 
@@ -176,19 +176,19 @@ async def process_invitation_link(token: str):
 async def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
-    user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
+    user = await users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
     if user is None:
         return {"errors": ["invitation not found"]}
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
+    return await users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
 
 
 @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
 async def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
+    return await users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                              user_id_to_update=memberId)
 
 
@@ -202,13 +202,13 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
     if len(key) == 0:
         return {"errors": ["please provide a key for search"]}
     return {
-        "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
+        "data": await sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
 
 
 @app.get('/projects', tags=['projects'])
 async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
+    return {"data": await projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
 # for backward compatibility
@@ -234,7 +234,7 @@ async def get_session(projectId: int, sessionId: Union[int, str], background_tas
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
 async def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+    data = await sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
                                     platform=context.project.platform)
     return {'data': data}
 
@@ -242,7 +242,7 @@ async def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSch
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
 async def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+    data = await sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
                                     platform=context.project.platform)
     return {'data': data}
 
@@ -273,7 +273,7 @@ async def get_session_events(projectId: int, sessionId: Union[int, str],
         return {"errors": ["session not found"]}
     else:
         sessionId = int(sessionId)
-    data = sessions_replay.get_events(project_id=projectId, session_id=sessionId)
+    data = await sessions_replay.get_events(project_id=projectId, session_id=sessionId)
     if data is None:
         return {"errors": ["session not found"]}
 
@@ -296,7 +296,7 @@ async def get_error_trace(projectId: int, sessionId: int, errorId: str,
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
 async def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
+    data = await errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
         background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
@@ -320,15 +320,15 @@ async def add_remove_favorite_error(projectId: int, errorId: str, action: str, s
                               endDate: int = TimeUTC.now(),
                               context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
-        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+        return await errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
     elif action == "sessions":
         start_date = startDate
         end_date = endDate
         return {
-            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
+            "data": await errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                         start_date=start_date, end_date=end_date)}
     elif action in list(errors.ACTION_STATE.keys()):
-        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
+        return await errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
     else:
         return {"errors": ["undefined action"]}
 
@@ -377,9 +377,9 @@ async def get_live_session_devtools_file(projectId: int, sessionId: Union[int, s
         return not_found
     else:
         sessionId = int(sessionId)
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+    if not await sessions.session_exists(project_id=projectId, session_id=sessionId):
         print(f"{projectId}/{sessionId} not found in DB.")
-        if not assist.session_exists(project_id=projectId, session_id=sessionId):
+        if not await assist.session_exists(project_id=projectId, session_id=sessionId):
             print(f"{projectId}/{sessionId} not found in Assist.")
             return not_found
 
@@ -393,18 +393,18 @@ async def get_live_session_devtools_file(projectId: int, sessionId: Union[int, s
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
 async def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
+    return {"data": await heatmaps.get_by_url(project_id=projectId, data=data)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
 async def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
+    return await sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
 async def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
+    data = await sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
                                                tenant_id=context.tenant_id,
                                                user_id=context.user_id)
     if "errors" in data:
@@ -417,7 +417,7 @@ async def assign_session(projectId: int, sessionId, context: schemas.CurrentCont
 @app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 async def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
+    data = await sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
                                     tenant_id=context.tenant_id, user_id=context.user_id)
     if "errors" in data:
         return data
@@ -430,7 +430,7 @@ async def assign_session(projectId: int, sessionId: int, issueId: str,
 async def comment_assignment(projectId: int, sessionId: int, issueId: str,
                        data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
+    data = await sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
                                         session_id=sessionId, assignment_id=issueId,
                                         user_id=context.user_id, message=data.message)
     if "errors" in data.keys():
@@ -443,9 +443,9 @@ async def comment_assignment(projectId: int, sessionId: int, issueId: str,
 @app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
 async def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+    if not await sessions.session_exists(project_id=projectId, session_id=sessionId):
         return {"errors": ["Session not found"]}
-    data = sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
+    data = await sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
                                  session_id=sessionId, user_id=context.user_id, data=data)
     if "errors" in data.keys():
         return data
@@ -456,7 +456,7 @@ async def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteS
 
 @app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
 async def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
+    data = await sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
                                             session_id=sessionId, user_id=context.user_id)
     if "errors" in data:
         return data
@@ -468,7 +468,7 @@ async def get_session_notes(projectId: int, sessionId: int, context: schemas.Cur
 @app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
 async def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+    data = await sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                note_id=noteId, data=data)
     if "errors" in data.keys():
         return data
@@ -479,7 +479,7 @@ async def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNote
 
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
 async def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+    data = await sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                  note_id=noteId)
     return data
 
@@ -487,21 +487,21 @@ async def delete_note(projectId: int, noteId: int, _=Body(None), context: schema
 @app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
 async def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+    return await sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                          note_id=noteId, webhook_id=webhookId)
 
 
 @app.get('/{projectId}/notes/{noteId}/msteams/{webhookId}', tags=["sessions", "notes"])
 async def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return sessions_notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+    return await sessions_notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                            note_id=noteId, webhook_id=webhookId)
 
 
 @app.post('/{projectId}/notes', tags=["sessions", "notes"])
 async def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
+    data = await sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
                                                       user_id=context.user_id, data=data)
     if "errors" in data:
         return data
@@ -511,41 +511,41 @@ async def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(..
 @app.post('/{projectId}/click_maps/search', tags=["click maps"])
 async def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
+    return {"data": await click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
 async def search_feature_flags(project_id: int,
                          data: schemas.SearchFlagsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.search_feature_flags(project_id=project_id, user_id=context.user_id, data=data)
+    return await feature_flags.search_feature_flags(project_id=project_id, user_id=context.user_id, data=data)
 
 
 @app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 async def get_feature_flag(project_id: int, feature_flag_id: int):
-    return feature_flags.get_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
+    return await feature_flags.get_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
 
 
 @app.post('/{project_id}/feature-flags', tags=["feature flags"])
 async def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
+    return await feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
 
 
 @app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 async def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
-    return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
+    return await feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
                                              user_id=context.user_id, feature_flag=data)
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
 async def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
-    return {"data": feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
+    return {"data": await feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
 
 
 @app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"])
 async def update_feature_flag_status(project_id: int, feature_flag_id: int,
                                data: schemas.FeatureFlagStatus = Body(...)):
-    return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
+    return {"data": await feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
                                                              is_active=data.is_active)}

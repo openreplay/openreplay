@@ -11,10 +11,10 @@ from chalicelib.utils.TimeUTC import TimeUTC
 logger = logging.getLogger(__name__)
 
 
-def create_tenant(data: schemas.UserSignupSchema):
+async def create_tenant(data: schemas.UserSignupSchema):
     logger.info(f"==== Signup started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
-    if tenants.tenants_exists():
+    if await tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
     email = data.email
@@ -24,9 +24,9 @@ def create_tenant(data: schemas.UserSignupSchema):
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")
     else:
-        if users.email_exists(email):
+        if await users.email_exists(email):
             errors.append("Email address already in use.")
-        if users.get_deleted_user_by_email(email) is not None:
+        if await users.get_deleted_user_by_email(email) is not None:
             errors.append("Email address previously deleted.")
 
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
@@ -73,13 +73,13 @@ def create_tenant(data: schemas.UserSignupSchema):
                  RETURNING project_id, (SELECT api_key FROM t) AS api_key;"""
 
     async with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(query, params))
-        data = cur.fetchone()
+        await cur.execute(cur.mogrify(query, params))
+        data = await cur.fetchone()
         project_id = data["project_id"]
         api_key = data["api_key"]
     telemetry.new_client()
     created_at = TimeUTC.now()
-    r = users.authenticate(email, password)
+    r = await users.authenticate(email, password)
     r["banner"] = False
     r["limits"] = {
         "teamMember": {"limit": 99, "remaining": 98, "count": 1},

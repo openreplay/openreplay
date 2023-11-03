@@ -33,10 +33,10 @@ def get_live_sessions_ws_user_id(project_id, user_id):
     data = {
         "filter": {"userId": user_id} if user_id else {}
     }
-    return __get_live_sessions_ws(project_id=project_id, data=data)
+    return await __get_live_sessions_ws(project_id=project_id, data=data)
 
 
-def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
+async def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
     data = {
         "filter": {},
         "pagination": {"limit": body.limit, "page": body.page},
@@ -48,12 +48,12 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 
         else:
             data["filter"][f.type] = {"values": f.value, "operator": f.operator}
-    return __get_live_sessions_ws(project_id=project_id, data=data)
+    return await __get_live_sessions_ws(project_id=project_id, data=data)
 
 
 async def __get_live_sessions_ws(project_id, data):
     http = orpy.orpy.get().httpx
-    project_key = projects.get_project_key(project_id)
+    project_key = await projects.get_project_key(project_id)
     try:
         results = await http.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
@@ -158,13 +158,13 @@ def is_live(project_id, session_id, project_key=None):
     return str(session_id) == results
 
 
-def autocomplete(project_id, q: str, key: str = None):
-    project_key = projects.get_project_key(project_id)
+async def autocomplete(project_id, q: str, key: str = None):
+    project_key = await projects.get_project_key(project_id)
     params = {"q": q}
     if key:
         params["key"] = key
     try:
-        results = requests.get(
+        results = await orpy.orpy.get().httpx.get(
             ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
@@ -245,10 +245,10 @@ def get_raw_devtools_by_id(project_id, session_id):
     return None
 
 
-def session_exists(project_id, session_id):
-    project_key = projects.get_project_key(project_id)
+async def session_exists(project_id, session_id):
+    project_key = await projects.get_project_key(project_id)
     try:
-        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+        results = await orpy.orpy.get().get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for session_exists")

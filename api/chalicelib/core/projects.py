@@ -18,8 +18,8 @@ async def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
                                     {"AND project_id!=%(exclude_id)s" if exclude_id else ""}) AS exists;""",
                             {"name": name, "exclude_id": exclude_id})
 
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         return row["exists"]
 
 
@@ -37,8 +37,9 @@ async def __update(tenant_id, project_id, changes):
                                     AND deleted_at ISNULL
                                 RETURNING project_id,name,gdpr;""",
                             {"project_id": project_id, **changes})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        out = await cur.fetchone()
+        return helper.dict_to_camel_case(out)
 
 
 async def __create(tenant_id, data):
@@ -47,9 +48,10 @@ async def __create(tenant_id, data):
                                 VALUES (%(name)s,%(platform)s,TRUE)
                                 RETURNING project_id;""",
                             data)
-        cur.execute(query=query)
-        project_id = cur.fetchone()["project_id"]
-    return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
+        await cur.execute(query=query)
+        project_id = await cur.fetchone()
+        project_id = project_id["project_id"]
+    return await get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
 async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
@@ -75,8 +77,8 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                 WHERE s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""",
                             {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
             u_values = []
@@ -98,7 +100,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                         SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
                                         FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
                                         WHERE projects.project_id=u.project_id;""", params)
-                cur.execute(query)
+                await cur.execute(query)
         else:
             for r in rows:
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
@@ -127,8 +129,8 @@ async def get_project(tenant_id, project_id, include_last_session=False, include
                                     AND s.deleted_at IS NULL
                                 LIMIT 1;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         return helper.dict_to_camel_case(row)
 
 
@@ -137,10 +139,10 @@ async def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_aut
     if nok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if not skip_authorization:
-        admin = users.get(user_id=user_id, tenant_id=tenant_id)
+        admin = await users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
+    return {"data": await __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
 async def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -165,7 +167,7 @@ async def delete(tenant_id, user_id, project_id):
                                    active = FALSE
                                WHERE project_id = %(project_id)s;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
+        await cur.execute(query=query)
     return {"data": {"state": "success"}}
 
 
@@ -176,8 +178,9 @@ async def get_gdpr(project_id):
                                WHERE s.project_id =%(project_id)s
                                     AND s.deleted_at IS NULL;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        row = cur.fetchone()["gdpr"]
+        await cur.execute(query=query)
+        row = await cur.fetchone()
+        row = row["gdpr"]
         row["projectId"] = project_id
         return row
 
@@ -190,8 +193,8 @@ async def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
                             {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump())})
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         if not row:
             return {"errors": ["something went wrong"]}
         row = row["gdpr"]
@@ -208,8 +211,8 @@ async def get_by_project_key(project_key):
                                WHERE project_key =%(project_key)s 
                                     AND deleted_at ISNULL;""",
                             {"project_key": project_key})
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         return helper.dict_to_camel_case(row)
 
 
@@ -220,8 +223,8 @@ async def get_project_key(project_id):
                                WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        project = cur.fetchone()
+        await cur.execute(query=query)
+        project = await cur.fetchone()
         return project["project_key"] if project is not None else None
 
 
@@ -232,8 +235,9 @@ async def get_capture_status(project_id):
                                WHERE project_id =%(project_id)s 
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        out = await cur.fetchone()
+        return helper.dict_to_camel_case(out)
 
 
 async def update_capture_status(project_id, changes: schemas.SampleRateSchema):
@@ -246,7 +250,7 @@ async def update_capture_status(project_id, changes: schemas.SampleRateSchema):
                                WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id, "sample_rate": sample_rate})
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
     return changes
 
@@ -257,6 +261,6 @@ async def get_projects_ids(tenant_id):
                     FROM public.projects AS s
                     WHERE s.deleted_at IS NULL
                     ORDER BY s.project_id;"""
-        cur.execute(query=query)
-        rows = cur.fetchall()
+        await cur.execute(query=query)
+        rows = await cur.fetchall()
     return [r["project_id"] for r in rows]

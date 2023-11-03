@@ -28,8 +28,8 @@ NAME_QUERY = """\
 """
 
 
-def get(project_id, issue_id):
-    with pg_client.PostgresClient() as cur:
+async def get(project_id, issue_id):
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """\
             SELECT
@@ -39,16 +39,16 @@ def get(project_id, issue_id):
                 AND issue_id = %(issue_id)s;""",
             {"project_id": project_id, "issue_id": issue_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchone()
+        await cur.execute(query=query)
+        data = await cur.fetchone()
         if data is not None:
             data["title"] = helper.get_issue_title(data["type"])
     return helper.dict_to_camel_case(data)
 
 
-def get_by_session_id(session_id, project_id, issue_type=None):
+async def get_by_session_id(session_id, project_id, issue_type=None):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""\
                     SELECT *
                     FROM events_common.issues
@@ -59,12 +59,13 @@ def get_by_session_id(session_id, project_id, issue_type=None):
                     ORDER BY timestamp;""",
                         {"session_id": session_id, "project_id": project_id, "type": issue_type})
         )
-        return helper.list_to_camel_case(cur.fetchall())
+        out = await cur.fetchall()
+        return helper.list_to_camel_case(out)
 
 
-def get_types_by_project(project_id):
+async def get_types_by_project(project_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""SELECT type,
                                {ORDER_QUERY}>=0 AS visible,
                                {ORDER_QUERY} AS order,
@@ -73,7 +74,8 @@ def get_types_by_project(project_id):
                                   FROM public.issues
                                   WHERE project_id = %(project_id)s) AS types
                             ORDER BY "order";""", {"project_id": project_id}))
-        return helper.list_to_camel_case(cur.fetchall())
+        out = await cur.fetchall()
+        return helper.list_to_camel_case(out)
 
 
 def get_all_types():

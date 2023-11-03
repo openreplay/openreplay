@@ -17,10 +17,10 @@ def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
-def get_user_settings(user_id):
+async def get_user_settings(user_id):
     #     read user settings from users.settings:jsonb column
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         settings
@@ -30,10 +30,11 @@ def get_user_settings(user_id):
                     LIMIT 1""",
                 {"user_id": user_id})
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        out = await cur.fetchone()
+        return helper.dict_to_camel_case(out)
 
 
-def update_user_module(user_id, data: schemas.ModuleStatus):
+async def update_user_module(user_id, data: schemas.ModuleStatus):
     # example data = {"settings": {"modules": ['ASSIST', 'METADATA']}
     #     update user settings from users.settings:jsonb column only update settings.modules
     #   if module property is not exists, it will be created
@@ -52,13 +53,13 @@ def update_user_module(user_id, data: schemas.ModuleStatus):
     elif not data.status and data.module in settings["modules"]:
         settings["modules"].remove(data.module)
 
-    return update_user_settings(user_id, settings)
+    return await update_user_settings(user_id, settings)
 
 
-def update_user_settings(user_id, settings):
+async def update_user_settings(user_id, settings):
     #     update user settings from users.settings:jsonb column
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""UPDATE public.users
                     SET settings = %(settings)s
@@ -67,10 +68,11 @@ def update_user_settings(user_id, settings):
                     RETURNING settings;""",
                 {"user_id": user_id, "settings": json.dumps(settings)})
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        out = await cur.fetchone()
+        return helper.dict_to_camel_case(out)
 
 
-def create_new_member(email, invitation_token, admin, name, owner=False):
+async def create_new_member(email, invitation_token, admin, name, owner=False):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH u AS (INSERT INTO public.users (email, role, name, data)
@@ -94,14 +96,15 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
                             {"email": email, "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "invitation_token": invitation_token})
-        cur.execute(query)
-        row = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query)
+        row = await cur.fetchone()
+        row = helper.dict_to_camel_case(row)
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
         return row
 
 
-def restore_member(user_id, email, invitation_token, admin, name, owner=False):
+async def restore_member(user_id, email, invitation_token, admin, name, owner=False):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH ua AS (UPDATE public.basic_authentication
@@ -131,14 +134,14 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
                             {"user_id": user_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member",
                              "name": name, "invitation_token": invitation_token})
-        cur.execute(query)
-        result = cur.fetchone()
-        cur.execute(query)
+        await cur.execute(query)
+        result = await cur.fetchone()
+        await cur.execute(query)
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
     return helper.dict_to_camel_case(result)
 
 
-def generate_new_invitation(user_id):
+async def generate_new_invitation(user_id):
     invitation_token = __generate_invitation_token()
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
@@ -150,23 +153,24 @@ def generate_new_invitation(user_id):
                         WHERE user_id=%(user_id)s
                         RETURNING invitation_token;""",
                             {"user_id": user_id, "invitation_token": invitation_token})
-        cur.execute(
+        await cur.execute(
             query
         )
-        return __get_invitation_link(cur.fetchone().pop("invitation_token"))
+        row = await cur.fetchone()
+        return __get_invitation_link(row.pop("invitation_token"))
 
 
-def reset_member(tenant_id, editor_id, user_id_to_update):
-    admin = get(tenant_id=tenant_id, user_id=editor_id)
+await def reset_member(tenant_id, editor_id, user_id_to_update):
+    admin = await get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    user = get(tenant_id=tenant_id, user_id=user_id_to_update)
+    user = await get(tenant_id=tenant_id, user_id=user_id_to_update)
     if not user:
         return {"errors": ["user not found"]}
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
-def update(tenant_id, user_id, changes, output=True):
+async def update(tenant_id, user_id, changes, output=True):
     AUTH_KEYS = ["password", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
         return None
@@ -185,7 +189,7 @@ def update(tenant_id, user_id, changes, output=True):
 
     async with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""\
                             UPDATE public.users
                             SET {" ,".join(sub_query_users)}
@@ -202,7 +206,7 @@ def update(tenant_id, user_id, changes, output=True):
                             {"user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""\
                             UPDATE public.basic_authentication
                             SET {" ,".join(sub_query_bauth)}
@@ -223,25 +227,25 @@ def update(tenant_id, user_id, changes, output=True):
     return get(user_id=user_id, tenant_id=tenant_id)
 
 
-def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
-    admin = get(tenant_id=tenant_id, user_id=user_id)
+async def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
+    admin = await get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     if data.user_id is not None:
         return {"errors": ["please use POST/PUT /client/members/{memberId} for update"]}
-    user = get_by_email_only(email=data.email)
+    user = await get_by_email_only(email=data.email)
     if user:
         return {"errors": ["user already exists"]}
 
     if data.name is None or len(data.name) == 0:
         data.name = data.email
     invitation_token = __generate_invitation_token()
-    user = get_deleted_user_by_email(email=data.email)
+    user = await get_deleted_user_by_email(email=data.email)
     if user is not None:
-        new_member = restore_member(email=data.email, invitation_token=invitation_token,
+        new_member = await restore_member(email=data.email, invitation_token=invitation_token,
                                     admin=data.admin, name=data.name, user_id=user["userId"])
     else:
-        new_member = create_new_member(email=data.email, invitation_token=invitation_token,
+        new_member = await create_new_member(email=data.email, invitation_token=invitation_token,
                                        admin=data.admin, name=data.name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     background_tasks.add_task(email_helper.send_team_invitation, **{
@@ -257,7 +261,7 @@ def __get_invitation_link(invitation_token):
     return config("SITE_URL") + config("invitation_link") % invitation_token
 
 
-def allow_password_change(user_id, delta_min=10):
+async def allow_password_change(user_id, delta_min=10):
     pass_token = secrets.token_urlsafe(8)
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.basic_authentication 
@@ -265,15 +269,15 @@ def allow_password_change(user_id, delta_min=10):
                                     change_pwd_token = %(pass_token)s
                                 WHERE user_id = %(user_id)s""",
                             {"user_id": user_id, "delta": delta_min, "pass_token": pass_token})
-        cur.execute(
+        await cur.execute(
             query
         )
     return pass_token
 
 
-def get(user_id, tenant_id):
+async def get(user_id, tenant_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         users.user_id,
@@ -292,13 +296,13 @@ def get(user_id, tenant_id):
                     LIMIT 1;""",
                 {"userId": user_id})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
         return helper.dict_to_camel_case(r)
 
 
-def generate_new_api_key(user_id):
+async def generate_new_api_key(user_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""UPDATE public.users
                     SET api_key=generate_api_key(20)
@@ -307,13 +311,13 @@ def generate_new_api_key(user_id):
                     RETURNING api_key;""",
                 {"userId": user_id})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
-def __get_account_info(tenant_id, user_id):
+async def __get_account_info(tenant_id, user_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT users.name, 
                            tenants.name AS tenant_name, 
@@ -323,18 +327,18 @@ def __get_account_info(tenant_id, user_id):
                         AND users.deleted_at IS NULL;""",
                 {"tenantId": tenant_id, "userId": user_id})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
-def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
+async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
-        user = get(user_id=user_id, tenant_id=tenant_id)
+        user = await get(user_id=user_id, tenant_id=tenant_id)
         if not user["superAdmin"] and not user["admin"]:
             return {"errors": ["unauthorized"]}
 
     if changes.name is not None and len(changes.name) > 0:
-        update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
+        await update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
 
     _tenant_changes = {}
     if changes.tenantName is not None and len(changes.tenantName) > 0:
@@ -343,16 +347,16 @@ def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None:
         _tenant_changes["opt_out"] = changes.opt_out
     if len(_tenant_changes.keys()) > 0:
-        tenants.edit_tenant(tenant_id=tenant_id, changes=_tenant_changes)
+        await tenants.edit_tenant(tenant_id=tenant_id, changes=_tenant_changes)
 
-    return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
+    return {"data": await __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
 
-def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
-    user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
+async def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
+    user = await get_member(user_id=user_id_to_update, tenant_id=tenant_id)
     _changes = {}
     if editor_id != user_id_to_update:
-        admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
+        admin = await get_user_role(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
         if admin["admin"] and user["superAdmin"]:
@@ -370,14 +374,14 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
         _changes["role"] = "admin" if changes.admin else "member"
 
     if len(_changes.keys()) > 0:
-        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
-        return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
+        await update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
+        return {"data": await get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
 
 
-def get_by_email_only(email):
+async def get_by_email_only(email):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         users.user_id,
@@ -395,13 +399,13 @@ def get_by_email_only(email):
                     LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
-def get_member(tenant_id, user_id):
+async def get_member(tenant_id, user_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         users.user_id,
@@ -421,7 +425,8 @@ def get_member(tenant_id, user_id):
                     ORDER BY name, user_id""",
                 {"user_id": user_id})
         )
-        u = helper.dict_to_camel_case(cur.fetchone())
+        r = await cur.fetchone()
+        u = helper.dict_to_camel_case(r)
         if u:
             u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
             if u["invitationToken"]:
@@ -432,9 +437,9 @@ def get_member(tenant_id, user_id):
     return u
 
 
-def get_members(tenant_id):
+async def get_members(tenant_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             f"""SELECT 
                         users.user_id,
                         users.email, 
@@ -452,7 +457,7 @@ def get_members(tenant_id):
                     WHERE users.deleted_at IS NULL
                     ORDER BY name, user_id"""
         )
-        r = cur.fetchall()
+        r = await cur.fetchall()
         if len(r):
             r = helper.list_to_camel_case(r)
             for u in r:
@@ -466,15 +471,15 @@ def get_members(tenant_id):
     return []
 
 
-def delete_member(user_id, tenant_id, id_to_delete):
+async def delete_member(user_id, tenant_id, id_to_delete):
     if user_id == id_to_delete:
         return {"errors": ["unauthorized, cannot delete self"]}
 
-    admin = get(user_id=user_id, tenant_id=tenant_id)
+    admin = await get(user_id=user_id, tenant_id=tenant_id)
     if admin["member"]:
         return {"errors": ["unauthorized"]}
 
-    to_delete = get(user_id=id_to_delete, tenant_id=tenant_id)
+    to_delete = await get(user_id=id_to_delete, tenant_id=tenant_id)
     if to_delete is None:
         return {"errors": ["not found"]}
 
@@ -482,12 +487,12 @@ def delete_member(user_id, tenant_id, id_to_delete):
         return {"errors": ["cannot delete super admin"]}
 
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""UPDATE public.users
                            SET deleted_at = timezone('utc'::text, now()) 
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete}))
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""UPDATE public.basic_authentication
                            SET password= NULL
                            WHERE user_id=%(user_id)s;""",
@@ -495,40 +500,40 @@ def delete_member(user_id, tenant_id, id_to_delete):
     return {"data": get_members(tenant_id=tenant_id)}
 
 
-def change_password(tenant_id, user_id, email, old_password, new_password):
-    item = get(tenant_id=tenant_id, user_id=user_id)
+async def change_password(tenant_id, user_id, email, old_password, new_password):
+    item = await get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
-    auth = authenticate(email, old_password, for_change_password=True)
+    auth = await authenticate(email, old_password, for_change_password=True)
     if auth is None:
         return {"errors": ["wrong password"]}
     changes = {"password": new_password}
-    user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
+    user = await update(tenant_id=tenant_id, user_id=user_id, changes=changes)
+    r = await authenticate(user['email'], new_password)
 
     return {
         'jwt': r.pop('jwt')
     }
 
 
-def set_password_invitation(user_id, new_password):
+async def set_password_invitation(user_id, new_password):
     changes = {"password": new_password,
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
-    user = update(tenant_id=-1, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
+    user = await update(tenant_id=-1, user_id=user_id, changes=changes)
+    r = await authenticate(user['email'], new_password)
 
     tenant_id = r.pop("tenantId")
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
+        "metadata": await metadata.get_remaining_metadata_with_count(tenant_id)}
 
-    c = tenants.get_by_tenant_id(tenant_id)
+    c = await tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True)
+    c["projects"] = await projects.get_projects(tenant_id=tenant_id, recorded=True)
     c["smtp"] = smtp.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     return {
@@ -540,9 +545,9 @@ def set_password_invitation(user_id, new_password):
     }
 
 
-def email_exists(email):
+async def email_exists(email):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         count(user_id)                        
@@ -553,13 +558,13 @@ def email_exists(email):
                     LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return r["count"] > 0
 
 
-def get_deleted_user_by_email(email):
+async def get_deleted_user_by_email(email):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         *                        
@@ -570,13 +575,13 @@ def get_deleted_user_by_email(email):
                     LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
-def get_by_invitation_token(token, pass_token=None):
+async def get_by_invitation_token(token, pass_token=None):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         *,
@@ -589,13 +594,13 @@ def get_by_invitation_token(token, pass_token=None):
                     LIMIT 1;""",
                 {"token": token, "pass_token": pass_token})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, jwt_iat):
+async def auth_exists(user_id, jwt_iat):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""SELECT user_id, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat 
                             FROM public.users  
                             WHERE user_id = %(userId)s 
@@ -603,15 +608,15 @@ def auth_exists(user_id, jwt_iat):
                             LIMIT 1;""",
                         {"userId": user_id})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return r is not None \
         and r.get("jwt_iat") is not None \
         and abs(jwt_iat - r["jwt_iat"]) <= 1
 
 
-def refresh_auth_exists(user_id, jwt_jti=None):
+async def refresh_auth_exists(user_id, jwt_jti=None):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(f"""SELECT user_id 
                             FROM public.users  
                             WHERE user_id = %(userId)s 
@@ -620,11 +625,11 @@ def refresh_auth_exists(user_id, jwt_jti=None):
                             LIMIT 1;""",
                         {"userId": user_id, "jwt_jti": jwt_jti})
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
     return r is not None
 
 
-def change_jwt_iat_jti(user_id):
+async def change_jwt_iat_jti(user_id):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
@@ -635,12 +640,12 @@ def change_jwt_iat_jti(user_id):
                                           jwt_refresh_jti, 
                                           EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
                             {"user_id": user_id})
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def refresh_jwt_iat_jti(user_id):
+async def refresh_jwt_iat_jti(user_id):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
@@ -650,12 +655,12 @@ def refresh_jwt_iat_jti(user_id):
                                           jwt_refresh_jti, 
                                           EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat""",
                             {"user_id": user_id})
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def authenticate(email, password, for_change_password=False) -> dict | bool | None:
+async def authenticate(email, password, for_change_password=False) -> dict | bool | None:
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -673,8 +678,8 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
                 LIMIT 1;""",
             {"email": email, "password": password})
 
-        cur.execute(query)
-        r = cur.fetchone()
+        await cur.execute(query)
+        r = await cur.fetchone()
 
     if r is not None:
         if for_change_password:
@@ -694,14 +699,14 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
     return None
 
 
-def logout(user_id: int):
+async def logout(user_id: int):
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.users
                SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
             {"user_id": user_id})
-        cur.execute(query)
+        await cur.execute(query)
 
 
 def refresh(user_id: int, tenant_id: int = -1) -> dict:
@@ -716,9 +721,9 @@ def refresh(user_id: int, tenant_id: int = -1) -> dict:
     }
 
 
-def get_user_role(tenant_id, user_id):
+async def get_user_role(tenant_id, user_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(
+        await cur.execute(
             cur.mogrify(
                 f"""SELECT 
                         users.user_id,
@@ -735,4 +740,5 @@ def get_user_role(tenant_id, user_id):
                     LIMIT 1""",
                 {"user_id": user_id})
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        w = await cur.fetchone()
+        return helper.dict_to_camel_case(w)

@@ -1,7 +1,7 @@
 from chalicelib.utils import pg_client, helper
 
 
-def get_all_alerts():
+async def get_all_alerts():
     async with pg_client.PostgresClient(long_query=True) as cur:
         query = """SELECT -1 AS tenant_id,
                            alert_id,
@@ -26,6 +26,7 @@ def get_all_alerts():
                       AND projects.deleted_at ISNULL
                       AND (alerts.series_id ISNULL OR metric_series.deleted_at ISNULL)
                     ORDER BY alerts.created_at;"""
-        cur.execute(query=query)
-        all_alerts = helper.list_to_camel_case(cur.fetchall())
+        await cur.execute(query=query)
+        all_alerts = await cur.fetchall()
+        all_alerts = helper.list_to_camel_case(all_alerts)
     return all_alerts

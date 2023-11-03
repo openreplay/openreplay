@@ -13,8 +13,8 @@ from chalicelib.core import authorizers, users
 logger = logging.getLogger(__name__)
 
 
-def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
-    user = users.get(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
+async def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
+    user = await users.get(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
     if user is None:
         logger.warning("User not found.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")

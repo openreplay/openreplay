@@ -9,9 +9,9 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event
 
 
-def get_customs_by_session_id(session_id, project_id):
+async def get_customs_by_session_id(session_id, project_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+        await cur.execute(cur.mogrify("""\
             SELECT 
                 c.*,
                 'CUSTOM' AS type
@@ -21,7 +21,7 @@ def get_customs_by_session_id(session_id, project_id):
             ORDER BY c.timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
     return helper.dict_to_camel_case(rows)
 
 
@@ -52,11 +52,11 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
-def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
+async def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     async with pg_client.PostgresClient() as cur:
         rows = []
         if event_type is None or event_type == schemas.EventType.click:
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
                 SELECT 
                     c.*,
                     'CLICK' AS type
@@ -66,11 +66,11 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                 ORDER BY c.timestamp;""",
                                     {"project_id": project_id, "session_id": session_id})
                         )
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
             if group_clickrage:
                 rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
         if event_type is None or event_type == schemas.EventType.input:
-            cur.execute(cur.mogrify("""
+            await cur.execute(cur.mogrify("""
                 SELECT 
                     i.*,
                     'INPUT' AS type
@@ -80,9 +80,9 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                 ORDER BY i.timestamp;""",
                                     {"project_id": project_id, "session_id": session_id})
                         )
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
         if event_type is None or event_type == schemas.EventType.location:
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
                 SELECT 
                     l.*,
                     l.path AS value,
@@ -92,7 +92,7 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                 WHERE 
                   l.session_id = %(session_id)s
                 ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
@@ -164,22 +164,23 @@ SUPPORTED_TYPES = {
 }
 
 
-def get_errors_by_session_id(session_id, project_id):
+async def get_errors_by_session_id(session_id, project_id):
     async with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
+        await cur.execute(cur.mogrify(f"""\
                     SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
                     FROM {EventType.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
                     WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
                     ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
-        errors = cur.fetchall()
+        errors = await cur.fetchall()
         for e in errors:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
         return helper.list_to_camel_case(errors)
 
 
-def search(text, event_type, project_id, source, key):
+async def search(text, event_type, project_id, source, key):
     if not event_type:
-        return {"data": autocomplete.__get_autocomplete_table(text, project_id)}
+        data = await autocomplete.__get_autocomplete_table(text, project_id)
+        return {"data": data}
 
     if event_type in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
@@ -192,8 +193,10 @@ def search(text, event_type, project_id, source, key):
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_IOS") \
             and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
-        return sessions_metas.search(text, event_type, project_id)
+        out = await sessions_metas.search(text, event_type, project_id)
+        return out
     else:
         return {"errors": ["unsupported event"]}
 
     return {"data": rows}
+

@@ -24,8 +24,8 @@ async def get(job_id, project_id):
                     AND project_id= %(project_id)s;""",
             {"job_id": job_id, "project_id": project_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchone()
+        await cur.execute(query=query)
+        data = await cur.fetchone()
         if data is None:
             return {}
 
@@ -42,8 +42,8 @@ def get_all(project_id):
                WHERE project_id = %(project_id)s;""",
             {"project_id": project_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchall()
+        await cur.execute(query=query)
+        data = await cur.fetchall()
         for record in data:
             format_datetime(record)
     return helper.list_to_camel_case(data)
@@ -63,9 +63,9 @@ def create(project_id, user_id):
                VALUES (%(project_id)s, %(description)s, %(status)s, %(action)s,%(reference_id)s, %(start_at)s)
                RETURNING *;""", job)
 
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        r = cur.fetchone()
+        r = await cur.fetchone()
         format_datetime(r)
         record = helper.dict_to_camel_case(r)
     return record
@@ -92,9 +92,9 @@ def update(job_id, job):
                WHERE job_id = %(job_id)s
                RETURNING *;""", job_data)
 
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        r = cur.fetchone()
+        r = await cur.fetchone()
         format_datetime(r)
         record = helper.dict_to_camel_case(r)
     return record
@@ -115,8 +115,8 @@ def __get_session_ids_by_user_ids(project_id, user_ids):
                     AND user_id IN %(userId)s
                LIMIT 1000;""",
             {"project_id": project_id, "userId": tuple(user_ids)})
-        cur.execute(query=query)
-        ids = cur.fetchall()
+        await cur.execute(query=query)
+        ids = await cur.fetchall()
     return [s["session_id"] for s in ids]
 
 
@@ -127,7 +127,7 @@ def __delete_sessions_by_session_ids(session_ids):
                WHERE session_id IN %(session_ids)s""",
             {"session_ids": tuple(session_ids)}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
 
 def __delete_session_mobs_by_session_ids(session_ids, project_id):
@@ -143,8 +143,8 @@ def get_scheduled_jobs():
                WHERE status = %(status)s 
                     AND start_at <= (now() at time zone 'utc');""",
             {"status": JobStatus.SCHEDULED})
-        cur.execute(query=query)
-        data = cur.fetchall()
+        await cur.execute(query=query)
+        data = await cur.fetchall()
     return helper.list_to_camel_case(data)
 
 

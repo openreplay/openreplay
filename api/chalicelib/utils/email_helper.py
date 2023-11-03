@@ -2,41 +2,41 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.email_handler import __get_html_from_file, send_html
 
 
-def send_team_invitation(recipient, client_id, sender_name, invitation_link):
+async def send_team_invitation(recipient, client_id, sender_name, invitation_link):
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/invitation.html",
                                      formatting_variables={"invitationLink": invitation_link,
                                                            "clientId": client_id,
                                                            "sender": sender_name})
     SUBJECT = "Welcome to OpenReplay"
-    send_html(BODY_HTML, SUBJECT, recipient)
+    await send_html(BODY_HTML, SUBJECT, recipient)
 
 
-def send_forgot_password(recipient, invitation_link):
+async def send_forgot_password(recipient, invitation_link):
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/reset_password.html",
                                      formatting_variables={"invitationLink": invitation_link})
     SUBJECT = "Password recovery"
-    send_html(BODY_HTML, SUBJECT, recipient)
+    await send_html(BODY_HTML, SUBJECT, recipient)
 
 
-def send_assign_session(recipient, message, link):
+async def send_assign_session(recipient, message, link):
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/assignment.html",
                                      formatting_variables={"message": message,
                                                            "now": TimeUTC.to_human_readable(TimeUTC.now()),
                                                            "link": link})
     SUBJECT = "assigned session"
-    send_html(BODY_HTML, SUBJECT, recipient)
+    await send_html(BODY_HTML, SUBJECT, recipient)
 
 
-def alert_email(recipients, subject, data):
+async def alert_email(recipients, subject, data):
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/alert_notification.html", formatting_variables=data)
-    send_html(BODY_HTML=BODY_HTML, SUBJECT=subject, recipient=recipients)
+    await send_html(BODY_HTML=BODY_HTML, SUBJECT=subject, recipient=recipients)
 
 
-def __get_color(idx):
+async def __get_color(idx):
     return "#3EAAAF" if idx == 0 else "#77C3C7" if idx == 1 else "#9ED4D7" if idx == 2 else "#99d59a"
 
 
-def weekly_report2(recipients, data):
+async def weekly_report2(recipients, data):
     data["o_tr_u"] = ""
     data["o_tr_d"] = ""
     for d in data["days_partition"]:
@@ -116,4 +116,4 @@ def weekly_report2(recipients, data):
           </td>"""
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/Project-Weekly-Report.html", formatting_variables=data)
     SUBJECT = "OpenReplay Project Weekly Report"
-    send_html(BODY_HTML=BODY_HTML, SUBJECT=SUBJECT, recipient=recipients)
+    await send_html(BODY_HTML=BODY_HTML, SUBJECT=SUBJECT, recipient=recipients)

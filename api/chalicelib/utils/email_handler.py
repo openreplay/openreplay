@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import logging
 import re
@@ -48,7 +49,7 @@ def __replace_images(HTML):
     return HTML, mime_img
 
 
-def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
+async def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
     BODY_HTML, mime_img = __replace_images(BODY_HTML)
     if not isinstance(recipient, list):
         recipient = [recipient]
@@ -69,13 +70,13 @@ def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
                 r += [bcc]
             try:
                 logging.info(f"Email sending to: {r}")
-                s.sendmail(msg['FROM'], r, msg.as_string().encode('ascii'))
+                asyncio.to_thread(s.sendmail, msg['FROM'], r, msg.as_string().encode('ascii'))
             except Exception as e:
                 logging.error("!!! Email error!")
                 logging.error(e)
 
 
-def send_text(recipients, text, subject):
+async def send_text(recipients, text, subject):
     with smtp.SMTPClient() as s:
         msg = MIMEMultipart()
         msg['Subject'] = Header(__get_subject(subject), 'utf-8')
@@ -84,7 +85,7 @@ def send_text(recipients, text, subject):
         body = MIMEText(text)
         msg.attach(body)
         try:
-            s.sendmail(msg['FROM'], recipients, msg.as_string().encode('ascii'))
+            asyncio.to_thread(s.sendmail, msg['FROM'], recipients, msg.as_string().encode('ascii'))
         except Exception as e:
             logging.error("!! Text-email failed: " + subject),
             logging.error(e)

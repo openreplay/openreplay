@@ -44,14 +44,15 @@ class JIRAIntegration(integration_base.BaseIntegration):
     # TODO: remove this once jira-oauth is done
     def get(self):
         async with pg_client.PostgresClient() as cur:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(
                     """SELECT username, token, url
                         FROM public.jira_cloud 
                         WHERE user_id=%(user_id)s;""",
                     {"user_id": self._user_id})
             )
-            data = helper.dict_to_camel_case(cur.fetchone())
+            data = await cur.fetchone()
+            data = helper.dict_to_camel_case(data)
 
         if data is None:
             return
@@ -71,7 +72,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
     def update(self, changes, obfuscate=False):
         async with pg_client.PostgresClient() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""\
                         UPDATE public.jira_cloud
                         SET {','.join(sub_query)}
@@ -80,7 +81,8 @@ class JIRAIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id,
                              **changes})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = await cur.fetchone()
+            w = helper.dict_to_camel_case(w)
             if obfuscate:
                 w["token"] = obfuscate_string(w["token"])
         return self.get()
@@ -92,7 +94,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
 
     def add(self, username, token, url):
         async with pg_client.PostgresClient() as cur:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify("""\
                         INSERT INTO public.jira_cloud(username, token, user_id,url)
                         VALUES (%(username)s, %(token)s, %(user_id)s,%(url)s)
@@ -100,12 +102,13 @@ class JIRAIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id, "username": username,
                              "token": token, "url": url})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = await cur.fetchone()
+            w = helper.dict_to_camel_case(w)
         return self.get()
 
     def delete(self):
         async with pg_client.PostgresClient() as cur:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify("""\
                         DELETE FROM public.jira_cloud
                         WHERE user_id=%(user_id)s;""",
