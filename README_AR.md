@@ -4,6 +4,8 @@
   <a href="/README_ESP.md">Español</a>
   &nbsp;|&nbsp;
   <a href="/README_RU.md">Русский</a>
+  &nbsp;|&nbsp;
+  <a href="/README.md">English</a>
 </p>
 
 <p align="center">
