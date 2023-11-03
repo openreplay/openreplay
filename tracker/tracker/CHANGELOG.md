@@ -1,3 +1,7 @@
+# 10.0.2
+
+- fix default ignore headers
+
 # 10.0.1
 
 - network proxy api is now default turned on
