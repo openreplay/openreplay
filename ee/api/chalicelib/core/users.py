@@ -169,19 +169,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.basic_authentication
                             WHERE users.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id,
-                                (SELECT roles.name 
-                                    FROM roles 
-                                    WHERE roles.tenant_id=%(tenant_id)s 
-                                        AND roles.role_id=users.role_id) AS role_name;""",
+                              AND users.user_id = basic_authentication.user_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -192,19 +180,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.users AS users
                             WHERE basic_authentication.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id AS id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id,
-                                (SELECT roles.name 
-                                    FROM roles 
-                                    WHERE roles.tenant_id=%(tenant_id)s 
-                                        AND roles.role_id=users.role_id) AS role_name;""",
+                              AND users.user_id = basic_authentication.user_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
     if not output:
@@ -396,7 +372,7 @@ def get_by_email_only(email):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         users.tenant_id,
                         users.email, 
                         users.role, 
@@ -879,7 +855,7 @@ def authenticate_sso(email, internal_id, exp=None):
         if r["serviceAccount"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="service account is not authorized to login")
-        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
+        jwt_iat = TimeUTC.datetime_to_timestamp(refresh_jwt_iat_jti(r['userId']))
         return authorizers.generate_jwt(r['userId'], r['tenantId'],
                                         iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
