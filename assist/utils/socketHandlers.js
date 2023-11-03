@@ -1,6 +1,5 @@
 const {
     extractPeerId,
-    extractRoomId,
 } = require("./helper");
 const {
     IDENTITIES,
@@ -60,11 +59,11 @@ function processNewSocket(socket) {
     socket.identity = socket.handshake.query.identity;
     socket.peerId = socket.handshake.query.peerId;
     let {projectKey: connProjectKey, sessionId: connSessionId, tabId: connTabId} = extractPeerId(socket.peerId);
-    socket.roomId = extractRoomId(socket.peerId);
+    socket.roomId = `${connProjectKey}-${connSessionId}`;
     socket.projectId = socket.handshake.query.projectId;
     socket.projectKey = connProjectKey;
     socket.sessId = connSessionId;
-    socket.tabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
+    socket.tabId = connTabId;
     debug_log && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
 }
 
@@ -76,7 +75,7 @@ async function onConnect(socket) {
     const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
     if (socket.identity === IDENTITIES.session) {
-        // Check if session already connected, if so, refuse new connexion
+        // Check if session with the same tabID already connected, if so, refuse new connexion
         if (sessionsCount > 0) {
             for (let tab of tabIDs) {
                 if (tab === socket.tabId) {
