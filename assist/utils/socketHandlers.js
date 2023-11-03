@@ -36,22 +36,23 @@ const findSessionSocketId = async (io, roomId, tabId) => {
 };
 
 async function getRoomData(io, roomID) {
-    let sessionsCount = 0, agentsCount = 0, agentIDs = [];
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [];
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
         for (let sock of connected_sockets) {
             if (sock.handshake.query.identity === IDENTITIES.session) {
-                sessionsCount++;
+                tabsCount++;
+                tabIDs.push(sock.tabId);
             } else {
                 agentsCount++;
                 agentIDs.push(sock.id);
             }
         }
     } else {
-        sessionsCount = -1;
+        tabsCount = -1;
         agentsCount = -1;
     }
-    return {sessionsCount, agentsCount, agentIDs};
+    return {tabsCount, agentsCount, tabIDs, agentIDs};
 }
 
 function processNewSocket(socket) {
@@ -72,14 +73,13 @@ async function onConnect(socket) {
     processNewSocket(socket);
 
     const io = getServer();
-    const {sessionsCount, agentsCount, agentIDs} = await getRoomData(io, socket.roomId);
+    const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session already connected, if so, refuse new connexion
         if (sessionsCount > 0) {
-            const connected_sockets = await io.in(socket.roomId).fetchSockets();
-            for (let item of connected_sockets) {
-                if (item.tabId === socket.tabId) {
+            for (let tab of tabIDs) {
+                if (tab === socket.tabId) {
                     error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
                     io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
@@ -141,10 +141,11 @@ async function onDisconnect(socket) {
     }
     debug_log && console.log("checking for number of connected agents and sessions");
     const io = getServer();
-    let {sessionsCount, agentsCount, agentIDs} = await getRoomData(io, socket.roomId);
+    let {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
     if (sessionsCount === -1 && agentsCount === -1) {
         debug_log && console.log(`room not found: ${socket.roomId}`);
+        return;
     }
     if (sessionsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no SESSIONS`);
