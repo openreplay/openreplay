@@ -44,7 +44,7 @@ export const enum MENU {
   NOTES = 'notes',
   LIVE_SESSIONS = 'live-sessions',
   RECORDINGS = 'recordings',
-  STATS = 'stats',
+  STATS = 'assist-stats',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
   FUNNELS = 'funnels',

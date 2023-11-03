@@ -135,9 +135,10 @@ function SideMenu(props: Props) {
   const isMenuItemActive = (key: string) => {
     const { pathname } = location;
     const activeRoute = menuRoutes[key];
+
     if (activeRoute && !key.includes('exit')) {
       const route = activeRoute();
-      return pathname.startsWith(route);
+      return pathname === route;
     }
     return false;
   };
