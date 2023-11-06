@@ -8,7 +8,7 @@ let IMAGES_URL = "/v1/mobile/images"
 
 class NetworkManager: NSObject {
     static let shared = NetworkManager()
-    var baseUrl = "https://app.openreplay.com/api"
+    var baseUrl = "https://api.openreplay.com/ingest"
     public var sessionId: String? = nil
     private var token: String? = nil
     public var writeToFile = false
