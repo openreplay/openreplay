@@ -6,7 +6,7 @@ import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
-import { LAST_7_DAYS } from 'Types/app/period';
+import { LAST_30_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
 import APIClient from 'App/api_client';
 import { FETCH_ACCOUNT, UPDATE_JWT } from "Duck/user";
@@ -48,10 +48,10 @@ const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
 const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION'
 
-const range = getDateRangeFromValue(LAST_7_DAYS);
+const range = getDateRangeFromValue(LAST_30_DAYS);
 const defaultDateFilters = {
     url: '',
-    rangeValue: LAST_7_DAYS,
+    rangeValue: LAST_30_DAYS,
     startDate: range.start.unix() * 1000,
     endDate: range.end.unix() * 1000,
 };

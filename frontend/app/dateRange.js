@@ -15,7 +15,8 @@ const DATE_RANGE_LABELS = {
     LAST_30_DAYS: "Past 30 Days",
     //THIS_MONTH: 'This Month',
     //LAST_MONTH: 'Previous Month',
-    //THIS_YEAR: 'This Year',
+    THIS_YEAR: 'This Year',
+    ALL_TIME: 'All Time',
     [CUSTOM_RANGE]: "Custom Range",
 };
 
@@ -52,11 +53,11 @@ export function getDateRangeFromValue(value) {
                 moment().utcOffset(offset).startOf("hour").subtract(30, "minutes"),
                 moment().utcOffset(offset).startOf("hour")
             );
-            case DATE_RANGE_VALUES.YESTERDAY:
-                return moment.range(
-                    moment().utcOffset(offset).subtract(1, "days").startOf("day"),
-                    moment().utcOffset(offset).subtract(1, "days").endOf("day")
-                    );
+        case DATE_RANGE_VALUES.YESTERDAY:
+            return moment.range(
+                moment().utcOffset(offset).subtract(1, "days").startOf("day"),
+                moment().utcOffset(offset).subtract(1, "days").endOf("day")
+            );
         case DATE_RANGE_VALUES.TODAY:
             return moment.range(moment().utcOffset(offset).startOf("day"), moment().utcOffset(offset).endOf("day"));
         case DATE_RANGE_VALUES.LAST_24_HOURS:
@@ -77,6 +78,10 @@ export function getDateRangeFromValue(value) {
             return moment().utcOffset(offset).subtract(1, "months").range("month");
         case DATE_RANGE_VALUES.THIS_YEAR:
             return moment().utcOffset(offset).range("year");
+        case DATE_RANGE_VALUES.ALL_TIME:
+            const start = new Date(2022, 0, 1); // we started hosting openreplay in 2023 so just pick some date before that
+            const end = moment().utcOffset(offset).endOf("day")
+            return moment().utcOffset(offset).range(start, end);
         case DATE_RANGE_VALUES.CUSTOM_RANGE:
             return moment.range(moment().utcOffset(offset), moment().utcOffset(offset));
     }

@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import { auditService } from "App/services"
 import Audit from './types/audit'
-import Period, { LAST_7_DAYS } from 'Types/app/period';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
 import { toast } from 'react-toastify';
 import { exportCSVFile } from 'App/utils';
 import { DateTime } from 'luxon'; // TODO
@@ -14,7 +14,7 @@ export default class AuditStore {
     searchQuery: string = '';
     isLoading: boolean = false;
     order: string = 'desc';
-    period: Period|null = Period({ rangeName: LAST_7_DAYS })
+    period: Period|null = Period({ rangeName: LAST_30_DAYS })
 
     constructor() {
         makeAutoObservable(this, {

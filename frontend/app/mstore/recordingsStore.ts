@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { recordingsService } from 'App/services';
 import { IRecord } from 'App/services/RecordingsService';
-import Period, { LAST_7_DAYS } from 'Types/app/period';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
@@ -16,8 +16,8 @@ export default class RecordingsStore {
   userId = '0';
   startTimestamp = 0;
   endTimestamp = 0;
-  rangeName: string = 'LAST_24_HOURS';
-  period: any = Period({ rangeName: LAST_7_DAYS });
+  rangeName: string = LAST_30_DAYS;
+  period: any = Period({ rangeName: LAST_30_DAYS });
 
   constructor() {
     makeAutoObservable(this);

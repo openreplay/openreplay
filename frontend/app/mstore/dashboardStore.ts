@@ -3,7 +3,7 @@ import Dashboard from './types/dashboard';
 import Widget from './types/widget';
 import { dashboardService, metricService } from 'App/services';
 import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
 import Filter from './types/filter';
 import { getRE } from 'App/utils';
 
@@ -20,9 +20,9 @@ export default class DashboardStore {
   currentWidget: Widget = new Widget();
   widgetCategories: any[] = [];
   widgets: Widget[] = [];
-  period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
+  period: Record<string, any> = Period({ rangeName: LAST_30_DAYS });
   drillDownFilter: Filter = new Filter();
-  drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
+  drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_30_DAYS });
   startTimestamp: number = 0;
   endTimestamp: number = 0;
   pendingRequests: number = 0;
@@ -64,7 +64,7 @@ export default class DashboardStore {
 
   resetDrillDownFilter() {
     this.drillDownFilter = new Filter();
-    this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
+    this.drillDownPeriod = Period({ rangeName: LAST_30_DAYS });
     const timeStamps = this.drillDownPeriod.toTimestamps();
     this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
     this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
