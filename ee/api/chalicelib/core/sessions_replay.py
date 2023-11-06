@@ -131,7 +131,8 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id,
+                                                            check_existence=False)
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
