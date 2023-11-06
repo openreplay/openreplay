@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
-import { Loader, Pagination, Button, NoContent } from 'UI';
+import { Button, Loader, NoContent, Pagination } from 'UI';
 
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
@@ -22,14 +22,10 @@ function CardIssues() {
   const pageSize = 5;
   const { showModal } = useModal();
 
-  const fetchIssues = async (filter: any) => {
-    if (!isMounted()) return;
-
-    setLoading(true);
-
+  function getFilters(filter: any) {
     const mapSeries = (item: any) => {
       const filters = item.filter.filters
-        .map((f: any) => f.toJson());
+          .map((f: any) => f.toJson());
 
       return {
         ...item,
@@ -40,12 +36,20 @@ function CardIssues() {
       };
     };
 
-    const newFilter = {
+    return {
       ...filter,
       limit: pageSize,
       page: metricStore.sessionsPage,
       series: filter.series.map(mapSeries)
     };
+  }
+
+  const fetchIssues = async (filter: any) => {
+    if (!isMounted()) return;
+
+    setLoading(true);
+
+    const newFilter = getFilters(filter);
 
     try {
       const res = await widget.fetchIssues(newFilter);
@@ -58,7 +62,8 @@ function CardIssues() {
   };
 
   const handleClick = (issue?: any) => {
-    showModal(<SessionsModal issue={issue} list={[]} />, { right: true, width: 900 });
+    // const filters = getFilters(widget.filter);
+    showModal(<SessionsModal issue={issue} />, { right: true, width: 900 });
   };
 
   const filter = useObserver(() => dashboardStore.drillDownFilter);
@@ -104,7 +109,6 @@ function CardIssues() {
       </Loader>
 
       <div className='w-full flex items-center justify-between pt-4'>
-
         <div className='text-disabled-text'>
           {data.total && (
             <>

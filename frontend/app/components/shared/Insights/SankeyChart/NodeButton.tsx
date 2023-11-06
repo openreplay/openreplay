@@ -8,16 +8,11 @@ interface Props {
 
 function NodeButton(props: Props) {
   const { payload } = props;
-  const [show, setShow] = React.useState(false);
-
-  const toggleMenu = (e: React.MouseEvent) => {
-    setShow(!show);
-  };
 
   return (
     <div className='relative'>
-      <Popover content={
-        <div className='bg-white rounded mt-1 text-xs'>
+      <Popover
+        content={<div className='bg-white rounded mt-1 text-xs'>
           <div className='border-b py-1 px-2 flex items-center'>
             <div className='w-6 shrink-0'>
               <Icon name='link-45deg' size={18} />
@@ -41,20 +36,24 @@ function NodeButton(props: Props) {
               </div>
             </div>
           )}
-        </div>
-      } title={<div className='text-sm'>Title</div>}>
+        </div>}>
         <div
-          className='copy-popover select-none rounded shadow'
+          className='flex items-center copy-popover select-none rounded shadow'
           style={{
             backgroundColor: 'white',
             padding: '3px 6px',
-            width: 'fit-content',
+            // width: 'fit-content',
             fontSize: '12px'
           }}
-          onClick={toggleMenu}
         >
-          {payload.name} <span style={{ fontWeight: 'bold' }}>{Math.round(payload.value) + '%'}</span>
-          {/*{' '} <span style={{}}>{payload.avgTimeFromPrevious}</span>*/}
+          <div style={{
+            maxWidth: '120px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            marginRight: '5px'
+          }}>{payload.name}</div>
+          <span style={{ fontWeight: 'bold' }}>{Math.round(payload.value) + '%'}</span>
         </div>
       </Popover>
     </div>

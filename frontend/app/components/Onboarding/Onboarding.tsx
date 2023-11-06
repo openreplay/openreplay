@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from 'UI';
 import SideMenu from './components/SideMenu';
 import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect, RouteComponentProps } from 'react-router';
@@ -8,6 +9,7 @@ import IdentifyUsersTab from './components/IdentifyUsersTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
 import { withSiteId } from 'App/routes';
+
 interface Props {
   match: {
     params: {
@@ -17,7 +19,27 @@ interface Props {
   };
   history: RouteComponentProps['history'];
 }
+
 const Onboarding = (props: Props) => {
+  const platforms = [
+    {
+      label: (
+        <div className={'font-semibold flex gap-2 items-center'}>
+          <Icon name="browser/browser" size={16} /> Web
+        </div>
+      ),
+      value: 'web',
+    } as const,
+    {
+      label: (
+        <div className={'font-semibold flex gap-2 items-center'}>
+          <Icon name="mobile" size={16} /> Mobile
+        </div>
+      ),
+      value: 'mobile',
+    } as const,
+  ] as const;
+  const [platform, setPlatform] = React.useState(platforms[0]);
   const {
     match: {
       params: { activeTab, siteId },
@@ -30,7 +52,7 @@ const Onboarding = (props: Props) => {
 
   const onMenuItemClick = (tab: string) => {
     props.history.push(withSiteId(onboardingRoute(tab), siteId));
-  }
+  };
 
   return (
     <div className="container-90 flex relative">
@@ -43,8 +65,20 @@ const Onboarding = (props: Props) => {
           style={{ maxWidth: '1360px' }}
         >
           <Switch>
-            <Route exact strict path={route(OB_TABS.INSTALLING)} component={InstallOpenReplayTab} />
-            <Route exact strict path={route(OB_TABS.IDENTIFY_USERS)} component={IdentifyUsersTab} />
+            <Route exact strict path={route(OB_TABS.INSTALLING)}>
+              <InstallOpenReplayTab
+                platforms={platforms}
+                platform={platform}
+                setPlatform={setPlatform}
+              />
+            </Route>
+            <Route exact strict path={route(OB_TABS.IDENTIFY_USERS)}>
+              <IdentifyUsersTab
+                platforms={platforms}
+                platform={platform}
+                setPlatform={setPlatform}
+              />
+            </Route>
             <Route exact strict path={route(OB_TABS.MANAGE_USERS)} component={ManageUsersTab} />
             <Route exact strict path={route(OB_TABS.INTEGRATIONS)} component={IntegrationsTab} />
             <Redirect to={route(OB_TABS.INSTALLING)} />

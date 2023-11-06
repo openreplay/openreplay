@@ -12,6 +12,7 @@ interface Node {
 }
 
 interface Link {
+  id: string;
   eventType: string;
   value: number;
   source: number;
@@ -35,79 +36,62 @@ const SankeyChart: React.FC<Props> = ({
                                         height = 240,
                                         onChartClick
                                       }: Props) => {
-  const [highlightedLinks, setHighlightedLinks] = useState<number[]>([]);
-  const [hoveredLinks, setHoveredLinks] = useState<number[]>([]);
+  const [highlightedLinks, setHighlightedLinks] = useState<string[]>([]);
+  const [hoveredLinks, setHoveredLinks] = useState<string[]>([]);
 
-  function buildReversedAdjacencyList(nodes, links) {
-    const adjList = Array(nodes.length).fill(null).map(() => []);
+  function findPreviousLinks(targetNodeIndex: number): Link[] {
+    const previousLinks: Link[] = [];
+    const visitedNodes: Set<number> = new Set();
 
-    for (const link of links) {
-      adjList[link.target].push(link.source);
-    }
+    const findPreviousLinksRecursive = (nodeIndex: number) => {
+      visitedNodes.add(nodeIndex);
 
-    return adjList;
-  }
+      for (const link of data.links) {
+        if (link.target === nodeIndex && !visitedNodes.has(link.source)) {
+          previousLinks.push(link);
+          findPreviousLinksRecursive(link.source);
+        }
+      }
+    };
 
-  function dfs(adjList, start, target, visited, path) {
-    if (start === target) return [...path, start];
+    findPreviousLinksRecursive(targetNodeIndex);
 
-    if (visited[start]) return null;
-
-    visited[start] = true;
-
-    for (const neighbor of adjList[start]) {
-      const newPath = dfs(adjList, neighbor, target, visited, [...path, start]);
-      if (newPath) return newPath;
-    }
-
-    return null;
-  }
-
-  function findPathFromLinkId(linkId) {
-    const startNodeIndex = data.links.findIndex(link => link.id === linkId);
-
-    if (startNodeIndex === -1) {
-      return null;
-    }
-
-    const adjList = buildReversedAdjacencyList(data.nodes, data.links);
-    const visited = Array(data.nodes.length).fill(false);
-    return dfs(adjList, startNodeIndex, 0, visited, []);
+    return previousLinks;
   }
 
   const handleLinkMouseEnter = (linkData: any) => {
     const { payload } = linkData;
-
-    const pathFromLinkId = findPathFromLinkId(payload.id);
-    setHoveredLinks(pathFromLinkId.reverse());
-
-
+    const link: any = data.links.find(link => link.id === payload.id);
+    const previousLinks: any = findPreviousLinks(link.source).reverse();
+    previousLinks.push({ id: payload.id });
+    setHoveredLinks(previousLinks.map((link: any) => link.id));
   };
 
   const clickHandler = () => {
     setHighlightedLinks(hoveredLinks);
 
-    const targetLink = data.links[hoveredLinks[0]];
-    const sourceLink = data.links[hoveredLinks[hoveredLinks.length - 1]];
-    const targetNode = data.nodes[targetLink.source];
-    const sourceNode = data.nodes[sourceLink.target];
+    const firstLink = data.links.find(link => link.id === hoveredLinks[0]) || null;
+    const lastLink = data.links.find(link => link.id === hoveredLinks[hoveredLinks.length - 1]) || null;
+
+    const firstNode = data.nodes[firstLink?.source];
+    const lastNode = data.nodes[lastLink.target];
 
     const filters = [];
 
-    if (targetNode) {
+    if (firstNode) {
       filters.push({
         operator: 'is',
-        type: targetNode.eventType,
-        value: [targetNode.name],
+        type: firstNode.eventType,
+        value: [firstNode.name],
         isEvent: true
       });
     }
 
-    if (sourceNode) {
+    if (lastNode) {
       filters.push({
         operator: 'is',
-        type: sourceNode.eventType,
-        value: [sourceNode.name],
+        type: lastNode.eventType,
+        value: [lastNode.name],
         isEvent: true
       });
     }
@@ -126,15 +110,15 @@ const SankeyChart: React.FC<Props> = ({
         <Sankey
           data={data}
           iterations={128}
-          node={<CustomNode activeNodes={highlightedLinks.map(index => data.nodes[data.links[index].target])} />}
+          node={<CustomNode />}
           sort={true}
           onClick={clickHandler}
-          link={({ source, target, ...linkProps }, index) => (
+          link={({ source, target, id, ...linkProps }, index) => (
             <CustomLink
               {...linkProps}
-              hoveredLinks={hoveredLinks.map(linkId => data.links[linkId].id)}
-              activeLinks={highlightedLinks.map(linkId => data.links[linkId].id)}
-              strokeOpacity={highlightedLinks.includes(index) ? 1 : 0.2}
+              hoveredLinks={hoveredLinks}
+              activeLinks={highlightedLinks}
+              strokeOpacity={highlightedLinks.includes(id) ? 0.8 : 0.2}
               onMouseEnter={() => handleLinkMouseEnter(linkProps)}
               onMouseLeave={() => setHoveredLinks([])}
             />

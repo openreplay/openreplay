@@ -8,8 +8,7 @@ import Session from 'App/mstore/types/session';
 import { useModal } from 'Components/Modal';
 
 interface Props {
-  list: any,
-  issue: any
+  issue: any,
 }
 
 function SessionsModal(props: Props) {
@@ -25,17 +24,17 @@ function SessionsModal(props: Props) {
 
   const fetchSessions = async (filter: any) => {
     setLoading(true);
-    filter.filters = [];
+    const _filter = { ...filter };
 
     if (issue) {
-      filter.filters.push({
+      _filter.filters.push({
         type: 'issue',
         operator: 'is',
         value: [issue.type]
       });
     }
-    const res = await metricService.fetchSessions(null, filter);
-    console.log('res', res);
+    const res = await metricService.fetchSessions(null, _filter);
+
     setList(res[0].sessions.map((item: any) => new Session().fromJson(item)));
     setTotal(res[0].total);
     setLoading(false);

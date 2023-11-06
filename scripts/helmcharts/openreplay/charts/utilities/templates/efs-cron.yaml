@@ -25,7 +25,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: efs-cleaner
-            image: alpine
+            image: debian:stable-slim
             command:
             - /bin/sh
             - -c
@@ -35,7 +35,7 @@ spec:
               set -x
               echo "Cleaning NFS strorage for data older than {{.Values.efsCleaner.retention}} days"
               storage=`du -sh /mnt/efs`
-              find /mnt/efs -type f -mtime +{{.Values.efsCleaner.retention}} -delete
+              find /mnt/efs -type f -mtime +{{.Values.efsCleaner.retention}} -exec /bin/bash -c "ls -lah {}; rm {}" \;
               echo "Storage before cleaning"
               echo ${storage}
               echo "Storage after cleaning"

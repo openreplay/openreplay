@@ -53,6 +53,14 @@ function SideMenu(props: Props) {
           if (item.key === MENU.VAULT) {
             return { ...item, hidden: false };
           }
+        } else {
+          if (item.key === MENU.VAULT) {
+            return { ...item, hidden: true };
+          }
+
+          if (item.key === MENU.BOOKMARKS) {
+            return { ...item, hidden: false };
+          }
         }
         if (item.hidden) return item;
 
