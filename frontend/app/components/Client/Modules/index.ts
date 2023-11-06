@@ -18,6 +18,7 @@ export interface Module {
   icon?: string;
   isEnabled?: boolean;
   hidden?: boolean;
+  enterprise?: boolean;
 }
 
 export const modules = [
@@ -26,6 +27,19 @@ export const modules = [
     description: 'Enable live session replay, remote control, annotations and webRTC call/video.',
     key: MODULES.ASSIST,
     icon: 'broadcast'
+  },
+  {
+    label: 'Recordings',
+    description: 'Record live sessions while co-browsing with users and share it with your team for training purposes.',
+    key: MODULES.OFFLINE_RECORDINGS,
+    icon: 'record2'
+  },
+  {
+    label: 'Cobrowsing Reports',
+    description: 'Keep an eye on cobrowsing metrics across your team and generate reports.',
+    key: MODULES.ASSIST_STATS,
+    icon: 'file-bar-graph',
+    enterprise: true
   },
   {
     label: 'Notes',
@@ -41,32 +55,20 @@ export const modules = [
     icon: 'filetype-pdf'
   },
   {
-    label: 'Recordings',
-    description: 'Record live sessions while co-browsing with users and share it with your team for training purposes.',
-    key: MODULES.OFFLINE_RECORDINGS,
-    icon: 'record2'
-  },
-  {
     label: 'Alerts',
     description: 'Create alerts on cards and get notified when a metric hits a certain threshold.',
     key: MODULES.ALERTS,
     icon: 'bell'
   },
   {
-    label: 'Cobrowsing Reports',
-    description: 'Get detailed analytics on your users and their sessions.',
-    key: MODULES.ASSIST_STATS,
-    icon: 'file-bar-graph'
-  },
-  {
     label: 'Feature Flags',
-    description: 'Create feature flags and enable/disable them on the fly.',
+    description: 'Make gradual releases and A/B test all of your new features without redeploying your app.',
     key: MODULES.FEATURE_FLAGS,
     icon: 'toggles'
   },
   {
     label: 'Recommendations',
-    description: 'Recommendations based on user behavior.',
+    description: 'Get personalized recommendations for sessions to watch, based on your replay history and search preferences.',
     key: MODULES.RECOMMENDATIONS,
     icon: 'magic',
     hidden: true
