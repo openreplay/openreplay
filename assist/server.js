@@ -1,8 +1,7 @@
 const client = require('prom-client');
 const collectDefaultMetrics = client.collectDefaultMetrics;
-const Registry = client.Registry;
-const register = new Registry();
-collectDefaultMetrics({ register });
+const prefix = 'assist_';
+collectDefaultMetrics({ prefix });
 
 const dumps = require('./utils/HeapSnapshot');
 const express = require('express');
