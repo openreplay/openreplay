@@ -1,3 +1,9 @@
+const client = require('prom-client');
+const collectDefaultMetrics = client.collectDefaultMetrics;
+const Registry = client.Registry;
+const register = new Registry();
+collectDefaultMetrics({ register });
+
 const dumps = require('./utils/HeapSnapshot');
 const express = require('express');
 const socket = require("./servers/websocket");
@@ -34,3 +40,11 @@ const wsserver = wsapp.listen(PORT, HOST, () => {
 wsapp.enable('trust proxy');
 socket.start(wsserver);
 module.exports = {wsserver};
+
+/*
+* Possible metrics:
+* - number of http requests
+* - http request's duration
+* - number of socket connection (sort by type: tab, agent)
+* - number of rooms
+* */
