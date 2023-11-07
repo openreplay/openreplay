@@ -84,7 +84,7 @@ export default class APIClient {
     clean?: boolean
   } = { clean: true }): Promise<Response> {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    if (jwt && this.isTokenExpired(jwt)) {
+    if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       const newJwt = await this.refreshToken();
       (this.init.headers as Headers).set('Authorization', `Bearer ${newJwt}`);
     }
@@ -121,8 +121,7 @@ export default class APIClient {
   }
 
   async refreshToken(): Promise<string> {
-    let edp = window.env.API_EDP || window.location.origin + '/api';
-    const response = await fetch(edp + '/refresh', {
+    const response = await this.fetch('/refresh', {
       method: 'GET',
       headers: this.init.headers
     });
