@@ -1,7 +1,7 @@
 ## Getting setup
 
 1. `yarn install`
-2. Copy .env.sample to .env and make any needed changes
+2. Copy .env.local to .env and make any needed changes
 3. `yarn start`
 
 Debugging the various react components is handled best using the react developers browser extension.
