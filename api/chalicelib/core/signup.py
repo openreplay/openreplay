@@ -3,7 +3,7 @@ import logging
 
 import schemas
 from chalicelib.core import users, telemetry, tenants
-from chalicelib.utils import captcha
+from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -77,6 +77,7 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     telemetry.new_client()
     r = users.authenticate(email, password)
+    r["smtp"] = smtp.has_smtp()
 
     return {
         'jwt': r.pop('jwt'),
