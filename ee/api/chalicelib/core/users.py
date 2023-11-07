@@ -495,7 +495,11 @@ def delete_member(user_id, tenant_id, id_to_delete):
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
         cur.execute(
             cur.mogrify(f"""UPDATE public.basic_authentication 
-                           SET password=NULL 
+                           SET password=NULL, jwt_iat= NULL,
+                                jwt_refresh_jti= NULL, jwt_refresh_iat= NULL,
+                                password= NULL, invitation_token= NULL,
+                                invited_at= NULL, changed_at= NULL,
+                                change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
     return {"data": get_members(tenant_id=tenant_id)}
