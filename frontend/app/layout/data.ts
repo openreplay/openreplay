@@ -75,7 +75,7 @@ export const categories: Category[] = [
     items: [
       { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
       { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true },
-      { label: 'Cobrowsing Report', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
+      { label: 'Reports', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
     ]
   },
   {
