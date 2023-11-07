@@ -138,7 +138,7 @@ def insert_event(event: EventCreate, db: Session):
         db.close()
 
 
-@app.post("/assist-stats/events", dependencies=[Depends(api_key_auth)])
+@app.post("/events", dependencies=[Depends(api_key_auth)])
 def create_event(event: EventCreate, db: Session = Depends(get_db)):
     if event.event_state == EventStateEnum.end:
         update_duration(event.event_id, event.timestamp, db)
