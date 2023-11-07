@@ -11,6 +11,7 @@ import { DndProvider } from 'react-dnd';
 import { ConfigProvider, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
+import { Notification } from 'UI';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -74,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
             <BrowserRouter>
+              <Notification />
               <Router />
             </BrowserRouter>
           </DndProvider>
