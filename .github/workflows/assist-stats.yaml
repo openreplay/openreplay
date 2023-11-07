@@ -71,7 +71,7 @@ jobs:
         }
         images=("assist-stats")
         for image in ${images[*]};do
-          docker push $DOCKER_REPO/$image:$IMAGE_TAG $DOCKER_REPO/$image:${IMAGE_TAG}
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG
         done
 
 ### Enterprise code deployment 
