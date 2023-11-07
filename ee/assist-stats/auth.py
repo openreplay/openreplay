@@ -1,8 +1,9 @@
+from fastapi import HTTPException, Depends, status, Security
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, Depends, status
 from decouple import config
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Instantiate OAuth2PasswordBearer with automatic error responses disabled
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
 class AuthHandler:
@@ -10,24 +11,33 @@ class AuthHandler:
         """
         Authorization method using an API key.
         """
-        self.__api_keys = [config("ACCESS_TOKEN")]
+        # Attempt to get the ACCESS_TOKEN, if not set, default to None
+        self.api_key = config("ACCESS_TOKEN", default=None)
 
-    def __contains__(self, api_key):
-        return api_key in self.__api_keys
-
-    def add_key(self, key):
-        """Adds new key for authentication."""
-        self.__api_keys.append(key)
+    def verify_api_key(self, api_key: str):
+        return api_key == self.api_key
 
 
-auth_method = AuthHandler()
+auth_handler = AuthHandler()
 
 
-def api_key_auth(api_key: str = Depends(oauth2_scheme)):
-    """Method to verify auth."""
-    global auth_method
-    if api_key not in auth_method:
+async def api_key_auth(api_key: str = Security(oauth2_scheme)):
+    # If ACCESS_TOKEN is not configured, skip the authorization check
+    if not auth_handler.api_key:
+        return True
+
+    # If the Authorization header is not provided, raise an HTTP 403 Forbidden error
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authenticated"
+        )
+
+    # If the provided API key is invalid, raise an HTTP 401 Unauthorized error
+    if not auth_handler.verify_api_key(api_key):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Forbidden"
         )
+    # If the API key is valid, continue processing the request
+    return True
