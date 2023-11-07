@@ -210,8 +210,8 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
                                     admin=data.admin, name=data.name, user_id=user["userId"], role_id=role_id)
     elif user is not None:
         __hard_delete_user(user_id=user["userId"])
-        new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=data.name, role_id=role_id)
+        new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
+                                       admin=data.admin, name=data.name, role_id=role_id)
     else:
         new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
                                        admin=data.admin, name=data.name, role_id=role_id)
