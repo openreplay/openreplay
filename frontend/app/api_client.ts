@@ -124,7 +124,7 @@ export default class APIClient {
     const response = await this.fetch('/refresh', {
       method: 'GET',
       headers: this.init.headers
-    });
+    }, { clean: false });
 
     const data = await response.json();
     const refreshedJwt = data.jwt;
