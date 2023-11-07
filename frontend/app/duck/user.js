@@ -69,7 +69,7 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_PASSWORD.SUCCESS:
       return state.set('passwordErrors', List());
     case SIGNUP.SUCCESS:
-      state.set('account', Account(action.data.user)).set('onboarding', true);
+      return state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:
