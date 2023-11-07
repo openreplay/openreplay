@@ -5,7 +5,7 @@ import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions, issueCategories, issueCategoriesMap } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
-import Period, { LAST_24_HOURS } from 'Types/app/period';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
 import Funnel from "../types/funnel";
 import { metricService } from 'App/services';
 import { FUNNEL, INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
@@ -72,7 +72,7 @@ export default class Widget {
   thumbnail?: string;
   params: any = { density: 70 };
 
-  period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
+  period: Record<string, any> = Period({ rangeName: LAST_30_DAYS }); // temp value in detail view
   hasChanged: boolean = false;
 
   position: number = 0;

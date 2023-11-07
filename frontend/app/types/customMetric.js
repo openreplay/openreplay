@@ -2,7 +2,7 @@ import Record from 'Types/Record';
 import { List } from 'immutable';
 import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
-import { LAST_7_DAYS } from 'Types/app/period';
+import { LAST_30_DAYS } from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
 import { filterMap } from 'Duck/search';
 
@@ -38,7 +38,7 @@ export default Record({
   startDate: '',
   endDate: '',
   active: true,
-  rangeName: LAST_7_DAYS,
+  rangeName: LAST_30_DAYS,
 }, {
   idKey: 'metricId',
   methods: {

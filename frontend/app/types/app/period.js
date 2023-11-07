@@ -12,6 +12,7 @@ export const LAST_30_DAYS = "LAST_30_DAYS";
 export const THIS_MONTH = "THIS_MONTH";
 export const LAST_MONTH = "LAST_MONTH";
 export const THIS_YEAR = "THIS_YEAR";
+export const ALL_TIME = "ALL_TIME"
 export const CUSTOM_RANGE = "CUSTOM_RANGE";
 
 const RANGE_LABELS = {
@@ -24,6 +25,7 @@ const RANGE_LABELS = {
     [THIS_MONTH]: "This Month",
     [LAST_MONTH]: "Last Month",
     [THIS_YEAR]: "This Year",
+    [ALL_TIME]: "All Time"
 };
 
 function getRange(rangeName, offset) {
@@ -39,8 +41,8 @@ function getRange(rangeName, offset) {
             return moment.range(
                 // moment().startOf("hour").subtract(24, "hours"),
                 // moment().startOf("hour")
-				moment().utcOffset(offset).subtract(24, 'hours'),
-        		moment().utcOffset(offset),
+                moment().utcOffset(offset).subtract(24, 'hours'),
+                moment().utcOffset(offset),
             );
         case LAST_30_MINUTES:
             return moment.range(
@@ -63,6 +65,10 @@ function getRange(rangeName, offset) {
             return moment().utcOffset(offset).subtract(1, "months").range("month");
         case THIS_YEAR:
             return moment().utcOffset(offset).range("year");
+        case ALL_TIME:
+            const start = new Date(2022, 0, 1); // we started hosting openreplay in 2023 so just pick some date before that
+            const end = moment().utcOffset(offset).endOf("day")
+            return moment().utcOffset(offset).range(start, end);
         default:
             return moment.range();
     }

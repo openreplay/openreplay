@@ -6,7 +6,7 @@ import { fetchListType, fetchType, saveType, editType, initType, removeType } fr
 import { createItemInListUpdater, mergeReducers, success, array } from './funcTools/tools';
 import { createRequestReducer } from './funcTools/request';
 import { getDateRangeFromValue } from 'App/dateRange';
-import { LAST_7_DAYS } from 'Types/app/period';
+import { LAST_30_DAYS } from 'Types/app/period';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 
 const name = 'funnel';
@@ -50,15 +50,15 @@ const SAVE_SUCCESS = success(SAVE);
 const UPDATE_SUCCESS = success(UPDATE);
 const REMOVE_SUCCESS = success(REMOVE);
 
-const range = getDateRangeFromValue(LAST_7_DAYS);
+const range = getDateRangeFromValue(LAST_30_DAYS);
 const defaultDateFilters = {
-  rangeValue: LAST_7_DAYS,
+  rangeValue: LAST_30_DAYS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000
 }
 
 const initialState = Map({
-  list: List(),  
+  list: List(),
   instance: Funnel(),
   insights: Funnel(),
   issues: List(),
@@ -80,28 +80,28 @@ const initialState = Map({
 });
 
 const reducer = (state = initialState, action = {}) => {
-	switch(action.type) {
+  switch (action.type) {
     case BLINK:
       return state.set('blink', action.state);
     case EDIT:
-      return state.mergeIn([ 'instance' ], action.instance);
+      return state.mergeIn(['instance'], action.instance);
     case EDIT_FILTER:
-      return state.mergeIn([ 'instance', 'filter' ], action.instance);
+      return state.mergeIn(['instance', 'filter'], action.instance);
     case EDIT_FUNNEL_FILTER:
-      return state.mergeIn([ 'funnelFilters' ], action.instance);
+      return state.mergeIn(['funnelFilters'], action.instance);
     case INIT:
       return state.set('instance', Funnel(action.instance))
-		case FETCH_LIST_SUCCESS:
-      return state.set('list', List(action.data).map(Funnel)) 
-		case FETCH_ISSUES_SUCCESS:
+    case FETCH_LIST_SUCCESS:
+      return state.set('list', List(action.data).map(Funnel))
+    case FETCH_ISSUES_SUCCESS:
       return state
         .set('issues', List(action.data.issues.significant).map(FunnelIssue))
         .set('criticalIssuesCount', action.data.issues.criticalIssuesCount)
-		case FETCH_SESSIONS_SUCCESS:      
+    case FETCH_SESSIONS_SUCCESS:
       return state
         .set('sessions', List(action.data.sessions).map(s => new Session(s)))
         .set('total', action.data.total)
-    case FETCH_ISSUE_SUCCESS:      
+    case FETCH_ISSUE_SUCCESS:
       return state
         .set('issue', FunnelIssue(action.data.issue))
         .set('sessions', List(action.data.sessions.sessions).map(s => new Session(s)))
@@ -116,7 +116,7 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_ISSUE_TYPES_SUCCESS:
       const tmpMap = {};
       action.data.forEach(element => {
-        tmpMap[element.type] = element.title        
+        tmpMap[element.type] = element.title
       });
       return state
         .set('issueTypes', List(action.data.map(({ type, title }) => ({ text: title, value: type }))))
@@ -145,11 +145,11 @@ const reducer = (state = initialState, action = {}) => {
       return state.update('list', itemInListUpdater(CustomField(action.data)))
     case REMOVE_SUCCESS:
       return state.update('list', list => list.filter(item => item.index !== action.index));
-    case APPLY_FILTER:      
-      return state.mergeIn([ action.filterType ], Array.isArray(action.filter) ? action.filter : Map(action.filter));
-    case APPLY_ISSUE_FILTER:      
+    case APPLY_FILTER:
+      return state.mergeIn([action.filterType], Array.isArray(action.filter) ? action.filter : Map(action.filter));
+    case APPLY_ISSUE_FILTER:
       return state.mergeIn(['issueFilters'], action.filter)
-    case REMOVE_ISSUE_FILTER:      
+    case REMOVE_ISSUE_FILTER:
       return state.updateIn(['issueFilters', 'filters'], list => list.filter(item => item !== action.errorType))
     case SET_ACTIVE_STAGES:
       return state.set('activeStages', List(action.stages))
@@ -157,15 +157,15 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('navRef', action.navRef);
     case SET_SESSIONS_SORT:
       const comparator = (s1, s2) => {
-        let diff = s1[ action.sortKey ] - s2[ action.sortKey ];
+        let diff = s1[action.sortKey] - s2[action.sortKey];
         diff = diff === 0 ? s1.startedAt - s2.startedAt : diff;
         return action.sign * diff;
-      };      
+      };
       return state
         .update('sessions', list => list.sort(comparator))
         .set('sessionsSort', { sort: action.sort, sign: action.sign });
     case RESET_FUNNEL:
-      return state        
+      return state
         .set('instance', Funnel())
         .set('activeStages', List())
         .set('issuesSort', Map({}))
@@ -173,9 +173,9 @@ const reducer = (state = initialState, action = {}) => {
         .set('insights', Funnel())
         .set('issues', List())
         .set('sessions', List());
-		default:
-			return state;
-	}
+    default:
+      return state;
+  }
 }
 
 export const fetchList = (range) => {
@@ -196,22 +196,22 @@ export const fetch = (funnelId, params) => (dispatch, getState) => {
 // const filterMap = ({value, type, key, operator, source, custom }) => ({value: Array.isArray(value) ? value: [value], custom, type, key, operator, source});
 
 function getParams(params, state) {
-  const filter = state.getIn([ 'funnels', 'instance', 'filter']).toData();
+  const filter = state.getIn(['funnels', 'instance', 'filter']).toData();
   filter.filters = filter.filters.map(filterMap);
-  const funnelFilters = state.getIn([ 'funnels', 'funnelFilters']).toJS();
+  const funnelFilters = state.getIn(['funnels', 'funnelFilters']).toJS();
 
   // const appliedFilter = state.getIn([ 'funnels', 'instance', 'filter' ]);
   // const filter = appliedFilter
   //   .update('events', list => list.map(event => event.set('value', event.value || '*')).map(eventMap))
   //   .toJS();
-  
+
   // filter.filters = state.getIn([ 'funnelFilters', 'appliedFilter', 'filters' ])
   //   .map(filterMap).toJS();
 
   return { ...filter, ...funnelFilters };
 }
 
-export const fetchInsights = (funnelId, params = {}, isRefresh = false) => (dispatch, getState) => {  
+export const fetchInsights = (funnelId, params = {}, isRefresh = false) => (dispatch, getState) => {
   return dispatch({
     types: array(FETCH_INSIGHTS),
     call: client => client.post(`/funnels/${funnelId}/insights`, getParams(params, getState())),
@@ -227,7 +227,7 @@ export const fetchFiltered = (funnelId, params) => (dispatch, getState) => {
   })
 }
 
-export const fetchIssuesFiltered = (funnelId, params) => (dispatch, getState) => {  
+export const fetchIssuesFiltered = (funnelId, params) => (dispatch, getState) => {
   return dispatch({
     types: array(FETCH_ISSUES),
     call: client => client.post(`/funnels/${funnelId}/issues`, getParams(params, getState())),
@@ -242,7 +242,7 @@ export const fetchSessionsFiltered = (funnelId, params) => (dispatch, getState) 
 }
 
 export const fetchIssue = (funnelId, issueId, params) => (dispatch, getState) => {
-  const filters = getState().getIn([ 'funnelFilters', 'appliedFilter' ]);  
+  const filters = getState().getIn(['funnelFilters', 'appliedFilter']);
   const _params = { ...filters.toData(), ...params };
   return dispatch({
     types: array(FETCH_ISSUE),
@@ -272,13 +272,13 @@ export const fetchIssueTypes = () => {
 }
 
 export const save = () => (dispatch, getState) => {
-  const instance = getState().getIn([ 'funnels', 'instance'])
+  const instance = getState().getIn(['funnels', 'instance'])
   const filter = instance.get('filter').toData();
   filter.filters = filter.filters.map(filterMap);
   const isExist = instance.exists();
 
   const _instance = instance instanceof Funnel ? instance : Funnel(instance);
-  const url = isExist ? `/funnels/${ _instance[idKey] }` : `/funnels`;
+  const url = isExist ? `/funnels/${_instance[idKey]}` : `/funnels`;
 
   return dispatch({
     types: array(isExist ? SAVE : UPDATE),
@@ -286,7 +286,7 @@ export const save = () => (dispatch, getState) => {
   });
 }
 
-export const updateFunnelFilters = (funnelId, filter) => {  
+export const updateFunnelFilters = (funnelId, filter) => {
   return {
     types: array(UPDATE),
     call: client => client.post(`/funnels/${funnelId}`, { filter }),
@@ -301,11 +301,11 @@ export const remove = (index) => {
   }
 }
 
-export const applyFilter = (filterType='funnelFilters', filter) => {  
+export const applyFilter = (filterType = 'funnelFilters', filter) => {
   return {
     type: APPLY_FILTER,
     filter,
-    filterType,    
+    filterType,
   }
 };
 
@@ -323,19 +323,19 @@ export const removeIssueFilter = errorType => {
   }
 };
 
-export const setActiveStages = (stages, filters, funnelId, forceRrefresh = false) => (dispatch, getState) => { 
+export const setActiveStages = (stages, filters, funnelId, forceRrefresh = false) => (dispatch, getState) => {
   dispatch({
     type: SET_ACTIVE_STAGES,
     stages,
   })
 
   if (stages.length === 2) {
-    const filter = {...filters.toData(), firstStage: stages[0] + 1, lastStage: stages[1] + 1 };
+    const filter = { ...filters.toData(), firstStage: stages[0] + 1, lastStage: stages[1] + 1 };
     dispatch(fetchIssuesFiltered(funnelId, filter))
     dispatch(fetchInsights(funnelId, filter, true));
     dispatch(fetchSessionsFiltered(funnelId, filter));
-  } else if (forceRrefresh) {    
-    const filter = {...filters.toData()};
+  } else if (forceRrefresh) {
+    const filter = { ...filters.toData() };
     dispatch(fetchIssuesFiltered(funnelId, filter))
     dispatch(fetchInsights(funnelId, filter));
     dispatch(fetchSessionsFiltered(funnelId, filter));
@@ -363,21 +363,21 @@ export const setNavRef = ref => {
   }
 };
 
-export const resetIssue = () => {  
+export const resetIssue = () => {
   return {
-    type: RESET_ISSUE,    
+    type: RESET_ISSUE,
   }
 }
 
-export const resetFunnel = () => {  
+export const resetFunnel = () => {
   return {
     type: RESET_FUNNEL,
   }
 }
 
-export const setSessionsSort = (sortKey, sign = 1) => {  
+export const setSessionsSort = (sortKey, sign = 1) => {
   return {
-    type: SET_SESSIONS_SORT,    
+    type: SET_SESSIONS_SORT,
     sortKey,
     sign
   }
@@ -398,8 +398,8 @@ export const refresh = (funnelId) => (dispatch, getState) => {
 }
 
 export default mergeReducers(
-	reducer,
-	createRequestReducer({
+  reducer,
+  createRequestReducer({
     fetchRequest: FETCH,
     fetchListRequest: FETCH_LIST,
     fetchInsights: FETCH_INSIGHTS,
@@ -408,12 +408,12 @@ export default mergeReducers(
     updateRequest: UPDATE,
     fetchIssuesRequest: FETCH_ISSUES,
     fetchSessionsRequest: FETCH_SESSIONS,
-  }),	
+  }),
 )
 
 const reduceThenFetchList = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
-  dispatch(refresh(getState().getIn([ 'funnels', 'instance', idKey ])));
+  dispatch(refresh(getState().getIn(['funnels', 'instance', idKey])));
 
   // const filter = getState().getIn([ 'funnels', 'instance', 'filter']).toData();
   // filter.filters = filter.filters.map(filterMap);
@@ -434,10 +434,10 @@ export const editFunnelFilter = reduceThenFetchList((instance) => ({
 
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
-  const instance = getState().getIn([ 'funnels', 'instance', 'filter']);
+  const instance = getState().getIn(['funnels', 'instance', 'filter']);
 
   if (hasFilterApplied(instance.filters, filter)) {
-    
+
   } else {
     const filters = instance.filters.push(filter);
     return dispatch(editFilter(instance.set('filters', filters)));
