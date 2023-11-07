@@ -1,5 +1,4 @@
 import schemas
-import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes
 from chalicelib.utils import errors_helper
@@ -176,8 +175,8 @@ def get_events(project_id, session_id):
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
                 data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                         session_id=session_id)
+                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
