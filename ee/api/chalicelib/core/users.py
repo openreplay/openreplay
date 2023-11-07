@@ -490,14 +490,14 @@ def delete_member(user_id, tenant_id, id_to_delete):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.users
-                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL
+                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL,
+                                jwt_iat= NULL, jwt_refresh_jti= NULL, 
+                                jwt_refresh_iat= NULL 
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
         cur.execute(
             cur.mogrify(f"""UPDATE public.basic_authentication 
-                           SET password=NULL, jwt_iat= NULL,
-                                jwt_refresh_jti= NULL, jwt_refresh_iat= NULL,
-                                password= NULL, invitation_token= NULL,
+                           SET password=NULL, invitation_token= NULL,
                                 invited_at= NULL, changed_at= NULL,
                                 change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
