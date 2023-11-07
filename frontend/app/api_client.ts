@@ -80,18 +80,6 @@ export default class APIClient {
     return decoded.exp < currentTime;
   }
 
-  async refreshToken(): Promise<string> {
-    const response = await fetch('/refresh', {
-      method: 'GET',
-      headers: this.init.headers
-    });
-
-    const data = await response.json();
-    const refreshedJwt = data.jwt;
-    store.dispatch(setJwt(refreshedJwt));
-    return refreshedJwt;
-  }
-
   async fetch(path: string, params?: any, options: {
     clean?: boolean
   } = { clean: true }): Promise<Response> {
@@ -130,6 +118,19 @@ export default class APIClient {
         return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
       }
     });
+  }
+
+  async refreshToken(): Promise<string> {
+    let edp = window.env.API_EDP || window.location.origin + '/api';
+    const response = await fetch(edp + '/refresh', {
+      method: 'GET',
+      headers: this.init.headers
+    });
+
+    const data = await response.json();
+    const refreshedJwt = data.jwt;
+    store.dispatch(setJwt(refreshedJwt));
+    return refreshedJwt;
   }
 
   get(path: string, params?: any, options?: any): Promise<Response> {
