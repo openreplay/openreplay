@@ -133,6 +133,8 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 if data["platform"] == 'ios':
                     data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
+                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
+                                                                    check_existence=False)
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
