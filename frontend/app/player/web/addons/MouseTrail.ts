@@ -3,6 +3,7 @@
  * */
 
 const LINE_DURATION = 3.5;
+const LINE_DURATION_MOBILE = 5
 const LINE_WIDTH_START = 5;
 
 export type SwipeEvent = { x: number; y: number; direction: 'up' | 'down' | 'left' | 'right' }
@@ -10,18 +11,9 @@ export type SwipeEvent = { x: number; y: number; direction: 'up' | 'down' | 'lef
 export default class MouseTrail {
   public isActive = true;
   public context: CanvasRenderingContext2D;
-  private dimensions = { width: 0, height: 0 };
-  /**
-   * 1 - every frame,
-   * 2 - every 2nd frame
-   * and so on, doesn't always work properly
-   * but 1 doesnt affect performance so we're fine
-   * */
-  private drawOnFrame = 1;
-  private currentFrame = 0;
-  private lineDuration = LINE_DURATION;
+  private dimensions = {width: 0, height: 0};
+  private readonly lineDuration: number;
   private points: Point[] = [];
-  private swipePoints: Point[] = []
 
   constructor(private readonly canvas: HTMLCanvasElement, isNativeMobile: boolean = false) {
     // @ts-ignore patching window
@@ -39,9 +31,7 @@ export default class MouseTrail {
         window.setTimeout(callback, 1000 / 60);
       };
 
-    if (isNativeMobile) {
-      this.lineDuration = 5
-    }
+    this.lineDuration = isNativeMobile ? LINE_DURATION_MOBILE : LINE_DURATION
   }
 
   resizeCanvas = (w: number, h: number) => {
@@ -66,11 +56,7 @@ export default class MouseTrail {
   };
 
   leaveTrail = (x: number, y: number) => {
-    if (this.currentFrame === this.drawOnFrame) {
-      this.addPoint(x + 7, y + 7);
-      this.currentFrame = 0;
-    }
-    this.currentFrame++;
+    this.addPoint(x + 7, y + 7);
   };
 
   init = () => {
@@ -81,46 +67,27 @@ export default class MouseTrail {
     }
   };
 
-  createSwipeTrail = ({ x, y, direction }: SwipeEvent) => {
-    const startCoords = this.calculateTrail({ x, y, direction });
-    this.addPoint(startCoords.x, startCoords.y);
-    this.addPoint(x, y);
-  }
-
-  calculateTrail = ({ x, y, direction }: SwipeEvent) => {
-    switch (direction) {
-      case 'up':
-        return { x, y: y - 20 };
-      case 'down':
-        return { x, y: y + 20 };
-      case 'left':
-        return { x: x - 20, y };
-      case 'right':
-        return { x: x + 20, y };
-      default:
-        return { x, y };
-    }
-  }
-
   animatePoints = () => {
     this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
 
     const duration = (this.lineDuration * 1000) / 60;
+    const points = this.points;
     let point, lastPoint;
 
-    for (let i = 0; i < this.points.length; i++) {
-      point = this.points[i];
+    for (let i = 0; i < points.length; i++) {
+      point = points[i];
 
-      if (this.points[i - 1] !== undefined) {
-        lastPoint = this.points[i - 1];
+      if (points[i - 1] !== undefined) {
+        lastPoint = points[i - 1];
       } else {
-        lastPoint = this.points[i];
+        lastPoint = points[i];
       }
 
       point.lifetime! += 1;
 
+      // 3500/60 = 58.333333333333336
       if (point.lifetime! > duration) {
-        this.points.splice(i, 1);
+        points.splice(i, 1);
         continue;
       }
 
