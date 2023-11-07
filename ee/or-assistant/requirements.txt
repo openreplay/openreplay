@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-decouple
+requests
+anyscale
+openai
+tiktoken
