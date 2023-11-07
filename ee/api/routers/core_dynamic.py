@@ -40,6 +40,8 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
     @public_app.put('/signup', tags=['signup'])
     def signup_handler(data: schemas.UserSignupSchema = Body(...)):
         content = signup.create_tenant(data)
+        if "errors" in content:
+            return content
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
         response = JSONResponse(content=content)
