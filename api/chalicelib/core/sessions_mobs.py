@@ -20,7 +20,7 @@ def __get_ios_video_keys(project_id, session_id):
         "projectId": project_id
     }
     return [
-        config("SESSION_IOS_VIDEO_PATTERN", default="replay.mp4") % params,
+        config("SESSION_IOS_VIDEO_PATTERN") % params,
     ]
 
 
