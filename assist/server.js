@@ -4,7 +4,6 @@ const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 const health = require("./utils/health");
 const assert = require('assert').strict;
-const register = require('./utils/metrics').register;
 
 const debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";
@@ -18,15 +17,6 @@ const wsapp = express();
 wsapp.use(express.json());
 wsapp.use(express.urlencoded({extended: true}));
 wsapp.use(request_logger("[wsapp]"));
-
-wsapp.get('/metrics', async (req, res) => {
-    try {
-        res.set('Content-Type', register.contentType);
-        res.end(await register.metrics());
-    } catch (ex) {
-        res.status(500).end(ex);
-    }
-});
 
 wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
         res.statusCode = 200;
