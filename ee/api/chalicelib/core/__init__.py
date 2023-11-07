@@ -27,12 +27,6 @@ if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
 else:
     from . import errors as errors
 
-if config("EXP_METRICS", cast=bool, default=False):
-    logging.info(">>> Using experimental metrics")
-    from . import metrics_exp as metrics
-else:
-    from . import metrics as metrics
-
 if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
     logging.info(">>> Using experimental sessions search for metrics")
 
