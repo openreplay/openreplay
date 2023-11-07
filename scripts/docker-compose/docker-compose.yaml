@@ -102,7 +102,7 @@ services:
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
   frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
     container_name: frontend
     depends_on:
       - db-migration
@@ -111,7 +111,7 @@ services:
     restart: on-failure
 
   alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
     container_name: alerts
     depends_on:
       - db-migration
@@ -122,7 +122,7 @@ services:
     restart: on-failure
 
   assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
     container_name: assets
     depends_on:
       - db-migration
@@ -133,7 +133,7 @@ services:
     restart: on-failure
 
   assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
     container_name: assist
     depends_on:
       - db-migration
@@ -144,7 +144,7 @@ services:
     restart: on-failure
 
   db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
     container_name: db
     depends_on:
       - db-migration
@@ -155,7 +155,7 @@ services:
     restart: on-failure
 
   ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
     container_name: ender
     depends_on:
       - db-migration
@@ -166,7 +166,7 @@ services:
     restart: on-failure
 
   heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: heuristics
     depends_on:
@@ -180,7 +180,7 @@ services:
     restart: on-failure
 
   # imagestorage-openreplay:
-  #   image: public.ecr.aws/p1t3u8a3/imagestorage:v1.14.0
+  #   image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
   #   depends_on:
   #     - db-migration
   #   networks:
@@ -188,7 +188,7 @@ services:
   #   restart: on-failure
 
   integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
     container_name: integrations
     depends_on:
       - db-migration
@@ -199,7 +199,7 @@ services:
     restart: on-failure
 
   peers-openreplay:
-    image: public.ecr.aws/p1t3u8a3/peers:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/peers:${COMMON_VERSION}
     container_name: peers
     depends_on:
       - db-migration
@@ -210,7 +210,7 @@ services:
     restart: on-failure
 
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemaps-reader:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/sourcemaps-reader:${COMMON_VERSION}
     container_name: sourcemaps-reader
     depends_on:
       - db-migration
@@ -221,7 +221,7 @@ services:
     restart: on-failure
 
   # videostorage-openreplay:
-  #   image: public.ecr.aws/p1t3u8a3/videostorage:v1.14.0
+  #   image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
   #   depends_on:
   #     - db-migration
   #   networks:
@@ -231,7 +231,7 @@ services:
   #   restart: on-failure
 
   http-openreplay:
-    image: public.ecr.aws/p1t3u8a3/http:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     container_name: http
     depends_on:
       - db-migration
@@ -242,7 +242,7 @@ services:
     restart: on-failure
 
   chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
     container_name: chalice
     depends_on:
       - db-migration
@@ -253,13 +253,9 @@ services:
     env_file:
       - chalice.env
     restart: on-failure
-    entrypoint:
-      - /bin/sh
-      - -c
-      - sleep 10000
 
   sink-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sink:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
     container_name: sink
     depends_on:
       - db-migration
@@ -272,7 +268,7 @@ services:
     restart: on-failure
 
   storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:v1.14.0
+    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
     container_name: storage
     depends_on:
       - db-migration
