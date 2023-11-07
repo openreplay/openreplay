@@ -80,23 +80,11 @@ export default class APIClient {
     return decoded.exp < currentTime;
   }
 
-  async refreshToken(): Promise<string> {
-    const response = await fetch('/refresh', {
-      method: 'GET',
-      headers: this.init.headers
-    });
-
-    const data = await response.json();
-    const refreshedJwt = data.jwt;
-    store.dispatch(setJwt(refreshedJwt));
-    return refreshedJwt;
-  }
-
   async fetch(path: string, params?: any, options: {
     clean?: boolean
   } = { clean: true }): Promise<Response> {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    if (jwt && this.isTokenExpired(jwt)) {
+    if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       const newJwt = await this.refreshToken();
       (this.init.headers as Headers).set('Authorization', `Bearer ${newJwt}`);
     }
@@ -130,6 +118,18 @@ export default class APIClient {
         return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
       }
     });
+  }
+
+  async refreshToken(): Promise<string> {
+    const response = await this.fetch('/refresh', {
+      method: 'GET',
+      headers: this.init.headers
+    });
+
+    const data = await response.json();
+    const refreshedJwt = data.jwt;
+    store.dispatch(setJwt(refreshedJwt));
+    return refreshedJwt;
   }
 
   get(path: string, params?: any, options?: any): Promise<Response> {
