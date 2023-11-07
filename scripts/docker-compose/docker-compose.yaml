@@ -94,7 +94,7 @@ services:
       - /bin/bash
       - -c
       - |
-          until PGPASSWORD=$${PGPASSWORD} psql -h $${PGHOST} -U $${PGUSER} -d $${PGDATABASE} -c '\q'; do
+          until PGPASSWORD=${COMMON_PG_PASSWORD} psql -h postgresql -U postgres -d postgres -c '\q'; do
           echo "PostgreSQL is unavailable - sleeping"
           sleep 1
           done
