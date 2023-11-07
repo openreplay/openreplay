@@ -9,6 +9,7 @@ import { SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
 import { Alert, Space } from 'antd';
+import { toast } from 'react-toastify';
 
 const LOGIN_ROUTE = login();
 
@@ -55,6 +56,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
       organizationName,
       auth,
       'g-recaptcha-response': token
+    }).then((resp: any) => {
+      if (resp && resp.errors && Array.isArray(resp.errors) && resp.errors.length > 0) {
+        resp.errors[0] ? toast.error(resp.errors[0]) : toast.error('Something went wrong');
+      }
     });
     setState({ ...state, reload: true });
   };

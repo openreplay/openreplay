@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { connect, ConnectedProps } from 'react-redux';
-import { Notification } from 'UI';
 import { Loader } from 'UI';
 import { fetchUserInfo, setJwt } from 'Duck/user';
 import { fetchList as fetchSiteList } from 'Duck/site';
@@ -140,7 +139,6 @@ const Router: React.FC<RouterProps> = (props) => {
     <ModalProvider>
       <Loader loading={loading || !siteId} className='flex-1'>
         <Layout hideHeader={hideHeader} siteId={siteId}>
-          <Notification />
           <PrivateRoutes />
         </Layout>
       </Loader>
