@@ -166,10 +166,8 @@ def update(tenant_id, user_id, changes, output=True):
                 cur.mogrify(f"""\
                             UPDATE public.users
                             SET {" ,".join(sub_query_users)}
-                            FROM public.basic_authentication
                             WHERE users.user_id = %(user_id)s
-                              AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id;""",
+                              AND users.tenant_id = %(tenant_id)s;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -177,10 +175,7 @@ def update(tenant_id, user_id, changes, output=True):
                 cur.mogrify(f"""\
                             UPDATE public.basic_authentication
                             SET {" ,".join(sub_query_bauth)}
-                            FROM public.users AS users
-                            WHERE basic_authentication.user_id = %(user_id)s
-                              AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id;""",
+                            WHERE basic_authentication.user_id = %(user_id)s;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
     if not output:

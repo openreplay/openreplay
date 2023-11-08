@@ -114,6 +114,10 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
 
 
 def update(tenant_id, user_id, changes, output=True):
+    print("---------")
+    print(tenant_id)
+    print(user_id)
+    print(changes)
     AUTH_KEYS = ["password", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
         return None
@@ -132,39 +136,20 @@ def update(tenant_id, user_id, changes, output=True):
 
     with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
-            cur.execute(
-                cur.mogrify(f"""\
+            query = cur.mogrify(f"""\
                             UPDATE public.users
                             SET {" ,".join(sub_query_users)}
-                            FROM public.basic_authentication
-                            WHERE users.user_id = %(user_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
-                            {"user_id": user_id, **changes})
-            )
+                            WHERE users.user_id = %(user_id)s;""",
+                                {"user_id": user_id, **changes})
+            cur.execute(query)
+            print(query)
         if len(sub_query_bauth) > 0:
-            cur.execute(
-                cur.mogrify(f"""\
+            query = cur.mogrify(f"""\
                             UPDATE public.basic_authentication
                             SET {" ,".join(sub_query_bauth)}
-                            FROM public.users AS users
-                            WHERE basic_authentication.user_id = %(user_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
-                            {"user_id": user_id, **changes})
-            )
+                            WHERE basic_authentication.user_id = %(user_id)s;""",
+                                {"user_id": user_id, **changes})
+            cur.execute(query)
     if not output:
         return None
     return get(user_id=user_id, tenant_id=tenant_id)
