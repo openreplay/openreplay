@@ -97,7 +97,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	var issueTypes pgtype.EnumArray
 	if err := s.db.QueryRow(`
 		SELECT platform,
-			duration, project_id, start_ts,
+			duration, project_id, start_ts, timezone,
 			user_uuid, user_os, user_os_version, 
 			user_device, user_device_type, user_country, user_state, user_city,
 			rev_id, tracker_version,
@@ -111,7 +111,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	`,
 		sessionID,
 	).Scan(&sess.Platform,
-		&sess.Duration, &sess.ProjectID, &sess.Timestamp,
+		&sess.Duration, &sess.ProjectID, &sess.Timestamp, &sess.Timezone,
 		&sess.UserUUID, &sess.UserOS, &userOSVersion,
 		&sess.UserDevice, &sess.UserDeviceType, &sess.UserCountry, &userState, &userCity,
 		&revID, &sess.TrackerVersion,
