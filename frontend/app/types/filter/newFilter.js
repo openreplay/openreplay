@@ -192,7 +192,11 @@ export default Record({
       if (type === FilterKey.METADATA) {
         _filter = filtersMap[filter.source];
       } else {
-        _filter = filtersMap[type];
+        if (filtersMap[filter.key]) {
+          _filter = filtersMap[filter.key]
+        } else {
+          _filter = filtersMap[type];
+        }
       }
     }
 

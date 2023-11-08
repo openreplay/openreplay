@@ -1,19 +1,26 @@
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
-import Period, { LAST_24_HOURS, LAST_7_DAYS, LAST_30_DAYS, CUSTOM_RANGE } from 'Types/app/period';
+import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import Filter from 'Types/filter/filter';
-import { filtersMap } from 'App/types/filter/newFilter';
+import { filtersMap } from 'Types/filter/newFilter';
 
-export const createUrlQuery = (filter: any) => {
-  const query = [];
+type QueryItem = {
+  key: any;
+  value: string;
+};
 
-  for (const f of filter.filters) {
+export const createUrlQuery = (filter: { filters: any[]; rangeValue: string; startDate?: string; endDate?: string }) => {
+  const query: QueryItem[] = [];
+
+  filter.filters.forEach((f: any) => {
     if (!f.value.length) {
-      continue;
+      return;
     }
 
     let str = `${f.operator}|${f.value.join('|')}`;
     if (f.hasSource) {
-      str = `${str}^${f.sourceOperator ? f.sourceOperator : ''}|${f.source ? f.source.join('|') : ''}`;
+      const sourceOperator = f.sourceOperator || '';
+      const source = f.source ? f.source.join('|') : '';
+      str = `${str}^${sourceOperator}|${source}`;
     }
 
     let key: any = setQueryParamKeyFromFilterkey(f.key);
@@ -21,37 +28,38 @@ export const createUrlQuery = (filter: any) => {
       key = [f.key];
     }
 
-    query.push({ key: key + '[]', value: str });
-  }
+    query.push({ key, value: str });
+  });
 
   if (query.length > 0) {
-    query.push({ key: 'range[]', value: filter.rangeValue });
+    query.push({ key: 'range', value: filter.rangeValue });
     if (filter.rangeValue === CUSTOM_RANGE) {
-      query.push({ key: 'rStart[]', value: filter.startDate });
-      query.push({ key: 'rEnd[]', value: filter.endDate });
+      query.push({ key: 'rStart', value: filter.startDate! });
+      query.push({ key: 'rEnd', value: filter.endDate! });
     }
   }
 
   return query.map(({ key, value }) => `${key}=${value}`).join('&');
 };
 
+
 export const getFiltersFromQuery = (search: string, filter: any) => {
   if (!search || filter.filters.size > 0) {
     return;
   }
 
-  const entires = getQueryObject(search);
-  const period: any = getPeriodFromEntries(entires);
-  const filters = getFiltersFromEntries(entires);
+  const entries = getQueryObject(search);
+  const period: any = getPeriodFromEntries(entries);
+  const filters = getFiltersFromEntries(entries);
 
-  return Filter({ filters, rangeValue: period.rangeName });
+  return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
 
-const getFiltersFromEntries = (entires: any) => {
+const getFiltersFromEntries = (entries: any) => {
   const _filters: any = { ...filtersMap };
   const filters: any = [];
-  if (entires.length > 0) {
-    entires.forEach((item: any) => {
+  if (entries.length > 0) {
+    entries.forEach((item: any) => {
       if (!item.key || !item.value) {
         return;
       }
@@ -64,32 +72,37 @@ const getFiltersFromEntries = (entires: any) => {
       const sourceArr = tmp[1] ? tmp[1].split('|') : [];
       const sourceOperator = sourceArr.shift();
 
-      if (filterKey) {
-        filter.type = filterKey;
-        filter.key = filterKey;
+      if (filterKey && _filters[filterKey]) {
+        filter = _filters[filterKey];
+        filter.value = valueArr;
       } else {
-        filter = _filters[item.key];
-        if (!!filter) {
-          filter.type = filter.key;
-          filter.key = filter.key;
+        if (filterKey) {
+          filter.type = filterKey;
+          filter.key = filterKey;
+        } else {
+          filter = _filters[item.key];
+          if (!!filter) {
+            filter.type = filter.key;
+          }
+        }
+
+        if (!filter) {
+          return;
+        }
+
+        filter.value = valueArr;
+        filter.operator = operator;
+        if (filter.icon === 'filters/metadata') {
+          filter.source = filter.type;
+          filter.type = 'MULTIPLE';
+        } else {
+          filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
+          filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
         }
       }
 
-      if (!filter) {
-        return
-      }
-
-      filter.value = valueArr;
-      filter.operator = operator;
-      if (filter.icon === "filters/metadata") {
-        filter.source = filter.type;
-        filter.type = 'METADATA';
-      } else {
-        filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
-        filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
-      }
-      
       if (!filter.filters || filter.filters.size === 0) {
+        // TODO support subfilters in url
         filters.push(filter);
       }
     });
@@ -97,15 +110,15 @@ const getFiltersFromEntries = (entires: any) => {
   return filters;
 };
 
-const getPeriodFromEntries = (entires: any) => {
-  const rangeFilter = entires.find(({ key }: any) => key === 'range');
+const getPeriodFromEntries = (entries: any) => {
+  const rangeFilter = entries.find(({ key }: any) => key === 'range');
   if (!rangeFilter) {
     return Period();
   }
 
   if (rangeFilter.value === CUSTOM_RANGE) {
-    const start = entires.find(({ key }: any) => key === 'rStart').value;
-    const end = entires.find(({ key }: any) => key === 'rEnd').value;
+    const start = entries.find(({ key }: any) => key === 'rStart').value;
+    const end = entries.find(({ key }: any) => key === 'rEnd').value;
     return Period({ rangeName: rangeFilter.value, start, end });
   }
 
@@ -118,7 +131,8 @@ function getQueryObject(search: any) {
     .split('&')
     .map((item: any) => {
       let [key, value] = item.split('=');
-      return { key: key.slice(0, -2), value };
+      key = key.replace('[]', '');
+      return { key: key, value: decodeURI(value) };
     });
   return jsonArray;
 }
