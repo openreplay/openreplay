@@ -147,7 +147,7 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
                         "We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
                 }
     return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=integrationId,
-                                   changes={"name": data.name, "endpoint": data.url})}
+                                   changes={"name": data.name, "endpoint": data.url.unicode_string()})}
 
 
 @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
