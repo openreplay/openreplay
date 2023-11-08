@@ -62,14 +62,14 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
             results.append(self.get(integration_project_id=i["integrationProjectId"], assignment_id=i["id"]))
         return {"issues": results}
 
-    def get(self, integration_project_id, assignment_id):
+    async def get(self, integration_project_id, assignment_id):
         repoId = integration_project_id
         issueNumber = assignment_id
-        issue = self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}")
+        issue = await self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}")
         issue = formatter.issue(issue)
         if issue["commentsCount"] > 0:
             issue["comments"] = [formatter.comment(c) for c in
-                                 self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}/comments")]
+                                 await self.__client.get(f"/repositories/{repoId}/issues/{issueNumber}/comments")]
         return issue
 
     def comment(self, integration_project_id, assignment_id, comment):
@@ -95,6 +95,6 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
                                self.__client.get(f"/repositories/{integration_project_id}/labels")]
                 }
 
-    def get_projects(self):
-        repos = self.__client.get("/user/repos")
+    async def get_projects(self):
+        repos = await self.__client.get("/user/repos")
         return [formatter.repo(r) for r in repos]

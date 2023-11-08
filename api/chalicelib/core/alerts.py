@@ -171,7 +171,7 @@ def send_by_email_batch(notifications_list):
         time.sleep(1)
 
 
-def send_to_slack_batch(notifications_list):
+async def send_to_slack_batch(notifications_list):
     webhookId_map = {}
     for n in notifications_list:
         if n.get("destination") not in webhookId_map:
@@ -182,7 +182,7 @@ def send_to_slack_batch(notifications_list):
                                                              "title_link": n["notification"]["buttonUrl"],
                                                              "ts": datetime.now().timestamp()})
     for batch in webhookId_map.keys():
-        Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+        await Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                          attachments=webhookId_map[batch]["batch"])
 
 
@@ -218,7 +218,7 @@ def send_to_msteams_batch(notifications_list):
                            attachments=webhookId_map[batch]["batch"])
 
 
-def delete(project_id, alert_id):
+async def delete(project_id, alert_id):
     async with pg_client.PostgresClient() as cur:
         await cur.execute(
             cur.mogrify(""" UPDATE public.alerts 

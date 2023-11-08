@@ -160,7 +160,7 @@ async def generate_new_invitation(user_id):
         return __get_invitation_link(row.pop("invitation_token"))
 
 
-await def reset_member(tenant_id, editor_id, user_id_to_update):
+async def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = await get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -224,7 +224,7 @@ async def update(tenant_id, user_id, changes, output=True):
             )
     if not output:
         return None
-    return get(user_id=user_id, tenant_id=tenant_id)
+    return await get(user_id=user_id, tenant_id=tenant_id)
 
 
 async def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
@@ -251,7 +251,7 @@ async def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, ba
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data.email,
         "invitation_link": new_member["invitationLink"],
-        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+        "client_id": await tenants.get_by_tenant_id(tenant_id)["name"],
         "sender_name": admin["name"]
     })
     return {"data": new_member}

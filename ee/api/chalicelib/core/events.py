@@ -183,7 +183,7 @@ def get_errors_by_session_id(session_id, project_id):
         return helper.list_to_camel_case(errors)
 
 
-def search(text, event_type, project_id, source, key):
+async def search(text, event_type, project_id, source, key):
     if not event_type:
         return {"data": autocomplete.__get_autocomplete_table(text, project_id)}
 

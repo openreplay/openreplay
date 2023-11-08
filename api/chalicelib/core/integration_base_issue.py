@@ -25,7 +25,7 @@ class BaseIntegrationIssue(ABC):
         pass
 
     @abstractmethod
-    def get(self, integration_project_id, assignment_id):
+    async def get(self, integration_project_id, assignment_id):
         pass
 
     @abstractmethod
@@ -37,5 +37,5 @@ class BaseIntegrationIssue(ABC):
         pass
 
     @abstractmethod
-    def get_projects(self):
+    async def get_projects(self):
         pass

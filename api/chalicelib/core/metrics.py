@@ -1839,9 +1839,9 @@ async def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days
                                          platform=platform, **args)
 
 
-def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
+async def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    return __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+    return await __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
                                          endTimestamp=endTimestamp,
                                          platform=platform, **args)
 
@@ -2470,7 +2470,7 @@ async def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, s
 async def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     async with pg_client.PostgresClient() as cur:
-        rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
+        rows = await __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
         results["chart"] = await __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp,

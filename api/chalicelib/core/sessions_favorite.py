@@ -56,7 +56,7 @@ async def favorite_session_exists(session_id, user_id=None):
         return r is not None
 
 
-def get_start_end_timestamp(project_id, user_id):
+async def get_start_end_timestamp(project_id, user_id):
     async with pg_client.PostgresClient() as cur:
         await cur.execute(
             cur.mogrify(

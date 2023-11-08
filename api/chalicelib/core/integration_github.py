@@ -47,7 +47,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
     def _add(self, data):
         pass
 
-    def add(self, token, obfuscate=False):
+    async def add(self, token, obfuscate=False):
         async with pg_client.PostgresClient() as cur:
             await cur.execute(
                 cur.mogrify("""\
@@ -64,7 +64,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
             return w
 
     # TODO: make a revoke token call
-    def delete(self):
+    async def delete(self):
         async with pg_client.PostgresClient() as cur:
             await cur.execute(
                 cur.mogrify("""\
@@ -74,10 +74,10 @@ class GitHubIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data: schemas.IssueTrackingGithubSchema):
-        s = self.get()
+    async def add_edit(self, data: schemas.IssueTrackingGithubSchema):
+        s = await self.get()
         if s is not None:
-            return self.update(
+            return await self.update(
                 changes={
                     "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
                         else s.token
@@ -85,4 +85,4 @@ class GitHubIntegration(integration_base.BaseIntegration):
                 obfuscate=True
             )
         else:
-            return self.add(token=data.token, obfuscate=True)
+            return await self.add(token=data.token, obfuscate=True)

@@ -153,7 +153,7 @@ async def __check_SSL(*_):
         }
     }
     try:
-        httpx.get(config("SITE_URL"), verify=True, follow_redirects=True)
+        await http.get(config("SITE_URL"), verify=True, follow_redirects=True)
     except Exception as e:
         # TODO: Exception is too broad? Is a 404 ok?
         print("!! health failed: SSL Certificate")
@@ -165,7 +165,7 @@ async def __check_SSL(*_):
     }
 
 
-def __get_sessions_stats(*_):
+async def __get_sessions_stats(*_):
     async with pg_client.PostgresClient() as cur:
         constraints = ["projects.deleted_at IS NULL"]
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
@@ -241,7 +241,7 @@ def cron():
                                 WHERE projects.deleted_at IS NULL
                                 ORDER BY project_id;""")
         await cur.execute(query)
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
         for r in rows:
             insert = False
             if r["last_update_at"] is None:
@@ -304,7 +304,7 @@ def weekly_cron():
                                WHERE projects.deleted_at IS NULL
                                ORDER BY project_id;""")
         await cur.execute(query)
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
         for r in rows:
             if r["last_update_at"] is None:
                 continue

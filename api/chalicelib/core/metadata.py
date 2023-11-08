@@ -113,8 +113,8 @@ async def __edit(project_id, col_index, colname, new_name):
 
 
 async def edit(tenant_id, project_id, index: int, new_name: str):
-    nok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=index)
-    if nok:
+    ok = await __exists_by_name(project_id=project_id, name=new_name, exclude_index=index)
+    if not ok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     return await __edit(project_id=project_id, col_index=index, colname=index_to_colname(index), new_name=new_name)
 
@@ -197,7 +197,7 @@ async def search(tenant_id, project_id, key, value):
 
 
 async def get_available_keys(project_id):
-    all_metas = get(project_id=project_id)
+    all_metas = await get(project_id=project_id)
     return [k["key"] for k in all_metas]
 
 

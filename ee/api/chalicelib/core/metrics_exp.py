@@ -629,7 +629,7 @@ def __get_resource_db_type_from_type(resource_type):
     return {v: k for k, v in RESOURCS_TYPE_TO_DB_TYPE.items()}.get(resource_type, resource_type)
 
 
-def search(text, resource_type, project_id, performance=False, pages_only=False, events_only=False,
+async def search(text, resource_type, project_id, performance=False, pages_only=False, events_only=False,
            metadata=False, key=None, platform=None):
     if text.startswith("^"):
         text = text[1:]

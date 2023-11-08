@@ -1,5 +1,5 @@
 from decouple import config
-from fastapi import HTTPException, status
+async from fastapi import HTTPException, status
 
 from chalicelib.core import health, tenants
 from routers.base import get_routers
@@ -18,7 +18,7 @@ async def get_global_health_status():
 if not tenants.tenants_exists(use_pool=False):
     @public_app.get('/health', tags=["health-check"])
     async def get_public_health_status():
-        if tenants.tenants_exists():
+        if await tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
 
         data = await health.get_health()

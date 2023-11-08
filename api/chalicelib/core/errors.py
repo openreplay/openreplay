@@ -8,9 +8,10 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
 
 
-def get(error_id, family=False):
+async def get(error_id, family=False):
     if family:
-        return get_batch([error_id])
+        out = await get_batch([error_id])
+        return out
     async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             "SELECT * FROM events.errors AS e INNER JOIN public.errors AS re USING(error_id) WHERE error_id = %(error_id)s;",
@@ -22,7 +23,7 @@ def get(error_id, family=False):
         return helper.dict_to_camel_case(result)
 
 
-def get_batch(error_ids):
+async def get_batch(error_ids):
     if len(error_ids) == 0:
         return []
     async with pg_client.PostgresClient() as cur:
@@ -460,7 +461,7 @@ async def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+        statuses = await sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                             error_status=data.status)
         if len(statuses) == 0:
             return empty_response

@@ -189,7 +189,7 @@ class MSTeams(BaseCollaboration):
         return {"data": data}
 
     @classmethod
-    def get_integration(cls, tenant_id, integration_id=None):
+    async def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
             out = await webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
                                        webhook_type=schemas.WebhookType.msteams)

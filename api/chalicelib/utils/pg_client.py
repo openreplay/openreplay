@@ -28,6 +28,8 @@ def configuration():
 
 
 @asynccontextmanager
-async def PostgresClient():
+async def PostgresClient(*args, **kwargs):
+    if len(args) or len(kwargs):
+        logger.warning("Unhandled arguments")
     async with orpy.orpy.get().pgsql.connection() as cnx:
         yield cnx

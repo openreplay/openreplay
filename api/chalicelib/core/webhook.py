@@ -48,7 +48,7 @@ async def get_by_type(tenant_id, webhook_type):
                             WHERE w.type =%(type)s AND deleted_at ISNULL;""",
                         {"type": webhook_type})
         )
-        webhooks = helper.list_to_camel_case(cur.fetchall())
+        webhooks = helper.list_to_camel_case(await cur.fetchall())
         for w in webhooks:
             w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
         return webhooks
@@ -59,7 +59,7 @@ async def get_by_tenant(tenant_id, replace_none=False):
         await cur.execute("""SELECT w.*
                         FROM public.webhooks AS w 
                         WHERE deleted_at ISNULL;""")
-        all = helper.list_to_camel_case(cur.fetchall())
+        all = helper.list_to_camel_case(await cur.fetchall())
         for w in all:
             w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
         return all

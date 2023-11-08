@@ -1,5 +1,6 @@
 import orpy
 from urllib.parse import urlparse
+import asyncio
 
 from decouple import config
 
@@ -10,7 +11,7 @@ from chalicelib.utils.storage import StorageClient, generators
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(StorageClient.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
+        results.append(await asyncio.to_thread(StorageClient.get_presigned_url_for_sharing, bucket=config('sourcemaps_bucket'), expires_in=120,
                                                                key=generators.generate_file_key_from_url(project_id, u),
                                                                check_exists=True))
     return results

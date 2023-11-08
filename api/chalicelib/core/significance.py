@@ -574,7 +574,7 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
         # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
         #                                   project_id=project_id, user_id=None, count_only=True)
         # last change
-        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
+        counts = await sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
                                           project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]

@@ -333,7 +333,7 @@ def __get_account_info(tenant_id, user_id):
     return helper.dict_to_camel_case(r)
 
 
-def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
+async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
         user = get(user_id=user_id, tenant_id=tenant_id)
         if not user["superAdmin"] and not user["admin"]:
@@ -698,7 +698,7 @@ def refresh_jwt_iat_jti(user_id):
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def authenticate(email, password, for_change_password=False) -> dict | bool | None:
+async def authenticate(email, password, for_change_password=False) -> dict | bool | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -831,14 +831,14 @@ def __hard_delete_user(user_id):
         cur.execute(query)
 
 
-def logout(user_id: int):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
+async def logout(user_id: int):
+    async with pg_client.PostgresClient() as cur:
+        query = await cur.mogrify(
             """UPDATE public.users
                SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
             {"user_id": user_id})
-        cur.execute(query)
+        await cur.execute(query)
 
 
 def refresh(user_id: int, tenant_id: int) -> dict:

@@ -70,7 +70,7 @@ async def search_short_session(data: schemas.ClickMapSessionsSearch, project_id,
     if session:
         if include_mobs:
             session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
-            session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
+            session['mobsUrl'] = await sessions_mobs.get_urls_depercated(session_id=session["session_id"])
         session['events'] = await events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
                                                      event_type=schemas.EventType.location)
 

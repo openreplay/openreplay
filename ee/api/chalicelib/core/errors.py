@@ -441,7 +441,7 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+async def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     empty_response = {
         'total': 0,
         'errors': []

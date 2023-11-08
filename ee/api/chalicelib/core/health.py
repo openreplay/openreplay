@@ -179,7 +179,7 @@ def __get_sessions_stats(tenant_id, *_):
     }
 
 
-def get_health(tenant_id=None):
+async def get_health(tenant_id=None):
     health_map = {
         "databases": {
             "postgres": __check_database_pg,

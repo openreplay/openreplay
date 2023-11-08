@@ -6,7 +6,7 @@ import schemas
 class BaseCollaboration(ABC):
     @classmethod
     @abstractmethod
-    def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
+    async def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
         pass
 
     @classmethod
@@ -41,5 +41,5 @@ class BaseCollaboration(ABC):
 
     @classmethod
     @abstractmethod
-    def get_integration(cls, tenant_id, integration_id=None):
+    async def get_integration(cls, tenant_id, integration_id=None):
         pass

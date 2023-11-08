@@ -788,7 +788,7 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
     return ch_sub_query
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+async def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startDate)
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startDate)
 

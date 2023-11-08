@@ -76,7 +76,7 @@ async def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
     return await errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
+async def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         logger.debug("empty series")
         return {
@@ -125,11 +125,11 @@ def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: i
     return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
+async def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
     return await __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
 
 
-def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
+async def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
     return await __get_errors_list(project_id=project_id, user_id=user_id, data=data)
 
 
@@ -236,8 +236,9 @@ async def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.
         #     results.append(
         #         {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
         #     break
+        kwargs = await sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)  
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **kwargs})
 
     return results
 
@@ -269,7 +270,7 @@ async def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSess
                 **kwargs}
 
 
-def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
+async def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
         return results
@@ -278,8 +279,11 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
             s.filter.filters += data.filters
         # if len(data.events) > 0:
         #     s.filter.events += data.events
-        results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+        kwargs = await sessions.search_sessions(
+            data=s.filter,
+            project_id=project_id, user_id=user_id
+        )
+        results.append({"seriesId": None, "seriesName": s.name, **kwargs})
 
     return results
 
@@ -692,7 +696,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                          "lostConversions": 0,
                          "unaffectedSessions": 0}
         return {"seriesId": s.series_id, "seriesName": s.name,
-                "sessions": sessions.search_sessions(user_id=user_id, project_id=project_id,
+                "sessions": await sessions.search_sessions(user_id=user_id, project_id=project_id,
                                                      issue=issue, data=s.filter)
                 if issue is not None else {"total": 0, "sessions": []},
                 "issue": issue}
@@ -721,7 +725,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
             if mob_exists:
                 raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
                                                                       project_id=project_id)
-                raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
+                raw_metric["data"]['mobsUrl'] = await sessions_mobs.get_urls_depercated(
                     session_id=raw_metric["data"]["sessionId"])
                 return raw_metric["data"]
 

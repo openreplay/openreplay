@@ -22,8 +22,8 @@ def get_by_tenant_key(tenant_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def get_by_tenant_id(tenant_id):
-    with pg_client.PostgresClient() as cur:
+async def get_by_tenant_id(tenant_id):
+    async with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT tenants.tenant_id,
                                        tenants.name,
                                        tenants.api_key,
@@ -37,7 +37,7 @@ def get_by_tenant_id(tenant_id):
                                     AND tenants.deleted_at ISNULL
                                 LIMIT 1;""",
                             {"tenantId": tenant_id})
-        cur.execute(query=query)
+        await cur.execute(query=query)
         return helper.dict_to_camel_case(cur.fetchone())
 
 
@@ -78,7 +78,7 @@ def edit_tenant(tenant_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def tenants_exists(use_pool=True):
-    with pg_client.PostgresClient(use_pool=use_pool) as cur:
-        cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
-        return cur.fetchone()["exists"]
+async def tenants_exists(use_pool=True):
+    async with pg_client.PostgresClient(use_pool=use_pool) as cur:
+        await cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        return await cur.fetchone()["exists"]

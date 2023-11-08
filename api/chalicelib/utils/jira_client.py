@@ -29,14 +29,14 @@ class JiraManager:
     def set_jira_project_id(self, project_id):
         self._config["JIRA_PROJECT_ID"] = project_id
 
-    def get_projects(self):
+    async def get_projects(self):
         try:
-            projects = self._jira.projects()
+            projects = await self._jira.projects()
         except JIRAError as e:
             self.retries -= 1
             if (e.status_code // 100) == 4 and self.retries > 0:
                 time.sleep(1)
-                return self.get_projects()
+                return await self.get_projects()
             logger.error(f"=>JIRA Exception {e.text}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         projects_dict_list = []
@@ -52,7 +52,7 @@ class JiraManager:
             self.retries -= 1
             if (e.status_code // 100) == 4 and self.retries > 0:
                 time.sleep(1)
-                return self.get_project()
+                return await self.get_project()
             logger.error(f"=>Exception {e.text}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         return self.__parser_project_info(project)

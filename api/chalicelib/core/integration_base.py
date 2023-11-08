@@ -56,5 +56,5 @@ class BaseIntegration(ABC):
         pass
 
     @abstractmethod
-    def add_edit(self, data):
+    async def add_edit(self, data):
         pass

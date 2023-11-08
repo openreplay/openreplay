@@ -92,7 +92,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
         print("a pretty defined abstract method")
         return
 
-    def add(self, username, token, url):
+    async def add(self, username, token, url):
         async with pg_client.PostgresClient() as cur:
             await cur.execute(
                 cur.mogrify("""\
@@ -104,7 +104,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
             )
             w = await cur.fetchone()
             w = helper.dict_to_camel_case(w)
-        return self.get()
+        return await self.get()
 
     def delete(self):
         async with pg_client.PostgresClient() as cur:
@@ -116,9 +116,9 @@ class JIRAIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data: schemas.IssueTrackingJiraSchema):
+    async def add_edit(self, data: schemas.IssueTrackingJiraSchema):
         if self.integration is not None:
-            return self.update(
+            return await self.update(
                 changes={
                     "username": data.username,
                     "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
@@ -128,7 +128,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
                 obfuscate=True
             )
         else:
-            return self.add(
+            return await self.add(
                 username=data.username,
                 token=data.token,
                 url=data.url

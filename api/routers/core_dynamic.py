@@ -356,7 +356,7 @@ async def get_live_session_replay_file(projectId: int, sessionId: Union[int, str
         return not_found
     else:
         sessionId = int(sessionId)
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+    if not await sessions.session_exists(project_id=projectId, session_id=sessionId):
         print(f"{projectId}/{sessionId} not found in DB.")
         if not assist.session_exists(project_id=projectId, session_id=sessionId):
             print(f"{projectId}/{sessionId} not found in Assist.")

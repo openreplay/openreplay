@@ -52,5 +52,5 @@ class JIRACloudIntegrationIssue(BaseIntegrationIssue):
         meta['users'] = self._client.get_assignable_users()
         return {"provider": self.provider.lower(), **meta}
 
-    def get_projects(self):
-        return self._client.get_projects()
+    async def get_projects(self):
+        return await self._client.get_projects()

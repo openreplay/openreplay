@@ -104,7 +104,7 @@ def __get_agent_token(project_id, project_key, session_id):
 
 async def get_live_session_by_id(project_id, session_id):
     http = orpy.orpy.get().httpx
-    project_key = projects.get_project_key(project_id)
+    project_key = await projects.get_project_key(project_id)
     try:
         results = await http.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
@@ -132,9 +132,9 @@ async def get_live_session_by_id(project_id, session_id):
     return results
 
 
-def is_live(project_id, session_id, project_key=None):
+async def is_live(project_id, session_id, project_key=None):
     if project_key is None:
-        project_key = projects.get_project_key(project_id)
+        project_key = await projects.get_project_key(project_id)
     try:
         results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))

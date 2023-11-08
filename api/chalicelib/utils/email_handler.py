@@ -70,7 +70,7 @@ async def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
                 r += [bcc]
             try:
                 logging.info(f"Email sending to: {r}")
-                asyncio.to_thread(s.sendmail, msg['FROM'], r, msg.as_string().encode('ascii'))
+                await asyncio.to_thread(s.sendmail, msg['FROM'], r, msg.as_string().encode('ascii'))
             except Exception as e:
                 logging.error("!!! Email error!")
                 logging.error(e)
@@ -85,7 +85,7 @@ async def send_text(recipients, text, subject):
         body = MIMEText(text)
         msg.attach(body)
         try:
-            asyncio.to_thread(s.sendmail, msg['FROM'], recipients, msg.as_string().encode('ascii'))
+            await asyncio.to_thread(s.sendmail, msg['FROM'], recipients, msg.as_string().encode('ascii'))
         except Exception as e:
             logging.error("!! Text-email failed: " + subject),
             logging.error(e)
