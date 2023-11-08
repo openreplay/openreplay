@@ -578,9 +578,9 @@ def refresh_auth_exists(user_id, jwt_jti=None):
 def change_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
-                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
+                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     jwt_refresh_jti = 0, 
-                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '2s') 
+                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s') 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
@@ -594,12 +594,12 @@ def change_jwt_iat_jti(user_id):
 def refresh_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
-                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
+                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     jwt_refresh_jti = jwt_refresh_jti + 1 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat""",
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
