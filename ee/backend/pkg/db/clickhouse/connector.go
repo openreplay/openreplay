@@ -492,7 +492,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		uint16(msg.Duration),
 		msg.Status < 400,
 		"REQUEST",
-		msg.TransferredBodySize,
+		uint32(msg.TransferredBodySize),
 	); err != nil {
 		c.checkError("requests", err)
 		return fmt.Errorf("can't append to requests batch: %s", err)
