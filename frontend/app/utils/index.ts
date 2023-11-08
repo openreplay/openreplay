@@ -434,6 +434,7 @@ export function deleteCookie(name: string, path: string, domain: string) {
  * @function
  * @param {string} paramName - The name of the URL parameter to check.
  * @param {string} [storageKey] - The optional key to use for storing the result in localStorage.
+ * @param search
  * @returns {boolean} - Returns true if the parameter exists and its value is 'true'. Otherwise, returns false.
  *
  * @example
@@ -448,8 +449,8 @@ export function deleteCookie(name: string, path: string, domain: string) {
  * does not exist, and a storageKey is provided, any existing localStorage entry with the storageKey
  * is removed.
  */
-export const checkParam = (paramName: string, storageKey?: string): boolean => {
-  const urlParams = new URLSearchParams(window.location.search);
+export const checkParam = (paramName: string, storageKey?: string, search?: string): boolean => {
+  const urlParams = new URLSearchParams(search ? search : window.location.search);
   const paramValue = urlParams.get(paramName);
 
   const existsAndTrue = paramValue && paramValue === 'true' || paramValue?.length > 0;

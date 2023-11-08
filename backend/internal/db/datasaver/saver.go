@@ -167,6 +167,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertWebPageEvent(session, m); err != nil {
 			return err
 		}
+		s.sessions.UpdateReferrer(session.SessionID, m.Referrer)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *NetworkRequest:
 		return s.pg.InsertWebNetworkRequest(session, m)
