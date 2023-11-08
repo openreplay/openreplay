@@ -1,7 +1,6 @@
 package datasaver
 
 import (
-	"errors"
 	"log"
 
 	"openreplay/backend/internal/config/db"
@@ -99,14 +98,6 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.pg.InsertWebCustomEvent(session, m)
 	case *MouseClick:
 		if err = s.pg.InsertWebClickEvent(session, m); err != nil {
-			return err
-		}
-		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
-	case *InputEvent:
-		if err = s.pg.InsertWebInputEvent(session, m); err != nil {
-			if errors.Is(err, postgres.EmptyLabel) {
-				return nil
-			}
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
