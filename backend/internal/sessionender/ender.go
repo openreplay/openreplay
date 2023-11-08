@@ -57,6 +57,7 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 	for sessID, _ := range se.sessions {
 		if !activeParts[sessID%se.parts] {
 			delete(se.sessions, sessID)
+			ender.DecreaseActiveSessions()
 			removedSessions++
 		} else {
 			activeSessions++
