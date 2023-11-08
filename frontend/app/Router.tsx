@@ -66,7 +66,7 @@ const Router: React.FC<RouterProps> = (props) => {
 
   const handleDestinationPath = () => {
     if (!isLoggedIn && location.pathname !== routes.login()) {
-      localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
+      localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname + location.search);
     }
   };
 
@@ -80,16 +80,25 @@ const Router: React.FC<RouterProps> = (props) => {
     if (
       destinationPath &&
       destinationPath !== routes.login() &&
+      destinationPath !== routes.signup() &&
       destinationPath !== '/'
     ) {
-      history.push(destinationPath + location.search);
+      const url = new URL(destinationPath, window.location.origin);
+      checkParams(url.search)
+      history.push(destinationPath);
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
   };
 
+  const checkParams = (search?: string) => {
+    const _isIframe = checkParam('iframe', IFRAME, search);
+    const _isJwt = checkParam('jwt', JWT_PARAM, search);
+    setIsIframe(_isIframe);
+    setIsJwt(_isJwt);
+  }
+
   useEffect(() => {
-    setIsIframe(checkParam('iframe', IFRAME));
-    setIsJwt(checkParam('jwt', JWT_PARAM));
+    checkParams();
   }, []);
 
   useEffect(() => {

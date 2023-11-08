@@ -5,7 +5,6 @@ import { Loader } from 'UI';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 
 import * as routes from './routes';
-import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { Map } from 'immutable';
 import NotFoundPage from 'Shared/NotFoundPage';
 import { ModalProvider } from 'Components/Modal';
@@ -49,7 +48,7 @@ function IFrameRoutes(props: Props) {
     return (
       <ModalProvider>
         <Layout hideHeader={true}>
-          <Loader loading={loading} className='flex-1'>
+          <Loader loading={!!loading} className='flex-1'>
             <Suspense fallback={<Loader loading={true} className='flex-1' />}>
               <Switch key='content'>
                 <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)}
