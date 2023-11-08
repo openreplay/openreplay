@@ -825,7 +825,7 @@ def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSche
                         "We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
                 }
     return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=webhookId,
-                                   changes={"name": data.name, "endpoint": data.url})}
+                                   changes={"name": data.name, "endpoint": data.url.unicode_string()})}
 
 
 @app.delete('/integrations/msteams/{webhookId}', tags=["integrations"])

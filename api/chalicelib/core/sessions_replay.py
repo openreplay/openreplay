@@ -55,7 +55,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
                                                                               session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id)
+                    data['mobsUrl'] = []
                 else:
                     data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                               group_clickrage=True)
@@ -122,8 +122,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['domURL'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id,
-                                                           check_existence=False)
+                    data['domURL'] = []
                     data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
                                                                     check_existence=False)
                 else:
