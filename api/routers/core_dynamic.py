@@ -103,14 +103,13 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
-        t["tenantName"] = t.get("name")
+        t["tenantName"] = t.pop("name")
     return {
         'data': {
             **r,
             **t,
             **license.get_status(context.tenant_id),
-            "smtp": smtp.has_smtp(),
-            # "iceServers": assist.get_ice_servers()
+            "smtp": smtp.has_smtp()
         }
     }
 
