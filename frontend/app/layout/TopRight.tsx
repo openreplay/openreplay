@@ -20,17 +20,17 @@ function TopRight(props: Props) {
   const { account } = props;
   // @ts-ignore
   return (
-    <Space className='flex items-center'>
+    <Space className="flex items-center">
       <ProjectDropdown />
       <GettingStartedProgress />
 
       <Notifications />
 
-      <HealthStatus />
+      {account.name ? <HealthStatus /> : null}
 
       <Popover content={<UserMenu />} placement={'topRight'}>
-        <div className='flex items-center cursor-pointer'>
-          <div className='w-10 h-10 bg-tealx rounded-full flex items-center justify-center color-white'>
+        <div className="flex items-center cursor-pointer">
+          <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center color-white">
             {getInitials(account.name)}
           </div>
         </div>

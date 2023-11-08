@@ -23,10 +23,11 @@ def __transform_journey(rows, reverse_path=False):
             break
         number_of_step1 += 1
         total_100p += r["sessions_count"]
-    for i in range(number_of_step1):
-        rows[i]["value"] = 100 / number_of_step1
+    # for i in range(number_of_step1):
+    #     rows[i]["value"] = 100 / number_of_step1
 
-    for i in range(number_of_step1, len(rows)):
+    # for i in range(number_of_step1, len(rows)):
+    for i in range(len(rows)):
         rows[i]["value"] = rows[i]["sessions_count"] * 100 / total_100p
 
     nodes = []
@@ -36,21 +37,35 @@ def __transform_journey(rows, reverse_path=False):
         source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
-            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
+            nodes_values.append({"name": r['e_value'], "eventType": r['event_type'],
+                                 "avgTimeFromPrevious": 0, "sessionsCount": 0})
         if r['next_value']:
             target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
             if target not in nodes:
                 nodes.append(target)
-                nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
+                nodes_values.append({"name": r['next_value'], "eventType": r['next_type'],
+                                     "avgTimeFromPrevious": 0, "sessionsCount": 0})
+
+            sr_idx = nodes.index(source)
+            tg_idx = nodes.index(target)
+            if r["avg_time_from_previous"] is not None:
+                nodes_values[tg_idx]["avgTimeFromPrevious"] += r["avg_time_from_previous"] * r["sessions_count"]
+                nodes_values[tg_idx]["sessionsCount"] += r["sessions_count"]
             link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],
                     "value": r["value"], "avgTimeFromPrevious": r["avg_time_from_previous"]}
             if not reverse_path:
-                link["source"] = nodes.index(source)
-                link["target"] = nodes.index(target)
+                link["source"] = sr_idx
+                link["target"] = tg_idx
             else:
-                link["source"] = nodes.index(target)
-                link["target"] = nodes.index(source)
+                link["source"] = tg_idx
+                link["target"] = sr_idx
             links.append(link)
+    for n in nodes_values:
+        if n["sessionsCount"] > 0:
+            n["avgTimeFromPrevious"] = n["avgTimeFromPrevious"] / n["sessionsCount"]
+        else:
+            n["avgTimeFromPrevious"] = None
+        n.pop("sessionsCount")
 
     return {"nodes": nodes_values,
             "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
@@ -97,6 +112,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     for i, sf in enumerate(data.start_point):
         f_k = f"start_point_{i}"
         op = sh.get_sql_operator(sf.operator)
+        sf.value = helper.values_for_operator(value=sf.value, op=sf.operator)
         is_not = sh.is_negation_operator(sf.operator)
         event_column = JOURNEY_TYPES[sf.type]['column']
         event_type = JOURNEY_TYPES[sf.type]['eventType']
@@ -113,6 +129,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
 
     exclusions = {}
     for i, ef in enumerate(data.excludes):
+        if len(ef.value) == 0:
+            continue
         if ef.type in data.metric_value:
             f_k = f"exclude_{i}"
             extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}

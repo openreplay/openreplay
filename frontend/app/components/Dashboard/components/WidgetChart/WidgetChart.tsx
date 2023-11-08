@@ -222,7 +222,7 @@ function WidgetChart(props: Props) {
         height={props.isPreview ? 500 : 240}
         data={data}
         onChartClick={(filters: any) => {
-          dashboardStore.drillDownFilter.merge({ filters });
+          dashboardStore.drillDownFilter.merge({ filters, page: 1 });
         }} />;
     }
 

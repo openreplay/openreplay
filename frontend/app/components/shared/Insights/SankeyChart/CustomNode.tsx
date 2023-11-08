@@ -23,8 +23,8 @@ function CustomNode(props: any) {
       <foreignObject
         x={isOut ? x - 6 : x + width + 5}
         y={y + 5}
-        height='200'
-        style={{ width: '150px' }}
+        height='25'
+        style={{ width: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
       >
         <NodeButton payload={payload} />
       </foreignObject>

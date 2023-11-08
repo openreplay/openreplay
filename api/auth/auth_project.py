@@ -22,7 +22,7 @@ class ProjectAuthorizer:
         value = request.path_params[self.project_identifier]
         current_project = None
         if self.project_identifier == "projectId" \
-                and isinstance(value, int) or isinstance(value, str) and value.isnumeric():
+                and (isinstance(value, int) or isinstance(value, str) and value.isnumeric()):
             current_project = projects.get_project(project_id=value, tenant_id=current_user.tenant_id)
         elif self.project_identifier == "projectKey":
             current_project = projects.get_by_project_key(project_key=value)

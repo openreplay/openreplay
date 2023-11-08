@@ -848,13 +848,6 @@ class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     _transform_filters = field_validator('filters', mode='before') \
         (force_is_event(events_enum=[ProductAnalyticsSelectedEventType]))
 
-    # @model_validator(mode="before")
-    # def __force_is_event_for_filters(cls, values):
-    #     for v in values.get("filters"):
-    #         if v.get("isEvent") is None:
-    #             v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-    #     return values
-
 
 class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
@@ -1471,13 +1464,7 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
 
     @model_validator(mode='after')
     def __validator(cls, values):
-        assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
-        c = 0
-        for v in values.values():
-            if v is not None and (not isinstance(v, str) or len(v) > 0):
-                c += 1
-                break
-        assert c > 0, "at least 1 value should be provided for update"
+        assert values.message is not None or values.timestamp is not None or values.is_public is not None, "at least 1 attribute should be provided for update"
         return values
 
 
@@ -1585,78 +1572,6 @@ class FeatureFlagSchema(BaseModel):
 
 class ModuleStatus(BaseModel):
     module: Literal["assist", "notes", "bug-reports",
-    "offline-recordings", "alerts"] = Field(..., description="Possible values: notes, bugs, live")
+    "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(...,
+                                                                                                 description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
     status: bool = Field(...)
-
-
-class AssistStatsAverage(BaseModel):
-    key: str = Field(...)
-    avg: float = Field(...)
-    chartData: List[dict] = Field(...)
-
-
-class AssistStatsMember(BaseModel):
-    name: str
-    count: int
-    assist_duration: Optional[int] = Field(default=0)
-    call_duration: Optional[int] = Field(default=0)
-    control_duration: Optional[int] = Field(default=0)
-    assist_count: Optional[int] = Field(default=0)
-
-
-class AssistStatsSessionAgent(BaseModel):
-    name: str
-    id: int
-
-
-class AssistStatsTopMembersResponse(BaseModel):
-    total: int
-    list: List[AssistStatsMember]
-
-
-class AssistStatsSessionRecording(BaseModel):
-    recordId: int = Field(...)
-    name: str = Field(...)
-    duration: int = Field(...)
-
-
-class AssistStatsSession(BaseModel):
-    sessionId: str = Field(...)
-    timestamp: int = Field(...)
-    teamMembers: List[AssistStatsSessionAgent] = Field(...)
-    assistDuration: Optional[int] = Field(default=0)
-    callDuration: Optional[int] = Field(default=0)
-    controlDuration: Optional[int] = Field(default=0)
-    # recordings: list[AssistStatsSessionRecording] = Field(default=[])
-
-
-assist_sort_options = ["timestamp", "assist_duration", "call_duration", "control_duration"]
-
-
-class AssistStatsSessionsRequest(BaseModel):
-    startTimestamp: int = Field(...)
-    endTimestamp: int = Field(...)
-    limit: Optional[int] = Field(default=10)
-    page: Optional[int] = Field(default=1)
-    sort: Optional[str] = Field(default="timestamp",
-                                enum=assist_sort_options)
-    order: Optional[str] = Field(default="desc", choices=["desc", "asc"])
-    userId: Optional[int] = Field(default=None)
-
-    @field_validator("sort")
-    def validate_sort(cls, v):
-        if v not in assist_sort_options:
-            raise ValueError(f"Invalid sort option. Allowed options: {', '.join(assist_sort_options)}")
-        return v
-
-    @field_validator("order")
-    def validate_order(cls, v):
-        if v not in ["desc", "asc"]:
-            raise ValueError("Invalid order option. Must be 'desc' or 'asc'.")
-        return v
-
-
-class AssistStatsSessionsResponse(BaseModel):
-    total: int = Field(...)
-    page: int = Field(...)
-    list: List[AssistStatsSession] = Field(default=[])

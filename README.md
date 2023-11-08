@@ -1,4 +1,14 @@
 <p align="center">
+  <a href="/README_FR.md">Français</a>
+  &nbsp;|&nbsp;
+  <a href="/README_ESP.md">Español</a>
+  &nbsp;|&nbsp;
+  <a href="/README_RU.md">Русский</a>
+  &nbsp;|&nbsp;
+  <a href="/README_AR.md">العربية</a>
+</p>
+
+<p align="center">
   <a href="https://openreplay.com/#gh-light-mode-only">
     <img src="static/openreplay-git-banner-light.png" width="100%">
   </a>
@@ -8,7 +18,7 @@
 </p>
 
 <h3 align="center">Session replay for developers</h3>
-<p align="center">The most advanced open-source session replay for building delightful web apps.</p>
+<p align="center">The most advanced session replay for building delightful web apps.</p>
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">

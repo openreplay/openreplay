@@ -1,5 +1,6 @@
 import store from 'App/store';
 import { queried } from './routes';
+import { setJwt } from 'Duck/user';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -29,12 +30,6 @@ const siteIdRequiredPaths: string[] = [
   '/notes',
   '/feature-flags',
   '/check-recording-status'
-];
-
-const noStoringFetchPathStarts: string[] = [
-  '/account/password',
-  '/password',
-  '/login'
 ];
 
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
@@ -73,7 +68,27 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  fetch(path: string, params?: any, options: { clean?: boolean } = { clean: true }): Promise<Response> {
+  private decodeJwt(jwt: string): any {
+    const base64Url = jwt.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(window.atob(base64));
+  }
+
+  isTokenExpired(token: string): boolean {
+    const decoded: any = this.decodeJwt(token);
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  }
+
+  async fetch(path: string, params?: any, options: {
+    clean?: boolean
+  } = { clean: true }): Promise<Response> {
+    const jwt = store.getState().getIn(['user', 'jwt']);
+    if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
+      const newJwt = await this.refreshToken();
+      (this.init.headers as Headers).set('Authorization', `Bearer ${newJwt}`);
+    }
+
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);
@@ -95,14 +110,26 @@ export default class APIClient {
     ) {
       edp = `${edp}/${this.siteId}`;
     }
-    return fetch(edp + path, this.init)
-      .then((response) => {
-        if (response.ok) {
-          return response;
-        } else {
-          return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
-        }
-      });
+
+    return fetch(edp + path, this.init).then((response) => {
+      if (response.ok) {
+        return response;
+      } else {
+        return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
+      }
+    });
+  }
+
+  async refreshToken(): Promise<string> {
+    const response = await this.fetch('/refresh', {
+      method: 'GET',
+      headers: this.init.headers
+    }, { clean: false });
+
+    const data = await response.json();
+    const refreshedJwt = data.jwt;
+    store.dispatch(setJwt(refreshedJwt));
+    return refreshedJwt;
   }
 
   get(path: string, params?: any, options?: any): Promise<Response> {

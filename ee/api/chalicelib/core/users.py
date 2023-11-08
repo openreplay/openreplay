@@ -169,19 +169,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.basic_authentication
                             WHERE users.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id,
-                                (SELECT roles.name 
-                                    FROM roles 
-                                    WHERE roles.tenant_id=%(tenant_id)s 
-                                        AND roles.role_id=users.role_id) AS role_name;""",
+                              AND users.user_id = basic_authentication.user_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -192,19 +180,7 @@ def update(tenant_id, user_id, changes, output=True):
                             FROM public.users AS users
                             WHERE basic_authentication.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s
-                              AND users.user_id = basic_authentication.user_id
-                            RETURNING users.user_id AS id,
-                                users.email,
-                                users.role,
-                                users.name,
-                                (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-                                (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id,
-                                (SELECT roles.name 
-                                    FROM roles 
-                                    WHERE roles.tenant_id=%(tenant_id)s 
-                                        AND roles.role_id=users.role_id) AS role_name;""",
+                              AND users.user_id = basic_authentication.user_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
     if not output:
@@ -234,8 +210,8 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
                                     admin=data.admin, name=data.name, user_id=user["userId"], role_id=role_id)
     elif user is not None:
         __hard_delete_user(user_id=user["userId"])
-        new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=data.name, role_id=role_id)
+        new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
+                                       admin=data.admin, name=data.name, role_id=role_id)
     else:
         new_member = create_new_member(tenant_id=tenant_id, email=data.email, invitation_token=invitation_token,
                                        admin=data.admin, name=data.name, role_id=role_id)
@@ -273,6 +249,7 @@ def get(user_id, tenant_id):
             cur.mogrify(
                 f"""SELECT 
                         users.user_id,
+                        users.tenant_id,
                         email, 
                         role, 
                         users.name,
@@ -396,7 +373,7 @@ def get_by_email_only(email):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         users.tenant_id,
                         users.email, 
                         users.role, 
@@ -513,12 +490,16 @@ def delete_member(user_id, tenant_id, id_to_delete):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.users
-                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL
+                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL,
+                                jwt_iat= NULL, jwt_refresh_jti= NULL, 
+                                jwt_refresh_iat= NULL 
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
         cur.execute(
             cur.mogrify(f"""UPDATE public.basic_authentication 
-                           SET password=NULL 
+                           SET password=NULL, invitation_token= NULL,
+                                invited_at= NULL, changed_at= NULL,
+                                change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
     return {"data": get_members(tenant_id=tenant_id)}
@@ -670,9 +651,9 @@ def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
 def change_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
-                                SET jwt_iat = timezone('utc'::text, now()),
+                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
                                     jwt_refresh_jti = 0, 
-                                    jwt_refresh_iat = timezone('utc'::text, now()) 
+                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '2s') 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
@@ -686,7 +667,7 @@ def change_jwt_iat_jti(user_id):
 def refresh_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
-                                SET jwt_iat = timezone('utc'::text, now()),
+                                SET jwt_iat = timezone('utc'::text, now()-INTERVAL '2s'),
                                     jwt_refresh_jti = jwt_refresh_jti + 1 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
@@ -879,7 +860,7 @@ def authenticate_sso(email, internal_id, exp=None):
         if r["serviceAccount"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="service account is not authorized to login")
-        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
+        jwt_iat = TimeUTC.datetime_to_timestamp(refresh_jwt_iat_jti(r['userId']))
         return authorizers.generate_jwt(r['userId'], r['tenantId'],
                                         iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
@@ -934,5 +915,58 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                              "user_id": user_id})
         cur.execute(
             query
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def get_user_settings(user_id):
+    #     read user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        settings
+                    FROM public.users 
+                    WHERE users.deleted_at IS NULL 
+                        AND users.user_id=%(user_id)s
+                    LIMIT 1""",
+                {"user_id": user_id})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_user_module(user_id, data: schemas.ModuleStatus):
+    # example data = {"settings": {"modules": ['ASSIST', 'METADATA']}
+    #     update user settings from users.settings:jsonb column only update settings.modules
+    #   if module property is not exists, it will be created
+    #  if module property exists, it will be updated, modify here and call update_user_settings
+    # module is a single element to be added or removed
+    settings = get_user_settings(user_id)["settings"]
+    if settings is None:
+        settings = {}
+
+    if settings.get("modules") is None:
+        settings["modules"] = []
+
+    if data.status and data.module not in settings["modules"]:
+        settings["modules"].append(data.module)
+
+    elif not data.status and data.module in settings["modules"]:
+        settings["modules"].remove(data.module)
+
+    return update_user_settings(user_id, settings)
+
+
+def update_user_settings(user_id, settings):
+    #     update user settings from users.settings:jsonb column
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""UPDATE public.users
+                    SET settings = %(settings)s
+                    WHERE users.user_id = %(user_id)s
+                            AND deleted_at IS NULL
+                    RETURNING settings;""",
+                {"user_id": user_id, "settings": json.dumps(settings)})
         )
         return helper.dict_to_camel_case(cur.fetchone())

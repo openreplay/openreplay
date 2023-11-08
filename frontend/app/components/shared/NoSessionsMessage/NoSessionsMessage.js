@@ -37,7 +37,7 @@ const NoSessionsMessage = (props) => {
               </div>
               <Button
                 variant='primary'
-                className='bg-white h-8 hover:bg-gray-light text-base'
+                className='h-8 text-base'
                 onClick={() => props.history.push(onboardingPath)}
               >
                 Complete Project Setup

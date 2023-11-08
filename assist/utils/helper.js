@@ -25,7 +25,7 @@ const extractPeerId = (peerId) => {
         return {};
     }
     if (splited.length === 2) {
-        return {projectKey: splited[0], sessionId: splited[1], tabId: null};
+        return {projectKey: splited[0], sessionId: splited[1], tabId: (Math.random() + 1).toString(36).substring(2)};
     }
     return {projectKey: splited[0], sessionId: splited[1], tabId: splited[2]};
 };

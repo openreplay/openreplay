@@ -45,16 +45,36 @@ function SideMenu(props: Props) {
 
     return sourceMenu.map(category => {
       const updatedItems = category.items.map(item => {
+        if (isEnterprise) {
+          if (item.key === MENU.BOOKMARKS) {
+            return { ...item, hidden: true };
+          }
+
+          if (item.key === MENU.VAULT) {
+            return { ...item, hidden: false };
+          }
+        } else {
+          if (item.key === MENU.VAULT) {
+            return { ...item, hidden: true };
+          }
+
+          if (item.key === MENU.BOOKMARKS) {
+            return { ...item, hidden: false };
+          }
+        }
         if (item.hidden) return item;
 
-          const isHidden = [
-            (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
-            (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS || item.key === MENU.STATS) && modules.includes(MODULES.ASSIST),
-            (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
-            (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
-            (item.isAdmin && !isAdmin),
-            (item.isEnterprise && !isEnterprise)
-          ].some(cond => cond);
+        const isHidden = [
+          (item.key === MENU.STATS && modules.includes(MODULES.ASSIST_STATS)),
+          (item.key === MENU.RECOMMENDATIONS && modules.includes(MODULES.RECOMMENDATIONS)),
+          (item.key === MENU.FEATURE_FLAGS && modules.includes(MODULES.FEATURE_FLAGS)),
+          (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
+          (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS || item.key === MENU.STATS) && modules.includes(MODULES.ASSIST),
+          (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
+          (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
+          (item.isAdmin && !isAdmin),
+          (item.isEnterprise && !isEnterprise),
+        ].some(cond => cond);
 
         return { ...item, hidden: isHidden };
       });
@@ -81,9 +101,10 @@ function SideMenu(props: Props) {
 
 
   const menuRoutes: any = {
-    exit: () => props.history.push(withSiteId(routes.sessions(), siteId)),
+    [MENU.EXIT]: () => props.history.push(withSiteId(routes.sessions(), siteId)),
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
+    [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
     [MENU.STATS]: () => withSiteId(routes.assistStats(), siteId),
@@ -122,9 +143,10 @@ function SideMenu(props: Props) {
   const isMenuItemActive = (key: string) => {
     const { pathname } = location;
     const activeRoute = menuRoutes[key];
-    if (activeRoute) {
+
+    if (activeRoute && !key.includes('exit')) {
       const route = activeRoute();
-      return pathname.startsWith(route);
+      return pathname === route;
     }
     return false;
   };
@@ -138,20 +160,10 @@ function SideMenu(props: Props) {
   return (
     <>
       <Menu
-        defaultSelectedKeys={['1']} mode='inline' onClick={handleClick}
+        mode='inline' onClick={handleClick}
         style={{ marginTop: '8px', border: 'none' }}
+        selectedKeys={menu.flatMap(category => category.items.filter((item: any) => isMenuItemActive(item.key)).map(item => item.key))}
       >
-        {isPreferencesActive && (
-          <Menu.ItemGroup>
-            <Menu.Item
-              key='exit'
-              // style={{ color: '#333', height: '32px' }}
-              icon={<SVG name='arrow-bar-left' size={16} />}
-            >
-              {!isCollapsed && <Text className='ml-2'>Exit</Text>}
-            </Menu.Item>
-          </Menu.ItemGroup>
-        )}
         {menu.map((category, index) => (
           <React.Fragment key={category.key}>
             {!category.hidden && (
@@ -159,11 +171,26 @@ function SideMenu(props: Props) {
                 {index > 0 && <Divider style={{ margin: '6px 0' }} />}
                 <Menu.ItemGroup
                   key={category.key}
-                  title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }}
-                              className={cn({ 'text-center': isCollapsed })}>{category.title}</div>}
+                  title={category.title}
+                  // title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }}
+                  //             className={cn({ 'text-center': isCollapsed })}>{category.title}</div>}
                 >
                   {category.items.filter((item: any) => !item.hidden).map((item: any) => {
                     const isActive = isMenuItemActive(item.key);
+
+                    if (item.key === MENU.EXIT) {
+                      return (
+                        <Menu.Item
+                          key={item.key}
+                          style={{ paddingLeft: '20px' }}
+                          icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                          className={cn('!rounded hover-fill-teal')}
+                        >
+                          {item.label}
+                        </Menu.Item>
+                      );
+                    }
+
                     return item.children ? (
                       <Menu.SubMenu
                         key={item.key}
@@ -177,9 +204,10 @@ function SideMenu(props: Props) {
                     ) : (
                       <Menu.Item
                         key={item.key}
-                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''}
+                                    className={'hover-fill-teal'} />}
                         style={{ paddingLeft: '20px' }}
-                        className={cn('!rounded')}
+                        className={cn('!rounded hover-fill-teal')}
                         itemIcon={item.leading ?
                           <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
                         {item.label}

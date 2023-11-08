@@ -358,8 +358,8 @@ const integrations = [
       {
         title: 'Zustand',
         subtitle: 'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
-        icon: '',
-        header: '🐻',
+        icon: 'integrations/zustand',
+        // header: '🐻',
         component: <ZustandDoc />
       }
     ]

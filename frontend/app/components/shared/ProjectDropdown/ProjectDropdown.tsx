@@ -5,7 +5,7 @@ import { CaretDownOutlined, FolderAddOutlined, FolderOutlined } from '@ant-desig
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { setSiteId } from 'Duck/site';
-import { fetchListActive as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { useModal } from 'Components/Modal';
@@ -13,6 +13,7 @@ import { init as initProject } from 'Duck/site';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { withStore } from 'App/mstore';
 import { Icon } from 'UI'
+import cn from 'classnames'
 
 const { Text } = Typography;
 
@@ -26,7 +27,7 @@ interface Props extends RouteComponentProps {
   sites: Site[];
   siteId: string;
   setSiteId: (siteId: string) => void;
-  fetchIntegrationVariables: () => void;
+  fetchMetadata: () => void;
   clearSearch: (isSession: boolean) => void;
   clearSearchLive: () => void;
   initProject: (data: any) => void;
@@ -43,7 +44,7 @@ function ProjectDropdown(props: Props) {
 
   const handleSiteChange = (newSiteId: string) => {
     props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    props.fetchIntegrationVariables();
+    props.fetchMetadata();
     props.clearSearch(location.pathname.includes('/sessions'));
     props.clearSearchLive();
 
@@ -59,7 +60,7 @@ function ProjectDropdown(props: Props) {
     <Menu>
       {isAdmin && (
         <>
-          <Menu.Item icon={<FolderAddOutlined />} key='all-projects' onClick={addProjectClickHandler}>
+          <Menu.Item icon={<FolderAddOutlined rev={undefined} />} key='all-projects' onClick={addProjectClickHandler}>
             <Text>Add Project</Text>
           </Menu.Item>
           <Divider style={{ margin: 0 }} />
@@ -68,12 +69,12 @@ function ProjectDropdown(props: Props) {
 
       {sites.map((site) => (
         <Menu.Item
-          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} />}
+          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} color={activeSite?.host === site.host ? 'main' : undefined} />}
           key={site.id}
           onClick={() => handleSiteChange(site.id)}
-          className='!py-2'
+          className={cn('!py-2', activeSite?.host === site.host ? 'bg-active-blue' : '')}
         >
-          <Text className='capitalize'>{site.host}</Text>
+          <Text className={cn('capitalize', activeSite?.host === site.host ? 'text-main' : '')}>{site.host}</Text>
         </Menu.Item>
       ))}
     </Menu>
@@ -83,8 +84,13 @@ function ProjectDropdown(props: Props) {
     <Dropdown overlay={menu} placement='bottomLeft'>
       <Button>
         <Space>
-          <Text className='font-medium capitalize'>{showCurrent && activeSite ? activeSite.host : 'All Projects'}</Text>
-          <CaretDownOutlined />
+          <Text className='font-medium capitalize'>{showCurrent && activeSite ? (
+            <div className='flex items-center gap-2'>
+              <Icon name={activeSite?.platform === 'web' ? 'browser/browser' : 'mobile'} />
+              {activeSite.host}
+            </div>
+          ) : 'All Projects'}</Text>
+          <CaretDownOutlined rev={undefined} />
         </Space>
       </Button>
     </Dropdown>
@@ -100,7 +106,7 @@ const mapStateToProps = (state: any) => ({
 export default withRouter(
   connect(mapStateToProps, {
     setSiteId,
-    fetchIntegrationVariables,
+    fetchMetadata,
     clearSearch,
     clearSearchLive,
     initProject

@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global, assist_stats
+    custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -642,7 +642,7 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
 @app.post('/users/modules', tags=['users'])
 def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
                        data: schemas.ModuleStatus = Body(...)):
-    return users.update_user_module(context.user_id, data)
+    return {"data": users.update_user_module(context.user_id, data)}
 
 
 @app.get('/notifications', tags=['notifications'])
@@ -859,60 +859,3 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
-
-
-@public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
-def get_assist_stats_avg(
-        project_id: int,
-        startTimestamp: int = None,
-        endTimestamp: int = None,
-        userId: str = None
-):
-    return assist_stats.get_averages(
-        project_id=project_id,
-        start_timestamp=startTimestamp,
-        end_timestamp=endTimestamp,
-        user_id=userId)
-
-
-@public_app.get(
-    '/{project_id}/assist-stats/top-members',
-    tags=["assist-stats"],
-    response_model=schemas.AssistStatsTopMembersResponse
-)
-def get_assist_stats_top_members(
-        project_id: int,
-        startTimestamp: int = None,
-        endTimestamp: int = None,
-        sort: Optional[str] = Query(default="sessionsAssisted",
-                                    description="Sort options: " + ", ".join(assist_stats.event_type_mapping)),
-        order: str = "desc",
-        userId: int = None,
-        page: int = 0,
-        limit: int = 5
-):
-    return assist_stats.get_top_members(
-        project_id=project_id,
-        start_timestamp=startTimestamp,
-        end_timestamp=endTimestamp,
-        sort_by=sort,
-        sort_order=order,
-        user_id=userId,
-        page=page,
-        limit=limit
-    )
-
-
-@public_app.post(
-    '/{project_id}/assist-stats/sessions',
-    tags=["assist-stats"],
-    response_model=schemas.AssistStatsSessionsResponse
-)
-def get_assist_stats_sessions(
-        project_id: int,
-        data: schemas.AssistStatsSessionsRequest = Body(...),
-):
-    return assist_stats.get_sessions(
-        project_id=project_id,
-        data=data
-    )

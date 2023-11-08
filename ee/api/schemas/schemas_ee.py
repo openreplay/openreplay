@@ -101,29 +101,30 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
 
 
 class SessionModel(BaseModel):
-    viewed: bool = Field(default=False)
-    userId: Optional[str]
-    userOs: str
     duration: int
-    favorite: bool = Field(default=False)
-    platform: str
-    startTs: int
-    userUuid: str
-    projectId: int
-    sessionId: str
-    issueScore: int
-    issueTypes: List[schemas.IssueType] = Field(default=[])
-    pagesCount: int
-    userDevice: Optional[str]
     errorsCount: int
     eventsCount: int
-    userBrowser: str
-    userCountry: str
-    userCity: str
-    userState: str
-    userDeviceType: str
-    userAnonymousId: Optional[str]
+    favorite: bool = Field(default=False)
+    issueScore: int
+    issueTypes: List[schemas.IssueType] = Field(default=[])
     metadata: dict = Field(default={})
+    pagesCount: int
+    platform: str
+    projectId: int
+    sessionId: str
+    startTs: int
+    timezone: str
+    userAnonymousId: Optional[str]
+    userBrowser: str
+    userCity: str
+    userCountry: str
+    userDevice: Optional[str]
+    userDeviceType: str
+    userId: Optional[str]
+    userOs: str
+    userState: str
+    userUuid: str
+    viewed: bool = Field(default=False)
 
 
 class AssistRecordUpdatePayloadSchema(BaseModel):

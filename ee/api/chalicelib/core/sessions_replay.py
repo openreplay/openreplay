@@ -1,5 +1,4 @@
 import schemas
-import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes
 from chalicelib.utils import errors_helper
@@ -131,7 +130,10 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id, project_id=project_id,
+                                                            check_existence=False)
+                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
+                                                                    check_existence=False)
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
@@ -173,8 +175,8 @@ def get_events(project_id, session_id):
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
                 data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                         session_id=session_id)
+                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)

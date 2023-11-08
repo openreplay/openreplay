@@ -3,7 +3,6 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from chalicelib.core import telemetry
 from chalicelib.core import weekly_report, jobs, health
-from chalicelib.core import assist_stats
 
 
 async def run_scheduled_jobs() -> None:
@@ -26,10 +25,6 @@ async def weekly_health_cron() -> None:
     health.weekly_cron()
 
 
-async def assist_events_aggregates_cron() -> None:
-    assist_stats.insert_aggregated_data()
-
-
 cron_jobs = [
     {"func": telemetry_cron, "trigger": CronTrigger(day_of_week="*"),
      "misfire_grace_time": 60 * 60, "max_instances": 1},
@@ -40,7 +35,5 @@ cron_jobs = [
     {"func": health_cron, "trigger": IntervalTrigger(hours=0, minutes=30, start_date="2023-04-01 0:0:0", jitter=300),
      "misfire_grace_time": 60 * 60, "max_instances": 1},
     {"func": weekly_health_cron, "trigger": CronTrigger(day_of_week="sun", hour=5),
-     "misfire_grace_time": 60 * 60, "max_instances": 1},
-    {"func": assist_events_aggregates_cron,
-     "trigger": IntervalTrigger(hours=1, start_date="2023-04-01 0:0:0", jitter=10), }
+     "misfire_grace_time": 60 * 60, "max_instances": 1}
 ]

@@ -4,8 +4,9 @@ import { useModal } from 'App/components/Modal';
 import GettingStartedModal from './GettingStartedModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { connect } from "react-redux";
 
-const GettingStartedProgress: React.FC<null> = () => {
+const GettingStartedProgress = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const { showModal } = useModal();
 
   const {
@@ -13,8 +14,10 @@ const GettingStartedProgress: React.FC<null> = () => {
   } = useStore();
 
   useEffect(() => {
-    gettingStarted.fetchData();
-  }, []);
+    if (isLoggedIn) {
+      gettingStarted.fetchData();
+    }
+  }, [isLoggedIn]);
 
   const clickHandler = () => {
     showModal(<GettingStartedModal list={gettingStarted.steps} />, { right: true, width: 450 });
@@ -37,4 +40,5 @@ const GettingStartedProgress: React.FC<null> = () => {
   );
 };
 
-export default observer(GettingStartedProgress);
+export default connect((state: any) => ({ isLoggedIn: Boolean(state.getIn(['user', 'jwt'])), }))(observer(GettingStartedProgress));
+

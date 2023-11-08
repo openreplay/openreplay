@@ -18,8 +18,8 @@ function CustomLink(props: any) {
     activeLink
   } =
     props;
-  const isActive = activeLinks.length > 1 && activeLinks.includes(payload.id);
-  const isHover = hoveredLinks.length > 1 && hoveredLinks.includes(payload.id);
+  const isActive = activeLinks.length > 0 && activeLinks.includes(payload.id);
+  const isHover = hoveredLinks.length > 0 && hoveredLinks.includes(payload.id);
 
   const onClick = () => {
     if (props.onClick) {

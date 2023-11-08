@@ -50,12 +50,12 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
         ENVIRONMENT: staging
       run: |
         skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         cd assist-stats
-        PUSH_IMAGE=0 bash -x ./build.sh
+        PUSH_IMAGE=0 bash -x ./build.sh ee
         [[ "x$skip_security_checks" == "xtrue" ]]  || {
           curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
           images=("assist-stats")
@@ -71,55 +71,8 @@ jobs:
         }
         images=("assist-stats")
         for image in ${images[*]};do
-          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
-          docker tag $DOCKER_REPO/$image:$IMAGE_TAG $DOCKER_REPO/$image:${IMAGE_TAG}-ee
-          docker push $DOCKER_REPO/$image:$IMAGE_TAG $DOCKER_REPO/$image:${IMAGE_TAG}-ee
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG
         done
-    - name: Creating old image input
-      run: |
-        #
-        # Create yaml with existing image tags
-        #
-        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
-        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-
-        echo > /tmp/image_override.yaml
-
-        for line in `cat /tmp/image_tag.txt`;
-        do
-            image_array=($(echo "$line" | tr ':' '\n'))
-            cat <<EOF >> /tmp/image_override.yaml
-        ${image_array[0]}:
-          image:
-            tag: ${image_array[1]}
-        EOF
-        done
-
-    - name: Deploy to kubernetes
-      run: |
-        cd scripts/helmcharts/
-
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
-
-        # Update changed image tag
-        sed -i "/assist-stats/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
-
-        cat /tmp/image_override.yaml
-        # Deploy command
-        mv openreplay/charts/{ingress-nginx,assist-stats,quickwit} /tmp
-        rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,assist-stats,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -f -
-      env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
-        ENVIRONMENT: staging
 
 ### Enterprise code deployment 
 

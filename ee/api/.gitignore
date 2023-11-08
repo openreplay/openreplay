@@ -251,7 +251,6 @@ Pipfile.lock
 /routers/subs/__init__.py
 /routers/__init__.py
 /chalicelib/core/assist.py
-/chalicelib/core/assist_stats.py
 /auth/__init__.py
 /auth/auth_apikey.py
 /build.sh

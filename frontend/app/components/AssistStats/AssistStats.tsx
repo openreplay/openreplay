@@ -69,6 +69,7 @@ function AssistStats() {
     const topMembersPr = assistStatsService.getTopMembers({
       startTimestamp: usedP.start,
       endTimestamp: usedP.end,
+      userId: selectedUser ? selectedUser : undefined,
       sort: membersSort,
       order: 'desc',
     });
@@ -206,20 +207,21 @@ function AssistStats() {
 
   return (
     <div className={'w-full'}>
-      <div className={'mx-auto'} style={{ maxWidth: 1360 }} id={'pdf-anchor'}>
+      <div className={'mx-auto p-4 bg-white rounded border'} style={{ maxWidth: 1360 }} id={'pdf-anchor'}>
         <div id={'pdf-ignore'} className={'w-full flex items-center mb-2'}>
           <Typography.Title style={{ marginBottom: 0 }} level={4}>
-            Assist Stats
+            Reports
           </Typography.Title>
           <div className={'ml-auto flex items-center gap-2'}>
             <UserSearch onUserSelect={onUserSelect} />
 
             <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt />
-            <Tooltip title={'Export PDF'}>
+            <Tooltip title={!sessions || sessions.total === 0 ? 'No data at the moment to export.' : 'Export PDF'}>
               <Button
                 onClick={getPdf2}
                 shape={'default'}
                 size={'small'}
+                disabled={!sessions || sessions.total === 0}
                 icon={<FilePdfOutlined rev={undefined} />}
               />
             </Tooltip>
@@ -292,4 +294,4 @@ function AssistStats() {
   );
 }
 
-export default withPageTitle('Assist Stats - Openreplay')(AssistStats);
+export default withPageTitle('Reports - OpenReplay')(AssistStats);

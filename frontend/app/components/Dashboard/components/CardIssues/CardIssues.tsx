@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
-import { Loader, Pagination, Button, NoContent } from 'UI';
+import { Button, Loader, NoContent, Pagination } from 'UI';
 
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
@@ -19,16 +19,13 @@ function CardIssues() {
   const [loading, setLoading] = useState(false);
   const widget: any = useObserver(() => metricStore.instance);
   const isMounted = useIsMounted();
+  const pageSize = 5;
   const { showModal } = useModal();
 
-  const fetchIssues = async (filter: any) => {
-    if (!isMounted()) return;
-
-    setLoading(true);
-
+  function getFilters(filter: any) {
     const mapSeries = (item: any) => {
       const filters = item.filter.filters
-        .map((f: any) => f.toJson());
+          .map((f: any) => f.toJson());
 
       return {
         ...item,
@@ -39,10 +36,20 @@ function CardIssues() {
       };
     };
 
-    const newFilter = {
+    return {
       ...filter,
+      limit: pageSize,
+      page: metricStore.sessionsPage,
       series: filter.series.map(mapSeries)
     };
+  }
+
+  const fetchIssues = async (filter: any) => {
+    if (!isMounted()) return;
+
+    setLoading(true);
+
+    const newFilter = getFilters(filter);
 
     try {
       const res = await widget.fetchIssues(newFilter);
@@ -54,8 +61,9 @@ function CardIssues() {
     }
   };
 
-  const handleClick = (issue: any) => {
-    showModal(<SessionsModal issue={issue} list={[]} />, { right: true, width: 900 });
+  const handleClick = (issue?: any) => {
+    // const filters = getFilters(widget.filter);
+    showModal(<SessionsModal issue={issue} />, { right: true, width: 900 });
   };
 
   const filter = useObserver(() => dashboardStore.drillDownFilter);
@@ -66,21 +74,28 @@ function CardIssues() {
   useEffect(() => {
     const newPayload = {
       ...widget,
-      page: metricStore.sessionsPage,
-      limit: metricStore.sessionsPageSize,
+      page: filter.page,
+      limit: filter.limit,
       filters: filter.filters
     };
-    console.log('drillDownPeriod', newPayload);
     debounceRequest(newPayload);
-  }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
+  }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
 
   return useObserver(() => (
     <div className='my-8 bg-white rounded p-4 border'>
       <div className='flex justify-between'>
-        <h1 className='font-medium text-2xl'>Issues</h1>
-        {/*<div>*/}
-        {/*  <Button variant='text-primary'>All Sessions</Button>*/}
-        {/*</div>*/}
+        <div className='flex items-center'>
+          <h1 className='font-medium text-2xl'>Issues</h1>
+          {filter.filters.length > 0 && (
+            <div className='text-disabled-text ml-3'>
+              Showing issues of <span className='font-medium'>{filter.filters[0].value}</span> to
+              <span className='font-medium'>{filter.filters[1].value}</span>
+            </div>
+          )}
+        </div>
+        <div>
+          <Button variant='text-primary' onClick={() => handleClick()}>All Sessions</Button>
+        </div>
       </div>
 
       <Loader loading={loading}>
@@ -95,15 +110,20 @@ function CardIssues() {
 
       <div className='w-full flex items-center justify-between pt-4'>
         <div className='text-disabled-text'>
-          Showing <span
-          className='font-semibold'>{Math.min(data.issues.length, metricStore.sessionsPageSize)}</span> out of{' '}
-          <span className='font-semibold'>{data.total}</span> Issues
+          {data.total && (
+            <>
+              Showing < span className='font-medium'>{(filter.page - 1) * pageSize + 1}</span> to{' '}
+              <span className='font-medium'>{(filter.page - 1) * pageSize + pageSize}</span> of{' '}
+              <span className='font-medium'>{data.total}</span> issues.
+            </>
+          )}
         </div>
+
         <Pagination
-          page={metricStore.sessionsPage}
-          totalPages={Math.ceil(data.issues.length / metricStore.sessionsPageSize)}
-          onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
-          limit={metricStore.sessionsPageSize}
+          page={filter.page}
+          totalPages={Math.ceil(data.total / pageSize)}
+          onPageChange={(page: any) => filter.updateKey('page', page)}
+          limit={pageSize}
           debounceRequest={500}
         />
       </div>

@@ -79,11 +79,12 @@ function TeamMembers({
               </Space>
             </Button>
           </Dropdown>
-          <Tooltip title={'Export CSV'}>
+          <Tooltip title={topMembers.list.length === 0 ? 'No data at the moment to export.' : 'Export CSV'}>
             <Button
               onClick={onExport}
               shape={'default'}
               size={'small'}
+              disabled={topMembers.list.length === 0}
               icon={<TableOutlined rev={undefined} />}
             />
           </Tooltip>

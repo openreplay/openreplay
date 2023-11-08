@@ -10,11 +10,12 @@ import { updateModule } from 'Duck/user';
 interface Props {
   modules: string[];
   updateModule: (moduleKey: string) => void;
+  isEnterprise: boolean;
 }
 
 function Modules(props: Props) {
   const { modules } = props;
-  const [modulesState, setModulesState] = React.useState<any[]>([]);
+  const [modulesState, setModulesState, isEnterprise = false] = React.useState<any[]>([]);
 
   const onToggle = async (module: any) => {
     try {
@@ -28,6 +29,7 @@ function Modules(props: Props) {
       toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
       props.updateModule(module.key);
     } catch (err) {
+      console.error(err);
       toast.error(`Failed to ${module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
       module.isEnabled = !module.isEnabled;
       setModulesState([...modulesState]);
@@ -38,7 +40,7 @@ function Modules(props: Props) {
     list.forEach((module) => {
       module.isEnabled = modules.includes(module.key);
     });
-    setModulesState(list);
+    setModulesState(list.filter((module) => !module.hidden && (!module.enterprise || isEnterprise)));
   }, [modules]);
 
 
@@ -65,5 +67,6 @@ function Modules(props: Props) {
 
 
 export default withPageTitle('Modules - OpenReplay Preferences')(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'settings', 'modules']) || []
+  modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
 }), { updateModule })(Modules));

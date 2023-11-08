@@ -73,7 +73,6 @@ rm -rf ./crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
-rm -rf ./chalicelib/core/assist_stats.py
 rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh

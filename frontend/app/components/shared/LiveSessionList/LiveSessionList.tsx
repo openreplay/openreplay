@@ -16,7 +16,7 @@ import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 
-const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
+const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 interface Props {
@@ -104,7 +104,7 @@ function LiveSessionList(props: Props) {
                   options={sortOptions}
                   onChange={onSortChange}
                   value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                />
+              />
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => props.applyFilter({ order: state })}

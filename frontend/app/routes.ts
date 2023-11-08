@@ -95,7 +95,7 @@ export const fflagRead = (id = ':fflagId', hash?: string | number): string => ha
 export const notes = (params?: Record<string, any>): string => queried('/notes', params);
 export const bookmarks = (params?: Record<string, any>): string => queried('/bookmarks', params);
 export const assist = (params?: Record<string, any>): string => queried('/assist', params);
-export const assistStats = (params?: Record<string, any>): string => queried('/cobrowse-stats', params);
+export const assistStats = (params?: Record<string, any>): string => queried('/assist-stats', params);
 export const recordings = (params?: Record<string, any>): string => queried('/recordings', params);
 export const multiviewIndex = (params?: Record<string, any>): string => queried('/multiview', params);
 export const multiview = (sessionsQuery = ':sessionsquery', hash?: string | number): string =>

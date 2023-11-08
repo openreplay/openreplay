@@ -1,3 +1,6 @@
+## this plugin is deprecated, all network tracking apis are moved into the main tracker codebase
+______
+
 # OpenReplay Tracker Axios plugin
 
 Tracker plugin to support tracking of the [Axios](https://axios-http.com/) requests.

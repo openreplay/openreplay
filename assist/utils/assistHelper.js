@@ -7,10 +7,14 @@ let debug = process.env.debug === "1";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
     listen: {
-        UPDATE_EVENT: "UPDATE_SESSION",
+        UPDATE_EVENT: "UPDATE_SESSION", // tab become active/inactive, page title change, changed session object (rare case), call start/end
         CONNECT_ERROR: "connect_error",
         CONNECT_FAILED: "connect_failed",
         ERROR: "error"
+    },
+    //The following list of events will be only emitted by the server
+    server: {
+        UPDATE_SESSION: "SERVER_UPDATE_SESSION"
     }
 };
 EVENTS_DEFINITION.emit = {

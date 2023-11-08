@@ -350,8 +350,8 @@ export default class App {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
         this.messages.unshift(Timestamp(this.timestamp()))
-        // ? why I need to do this?
-        this.worker!.postMessage(this.messages)
+        // why I need to add opt chaining?
+        this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
       })

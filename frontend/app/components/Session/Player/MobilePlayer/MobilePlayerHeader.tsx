@@ -1,12 +1,7 @@
-
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import {
-  sessions as sessionsRoute,
-  liveSession as liveSessionRoute,
-  withSiteId,
-} from 'App/routes';
+import { sessions as sessionsRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
 import { BackLink, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
@@ -26,8 +21,8 @@ function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
 
-  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
-  const { width = 0, height = 0, showEvents = false } = playerState
+  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
+  const { width = 0, height = 0, showEvents = false } = playerState;
 
   const {
     session,
@@ -49,16 +44,7 @@ function PlayerBlockHeader(props: any) {
   }, []);
 
   const backHandler = () => {
-    if (
-      sessionPath.pathname === history.location.pathname ||
-      sessionPath.pathname.includes('/session/')
-    ) {
-      history.push(withSiteId(SESSIONS_ROUTE, siteId));
-    } else {
-      history.push(
-        sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId)
-      );
-    }
+    history.push(withSiteId(SESSIONS_ROUTE, siteId));
   };
 
   const { metadata } = session;
@@ -78,10 +64,7 @@ function PlayerBlockHeader(props: any) {
     <div className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}>
       <div className="flex w-full items-center">
         {!hideBack && (
-          <div
-            className="flex items-center h-full cursor-pointer group"
-            onClick={backHandler}
-          >
+          <div className="flex items-center h-full cursor-pointer group" onClick={backHandler}>
             {/* @ts-ignore TODO */}
             <BackLink label="Back" className="h-full ml-2" />
             <div className={stl.divider} />

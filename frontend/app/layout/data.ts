@@ -44,7 +44,7 @@ export const enum MENU {
   NOTES = 'notes',
   LIVE_SESSIONS = 'live-sessions',
   RECORDINGS = 'recordings',
-  STATS = 'stats',
+  STATS = 'assist-stats',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
   FUNNELS = 'funnels',
@@ -54,6 +54,7 @@ export const enum MENU {
   FEATURE_FLAGS = 'feature-flags',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
+  EXIT = 'exit',
 }
 
 export const categories: Category[] = [
@@ -62,8 +63,8 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      // { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic' },
-      // { label: 'Vault', key: MENU.VAULT, icon: 'safe' },
+      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
+      { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
     ]
@@ -74,7 +75,7 @@ export const categories: Category[] = [
     items: [
       { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
       { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true },
-      { label: 'Stats', key: MENU.STATS, icon: 'file-bar-graph' },
+      { label: 'Reports', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
     ]
   },
   {
@@ -107,11 +108,18 @@ export const categories: Category[] = [
 
 export const preferences: Category[] = [
   {
+    title: '',
+    key: 'exit',
+    items: [
+      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' }
+    ]
+  },
+  {
     title: 'Preferences',
     key: 'preferences',
     items: [
       { label: 'Account', key: PREFERENCES_MENU.ACCOUNT, icon: 'person' },
-      { label: 'Session Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
+      { label: 'Sessions Listing', key: PREFERENCES_MENU.SESSION_LISTING, icon: 'card-list' },
       { label: 'Integrations', key: PREFERENCES_MENU.INTEGRATIONS, icon: 'plug' },
       { label: 'Metadata', key: PREFERENCES_MENU.METADATA, icon: 'tags' },
       { label: 'Webhooks', key: PREFERENCES_MENU.WEBHOOKS, icon: 'link-45deg' },
@@ -126,8 +134,8 @@ export const preferences: Category[] = [
       },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true },
       { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
-      { label: 'Notifications', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'bell' },
-      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'bell', hidden: true }
+      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper' },
+      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true }
     ]
   }
 ];

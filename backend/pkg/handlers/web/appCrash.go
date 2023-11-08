@@ -1,7 +1,6 @@
 package web
 
 import (
-	"log"
 	"openreplay/backend/pkg/messages"
 )
 
@@ -50,7 +49,6 @@ func (h *AppCrashDetector) build() messages.Message {
 			Timestamp: h.dropTimestamp,
 			Type:      "app_crash",
 		}
-		log.Printf("created app crash event: %+v", msg)
 		h.reset()
 		return msg
 	}

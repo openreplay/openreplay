@@ -94,7 +94,10 @@ export default class NetworkMessage {
   }
 
   isHeaderIgnored(key: string) {
-    if (Array.isArray(this.ignoredHeaders)) return this.ignoredHeaders.includes(key)
-    return this.ignoredHeaders
+    if (Array.isArray(this.ignoredHeaders)) {
+      return this.ignoredHeaders.map((k) => k.toLowerCase()).includes(key.toLowerCase())
+    } else {
+      return this.ignoredHeaders
+    }
   }
 }

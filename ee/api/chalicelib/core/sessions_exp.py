@@ -988,57 +988,57 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                         event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
-            # TODO: no isNot for TimeBetweenEvents
-            elif event_type == schemas.PerformanceEventType.time_between_events:
-                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                # event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
-                event_where.append(f"main.event_type='{__get_event_type(event.value[0].type, platform=platform)}'")
-                events_conditions.append({"type": event_where[-1]})
-                event_where.append(f"main.event_type='{__get_event_type(event.value[0].type, platform=platform)}'")
-                events_conditions.append({"type": event_where[-1]})
-
-                if not isinstance(event.value[0].value, list):
-                    event.value[0].value = [event.value[0].value]
-                if not isinstance(event.value[1].value, list):
-                    event.value[1].value = [event.value[1].value]
-                event.value[0].value = helper.values_for_operator(value=event.value[0].value,
-                                                                  op=event.value[0].operator)
-                event.value[1].value = helper.values_for_operator(value=event.value[1].value,
-                                                                  op=event.value[0].operator)
-                e_k1 = e_k + "_e1"
-                e_k2 = e_k + "_e2"
-                full_args = {**full_args,
-                             **_multiple_values(event.value[0].value, value_key=e_k1),
-                             **_multiple_values(event.value[1].value, value_key=e_k2)}
-                s_op = __get_sql_operator(event.value[0].operator)
-                # event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
-                # if event_index > 0 and not or_events:
-                #     event_where.append("main2.session_id=event_0.session_id")
-                is_any = _isAny_opreator(event.value[0].operator)
-                if not is_any:
-                    event_where.append(
-                        _multiple_conditions(
-                            f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
-                            event.value[0].value, value_key=e_k1))
-                    events_conditions[-2]["condition"] = event_where[-1]
-                s_op = __get_sql_operator(event.value[1].operator)
-                is_any = _isAny_opreator(event.value[1].operator)
-                if not is_any:
-                    event_where.append(
-                        _multiple_conditions(
-                            f"main.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
-                            event.value[1].value, value_key=e_k2))
-                    events_conditions[-1]["condition"] = event_where[-1]
-
-                e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
-                # event_where.append(
-                #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
-                #                          event.source, value_key=e_k))
-                # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
-                events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator.value}%({e_k})s",
-                                                                     event.source, value_key=e_k)
-                event_index += 1
+            # # TODO: no isNot for TimeBetweenEvents
+            # elif event_type == schemas.PerformanceEventType.time_between_events:
+            #     event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+            #     # event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
+            #     event_where.append(f"main.event_type='{__get_event_type(event.value[0].type, platform=platform)}'")
+            #     events_conditions.append({"type": event_where[-1]})
+            #     event_where.append(f"main.event_type='{__get_event_type(event.value[0].type, platform=platform)}'")
+            #     events_conditions.append({"type": event_where[-1]})
+            #
+            #     if not isinstance(event.value[0].value, list):
+            #         event.value[0].value = [event.value[0].value]
+            #     if not isinstance(event.value[1].value, list):
+            #         event.value[1].value = [event.value[1].value]
+            #     event.value[0].value = helper.values_for_operator(value=event.value[0].value,
+            #                                                       op=event.value[0].operator)
+            #     event.value[1].value = helper.values_for_operator(value=event.value[1].value,
+            #                                                       op=event.value[0].operator)
+            #     e_k1 = e_k + "_e1"
+            #     e_k2 = e_k + "_e2"
+            #     full_args = {**full_args,
+            #                  **_multiple_values(event.value[0].value, value_key=e_k1),
+            #                  **_multiple_values(event.value[1].value, value_key=e_k2)}
+            #     s_op = __get_sql_operator(event.value[0].operator)
+            #     # event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
+            #     # if event_index > 0 and not or_events:
+            #     #     event_where.append("main2.session_id=event_0.session_id")
+            #     is_any = _isAny_opreator(event.value[0].operator)
+            #     if not is_any:
+            #         event_where.append(
+            #             _multiple_conditions(
+            #                 f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
+            #                 event.value[0].value, value_key=e_k1))
+            #         events_conditions[-2]["condition"] = event_where[-1]
+            #     s_op = __get_sql_operator(event.value[1].operator)
+            #     is_any = _isAny_opreator(event.value[1].operator)
+            #     if not is_any:
+            #         event_where.append(
+            #             _multiple_conditions(
+            #                 f"main.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
+            #                 event.value[1].value, value_key=e_k2))
+            #         events_conditions[-1]["condition"] = event_where[-1]
+            #
+            #     e_k += "_custom"
+            #     full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+            #     # event_where.append(
+            #     #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
+            #     #                          event.source, value_key=e_k))
+            #     # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
+            #     events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator.value}%({e_k})s",
+            #                                                          event.source, value_key=e_k)
+            #     event_index += 1
             # TODO: no isNot for RequestDetails
             elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -1062,7 +1062,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status {f.operator.value} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
@@ -1073,7 +1073,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator.value} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True

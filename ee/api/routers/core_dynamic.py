@@ -40,6 +40,8 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
     @public_app.put('/signup', tags=['signup'])
     def signup_handler(data: schemas.UserSignupSchema = Body(...)):
         content = signup.create_tenant(data)
+        if "errors" in content:
+            return content
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
         response = JSONResponse(content=content)
@@ -105,8 +107,8 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
-        t.pop("createdAt")
-        t["tenantName"] = t.pop("name")
+        t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
+        t["tenantName"] = t.get("name")
     return {
         'data': {
             **r,

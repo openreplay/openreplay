@@ -65,7 +65,12 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
             </Space>
           </Button>
         </Dropdown>
-        <Button size={'small'} icon={<TableOutlined rev={undefined} />} onClick={exportCSV}>
+        <Button
+          size={'small'}
+          icon={<TableOutlined rev={undefined} />}
+          onClick={exportCSV}
+          disabled={sessions?.list.length === 0}
+        >
           Export CSV
         </Button>
       </div>

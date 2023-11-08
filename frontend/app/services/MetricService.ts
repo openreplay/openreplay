@@ -110,7 +110,7 @@ export default class MetricService {
     if (filter.metricType === USER_PATH) {
       const widget = new Widget().fromJson(filter);
       const drillDownFilter = filter.filters;
-      filter = widget.toJson();
+      filter = { ...widget.toJson(), page: filter.page };
       filter.filters = drillDownFilter;
     }
 

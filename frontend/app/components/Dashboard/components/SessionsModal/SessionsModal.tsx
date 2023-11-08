@@ -8,8 +8,7 @@ import Session from 'App/mstore/types/session';
 import { useModal } from 'Components/Modal';
 
 interface Props {
-  list: any,
-  issue: any
+  issue: any,
 }
 
 function SessionsModal(props: Props) {
@@ -25,15 +24,17 @@ function SessionsModal(props: Props) {
 
   const fetchSessions = async (filter: any) => {
     setLoading(true);
-    filter.filters = [
-      {
+    const _filter = { ...filter };
+
+    if (issue) {
+      _filter.filters.push({
         type: 'issue',
         operator: 'is',
         value: [issue.type]
-      }
-    ];
-    const res = await metricService.fetchSessions(null, filter);
-    console.log('res', res);
+      });
+    }
+    const res = await metricService.fetchSessions(null, _filter);
+
     setList(res[0].sessions.map((item: any) => new Session().fromJson(item)));
     setTotal(res[0].total);
     setLoading(false);
@@ -43,15 +44,10 @@ function SessionsModal(props: Props) {
     fetchSessions({ ...dashboardStore.drillDownFilter, ...metricStore.instance.toJson(), limit: 10, page: page });
   }, [page]);
 
-  useEffect(() => {
-    fetchSessions({ ...dashboardStore.drillDownFilter, ...metricStore.instance.toJson(), limit: 10, page: 1 });
-  }, [props.issue]);
-
-
   return (
     <div className='bg-white h-screen'>
       <Modal.Header title='Sessions'>
-        Sessions with selected issue
+        {issue ? 'Sessions with selected issue' : 'All sessions'}
       </Modal.Header>
       <Loader loading={loading}>
         <NoContent show={length == 0} title='No data!'>

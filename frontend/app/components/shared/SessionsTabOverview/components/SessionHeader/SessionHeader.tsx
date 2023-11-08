@@ -51,12 +51,8 @@ function SessionHeader(props: Props) {
             <>
               <SessionTags />
               <div className='mr-auto' />
-              {listCount > 0 && (
-                <>
-                  <SelectDateRange period={period} onChange={onDateChange} right={true} />
-                  <div className='mx-2' />
-                </>
-              )}
+              <SelectDateRange period={period} onChange={onDateChange} right={true} />
+              <div className='mx-2' />
             </>
           )}
           <SessionSort />

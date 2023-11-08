@@ -1,9 +1,17 @@
+# 10.0.2
+
+- fix default ignore headers
+
+# 10.0.1
+
+- network proxy api is now default turned on
+
 # 10.0.0
 
 - networkRequest message changed to include `TransferredBodySize`
-- tracker now attempts to create proxy for beacon api as well (if its in scope)
+- tracker now attempts to create proxy for beacon api as well (if its in scope of the current env)
 - safe wrapper for angular apps
-- better browser lag handling
+- better browser lag handling (and some performance improvements as a bonus)
 
 # 9.0.11
 

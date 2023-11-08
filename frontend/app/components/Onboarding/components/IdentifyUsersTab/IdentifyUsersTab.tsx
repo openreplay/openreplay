@@ -8,29 +8,20 @@ import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
 
-interface Props extends WithOnboardingProps {}
+interface Props extends WithOnboardingProps {
+  platforms: Array<{
+    label: string;
+    value: string;
+  }>;
+  platform: {
+    label: string;
+    value: string;
+  };
+  setPlatform: (val: { label: string; value: string }) => void;
+}
 
 function IdentifyUsersTab(props: Props) {
-  const platforms = [
-    {
-      label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="browser/browser" size={16} /> Web
-        </div>
-      ),
-      value: 'web',
-    } as const,
-    {
-      label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="mobile" size={16} /> Mobile
-        </div>
-      ),
-      value: 'mobile',
-    } as const,
-  ];
-  const [platform, setPlatform] = React.useState(platforms[0]);
-  const { site } = props;
+  const { site, platforms, platform, setPlatform } = props;
 
   React.useEffect(() => {
     if (site.platform)
@@ -125,7 +116,12 @@ function IdentifyUsersTab(props: Props) {
                 </div>
                 {platform.value === 'web' ? (
                   <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
-                  ) : <HighlightCode className="swift" text={`ORTracker.shared.setMetadata('plan', 'premium');`} />}
+                ) : (
+                  <HighlightCode
+                    className="swift"
+                    text={`ORTracker.shared.setMetadata('plan', 'premium');`}
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,8 @@
+from typing import Optional
+
 from chalicelib.core import roles, traces, assist_records, sessions
+from chalicelib.core import sessions_insights, assist_stats
 from chalicelib.core import unlock, signals
-from chalicelib.core import sessions_insights
 from chalicelib.utils import assist_helper
 
 unlock.check()
@@ -8,7 +10,7 @@ unlock.check()
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 import schemas
-from fastapi import Depends, Body
+from fastapi import Depends, Body, Query
 
 public_app, app, app_apikey = get_routers()
 
@@ -135,3 +137,60 @@ def send_interactions(projectId: int, data: schemas.SignalsSchema = Body(...),
 def sessions_search(projectId: int, data: schemas.GetInsightsSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId)}
+
+
+@public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])
+def get_assist_stats_avg(
+        project_id: int,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
+        userId: str = None
+):
+    return assist_stats.get_averages(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        user_id=userId)
+
+
+@public_app.get(
+    '/{project_id}/assist-stats/top-members',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsTopMembersResponse
+)
+def get_assist_stats_top_members(
+        project_id: int,
+        startTimestamp: int = None,
+        endTimestamp: int = None,
+        sort: Optional[str] = Query(default="sessionsAssisted",
+                                    description="Sort options: " + ", ".join(assist_stats.event_type_mapping)),
+        order: str = "desc",
+        userId: int = None,
+        page: int = 0,
+        limit: int = 5
+):
+    return assist_stats.get_top_members(
+        project_id=project_id,
+        start_timestamp=startTimestamp,
+        end_timestamp=endTimestamp,
+        sort_by=sort,
+        sort_order=order,
+        user_id=userId,
+        page=page,
+        limit=limit
+    )
+
+
+@public_app.post(
+    '/{project_id}/assist-stats/sessions',
+    tags=["assist-stats"],
+    response_model=schemas.AssistStatsSessionsResponse
+)
+def get_assist_stats_sessions(
+        project_id: int,
+        data: schemas.AssistStatsSessionsRequest = Body(...),
+):
+    return assist_stats.get_sessions(
+        project_id=project_id,
+        data=data
+    )

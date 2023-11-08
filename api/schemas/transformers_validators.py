@@ -32,7 +32,7 @@ def force_is_event(events_enum: list[Type[Enum]]):
             for v in value:
                 r = False
                 for en in events_enum:
-                    if en.has_value(v["type"]):
+                    if en.has_value(v["type"]) or en.has_value(v["type"].lower()):
                         r = True
                         break
                 v["isEvent"] = r

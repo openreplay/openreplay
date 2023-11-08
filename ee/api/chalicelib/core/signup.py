@@ -5,7 +5,7 @@ from decouple import config
 
 import schemas
 from chalicelib.core import users, telemetry, tenants
-from chalicelib.utils import captcha
+from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -83,48 +83,16 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
-        data = cur.fetchone()
-        project_id = data["project_id"]
-        api_key = data["api_key"]
+
     telemetry.new_client(tenant_id=data["tenant_id"])
-    created_at = TimeUTC.now()
     r = users.authenticate(email, password)
-    r["banner"] = False
-    r["limits"] = {
-        "teamMember": {"limit": 99, "remaining": 98, "count": 1},
-        "projects": {"limit": 99, "remaining": 98, "count": 1},
-        "metadata": [{
-            "projectId": project_id,
-            "name": project_name,
-            "limit": 10,
-            "remaining": 10,
-            "count": 0
-        }]
-    }
-    c = {
-        "tenantId": 1,
-        "name": organization_name,
-        "apiKey": api_key,
-        "remainingTrial": 14,
-        "trialEnded": False,
-        "billingPeriodStartDate": created_at,
-        "hasActivePlan": True,
-        "projects": [
-            {
-                "projectId": project_id,
-                "name": project_name,
-                "recorded": False,
-                "stackIntegrations": False,
-                "status": "red"
-            }
-        ]
-    }
+    r["smtp"] = smtp.has_smtp()
+
     return {
         'jwt': r.pop('jwt'),
         'refreshToken': r.pop('refreshToken'),
         'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
         'data': {
-            "user": r,
-            "client": c,
+            "user": r
         }
     }

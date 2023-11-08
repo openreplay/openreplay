@@ -9,43 +9,63 @@ const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
 const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab }));
 
+
+type RequestResponse = {
+  headers?: Record<string, string>;
+  body?: any;
+};
+
 function parseRequestResponse(
   r: string,
   setHeaders: (hs: Record<string, string> | null) => void,
-  setJSONBody: (body: Record<string, string> | null) => void,
+  setJSONBody: (body: Record<string, unknown> | null) => void,
   setStringBody: (body: string) => void,
-) {
+): void {
   try {
     if (!r) {
       setHeaders(null);
       setJSONBody(null);
-      setStringBody('');
       return;
     }
-    const json = JSON.parse(r)
-    const hs = json.headers
-    const bd = json.body as string
 
-    if (typeof hs === "object") {
-      setHeaders(hs);
+    let parsed: RequestResponse;
+    try {
+      parsed = JSON.parse(r);
+    } catch (e) {
+      logger.error("Error parsing request string as JSON:", e);
+      setHeaders(null);
+      setJSONBody(null);
+      return;
+    }
+
+    const { headers, body } = parsed;
+
+    // Set headers if headers is a non-null object and not an array.
+    if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+      setHeaders(headers);
     } else {
       setHeaders(null);
     }
-    if (!bd) {
-      setJSONBody(null)
-      setStringBody('')
-    }
-    try {
-      const jBody = JSON.parse(bd)
-      if (typeof jBody === "object" && jBody != null) {
-        setJSONBody(jBody)
-      } else {
-        setStringBody(bd)
+
+    // If body is not present, set it as null for JSON and an empty string for string body.
+    if (body === undefined || body === null) {
+      setJSONBody(null);
+      setStringBody('');
+    } else if (typeof body === "string") {
+      // Try to parse the body as JSON, if it fails, set it as a string body.
+      try {
+        const jBody = JSON.parse(body);
+        setJSONBody(jBody);
+      } catch {
+        setStringBody(body);
       }
-    } catch {
-      setStringBody(bd)
+    } else {
+      // If body is an object but not a string, it's already in JSON format.
+      setJSONBody(body as Record<string, unknown>);
     }
-  } catch(e) { logger.error("Error decoding payload json:", e, r)}
+  } catch (e) {
+    logger.error("Error decoding payload json:", e, r);
+  }
 }
 
 
@@ -137,7 +157,7 @@ function FetchTabs({ resource }: Props) {
               <div className="mt-6">
                 { jsonResponse 
                   ? <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
-                  : <div className="ml-3 break-words my-3"> {stringResponse} </div>  
+                  : <div className="ml-3 break-words my-3"></div>
                 }
               </div>
               <div className="divider" />

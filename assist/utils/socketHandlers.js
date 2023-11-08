@@ -1,7 +1,5 @@
 const {
     extractPeerId,
-    extractRoomId,
-    getAvailableRooms
 } = require("./helper");
 const {
     IDENTITIES,
@@ -36,50 +34,36 @@ const findSessionSocketId = async (io, roomId, tabId) => {
     return null;
 };
 
-async function sessions_agents_count(io, socket) {
-    let c_sessions = 0, c_agents = 0;
-    const rooms = await getAvailableRooms(io);
-    if (rooms.get(socket.roomId)) {
-        const connected_sockets = await io.in(socket.roomId).fetchSockets();
-
-        for (let item of connected_sockets) {
-            if (item.handshake.query.identity === IDENTITIES.session) {
-                c_sessions++;
+async function getRoomData(io, roomID) {
+    let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [];
+    const connected_sockets = await io.in(roomID).fetchSockets();
+    if (connected_sockets.length > 0) {
+        for (let sock of connected_sockets) {
+            if (sock.handshake.query.identity === IDENTITIES.session) {
+                tabsCount++;
+                tabIDs.push(sock.tabId);
             } else {
-                c_agents++;
+                agentsCount++;
+                agentIDs.push(sock.id);
             }
         }
     } else {
-        c_agents = -1;
-        c_sessions = -1;
+        tabsCount = -1;
+        agentsCount = -1;
     }
-    return {c_sessions, c_agents};
-}
-
-async function get_all_agents_ids(io, socket) {
-    let agents = [];
-    const rooms = await getAvailableRooms(io);
-    if (rooms.get(socket.roomId)) {
-        const connected_sockets = await io.in(socket.roomId).fetchSockets();
-        for (let item of connected_sockets) {
-            if (item.handshake.query.identity === IDENTITIES.agent) {
-                agents.push(item.id);
-            }
-        }
-    }
-    return agents;
+    return {tabsCount, agentsCount, tabIDs, agentIDs};
 }
 
 function processNewSocket(socket) {
     socket._connectedAt = new Date();
     socket.identity = socket.handshake.query.identity;
     socket.peerId = socket.handshake.query.peerId;
-    let {projectKey: connProjectKey, sessionId: connSessionId, tabId:connTabId} = extractPeerId(socket.peerId);
-    socket.roomId = extractRoomId(socket.peerId);
+    let {projectKey: connProjectKey, sessionId: connSessionId, tabId: connTabId} = extractPeerId(socket.peerId);
+    socket.roomId = `${connProjectKey}-${connSessionId}`;
     socket.projectId = socket.handshake.query.projectId;
     socket.projectKey = connProjectKey;
     socket.sessId = connSessionId;
-    socket.tabId = connTabId ?? (Math.random() + 1).toString(36).substring(2);
+    socket.tabId = connTabId;
     debug_log && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.roomId}`);
 }
 
@@ -88,44 +72,40 @@ async function onConnect(socket) {
     processNewSocket(socket);
 
     const io = getServer();
-    let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
+    const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+
     if (socket.identity === IDENTITIES.session) {
-        // Check if session already connected, if so, refuse new connexion
-        if (c_sessions > 0) {
-            const rooms = await getAvailableRooms(io);
-            for (let roomId of rooms.keys()) {
-                let {projectKey} = extractPeerId(roomId);
-                if (projectKey === socket.projectKey) {
-                    const connected_sockets = await io.in(roomId).fetchSockets();
-                    for (let item of connected_sockets) {
-                        if (item.tabId === socket.tabId) {
-                            error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
-                            io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
-                            return socket.disconnect();
-                        }
-                    }
+        // Check if session with the same tabID already connected, if so, refuse new connexion
+        if (sessionsCount > 0) {
+            for (let tab of tabIDs) {
+                if (tab === socket.tabId) {
+                    error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
+                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
+                    return socket.disconnect();
                 }
             }
         }
         extractSessionInfo(socket);
         // Inform all connected agents about reconnected session
-        if (c_agents > 0) {
+        if (agentsCount > 0) {
             debug_log && console.log(`notifying new session about agent-existence`);
-            let agents_ids = await get_all_agents_ids(io, socket);
-            io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agents_ids);
+            io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
             socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
 
-    } else if (c_sessions <= 0) {
+    } else if (sessionsCount <= 0) {
         debug_log && console.log(`notifying new agent about no SESSIONS with peerId:${socket.peerId}`);
         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
     await socket.join(socket.roomId);
-    const rooms = await getAvailableRooms(io);
-    if (rooms.has(socket.roomId)) {
+
+    if (debug_log) {
         let connectedSockets = await io.in(socket.roomId).fetchSockets();
-        debug_log && console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
+        if (connectedSockets.length > 0) {
+            console.log(`${socket.id} joined room:${socket.roomId}, as:${socket.identity}, members:${connectedSockets.length}`);
+        }
     }
+
     if (socket.identity === IDENTITIES.agent) {
         if (socket.handshake.query.agentInfo !== undefined) {
             socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
@@ -152,7 +132,6 @@ async function onConnect(socket) {
 }
 
 async function onDisconnect(socket) {
-    const io = getServer();
     debug_log && console.log(`${socket.id} disconnected from ${socket.roomId}`);
     if (socket.identity === IDENTITIES.agent) {
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
@@ -160,57 +139,51 @@ async function onDisconnect(socket) {
         endAssist(socket, socket.agentID);
     }
     debug_log && console.log("checking for number of connected agents and sessions");
-    let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
-    if (c_sessions === -1 && c_agents === -1) {
+    const io = getServer();
+    let {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+
+    if (sessionsCount === -1 && agentsCount === -1) {
         debug_log && console.log(`room not found: ${socket.roomId}`);
+        return;
     }
-    if (c_sessions === 0) {
+    if (sessionsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no SESSIONS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
-    if (c_agents === 0) {
+    if (agentsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no AGENTS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_AGENTS);
     }
 }
 
 async function onUpdateEvent(socket, ...args) {
-    const io = getServer();
     debug_log && console.log(`${socket.id} sent update event.`);
     if (socket.identity !== IDENTITIES.session) {
         debug_log && console.log('Ignoring update event.');
         return
     }
-    // Back compatibility (add top layer with meta information)
-    if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
-        args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
-    }
+
+    args[0] = updateSessionData(socket, args[0])
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
-    socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
-    // Update sessionInfo for all sessions in room
-    const rooms = await getAvailableRooms(io);
-    for (let roomId of rooms.keys()) {
-        if (roomId === socket.roomId) {
-            const connected_sockets = await io.in(roomId).fetchSockets();
-            for (let item of connected_sockets) {
-                if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-                    Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
-                }
-            }
+
+    // Update sessionInfo for all agents in the room
+    const io = getServer();
+    const connected_sockets = await io.in(socket.roomId).fetchSockets();
+    for (let item of connected_sockets) {
+        if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
+            Object.assign(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
+        } else if (item.handshake.query.identity === IDENTITIES.agent) {
+            socket.to(item.id).emit(EVENTS_DEFINITION.listen.UPDATE_EVENT, args[0]);
         }
     }
 }
 
 async function onAny(socket, eventName, ...args) {
-    const io = getServer();
     if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
         debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
     }
-    // Back compatibility (add top layer with meta information)
-    if (args[0]?.meta === undefined && socket.identity === IDENTITIES.session) {
-        args[0] = {meta: {tabId: socket.tabId, version: 1}, data: args[0]};
-    }
+    args[0] = updateSessionData(socket, args[0])
     if (socket.identity === IDENTITIES.session) {
         debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.roomId}`);
         socket.to(socket.roomId).emit(eventName, args[0]);
@@ -218,6 +191,7 @@ async function onAny(socket, eventName, ...args) {
         // Stats
         handleEvent(eventName, socket, args[0]);
         debug_log && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.roomId}`);
+        const io = getServer();
         let socketId = await findSessionSocketId(io, socket.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
             debug_log && console.log(`session not found for:${socket.roomId}`);
@@ -227,6 +201,14 @@ async function onAny(socket, eventName, ...args) {
             io.to(socketId).emit(eventName, socket.id, args[0]);
         }
     }
+}
+
+// Back compatibility (add top layer with meta information)
+function updateSessionData(socket, sessionData) {
+    if (sessionData?.meta === undefined && socket.identity === IDENTITIES.session) {
+        sessionData = {meta: {tabId: socket.tabId, version: 1}, data: sessionData};
+    }
+    return sessionData
 }
 
 module.exports = {

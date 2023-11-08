@@ -48,7 +48,7 @@ function ExcludeFilters(props: Props) {
         </div>
       ) : (
         <Button variant="text-primary" onClick={addPageFilter}>
-          Add Exclustion
+          Add Exclusion
         </Button>
       )}
     </div>

@@ -13,6 +13,8 @@ export default class Filter {
     startTimestamp: number = 0
     endTimestamp: number = 0
     eventsHeader: string = "EVENTS"
+    page: number = 1
+    limit: number = 10
 
     constructor() {
         makeAutoObservable(this, {
