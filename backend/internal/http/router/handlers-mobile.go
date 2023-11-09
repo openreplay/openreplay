@@ -155,7 +155,6 @@ func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Reque
 
 func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
-	log.Printf("recieved imagerequest")
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
@@ -174,7 +173,6 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
-		// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		return
@@ -190,15 +188,12 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//prefix := r.MultipartForm.Value["projectKey"][0] + "/" + strconv.FormatUint(sessionData.ID, 10) + "/"
-
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
 			file, err := fileHeader.Open()
 			if err != nil {
-				continue // TODO: send server error or accumulate successful files
+				continue
 			}
-			//key := prefix + fileHeader.Filename
 
 			data, err := ioutil.ReadAll(file)
 			if err != nil {
@@ -210,13 +205,6 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			if err := e.services.Producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
 				log.Printf("failed to produce mobile session start message: %v", err)
 			}
-			log.Printf("Image uploaded")
-			//go func() { //TODO: mime type from header
-			//	log.Printf("Uploading image... %v", file)
-			//	//if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
-			//	//	log.Printf("Upload ios screen error. %v", err)
-			//	//}
-			//}()
 		}
 	}
 
