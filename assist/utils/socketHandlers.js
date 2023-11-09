@@ -82,12 +82,12 @@ async function onConnect(socket) {
     processNewSocket(socket);
 
     const io = getServer();
-    const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
-    console.log(`sessionsCount: ${sessionsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
+    const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    console.log(`sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
-        if (sessionsCount > 0) {
+        if (tabsCount > 0) {
             for (let tab of tabIDs) {
                 if (tab === socket.tabId) {
                     error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
@@ -96,7 +96,7 @@ async function onConnect(socket) {
                 }
             }
         }
-        if (sessionsCount < 0) {
+        if (tabsCount < 0) {
             // New session creates new room
             IncreaseTotalRooms();
             IncreaseOnlineRooms();
@@ -108,7 +108,7 @@ async function onConnect(socket) {
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
             socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
-    } else if (sessionsCount <= 0) {
+    } else if (tabsCount <= 0) {
         debug_log && console.log(`notifying new agent about no SESSIONS with peerId:${socket.peerId}`);
         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
@@ -157,14 +157,14 @@ async function onDisconnect(socket) {
     }
     debug_log && console.log("checking for number of connected agents and sessions");
     const io = getServer();
-    let {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
-    if (sessionsCount === -1 && agentsCount === -1) {
+    if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();
         debug_log && console.log(`room not found: ${socket.roomId}`);
         return;
     }
-    if (sessionsCount === 0) {
+    if (tabsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no SESSIONS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
