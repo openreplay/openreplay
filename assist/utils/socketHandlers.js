@@ -76,14 +76,14 @@ function processNewSocket(socket) {
 }
 
 async function onConnect(socket) {
-    IncreaseTotalWSConnections();
-    IncreaseOnlineConnections();
     debug_log && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
+    IncreaseTotalWSConnections(socket.identity);
+    IncreaseOnlineConnections(socket.identity);
 
     const io = getServer();
     const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
-    console.log(`sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
+    console.log(`onConnect. sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
@@ -147,7 +147,7 @@ async function onConnect(socket) {
 }
 
 async function onDisconnect(socket) {
-    DecreaseOnlineConnections();
+    DecreaseOnlineConnections(socket.identity);
     debug_log && console.log(`${socket.id} disconnected from ${socket.roomId}`);
 
     if (socket.identity === IDENTITIES.agent) {
@@ -158,6 +158,7 @@ async function onDisconnect(socket) {
     debug_log && console.log("checking for number of connected agents and sessions");
     const io = getServer();
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    console.log(`onDisconnect. sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();

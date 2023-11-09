@@ -49,12 +49,12 @@ const websocketOnlineConnections = new client.Gauge({
     labelNames: ['type'], // tab, agent
 });
 
-const IncreaseOnlineConnections = function () {
-    websocketOnlineConnections.inc();
+const IncreaseOnlineConnections = function (type) {
+    websocketOnlineConnections.inc({type: type});
 }
 
-const DecreaseOnlineConnections = function () {
-    websocketOnlineConnections.dec();
+const DecreaseOnlineConnections = function (type) {
+    websocketOnlineConnections.dec({type: type});
 }
 
 const websocketTotalRooms = new client.Counter({
