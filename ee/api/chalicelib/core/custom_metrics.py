@@ -307,9 +307,6 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         filters=filters
     )
 
-    if len(search_data.events) == 0:
-        return {"data": {}}
-
     for s in data.excludes:
         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                      operator=schemas.SearchEventOperator._not_on,
