@@ -83,7 +83,6 @@ async function onConnect(socket) {
 
     const io = getServer();
     const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
-    console.log(`onConnect. sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
@@ -158,7 +157,6 @@ async function onDisconnect(socket) {
     debug_log && console.log("checking for number of connected agents and sessions");
     const io = getServer();
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
-    console.log(`onDisconnect. sessionsCount: ${tabsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();
