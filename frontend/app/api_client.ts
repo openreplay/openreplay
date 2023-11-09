@@ -51,7 +51,8 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
 
 export default class APIClient {
   private init: RequestInit;
-  private siteId: string | undefined;
+  private readonly siteId: string | undefined;
+  private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
     const jwt = store.getState().getIn(['user', 'jwt']);
@@ -68,6 +69,32 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
+  private getInit(method: string = 'GET', params?: any): RequestInit {
+    // Always fetch the latest JWT from the store
+    const jwt = store.getState().getIn(['user', 'jwt']);
+    const headers = new Headers({
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    });
+
+    if (jwt) {
+      headers.set('Authorization', `Bearer ${jwt}`);
+    }
+
+    // Create the init object
+    const init: RequestInit = {
+      method,
+      headers,
+      body: params ? JSON.stringify(params) : undefined,
+    };
+
+    if (method === 'GET') {
+      delete init.body; // GET requests shouldn't have a body
+    }
+
+    return init;
+  }
+
   private decodeJwt(jwt: string): any {
     const base64Url = jwt.split('.')[1];
     const base64 = base64Url.replace('-', '+').replace('_', '/');
@@ -80,14 +107,28 @@ export default class APIClient {
     return decoded.exp < currentTime;
   }
 
-  async fetch(path: string, params?: any, options: {
+  private async handleTokenRefresh(): Promise<string> {
+    // If we are already refreshing the token, return the existing promise
+    if (!this.refreshingTokenPromise) {
+      this.refreshingTokenPromise = this.refreshToken().finally(() => {
+        // Once the token has been refreshed, reset the promise
+        this.refreshingTokenPromise = null;
+      });
+    }
+    return this.refreshingTokenPromise;
+  }
+
+  async fetch(path: string, params?: any, method: string = 'GET', options: {
     clean?: boolean
   } = { clean: true }): Promise<Response> {
-    const jwt = store.getState().getIn(['user', 'jwt']);
+    let jwt = store.getState().getIn(['user', 'jwt']);
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
-      const newJwt = await this.refreshToken();
-      (this.init.headers as Headers).set('Authorization', `Bearer ${newJwt}`);
+      jwt = await this.handleTokenRefresh();
+      (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
+
+    const init = this.getInit(method, options.clean ? clean(params) : params);
+
 
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
@@ -111,7 +152,7 @@ export default class APIClient {
       edp = `${edp}/${this.siteId}`;
     }
 
-    return fetch(edp + path, this.init).then((response) => {
+    return fetch(edp + path, init).then((response) => {
       if (response.ok) {
         return response;
       } else {
@@ -121,34 +162,43 @@ export default class APIClient {
   }
 
   async refreshToken(): Promise<string> {
-    const response = await this.fetch('/refresh', {
-      method: 'GET',
-      headers: this.init.headers
-    }, { clean: false });
+    try {
+      const response = await this.fetch('/refresh', {
+        headers: this.init.headers
+      }, 'GET', { clean: false });
 
-    const data = await response.json();
-    const refreshedJwt = data.jwt;
-    store.dispatch(setJwt(refreshedJwt));
-    return refreshedJwt;
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      const refreshedJwt = data.jwt;
+      store.dispatch(setJwt(refreshedJwt));
+      return refreshedJwt;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      store.dispatch(setJwt(null));
+      throw error;
+    }
   }
 
   get(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'GET';
-    return this.fetch(queried(path, params, options));
+    return this.fetch(queried(path, params), 'GET', options);
   }
 
   post(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'POST';
-    return this.fetch(path, params);
+    return this.fetch(path, params, 'POST');
   }
 
   put(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'PUT';
-    return this.fetch(path, params);
+    return this.fetch(path, params, 'PUT');
   }
 
   delete(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'DELETE';
-    return this.fetch(path, params);
+    return this.fetch(path, params, 'DELETE');
   }
 }
