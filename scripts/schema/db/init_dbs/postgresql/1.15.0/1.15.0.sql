@@ -132,6 +132,8 @@ SET gdpr=(SELECT *
           LIMIT 1)
 WHERE jsonb_typeof(gdpr) = 'array';
 
+ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'app_crash';
+
 COMMIT;
 
 \elif :is_next
