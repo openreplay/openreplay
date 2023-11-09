@@ -83,6 +83,7 @@ async function onConnect(socket) {
 
     const io = getServer();
     const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    console.log(`sessionsCount: ${sessionsCount}, agentsCount: ${agentsCount}, tabIDs: ${tabIDs}, agentIDs: ${agentIDs}`);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
