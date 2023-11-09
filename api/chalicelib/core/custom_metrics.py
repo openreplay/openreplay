@@ -255,6 +255,8 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     for s in data.series:
         if len(data.filters) > 0:
             s.filter.filters += data.filters
+            s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
+
         results.append({"seriesId": None, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -284,9 +286,6 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         page=data.page,
         filters=filters
     )
-
-    if len(search_data.events) == 0:
-        return {"data": {}}
 
     for s in data.excludes:
         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
