@@ -463,9 +463,9 @@ def get_stages(stages, rows):
                 drop = int(100 * (session_counts[i] - session_counts[i + 1]) / session_counts[i])
 
         stages_list.append(
-            {"value": stage["value"],
-             "type": stage["type"],
-             "operator": stage["operator"],
+            {"value": stage.value,
+             "type": stage.type,
+             "operator": stage.operator,
              "sessionsCount": session_counts[i + 1],
              "drop_pct": drop,
              "usersCount": users_counts[i + 1],
@@ -593,8 +593,8 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     stages_list = get_stages(stages, rows)
     # Obtain the second part of the output
     total_drop_due_to_issues = get_issues(stages, rows,
-                                          first_stage=filter_d.get("firstStage"),
-                                          last_stage=filter_d.get("lastStage"),
+                                          first_stage=1,
+                                          last_stage=len(filter_d.events),
                                           drop_only=True)
     return stages_list, total_drop_due_to_issues
 
@@ -614,46 +614,4 @@ def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_
     output['total_drop_due_to_issues'] = total_drop_due_to_issues
     # output['critical_issues_count'] = n_critical_issues
     output = {**output, **issues_dict}
-    return output
-
-
-def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
-    output = dict()
-    stages = filter_d["events"]
-    # TODO: handle 1 stage alone
-    if len(stages) == 0:
-        return {"stages": [],
-                "criticalIssuesCount": 0}
-    elif len(stages) == 1:
-        # TODO: count sessions, and users for single stage
-        output["stages"] = [{
-            "type": stages[0]["type"],
-            "value": stages[0]["value"],
-            "sessionsCount": None,
-            "dropPercentage": None,
-            "usersCount": None
-        }]
-        return output
-    # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
-    if len(rows) == 0:
-        # PS: not sure what to return if rows are empty
-        output["stages"] = [{
-            "type": stages[0]["type"],
-            "value": stages[0]["value"],
-            "sessionsCount": None,
-            "dropPercentage": None,
-            "usersCount": None
-        }]
-        output['criticalIssuesCount'] = 0
-        return output
-    # Obtain the first part of the output
-    stages_list = get_stages(stages, rows)
-
-    # Obtain the second part of the output
-    n_critical_issues, issues_dict, total_drop_due_to_issues = get_issues(stages, rows, first_stage=first_stage,
-                                                                          last_stage=last_stage)
-
-    output['stages'] = stages_list
-    output['criticalIssuesCount'] = n_critical_issues
     return output

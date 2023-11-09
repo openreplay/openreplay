@@ -761,6 +761,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     def merge_identical_filters(cls, values):
         i = 0
         while i < len(values):
+            if values[i].is_event:
+                i += 1
+                continue
             j = i + 1
             while j < len(values):
                 if values[i].type == values[j].type:
@@ -1022,16 +1025,6 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         for v in values.get("filters", []):
             if v.get("isEvent") is None:
                 v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-        return values
-
-    @model_validator(mode="before")
-    def remove_wrong_filter_values(cls, values):
-        for f in values.get("filters", []):
-            vals = []
-            for v in f.get("value", []):
-                if v is not None:
-                    vals.append(v)
-            f["value"] = vals
         return values
 
     @model_validator(mode="before")
