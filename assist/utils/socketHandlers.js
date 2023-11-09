@@ -15,6 +15,14 @@ const {
 const {
     getServer
 } = require('../utils/wsServer');
+const {
+    IncreaseTotalWSConnections,
+    IncreaseOnlineConnections,
+    DecreaseOnlineConnections,
+    IncreaseTotalRooms,
+    IncreaseOnlineRooms,
+    DecreaseOnlineRooms,
+} = require('../utils/metrics');
 
 const debug_log = process.env.debug === "1";
 const error_log = process.env.ERROR === "1";
@@ -70,13 +78,15 @@ function processNewSocket(socket) {
 async function onConnect(socket) {
     debug_log && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
+    IncreaseTotalWSConnections(socket.identity);
+    IncreaseOnlineConnections(socket.identity);
 
     const io = getServer();
-    const {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    const {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
     if (socket.identity === IDENTITIES.session) {
         // Check if session with the same tabID already connected, if so, refuse new connexion
-        if (sessionsCount > 0) {
+        if (tabsCount > 0) {
             for (let tab of tabIDs) {
                 if (tab === socket.tabId) {
                     error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.peerId}`);
@@ -85,6 +95,11 @@ async function onConnect(socket) {
                 }
             }
         }
+        if (tabsCount < 0) {
+            // New session creates new room
+            IncreaseTotalRooms();
+            IncreaseOnlineRooms();
+        }
         extractSessionInfo(socket);
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
@@ -92,8 +107,7 @@ async function onConnect(socket) {
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
             socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
-
-    } else if (sessionsCount <= 0) {
+    } else if (tabsCount <= 0) {
         debug_log && console.log(`notifying new agent about no SESSIONS with peerId:${socket.peerId}`);
         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
@@ -132,7 +146,9 @@ async function onConnect(socket) {
 }
 
 async function onDisconnect(socket) {
+    DecreaseOnlineConnections(socket.identity);
     debug_log && console.log(`${socket.id} disconnected from ${socket.roomId}`);
+
     if (socket.identity === IDENTITIES.agent) {
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
         // Stats
@@ -140,13 +156,14 @@ async function onDisconnect(socket) {
     }
     debug_log && console.log("checking for number of connected agents and sessions");
     const io = getServer();
-    let {sessionsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
+    let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.roomId);
 
-    if (sessionsCount === -1 && agentsCount === -1) {
+    if (tabsCount === -1 && agentsCount === -1) {
+        DecreaseOnlineRooms();
         debug_log && console.log(`room not found: ${socket.roomId}`);
         return;
     }
-    if (sessionsCount === 0) {
+    if (tabsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no SESSIONS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
