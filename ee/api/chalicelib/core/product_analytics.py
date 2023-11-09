@@ -382,7 +382,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                   sessions_count,
                                   avg_time_from_previous
                            FROM n1"""]
-    for i in range(2, data.density):
+    for i in range(2, data.density + 1):
         steps_query.append(f"""n{i} AS (SELECT *
                                         FROM (SELECT re.event_number_in_session AS event_number_in_session,
                                                      re.event_type AS event_type,
@@ -428,7 +428,7 @@ WITH {initial_event_cte}
                                  FROM {main_table}
                                  WHERE {" AND ".join(ch_sub_query)}
                                  ) AS full_ranked_events
-                           WHERE event_number_in_session < 4)
+                           WHERE event_number_in_session <= %(density)s)
 SELECT *
 FROM pre_ranked_events;"""
         ch.execute(query=ch_query1, params=params)

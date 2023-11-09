@@ -349,7 +349,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                    sessions_count,
                                    avg_time_from_previous
                            FROM n1)"""]
-    for i in range(2, data.density):
+
+    for i in range(2, data.density + 1):
         steps_query.append(f"""n{i} AS (SELECT *
                                       FROM (SELECT re.event_number_in_session,
                                                    re.event_type,
@@ -388,7 +389,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
                                         row_number() OVER (PARTITION BY session_id ORDER BY timestamp {path_direction}) AS event_number_in_session
                                  FROM sub_events
                                  ORDER BY session_id) AS full_ranked_events
-                           WHERE event_number_in_session < %(density)s),
+                           WHERE event_number_in_session <= %(density)s),
      start_points AS (SELECT session_id
                       FROM {start_points_from}
                       WHERE {" AND ".join(start_points_conditions)}),
