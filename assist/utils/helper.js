@@ -45,7 +45,8 @@ const request_logger = (identity) => {
         res.on('finish', function () {
             const duration = performance.now() - startTs;
             IncreaseTotalRequests();
-            RecordRequestDuration(req.method, req.originalUrl, this.statusCode, duration);
+            let route = req.originalUrl.split('/')[3];
+            RecordRequestDuration(req.method, route, this.statusCode, duration);
             if (this.statusCode !== 200 || debug) {
                 console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
             }
