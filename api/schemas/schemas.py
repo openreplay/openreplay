@@ -1003,13 +1003,6 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     _transform_filters = field_validator('filters', mode='before') \
         (force_is_event(events_enum=[EventType, PerformanceEventType]))
 
-    # @model_validator(mode="before")
-    # def __force_is_event(cls, values):
-    #     for v in values.get("filters"):
-    #         if v.get("isEvent") is None:
-    #             v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
-    #     return values
-
     @model_validator(mode="before")
     def remove_wrong_filter_values(cls, values):
         for f in values.get("filters", []):
@@ -1035,11 +1028,6 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         if values.get("endTimestamp") is None:
             values["endTimestamp"] = TimeUTC.now()
 
-        for s in values.get("series", []):
-            if s.get("filter") is not None:
-                s["filter"]["startTimestamp"] = values["startTimestamp"]
-                s["filter"]["endTimestamp"] = values["endTimestamp"]
-
         return values
 
     @model_validator(mode="after")
@@ -1048,6 +1036,8 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
             if s.filter is not None:
                 s.filter.limit = values.limit
                 s.filter.page = values.page
+                s.filter.startTimestamp = values.startTimestamp
+                s.filter.endTimestamp = values.endTimestamp
 
         return values
 

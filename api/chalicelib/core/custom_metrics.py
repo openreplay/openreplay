@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import List
 
 from decouple import config
 from fastapi import HTTPException, status
@@ -186,22 +185,18 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
 
 def __merge_metric_with_data(metric: schemas.CardSchema,
                              data: schemas.CardSessionsSchema) -> schemas.CardSchema:
+    metric.startTimestamp = data.startTimestamp
+    metric.endTimestamp = data.endTimestamp
+    metric.page = data.page
+    metric.limit = data.limit
+    metric.density = data.density
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
-    # TODO: try to refactor this
-    metric: schemas.CardSchema = schemas.CardSchema(**{**data.model_dump(by_alias=True),
-                                                       **metric.model_dump(by_alias=True)})
-    # if len(data.filters) > 0 or len(data.events) > 0:
+
     if len(data.filters) > 0:
         for s in metric.series:
-            # if len(data.filters) > 0:
             s.filter.filters += data.filters
-            # if len(data.events) > 0:
-            #     s.filter.events += data.events
-    # metric.limit = data.limit
-    # metric.page = data.page
-    # metric.startTimestamp = data.startTimestamp
-    # metric.endTimestamp = data.endTimestamp
+    metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
     return metric
 
 
@@ -214,27 +209,13 @@ def make_chart(project_id, user_id, data: schemas.CardSessionsSchema, metric: sc
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False, include_data=True)
     card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if card is None:
         return None
     metric: schemas.CardSchema = schemas.CardSchema(**card)
     metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
     results = []
-    # is_click_map = False
-    # if __is_click_map(metric) and raw_metric.get("data") is not None:
-    #     is_click_map = True
     for s in metric.series:
-        # s.filter.startTimestamp = data.startTimestamp
-        # s.filter.endTimestamp = data.endTimestamp
-        # s.filter.limit = data.limit
-        # s.filter.page = data.page
-        # if is_click_map:
-        #     results.append(
-        #         {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
-        #     break
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -274,8 +255,6 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     for s in data.series:
         if len(data.filters) > 0:
             s.filter.filters += data.filters
-        # if len(data.events) > 0:
-        #     s.filter.events += data.events
         results.append({"seriesId": None, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -309,15 +288,6 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
     if len(search_data.events) == 0:
         return {"data": {}}
 
-    # for s in data.start_point:
-    #     if data.start_type == "end":
-    #         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
-    #                                                                      operator=s.operator,
-    #                                                                      value=s.value))
-    #     else:
-    #         search_data.filters.insert(0, schemas.SessionSearchEventSchema2(type=s.type,
-    #                                                                         operator=s.operator,
-    #                                                                         value=s.value))
     for s in data.excludes:
         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                      operator=schemas.SearchEventOperator._not_on,
@@ -388,9 +358,6 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
                         RETURNING metric_id;"""
 
         query = cur.mogrify(query, params)
-        # print("-------")
-        # print(query)
-        # print("-------")
         cur.execute(query)
         r = cur.fetchone()
         if dashboard:
