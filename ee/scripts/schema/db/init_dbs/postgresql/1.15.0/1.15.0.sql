@@ -124,13 +124,13 @@ ALTER TABLE IF EXISTS public.metrics
 
 CREATE TABLE IF NOT EXISTS public.assist_events
 (
-    event_id    varchar NOT NULL PRIMARY KEY,
-    project_id  integer NOT NULL,
-    session_id  varchar NOT NULL,
-    event_type  varchar NOT NULL,
-    timestamp   bigint NOT NULL,
-    duration    integer,
-    agent_id    integer
+    event_id   varchar NOT NULL PRIMARY KEY,
+    project_id integer NOT NULL,
+    session_id varchar NOT NULL,
+    event_type varchar NOT NULL,
+    timestamp  bigint  NOT NULL,
+    duration   integer,
+    agent_id   integer
 );
 
 CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
@@ -162,6 +162,8 @@ SET gdpr=(SELECT *
           WHERE jsonb_typeof(g) = 'object'
           LIMIT 1)
 WHERE jsonb_typeof(gdpr) = 'array';
+
+ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'app_crash';
 
 COMMIT;
 
