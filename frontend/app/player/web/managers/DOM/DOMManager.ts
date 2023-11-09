@@ -113,6 +113,10 @@ export default class DOMManager extends ListWalker<Message> {
     return false;
   }
 
+  public getNode(id: number) {
+    return this.vElements.get(id) || this.vTexts.get(id)
+  }
+
   private insertNode({ parentID, id, index }: { parentID: number, id: number, index: number }): void {
     const child = this.vElements.get(id) || this.vTexts.get(id)
     if (!child) {
@@ -208,7 +212,8 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.CreateElementNode: {
-        const vElem = new VElement(msg.tag, msg.svg)
+        if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
+        const vElem = new VElement(msg.tag, msg.svg, msg.index)
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true
         }

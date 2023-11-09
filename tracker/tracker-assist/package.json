@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "6.0.3",
+  "version": "6.0.4-53",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -31,10 +31,11 @@
   "dependencies": {
     "csstype": "^3.0.10",
     "peerjs": "1.5.1",
+    "simple-peer-light": "^9.10.0",
     "socket.io-client": "^4.7.2"
   },
   "peerDependencies": {
-    "@openreplay/tracker": ">=8.0.0"
+    "@openreplay/tracker": ">=10.0.3"
   },
   "devDependencies": {
     "@openreplay/tracker": "file:../tracker",

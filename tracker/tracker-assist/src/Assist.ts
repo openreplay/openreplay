@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
+import {hasTag,} from '@openreplay/tracker/lib/app/guards'
 import type { Socket, } from 'socket.io-client'
 import { connect, } from 'socket.io-client'
 import Peer, { MediaConnection, } from 'peerjs'
@@ -14,12 +15,23 @@ import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 import ScreenRecordingState from './ScreenRecordingState.js'
 import { pkgVersion, } from './version.js'
+import Canvas from './Canvas.js'
+// @ts-ignore
+import SLPeer from 'simple-peer-light'
 
 // TODO: fully specified strict check with no-any (everywhere)
 // @ts-ignore
 const safeCastedPeer = Peer.default || Peer
 
 type StartEndCallback = (agentInfo?: Record<string, any>) => ((() => any) | void)
+
+interface AgentInfo {
+  email: string;
+  id: number
+  name: string
+  peerId: string
+  query: string
+}
 
 export interface Options {
   onAgentConnect: StartEndCallback;
@@ -58,7 +70,7 @@ type OptionalCallback = (()=>Record<string, unknown>) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
   onControlReleased?: OptionalCallback,
-  agentInfo: Record<string, string> | undefined
+  agentInfo: AgentInfo | undefined
   //
 }
 
@@ -74,6 +86,8 @@ export default class Assist {
 
   private agents: Record<string, Agent> = {}
   private readonly options: Options
+  private readonly canvasMap: Map<number, Canvas> = new Map()
+
   constructor(
     private readonly app: App,
     options?: Partial<Options>,
@@ -151,6 +165,7 @@ export default class Assist {
     }
     return ''
   }
+
   private onStart() {
     const app = this.app
     const sessionId = app.getSessionID()
@@ -276,7 +291,7 @@ export default class Assist {
     socket.on('startAnnotation', (id, event) => processEvent(id, event, (_,  d) => annot?.start(d)))
     socket.on('stopAnnotation', (id, event) => processEvent(id, event, annot?.stop))
 
-    socket.on('NEW_AGENT', (id: string, info) => {
+    socket.on('NEW_AGENT', (id: string, info: AgentInfo) => {
       this.agents[id] = {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
@@ -386,7 +401,7 @@ export default class Assist {
       host: this.getHost(),
       path: this.getBasePrefixUrl()+'/assist',
       port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
-      //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
+      debug: 2, //appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
     }
     if (this.options.config) {
       peerOptions['config'] = this.options.config
@@ -547,6 +562,53 @@ export default class Assist {
         app.debug.log(reason)
       })
     })
+
+    app.nodes.attachNodeCallback((node) => {
+      const id = app.nodes.getID(node)
+      if (id && hasTag(node, 'canvas')) {
+        // if (this.canvasMap.has(id)) {
+        //   console.log('testing old peer conn')
+        //   const canvasHandler = this.canvasMap.get(id) as Canvas
+        //   return canvasHandler?.restart()
+        // } else {
+        // https://raphamorim.io/canvas-experiments/draw
+        const canvasHandler = new Canvas(
+          node as unknown as HTMLCanvasElement,
+          id,
+          30,
+          (stream, canvasId) => {
+              const slPeer = new SLPeer({ initiator: true, stream: stream, })
+              slPeer.on('signal', (data: any) => {
+                this.emit('c_signal', { data, id, })
+              })
+              this.socket?.on('c_signal', (tab: string, data: any) => {
+                console.log(data)
+                slPeer.signal(data)
+              })
+              slPeer.on('error', console.error)
+              this.emit('canvas_stream', { canvasId, })
+            // setTimeout(() => {
+            //   Object.values(this.agents).forEach(agent => {
+            //     if (agent.agentInfo) {
+            //       const id = `${agent.agentInfo.peerId}-canvas` // -${canvasId}
+            //       const connection = this.peer?.connect(id)
+            //       connection?.on('open', () => {
+            //         const callConn = this.peer?.call(id, stream)
+            //         callConn?.on('error', console.error)
+            //       })
+            //       connection?.on('error', (err) => {
+            //         console.log('error', err)
+            //       })
+            //       this.peer?.on('error', (err) => console.log('peer error', err))
+            //     }
+            //   })
+            // }, 100)
+          },
+        )
+        this.canvasMap.set(id, canvasHandler)
+      }
+      // }
+    })
   }
 
   private playNotificationSound() {
@@ -570,5 +632,15 @@ export default class Assist {
       this.socket.disconnect()
       this.app.debug.log('Socket disconnected')
     }
+  }
+}
+
+async function getWebcamStream() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true, })
+    return stream
+  } catch (error) {
+    console.error('Error accessing webcam.', error)
+    throw error // Rethrow the error after logging or handling it
   }
 }

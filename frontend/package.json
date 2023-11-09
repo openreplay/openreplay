@@ -78,6 +78,7 @@
     "redux-thunk": "^2.3.0",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.1.2",
+    "simple-peer-light": "^9.10.0",
     "socket.io-client": "^4.4.1",
     "source-map": "^0.7.3",
     "syncod": "^0.0.1"

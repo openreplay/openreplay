@@ -76,6 +76,10 @@ export default class TabSessionManager {
     })
   }
 
+  public getNode(id: number) {
+    return this.pagesManager.getNode(id)
+  }
+
   public updateLists(lists: Partial<InitialLists>) {
     Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
       const currentList = this.lists.lists[key]

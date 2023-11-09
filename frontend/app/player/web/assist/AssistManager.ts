@@ -1,3 +1,4 @@
+import MessageManager from "Player/web/MessageManager";
 import type { Socket } from 'socket.io-client';
 import type Screen from '../Screen/Screen';
 import type { Store } from '../../common/types'
@@ -7,7 +8,7 @@ import JSONRawMessageReader from '../messages/JSONRawMessageReader'
 import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl'
 import ScreenRecording,  { SessionRecordingStatus } from './ScreenRecording'
-
+import CanvasReceiver from "Player/web/assist/CanvasReceiver";
 
 export {
   RemoteControlStatus,
@@ -60,6 +61,7 @@ const MAX_RECONNECTION_COUNT = 4;
 
 export default class AssistManager {
   assistVersion = 1
+  private canvasReceiver: CanvasReceiver
   static readonly INITIAL_STATE = {
     peerConnectionStatus: ConnectionStatus.Connecting,
     assistStart: 0,
@@ -75,6 +77,7 @@ export default class AssistManager {
     private screen: Screen,
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
+    private getNode: MessageManager['getNode'],
     public readonly uiErrorHandler?: { error: (msg: string) => void }
   ) {}
 
@@ -172,6 +175,7 @@ export default class AssistManager {
           agentInfo: JSON.stringify({
             ...this.session.agentInfo,
             id: agentId,
+            peerId: this.peerID,
             query: document.location.search,
           })
         }
@@ -275,6 +279,15 @@ export default class AssistManager {
         () => this.screen.setBorderStyle(this.borderStyle),
         this.uiErrorHandler,
         this.getAssistVersion,
+      )
+      this.canvasReceiver = this.canvasReceiver
+        ? this.canvasReceiver
+        : new CanvasReceiver(
+        this.peerID,
+        this.config,
+        this.socket,
+        this.getNode,
+          this.screen,
       )
 
       document.addEventListener('visibilitychange', this.onVisChange)
