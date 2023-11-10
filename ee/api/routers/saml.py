@@ -107,9 +107,14 @@ async def process_sso_assertion(request: Request):
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    return Response(
+    refresh_token = jwt["refreshToken"]
+    refresh_token_max_age = jwt["refreshTokenMaxAge"]
+    response = Response(
         status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt)})
+        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"])})
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    return response
 
 
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])

@@ -854,10 +854,16 @@ def authenticate_sso(email, internal_id, exp=None):
         if r["serviceAccount"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="service account is not authorized to login")
-        jwt_iat = TimeUTC.datetime_to_timestamp(refresh_jwt_iat_jti(r['userId']))
-        return authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                        iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
-                                        exp=(exp + jwt_iat // 1000) if exp is not None else None)
+        jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=r['userId'])
+        return {
+            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+                                            aud=f"front:{helper.get_stage_name()}"),
+            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                             jwt_jti=jwt_r_jti),
+            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+        }
+
     return None
 
 
