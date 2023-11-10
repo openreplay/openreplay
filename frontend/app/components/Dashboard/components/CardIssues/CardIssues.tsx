@@ -86,9 +86,10 @@ function CardIssues() {
       <div className='flex justify-between'>
         <div className='flex items-center'>
           <h1 className='font-medium text-2xl'>Issues</h1>
-          {filter.filters.length > 0 && (
+          {!!filter.filters[1] && (
             <div className='text-disabled-text ml-3'>
-              Showing issues of <span className='font-medium'>{filter.filters[0].value}</span> to
+              Showing issues of <span className='font-medium'>{filter.filters[0].value}</span>
+              <span className="mx-1">to</span>
               <span className='font-medium'>{filter.filters[1].value}</span>
             </div>
           )}
