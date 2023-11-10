@@ -1362,8 +1362,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                     FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
                                     WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
         else:
-            extra_join += f"""(SELECT * 
-                                FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
+            extra_join = f"""(SELECT * 
+                                FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}
                                 ORDER BY _timestamp DESC
                                 LIMIT 1 BY session_id) AS s"""
