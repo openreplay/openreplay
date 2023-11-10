@@ -12,7 +12,8 @@ const ISSUE_MAP: any = {
   custom_event_error: { name: 'Custom Event Error', icon: 'funnel/exclamation-circle-fill', color: '#BF6C00' },
   custom: { name: 'Custom', icon: 'funnel/exclamation-circle-fill', color: '#BF6C00' },
   crash: { name: 'Crash', icon: 'funnel/file-x', color: '#BF2D00' },
-  js_exception: { name: 'JS Exception', icon: 'funnel/exclamation-circle', color: '#BF2D00' }
+  js_exception: { name: 'JS Exception', icon: 'funnel/exclamation-circle', color: '#BF2D00' },
+  mouse_thrashing: { name: 'Mouse Thrashing', icon: 'event/mouse_thrashing', color: '#D3545F' },
 };
 
 export default class Issue {
