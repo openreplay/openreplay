@@ -23,6 +23,6 @@
     "jsonwebtoken": "^9.0.2",
     "prom-client": "^15.0.0",
     "socket.io": "^4.7.2",
-    "ua-parser-js": "^1.0.35"
+    "ua-parser-js": "^1.0.37"
   }
 }
