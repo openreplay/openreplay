@@ -132,7 +132,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     const input = argsList[0]
     const init = argsList[1]
     // @ts-ignore
-    if (!input?.url && !input) return <ReturnType<T>>target.apply(window, argsList)
+    if (!input || !input?.url) return <ReturnType<T>>target.apply(window, argsList)
 
     const isORUrl =
       input instanceof URL || typeof input === 'string'
@@ -179,7 +179,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       })
   }
 
-  protected beforeFetch(item: NetworkMessage, input: RequestInfo, init?: RequestInit) {
+  protected beforeFetch(item: NetworkMessage, input: RequestInfo | string, init?: RequestInit) {
     let url: URL,
       method = 'GET',
       requestHeader: HeadersInit = {}

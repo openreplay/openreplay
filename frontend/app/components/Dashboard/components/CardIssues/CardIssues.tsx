@@ -39,7 +39,7 @@ function CardIssues() {
     return {
       ...filter,
       limit: pageSize,
-      page: metricStore.sessionsPage,
+      page: filter.page,
       series: filter.series.map(mapSeries)
     };
   }
