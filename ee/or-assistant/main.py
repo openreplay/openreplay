@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from auth.auth_key import api_key_auth
-from core.session_summary import summarize, summarize_stream
+from core.session_summary import summarize_stream
 # from utils import params
 from utils import declarations
 
@@ -28,12 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.post('/{projectId}/summary/session/{sessionId}', dependencies=[Depends(api_key_auth)])
-async def session_summary(projectId: int, sessionId: int, eventList: declarations.EventList):
-    # result = summarize(projectId, sessionId, eventList)
-    result = None
-    return {'status': 200, 'content': result}
 
 @app.get('/stream/{projectId}/summary/session/{sessionId}',
           dependencies=[Depends(api_key_auth)],

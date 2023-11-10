@@ -4,4 +4,5 @@ session_summary_base_prompt = """{event_list_json}\nDescribe the user behaviour 
 
 # LLM Request formula:
 ## {role: user/system/assistant, content: message}
+summary_context = "You are an AI assistant that summarize json invents into user behaviour. You have to give an overall view of what where the issues the user encounter, what was he trying to achieve and in which page he spent most of the time on. Be as consise as possible and anwser in few words."
 
