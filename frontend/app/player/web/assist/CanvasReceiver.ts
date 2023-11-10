@@ -13,6 +13,7 @@ export default class CanvasReceiver {
     private readonly getNode: MessageManager['getNode'],
     private readonly agentInfo: Record<string, any>
   ) {
+    console.log(agentInfo)
     // @ts-ignore
     const urlObject = new URL(window.env.API_EDP || window.location.origin);
     const peerOpts: Peer.PeerJSOption = {

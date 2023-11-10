@@ -574,10 +574,11 @@ export default class Assist {
           (stream: MediaStream) => {
             Object.values(this.agents).forEach(agent => {
               if (agent.agentInfo) {
-                const connection = this.canvasPeer?.connect(`${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`)
+                const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`
+                const connection = this.canvasPeer?.connect(target)
                 connection?.on('open', () => {
                   if (agent.agentInfo) {
-                    const pCall = this.canvasPeer?.call(`${agent.agentInfo.peerId}-canvas`, stream)
+                    const pCall = this.canvasPeer?.call(target, stream)
                     pCall?.on('error', app.debug.error)
                   }
                 })

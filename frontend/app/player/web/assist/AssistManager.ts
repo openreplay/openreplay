@@ -76,7 +76,9 @@ export default class AssistManager {
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
     private getNode: MessageManager['getNode'],
-    public readonly uiErrorHandler?: { error: (msg: string) => void }
+    public readonly uiErrorHandler?: {
+      error: (msg: string) => void;
+    }
   ) {}
 
   public getAssistVersion = () => this.assistVersion;
@@ -290,7 +292,10 @@ export default class AssistManager {
       );
       this.canvasReceiver = this.canvasReceiver
         ? this.canvasReceiver
-        : new CanvasReceiver(this.peerID, this.config, this.getNode, this.session.agentInfo);
+        : new CanvasReceiver(this.peerID, this.config, this.getNode, {
+            ...this.session.agentInfo,
+            id: agentId,
+          });
 
       document.addEventListener('visibilitychange', this.onVisChange);
     });
