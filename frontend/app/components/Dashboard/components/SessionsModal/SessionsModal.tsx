@@ -24,13 +24,17 @@ function SessionsModal(props: Props) {
 
   const fetchSessions = async (filter: any) => {
     setLoading(true);
-    const _filter = { ...filter };
+    const _filter = {
+      ...filter,
+      filters: [...filter.filters]
+    };
 
     if (issue) {
       _filter.filters.push({
         type: 'issue',
         operator: 'is',
-        value: [issue.type]
+        value: [issue.type],
+        source: issue.source,
       });
     }
     const res = await metricService.fetchSessions(null, _filter);
