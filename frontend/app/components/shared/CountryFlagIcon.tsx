@@ -8,16 +8,13 @@ interface CountryFlagProps {
 }
 
 const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, style }) => {
-  if (!hasFlag(countryCode)) {
-    return <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>;
-  }
-
   const FlagComponent = Flags[countryCode as keyof typeof Flags];
-  if (!FlagComponent) {
-    return <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>;
-  }
 
-  return <FlagComponent style={style} />;
+  return hasFlag(countryCode) && FlagComponent ? (
+    <FlagComponent style={style} />
+  ) : (
+    <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>
+  );
 };
 
 export default CountryFlagIcon;
