@@ -19743,7 +19743,6 @@ __metadata:
     sass-loader: ^13.0.0
     semantic-ui-css: ^2.4.1
     semantic-ui-react: ^2.1.2
-    simple-peer-light: ^9.10.0
     socket.io-client: ^4.4.1
     source-map: ^0.7.3
     style-loader: ^3.3.1
@@ -24309,13 +24308,6 @@ __metadata:
   version: 0.1.1
   resolution: "simple-html-tokenizer@npm:0.1.1"
   checksum: 627fd911bd98874a77df7a87e1552cb7403be7c3aa629bcc99ac13e34b9d989c318c83ea42eff130aeb3a98cea27f80fd8ed5511518396cbc2570e1e2409d9fe
-  languageName: node
-  linkType: hard
-
-"simple-peer-light@npm:^9.10.0":
-  version: 9.10.0
-  resolution: "simple-peer-light@npm:9.10.0"
-  checksum: cfc029bcc46fa780188f470827dd7cabf23580663312b665c1e1238a500749f3f3e1437feb15a8439f6231ae682d04438550c7207d64e1bd4fe37980161b239c
   languageName: node
   linkType: hard
 

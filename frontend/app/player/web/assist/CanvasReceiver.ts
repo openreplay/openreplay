@@ -3,8 +3,6 @@ import {VElement} from "Player/web/managers/DOM/VirtualDOM";
 import MessageManager from "Player/web/MessageManager";
 import Screen from "Player/web/Screen/Screen";
 import type { Socket } from 'socket.io-client';
-// @ts-ignore
-import SLPeer from 'simple-peer-light';
 
 export default class CanvasReceiver {
   private _peers: Map<string, Peer> = new Map();
@@ -17,28 +15,41 @@ export default class CanvasReceiver {
     private readonly screen: Screen,
   ) {
     // @ts-ignore
-    const peer = new SLPeer({ initiator: false })
-    socket.on('c_signal', ({ data }) => {
-      console.log('got signal', data)
-      peer.signal(data.data);
-      peer.canvasId = data.id;
-    });
-
-    peer.on('signal', (data: any) => {
-      socket.emit('c_signal', data);
-    });
-    peer.on('stream', (stream: MediaStream) => {
-      console.log('stream ready', stream, peer.canvasId);
-      this.streams.set(peer.canvasId, stream)
-      setTimeout(() => {
-        const node = this.getNode(peer.canvasId)
-        console.log(peer.canvasId, this.streams, node)
-        spawnVideo(this.streams.get(peer.canvasId)?.clone(), node, this.screen)
-      }, 500)
-    })
-    peer.on('error', console.error)
+    const urlObject = new URL(window.env.API_EDP || window.location.origin);
+    const peerOpts: Peer.PeerJSOption = {
+      host: urlObject.hostname,
+      path: '/assist',
+      port:
+        urlObject.port === ''
+          ? location.protocol === 'https:'
+            ? 443
+            : 80
+          : parseInt(urlObject.port),
+    };
+    if (this.config) {
+      peerOpts['config'] = {
+        iceServers: this.config,
+        //@ts-ignore
+        sdpSemantics: 'unified-plan',
+        iceTransportPolicy: 'all',
+      };
+    }
     const id = `${this.peerIdPrefix}-canvas`;
-    // const canvasPeer = new Peer(id, peerOpts);
+    const canvasPeer = new Peer(id, peerOpts);
+    canvasPeer.on('error', (err) => console.error('canvas peer error', err));
+    canvasPeer.on('call', (call) => {
+      call.answer()
+      const canvasId = call.peer.split('-')[2];
+      call.on('stream', (stream) => {
+        this.streams.set(canvasId, stream)
+        setTimeout(() => {
+          const node = this.getNode(parseInt(canvasId, 10))
+          console.log(canvasId, this.streams, node)
+          spawnVideo(this.streams.get(canvasId)?.clone() as MediaStream, node as VElement)
+        }, 500)
+      })
+      call.on('error', (err) => console.error('canvas call error', err));
+    })
     // this.socket.on('canvas_stream', ({ data }) => {
     //   const { canvasId } = data;
     //   console.log(id, 'got', data, peer.canvasId);
@@ -72,17 +83,17 @@ export default class CanvasReceiver {
   }
 }
 
-function spawnVideo(stream: any, node: VElement) {
+function spawnVideo(stream: MediaStream, node: VElement) {
   (node.node as HTMLVideoElement).srcObject = stream.clone();
   (node.node as HTMLVideoElement).setAttribute('autoplay', 'true');
   (node.node as HTMLVideoElement).setAttribute('muted', 'true');
   (node.node as HTMLVideoElement).setAttribute('playsinline', 'true');
   (node.node as HTMLVideoElement).setAttribute('crossorigin', 'anonymous');
-  (node.node as HTMLVideoElement).play();
+  void (node.node as HTMLVideoElement).play();
 }
 
 
-function spawnDebugVideo(stream, node) {
+function spawnDebugVideo(stream: MediaStream, node: VElement) {
   const video = document.createElement('video');
   video.id = 'canvas-or-testing';
   video.style.border = '1px solid red';
@@ -105,5 +116,39 @@ function spawnDebugVideo(stream, node) {
   video.srcObject = stream;
 
   document.body.appendChild(video)
-  void video.play()
+  video.play().then(() => {
+    console.log('started streaming canvas')
+  }).catch(e => {
+    console.error(e)
+    const waiter = () => {
+      void video.play()
+      document.removeEventListener('click', waiter)
+    }
+    document.addEventListener('click', waiter)
+    })
 }
+
+/** simple peer example
+ * // @ts-ignore
+ *     const peer = new SLPeer({ initiator: false })
+ *     socket.on('c_signal', ({ data }) => {
+ *       console.log('got signal', data)
+ *       peer.signal(data.data);
+ *       peer.canvasId = data.id;
+ *     });
+ *
+ *     peer.on('signal', (data: any) => {
+ *       socket.emit('c_signal', data);
+ *     });
+ *     peer.on('stream', (stream: MediaStream) => {
+ *       console.log('stream ready', stream, peer.canvasId);
+ *       this.streams.set(peer.canvasId, stream)
+ *       setTimeout(() => {
+ *         const node = this.getNode(peer.canvasId)
+ *         console.log(peer.canvasId, this.streams, node)
+ *         spawnVideo(this.streams.get(peer.canvasId)?.clone(), node, this.screen)
+ *       }, 500)
+ *     })
+ *     peer.on('error', console.error)
+ *
+ * */
