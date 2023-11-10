@@ -18,9 +18,9 @@ else:
     from . import errors as errors
 
 if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
-    from chalicelib.core import sessions_legacy as sessions
-else:
     from chalicelib.core import sessions
+else:
+    from chalicelib.core import sessions_legacy as sessions
 
 logger = logging.getLogger(__name__)
 PIE_CHART_GROUP = 5

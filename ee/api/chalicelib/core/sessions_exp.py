@@ -417,6 +417,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                         WHERE user_id = %(userId)s)""")
     extra_from = ""
     events_query_part = ""
+    issues = []
     __events_where_basic = ["project_id = %(projectId)s",
                             "datetime >= toDateTime(%(startDate)s/1000)",
                             "datetime <= toDateTime(%(endDate)s/1000)"]
@@ -643,6 +644,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     extra_constraints.append("notEmpty(s.issue_types)")
                     ss_constraints.append("notEmpty(ms.issue_types)")
                 else:
+                    if f.source:
+                        issues.append(f)
+
                     extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
                     # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
                     #                      value_key=f_k))
@@ -1324,6 +1328,24 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
+    elif len(issues) > 0:
+        issues_conditions = []
+        for i, f in enumerate(issues):
+            f_k_v = f"f_issue_v{i}"
+            f_k_s = f_k_v + "_source"
+            full_args = {**full_args, **_multiple_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            issues_conditions.append(_multiple_conditions(f"issues.type=%({f_k_v})s", f.value,
+                                                          value_key=f_k_v))
+            issues_conditions[-1] = f"({issues_conditions[-1]} AND issues.context_string=%({f_k_s})s)"
+        extra_join = f"""INNER JOIN (SELECT DISTINCT events.session_id
+                                 FROM experimental.issues
+                                          INNER JOIN experimental.events USING (issue_id)
+                                 WHERE issues.project_id = %(projectId)s
+                                   AND events.project_id = %(projectId)s
+                                   AND events.datetime >= toDateTime(%(startDate)s/1000)
+                                   AND events.datetime <= toDateTime(%(endDate)s/1000)
+                                   AND {" OR ".join(issues_conditions)}
+                            ) AS issues USING (session_id)"""
 
     if extra_event:
         extra_event = f"INNER JOIN ({extra_event}) AS extra_event USING(session_id)"
