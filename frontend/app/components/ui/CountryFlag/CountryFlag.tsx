@@ -3,6 +3,7 @@ import cn from 'classnames';
 import { Icon, TextEllipsis } from 'UI';
 import { Tooltip } from 'antd';
 import { countries } from 'App/constants';
+import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 interface CountryFlagProps {
   userCity?: string;
@@ -24,7 +25,7 @@ const CountryFlag: FC<CountryFlagProps> = ({
                                              style = {},
                                              width = 22,
                                              height = 15,
-                                             showLabel = false,
+                                             showLabel = false
                                            }) => {
   const knownCountry = !!country && country !== 'UN';
   const countryFlag = knownCountry ? country.toLowerCase() : '';
@@ -54,11 +55,11 @@ const CountryFlag: FC<CountryFlagProps> = ({
   return (
     <div className='flex items-center' style={style}>
       {knownCountry ? (
-        <Tooltip title={fullGeoInfo} mouseEnterDelay={0.5}>
-          <div
-            className={cn(`flag flag-${countryFlag} flex-shrink-0`, className)}
-            style={{ width: `${width}px`, height: `${height}px` }}
-          />
+        <Tooltip title={fullGeoInfo}>
+          <div>
+            <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
+                             style={{ width: `${width}px`, borderRadius: '2px' }} />
+          </div>
         </Tooltip>
       ) : (
         renderUnknownCountry
