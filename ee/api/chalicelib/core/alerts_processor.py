@@ -117,7 +117,7 @@ def Build(a):
         a["filter"]["startDate"] = -1
         a["filter"]["endDate"] = TimeUTC.now()
         full_args, query_part = sessions.search_query_parts(
-            data=schemas.SessionsSearchPayloadSchema.parse_obj(a["filter"]), error_status=None, errors_only=False,
+            data=schemas.SessionsSearchPayloadSchema.model_validate(a["filter"]), error_status=None, errors_only=False,
             issue=None, project_id=a["projectId"], user_id=None, favorite_only=False)
         subQ = f"""SELECT COUNT(session_id) AS value 
                 {query_part}"""
