@@ -200,14 +200,6 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     return metric
 
 
-def make_chart(project_id, user_id, data: schemas.CardSessionsSchema, metric: schemas.CardSchema):
-    if metric is None:
-        return None
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-
-    return get_chart(project_id=project_id, data=metric, user_id=user_id)
-
-
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if card is None:
@@ -664,11 +656,15 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
 
 def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
+
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
     raw_metric["startTimestamp"] = data.startTimestamp
     raw_metric["endTimestamp"] = data.endTimestamp
+    raw_metric["limit"] = data.limit
+    raw_metric["density"] = data.density
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
+
     if metric.is_predefined:
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
@@ -689,4 +685,4 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
                     session_id=raw_metric["data"]["sessionId"])
                 return raw_metric["data"]
 
-    return make_chart(project_id=project_id, user_id=user_id, data=data, metric=metric)
+    return get_chart(project_id=project_id, data=metric, user_id=user_id)
