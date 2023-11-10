@@ -17,7 +17,8 @@ page_event_properties = [
         'query',
         'path',
         'host',
-        'spentTime'
+#         'spentTime',
+        'pageTimeShare'
         ]
 
 
@@ -55,11 +56,16 @@ def preprocess_events(event_list: EventList, max_click_events=10, max_page_event
     ordered_click_events = [(i, ce) for (i,ce) in enumerate(event_list.data['events']) if ce['type']=="CLICK"]
     ordered_page_event = [(i, pe) for (i,pe) in enumerate(event_list.data['events']) if pe['type']=="LOCATION"]
     ordered_click_events = sorted(ordered_click_events, key=lambda k: k[1]['hesitation'], reverse=True)[:max_click_events]
-    #TODO order the pages by how long they stayed
+    total_time = 0
     for i in range(len(ordered_page_event)-1):
         delta_time = ordered_page_event[i+1][1]['timestamp'] - ordered_page_event[i][1]['timestamp']
         ordered_page_event[i][1]['spentTime'] = delta_time
+        total_time += delta_time
     ordered_page_event[-1][1]['spentTime'] = None
+    ordered_page_event[-1][1]['pageTimeShare'] = None
+    # TODO: Add variavle PageTimeShare (% of time spent in current page)
+    for i in range(len(ordered_page_event)-1):
+        ordered_page_event[i][1]['pageTimeShare'] = f"{ordered_page_event[i][1]['spentTime'] / total_time:.1f}%"
     last_page = ordered_page_event[-1][1]
     ordered_page_event = sorted(ordered_page_event[:-1], key=lambda k: k[1]['spentTime'], reverse=True)[:max_page_events]
 

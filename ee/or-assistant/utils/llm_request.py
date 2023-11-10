@@ -157,7 +157,7 @@ class Completion:
                     continue
 
     def send_stream_request(self, message: str, filter_response: bool = True, context: str = ''):
-        self.update_message_history(message, raw=True)
+        self.update_message_history(message, raw=False)
         response = openai.ChatCompletion.create(
                 api_base = LLM_ENDPOINT,
                 api_key= LLM_API_KEY,
