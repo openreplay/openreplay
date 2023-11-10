@@ -120,7 +120,7 @@ export default class Screen {
     return this.parentElement
   }
 
-  setBorderStyle(style: { border: string }) {
+  setBorderStyle(style: { outline: string }) {
     return Object.assign(this.screen.style, style)
   }
 

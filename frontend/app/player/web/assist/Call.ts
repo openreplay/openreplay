@@ -16,7 +16,6 @@ export enum CallingState {
 }
 
 export interface State {
-  tabs: string[]
   calling: CallingState;
   currentTab?: string;
 }
@@ -33,7 +32,7 @@ export default class Call {
   private videoStreams: Record<string, MediaStreamTrack> = {};
 
   constructor(
-    private store: Store<State>,
+    private store: Store<State & { tabs: Set<string> }>,
     private socket: Socket,
     private config: RTCIceServer[] | null,
     private peerID: string,

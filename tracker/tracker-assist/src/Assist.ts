@@ -571,10 +571,10 @@ export default class Assist {
           node as unknown as HTMLCanvasElement,
           id,
           30,
-          (stream) => {
+          (stream: MediaStream) => {
             Object.values(this.agents).forEach(agent => {
               if (agent.agentInfo) {
-                const connection = this.canvasPeer?.connect(`${agent.agentInfo.peerId}-canvas`)
+                const connection = this.canvasPeer?.connect(`${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`)
                 connection?.on('open', () => {
                   if (agent.agentInfo) {
                     const pCall = this.canvasPeer?.call(`${agent.agentInfo.peerId}-canvas`, stream)

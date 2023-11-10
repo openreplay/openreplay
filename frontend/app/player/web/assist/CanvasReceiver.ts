@@ -10,9 +10,8 @@ export default class CanvasReceiver {
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
-    private readonly socket: Socket,
     private readonly getNode: MessageManager['getNode'],
-    private readonly screen: Screen,
+    private readonly agentInfo: Record<string, any>
   ) {
     // @ts-ignore
     const urlObject = new URL(window.env.API_EDP || window.location.origin);
@@ -34,7 +33,7 @@ export default class CanvasReceiver {
         iceTransportPolicy: 'all',
       };
     }
-    const id = `${this.peerIdPrefix}-canvas`;
+    const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
     const canvasPeer = new Peer(id, peerOpts);
     canvasPeer.on('error', (err) => console.error('canvas peer error', err));
     canvasPeer.on('call', (call) => {
