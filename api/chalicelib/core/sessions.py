@@ -408,6 +408,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     ]
     extra_from = ""
     events_query_part = ""
+    issues = []
     if len(data.filters) > 0:
         meta_keys = None
         for i, f in enumerate(data.filters):
@@ -626,6 +627,9 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     extra_constraints.append("array_length(s.issue_types, 1) > 0")
                     ss_constraints.append("array_length(ms.issue_types, 1) > 0")
                 else:
+                    if f.source:
+                        issues.append(f)
+
                     extra_constraints.append(
                         sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
                                             value_key=f_k))
@@ -1040,6 +1044,27 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
+    elif len(issues) > 0:
+        print(issues)
+        issues_conditions = []
+        for i, f in enumerate(issues):
+            f_k_v = f"f_issue_v{i}"
+            f_k_s = f_k_v + "_source"
+            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            issues_conditions.append(sh.multi_conditions(f"p_issues.type=%({f_k_v})s", f.value,
+                                                         value_key=f_k_v))
+            issues_conditions[-1] = f"({issues_conditions[-1]} AND p_issues.context_string=%({f_k_s})s)"
+
+        extra_join = f"""
+                        INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
+                        WHERE issues.session_id=f.session_id 
+                            AND timestamp >= f.first_event_ts
+                            AND timestamp <= f.last_event_ts
+                            AND {" OR ".join(issues_conditions)}
+                            ) AS issues ON(TRUE)
+                        """
+        # full_args["issue_contextString"] = issue["contextString"]
+        # full_args["issue_type"] = issue["type"]
     if extra_event:
         extra_join += f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
         extra_constraints.append("ev.timestamp>=%(startDate)s")
