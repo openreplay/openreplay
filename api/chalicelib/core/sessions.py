@@ -1045,7 +1045,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
     elif len(issues) > 0:
-        print(issues)
         issues_conditions = []
         for i, f in enumerate(issues):
             f_k_v = f"f_issue_v{i}"
