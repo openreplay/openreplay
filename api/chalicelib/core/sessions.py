@@ -358,7 +358,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
                                             COALESCE(SUM(session_count), 0) AS total_sessions,
                                             COALESCE(JSONB_AGG(ranked_issues) 
-                                                FILTER ( WHERE rn>= %(issues_limit_s)s 
+                                                FILTER ( WHERE rn > %(issues_limit_s)s 
                                                             AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
                                       FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
                                             FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS session_count
