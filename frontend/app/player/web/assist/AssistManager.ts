@@ -290,9 +290,7 @@ export default class AssistManager {
         this.uiErrorHandler,
         this.getAssistVersion
       );
-      this.canvasReceiver = this.canvasReceiver
-        ? this.canvasReceiver
-        : new CanvasReceiver(this.peerID, this.config, this.getNode, {
+      this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
             ...this.session.agentInfo,
             id: agentId,
           });
@@ -356,6 +354,7 @@ export default class AssistManager {
     this.cleaned = true; // sometimes cleaned before modules loaded
     this.remoteControl?.clean();
     this.callManager?.clean();
+    this.canvasReceiver?.clear();
     this.socket?.close();
     this.socket = null;
     this.clearDisconnectTimeout();

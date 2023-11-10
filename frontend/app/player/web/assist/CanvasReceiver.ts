@@ -1,19 +1,17 @@
 import Peer from 'peerjs';
-import {VElement} from "Player/web/managers/DOM/VirtualDOM";
-import MessageManager from "Player/web/MessageManager";
-import Screen from "Player/web/Screen/Screen";
-import type { Socket } from 'socket.io-client';
+import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
+import MessageManager from 'Player/web/MessageManager';
 
 export default class CanvasReceiver {
-  private _peers: Map<string, Peer> = new Map();
   private streams: Map<string, MediaStream> = new Map();
+  private peer: Peer | null = null;
+
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
     private readonly getNode: MessageManager['getNode'],
     private readonly agentInfo: Record<string, any>
   ) {
-    console.log(agentInfo)
     // @ts-ignore
     const urlObject = new URL(window.env.API_EDP || window.location.origin);
     const peerOpts: Peer.PeerJSOption = {
@@ -36,50 +34,31 @@ export default class CanvasReceiver {
     }
     const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
     const canvasPeer = new Peer(id, peerOpts);
+    this.peer = canvasPeer;
     canvasPeer.on('error', (err) => console.error('canvas peer error', err));
     canvasPeer.on('call', (call) => {
-      call.answer()
+      call.answer();
       const canvasId = call.peer.split('-')[2];
       call.on('stream', (stream) => {
-        this.streams.set(canvasId, stream)
+        this.streams.set(canvasId, stream);
         setTimeout(() => {
-          const node = this.getNode(parseInt(canvasId, 10))
-          console.log(canvasId, this.streams, node)
-          spawnVideo(this.streams.get(canvasId)?.clone() as MediaStream, node as VElement)
-        }, 500)
-      })
+          const node = this.getNode(parseInt(canvasId, 10));
+          console.log(canvasId, this.streams, node);
+          spawnVideo(this.streams.get(canvasId)?.clone() as MediaStream, node as VElement);
+        }, 500);
+      });
       call.on('error', (err) => console.error('canvas call error', err));
-    })
-    // this.socket.on('canvas_stream', ({ data }) => {
-    //   const { canvasId } = data;
-    //   console.log(id, 'got', data, peer.canvasId);
-    //
+    });
+  }
 
-      // if (this._peers.has(id)) {
-      //   return console.log('already have peer for canvas', canvasId);
-      // } else {
-      //   canvasPeer.on('call', (call) => {
-      //     call.answer();
-      //     console.log('getting call from canvas peer', call);
-      //     call.on('stream', (stream) => {
-      //       console.log('getting stream from canvas peer');
-      //       setTimeout(() => {
-      //         const node = this.getNode(canvasId)
-      //         if (node) {
-      //           console.log('got node', node, stream.active)
-      //           spawnVideo(stream, node)
-      //         } else {
-      //           console.log('no node for canvas', canvasId)
-      //         }
-      //       }, 1000)
-      //     });
-      //     canvasPeer.on('error', (err) => console.error('canvas peer error', err))
-      //     call.on('error', (err) => console.error('canvas call error', err));
-      //   });
-      //   this._peers.set(id, canvasPeer);
-      // }
-      // this.socket.emit('canvas_ready', { canvasId });
-    // });
+  clear() {
+    if (this.peer) {
+      // otherwise it calls reconnection on data chan close
+      const peer = this.peer;
+      this.peer = null;
+      peer.disconnect();
+      peer.destroy();
+    }
   }
 }
 
@@ -92,7 +71,6 @@ function spawnVideo(stream: MediaStream, node: VElement) {
   void (node.node as HTMLVideoElement).play();
 }
 
-
 function spawnDebugVideo(stream: MediaStream, node: VElement) {
   const video = document.createElement('video');
   video.id = 'canvas-or-testing';
@@ -102,7 +80,7 @@ function spawnDebugVideo(stream: MediaStream, node: VElement) {
   video.setAttribute('playsinline', 'true');
   video.setAttribute('crossorigin', 'anonymous');
 
-  const coords = node.node.getBoundingClientRect()
+  const coords = node.node.getBoundingClientRect();
 
   Object.assign(video.style, {
     position: 'absolute',
@@ -110,22 +88,25 @@ function spawnDebugVideo(stream: MediaStream, node: VElement) {
     top: `${coords.top}px`,
     width: `${coords.width}px`,
     height: `${coords.height}px`,
-  })
+  });
   video.width = coords.width;
   video.height = coords.height;
   video.srcObject = stream;
 
-  document.body.appendChild(video)
-  video.play().then(() => {
-    console.log('started streaming canvas')
-  }).catch(e => {
-    console.error(e)
-    const waiter = () => {
-      void video.play()
-      document.removeEventListener('click', waiter)
-    }
-    document.addEventListener('click', waiter)
+  document.body.appendChild(video);
+  video
+    .play()
+    .then(() => {
+      console.log('started streaming canvas');
     })
+    .catch((e) => {
+      console.error(e);
+      const waiter = () => {
+        void video.play();
+        document.removeEventListener('click', waiter);
+      };
+      document.addEventListener('click', waiter);
+    });
 }
 
 /** simple peer example
