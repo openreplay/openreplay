@@ -51,46 +51,44 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     if len(filters) > 0:
         meta_keys = None
         for i, f in enumerate(filters):
-            if not isinstance(f["value"], list):
-                f.value = [f["value"]]
-            if len(f["value"]) == 0 or f["value"] is None:
+            if len(f.value) == 0:
                 continue
-            f["value"] = helper.values_for_operator(value=f["value"], op=f["operator"])
+            f.value = helper.values_for_operator(value=f.value, op=f.operator)
             # filter_args = _multiple_values(f["value"])
-            op = sh.get_sql_operator(f["operator"])
+            op = sh.get_sql_operator(f.operator)
 
-            filter_type = f["type"]
+            filter_type = f.type
             # values[f_k] = sessions.__get_sql_value_multiple(f["value"])
             f_k = f"f_value{i}"
             values = {**values,
-                      **sh.multi_values(helper.values_for_operator(value=f["value"], op=f["operator"]),
+                      **sh.multi_values(helper.values_for_operator(value=f.value, op=f.operator),
                                         value_key=f_k)}
             if filter_type == schemas.FilterType.user_browser:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, value_key=f_k))
             elif filter_type == schemas.FilterType.duration:
-                if len(f["value"]) > 0 and f["value"][0] is not None:
+                if len(f.value) > 0 and f.value[0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
-                    values["minDuration"] = f["value"][0]
-                if len(f["value"]) > 1 and f["value"][1] is not None and int(f["value"][1]) > 0:
+                    values["minDuration"] = f.value[0]
+                if len(f["value"]) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                     first_stage_extra_constraints.append('s.duration <= %(maxDuration)s')
-                    values["maxDuration"] = f["value"][1]
+                    values["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
@@ -102,7 +100,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 # op = sessions.__get_sql_operator(f["operator"])
-                if f.get("key") in meta_keys.keys():
+                if f.source in meta_keys.keys():
                     first_stage_extra_constraints.append(
                         sh.multi_conditions(
                             f's.{metadata.index_to_colname(meta_keys[f["key"]])} {op} %({f_k})s', f["value"],
