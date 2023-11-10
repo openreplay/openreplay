@@ -44,9 +44,11 @@ const request_logger = (identity) => {
         const startTs = performance.now(); // millis
         res.on('finish', function () {
             const duration = performance.now() - startTs;
-            IncreaseTotalRequests();
             let route = req.originalUrl.split('/')[3];
-            RecordRequestDuration(req.method, route, this.statusCode, duration);
+            if (route !== undefined) {
+                IncreaseTotalRequests();
+                RecordRequestDuration(req.method, route, this.statusCode, duration);
+            }
             if (this.statusCode !== 200 || debug) {
                 console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
             }
