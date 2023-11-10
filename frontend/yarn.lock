@@ -10660,6 +10660,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"country-flag-icons@npm:^1.5.7":
+  version: 1.5.7
+  resolution: "country-flag-icons@npm:1.5.7"
+  checksum: 44900ae66a74d35cd91d62557905cdd75cb2802a37155e70798ecf0b08411b18ffab0e926dbf514b143090a779e0a7f73aefc44c485bc2869281f8938e113431
+  languageName: node
+  linkType: hard
+
 "cp-file@npm:^7.0.0":
   version: 7.0.0
   resolution: "cp-file@npm:7.0.0"
@@ -19666,6 +19673,7 @@ __metadata:
     copy-to-clipboard: ^3.3.1
     copy-webpack-plugin: ^11.0.0
     country-data: 0.0.31
+    country-flag-icons: ^1.5.7
     css-loader: ^6.7.1
     cssnano: ^5.0.12
     cypress: ^13.3.0
