@@ -1054,14 +1054,24 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                                          value_key=f_k_v))
             issues_conditions[-1] = f"({issues_conditions[-1]} AND p_issues.context_string=%({f_k_s})s)"
 
-        extra_join = f"""
-                        INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
-                        WHERE issues.session_id=f.session_id 
-                            AND timestamp >= f.first_event_ts
-                            AND timestamp <= f.last_event_ts
-                            AND {" OR ".join(issues_conditions)}
-                            ) AS issues ON(TRUE)
-                        """
+        if len(events_query_part) > 0:
+            extra_join = f"""
+                            INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
+                            WHERE issues.session_id=f.session_id 
+                                AND timestamp >= f.first_event_ts
+                                AND timestamp <= f.last_event_ts
+                                AND {" OR ".join(issues_conditions)}
+                                ) AS issues ON(TRUE)
+                            """
+        else:
+            extra_join = f"""
+                            INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
+                            WHERE issues.session_id=s.session_id 
+                                AND timestamp >= %(startDate)s
+                                AND timestamp <= %(endDate)s
+                                AND {" OR ".join(issues_conditions)}
+                                ) AS issues ON(TRUE)
+                            """
         # full_args["issue_contextString"] = issue["contextString"]
         # full_args["issue_type"] = issue["type"]
     if extra_event:
