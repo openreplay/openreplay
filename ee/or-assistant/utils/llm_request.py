@@ -3,7 +3,7 @@ import json
 import requests
 from typing import List
 from utils.params import LLM_ENDPOINT, LLM_API_KEY, LLM_TEMPERATURE
-from utils.base_prompt import session_summary_base_prompt, \
+from utils.prompts import session_summary_base_prompt, \
         session_summary_base_prompt_long, summary_context
 import tiktoken
 import openai
