@@ -854,7 +854,7 @@ def authenticate_sso(email, internal_id, exp=None):
         if r["serviceAccount"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="service account is not authorized to login")
-        jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=r['userId'])
+        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
         return {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
                                             aud=f"front:{helper.get_stage_name()}"),
