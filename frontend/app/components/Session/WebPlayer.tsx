@@ -24,7 +24,7 @@ const TABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList } = props;
+  const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList, startedAt } = props;
   const { notesStore, sessionStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
@@ -79,7 +79,7 @@ function WebPlayer(props: any) {
 
       if (jumpToTime || shouldAdjustOffset) {
         if (jumpToTime > visualOffset) {
-          contextValue.player.jump(parseInt(jumpToTime));
+          contextValue.player.jump(parseInt(jumpToTime - props.startedAt));
         } else {
           contextValue.player.jump(visualOffset);
           setAdjusted(true);
@@ -168,6 +168,7 @@ export default connect(
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
     showEvents: state.get('showEvents'),
     members: state.getIn(['members', 'list']),
+    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
   }),
   {
     toggleFullscreen,
