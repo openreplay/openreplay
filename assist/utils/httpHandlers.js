@@ -33,7 +33,7 @@ const respond = function (req, res, data) {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(result));
     } else {
-        method = req.getMethod();
+        // method = req.getMethod();
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
     const duration = performance.now() - req.startTs;
@@ -141,6 +141,7 @@ const socketsLiveByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
+    console.log(`TEST::before respond: ${req.getMethod()}`);
     respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
