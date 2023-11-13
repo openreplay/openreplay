@@ -83,8 +83,9 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
+        t = cur.fetchone()
 
-    telemetry.new_client(tenant_id=data["tenant_id"])
+    telemetry.new_client(tenant_id=t["tenant_id"])
     r = users.authenticate(email, password)
     r["smtp"] = smtp.has_smtp()
 
