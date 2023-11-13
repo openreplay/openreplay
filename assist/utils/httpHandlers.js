@@ -37,7 +37,6 @@ const respond = function (req, res, data) {
     const duration = performance.now() - req.startTs;
     IncreaseTotalRequests();
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
-    console.log(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
 const socketsList = async function (req, res) {
