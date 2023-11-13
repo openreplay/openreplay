@@ -36,11 +36,9 @@ const respond = function (req, res, data) {
         method = req.getMethod();
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
-    console.log(`debug log :: req.startTs: ${req.startTs}`);
     const duration = performance.now() - req.startTs;
     IncreaseTotalRequests();
     RecordRequestDuration(req.method, res.handlerName, 200, duration/1000.0);
-    console.log(method, res.handlerName, 200, duration);
 }
 
 const socketsList = async function (req, res) {
