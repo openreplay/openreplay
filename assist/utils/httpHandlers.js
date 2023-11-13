@@ -39,7 +39,7 @@ const respond = function (req, res, data) {
     console.log(`debug log :: req.startTs: ${req.startTs}`);
     const duration = performance.now() - req.startTs;
     IncreaseTotalRequests();
-    RecordRequestDuration(req.method, res.handlerName, 200, duration);
+    RecordRequestDuration(req.method, res.handlerName, 200, duration/1000.0);
     console.log(method, res.handlerName, 200, duration);
 }
 
