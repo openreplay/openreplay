@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = 'ORTracker'
   s.version          = '1.15.0'
-  s.summary          = 'A short description of ORTracker.'
+  s.summary          = 'IOS Library for Openreplay.'
   s.homepage         = 'https://github.com/openreplay/openreplay/tracker/tracker-ios'
   s.license          = { :type => 'ELv2', :file => 'LICENSE.md' }
   s.author           = { 'Nick Delirium' => 'nick.delirium@proton.me' }
