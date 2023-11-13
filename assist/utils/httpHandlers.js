@@ -106,6 +106,7 @@ const socketsListByProject = async function (req, res) {
 }
 
 const socketsLiveByProject = async function (req, res) {
+    console.log(`TEST::before respond: ${req.getMethod()}`);
     res.handlerName = 'socketsLiveByProject';
     let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");
@@ -141,7 +142,6 @@ const socketsLiveByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
-    console.log(`TEST::before respond: ${req.getMethod()}`);
     respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
