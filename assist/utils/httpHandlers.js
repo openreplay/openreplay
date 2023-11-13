@@ -33,12 +33,12 @@ const respond = function (req, res, data) {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(result));
     } else {
-        // method = req.getMethod();
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
     const duration = performance.now() - req.startTs;
     IncreaseTotalRequests();
     RecordRequestDuration(method, res.handlerName, 200, duration/1000.0);
+    console.log(method, res.handlerName, 200, duration/1000.0);
 }
 
 const socketsList = async function (req, res) {
@@ -106,7 +106,7 @@ const socketsListByProject = async function (req, res) {
 }
 
 const socketsLiveByProject = async function (req, res) {
-    console.log(`TEST::before respond: ${req.getMethod()}`);
+    console.log(`TEST::before respond: ${req.method}`);
     res.handlerName = 'socketsLiveByProject';
     let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");

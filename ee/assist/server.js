@@ -77,6 +77,7 @@ if (process.env.uws !== "true") {
         return (res, req) => {
             res.id = 1;
             req.startTs = performance.now(); // track request's start timestamp
+            req.method = req.getMethod();
             res.onAborted(() => {
                 onAbortedOrFinishedResponse(res, readStream);
             });
