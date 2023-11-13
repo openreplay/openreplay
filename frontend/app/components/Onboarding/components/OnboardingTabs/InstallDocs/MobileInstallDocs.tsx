@@ -7,11 +7,11 @@ import { CopyButton } from 'UI';
 
 const installationCommand = `
 // Cocoapods
-pod 'OpenReplay', '~> 1.0.0'
+pod 'Openreplay', '~> 1.0.5'
 
 // Swift Package Manager
 dependencies: [
-    .package(url: "https://github.com/openreplay/ios.git", from: "1.0.0"),
+    .package(url: "https://github.com/openreplay/ios-tracker.git", from: "1.0.5"),
 ]
 `;
 
