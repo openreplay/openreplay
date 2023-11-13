@@ -3,10 +3,6 @@ const {request_logger} = require('./utils/helper');
 const express = require('express');
 const health = require("./utils/health");
 const assert = require('assert').strict;
-const {
-    RecordRequestDuration,
-    IncreaseTotalRequests
-} = require('./utils/metrics');
 
 let socket;
 if (process.env.redis === "true") {
