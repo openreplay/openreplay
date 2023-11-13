@@ -59,14 +59,12 @@ if (process.env.uws !== "true") {
 
 
     /* Either onAborted or simply finished request */
-    const onAbortedOrFinishedResponse = function (res, readStream) {
+    const onAbortedOrFinishedResponse = function (res) {
 
         if (res.id === -1) {
             debug && console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
         } else {
             debug && console.log('Stream was closed');
-            console.timeEnd(res.id);
-            readStream.destroy();
         }
 
         /* Mark this response already accounted for */
@@ -79,7 +77,7 @@ if (process.env.uws !== "true") {
             req.startTs = performance.now(); // track request's start timestamp
             req.method = req.getMethod();
             res.onAborted(() => {
-                onAbortedOrFinishedResponse(res, readStream);
+                onAbortedOrFinishedResponse(res);
             });
             return fn(req, res);
         }

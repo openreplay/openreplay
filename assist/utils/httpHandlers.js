@@ -27,7 +27,6 @@ const debug_log = process.env.debug === "1";
 
 const respond = function (req, res, data) {
     let result = {data}
-    let method = req.method;
     if (process.env.uws !== "true") {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -37,8 +36,8 @@ const respond = function (req, res, data) {
     }
     const duration = performance.now() - req.startTs;
     IncreaseTotalRequests();
-    RecordRequestDuration(method, res.handlerName, 200, duration/1000.0);
-    console.log(method, res.handlerName, 200, duration/1000.0);
+    RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
+    console.log(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
 const socketsList = async function (req, res) {
@@ -106,7 +105,6 @@ const socketsListByProject = async function (req, res) {
 }
 
 const socketsLiveByProject = async function (req, res) {
-    console.log(`TEST::before respond: ${req.method}`);
     res.handlerName = 'socketsLiveByProject';
     let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");
