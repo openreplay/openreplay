@@ -10,7 +10,7 @@ import {
   addFilterByKeyAndValue,
   updateCurrentPage,
   setScrollPosition,
-  checkForLatestSessions
+  checkForLatestSessions,
 } from 'Duck/search';
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
@@ -29,7 +29,7 @@ enum NoContentType {
 type SessionStatus = {
   status: number;
   count: number;
-}
+};
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
@@ -43,6 +43,7 @@ interface Props extends RouteComponentProps {
   currentPage: number;
   pageSize: number;
   total: number;
+  groupBy?: string;
   filters: any;
   lastPlayedSessionId: string;
   metaList: any;
@@ -74,48 +75,48 @@ function SessionList(props: Props) {
     metaList,
     activeTab,
     isEnterprise = false,
+    groupBy,
     sites,
-    siteId
+    siteId,
   } = props;
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
     _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
   const isBookmark = activeTab.type === 'bookmark';
+  const isGroupedSessions = !!groupBy;
   const isVault = isBookmark && isEnterprise;
   const activeSite: any = sites.find((s: any) => s.id === siteId);
   const hasNoRecordings = !activeSite || !activeSite.recorded;
-
+  console.log('isGroupedSessions', isGroupedSessions);
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
       setNoContentType(NoContentType.Bookmarked);
       return {
         icon: ICONS.NO_BOOKMARKS,
-        message: 'No sessions bookmarked'
+        message: 'No sessions bookmarked',
       };
     } else if (isVault) {
       setNoContentType(NoContentType.Vaulted);
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
-        message: 'No sessions found in vault'
+        message: 'No sessions found in vault',
       };
     }
     setNoContentType(NoContentType.ToDate);
     return {
       icon: ICONS.NO_SESSIONS,
-      message: <SessionDateRange />
+      message: <SessionDateRange />,
     };
   }, [isBookmark, isVault, activeTab]);
   const [statusData, setStatusData] = React.useState<SessionStatus>({ status: 0, count: 0 });
-
 
   const fetchStatus = async () => {
     const response = await sessionService.getRecordingStatus();
     setStatusData({
       status: response.recording_status,
-      count: response.sessions_count
+      count: response.sessions_count,
     });
   };
-
 
   useEffect(() => {
     if (!hasNoRecordings || !activeSite) {
@@ -131,13 +132,13 @@ function SessionList(props: Props) {
     return () => clearInterval(sessionStatusTimeOut);
   }, [hasNoRecordings, activeSite]);
 
-
   useEffect(() => {
     if (!hasNoRecordings && statusData.status === 0) {
       return;
     }
 
-    if (statusData.status === 2 && activeSite) { // recording && processed
+    if (statusData.status === 2 && activeSite) {
+      // recording && processed
       props.updateProjectRecordingStatus(activeSite.id, true);
       props.fetchSessions(null, true);
       clearInterval(sessionStatusTimeOut);
@@ -176,7 +177,7 @@ function SessionList(props: Props) {
       return;
     }
 
-    sessionTimeOut = setTimeout(function() {
+    sessionTimeOut = setTimeout(function () {
       if (!document.hidden) {
         props.checkForLatestSessions();
       }
@@ -206,20 +207,20 @@ function SessionList(props: Props) {
 
   return (
     <Loader loading={loading}>
-      {hasNoRecordings && statusData.status == 1 ? <RecordingStatus data={statusData} /> : (
+      {hasNoRecordings && statusData.status == 1 ? (
+        <RecordingStatus data={statusData} />
+      ) : (
         <>
           <NoContent
             title={
-              <div className='flex items-center justify-center flex-col'>
+              <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={NO_CONTENT.icon} size={180} />
-                <div className='mt-4' />
-                <div className='text-center relative'>
-                  {NO_CONTENT.message}
-                </div>
+                <div className="mt-4" />
+                <div className="text-center relative">{NO_CONTENT.message}</div>
               </div>
             }
             subtext={
-              <div className='flex flex-col items-center'>
+              <div className="flex flex-col items-center">
                 {(isVault || isBookmark) && (
                   <div>
                     {isVault
@@ -228,9 +229,9 @@ function SessionList(props: Props) {
                   </div>
                 )}
                 <Button
-                  variant='text-primary'
-                  className='mt-4'
-                  icon='arrow-repeat'
+                  variant="text-primary"
+                  className="mt-4"
+                  icon="arrow-repeat"
                   iconSize={20}
                   onClick={() => props.fetchSessions(null, true)}
                 >
@@ -241,7 +242,7 @@ function SessionList(props: Props) {
             show={!loading && list.length === 0}
           >
             {list.map((session: any) => (
-              <div key={session.sessionId} className='border-b'>
+              <div key={session.sessionId} className="border-b">
                 <SessionItem
                   session={session}
                   hasUserFilter={hasUserFilter}
@@ -256,11 +257,11 @@ function SessionList(props: Props) {
           </NoContent>
 
           {total > 0 && (
-            <div className='flex items-center justify-between p-5'>
+            <div className="flex items-center justify-between p-5">
               <div>
-                Showing <span className='font-medium'>{(currentPage - 1) * pageSize + 1}</span> to{' '}
-                <span className='font-medium'>{(currentPage - 1) * pageSize + list.length}</span> of{' '}
-                <span className='font-medium'>{numberWithCommas(total)}</span> sessions.
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+                <span className="font-medium">{(currentPage - 1) * pageSize + list.length}</span> of{' '}
+                <span className="font-medium">{numberWithCommas(total)}</span> sessions.
               </div>
               <Pagination
                 page={currentPage}
@@ -272,7 +273,6 @@ function SessionList(props: Props) {
             </div>
           )}
         </>
-
       )}
     </Loader>
   );
@@ -282,6 +282,7 @@ export default connect(
   (state: any) => ({
     list: state.getIn(['sessions', 'list']),
     filters: state.getIn(['search', 'instance', 'filters']),
+    groupBy: state.getIn(['search', 'instance', 'groupBy']),
     lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
     metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     loading: state.getIn(['sessions', 'loading']),
@@ -292,7 +293,7 @@ export default connect(
     pageSize: state.getIn(['search', 'pageSize']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list'])
+    sites: state.getIn(['site', 'list']),
   }),
   {
     updateCurrentPage,
@@ -302,6 +303,6 @@ export default connect(
     fetchMetadata,
     checkForLatestSessions,
     toggleFavorite,
-    updateProjectRecordingStatus
+    updateProjectRecordingStatus,
   }
 )(withRouter(SessionList));

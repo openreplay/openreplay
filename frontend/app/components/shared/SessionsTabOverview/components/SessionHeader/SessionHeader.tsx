@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { setActiveTab } from 'Duck/search';
 import SessionSettingButton from '../SessionSettingButton';
+import SessionGroupBy from '../SessionGroupBy';
 
 interface Props {
   listCount: number;
@@ -33,7 +34,7 @@ function SessionHeader(props: Props) {
       return 'Notes';
     }
     if (activeTab === 'bookmark') {
-      return isEnterprise? 'Vault' : 'Bookmarks';
+      return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
   }, [activeTab]);
@@ -54,12 +55,15 @@ function SessionHeader(props: Props) {
               <div className="mr-auto" />
               {listCount > 0 && (
                 <>
+                  <div className="mx-2" />
                   <SelectDateRange period={period} onChange={onDateChange} right={true} />
                   <div className="mx-2" />
                 </>
               )}
             </>
           )}
+          <SessionGroupBy />
+          <div className="mx-2" />
           <SessionSort />
           <SessionSettingButton />
         </div>

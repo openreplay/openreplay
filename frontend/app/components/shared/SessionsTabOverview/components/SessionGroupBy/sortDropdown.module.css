@@ -1,0 +1,23 @@
+.dropdown {
+  display: flex !important;
+  padding: 4px 6px;
+  border-radius: 3px;
+  color: $gray-darkest;
+  font-weight: 500;
+  &:hover {
+    background-color: $gray-light;
+  }
+}
+
+.dropdownTrigger {
+  padding: 4px 8px;
+  border-radius: 3px;
+  &:hover {
+    background-color: $gray-light;
+  }
+}
+
+.dropdownIcon {
+  margin-top: 2px;
+  margin-left: 3px;
+}

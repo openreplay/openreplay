@@ -94,6 +94,45 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif data.group_by:
+            g_sort = "count(full_sessions)"
+            if data.order is None:
+                data.order = schemas.SortOrderType.desc.value
+            else:
+                data.order = data.order.value
+            if data.sort is not None and data.sort != 'sessionsCount':
+                sort = helper.key_to_snake_case(data.sort)
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
+            else:
+                sort = 'start_ts'
+
+            meta_keys = metadata.get(project_id=project_id)
+            group_meta_key_index = None
+            for meta_key in meta_keys:
+                if meta_key["key"] == data.group_by:
+                    group_meta_key_index = meta_key["index"]
+                    break
+            if group_meta_key_index is None:
+                raise Exception("Invalid group by metadata key")
+            
+            meta_column_name = f'metadata_{group_meta_key_index}'
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
+                                                COALESCE(JSONB_AGG(users_sessions) 
+                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
+                                        FROM (SELECT {meta_column_name},
+                                                 count(full_sessions)                                   AS user_sessions_count,
+                                                 jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
+                                                 MIN(full_sessions.start_ts)                            AS first_session_ts,
+                                                 ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY {meta_column_name} ORDER BY {sort} {data.order}) AS rn 
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
+                                                                    {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                    {query_part}
+                                                    ) AS filtred_sessions
+                                                ) AS full_sessions
+                                                GROUP BY {meta_column_name}
+                                            ) AS users_sessions;""",
+                                     full_args)
         elif ids_only:
             main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
                                              {query_part}
@@ -142,7 +181,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         total = sessions["count"]
         sessions = sessions["sessions"]
 
-    if data.group_by_user:
+    if data.group_by_user or data.group_by:
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
