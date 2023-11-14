@@ -12,6 +12,8 @@ from decouple import config
 from loguru import logger as log
 from pampy import _, match
 
+import helper
+
 ROUTE_REGISTRY = []
 
 ORPY_DEBUG = config("ORPY_DEBUG", False)
@@ -39,28 +41,42 @@ Application = namedtuple(
         "database",
         "http",
         "make_timestamp",
-        # Background loop, and its tasks
-        "loop",
+        "cache",
+        # Background tasks runner
+        "runner",
         "tasks",
     ),
 )
 
 
-def spawn(coroutine):
+def runner_spawn(coroutine):
     context.get().tasks.add(coroutine)
+
+
+async def runner_run():
+    while asyncio.get_event_loop().is_running():
+        log.debug("Runner falling to sleep for one second")
+        await asyncio.sleep(1)
+        while application.get() and application.get().tasks:
+            task = application.get().tasks.pop()
+            await task
 
 
 # TODO: use uvicorn lifespan
 async def make_application():
     # https://loguru.readthedocs.io/en/stable/resources/migration.html
     log.remove()
-    log.add(sys.stderr, enqueue=True, backtrace=True, diagnose=ORPY_DEBUG)
+    level = "DEBUG" if ORPY_DEBUG else "WARNING"
+    log.add(sys.stderr, enqueue=True, backtrace=True, diagnose=ORPY_DEBUG, level=level)
 
     # TODO: replace with uvicorn lifespan
     # TODO: pick configuration from .env with decouple
-    database = psycopg_pool.AsyncConnectionPool(
-        "dbname=amirouche user=amirouche password=amirouche"
-    )
+
+    # database = psycopg_pool.AsyncConnectionPool(
+    #     "dbname=amirouche user=amirouche password=amirouche"
+    # )
+
+    database = None
 
     # setup app
     make_timestamp = make_timestamper()
@@ -69,10 +85,13 @@ async def make_application():
     app = Application(
         database,
         http,
+        dict(),
         make_timestamp,
+        asyncio.create_task(runner_run()),
         set(),
     )
 
+    log.debug("Application setup, and runner is up")
     return app
 
 
@@ -144,26 +163,57 @@ async def _query_user_by_email(txn, email):
     FROM public.users
     WHERE users.email = %(email)s AND users.deleted_at IS NULL
     """
-
     await txn.execute(sql, email)
     row = await txn.fetchrow()
-    return camelCase(row)
+    return helpers.dict_to_camel_case(row)
 
 
-def _task_reset_password_link(email):
+import os
+
+
+def _read(filepath):
+    # XXX: dangerous to use that with a filepath that is not hardcoded.
+    for path in sys.path:
+        filename = os.path.join(directory, filepath)
+        if os.path.exists(filename):
+            with open(filename) as f:
+                return f.read()
+    raise RuntimeError("File not found: {}".format(filepath))
+
+
+async def read(filepath):
+    try:
+        content = context.get().application.cache[filepath]
+    except KeyError:
+        content = asyncio.to_thread(_read(filepath))
+        context.get().application.cache[filepath] = content
+    return content
+
+
+def _file_format(source, formatting_variables=None):
+    if formatting_variables is None:
+        formatting_variables = {}
+    formatting_variables["frontend_url"] = config("SITE_URL")
+    source = re.sub(r"%(?![(])", "%%", source)
+    source = source % formatting_variables
+    return source
+
+
+async def _task_reset_password_link(email):
     async with txn() as txn:
-        user = await user_by_email(txn, data.email)
+        user = await user_by_email(txn, email)
         if user is None:
             return
         # TODO: document magic number 64
         token = secrets.token_urlsafe(64)
         invitation_link = await user_new_invitation(txn, user["userId"])
-        email = template_forgot_password.format(**user, invitation_link=invitation_link)
-        await email_send(email)
+    template = await read("chalicelib/utils/html/reset_password.html")
+    html = _file_format(template, dict(invitation_link=invitation_link))
+    await send_html(html, "Password recovery", email)
 
 
 @route("GET", "password", "reset-link")
-def public_reset_password_link():
+async def public_reset_password_link():
     data = json.loads(await orpy.get().receive())
     if not captcha.is_valid(data.captcha):
         out = jsonify({"errors": ["Invalid capatcha"]})
@@ -177,7 +227,7 @@ def public_reset_password_link():
             }
         )
         return 400, [(b"content-type", "application/javascript")], out
-    spawn(_task_reset_password_link(email))
+    runner_spawn(_task_reset_password_link(email))
     return 200, [(b"content-type", "application/javascript")], out
 
 
@@ -311,15 +361,13 @@ async def http(send):
         )
 
 
-async def handle(scope, receive, send):
+async def orpy(scope, receive, send):
     log.debug("ASGI scope: {}", scope)
+
+    if application.get() is None:
+        application.set(await make_application())
 
     context.set(Context(application, scope, receive))
 
     if scope["type"] == "http":
         await http(send)
-
-
-def orpy():
-    application.set(asyncio.wait(make_application()))
-    return handle

@@ -33,11 +33,14 @@ todo: ## Things that should be done
 xxx: ## Things that require attention
 	@grep -nR --color=always --before-context=2  --after-context=2 XXX .
 
-serve: check
-	uvicorn --log-level debug --port 9998 --reload --factory orpy:orpy
+serve: ## Run the server
+	uvicorn --log-level warning --port 9998 --reload orpy:orpy
+
+lock: ## Lock dependencies
+	pip-compile -o requirements.txt requirements.source.txt
 
 wip:
-	pip-compile -o requirements.txt requirements.source.txt
 	black orpy.py
 	isort --profile black orpy.py
-	git commit -am "wip"
+	git add .
+	git commit -m "wip"
