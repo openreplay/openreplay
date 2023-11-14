@@ -4,7 +4,7 @@ const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 const health = require("./utils/health");
 const assert = require('assert').strict
-const register = require('./metrics').register;
+const register = require('./utils/metrics').register;
 
 const debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";
