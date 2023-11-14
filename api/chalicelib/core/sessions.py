@@ -185,6 +185,10 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
+            if data.group_by_user:
+                sessions[i]["userDisplayName"] = sessions[i]['userUuid']
+            else:
+                sessions[i]['userDisplayName'] = sessions[i][meta_column_name]
             sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
                                        if sessions[i][f'metadata_{k["index"]}'] is not None}
     else:

@@ -250,6 +250,7 @@ function SessionList(props: Props) {
                   metaList={metaList}
                   lastPlayedSessionId={lastPlayedSessionId}
                   bookmarked={isBookmark}
+                  isGroupedSessions={isGroupedSessions}
                   toggleFavorite={toggleFavorite}
                 />
               </div>
