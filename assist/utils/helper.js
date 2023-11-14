@@ -1,8 +1,3 @@
-const {
-    RecordRequestDuration,
-    IncreaseTotalRequests
-} = require('../utils/metrics');
-
 let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
 let debug = process.env.debug === "1" || false;
 
@@ -41,14 +36,8 @@ const extractPeerId = (peerId) => {
 const request_logger = (identity) => {
     return (req, res, next) => {
         debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
-        const startTs = performance.now(); // millis
+        req.startTs = performance.now(); // track request's start timestamp
         res.on('finish', function () {
-            const duration = performance.now() - startTs;
-            let route = req.originalUrl.split('/')[3];
-            if (route !== undefined) {
-                IncreaseTotalRequests();
-                RecordRequestDuration(req.method, route, this.statusCode, duration);
-            }
             if (this.statusCode !== 200 || debug) {
                 console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
             }
