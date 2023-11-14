@@ -1,0 +1,7 @@
+pytest
+pytest-cov
+pytest-asyncio
+bandit
+pylama
+black
+isort

@@ -1,0 +1,7 @@
+pyjwt
+psycopg
+uvicorn[standard]
+python-decouple
+httpx
+pampy
+loguru
