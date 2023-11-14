@@ -31,6 +31,9 @@ type StartSessionResponse struct {
 	ProjectID            string `json:"projectID"`
 	BeaconSizeLimit      int64  `json:"beaconSizeLimit"`
 	CompressionThreshold int64  `json:"compressionThreshold"`
+	CanvasEnabled        bool   `json:"canvasEnabled"` // false default
+	CanvasImageQuality   string `json:"canvasQuality"` // low | medium | high
+	CanvasFrameRate      int    `json:"canvasFPS"`     // 2 default
 }
 
 type NotStartedRequest struct {
