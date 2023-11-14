@@ -19,7 +19,7 @@ function SessionGroupBy(props: Props) {
     fields,
   } = props;
   const onGroupBy = ({ value }: any) => {
-    const metadata_name = value.value;
+    const metadata_name = value?.value;
     props.applyFilter({ groupBy: metadata_name });
   };
 
@@ -42,6 +42,7 @@ function SessionGroupBy(props: Props) {
       name="groupSessions"
       plain
       right
+      isClearable
       placeholder="Group by"
       options={groupByOptions}
       onChange={onGroupBy}
