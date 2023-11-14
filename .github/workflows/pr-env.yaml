@@ -1,0 +1,115 @@
+name: PR-Deployment
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  create-vcluster-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Install vCluster CLI
+      run: |
+        # Replace with the command to install vCluster CLI
+        curl -s -L "https://github.com/loft-sh/vcluster/releases/download/v0.16.4/vcluster-linux-amd64" -o /usr/local/bin/vcluster
+        chmod +x /usr/local/bin/vcluster
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+
+    - name: Get LoadBalancer IP
+      id: lb-ip
+      run: |
+        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "::set-output name=ip::$LB_IP"
+
+    - name: Create vCluster
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        # Replace with the actual command to create a vCluster
+        cd openreplay/scripts/pr-env/vcluster
+        bash create.sh pr-${PR_NUMBER}.${{ secrets.OR_PR_DOMAIN_NAME }}
+        cp kubeconfig.yaml /tmp/
+
+    - name: Update AWS Route53 Record
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME_1=$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME_2=$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        cat <<EOF > route53-changes.json
+        {
+          "Comment": "Create record set for VCluster",
+          "Changes": [
+            {
+              "Action": "CREATE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_1",
+                "Type": "A",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            },
+            {
+              "Action": "CREATE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_2",
+                "Type": "A",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            }
+          ]
+        }
+        EOF
+
+        aws route53 change-resource-record-sets --hosted-zone-id ${{ secrets.OR_PR_HOSTED_ZONE_ID }} --change-batch file://route53-changes.json
+
+    - name: Wait for DNS Propagation
+      env:
+        EXPECTED_IP: ${{ steps.lb-ip.outputs.ip }}
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME_1="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
+        MAX_ATTEMPTS=30
+        attempt=1
+        until [[ $attempt -gt $MAX_ATTEMPTS ]]
+        do
+          DNS_IP=$(dig +short $DOMAIN_NAME_1 @8.8.8.8)
+          if [[ "$DNS_IP" == "$EXPECTED_IP" ]]; then
+            echo "DNS has propagated for $DOMAIN_NAME_1"
+            break
+          fi
+          echo "Waiting for DNS propagation... Attempt $attempt of $MAX_ATTEMPTS"
+          ((attempt++))
+          sleep 20
+        done
+
+        if [[ $attempt -gt $MAX_ATTEMPTS ]]; then
+          echo "DNS propagation check failed for $DOMAIN_NAME_1 after $MAX_ATTEMPTS attempts."
+          exit 1
+        fi
+
+    - name: Install openreplay
+      env:
+        KUBECONFIG: /tmp/kubeconfig.yaml
+      run: |
+        helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait --debug
+        helm upgrade -i openreplay -n app ./openreplay -f vars.yaml --create-namespace --set ingress-nginx.enabled=false -f ../pr-env/resources.yaml --wait --debug
+
+    - name: Send Slack Message
+      env:
+        SLACK_URL: ${{ secrets.OR_PR_SLACK_URL }}
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"PR Number: '$PR_NUMBER'\nVCluster: '$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}'\nGenerated VCluster Kubeconfig File"}' $SLACK_URL
+
+    # - name: Cleanup
+    #   if: always()
+    #   run: |
+    #     # Add any cleanup commands if necessary
+
