@@ -1,7 +1,6 @@
 const express = require('express');
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.HEALTH_PORT || 8888;
-const register = require('./metrics').register;
 
 const {request_logger} = require("./helper");
 const debug = process.env.debug === "1";
@@ -38,15 +37,6 @@ healthApp.get('/shutdown', (req, res) => {
         process.kill(1, "SIGTERM");
     }
 );
-
-healthApp.get('/metrics', async (req, res) => {
-    try {
-        res.set('Content-Type', register.contentType);
-        res.end(await register.metrics());
-    } catch (ex) {
-        res.status(500).end(ex);
-    }
-});
 
 const listen_cb = async function () {
     console.log(`Health App listening on http://${HOST}:${PORT}`);

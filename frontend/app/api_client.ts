@@ -127,7 +127,7 @@ export default class APIClient {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
 
-    const init = this.getInit(method, options.clean ? clean(params) : params);
+    const init = this.getInit(method, options.clean && params ? clean(params) : params);
 
 
     if (params !== undefined) {
