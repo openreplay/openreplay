@@ -46,7 +46,7 @@ target 'RntrackerExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
   Dir['../../']
-  pod 'ORTracker', :path => '../../../tracker-ios'
+  pod 'Openreplay', '~> 1.0.5'
 
 
   target 'RntrackerExampleTests' do

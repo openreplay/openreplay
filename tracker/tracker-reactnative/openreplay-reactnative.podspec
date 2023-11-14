@@ -19,11 +19,11 @@ Pod::Spec.new do |s|
   # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.
   # See https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79.
   if respond_to?(:install_modules_dependencies, true)
-    s.dependency "ORTracker"
+    s.dependency "Openreplay"
     install_modules_dependencies(s)
   else
   s.dependency "React-Core"
-  s.dependency "ORTracker"
+  s.dependency "Openreplay"
 
   # Don't install the dependencies when we run `pod install` in the old architecture.
   if ENV['RCT_NEW_ARCH_ENABLED'] == '1' then
@@ -36,7 +36,7 @@ Pod::Spec.new do |s|
     s.dependency "React-RCTFabric"
     s.dependency "React-Codegen"
     s.dependency "RCT-Folly"
-    s.dependency "ORTracker"
+    s.dependency "Openreplay"
     s.dependency "RCTRequired"
     s.dependency "RCTTypeSafety"
     s.dependency "ReactCommon/turbomodule/core"
