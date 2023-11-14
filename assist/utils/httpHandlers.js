@@ -18,10 +18,14 @@ const {
 const {
     getServer
 } = require('../utils/wsServer');
+const {
+    RecordRequestDuration,
+    IncreaseTotalRequests
+} = require('../utils/metrics');
 
 const debug_log = process.env.debug === "1";
 
-const respond = function (res, data) {
+const respond = function (req, res, data) {
     let result = {data}
     if (process.env.uws !== "true") {
         res.statusCode = 200;
@@ -30,9 +34,13 @@ const respond = function (res, data) {
     } else {
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
+    const duration = performance.now() - req.startTs;
+    IncreaseTotalRequests();
+    RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
 const socketsList = async function (req, res) {
+    res.handlerName = 'socketsList';
     let io = getServer();
     debug_log && console.log("[WS]looking for all available sessions");
     let filters = await extractPayloadFromRequest(req, res);
@@ -60,10 +68,11 @@ const socketsList = async function (req, res) {
     liveSessionsPerProject.forEach((sessions, projectId) => {
         liveSessions[projectId] = Array.from(sessions);
     });
-    respond(res, liveSessions);
+    respond(req, res, liveSessions);
 }
 
 const socketsListByProject = async function (req, res) {
+    res.handlerName = 'socketsListByProject';
     let io = getServer();
     debug_log && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
@@ -89,12 +98,13 @@ const socketsListByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
-    respond(res, _sessionId === undefined ? sortPaginate(sessions, filters)
+    respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters)
         : sessions.length > 0 ? sessions[0]
             : null);
 }
 
 const socketsLiveByProject = async function (req, res) {
+    res.handlerName = 'socketsLiveByProject';
     let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
@@ -129,16 +139,17 @@ const socketsLiveByProject = async function (req, res) {
         }
     }
     let sessions = Array.from(liveSessions);
-    respond(res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
+    respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
 }
 
 const socketsLiveBySession = async function (req, res) {
+    res.handlerName = 'socketsLiveBySession';
     let io = getServer();
     debug_log && console.log("[WS]looking for LIVE session");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId === undefined) {
-        return respond(res, null);
+        return respond(req, res, null);
     }
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
@@ -166,10 +177,11 @@ const socketsLiveBySession = async function (req, res) {
 
     }
     let sessions = Array.from(liveSessions);
-    respond(res, sessions.length > 0 ? sessions[0] : null);
+    respond(req, res, sessions.length > 0 ? sessions[0] : null);
 }
 
 const autocomplete = async function (req, res) {
+    res.handlerName = 'autocomplete';
     let io = getServer();
     debug_log && console.log("[WS]autocomplete");
     let _projectKey = extractProjectKeyFromRequest(req);
@@ -189,7 +201,7 @@ const autocomplete = async function (req, res) {
             }
         }
     }
-    respond(res, uniqueAutocomplete(results));
+    respond(req, res, uniqueAutocomplete(results));
 }
 
 module.exports = {
