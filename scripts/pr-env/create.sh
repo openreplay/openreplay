@@ -55,3 +55,5 @@ EOF
 
 echo "Getting kubeconfig file for vcluster"
 vcluster connect $CLUSTER_NAME --update-current=false --server=https://$DOMAIN
+
+
