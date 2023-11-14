@@ -40,3 +40,4 @@ wip:
 	pip-compile -o requirements.txt requirements.source.txt
 	black orpy.py
 	isort --profile black orpy.py
+	git commit -am "wip"
