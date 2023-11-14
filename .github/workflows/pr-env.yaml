@@ -98,6 +98,10 @@ jobs:
       env:
         KUBECONFIG: /tmp/kubeconfig.yaml
       run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME=$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        cd openreplay/scripts/helmcharts
+        sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
         helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait --debug
         helm upgrade -i openreplay -n app ./openreplay -f vars.yaml --create-namespace --set ingress-nginx.enabled=false -f ../pr-env/resources.yaml --wait --debug
 

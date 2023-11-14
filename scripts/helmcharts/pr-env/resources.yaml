@@ -1,0 +1,150 @@
+alerts:
+  resources:
+    requests:
+      cpu: 50m
+assets:
+  resources:
+    requests:
+      cpu: 50m
+assist:
+  resources:
+    requests:
+      cpu: 50m
+assist-stats:
+  resources:
+    requests:
+      cpu: 50m
+chalice:
+  resources:
+    requests:
+      cpu: 50m
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sink
+            - storage
+            - chalice
+            - imagestorage
+            - videostorage
+        topologyKey: kubernetes.io/hostname
+db:
+  resources:
+    requests:
+      cpu: 50m
+ender:
+  resources:
+    requests:
+      cpu: 50m
+frontend:
+  resources:
+    requests:
+      cpu: 50m
+heuristics:
+  resources:
+    requests:
+      cpu: 50m
+http:
+  resources:
+    requests:
+      cpu: 50m
+imagestorage:
+  resources:
+    requests:
+      cpu: 50m
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sink
+            - storage
+            - chalice
+            - imagestorage
+            - videostorage
+        topologyKey: kubernetes.io/hostname
+ingress-nginx:
+  resources:
+    requests:
+      cpu: 50m
+integrations:
+  resources:
+    requests:
+      cpu: 50m
+peers:
+  resources:
+    requests:
+      cpu: 50m
+quickwit:
+  resources:
+    requests:
+      cpu: 50m
+sink:
+  resources:
+    requests:
+      cpu: 50m
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sink
+            - storage
+            - chalice
+            - imagestorage
+            - videostorage
+        topologyKey: kubernetes.io/hostname
+sourcemapreader:
+  resources:
+    requests:
+      cpu: 50m
+storage:
+  resources:
+    requests:
+      cpu: 50m
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sink
+            - storage
+            - chalice
+            - imagestorage
+            - videostorage
+        topologyKey: kubernetes.io/hostname
+utilities:
+  resources:
+    requests:
+      cpu: 50m
+videostorage:
+  resources:
+    requests:
+      cpu: 50m
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sink
+            - storage
+            - chalice
+            - imagestorage
+            - videostorage
+        topologyKey: kubernetes.io/hostname
