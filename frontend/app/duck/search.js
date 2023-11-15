@@ -74,7 +74,7 @@ function reducer(state, action = {}) {
                 scrollY: 0,
             });
 
-            console.log('search/reducer/init', initialState.toJSON().instance.toJSON())
+            console.log('search/reducer/init', initialState?.toJSON().instance?.toJSON())
 
             return initialState;
         case REFRESH_FILTER_OPTIONS:
@@ -161,6 +161,9 @@ export const filterMap = ({ category, value, key, operator, sourceOperator, sour
 
 
 const getFilters = (state) => {
+    if (!state.getIn(['search', 'instance'])) {
+        return;
+    }
     const filter = state.getIn(['search', 'instance']).toData();
     const activeTab = state.getIn(['search', 'activeTab']);
     if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
@@ -208,6 +211,7 @@ export const reduceThenFetchResource =
                 if (['notes', 'flags'].includes(activeTab.type)) return;
 
                 const filter = getFilters(getState());
+                if (!filter) return;
                 filter.limit = PER_PAGE;
                 filter.page = getState().getIn(['search', 'currentPage']);
 

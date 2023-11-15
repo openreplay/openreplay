@@ -64,6 +64,7 @@ interface Props extends RouteComponentProps {
 
 function SessionList(props: Props) {
   const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
+
   const {
     loading,
     list,
@@ -79,13 +80,13 @@ function SessionList(props: Props) {
     sites,
     siteId,
   } = props;
-  const _filterKeys = filters.map((i: any) => i.key);
+  const _filterKeys = filters?.map((i: any) => i.key) || [];
   const hasUserFilter =
     _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
-  const isBookmark = activeTab.type === 'bookmark';
+  const isBookmark = activeTab?.type === 'bookmark';
   const isGroupedSessions = !!groupBy;
   const isVault = isBookmark && isEnterprise;
-  const activeSite: any = sites.find((s: any) => s.id === siteId);
+  const activeSite: any = sites?.find((s: any) => s.id === siteId);
   const hasNoRecordings = !activeSite || !activeSite.recorded;
 
   const NO_CONTENT = React.useMemo(() => {

@@ -20,6 +20,9 @@ interface Props {
   setActiveTab: (tab: any) => void;
 }
 function SessionHeader(props: Props) {
+  if (!props.filter) {
+    return null;
+  }
   const {
     filter: { startDate, endDate, rangeValue },
     activeTab,

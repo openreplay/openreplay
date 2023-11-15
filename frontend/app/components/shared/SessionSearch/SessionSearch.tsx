@@ -9,27 +9,31 @@ import { edit, addFilter, fetchSessions, updateFilter } from 'Duck/search';
 import { debounce } from 'App/utils';
 import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler';
 
-let debounceFetch: any = () => {}
+let debounceFetch: any = () => {};
 
 interface Props {
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
   saveRequestPayloads: boolean;
-  metaLoading?: boolean
+  metaLoading?: boolean;
   fetchSessions: typeof fetchSessions;
   updateFilter: typeof updateFilter;
 }
 function SessionSearch(props: Props) {
   const { appliedFilter, saveRequestPayloads = false, metaLoading = false } = props;
-  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
-  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
+  const hasEvents = appliedFilter?.filters?.filter((i: any) => i.isEvent).size > 0;
+  const hasFilters = appliedFilter?.filters?.filter((i: any) => !i.isEvent).size > 0;
 
-  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.updateFilter, loading: metaLoading });
+  useSessionSearchQueryHandler({
+    appliedFilter,
+    applyFilter: props.updateFilter,
+    loading: metaLoading,
+  });
 
   useEffect(() => {
     debounceFetch = debounce(() => props.fetchSessions(), 500);
-  }, [])
+  }, []);
 
   const onAddFilter = (filter: any) => {
     props.addFilter(filter);
@@ -49,7 +53,7 @@ function SessionSearch(props: Props) {
       filters: newFilters,
     });
 
-    debounceFetch()
+    debounceFetch();
   };
 
   const onRemoveFilter = (filterIndex: any) => {
@@ -61,7 +65,7 @@ function SessionSearch(props: Props) {
       filters: newFilters,
     });
 
-    debounceFetch()
+    debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
@@ -69,7 +73,7 @@ function SessionSearch(props: Props) {
       eventsOrder: value,
     });
 
-    debounceFetch()
+    debounceFetch();
   };
 
   return !metaLoading ? (
@@ -89,11 +93,7 @@ function SessionSearch(props: Props) {
           <div className="border-t px-5 py-1 flex items-center -mx-2">
             <div>
               <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
-                <Button
-                  variant="text-primary"
-                  className="mr-2"
-                  icon="plus"
-                >
+                <Button variant="text-primary" className="mr-2" icon="plus">
                   ADD STEP
                 </Button>
               </FilterSelection>
@@ -114,7 +114,7 @@ export default connect(
   (state: any) => ({
     saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
     appliedFilter: state.getIn(['search', 'instance']),
-    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading'])
+    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
   }),
   { edit, addFilter, fetchSessions, updateFilter }
 )(SessionSearch);

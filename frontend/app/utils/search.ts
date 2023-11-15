@@ -18,7 +18,9 @@ export const createUrlQuery = (filter: {
   groupBy?: string;
 }) => {
   const query: QueryItem[] = [];
-
+  if (!filter) {
+    return '';
+  }
   filter.filters.forEach((f: any) => {
     if (!f.value.length) {
       return;
@@ -59,7 +61,7 @@ export const createUrlQuery = (filter: {
 
 export const getFiltersFromQuery = (search: string) => {
   if (!search) {
-    return;
+    return Filter();
   }
 
   const entires = getQueryObject(search);
