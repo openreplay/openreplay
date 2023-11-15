@@ -39,6 +39,10 @@ function build_api(){
     [[ $1 == "ee" ]] && {
         destination="_assist_ee"
     }
+    [[ -d ../${destination} ]] && {
+      echo "Removing previous build cache"
+      rm -rf ../${destination}
+    }
     cp -R ../assist ../${destination}
     cd ../${destination}
 

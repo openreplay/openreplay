@@ -4,7 +4,7 @@ from chalicelib.utils import helper, pg_client
 
 
 def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
-    args = {"startDate": data.startDate, "endDate": data.endDate,
+    args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["sessions.project_id = %(project_id)s",
                    "(url = %(url)s OR path= %(url)s)",
@@ -43,13 +43,6 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
                                                        f.value, value_key=f_k))
                 constraints.append(sh.multi_conditions(f"mis.type = %({f_k})s",
                                                        f.value, value_key=f_k))
-                if len(f.filters) > 0:
-                    for j, sf in enumerate(f.filters):
-                        f_k = f"issue_svalue{i}{j}"
-                        args = {**args, **sh.multi_values(sf.value, value_key=f_k)}
-                        if sf.type == schemas.IssueFilterType._selector and len(sf.value) > 0:
-                            constraints.append(sh.multi_conditions(f"clicks.selector = %({f_k})s",
-                                                                   sf.value, value_key=f_k))
 
     if data.click_rage and not has_click_rage_filter:
         constraints.append("""(issues.session_id IS NULL 

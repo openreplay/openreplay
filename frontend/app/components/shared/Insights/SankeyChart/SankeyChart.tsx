@@ -1,134 +1,140 @@
-import React from 'react';
-import { Sankey, Tooltip, Rectangle, Layer, ResponsiveContainer } from 'recharts';
+import React, { useState } from 'react';
+import { Sankey, ResponsiveContainer } from 'recharts';
+import CustomLink from './CustomLink';
+import CustomNode from './CustomNode';
+import { NoContent } from 'UI';
 
-type Node = {
+interface Node {
+  idd: number;
   name: string;
+  eventType: string;
+  avgTimeFromPrevious: number | null;
 }
 
-type Link = {
+interface Link {
+  id: string;
+  eventType: string;
+  value: number;
   source: number;
   target: number;
-  value: number;
 }
 
-export interface SankeyChartData {
-  links: Link[];
+interface Data {
   nodes: Node[];
+  links: Link[];
 }
+
 interface Props {
-  data: SankeyChartData;
-  nodePadding?: number;
+  data: Data;
   nodeWidth?: number;
+  height?: number;
+  onChartClick?: (filters: any[]) => void;
 }
-function SankeyChart(props: Props) {
-  const { data, nodePadding = 50, nodeWidth = 10 } = props;
+
+const SankeyChart: React.FC<Props> = ({
+                                        data,
+                                        height = 240,
+                                        onChartClick
+                                      }: Props) => {
+  const [highlightedLinks, setHighlightedLinks] = useState<string[]>([]);
+  const [hoveredLinks, setHoveredLinks] = useState<string[]>([]);
+
+  function findPreviousLinks(targetNodeIndex: number): Link[] {
+    const previousLinks: Link[] = [];
+    const visitedNodes: Set<number> = new Set();
+
+    const findPreviousLinksRecursive = (nodeIndex: number) => {
+      visitedNodes.add(nodeIndex);
+
+      for (const link of data.links) {
+        if (link.target === nodeIndex && !visitedNodes.has(link.source)) {
+          previousLinks.push(link);
+          findPreviousLinksRecursive(link.source);
+        }
+      }
+    };
+
+    findPreviousLinksRecursive(targetNodeIndex);
+
+    return previousLinks;
+  }
+
+  const handleLinkMouseEnter = (linkData: any) => {
+    const { payload } = linkData;
+    const link: any = data.links.find(link => link.id === payload.id);
+    const previousLinks: any = findPreviousLinks(link.source).reverse();
+    previousLinks.push({ id: payload.id });
+    setHoveredLinks(previousLinks.map((link: any) => link.id));
+  };
+
+  const clickHandler = () => {
+    setHighlightedLinks(hoveredLinks);
+
+    const firstLink = data.links.find(link => link.id === hoveredLinks[0]) || null;
+    const lastLink = data.links.find(link => link.id === hoveredLinks[hoveredLinks.length - 1]) || null;
+
+    const firstNode = data.nodes[firstLink?.source];
+    const lastNode = data.nodes[lastLink.target];
+
+    const filters = [];
+
+    if (firstNode) {
+      filters.push({
+        operator: 'is',
+        type: firstNode.eventType,
+        value: [firstNode.name],
+        isEvent: true
+      });
+    }
+
+    if (lastNode) {
+      filters.push({
+        operator: 'is',
+        type: lastNode.eventType,
+        value: [lastNode.name],
+        isEvent: true
+      });
+    }
+
+    onChartClick?.(filters);
+  };
+
+
   return (
-    <div className="rounded border shadow">
-      <div className="text-lg p-3 border-b bg-gray-lightest">Sankey Chart</div>
-      <div className="">
-        <ResponsiveContainer height={500} width="100%">
-          <Sankey
-            width={960}
-            height={500}
-            data={data}
-            // node={{ stroke: '#77c878', strokeWidth: 0 }}
-            node={<CustomNodeComponent />}
-            nodePadding={nodePadding}
-            nodeWidth={nodeWidth}
-            margin={{
-              left: 10,
-              right: 100,
-              top: 10,
-              bottom: 10,
-            }}
-            link={<CustomLinkComponent />}
-          >
-            <defs>
-              <linearGradient id={'linkGradient'}>
-                <stop offset="0%" stopColor="rgba(0, 136, 254, 0.5)" />
-                <stop offset="100%" stopColor="rgba(0, 197, 159, 0.3)" />
-              </linearGradient>
-            </defs>
-            <Tooltip content={<CustomTooltip />} />
-          </Sankey>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <NoContent
+      style={{ paddingTop: '80px' }}
+      show={!data.nodes.length || !data.links.length}
+      title={'No data for the selected time period.'}
+    >
+      <ResponsiveContainer height={height} width='100%'>
+        <Sankey
+          data={data}
+          iterations={128}
+          node={<CustomNode />}
+          sort={true}
+          onClick={clickHandler}
+          link={({ source, target, id, ...linkProps }, index) => (
+            <CustomLink
+              {...linkProps}
+              hoveredLinks={hoveredLinks}
+              activeLinks={highlightedLinks}
+              strokeOpacity={highlightedLinks.includes(id) ? 0.8 : 0.2}
+              onMouseEnter={() => handleLinkMouseEnter(linkProps)}
+              onMouseLeave={() => setHoveredLinks([])}
+            />
+          )}
+          margin={{ right: 200, bottom: 50 }}
+        >
+          <defs>
+            <linearGradient id={'linkGradient'}>
+              <stop offset='0%' stopColor='rgba(57, 78, 255, 0.2)' />
+              <stop offset='100%' stopColor='rgba(57, 78, 255, 0.2)' />
+            </linearGradient>
+          </defs>
+        </Sankey>
+      </ResponsiveContainer>
+    </NoContent>
   );
-}
+};
 
 export default SankeyChart;
-
-const CustomTooltip = (props: any) => {
-  return <div className="rounded bg-white border p-0 px-1 text-sm">test</div>;
-  // if (active && payload && payload.length) {
-  //   return (
-  //     <div className="custom-tooltip">
-  //       <p className="label">{`${label} : ${payload[0].value}`}</p>
-  //       <p className="intro">{getIntroOfPage(label)}</p>
-  //       <p className="desc">Anything you want can be displayed here.</p>
-  //     </div>
-  //   );
-  // }
-
-  return null;
-};
-
-function CustomNodeComponent({ x, y, width, height, index, payload, containerWidth }: any) {
-  const isOut = x + width + 6 > containerWidth;
-  return (
-    <Layer key={`CustomNode${index}`}>
-      <Rectangle x={x} y={y} width={width} height={height} fill="#5192ca" fillOpacity="1" />
-      <text
-        textAnchor={isOut ? 'end' : 'start'}
-        x={isOut ? x - 6 : x + width + 6}
-        y={y + height / 2}
-        fontSize="8"
-        // stroke="#333"
-      >
-        {payload.name}
-      </text>
-      <text
-        textAnchor={isOut ? 'end' : 'start'}
-        x={isOut ? x - 6 : x + width + 6}
-        y={y + height / 2 + 13}
-        fontSize="12"
-        // stroke="#333"
-        // strokeOpacity="0.5"
-      >
-        {payload.value + 'k'}
-      </text>
-    </Layer>
-  );
-}
-
-const CustomLinkComponent = (props: any) => {
-  const [fill, setFill] = React.useState('url(#linkGradient)');
-  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index } =
-    props;
-  return (
-    <Layer key={`CustomLink${index}`}>
-      <path
-        d={`
-            M${sourceX},${sourceY + linkWidth / 2}
-            C${sourceControlX},${sourceY + linkWidth / 2}
-              ${targetControlX},${targetY + linkWidth / 2}
-              ${targetX},${targetY + linkWidth / 2}
-            L${targetX},${targetY - linkWidth / 2}
-            C${targetControlX},${targetY - linkWidth / 2}
-              ${sourceControlX},${sourceY - linkWidth / 2}
-              ${sourceX},${sourceY - linkWidth / 2}
-            Z
-          `}
-        fill={fill}
-        strokeWidth="0"
-        onMouseEnter={() => {
-          setFill('rgba(0, 136, 254, 0.5)');
-        }}
-        onMouseLeave={() => {
-          setFill('url(#linkGradient)');
-        }}
-      />
-    </Layer>
-  );
-};

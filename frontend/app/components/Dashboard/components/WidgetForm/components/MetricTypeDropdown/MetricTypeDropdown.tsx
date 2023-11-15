@@ -1,5 +1,5 @@
 import React from 'react';
-import { DROPDOWN_OPTIONS, INSIGHTS, Option } from 'App/constants/card';
+import { DROPDOWN_OPTIONS, INSIGHTS, Option, USER_PATH } from 'App/constants/card';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
@@ -37,6 +37,7 @@ function MetricTypeDropdown(props: Props) {
       }
       setTimeout(() => onChange(type.value), 0);
     }
+    // setTimeout(() => onChange(USER_PATH), 0);
   }, []);
 
   const onChange = (type: string) => {

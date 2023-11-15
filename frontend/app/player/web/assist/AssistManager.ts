@@ -25,6 +25,12 @@ export enum ConnectionStatus {
   Closed,
 }
 
+type StatsEvent = 's_call_started'
+  | 's_call_ended'
+  | 's_control_started'
+  | 's_control_ended'
+  | 's_recording_started'
+  | 's_recording_ended'
 
 export function getStatusText(status: ConnectionStatus): string {
   switch(status) {
@@ -80,9 +86,9 @@ export default class AssistManager {
     const isRecordingActive = recordingState === SessionRecordingStatus.Recording
     const isControlActive = remoteControl === RemoteControlStatus.Enabled
     // recording gets priority here
-    if (isRecordingActive) return { border: '2px dashed red' }
-    if (isControlActive) return { border: '2px dashed blue' }
-    return { border: 'unset'}
+    if (isRecordingActive) return { outline: '2px dashed red' }
+    if (isControlActive) return { outline: '2px dashed blue' }
+    return { outline: 'unset' }
   }
 
   private setStatus(status: ConnectionStatus) {
@@ -137,7 +143,7 @@ export default class AssistManager {
     this.inactiveTimeout && clearTimeout(this.inactiveTimeout)
     this.inactiveTimeout = undefined
   }
-  connect(agentToken: string) {
+  connect(agentToken: string, agentId: number, projectId: number) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
@@ -152,17 +158,21 @@ export default class AssistManager {
       const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
       const socket: Socket = this.socket = io(urlObject.origin, {
+        withCredentials: true,
         multiplex: true,
+        transports: ['websocket'],
         path: '/ws-assist/socket',
         auth: {
           token: agentToken
         },
         query: {
           peerId: this.peerID,
+          projectId,
           identity: "agent",
           agentInfo: JSON.stringify({
             ...this.session.agentInfo,
-            query: document.location.search
+            id: agentId,
+            query: document.location.search,
           })
         }
       })
@@ -269,6 +279,10 @@ export default class AssistManager {
 
       document.addEventListener('visibilitychange', this.onVisChange)
     })
+  }
+
+  public ping(event: StatsEvent, id: number) {
+    this.socket?.emit(event, id)
   }
 
 

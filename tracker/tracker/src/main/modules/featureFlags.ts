@@ -54,7 +54,6 @@ export default class FeatureFlags {
       userID: sessionInfo.userID,
       metadata: sessionInfo.metadata,
       referrer: document.referrer,
-      // todo: get from backend
       os: userInfo.userOS,
       device: userInfo.userDevice,
       country: userInfo.userCountry,

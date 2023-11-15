@@ -15,13 +15,16 @@ const itemInListUpdater = createItemInListUpdater(idKey);
 
 const initialState = Map({
     instance: Config(),
+    loaded: false,
     list: List(),
 });
 
 const reducer = (state = initialState, action = {}) => {
     switch (action.type) {
+        case FETCH_LIST.REQUEST:
+            return state.set('loaded', true);
         case FETCH_LIST.SUCCESS:
-            return state.set('list', List(action.data).map(Config));
+            return state.set('list', List(action.data).map(Config)).set('loaded', true)
         case UPDATE.SUCCESS:
         case SAVE.SUCCESS:
             const config = Config(action.data);

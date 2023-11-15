@@ -51,6 +51,18 @@ function hashString(s: string): number {
   return hash;
 }
 
+interface IosCrash {
+  crashId: string
+  name: string
+  projectId: number
+  reason: string
+  seqIndex: number
+  sessionId: string
+  stacktrace: string
+  time: number
+  timestamp: number
+}
+
 export interface ISession {
   sessionId: string;
   pageTitle: string;
@@ -62,6 +74,7 @@ export interface ISession {
   startedAt: number;
   duration: number;
   events: InjectedEvent[];
+  crashes: IosCrash[]
   stackEvents: StackEvent[];
   metadata: [];
   favorite: boolean;
@@ -98,7 +111,6 @@ export interface ISession {
   userDeviceHeapSize: number;
   userDeviceMemorySize: number;
   errors: SessionError[];
-  crashes?: [];
   socket: string;
   isIOS: boolean;
   revId: string | null;
@@ -108,7 +120,7 @@ export interface ISession {
   notes: Note[];
   notesWithEvents: Array<Note | InjectedEvent>;
   fileKey: string;
-  platform: string;
+  platform: "web" | "ios" | "android";
   projectId: string;
   startTs: number;
   timestamp: number;
@@ -118,6 +130,7 @@ export interface ISession {
   userID: string;
   userUUID: string;
   userEvents: any[];
+  timezone?: string;
 }
 
 const emptyValues = {
@@ -137,7 +150,8 @@ const emptyValues = {
   notes: [],
   metadata: {},
   startedAt: 0,
-};
+  platform: 'web',
+} as const
 
 export default class Session {
   sessionId: ISession['sessionId'];
@@ -196,6 +210,8 @@ export default class Session {
   notes: ISession['notes'];
   notesWithEvents: ISession['notesWithEvents'];
   frustrations: Array<IIssue | InjectedEvent>
+  timezone?: ISession['timezone'];
+  platform: ISession['platform'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
@@ -216,6 +232,7 @@ export default class Session {
       domURL = [],
       devtoolsURL = [],
       mobsUrl = [],
+      crashes = [],
       notes = [],
       ...session
     } = sessionData;
@@ -251,7 +268,7 @@ export default class Session {
       stackEventsList.push(...mergedArrays);
     }
 
-    const exceptions = (errors as IError[]).map((e) => new SessionError(e)) || [];
+    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
 
     const issuesList =
       (issues as IIssue[]).map(
@@ -289,6 +306,7 @@ export default class Session {
       isMobile,
       startedAt,
       duration,
+      crashes,
       durationSeconds,
       userNumericHash: hashString(
         session.userId ||
@@ -314,13 +332,14 @@ export default class Session {
 
   addEvents(
     sessionEvents: EventData[],
+    crashes: IosCrash[],
     errors: any[],
     issues: any[],
     resources: any[],
-    userEvents: any[],
-    stackEvents: any[]
+    userEvents: any[] = [],
+    stackEvents: any[] = []
   ) {
-    const exceptions = (errors as IError[]).map((e) => new SessionError(e)) || [];
+    const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
     const issuesList =
       (issues as IIssue[]).map(
         (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k })
@@ -354,11 +373,11 @@ export default class Session {
           // @ts-ignore
           return ev.hesitation > 1000
         }
-        return ev.type === TYPES.CLICKRAGE
+        return ev.type === TYPES.CLICKRAGE || ev.type === TYPES.TAPRAGE
       }
     )
 
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE)
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
@@ -376,6 +395,7 @@ export default class Session {
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;
+    this.crashes = crashes || [];
     return this;
   }
 

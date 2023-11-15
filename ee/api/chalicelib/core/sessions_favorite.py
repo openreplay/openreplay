@@ -1,12 +1,12 @@
 from decouple import config
 
-import schemas_ee
+import schemas
 from chalicelib.core import sessions, sessions_favorite_exp, sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client
 from chalicelib.utils.storage import extra
 
 
-def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
+def add_favorite_session(context: schemas.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -22,7 +22,7 @@ def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session
     return {"errors": ["something went wrong"]}
 
 
-def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
+def remove_favorite_session(context: schemas.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -39,7 +39,7 @@ def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, sess
     return {"errors": ["something went wrong"]}
 
 
-def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
+def favorite_session(context: schemas.CurrentContext, project_id, session_id):
     keys = sessions_mobs.__get_mob_keys(project_id=project_id, session_id=session_id)
     keys += sessions_mobs.__get_mob_keys_deprecated(session_id=session_id)  # To support old sessions
     keys += sessions_devtool.__get_devtools_keys(project_id=project_id, session_id=session_id)

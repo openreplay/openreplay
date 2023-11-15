@@ -4,7 +4,7 @@ CREATE INDEX pages_dom_content_loaded_time_idx ON events.pages (dom_content_load
 CREATE INDEX pages_first_paint_time_idx ON events.pages (first_paint_time) WHERE first_paint_time > 0;
 CREATE INDEX pages_ttfb_idx ON events.pages (ttfb) WHERE ttfb > 0;
 CREATE INDEX pages_time_to_interactive_idx ON events.pages (time_to_interactive) WHERE time_to_interactive > 0;
-CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;
+CREATE INDEX sessions_session_id_project_id_start_ts_idx ON public.sessions (session_id, project_id, start_ts) WHERE duration > 0;
 CREATE INDEX pages_session_id_timestamp_loadgt0NN_idx ON events.pages (session_id, timestamp) WHERE load_time > 0 AND load_time IS NOT NULL;
 DROP INDEX events.resources_type_idx;
 CREATE INDEX resources_timestamp_type_durationgt0NN_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL;

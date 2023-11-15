@@ -11,7 +11,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 def app_connection_string(name, port, path):
     namespace = config("POD_NAMESPACE", default="app")
     conn_string = config("CLUSTER_URL", default="svc.cluster.local")
-    return f"http://{name}.{namespace}.{conn_string}:{port}/{path}"
+    return f"http://{'.'.join(filter(None,[name,namespace,conn_string]))}:{port}/{path}"
 
 
 HEALTH_ENDPOINTS = {
@@ -123,8 +123,7 @@ def __check_redis(*_):
         return fail_response
 
     try:
-        u = urlparse(config("REDIS_STRING"))
-        r = redis.Redis(host=u.hostname, port=u.port, socket_timeout=2)
+        r = redis.from_url(config("REDIS_STRING"))
         r.ping()
     except Exception as e:
         print("!! Issue getting redis-health response")
@@ -162,7 +161,7 @@ def __check_SSL(*_):
 def __get_sessions_stats(*_):
     with pg_client.PostgresClient() as cur:
         constraints = ["projects.deleted_at IS NULL"]
-        query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c, 
+        query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
                                        COALESCE(SUM(events_count),0) AS e_c
                                 FROM public.projects_stats
                                      INNER JOIN public.projects USING(project_id)

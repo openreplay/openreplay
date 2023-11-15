@@ -19,7 +19,6 @@ type BulkSet struct {
 	requests          Bulk
 	customEvents      Bulk
 	webPageEvents     Bulk
-	webInputEvents    Bulk
 	webInputDurations Bulk
 	webGraphQL        Bulk
 	webErrors         Bulk
@@ -57,8 +56,6 @@ func (conn *BulkSet) Get(name string) Bulk {
 		return conn.customEvents
 	case "webPageEvents":
 		return conn.webPageEvents
-	case "webInputEvents":
-		return conn.webInputEvents
 	case "webInputDurations":
 		return conn.webInputDurations
 	case "webGraphQL":
@@ -119,14 +116,6 @@ func (conn *BulkSet) initBulks() {
 			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
 			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0))",
 		18, 200)
-	if err != nil {
-		log.Fatalf("can't create webPageEvents bulk: %s", err)
-	}
-	conn.webInputEvents, err = NewBulk(conn.c,
-		"events.inputs",
-		"(session_id, message_id, timestamp, label)",
-		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''))",
-		4, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
@@ -204,9 +193,9 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.webNetworkRequest, err = NewBulk(conn.c,
 		"events_common.requests",
-		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
-		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
-		13, 200)
+		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, transfer_size)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d, $%d)",
+		14, 200)
 	if err != nil {
 		log.Fatalf("can't create webNetworkRequest bulk: %s", err)
 	}
@@ -220,7 +209,6 @@ func (conn *BulkSet) Send() {
 	newTask.bulks = append(newTask.bulks, conn.requests)
 	newTask.bulks = append(newTask.bulks, conn.customEvents)
 	newTask.bulks = append(newTask.bulks, conn.webPageEvents)
-	newTask.bulks = append(newTask.bulks, conn.webInputEvents)
 	newTask.bulks = append(newTask.bulks, conn.webInputDurations)
 	newTask.bulks = append(newTask.bulks, conn.webGraphQL)
 	newTask.bulks = append(newTask.bulks, conn.webErrors)

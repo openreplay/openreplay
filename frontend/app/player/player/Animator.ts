@@ -1,5 +1,5 @@
-import type { Store, Interval } from '../common/types';
-import MessageManager from 'App/player/web/MessageManager'
+import {Message} from "Player/web/messages";
+import type { Store, Interval } from 'Player';
 
 
 const fps = 60
@@ -21,6 +21,18 @@ const cancelAnimationFrame =
   window.mozCancelAnimationFrame ||
   window.clearTimeout
 
+export interface IMessageManager {
+  onFileReadSuccess(): void;
+  onFileReadFailed(e: any): void;
+  onFileReadFinally(): void;
+  startLoading(): void;
+  resetMessageManagers(): void;
+  move(t: number): any;
+  distributeMessage(msg: Message): void;
+  setMessagesLoading(messagesLoading: boolean): void;
+  clean(): void;
+  _sortMessagesHack: (msgs: Message[]) => void;
+}
 
 export interface SetState {
   time: number
@@ -56,7 +68,7 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0
 
-  constructor(private store: Store<GetState>, private mm: MessageManager) {
+  constructor(private store: Store<GetState>, private mm: IMessageManager) {
 
     // @ts-ignore
     window.playerJump = this.jump.bind(this)

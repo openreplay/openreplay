@@ -23,7 +23,7 @@ const config: Configuration = {
     filename: 'app-[contenthash:7].js',
     path: path.resolve(__dirname, 'public'),
   },
-  entry: "./app/initialize.js",
+  entry: "./app/initialize.tsx",
   optimization: {
     splitChunks: {
       chunks: 'all',

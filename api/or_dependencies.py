@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import Callable
 
+from fastapi import Depends, Security
 from fastapi.routing import APIRoute
+from fastapi.security import SecurityScopes
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
@@ -9,6 +12,8 @@ from starlette.responses import Response, JSONResponse
 
 import schemas
 from chalicelib.utils import helper
+
+logger = logging.getLogger(__name__)
 
 
 async def OR_context(request: Request) -> schemas.CurrentContext:
@@ -23,6 +28,7 @@ class ORRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
+            logger.debug(f"call processed by: {self.methods} {self.path_format}")
             try:
                 response: Response = await original_route_handler(request)
             except HTTPException as e:
@@ -48,3 +54,14 @@ class ORRoute(APIRoute):
             return response
 
         return custom_route_handler
+
+
+def __check_role(required_roles: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
+    if len(required_roles.scopes) > 0:
+        if context.role not in required_roles.scopes:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You need a different role to access this resource")
+
+
+def OR_role(*required_roles):
+    return Security(__check_role, scopes=list(required_roles))

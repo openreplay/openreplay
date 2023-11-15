@@ -1,3 +1,11 @@
+## 6.0.2
+
+- fix cursor position for remote control
+
+## 6.0.1
+
+- few small fixes for reconnects
+
 ## 6.0.0
 
 - added support for multi tab assist session

@@ -38,7 +38,7 @@ function EventsBlock(props: IProps) {
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { playing, tabStates, tabChangeEvents } = store.get();
+  const { playing, tabStates, tabChangeEvents = [] } = store.get();
 
   const {
     filteredEvents,
@@ -53,23 +53,30 @@ function EventsBlock(props: IProps) {
   const filteredLength = filteredEvents?.length || 0;
   const notesWithEvtsLength = notesWithEvents?.length || 0;
   const notesLength = notes.length;
-  const eventListNow = Object.values(tabStates)[0]?.eventListNow || [];
+  const eventListNow: any[] = []
+  if (tabStates !== undefined) {
+    eventListNow.concat(Object.values(tabStates)[0]?.eventListNow || [])
+  } else {
+    eventListNow.concat(store.get().eventListNow)
+  }
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {
-    tabChangeEvents.forEach(ev => {
-      const urlsList = tabStates[ev.tabId].urlsList;
-      let found = false;
-      let i = urlsList.length - 1;
-      while (!found && i >= 0) {
-        const item = urlsList[i]
-        if (item.url && item.time <= ev.time) {
-          found = true;
-          ev.activeUrl = item.url.replace(/.*\/\/[^\/]*/, '');
+    if (tabStates !== undefined) {
+      tabChangeEvents.forEach(ev => {
+        const urlsList = tabStates[ev.tabId].urlsList;
+        let found = false;
+        let i = urlsList.length - 1;
+        while (!found && i >= 0) {
+          const item = urlsList[i]
+          if (item.url && item.time <= ev.time) {
+            found = true;
+            ev.activeUrl = item.url.replace(/.*\/\/[^\/]*/, '');
+          }
+          i--;
         }
-        i--;
-      }
-    })
+      })
+    }
     const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
     return mergeEventLists(filteredLength > 0 ? filteredEvents : eventsWithMobxNotes, tabChangeEvents);
   }, [filteredLength, notesWithEvtsLength, notesLength])
@@ -133,7 +140,7 @@ function EventsBlock(props: IProps) {
     const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
-    const isTabChange = event.type === 'TABCHANGE';
+    const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
 
     return (

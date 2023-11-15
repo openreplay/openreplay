@@ -17,6 +17,7 @@ type Config struct {
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
 	TopicRawWeb             string        `env:"TOPIC_RAW_WEB,required"`
 	TopicRawIOS             string        `env:"TOPIC_RAW_IOS,required"`
+	TopicRawImages          string        `env:"TOPIC_RAW_IMAGES,required"`
 	BeaconSizeLimit         int64         `env:"BEACON_SIZE_LIMIT,required"`
 	CompressionThreshold    int64         `env:"COMPRESSION_THRESHOLD,default=20000"`
 	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=1000"`

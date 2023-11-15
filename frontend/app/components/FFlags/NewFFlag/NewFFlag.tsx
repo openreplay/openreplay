@@ -34,7 +34,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
 
   if (featureFlagsStore.isLoading) return <Loader loading={true} />;
   if (!current) return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
+    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
@@ -76,7 +76,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
 
   const showDescription = Boolean(current.description?.length);
   return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
+    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
       <Prompt
         when={current.hasChanged}
         message={() => {

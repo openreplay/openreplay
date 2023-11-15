@@ -88,6 +88,9 @@ export default Record({
       const range = getDateRangeFromValue(rValue);
       startDate = range.start.unix() * 1000;
       endDate = range.end.unix() * 1000;
+    } else if (filter.startDate && filter.endDate) {
+      startDate = filter.startDate;
+      endDate = filter.endDate;
     }
     return {
       ...filter,

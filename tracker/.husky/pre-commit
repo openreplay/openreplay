@@ -7,7 +7,7 @@ then
   pwd
   cd tracker/tracker
 
-  npm run lint-front
+  bun run lint-front
 
   cd ../../
 fi
@@ -17,7 +17,7 @@ then
   echo "tracker-assist"
   cd tracker/tracker-assist
 
-  npm run lint-front
+  bun run lint-front
 
   cd ../../
 fi

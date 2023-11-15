@@ -40,7 +40,7 @@ if ssl_protocol:
 
 session_messages = [1, 25, 28, 29, 30, 31, 32, 54, 56, 62, 69, 78, 125, 126]
 if EVENT_TYPE == 'normal':
-    events_messages = [21, 22, 25, 27, 64, 78, 125]
+    events_messages = [21, 22, 25, 27, 64, 69, 78, 125]
 elif EVENT_TYPE == 'detailed':
     events_messages = [1, 4, 21, 22, 25, 27, 31, 32, 39, 48, 59, 64, 69, 78, 125, 126]
 allowed_messages = list(set(session_messages + events_messages))
@@ -340,7 +340,7 @@ def fix_missing_redshift():
     all_ids = list()
     # logging.info(f'[FILL INFO] {pg_res[:5]}')
     for i in range(len(df)):
-        user = df.iloc[i].name
+        user = df.iloc[i].name.replace("'", "''")
         aux = [str(sess) for sess in df.iloc[i].session_id if sess != 'NN']
         all_ids += aux
         if len(aux) == 0:
@@ -357,6 +357,7 @@ def fix_missing_redshift():
         database_api.pdredshift.exec_commit(base_query)
     except Exception as e:
         logging.error(f'[ERROR] Error while executing query. {repr(e)}')
+        logging.error(f'[ERROR INFO] query: {base_query}')
         database_api.close()
         asyncio.run(pg_client.terminate())
         return
@@ -449,14 +450,18 @@ class WorkerPool:
         kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
         kafka_reader_process.start()
         current_loop_number = 0
+        n_kafka_restarts = 0
         while signal_handler.KEEP_PROCESSING:
             current_loop_number = (current_loop_number + 1) % self.n_of_loops
             # Setup of parameters for workers
             if not kafka_reader_process.is_alive():
+                if n_kafka_restarts > 3:
+                    break
                 print('[WORKER-INFO] Restarting reader task')
                 del kafka_reader_process
                 kafka_reader_process = Process(target=read_from_kafka, args=(reader_conn, kafka_task_params))
                 kafka_reader_process.start()
+                n_kafka_restarts += 1
             decoding_params = [{'flag': 'decoder',
                                 'message': list(),
                                 'memory': dict()} for _ in range(self.n_workers)

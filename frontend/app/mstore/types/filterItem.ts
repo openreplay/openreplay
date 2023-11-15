@@ -91,6 +91,7 @@ export default class FilterItem {
 
         this.completed = json.completed;
         this.dropped = json.dropped;
+
         return this;
     }
 

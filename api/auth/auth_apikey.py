@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from fastapi import Request
@@ -7,6 +8,8 @@ from starlette.exceptions import HTTPException
 
 from chalicelib.core import authorizers
 from schemas import CurrentAPIContext
+
+logger = logging.getLogger(__name__)
 
 
 class APIKeyAuth(APIKeyHeader):
@@ -22,7 +25,7 @@ class APIKeyAuth(APIKeyHeader):
                 detail="Invalid API Key",
             )
         r["authorizer_identity"] = "api_key"
-        print(r)
+        logger.debug(r)
         request.state.authorizer_identity = "api_key"
-        request.state.currentContext = CurrentAPIContext(tenant_id=r["tenantId"])
+        request.state.currentContext = CurrentAPIContext(tenantId=r["tenantId"])
         return request.state.currentContext

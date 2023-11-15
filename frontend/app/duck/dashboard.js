@@ -39,10 +39,3 @@ export function setShowAlerts(state) {
     state,
   }
 }
-
-export function getOnboard() {
-  return {
-    types: ON_BOARD.toArray(),
-    call: client => client.get('/boarding'),
-  }
-}

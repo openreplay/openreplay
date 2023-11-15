@@ -1,22 +1,23 @@
+import WebPlayer from 'Player/web/WebPlayer';
+import MobilePlayer from 'Player/mobile/IOSPlayer';
 import React, { useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
 
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
-import { ResourceType } from 'Player';
+import { ResourceType, Timed } from 'Player';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import { toJS } from 'mobx';
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 
 const INDEX_KEY = 'network';
 
@@ -36,7 +37,7 @@ const TYPE_TO_TAB = {
   [ResourceType.IMG]: IMG,
   [ResourceType.MEDIA]: MEDIA,
   [ResourceType.OTHER]: OTHER,
-}
+};
 
 const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER] as const;
 const TABS = TAP_KEYS.map((tab) => ({
@@ -92,7 +93,7 @@ function renderSize(r: any) {
     content = (
       <ul>
         {showTransferred && (
-          <li>{`${formatBytes(r.encodedBodySize + headerSize)} transfered over network`}</li>
+          <li>{`${formatBytes(r.encodedBodySize + headerSize)} transferred over network`}</li>
         )}
         <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
       </ul>
@@ -129,38 +130,109 @@ export function renderDuration(r: any) {
   );
 }
 
-function renderStatus({ status, cached }: { status: string, cached: boolean }) {
+function renderStatus({ status, cached }: { status: string; cached: boolean }) {
   return (
     <>
       {cached ? (
-        <Tooltip title={"Served from cache"}>
+        <Tooltip title={'Served from cache'}>
           <div className="flex items-center">
             <span className="mr-1">{status}</span>
             <Icon name="wifi" size={16} />
           </div>
         </Tooltip>
-      ) : status}
+      ) : (
+        status
+      )}
     </>
-  )
+  );
 }
 
-function NetworkPanel({ startedAt }: { startedAt: number }) {
-  const { player, store } = React.useContext(PlayerContext)
+function NetworkPanelCont({ startedAt }: { startedAt: number }) {
+  const { player, store } = React.useContext(PlayerContext);
 
-  const {
-    domContentLoadedTime,
-    loadTime,
-    domBuildingTime,
-    tabStates,
-    currentTab
-  } = store.get()
+  const { domContentLoadedTime, loadTime, domBuildingTime, tabStates, currentTab } = store.get();
   const {
     fetchList = [],
     resourceList = [],
     fetchListNow = [],
-    resourceListNow = []
-  } = tabStates[currentTab]
+    resourceListNow = [],
+  } = tabStates[currentTab];
 
+  return (
+    <NetworkPanelComp
+      loadTime={loadTime}
+      domBuildingTime={domBuildingTime}
+      domContentLoadedTime={domContentLoadedTime}
+      fetchList={fetchList}
+      resourceList={resourceList}
+      fetchListNow={fetchListNow}
+      resourceListNow={resourceListNow}
+      player={player}
+      startedAt={startedAt}
+    />
+  );
+}
+
+function MobileNetworkPanelCont({ startedAt }: { startedAt: number }) {
+  const { player, store } = React.useContext(MobilePlayerContext);
+
+  const domContentLoadedTime = undefined;
+  const loadTime = undefined;
+  const domBuildingTime = undefined;
+  const {
+    fetchList = [],
+    resourceList = [],
+    fetchListNow = [],
+    resourceListNow = [],
+  } = store.get();
+
+  return (
+    <NetworkPanelComp
+      isMobile
+      loadTime={loadTime}
+      domBuildingTime={domBuildingTime}
+      domContentLoadedTime={domContentLoadedTime}
+      fetchList={fetchList}
+      resourceList={resourceList}
+      fetchListNow={fetchListNow}
+      resourceListNow={resourceListNow}
+      player={player}
+      startedAt={startedAt}
+    />
+  );
+}
+
+interface Props {
+  domContentLoadedTime?: {
+    time: number;
+    value: number;
+  };
+  loadTime?: {
+    time: number;
+    value: number;
+  };
+  domBuildingTime?: number;
+  fetchList: Timed[];
+  resourceList: Timed[];
+  fetchListNow: Timed[];
+  resourceListNow: Timed[];
+  player: WebPlayer | MobilePlayer;
+  startedAt: number;
+  isMobile?: boolean;
+}
+
+const NetworkPanelComp = observer(({
+  loadTime,
+  domBuildingTime,
+  domContentLoadedTime,
+  fetchList,
+  resourceList,
+  fetchListNow,
+  resourceListNow,
+  player,
+  startedAt,
+  isMobile
+}: Props) => {
   const { showModal } = useModal();
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
@@ -174,70 +246,87 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
 
-  const list = useMemo(() =>
-    // TODO: better merge (with body size info) - do it in player
-    resourceList.filter(res => !fetchList.some(ft => {
-      // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
-      if (res.name === ft.name) {
-        if (res.time === ft.time) return true;
-        if (res.url.includes(ft.url)) {
-          return Math.abs(res.time - ft.time) < 350
-            || Math.abs(res.timestamp - ft.timestamp) < 350;
-        }
-      }
+  const list = useMemo(
+    () =>
+      // TODO: better merge (with body size info) - do it in player
+      resourceList
+        .filter(
+          (res) =>
+            !fetchList.some((ft) => {
+              // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
+              if (res.name === ft.name) {
+                if (res.time === ft.time) return true;
+                if (res.url.includes(ft.url)) {
+                  return (
+                    Math.abs(res.time - ft.time) < 350 ||
+                    Math.abs(res.timestamp - ft.timestamp) < 350
+                  );
+                }
+              }
 
-      if (res.name !== ft.name) { return false }
-      if (Math.abs(res.time - ft.time) > 250) { return false } // TODO: find good epsilons
-      if (Math.abs(res.duration - ft.duration) > 200) { return false }
+              if (res.name !== ft.name) {
+                return false;
+              }
+              if (Math.abs(res.time - ft.time) > 250) {
+                return false;
+              } // TODO: find good epsilons
+              if (Math.abs(res.duration - ft.duration) > 200) {
+                return false;
+              }
 
-      return true
-    }))
-    .concat(fetchList)
-    .sort((a, b) => a.time - b.time)
-  , [ resourceList.length, fetchList.length ])
+              return true;
+            })
+        )
+        .concat(fetchList)
+        .sort((a, b) => a.time - b.time),
+    [resourceList.length, fetchList.length]
+  );
 
   let filteredList = useMemo(() => {
-    if (!showOnlyErrors) { return list }
-    return list.filter(it => parseInt(it.status) >= 400 || !it.success)
-  }, [ showOnlyErrors, list ])
+    if (!showOnlyErrors) {
+      return list;
+    }
+    return list.filter((it) => parseInt(it.status) >= 400 || !it.success);
+  }, [showOnlyErrors, list]);
   filteredList = useRegExListFilterMemo(
     filteredList,
-    it => [ it.status, it.name, it.type ],
-    filter,
-  )
-  filteredList = useTabListFilterMemo(filteredList, it => TYPE_TO_TAB[it.type], ALL, activeTab)
+    (it) => [it.status, it.name, it.type],
+    filter
+  );
+  filteredList = useTabListFilterMemo(filteredList, (it) => TYPE_TO_TAB[it.type], ALL, activeTab);
 
-  const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
-  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
+  const onTabClick = (activeTab: (typeof TAP_KEYS)[number]) =>
+    devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
+    devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
-  const [
-    timeoutStartAutoscroll,
-    stopAutoscroll,
-  ] = useAutoscroll(
+  const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
     getLastItemTime(fetchListNow, resourceListNow),
     activeIndex,
-    index => devTools.update(INDEX_KEY, { index })
-  )
-  const onMouseEnter = stopAutoscroll
+    (index) => devTools.update(INDEX_KEY, { index })
+  );
+  const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
-    if (isDetailsModalActive) { return }
-    timeoutStartAutoscroll()
-  }
+    if (isDetailsModalActive) {
+      return;
+    }
+    timeoutStartAutoscroll();
+  };
 
-  const resourcesSize = useMemo(() =>
-    resourceList.reduce(
-      (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
-      0,
-    ), [ resourceList.length ])
-  const transferredSize = useMemo(() =>
-    resourceList.reduce(
-      (sum, { headerSize, encodedBodySize }) =>
-        sum + (headerSize || 0) + (encodedBodySize || 0),
-      0,
-    ), [ resourceList.length ])
-
+  const resourcesSize = useMemo(
+    () => resourceList.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0),
+    [resourceList.length]
+  );
+  const transferredSize = useMemo(
+    () =>
+      resourceList.reduce(
+        (sum, { headerSize, encodedBodySize }) => sum + (headerSize || 0) + (encodedBodySize || 0),
+        0
+      ),
+    [resourceList.length]
+  );
 
   const referenceLines = useMemo(() => {
     const arr = [];
@@ -256,24 +345,29 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
     }
 
     return arr;
-  }, [ domContentLoadedTime, loadTime ])
+  }, [domContentLoadedTime, loadTime]);
 
   const showDetailsModal = (item: any) => {
-    setIsDetailsModalActive(true)
+    setIsDetailsModalActive(true);
     showModal(
-      <FetchDetailsModal time={item.time + startedAt} resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
+      <FetchDetailsModal
+        time={item.time + startedAt}
+        resource={item}
+        rows={filteredList}
+        fetchPresented={fetchList.length > 0}
+      />,
       {
         right: true,
         width: 500,
         onClose: () => {
-          setIsDetailsModalActive(false)
-          timeoutStartAutoscroll()
-        }
+          setIsDetailsModalActive(false);
+          timeoutStartAutoscroll();
+        },
       }
-    )
-    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) })
-    stopAutoscroll()
-  }
+    );
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+    stopAutoscroll();
+  };
 
   return (
     <React.Fragment>
@@ -286,13 +380,15 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
         <BottomBlock.Header>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">Network</span>
-            <Tabs
-              className="uppercase"
-              tabs={TABS}
-              active={activeTab}
-              onClick={onTabClick}
-              border={false}
-            />
+            {isMobile ? null :
+              <Tabs
+                className="uppercase"
+                tabs={TABS}
+                active={activeTab}
+                onClick={onTabClick}
+                border={false}
+              />
+            }
           </div>
           <Input
             className="input-small"
@@ -413,8 +509,17 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
       </BottomBlock>
     </React.Fragment>
   );
-}
+})
 
-export default connect((state: any) => ({
+const WebNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
-}))(observer(NetworkPanel));
+}))(observer(NetworkPanelCont));
+
+const MobileNetworkPanel = connect((state: any) => ({
+  startedAt: state.getIn(['sessions', 'current']).startedAt,
+}))(observer(MobileNetworkPanelCont));
+
+export {
+    WebNetworkPanel,
+    MobileNetworkPanel
+}

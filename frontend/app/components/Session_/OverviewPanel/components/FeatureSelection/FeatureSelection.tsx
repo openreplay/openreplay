@@ -8,9 +8,9 @@ const FRUSTRATIONS = 'FRUSTRATIONS';
 const PERFORMANCE = 'PERFORMANCE';
 
 export const HELP_MESSAGE: any = {
-  NETWORK: 'Network requests made in this session',
+  NETWORK: 'Network requests with issues in this session',
   EVENTS: 'Visualizes the events that takes place in the DOM',
-  ERRORS: 'Visualizes native JS errors like Type, URI, Syntax etc.',
+  ERRORS: 'Visualizes native errors like Type, URI, Syntax etc.',
   PERFORMANCE: 'Summary of this session’s memory, and CPU consumption on the timeline',
   FRUSTRATIONS: 'Indicates user frustrations in the session',
 };

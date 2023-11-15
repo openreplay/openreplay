@@ -40,7 +40,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			tracker_version, issue_score,
 			platform,
 			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
-			user_id, user_state, user_city
+			user_id, user_state, user_city, timezone
 		) VALUES (
 			$1, $2, $3,
 			$4, $5, $6, $7, 
@@ -49,7 +49,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
-			NULLIF(LEFT($19, 8000), ''), NULLIF($20, ''), NULLIF($21, '')
+			NULLIF(LEFT($19, 8000), ''), NULLIF($20, ''), NULLIF($21, ''), $22
 		)`,
 		sess.SessionID, sess.ProjectID, sess.Timestamp,
 		sess.UserUUID, sess.UserDevice, sess.UserDeviceType, sess.UserCountry,
@@ -58,7 +58,7 @@ func (s *storageImpl) Add(sess *Session) error {
 		sess.TrackerVersion, sess.Timestamp/1000,
 		sess.Platform,
 		sess.UserAgent, sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
-		sess.UserID, sess.UserState, sess.UserCity,
+		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone,
 	)
 }
 
@@ -93,11 +93,11 @@ func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
 
 func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	sess := &Session{SessionID: sessionID}
-	var revID, userOSVersion, userBrowserVersion, userState, userCity *string
+	var revID, userOSVersion, userBrowser, userBrowserVersion, userState, userCity *string
 	var issueTypes pgtype.EnumArray
 	if err := s.db.QueryRow(`
 		SELECT platform,
-			duration, project_id, start_ts,
+			duration, project_id, start_ts, timezone,
 			user_uuid, user_os, user_os_version, 
 			user_device, user_device_type, user_country, user_state, user_city,
 			rev_id, tracker_version,
@@ -111,19 +111,22 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	`,
 		sessionID,
 	).Scan(&sess.Platform,
-		&sess.Duration, &sess.ProjectID, &sess.Timestamp,
+		&sess.Duration, &sess.ProjectID, &sess.Timestamp, &sess.Timezone,
 		&sess.UserUUID, &sess.UserOS, &userOSVersion,
 		&sess.UserDevice, &sess.UserDeviceType, &sess.UserCountry, &userState, &userCity,
 		&revID, &sess.TrackerVersion,
 		&sess.UserID, &sess.UserAnonymousID, &sess.Referrer,
 		&sess.PagesCount, &sess.EventsCount, &sess.ErrorsCount, &issueTypes,
-		&sess.UserBrowser, &userBrowserVersion, &sess.IssueScore,
+		&userBrowser, &userBrowserVersion, &sess.IssueScore,
 		&sess.Metadata1, &sess.Metadata2, &sess.Metadata3, &sess.Metadata4, &sess.Metadata5,
 		&sess.Metadata6, &sess.Metadata7, &sess.Metadata8, &sess.Metadata9, &sess.Metadata10); err != nil {
 		return nil, err
 	}
 	if userOSVersion != nil {
 		sess.UserOSVersion = *userOSVersion
+	}
+	if userBrowser != nil {
+		sess.UserBrowser = *userBrowser
 	}
 	if userBrowserVersion != nil {
 		sess.UserBrowserVersion = *userBrowserVersion

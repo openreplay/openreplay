@@ -1,5 +1,6 @@
 import boto3
 from chalicelib.core import log_tools
+from schemas import schemas
 
 IN_TY = "cloudwatch"
 
@@ -102,18 +103,18 @@ def delete(tenant_id, project_id):
     return log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
-def add_edit(tenant_id, project_id, data):
+def add_edit(tenant_id, project_id, data: schemas.IntegrationCloudwatchSchema):
     s = get(project_id)
     if s is not None:
         return update(tenant_id=tenant_id, project_id=project_id,
-                      changes={"awsAccessKeyId": data["awsAccessKeyId"],
-                               "awsSecretAccessKey": data["awsSecretAccessKey"],
-                               "logGroupName": data["logGroupName"],
-                               "region": data["region"]})
+                      changes={"awsAccessKeyId": data.aws_access_key_id,
+                               "awsSecretAccessKey": data.aws_secret_access_key,
+                               "logGroupName": data.log_group_name,
+                               "region": data.region})
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   aws_access_key_id=data["awsAccessKeyId"],
-                   aws_secret_access_key=data["awsSecretAccessKey"],
-                   log_group_name=data["logGroupName"],
-                   region=data["region"])
+                   aws_access_key_id=data.aws_access_key_id,
+                   aws_secret_access_key=data.aws_secret_access_key,
+                   log_group_name=data.log_group_name,
+                   region=data.region)

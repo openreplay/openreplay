@@ -84,6 +84,15 @@ export default class Screen {
     this.cursor = new Cursor(this.overlay, isMobile) // TODO: move outside
   }
 
+  addMobileStyles() {
+   this.iframe.className = styles.mobileIframe
+   this.screen.className = styles.mobileScreen
+  }
+
+  addFullscreenBoundary() {
+    this.screen.className = styles.mobileScreenFullview
+  }
+
   clean() {
     this.iframe?.remove?.();
     this.overlay?.remove?.();
@@ -98,6 +107,13 @@ export default class Screen {
 
     parentElement.appendChild(this.screen);
     this.parentElement = parentElement;
+  }
+
+  addToBody(el: HTMLElement) {
+    if (this.document) {
+      this.document.body.style.margin = '0';
+      this.document.body.appendChild(el)
+    }
   }
 
   getParentElement():  HTMLElement | null {
@@ -209,9 +225,11 @@ export default class Screen {
       posStyles = { height: height + 'px' }
       break;
     case ScaleMode.AdjustParentHeight:
+      // we want to scale the document with true height so the clickmap will be scrollable
+      const usedHeight = this.document?.body.offsetHeight && this.document?.body.offsetHeight > height ? this.document.body.offsetHeight + 'px' : height + 'px'
       this.scaleRatio = offsetWidth / width
       translate = "translate(-50%, 0)"
-      posStyles = { top: 0, height: height + 'px', }
+      posStyles = { top: 0, height: usedHeight, }
       break;
     }
 
@@ -234,7 +252,7 @@ export default class Screen {
     })
 
     this.boundingRect = this.screen.getBoundingClientRect();
-    this.onUpdateHook(width, height)
+    this.onUpdateHook?.(width, height)
   }
 
   setOnUpdate(cb: any) {
@@ -251,6 +269,10 @@ export default class Screen {
       start.className = styles.highlightoff
       end.className = styles.highlightoff
     }, 750)
+  }
+
+  public updateOverlayStyle(style: Partial<CSSStyleDeclaration>) {
+    Object.assign(this.overlay.style, style)
   }
 
   public clearSelection() {

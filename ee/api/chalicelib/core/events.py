@@ -14,6 +14,7 @@ if config("EXP_AUTOCOMPLETE", cast=bool, default=False):
 else:
     from . import autocomplete as autocomplete
 
+
 def get_customs_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
@@ -115,12 +116,13 @@ class EventType:
                   column=None)  # column=None because errors are searched by name or message
     METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
     #     IOS
-    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.clicks", column="label")
+    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.taps", column="label")
     INPUT_IOS = Event(ui_type=schemas.EventType.input_ios, table="events_ios.inputs", column="label")
     VIEW_IOS = Event(ui_type=schemas.EventType.view_ios, table="events_ios.views", column="name")
+    SWIPE_IOS = Event(ui_type=schemas.EventType.swipe_ios, table="events_ios.swipes", column="label")
     CUSTOM_IOS = Event(ui_type=schemas.EventType.custom_ios, table="events_common.customs", column="name")
-    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="url")
-    ERROR_IOS = Event(ui_type=schemas.EventType.error_ios, table="events_ios.crashes",
+    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="path")
+    CRASH_IOS = Event(ui_type=schemas.EventType.error_ios, table="events_common.crashes",
                       column=None)  # column=None because errors are searched by name or message
 
 
@@ -163,7 +165,7 @@ SUPPORTED_TYPES = {
     EventType.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_IOS),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.REQUEST_IOS.ui_type)),
-    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
+    EventType.CRASH_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
                                                  query=None),
 }
 

@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { isURL, IS_FIREFOX, MAX_STR_LEN } from '../utils.js'
+import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils.js'
 import { ResourceTiming, SetNodeAttributeURLBased } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
@@ -81,24 +81,25 @@ export default function (app: App): void {
       sendSrcset(id, img)
     }
   })
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'attributes') {
-        const target = mutation.target as HTMLImageElement
-        const id = app.nodes.getID(target)
-        if (id === undefined) {
-          return
-        }
-        if (mutation.attributeName === 'src') {
-          sendSrc(id, target)
-        }
-        if (mutation.attributeName === 'srcset') {
-          sendSrcset(id, target)
+  const observer = createMutationObserver(
+    app.safe((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          const target = mutation.target as HTMLImageElement
+          const id = app.nodes.getID(target)
+          if (id === undefined) {
+            return
+          }
+          if (mutation.attributeName === 'src') {
+            sendSrc(id, target)
+          }
+          if (mutation.attributeName === 'srcset') {
+            sendSrcset(id, target)
+          }
         }
       }
-    }
-  })
+    }) as MutationCallback,
+  )
 
   app.attachStopCallback(() => {
     observer.disconnect()

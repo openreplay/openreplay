@@ -79,7 +79,7 @@ class ServedModel:
             query = conn.mogrify(
                 """SELECT project_id, session_id, user_id, %(userId)s as viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
                     FROM sessions
-                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions WHERE user_id = %(userId)s) AND duration IS NOT NULL AND start_ts > %(oldest_limit)s LIMIT %(limit)s""",
+                    WHERE project_id = %(projectId)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions WHERE user_id = %(userId)s) AND duration > 10000 AND start_ts > %(oldest_limit)s LIMIT %(limit)s""",
                 {'userId': userId, 'projectId': projectId, 'limit': limit, 'oldest_limit': oldest_limit}
             )
             conn.execute(query)

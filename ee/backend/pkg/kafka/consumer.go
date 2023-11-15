@@ -3,13 +3,14 @@ package kafka
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/pkg/errors"
 )
 
@@ -41,6 +42,7 @@ func NewConsumer(
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
+		"go.logs.channel.enable":          true,
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {
@@ -90,7 +92,17 @@ func NewConsumer(
 	if err := c.Subscribe(subREx, consumer.reBalanceCallback); err != nil {
 		log.Fatalln(err)
 	}
-
+	go func() {
+		for {
+			logMsg := <-consumer.c.Logs()
+			if logMsg.Tag == "MAXPOLL" && strings.Contains(logMsg.Message, "leaving group") {
+				// By some reason service logic took too much time and was kicked out from the group
+				log.Printf("Kafka consumer left the group, exiting...")
+				os.Exit(1)
+			}
+			log.Printf("Kafka consumer log: %s", logMsg.String())
+		}
+	}()
 	return consumer
 }
 

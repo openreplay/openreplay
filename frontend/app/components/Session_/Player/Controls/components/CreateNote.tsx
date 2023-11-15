@@ -89,7 +89,7 @@ function CreateNote({
     const note: WriteNote = {
       message: text,
       tag,
-      timestamp: useTimestamp ? (isEdit ? editNote.timestamp : time) : -1,
+      timestamp: useTimestamp ? Math.floor((isEdit ? editNote.timestamp : time)) : -1,
       isPublic,
     };
     const onSuccess = (noteId: string) => {
@@ -236,7 +236,7 @@ function CreateNote({
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
             <Checkbox checked={useSlack} />
-            <span className="ml-1 mr-3"> Send to slack? </span>
+            <span className="ml-1 mr-3"> Send to Slack? </span>
           </div>
 
           {useSlack && (

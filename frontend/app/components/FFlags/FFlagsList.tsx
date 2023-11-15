@@ -21,7 +21,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
   return (
     <div
       className={'mb-5 w-full mx-auto bg-white rounded pb-10 pt-4 widget-wrapper'}
-      style={{ maxWidth: '1300px' }}
+      style={{ maxWidth: '1360px' }}
     >
       <FFlagsListHeader siteId={siteId} />
       <div className={'border-y px-3 py-2 mt-2 flex items-center w-full justify-end gap-4'}>

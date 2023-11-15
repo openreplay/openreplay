@@ -3,7 +3,7 @@ from typing import Optional, Union
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
 from fastapi import HTTPException, status
-from starlette.responses import RedirectResponse, FileResponse
+from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
@@ -15,7 +15,7 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import OR_context
+from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -34,18 +34,26 @@ if not tenants.tenants_exists(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
     def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-        return signup.create_tenant(data)
+        content = signup.create_tenant(data)
+        if "errors" in content:
+            return content
+        refresh_token = content.pop("refreshToken")
+        refresh_token_max_age = content.pop("refreshTokenMaxAge")
+        response = JSONResponse(content=content)
+        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        return response
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(data: schemas.UserLoginSchema = Body(...)):
+def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid captcha."
         )
 
-    r = users.authenticate(data.email, data.password)
+    r = users.authenticate(data.email, data.password.get_secret_value())
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,20 +66,35 @@ def login_user(data: schemas.UserLoginSchema = Body(...)):
         )
 
     r["smtp"] = smtp.has_smtp()
+    refresh_token = r.pop("refreshToken")
+    refresh_token_max_age = r.pop("refreshTokenMaxAge")
     content = {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r
         }
     }
+    response = JSONResponse(content=content)
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    return response
 
-    return content
 
-
-@app.get('/logout', tags=["login", "logout"])
-def logout_user(context: schemas.CurrentContext = Depends(OR_context)):
+@app.get('/logout', tags=["login"])
+def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     users.logout(user_id=context.user_id)
+    response.delete_cookie(key="refreshToken", path="/api/refresh")
     return {"data": "success"}
+
+
+@app.get('/refresh', tags=["login"])
+def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
+    r = users.refresh(user_id=context.user_id)
+    content = {"jwt": r.get("jwt")}
+    response = JSONResponse(content=content)
+    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
+                        max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
+    return response
 
 
 @app.get('/account', tags=['accounts'])
@@ -79,15 +102,14 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
-        t.pop("createdAt")
+        t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
         t["tenantName"] = t.pop("name")
     return {
         'data': {
             **r,
             **t,
             **license.get_status(context.tenant_id),
-            "smtp": smtp.has_smtp(),
-            # "iceServers": assist.get_ice_servers()
+            "smtp": smtp.has_smtp()
         }
     }
 
@@ -124,13 +146,13 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
                         "We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
                 }
     return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=integrationId,
-                                   changes={"name": data.name, "endpoint": data.url})}
+                                   changes={"name": data.name, "endpoint": data.url.unicode_string()})}
 
 
-@app.post('/client/members', tags=["client"])
+@app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
+    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
                                background_tasks=background_tasks)
 
 
@@ -161,10 +183,10 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data.password, user_id=user["userId"])
+    return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
 
 
-@app.put('/client/members/{memberId}', tags=["client"])
+@app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
@@ -194,8 +216,10 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions", "replay"])
 def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str):
+    if not sessionId.isnumeric():
         return {"errors": ["session not found"]}
+    else:
+        sessionId = int(sessionId)
     data = sessions_replay.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
                                          include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
@@ -209,24 +233,28 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+                                    platform=context.project.platform)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+                                    platform=context.project.platform)
     return {'data': data}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"])
 def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                        context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str):
+    if not sessionId.isnumeric():
         return {"errors": ["session not found"]}
+    else:
+        sessionId = int(sessionId)
     data = sessions_replay.get_replay(project_id=projectId, session_id=sessionId, full_data=True,
                                       include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
@@ -242,8 +270,10 @@ def get_session_events(projectId: int, sessionId: Union[int, str], background_ta
 @app.get('/{projectId}/sessions/{sessionId}/events', tags=["sessions", "replay"])
 def get_session_events(projectId: int, sessionId: Union[int, str],
                        context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str):
+    if not sessionId.isnumeric():
         return {"errors": ["session not found"]}
+    else:
+        sessionId = int(sessionId)
     data = sessions_replay.get_events(project_id=projectId, session_id=sessionId)
     if data is None:
         return {"errors": ["session not found"]}
@@ -264,18 +294,6 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
-@app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": errors.search(data, projectId, user_id=context.user_id)}
-
-
-@app.get('/{projectId}/errors/stats', tags=['errors'])
-def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
-
-
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
@@ -284,15 +302,6 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     if data.get("data") is not None:
         background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
                                   error_id=errorId)
-    return data
-
-
-@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
-                                    endDate: int = TimeUTC.now(), density: int = 7,
-                                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                    **{"startDate": startDate, "endDate": endDate, "density": density})
     return data
 
 
@@ -344,9 +353,10 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
-    if isinstance(sessionId, str):
-        print(f"{sessionId} not a valid number.")
+    if not sessionId.isnumeric():
         return not_found
+    else:
+        sessionId = int(sessionId)
     if not sessions.session_exists(project_id=projectId, session_id=sessionId):
         print(f"{projectId}/{sessionId} not found in DB.")
         if not assist.session_exists(project_id=projectId, session_id=sessionId):
@@ -364,9 +374,10 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}
-    if isinstance(sessionId, str):
-        print(f"{sessionId} not a valid number.")
+    if not sessionId.isnumeric():
         return not_found
+    else:
+        sessionId = int(sessionId)
     if not sessions.session_exists(project_id=projectId, session_id=sessionId):
         print(f"{projectId}/{sessionId} not found in DB.")
         if not assist.session_exists(project_id=projectId, session_id=sessionId):
@@ -499,7 +510,7 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
 
 
 @app.post('/{projectId}/click_maps/search', tags=["click maps"])
-def click_map_search(projectId: int, data: schemas.FlatClickMapSessionsSearch = Body(...),
+def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 
@@ -530,7 +541,7 @@ def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.Fea
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-async def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
+def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
     return {"data": feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
 
 

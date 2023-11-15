@@ -56,18 +56,19 @@ export interface Options {
   sanitizer?: Sanitizer
   axiosInstances?: Array<AxiosInstance>
   useProxy?: boolean
+  tokenUrlMatcher?: (url: string) => boolean
 }
 
 export default function (app: App, opts: Partial<Options> = {}) {
   const options: Options = Object.assign(
     {
       failuresOnly: false,
-      ignoreHeaders: ['Cookie', 'Set-Cookie', 'Authorization'],
+      ignoreHeaders: ['cookie', 'set-cookie', 'authorization'],
       capturePayload: false,
       sessionTokenHeader: false,
       captureInIframes: true,
       axiosInstances: undefined,
-      useProxy: false,
+      useProxy: true,
     },
     opts,
   )
@@ -136,6 +137,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         sanitize,
         (message) => app.send(message),
         (url) => app.isServiceURL(url),
+        options.tokenUrlMatcher,
       )
     }
     /* ====== Fetch ====== */
@@ -220,6 +222,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
                 r.status,
                 startTime + getTimeOrigin(),
                 duration,
+                0,
               ),
             )
           })
@@ -228,6 +231,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         return response
       })
     }
+    // @ts-ignore
     context.fetch = trackFetch
 
     /* ====== <> ====== */
@@ -291,6 +295,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
               xhr.status,
               startTime + getTimeOrigin(),
               duration,
+              0,
             ),
           )
         }),

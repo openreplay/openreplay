@@ -6,15 +6,15 @@ from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
 
-
-@app.get('/{projectId}/insights/journey', tags=["insights"])
-async def get_insights_journey(projectId: int):
-    return {"data": product_analytics.path_analysis(project_id=projectId, data=schemas.PathAnalysisSchema())}
-
+#
+# @app.get('/{projectId}/insights/journey', tags=["insights"])
+# async def get_insights_journey(projectId: int):
+#     return {"data": product_analytics.path_analysis(project_id=projectId, data=schemas.PathAnalysisSchema())}
+#
 #
 # @app.post('/{projectId}/insights/journey', tags=["insights"])
-# async def get_insights_journey(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-#     return {"data": product_analytics.journey(project_id=projectId, data=data)}
+# async def get_insights_journey(projectId: int, data: schemas.PathAnalysisSchema = Body(...)):
+#     return {"data": product_analytics.path_analysis(project_id=projectId, data=data)}
 #
 #
 # @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])

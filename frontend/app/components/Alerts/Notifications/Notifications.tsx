@@ -5,6 +5,9 @@ import { useModal } from 'App/components/Modal';
 import AlertTriggersModal from 'Shared/AlertTriggersModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Badge, Button } from 'antd';
+import { BellOutlined } from '@ant-design/icons';
+
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
@@ -22,18 +25,16 @@ function Notifications() {
   }, []);
 
   return (
-    <Tooltip title={`Alerts`}>
-      <div
-        className={stl.button}
-        onClick={() => showModal(<AlertTriggersModal />, { right: true })}
-      >
-        <div className={stl.counter} data-hidden={count === 0}>
-          {count}
-        </div>
-        <Icon name="bell" size="18" color="gray-dark" />
-      </div>
-    </Tooltip>
+    <Badge dot={count > 0} size='small'>
+      <Tooltip title='Alerts'>
+        <Button
+          icon={<BellOutlined />}
+          onClick={() => showModal(<AlertTriggersModal />, { right: true })}>
+          {/*<Icon name='bell' size='18' color='gray-dark' />*/}
+        </Button>
+      </Tooltip>
+    </Badge>
   );
 }
 
-export default observer(Notifications)
+export default observer(Notifications);

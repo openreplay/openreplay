@@ -55,7 +55,7 @@ def __process_circular(alert):
 
 
 def create(project_id, data: schemas.AlertSchema):
-    data = data.dict()
+    data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
@@ -72,7 +72,7 @@ def create(project_id, data: schemas.AlertSchema):
 
 
 def update(id, data: schemas.AlertSchema):
-    data = data.dict()
+    data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 

@@ -25,8 +25,8 @@ ALTER TABLE IF EXISTS public.sessions
 
 COMMIT;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON sessions (project_id, user_city);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON sessions (project_id, user_state);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_city_idx ON public.sessions (project_id, user_city);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS sessions_project_id_user_state_idx ON public.sessions (project_id, user_state);
 
 \elif :is_next
 \echo new version detected :'next_version', nothing to do

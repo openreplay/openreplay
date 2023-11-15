@@ -1,6 +1,11 @@
-from decouple import config
+import logging
+
 import requests
+from decouple import config
+
 from chalicelib.utils import helper
+
+logger = logging.getLogger(__name__)
 
 
 def __get_captcha_config():
@@ -9,16 +14,16 @@ def __get_captcha_config():
 
 def is_valid(response):
     if not helper.allow_captcha():
-        print("!! Captcha is disabled")
+        logger.info("!! Captcha is disabled")
         return True
     url, secret = __get_captcha_config()
     r = requests.post(url=url, data={"secret": secret, "response": response})
     if r.status_code != 200:
-        print("something went wrong")
-        print(r)
-        print(r.status_code)
-        print(r.text)
+        logger.warning("something went wrong")
+        logger.error(r)
+        logger.warning(r.status_code)
+        logger.warning(r.text)
         return
     r = r.json()
-    print(r)
+    logger.debug(r)
     return r["success"]

@@ -9,6 +9,7 @@ import { CountryFlag, IconButton, BackLink } from 'UI';
 import { toggleFavorite } from 'Duck/sessions';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import SharePopup from 'Shared/SharePopup/SharePopup';
+import { capitalize } from "App/utils";
 
 import Section from './Header/Section';
 import Resolution from './Header/Resolution';
@@ -17,10 +18,6 @@ import cls from './header.module.css';
 
 
 const SESSIONS_ROUTE = sessionsRoute();
-
-function capitalise(str) {
-  return str[0].toUpperCase() + str.slice(1);
-}
 
 
 function Header({ 

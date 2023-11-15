@@ -28,7 +28,7 @@ export const options = [
   { key: 'not equal', label: 'not equal', value: 'not equal' },
   { key: 'onSelector', label: 'on selector', value: 'onSelector' },
   { key: 'onText', label: 'on text', value: 'onText' },
-  { key: 'onComponent', label: 'on component', value: 'onComponent' },
+  { key: 'onComponent', label: 'on component', value: 'onComponent' }
 ];
 
 const filterKeys = ['is', 'isNot'];
@@ -38,47 +38,47 @@ const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'st
 const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
-const pageUrlFilter = ['contains', 'startsWith', 'endsWith']
+const pageUrlFilter = ['contains', 'startsWith', 'endsWith'];
 
 const getOperatorsByKeys = (keys) => {
   return options.filter(option => keys.includes(option.key));
 };
 
-export const baseOperators = options.filter(({key}) => filterKeys.includes(key));
-export const stringOperatorsLimited = options.filter(({key}) => stringFilterKeysLimited.includes(key));
-export const stringOperators = options.filter(({key}) => stringFilterKeys.includes(key));
-export const stringOperatorsPerformance = options.filter(({key}) => stringFilterKeysPerformance.includes(key));
-export const targetOperators = options.filter(({key}) => targetFilterKeys.includes(key));
+export const baseOperators = options.filter(({ key }) => filterKeys.includes(key));
+export const stringOperatorsLimited = options.filter(({ key }) => stringFilterKeysLimited.includes(key));
+export const stringOperators = options.filter(({ key }) => stringFilterKeys.includes(key));
+export const stringOperatorsPerformance = options.filter(({ key }) => stringFilterKeysPerformance.includes(key));
+export const targetOperators = options.filter(({ key }) => targetFilterKeys.includes(key));
 export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
-  { key: 'false', label: 'false', value: 'false' },
-]
-export const pageUrlOperators = options.filter(({key}) => pageUrlFilter.includes(key))
+  { key: 'false', label: 'false', value: 'false' }
+];
+export const pageUrlOperators = options.filter(({ key }) => pageUrlFilter.includes(key));
 
 export const customOperators = [
   { key: '=', label: '=', value: '=' },
   { key: '<', label: '<', value: '<' },
   { key: '>', label: '>', value: '>' },
   { key: '<=', label: '<=', value: '<=' },
-  { key: '>=', label: '>=', value: '>=' },
-]
+  { key: '>=', label: '>=', value: '>=' }
+];
 
 export const metricTypes = [
   { label: 'Timeseries', value: 'timeseries' },
   { label: 'Table', value: 'table' },
-  { label: 'Funnel', value: 'funnel' },
+  { label: 'Funnel', value: 'funnel' }
   // { label: 'Errors', value: 'errors' },
   // { label: 'Sessions', value: 'sessions' },
 ];
 
 export const tableColumnName = {
-    [FilterKey.USERID]: 'Users',
-    [FilterKey.ISSUE]: 'Issues',
-    [FilterKey.USER_BROWSER]: 'Browser',
-    [FilterKey.USER_DEVICE]: 'Devices',
-    [FilterKey.USER_COUNTRY]: 'Countries',
-    [FilterKey.LOCATION]: 'URLs',
-}
+  [FilterKey.USERID]: 'Users',
+  [FilterKey.ISSUE]: 'Issues',
+  [FilterKey.USER_BROWSER]: 'Browser',
+  [FilterKey.USER_DEVICE]: 'Devices',
+  [FilterKey.USER_COUNTRY]: 'Countries',
+  [FilterKey.LOCATION]: 'URLs'
+};
 
 export const metricOf = [
   { label: 'Session Count', value: 'sessionCount', type: 'timeseries' },
@@ -89,9 +89,9 @@ export const metricOf = [
   { label: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
   { label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
   { label: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
-  { label: 'URLs', value: FilterKey.LOCATION, type: 'table' },
+  { label: 'URLs', value: FilterKey.LOCATION, type: 'table' }
 
-]
+];
 
 export const methodOptions = [
   { label: 'GET', value: 'GET' },
@@ -102,8 +102,8 @@ export const methodOptions = [
   { label: 'HEAD', value: 'HEAD' },
   { label: 'OPTIONS', value: 'OPTIONS' },
   { label: 'TRACE', value: 'TRACE' },
-  { label: 'CONNECT', value: 'CONNECT' },
-]
+  { label: 'CONNECT', value: 'CONNECT' }
+];
 
 export const issueOptions = [
   { label: 'Click Rage', value: IssueType.CLICK_RAGE },
@@ -119,19 +119,26 @@ export const issueOptions = [
   { label: 'Custom', value: IssueType.CUSTOM },
   { label: 'Error', value: IssueType.JS_EXCEPTION },
   { label: 'Mouse Thrashing', value: IssueType.MOUSE_THRASHING }
-]
+];
 
 export const issueCategories = [
   { label: 'Resources', value: IssueCategory.RESOURCES },
   { label: 'Network Request', value: IssueCategory.NETWORK },
   { label: 'Click Rage', value: IssueCategory.RAGE },
-  { label: 'JS Errors', value: IssueCategory.ERRORS },
-]
+  { label: 'JS Errors', value: IssueCategory.ERRORS }
+];
 
-export const issueCategoriesMap = issueCategories.reduce((acc, {value, label}) => {
+export const pathAnalysisEvents = [
+  { value: FilterKey.LOCATION, label: 'Pages' },
+  { value: FilterKey.CLICK, label: 'Clicks' },
+  { value: FilterKey.INPUT, label: 'Input' },
+  { value: FilterKey.CUSTOM, label: 'Custom' }
+];
+
+export const issueCategoriesMap = issueCategories.reduce((acc, { value, label }) => {
   acc[value] = label;
   return acc;
-}, {})
+}, {});
 
 export default {
   options,
@@ -148,5 +155,5 @@ export default {
   issueOptions,
   issueCategories,
   methodOptions,
-  pageUrlOperators,
-}
+  pageUrlOperators
+};

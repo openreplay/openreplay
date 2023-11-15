@@ -1,6 +1,14 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
-import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
+import {
+  now,
+  adjustTimeOrigin,
+  deprecationWarn,
+  inIframe,
+  createEventListener,
+  deleteEventListener,
+  requestIdleCb,
+} from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -39,6 +47,7 @@ interface OnStartInfo {
   sessionToken: string
   userUUID: string
 }
+
 const CANCELED = 'canceled' as const
 const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & { success: true }
@@ -47,9 +56,10 @@ type UnsuccessfulStart = {
   success: false
 }
 
-type RickRoll = { source: string } & (
+type RickRoll = { source: string; context: string } & (
   | { line: 'never-gonna-give-you-up' }
   | { line: 'never-gonna-let-you-down'; token: string }
+  | { line: 'never-gonna-run-around-and-desert-you'; token: string }
 )
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
@@ -58,6 +68,7 @@ export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
 
 type StartCallback = (i: OnStartInfo) => void
 type CommitCallback = (messages: Array<Message>) => void
+
 enum ActivityState {
   NotActive,
   Starting,
@@ -95,6 +106,14 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
+function getTimezone() {
+  const offset = new Date().getTimezoneOffset() * -1
+  const sign = offset >= 0 ? '+' : '-'
+  const hours = Math.floor(Math.abs(offset) / 60)
+  const minutes = Math.abs(offset) % 60
+  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
 export default class App {
   readonly nodes: Nodes
   readonly ticker: Ticker
@@ -106,7 +125,8 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
-  /* private */ readonly observer: Observer // non-privat for attachContextCallback
+  /* private */
+  readonly observer: Observer // non-privat for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -120,13 +140,14 @@ export default class App {
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
   private readonly bc: BroadcastChannel | null = null
+  private readonly contextId
   public attributeSender: AttributeSender
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
-
+    this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
     this.networkOptions = options.network
     this.options = Object.assign(
@@ -152,7 +173,7 @@ export default class App {
     )
 
     if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
-      this.bc = new BroadcastChannel('rick')
+      this.bc = inIframe() ? null : new BroadcastChannel('rick')
     }
 
     this.revID = this.options.revID
@@ -235,24 +256,45 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    if (!this.session.getSessionToken() && this.bc) {
-      this.bc.postMessage({ line: 'never-gonna-give-you-up', source: thisTab })
-    }
+    const proto = {
+      // ask if there are any tabs alive
+      ask: 'never-gonna-give-you-up',
+      // yes, there are someone out there
+      resp: 'never-gonna-let-you-down',
+      // you stole someone's identity
+      reg: 'never-gonna-run-around-and-desert-you',
+    } as const
 
     if (this.bc) {
+      this.bc.postMessage({
+        line: proto.ask,
+        source: thisTab,
+        context: this.contextId,
+      })
+    }
+
+    if (this.bc !== null) {
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
-        if (ev.data.source === thisTab) return
-        if (ev.data.line === 'never-gonna-let-you-down') {
+        if (ev.data.context === this.contextId) {
+          return
+        }
+        if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
         }
-        if (ev.data.line === 'never-gonna-give-you-up') {
+        if (ev.data.line === proto.reg) {
+          const sessionToken = ev.data.token
+          this.session.regenerateTabId()
+          this.session.setSessionToken(sessionToken)
+        }
+        if (ev.data.line === proto.ask) {
           const token = this.session.getSessionToken()
           if (token && this.bc) {
             this.bc.postMessage({
-              line: 'never-gonna-let-you-down',
+              line: ev.data.source === thisTab ? proto.reg : proto.resp,
               token,
               source: thisTab,
+              context: this.contextId,
             })
           }
         }
@@ -276,6 +318,7 @@ export default class App {
   }
 
   private _usingOldFetchPlugin = false
+
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
@@ -301,17 +344,22 @@ export default class App {
       this.commit()
     }
   }
+
   private commit(): void {
-    if (this.worker && this.messages.length) {
-      this.messages.unshift(TabData(this.session.getTabId()))
-      this.messages.unshift(Timestamp(this.timestamp()))
-      this.worker.postMessage(this.messages)
-      this.commitCallbacks.forEach((cb) => cb(this.messages))
-      this.messages.length = 0
+    if (this.worker !== undefined && this.messages.length) {
+      requestIdleCb(() => {
+        this.messages.unshift(TabData(this.session.getTabId()))
+        this.messages.unshift(Timestamp(this.timestamp()))
+        // why I need to add opt chaining?
+        this.worker?.postMessage(this.messages)
+        this.commitCallbacks.forEach((cb) => cb(this.messages))
+        this.messages.length = 0
+      })
     }
   }
 
   private delay = 0
+
   timestamp(): number {
     return now() + this.delay
   }
@@ -334,18 +382,21 @@ export default class App {
   attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
   }
+
   attachStartCallback(cb: StartCallback, useSafe = false): void {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.startCallbacks.push(cb)
   }
+
   attachStopCallback(cb: () => any, useSafe = false): void {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.stopCallbacks.push(cb)
   }
+
   // Use  app.nodes.attachNodeListener for registered nodes instead
   attachEventListener(
     target: EventTarget,
@@ -357,8 +408,14 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
-    this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
+    this.attachStartCallback(
+      () => (target ? createEventListener(target, type, listener, useCapture) : null),
+      useSafe,
+    )
+    this.attachStopCallback(
+      () => (target ? deleteEventListener(target, type, listener, useCapture) : null),
+      useSafe,
+    )
   }
 
   // TODO: full correct semantic
@@ -388,15 +445,18 @@ export default class App {
       isSnippet: this.options.__is_snippet,
     }
   }
+
   getSessionInfo() {
     return {
       ...this.session.getInfo(),
       ...this.getTrackerInfo(),
     }
   }
+
   getSessionToken(): string | undefined {
     return this.session.getSessionToken()
   }
+
   getSessionID(): string | undefined {
     return this.session.getInfo().sessionID || undefined
   }
@@ -410,7 +470,7 @@ export default class App {
     const ingest = this.options.ingestPoint
     const isSaas = /api\.openreplay\.com/.test(ingest)
 
-    const projectPath = isSaas ? 'https://openreplay.com/ingest' : ingest
+    const projectPath = isSaas ? 'https://app.openreplay.com/ingest' : ingest
 
     const url = projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
 
@@ -425,9 +485,11 @@ export default class App {
   getHost(): string {
     return new URL(this.options.ingestPoint).host
   }
+
   getProjectKey(): string {
     return this.projectKey
   }
+
   getBaseHref(): string {
     if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
@@ -443,6 +505,7 @@ export default class App {
       location.origin + location.pathname
     )
   }
+
   resolveResourceURL(resourceURL: string): string {
     const base = new URL(this.getBaseHref())
     base.pathname += '/' + new URL(resourceURL).pathname
@@ -511,7 +574,12 @@ export default class App {
     const sessionToken = this.session.getSessionToken()
     const isNewSession = needNewSessionID || !sessionToken
 
-    console.log('OpenReplay: starting session', needNewSessionID, sessionToken)
+    console.log(
+      'OpenReplay: starting session; need new session id?',
+      needNewSessionID,
+      'session token: ',
+      sessionToken,
+    )
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
@@ -525,6 +593,7 @@ export default class App {
           token: isNewSession ? undefined : sessionToken,
           deviceMemory,
           jsHeapSizeLimit,
+          timezone: getTimezone(),
         }),
       })
       .then((r) => {
@@ -645,7 +714,7 @@ export default class App {
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve(this._start(...args))
-        }, 10)
+        }, 25)
       })
     } else {
       return new Promise((resolve) => {
@@ -654,7 +723,7 @@ export default class App {
             document.removeEventListener('visibilitychange', onVisibilityChange)
             setTimeout(() => {
               resolve(this._start(...args))
-            }, 10)
+            }, 25)
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
@@ -669,6 +738,7 @@ export default class App {
   getTabId() {
     return this.session.getTabId()
   }
+
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {

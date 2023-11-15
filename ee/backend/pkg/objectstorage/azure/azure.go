@@ -3,6 +3,7 @@ package azure
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -85,6 +86,10 @@ func (s *storageImpl) Get(key string) (io.ReadCloser, error) {
 
 	err = retryReader.Close()
 	return io.NopCloser(bytes.NewReader(downloadedData.Bytes())), err
+}
+
+func (s *storageImpl) GetAll(key string) ([]io.ReadCloser, error) {
+	return nil, errors.New("not implemented")
 }
 
 func (s *storageImpl) Exists(key string) bool {

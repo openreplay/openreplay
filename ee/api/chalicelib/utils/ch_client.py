@@ -18,14 +18,18 @@ if config('ch_receive_timeout', cast=int, default=-1) > 0:
 class ClickHouseClient:
     __client = None
 
-    def __init__(self):
+    def __init__(self, database=None):
+        extra_args = {}
+        if config("CH_COMPRESSION", cast=bool, default=True):
+            extra_args["compression"] = "lz4"
         self.__client = clickhouse_driver.Client(host=config("ch_host"),
-                                                 database=config("ch_database", default="default"),
+                                                 database=database if database else config("ch_database",
+                                                                                           default="default"),
                                                  user=config("ch_user", default="default"),
                                                  password=config("ch_password", default=""),
                                                  port=config("ch_port", cast=int),
                                                  settings=settings,
-                                                 compression='lz4') \
+                                                 **extra_args) \
             if self.__client is None else self.__client
 
     def __enter__(self):

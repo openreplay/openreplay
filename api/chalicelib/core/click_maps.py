@@ -27,7 +27,7 @@ COALESCE((SELECT TRUE
    AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
 
 
-def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, user_id, include_mobs: bool = True):
+def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id, include_mobs: bool = True):
     no_platform = True
     for f in data.filters:
         if f.type == schemas.FilterType.platform:
@@ -62,7 +62,7 @@ def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, u
             print("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION -----------")
             print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.json())
+            print(data.model_dump_json())
             print("--------------------")
             raise err
 

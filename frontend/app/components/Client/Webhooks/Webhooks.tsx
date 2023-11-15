@@ -44,8 +44,8 @@ function Webhooks() {
     };
 
     return (
-        <div>
-            <div className={cn(styles.tabHeader, 'px-5 pt-5')}>
+        <div className="p-5 bg-white rounded-lg">
+            <div className={cn(styles.tabHeader)}>
                 <h3 className={cn(styles.tabTitle, 'text-2xl')}>{'Webhooks'}</h3>
                 <Button className="ml-auto" variant="primary" onClick={() => init()}>Add Webhook</Button>
             </div>

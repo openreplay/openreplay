@@ -34,11 +34,13 @@ const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 function ScreenRecorder({
   siteId,
   sessionId,
+  agentId,
   isEnterprise,
 }: {
   siteId: string;
   sessionId: string;
   isEnterprise: boolean;
+  agentId: number,
 }) {
   const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
   const recordingState = store.get().recordingState;
@@ -96,6 +98,7 @@ function ScreenRecorder({
   };
 
   const stopRecordingHandler = () => {
+    player.assistManager.ping('s_recording_ended', agentId)
     stopRecorderCb?.();
     onStop();
   };
@@ -104,6 +107,12 @@ function ScreenRecorder({
     const onDeny = () => toast.info('Recording request was rejected by user')
     player.assistManager.requestRecording({ onDeny });
   };
+
+  React.useEffect(() => {
+    if (isRecording) {
+      player.assistManager.ping('s_recording_started', agentId)
+    }
+  }, [isRecording])
 
   if (!isSupported() || !isEnterprise) {
     return (
@@ -136,4 +145,5 @@ export default connect((state: any) => ({
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
   siteId: state.getIn(['site', 'siteId']),
   sessionId: state.getIn(['sessions', 'current']).sessionId,
+  agentId: state.getIn(['user', 'account', 'id']),
 }))(observer(ScreenRecorder));

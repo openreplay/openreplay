@@ -5,10 +5,10 @@ $$
 SELECT 'v1.4.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
-CREATE TABLE IF NOT EXISTS traces
+CREATE TABLE IF NOT EXISTS public.traces
 (
-    user_id     integer NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    tenant_id   integer NOT NULL REFERENCES tenants (tenant_id) ON DELETE CASCADE,
+    user_id     integer NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    tenant_id   integer NOT NULL REFERENCES public.tenants (tenant_id) ON DELETE CASCADE,
     created_at  bigint  NOT NULL DEFAULT (EXTRACT(EPOCH FROM now() at time zone 'utc') * 1000)::bigint,
     auth        text    NULL,
     action      text    NOT NULL,
@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS traces
     parameters  jsonb   NULL,
     status      int     NULL
 );
-CREATE INDEX IF NOT EXISTS traces_user_id_idx ON traces (user_id);
-CREATE INDEX IF NOT EXISTS traces_tenant_id_idx ON traces (tenant_id);
+CREATE INDEX IF NOT EXISTS traces_user_id_idx ON public.traces (user_id);
+CREATE INDEX IF NOT EXISTS traces_tenant_id_idx ON public.traces (tenant_id);
 
-CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON user_favorite_sessions (user_id, session_id);
+CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON public.user_favorite_sessions (user_id, session_id);
 
 CREATE INDEX IF NOT EXISTS pages_first_contentful_paint_time_idx ON events.pages (first_contentful_paint_time) WHERE first_contentful_paint_time > 0;
 CREATE INDEX IF NOT EXISTS pages_dom_content_loaded_time_idx ON events.pages (dom_content_loaded_time) WHERE dom_content_loaded_time > 0;
@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS pages_timestamp_metgt0_idx ON events.pages (timestamp
                                                                                         time_to_interactive > 0;
 CREATE INDEX IF NOT EXISTS pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
 CREATE INDEX IF NOT EXISTS pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
-CREATE INDEX IF NOT EXISTS issues_project_id_idx ON issues (project_id);
+CREATE INDEX IF NOT EXISTS issues_project_id_idx ON public.issues (project_id);
 
 CREATE INDEX IF NOT EXISTS errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
 CREATE INDEX IF NOT EXISTS errors_project_id_error_id_idx ON public.errors (project_id, error_id);
@@ -46,10 +46,10 @@ CREATE INDEX IF NOT EXISTS errors_project_id_error_id_integration_idx ON public.
 
 CREATE INDEX IF NOT EXISTS sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration > 0;
 CREATE INDEX IF NOT EXISTS sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
-CREATE INDEX IF NOT EXISTS sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;
+CREATE INDEX IF NOT EXISTS sessions_session_id_project_id_start_ts_idx ON public.sessions (session_id, project_id, start_ts) WHERE duration > 0;
 
-CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON user_favorite_sessions (user_id, session_id);
-CREATE INDEX IF NOT EXISTS jobs_project_id_idx ON jobs (project_id);
+CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON public.user_favorite_sessions (user_id, session_id);
+CREATE INDEX IF NOT EXISTS jobs_project_id_idx ON public.jons (project_id);
 CREATE INDEX IF NOT EXISTS errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
 CREATE INDEX IF NOT EXISTS errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
 CREATE INDEX IF NOT EXISTS errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
@@ -66,10 +66,10 @@ CREATE INDEX IF NOT EXISTS resources_session_id_timestamp_url_host_firstparty_id
 CREATE INDEX IF NOT EXISTS resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id, timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
 CREATE INDEX IF NOT EXISTS resources_timestamp_session_id_idx ON events.resources (timestamp, session_id);
 
-DROP TRIGGER IF EXISTS on_insert_or_update ON projects;
+DROP TRIGGER IF EXISTS on_insert_or_update ON public.projects;
 CREATE TRIGGER on_insert_or_update
     AFTER INSERT OR UPDATE
-    ON projects
+    ON public.projects
     FOR EACH ROW
 EXECUTE PROCEDURE notify_project();
 
@@ -94,7 +94,7 @@ DROP INDEX IF EXISTS sessions_project_id_user_country_idx1;
 ALTER INDEX IF EXISTS platform_idx RENAME TO sessions_platform_idx;
 ALTER INDEX IF EXISTS events.resources_duration_idx RENAME TO resources_duration_durationgt0_idx;
 DROP INDEX IF EXISTS projects_project_key_idx1;
-CREATE INDEX IF NOT EXISTS errors_parent_error_id_idx ON errors (parent_error_id);
+CREATE INDEX IF NOT EXISTS errors_parent_error_id_idx ON public.errors (parent_error_id);
 
 CREATE INDEX IF NOT EXISTS performance_session_id_idx ON events.performance (session_id);
 CREATE INDEX IF NOT EXISTS performance_timestamp_idx ON events.performance (timestamp);
@@ -102,21 +102,21 @@ CREATE INDEX IF NOT EXISTS performance_session_id_timestamp_idx ON events.perfor
 CREATE INDEX IF NOT EXISTS performance_avg_cpu_gt0_idx ON events.performance (avg_cpu) WHERE avg_cpu > 0;
 CREATE INDEX IF NOT EXISTS performance_avg_used_js_heap_size_gt0_idx ON events.performance (avg_used_js_heap_size) WHERE avg_used_js_heap_size > 0;
 
-CREATE TABLE IF NOT EXISTS metrics
+CREATE TABLE IF NOT EXISTS public.metrics
 (
     metric_id  integer generated BY DEFAULT AS IDENTITY PRIMARY KEY,
-    project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-    user_id    integer REFERENCES users (user_id) ON DELETE SET NULL,
+    project_id integer NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    user_id    integer REFERENCES public.users (user_id) ON DELETE SET NULL,
     name       text    NOT NULL,
     is_public  boolean NOT NULL DEFAULT FALSE,
     created_at timestamp        default timezone('utc'::text, now()) not null,
     deleted_at timestamp
 );
 CREATE INDEX IF NOT EXISTS metrics_user_id_is_public_idx ON public.metrics (user_id, is_public);
-CREATE TABLE IF NOT EXISTS metric_series
+CREATE TABLE IF NOT EXISTS public.metric_series
 (
     series_id  integer generated BY DEFAULT AS IDENTITY PRIMARY KEY,
-    metric_id  integer REFERENCES metrics (metric_id) ON DELETE CASCADE,
+    metric_id  integer REFERENCES public.metrics (metric_id) ON DELETE CASCADE,
     index      integer                                        NOT NULL,
     name       text                                           NULL,
     filter     jsonb                                          NOT NULL,
@@ -127,11 +127,11 @@ CREATE INDEX IF NOT EXISTS metric_series_metric_id_idx ON public.metric_series (
 CREATE INDEX IF NOT EXISTS funnels_project_id_idx ON public.funnels (project_id);
 
 
-CREATE TABLE IF NOT EXISTS searches
+CREATE TABLE IF NOT EXISTS public.searches
 (
     search_id  integer generated BY DEFAULT AS IDENTITY PRIMARY KEY,
-    project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-    user_id    integer NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    project_id integer NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    user_id    integer NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
     name       text    not null,
     filter     jsonb   not null,
     created_at timestamp        default timezone('utc'::text, now()) not null,
@@ -144,7 +144,7 @@ CREATE INDEX IF NOT EXISTS searches_project_id_idx ON public.searches (project_i
 CREATE INDEX IF NOT EXISTS alerts_project_id_idx ON alerts (project_id);
 
 ALTER TABLE alerts
-    ADD COLUMN IF NOT EXISTS series_id integer NULL REFERENCES metric_series (series_id) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS series_id integer NULL REFERENCES public.metric_series (series_id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS alerts_series_id_idx ON alerts (series_id);
 UPDATE alerts
@@ -155,13 +155,13 @@ WHERE detection_method = 'change'
 ALTER TABLE roles
     ADD COLUMN IF NOT EXISTS all_projects bool NOT NULL DEFAULT TRUE;
 
-CREATE TABLE IF NOT EXISTS roles_projects
+CREATE TABLE IF NOT EXISTS public.roles_projects
 (
     role_id    integer NOT NULL REFERENCES roles (role_id) ON DELETE CASCADE,
-    project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+    project_id integer NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     CONSTRAINT roles_projects_pkey PRIMARY KEY (role_id, project_id)
 );
-CREATE INDEX IF NOT EXISTS roles_projects_role_id_idx ON roles_projects (role_id);
-CREATE INDEX IF NOT EXISTS roles_projects_project_id_idx ON roles_projects (project_id);
+CREATE INDEX IF NOT EXISTS roles_projects_role_id_idx ON public.roles_projects (role_id);
+CREATE INDEX IF NOT EXISTS roles_projects_project_id_idx ON public.roles_projects (project_id);
 
 COMMIT;

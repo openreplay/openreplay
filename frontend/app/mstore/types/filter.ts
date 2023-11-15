@@ -1,15 +1,20 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterItem from "./filterItem"
+import { filtersMap } from 'Types/filter/newFilter';
 
 export default class Filter {
     public static get ID_KEY():string { return "filterId" }
     filterId: string = ''
     name: string = ''
     filters: FilterItem[] = []
+    excludes: FilterItem[] = []
     eventsOrder: string = 'then'
     eventsOrderSupport: string[] = ['then', 'or', 'and']
     startTimestamp: number = 0
     endTimestamp: number = 0
+    eventsHeader: string = "EVENTS"
+    page: number = 1
+    limit: number = 10
 
     constructor() {
         makeAutoObservable(this, {
@@ -22,6 +27,7 @@ export default class Filter {
             removeFilter: action,
             updateKey: action,
             merge: action,
+            addExcludeFilter: action,
         })
     }
 
@@ -73,6 +79,10 @@ export default class Filter {
         return json
     }
 
+    createFilterBykey(key: string) {
+        return filtersMap[key] ? new FilterItem(filtersMap[key]) : new FilterItem()
+    }
+
     toJson() {
         const json = {
             name: this.name,
@@ -80,5 +90,17 @@ export default class Filter {
             eventsOrder: this.eventsOrder,
         }
         return json
+    }
+
+    addExcludeFilter(filter: FilterItem) {
+        this.excludes.push(filter)
+    }
+
+    updateExcludeFilter(index: number, filter: FilterItem) {
+        this.excludes[index] = new FilterItem(filter)
+    }
+
+    removeExcludeFilter(index: number) {
+        this.excludes.splice(index, 1)
     }
 }

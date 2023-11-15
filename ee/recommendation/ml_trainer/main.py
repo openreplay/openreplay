@@ -3,7 +3,7 @@ import hashlib
 import argparse
 import numpy as np
 from decouple import config
-from datetime import datetime
+from datetime import datetime,timedelta
 from core.user_features import get_training_database
 from core.recommendation_model import SVM_recommendation, sort_database
 
@@ -53,7 +53,7 @@ def main(experiment_name, projectId, tenantId):
         tenantId: tenant of the project id (used mainly as salt for hashing).
     """
     hashed = hashlib.sha256(bytes(f'{projectId}-{tenantId}'.encode('utf-8'))).hexdigest()
-    x_, y_, d = get_training_database(projectId, max_timestamp=1680248412284, favorites=True)
+    x_, y_, d = get_training_database(projectId, max_timestamp=int((datetime.now() - timedelta(days=1)).timestamp()), favorites=True)
 
     x, y = handle_database(x_, y_)
     if x is None:

@@ -24,7 +24,10 @@ export default class Sanitizer {
   private readonly hidden: Set<number> = new Set()
   private readonly options: Options
 
-  constructor(private readonly app: App, options: Partial<Options>) {
+  constructor(
+    private readonly app: App,
+    options: Partial<Options>,
+  ) {
     this.options = Object.assign(
       {
         obscureTextEmails: true,

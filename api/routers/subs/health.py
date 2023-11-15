@@ -1,3 +1,4 @@
+from decouple import config
 from fastapi import HTTPException, status
 
 from chalicelib.core import health, tenants
@@ -8,6 +9,8 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/healthz', tags=["health-check"])
 def get_global_health_status():
+    if config("LOCAL_DEV", cast=bool, default=False):
+        return {"data": ""}
     return {"data": health.get_health()}
 
 

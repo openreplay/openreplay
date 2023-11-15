@@ -17,8 +17,11 @@ jobs:
     name: Build and test Tracker
     strategy:
       matrix:
-        node-version: [ 16.x ]
+        node-version: [ 18.x ]
     steps:
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
@@ -28,7 +31,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
           restore-keys: |
             test_tracker_build{{ runner.OS }}-build-
             test_tracker_build{{ runner.OS }}-
@@ -36,27 +39,34 @@ jobs:
         uses: actions/cache@v3
         with:
           path: tracker/tracker-assist/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
           restore-keys: |
             test_tracker_build{{ runner.OS }}-build-
             test_tracker_build{{ runner.OS }}-
       - name: Setup Testing packages
         run: |
           cd tracker/tracker
-          npm i -g yarn
-          yarn
-      - name: Setup Testing packages
+          bun install
+      - name: (TA) Setup Testing packages
         run: |
           cd tracker/tracker-assist
-          yarn
+          bun install
       - name: Jest tests
         run: |
           cd tracker/tracker
-          yarn test:ci
-      - name: Jest tests
+          bun run test:ci
+      - name: Building test
+        run: |
+          cd tracker/tracker
+          bun run build
+      - name: (TA) Jest tests
         run: |
           cd tracker/tracker-assist
-          yarn test:ci
+          bun run test:ci
+      - name: (TA) Building test
+        run: |
+          cd tracker/tracker-assist
+          bun run build
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:

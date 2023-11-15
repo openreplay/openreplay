@@ -8,11 +8,22 @@ Expand the name of the chart.
 {{/* Get domain name with/without port */}}
 {{- define "openreplay.domainURL" -}}
 {{- $scheme := ternary "https" "http" .Values.global.ORSecureAccess -}}
-{{- $port := ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess -}}
-{{- if or (eq (toString $port) "80") (eq (toString $port) "443") -}}
+{{- $internalPort := ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess -}}
+{{/* If you're running OR behind proxy
+ingress-nginx: &ingress-nginx
+  externalProxyPorts:
+    http: 80
+    https: 443
+*/}}
+{{- $externalPort := $internalPort -}}
+{{- if .Values.global.ingress.externalProxyPorts }}
+{{- $externalPort = ternary .Values.global.ingress.externalProxyPorts.https .Values.global.ingress.externalProxyPorts.http .Values.global.ORSecureAccess -}}
+{{- end }}
+{{- $port := toString $externalPort -}}
+{{- if or (eq $port "80") (eq $port "443") -}}
 {{- printf "%s://%s" $scheme .Values.global.domainName -}}
 {{- else -}}
-{{- printf "%s://%s:%d" $scheme .Values.global.domainName $port -}}
+{{- printf "%s://%s:%s" $scheme .Values.global.domainName $port -}}
 {{- end -}}
 {{- end -}}
 

@@ -9,6 +9,7 @@ type Project struct {
 	SampleRate          byte
 	SaveRequestPayloads bool
 	BeaconSize          int64
+	Platform            string
 	Metadata1           *string
 	Metadata2           *string
 	Metadata3           *string
@@ -57,4 +58,12 @@ func (p *Project) GetMetadataNo(key string) uint {
 		return 10
 	}
 	return 0
+}
+
+func (p *Project) IsMobile() bool {
+	return p.Platform == "ios" || p.Platform == "android"
+}
+
+func (p *Project) IsWeb() bool {
+	return p.Platform == "web"
 }

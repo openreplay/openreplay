@@ -5,6 +5,7 @@ type StartSessionRequest struct {
 	UserUUID        *string `json:"userUUID"`
 	RevID           string  `json:"revID"`
 	Timestamp       int64   `json:"timestamp"`
+	Timezone        string  `json:"timezone"`
 	TrackerVersion  string  `json:"trackerVersion"`
 	IsSnippet       bool    `json:"isSnippet"`
 	DeviceMemory    uint64  `json:"deviceMemory"`
@@ -36,4 +37,27 @@ type NotStartedRequest struct {
 	ProjectKey     *string `json:"projectKey"`
 	TrackerVersion string  `json:"trackerVersion"`
 	DoNotTrack     bool    `json:"DoNotTrack"`
+}
+
+type StartIOSSessionRequest struct {
+	Token          string  `json:"token"`
+	ProjectKey     *string `json:"projectKey"`
+	TrackerVersion string  `json:"trackerVersion"`
+	RevID          string  `json:"revID"`
+	UserUUID       *string `json:"userUUID"`
+	UserOSVersion  string  `json:"userOSVersion"`
+	UserDevice     string  `json:"userDevice"`
+	Timestamp      uint64  `json:"timestamp"`
+	Timezone       string  `json:"timezone"`
+	DeviceMemory   uint64  `json:"deviceMemory"`
+}
+
+type StartIOSSessionResponse struct {
+	Token           string   `json:"token"`
+	ImagesHashList  []string `json:"imagesHashList"`
+	UserUUID        string   `json:"userUUID"`
+	BeaconSizeLimit int64    `json:"beaconSizeLimit"`
+	SessionID       string   `json:"sessionID"`
+	ImageQuality    string   `json:"quality"`
+	FrameRate       int      `json:"fps"`
 }

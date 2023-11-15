@@ -40,6 +40,10 @@ function build_api(){
     [[ $1 == "ee" ]] && {
         destination="_peers_ee"
     }
+    [[ -d ../${destination} ]] && {
+      echo "Removing previous build cache"
+      rm -rf ../${destination}
+    }
     cp -R ../peers ../${destination}
     cd ../${destination}
     cp -R ../assist/utils .

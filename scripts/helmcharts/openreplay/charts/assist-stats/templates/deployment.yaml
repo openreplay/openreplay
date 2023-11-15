@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "assist-stats.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "assist-stats.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "assist-stats.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "assist-stats.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "assist-stats.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            - name: version_number
+              value: '{{ .Chart.AppVersion }}'
+            - name: pg_host
+              value: '{{ .Values.global.postgresql.postgresqlHost }}'
+            - name: pg_port
+              value: '{{ .Values.global.postgresql.postgresqlPort }}'
+            - name: pg_dbname
+              value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: pg_user
+              value: '{{ .Values.global.postgresql.postgresqlUser }}'
+            - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

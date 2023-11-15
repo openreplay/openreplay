@@ -8,7 +8,8 @@ import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 import ClickMapRagePicker from "Components/Dashboard/components/ClickMapRagePicker";
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
-import { CLICKMAP, TABLE, TIMESERIES } from "App/constants/card";
+import { CLICKMAP, TABLE, TIMESERIES, RETENTION, USER_PATH } from 'App/constants/card';
+import { Space, Switch } from 'antd';
 
 interface Props {
     className?: string;
@@ -23,6 +24,7 @@ function WidgetPreview(props: Props) {
     const metric: any = metricStore.instance;
     const isTimeSeries = metric.metricType === TIMESERIES;
     const isTable = metric.metricType === TABLE;
+    const isRetention = metric.metricType === RETENTION;
     const disableVisualization = metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS;
 
     const changeViewType = (_, { name, value }: any) => {
@@ -39,6 +41,23 @@ function WidgetPreview(props: Props) {
                     {props.name}
                 </h2>
                 <div className="flex items-center">
+                    {metric.metricType === USER_PATH && (
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            metric.update({ hideExcess: !metric.hideExcess });
+                          }}
+                        >
+                          <Space>
+                            <Switch
+                              checked={metric.hideExcess}
+                              size="small"
+                            />
+                            <span className="mr-4 color-gray-medium">Hide Minor Paths</span>
+                          </Space>
+                        </a>
+                    )}
                     {isTimeSeries && (
                         <>
                             <span className="mr-4 color-gray-medium">Visualization</span>
@@ -74,6 +93,25 @@ function WidgetPreview(props: Props) {
                                 disabledMessage="Chart view is not supported"
                             />
                         </>
+                    )}
+
+                    {isRetention && (
+                        <>
+                        <span className="mr-4 color-gray-medium">Visualization</span>
+                        <SegmentSelection
+                            name="viewType"
+                            className="my-3"
+                            primary={true}
+                            size="small"
+                            onSelect={ changeViewType }
+                            value={{ value: metric.viewType }}
+                            list={[
+                                { value: 'trend', name: 'Trend', icon: 'graph-up-arrow' },
+                                { value: 'cohort', name: 'Cohort', icon: 'dice-3' },
+                            ]}
+                            disabledMessage="Chart view is not supported"
+                        />
+                    </>
                     )}
                     <div className="mx-4" />
                     {metric.metricType === CLICKMAP ? (

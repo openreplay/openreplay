@@ -17,6 +17,7 @@ type session struct {
 	lastUpdate    int64 // local timestamp
 	lastUserTime  uint64
 	isEnded       bool
+	isMobile      bool
 }
 
 // SessionEnder updates timestamp of last message for each session
@@ -56,6 +57,7 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 	for sessID, _ := range se.sessions {
 		if !activeParts[sessID%se.parts] {
 			delete(se.sessions, sessID)
+			ender.DecreaseActiveSessions()
 			removedSessions++
 		} else {
 			activeSessions++
@@ -73,6 +75,10 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
 	)
+	if messages.IsIOSType(msg.TypeID()) {
+		msgTimestamp = messages.GetTimestamp(msg)
+		log.Printf("got timestamp from iOS message, session: %d, ts: %d", msg.SessionID(), msgTimestamp)
+	}
 	if batchTimestamp == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
@@ -86,6 +92,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
+			isMobile:      messages.IsIOSType(msg.TypeID()),
 		}
 		ender.IncreaseActiveSessions()
 		ender.IncreaseTotalSessions()

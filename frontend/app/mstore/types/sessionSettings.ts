@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import moment from 'moment';
-import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
+import { SKIP_TO_ISSUE, TIMEZONE, SHOWN_TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
 
 export type Timezone = {
     label: string;
@@ -70,6 +70,7 @@ export default class SessionSettings {
     captureRate: string = '0';
     captureAll: boolean = false;
     mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
+    shownTimezone: 'user' | 'local';
 
 
     constructor() {
@@ -79,10 +80,13 @@ export default class SessionSettings {
         const defaultTimezone = this.defaultTimezones.find(tz => tz.value.includes('UTC' + userTimezoneOffset.slice(0,3))) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
         this.timezoneFix(defaultTimezone);
+        // @ts-ignore
         this.timezone = JSON.parse(localStorage.getItem(TIMEZONE)) || defaultTimezone;
         if (localStorage.getItem(MOUSE_TRAIL) === null) {
             localStorage.setItem(MOUSE_TRAIL, 'true');
         }
+
+        this.shownTimezone = localStorage.getItem(SHOWN_TIMEZONE) === 'user' ? 'user' : 'local'
         makeAutoObservable(this);
     }
 
@@ -112,11 +116,14 @@ export default class SessionSettings {
 
     updateKey = (key: string, value: any) => {
         runInAction(() => {
+            // @ts-ignore
             this[key] = value;
         });
 
         if (key === 'captureRate' || key === 'captureAll') return;
-
+        if (key === 'shownTimezone') {
+            return localStorage.setItem(SHOWN_TIMEZONE, value as string);
+        }
         if (key === 'durationFilter' || key === 'timezone') {
             localStorage.setItem(`__$session-${key}$__`, JSON.stringify(value));
         } else {

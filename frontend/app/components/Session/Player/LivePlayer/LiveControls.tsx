@@ -10,7 +10,7 @@ import {
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
-
+import { useLocation } from "react-router-dom";
 import AssistDuration from './AssistDuration';
 import Timeline from './Timeline';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
@@ -20,6 +20,8 @@ import styles from 'Components/Session_/Player/Controls/controls.module.css';
 function Controls(props: any) {
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
+  const [noControls, setNoControls] = React.useState(false);
+  const { search } = useLocation();
 
   const { jumpToLive } = player;
   const {
@@ -58,6 +60,12 @@ function Controls(props: any) {
     if (totalAssistSessions === 0) {
       fetchAssistSessions();
     }
+    const queryParams = new URLSearchParams(search);
+    if (
+      (queryParams.has('noFooter') && queryParams.get('noFooter') === 'true')
+    ) {
+      setNoControls(true);
+    }
     return () => {
       document.removeEventListener('keydown', onKeyDown.bind(this));
     };
@@ -73,8 +81,6 @@ function Controls(props: any) {
     player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
   };
 
-
-
   const toggleBottomTools = (blockName: number) => {
       toggleBottomBlock(blockName);
   };
@@ -82,6 +88,7 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       <Timeline />
+      {!noControls ?
         <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live>
           <div className="flex items-center">
             {!closedLive && (
@@ -112,6 +119,7 @@ function Controls(props: any) {
             />
           </div>
         </div>
+      : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import logging
+import time
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -10,11 +11,11 @@ from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from routers import core, core_dynamic
 from crons import core_crons, core_dynamic_crons
+from routers import core, core_dynamic, additional_routes
 from routers.subs import insights, metrics, v1_api, health
 
-loglevel = config("LOGLEVEL", default=logging.INFO)
+loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
 
@@ -54,13 +55,19 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 @app.middleware('http')
 async def or_middleware(request: Request, call_next):
     if helper.TRACK_TIME:
-        import time
-        now = int(time.time() * 1000)
-    response: StreamingResponse = await call_next(request)
+        now = time.time()
+    try:
+        response: StreamingResponse = await call_next(request)
+    except:
+        logging.error(f"{request.method}: {request.url.path} FAILED!")
+        raise
+    if response.status_code // 100 != 2:
+        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
     if helper.TRACK_TIME:
-        now = int(time.time() * 1000) - now
-        if now > 500:
-            logging.info(f"Execution time: {now} ms")
+        now = time.time() - now
+        if now > 2:
+            now = round(now, 2)
+            logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
     return response
 
 
@@ -87,6 +94,10 @@ app.include_router(v1_api.app_apikey)
 app.include_router(health.public_app)
 app.include_router(health.app)
 app.include_router(health.app_apikey)
+
+app.include_router(additional_routes.public_app)
+app.include_router(additional_routes.app)
+app.include_router(additional_routes.app_apikey)
 
 # @app.get('/private/shutdown', tags=["private"])
 # async def stop_server():

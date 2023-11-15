@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "imagestorage.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "imagestorage.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $key, $val := .Values.service.ports }}
+    - port: {{ $val }}
+      targetPort: {{ $key }}
+      protocol: TCP
+      name: {{ $key }}
+    {{- end}}
+  selector:
+    {{- include "imagestorage.selectorLabels" . | nindent 4 }}

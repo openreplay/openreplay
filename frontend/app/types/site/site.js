@@ -15,6 +15,7 @@ export default Record({
   id: undefined,
   name: '',
   host: '',
+  platform: 'web',
   status: RED,
   lastRecordedSessionAt: undefined,
   gdpr: GDPR(),
@@ -33,7 +34,7 @@ export default Record({
 
     toData() {
       const js = this.toJS();
-
+      console.log(js, this)
       delete js.key;
       delete js.gdpr;
       return js;

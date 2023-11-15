@@ -100,6 +100,33 @@ func IncreaseTotalRequests(method, table string) {
 	dbTotalRequests.WithLabelValues(method, table).Inc()
 }
 
+var cacheRedisRequests = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Namespace: "cache",
+		Name:      "redis_requests_total",
+		Help:      "A counter showing the total number of all Redis requests.",
+	},
+	[]string{"method", "table"},
+)
+
+func IncreaseRedisRequests(method, table string) {
+	cacheRedisRequests.WithLabelValues(method, table).Inc()
+}
+
+var cacheRedisRequestDuration = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Namespace: "cache",
+		Name:      "redis_request_duration_seconds",
+		Help:      "A histogram displaying the duration of each Redis request in seconds.",
+		Buckets:   common.DefaultDurationBuckets,
+	},
+	[]string{"method", "table"},
+)
+
+func RecordRedisRequestDuration(durMillis float64, method, table string) {
+	cacheRedisRequestDuration.WithLabelValues(method, table).Observe(durMillis / 1000.0)
+}
+
 func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		dbBatchElements,
@@ -109,5 +136,7 @@ func List() []prometheus.Collector {
 		dbBulkInsertDuration,
 		dbRequestDuration,
 		dbTotalRequests,
+		cacheRedisRequests,
+		cacheRedisRequestDuration,
 	}
 }

@@ -24,6 +24,8 @@ echo $DOCKER_REPO
     docker login $DOCKER_REPO
     cd ../../backend
     bash build.sh $@
+    cd ../assist-stats/
+    bash build.sh $@
     cd ../assist
     bash build.sh $@
     cd ../peers

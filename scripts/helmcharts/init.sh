@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 # Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 RED='\033[0;31m'
@@ -98,8 +98,8 @@ randomPass() {
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.14.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.14.0"
+# This wrapper will help to check the sed, and use the correct version="v1.15.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.15.0"
 function is_gnu_sed(){
   sed --version >/dev/null 2>&1
 }

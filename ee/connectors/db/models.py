@@ -109,6 +109,10 @@ class Event(Base):
     customissue_payload = Column(VARCHAR(5000))
     received_at = Column(BigInteger)
     batch_order_number = Column(BigInteger)
+    clickevent_hesitationtime =	Column(BigInteger)
+    clickevent_label = Column(VARCHAR(5000))
+    clickevent_messageid = Column(BigInteger)
+    clickevent_selector = Column(VARCHAR(5000))
 
 
 class DetailedEvent(Base):

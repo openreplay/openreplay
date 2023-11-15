@@ -17,7 +17,7 @@ class MSTeams(BaseCollaboration):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
-                               endpoint=data.url,
+                               endpoint=data.url.unicode_string(),
                                webhook_type=schemas.WebhookType.msteams,
                                name=data.name)
         return None

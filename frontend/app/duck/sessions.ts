@@ -82,7 +82,7 @@ const initObj = {
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timeLineTooltip: { time: 0, offset: 0, isVisible: false, timeStr: '' },
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false, localTime: '', userTime: '' },
     createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
     fetchFailed: false,
 }
@@ -191,10 +191,11 @@ const reducer = (state = initialState, action: IAction) => {
                 errors,
                 events,
                 issues,
+                crashes,
                 resources,
                 stackEvents,
                 userEvents
-            } = action.data as { errors: any[], events: any[], issues: any[], resources: any[], stackEvents: any[], userEvents: EventData[] };
+            } = action.data as { errors: any[], crashes: any[], events: any[], issues: any[], resources: any[], stackEvents: any[], userEvents: EventData[] };
             const filterEvents = action.filter.events as Record<string, any>[];
             const session = state.get('current') as Session;
             const matching: number[] = [];
@@ -228,6 +229,7 @@ const reducer = (state = initialState, action: IAction) => {
 
             const newSession = session.addEvents(
               events,
+              crashes,
               errors,
               issues,
               resources,
@@ -583,7 +585,7 @@ export function updateNote(note) {
     }
 }
 
-export function setSessionPath(path) {
+export function setSessionPath(path: any) {
     return {
         type: SET_SESSION_PATH,
         path,

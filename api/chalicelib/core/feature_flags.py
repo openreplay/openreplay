@@ -63,7 +63,7 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
         SELECT COUNT(1) OVER () AS count, {", ".join(feature_flag_columns)}
         FROM feature_flags
         WHERE {" AND ".join(constraints)}
-        ORDER BY updated_at {data.order.value}
+        ORDER BY updated_at {data.order}
         LIMIT %(limit)s OFFSET %(offset)s;
     """
 
@@ -206,7 +206,7 @@ def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
     params = {
         "project_id": project_id,
         "created_by": user_id,
-        **feature_flag_data.dict(),
+        **feature_flag_data.model_dump(),
         **conditions_data,
         **variants_data,
         "payload": json.dumps(feature_flag_data.payload)
@@ -218,7 +218,7 @@ def prepare_params_to_create_flag(feature_flag_data, project_id, user_id):
 def prepare_variants_values(feature_flag_data):
     variants_data = {}
     for i, v in enumerate(feature_flag_data.variants):
-        for k in v.dict().keys():
+        for k in v.model_dump().keys():
             variants_data[f"v_{k}_{i}"] = v.__getattribute__(k)
         variants_data[f"v_value_{i}"] = v.value
         variants_data[f"v_description_{i}"] = v.description
@@ -230,11 +230,11 @@ def prepare_variants_values(feature_flag_data):
 def prepare_conditions_values(feature_flag_data):
     conditions_data = {}
     for i, s in enumerate(feature_flag_data.conditions):
-        for k in s.dict().keys():
+        for k in s.model_dump().keys():
             conditions_data[f"{k}_{i}"] = s.__getattribute__(k)
         conditions_data[f"name_{i}"] = s.name
         conditions_data[f"rollout_percentage_{i}"] = s.rollout_percentage
-        conditions_data[f"filters_{i}"] = json.dumps([filter_.dict() for filter_ in s.filters])
+        conditions_data[f"filters_{i}"] = json.dumps([filter_.model_dump() for filter_ in s.filters])
     return conditions_data
 
 
@@ -299,7 +299,7 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
 
         with pg_client.PostgresClient() as cur:
             params = [
-                (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.dict() for filter_ in c.filters]))
+                (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.model_dump() for filter_ in c.filters]))
                 for c in conditions]
             query = cur.mogrify(sql, params)
             cur.execute(query)
@@ -327,10 +327,10 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
     )
 
     params = {
-        **feature_flag.dict(),
         "updated_by": user_id,
         "feature_flag_id": feature_flag_id,
         "project_id": project_id,
+        **feature_flag.model_dump(),
         "payload": json.dumps(feature_flag.payload),
     }
 
@@ -455,8 +455,7 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         """
 
         with pg_client.PostgresClient() as cur:
-            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in
-                      variants]
+            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
             query = cur.mogrify(sql, params)
             cur.execute(query)
             rows = cur.fetchall()

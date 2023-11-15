@@ -1,1 +1,1 @@
-export { default } from './NetworkPanel'
+export { WebNetworkPanel, MobileNetworkPanel } from './NetworkPanel';

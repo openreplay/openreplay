@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+sqlalchemy = "==2.0.21"
+uvicorn = "==0.23.2"
+python-decouple = "==3.8"
+psycopg2-binary = "==2.9.7"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

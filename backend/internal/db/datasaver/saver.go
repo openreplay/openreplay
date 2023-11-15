@@ -1,7 +1,6 @@
 package datasaver
 
 import (
-	"errors"
 	"log"
 
 	"openreplay/backend/internal/config/db"
@@ -41,6 +40,15 @@ func (s *saverImpl) Handle(msg Message) {
 	if msg.TypeID() == MsgCustomEvent {
 		defer s.Handle(types.WrapCustomEvent(msg.(*CustomEvent)))
 	}
+	if IsIOSType(msg.TypeID()) {
+		// Handle iOS messages
+		if err := s.handleMobileMessage(msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("iOS Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+			}
+			return
+		}
+	}
 	if err := s.handleMessage(msg); err != nil {
 		if !postgres.IsPkeyViolation(err) {
 			log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
@@ -51,6 +59,58 @@ func (s *saverImpl) Handle(msg Message) {
 		log.Printf("Stats Insertion Error %v; Session: %d, Message: %v", err, msg.SessionID(), msg)
 	}
 	return
+}
+
+func (s *saverImpl) handleMobileMessage(msg Message) error {
+	session, err := s.sessions.Get(msg.SessionID())
+	if err != nil {
+		return err
+	}
+	switch m := msg.(type) {
+	case *IOSSessionStart:
+		return s.pg.InsertIOSSessionStart(m.SessionID(), m)
+	case *IOSSessionEnd:
+		return s.pg.InsertIOSSessionEnd(m.SessionID(), m)
+	case *IOSUserID:
+		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_IOS", m.ID)
+		return nil
+	case *IOSUserAnonymousID:
+		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
+			return err
+		}
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.ID)
+		return nil
+	case *IOSMetadata:
+		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
+	case *IOSEvent:
+		return s.pg.InsertIOSEvent(session, m)
+	case *IOSClickEvent:
+		if err := s.pg.InsertIOSClickEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSSwipeEvent:
+		if err := s.pg.InsertIOSSwipeEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSInputEvent:
+		if err := s.pg.InsertIOSInputEvent(session, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *IOSNetworkCall:
+		return s.pg.InsertIOSNetworkCall(session, m)
+	case *IOSCrash:
+		if err := s.pg.InsertIOSCrash(session.SessionID, session.ProjectID, m); err != nil {
+			return err
+		}
+		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
+	}
+	return nil
 }
 
 func (s *saverImpl) handleMessage(msg Message) error {
@@ -66,10 +126,11 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *Metadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
-		if err = s.pg.InsertIssueEvent(session, m); err != nil {
+		err = s.pg.InsertIssueEvent(session, m)
+		if err != nil {
 			return err
 		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m))
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(m.Type))
 	case *CustomIssue:
 		ie := &IssueEvent{
 			Type:          "custom",
@@ -82,7 +143,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertIssueEvent(session, ie); err != nil {
 			return err
 		}
-		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(ie))
+		return s.sessions.UpdateIssuesStats(session.SessionID, 0, postgres.GetIssueScore(ie.Type))
 	case *UserID:
 		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
@@ -102,18 +163,11 @@ func (s *saverImpl) handleMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
-	case *InputEvent:
-		if err = s.pg.InsertWebInputEvent(session, m); err != nil {
-			if errors.Is(err, postgres.EmptyLabel) {
-				return nil
-			}
-			return err
-		}
-		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
 	case *PageEvent:
 		if err = s.pg.InsertWebPageEvent(session, m); err != nil {
 			return err
 		}
+		s.sessions.UpdateReferrer(session.SessionID, m.Referrer)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *NetworkRequest:
 		return s.pg.InsertWebNetworkRequest(session, m)

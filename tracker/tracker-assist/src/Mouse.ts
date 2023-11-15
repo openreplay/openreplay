@@ -32,6 +32,9 @@ export default class Mouse {
       position: 'absolute',
       zIndex: '999998',
       pointerEvents: 'none',
+      // adjusting the svg empty space
+      marginTop: '-1px',
+      marginLeft: '-2px',
     })
   }
 

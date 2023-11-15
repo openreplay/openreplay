@@ -71,7 +71,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        pass
+        
 
 
 class CreateElementNode(Message):
@@ -185,7 +185,7 @@ class MouseMove(Message):
         self.y = y
 
 
-class NetworkRequest(Message):
+class NetworkRequestDeprecated(Message):
     __id__ = 21
 
     def __init__(self, type, method, url, request, response, status, timestamp, duration):
@@ -708,6 +708,21 @@ class PartitionedMessage(Message):
         self.part_total = part_total
 
 
+class NetworkRequest(Message):
+    __id__ = 83
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration, transferred_body_size):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+        self.transferred_body_size = transferred_body_size
+
+
 class InputChange(Message):
     __id__ = 112
 
@@ -759,6 +774,20 @@ class ResourceTiming(Message):
         self.cached = cached
 
 
+class TabChange(Message):
+    __id__ = 117
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
+class TabData(Message):
+    __id__ = 118
+
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
 class IssueEvent(Message):
     __id__ = 125
 
@@ -786,15 +815,6 @@ class SessionSearch(Message):
     def __init__(self, timestamp, partition):
         self.timestamp = timestamp
         self.partition = partition
-
-
-class IOSBatchMeta(Message):
-    __id__ = 107
-
-    def __init__(self, timestamp, length, first_index):
-        self.timestamp = timestamp
-        self.length = length
-        self.first_index = first_index
 
 
 class IOSSessionStart(Message):
@@ -830,7 +850,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSCustomEvent(Message):
+class IOSEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name, payload):
@@ -843,19 +863,19 @@ class IOSCustomEvent(Message):
 class IOSUserID(Message):
     __id__ = 94
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSUserAnonymousID(Message):
     __id__ = 95
 
-    def __init__(self, timestamp, length, value):
+    def __init__(self, timestamp, length, id):
         self.timestamp = timestamp
         self.length = length
-        self.value = value
+        self.id = id
 
 
 class IOSScreenChanges(Message):
@@ -881,24 +901,15 @@ class IOSCrash(Message):
         self.stacktrace = stacktrace
 
 
-class IOSScreenEnter(Message):
+class IOSViewComponentEvent(Message):
     __id__ = 98
 
-    def __init__(self, timestamp, length, title, view_name):
+    def __init__(self, timestamp, length, screen_name, view_name, visible):
         self.timestamp = timestamp
         self.length = length
-        self.title = title
+        self.screen_name = screen_name
         self.view_name = view_name
-
-
-class IOSScreenLeave(Message):
-    __id__ = 99
-
-    def __init__(self, timestamp, length, title, view_name):
-        self.timestamp = timestamp
-        self.length = length
-        self.title = title
-        self.view_name = view_name
+        self.visible = visible
 
 
 class IOSClickEvent(Message):
@@ -955,16 +966,37 @@ class IOSInternalError(Message):
 class IOSNetworkCall(Message):
     __id__ = 105
 
-    def __init__(self, timestamp, length, duration, headers, body, url, success, method, status):
+    def __init__(self, timestamp, length, type, method, url, request, response, status, duration):
         self.timestamp = timestamp
         self.length = length
-        self.duration = duration
-        self.headers = headers
-        self.body = body
-        self.url = url
-        self.success = success
+        self.type = type
         self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
         self.status = status
+        self.duration = duration
+
+
+class IOSSwipeEvent(Message):
+    __id__ = 106
+
+    def __init__(self, timestamp, length, label, x, y, direction):
+        self.timestamp = timestamp
+        self.length = length
+        self.label = label
+        self.x = x
+        self.y = y
+        self.direction = direction
+
+
+class IOSBatchMeta(Message):
+    __id__ = 107
+
+    def __init__(self, timestamp, length, first_index):
+        self.timestamp = timestamp
+        self.length = length
+        self.first_index = first_index
 
 
 class IOSPerformanceAggregated(Message):

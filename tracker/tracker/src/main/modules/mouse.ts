@@ -168,7 +168,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     mouseTarget = null
     selectorMap = {}
     if (checkIntervalId) {
-      clearInterval(checkIntervalId)
+      clearInterval(checkIntervalId as unknown as number)
     }
   })
 

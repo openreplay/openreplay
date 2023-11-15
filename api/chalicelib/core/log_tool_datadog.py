@@ -1,4 +1,5 @@
 from chalicelib.core import log_tools
+from schemas import schemas
 
 IN_TY = "datadog"
 
@@ -30,14 +31,14 @@ def delete(tenant_id, project_id):
     return log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
-def add_edit(tenant_id, project_id, data):
+def add_edit(tenant_id, project_id, data: schemas.IntegrationDatadogSchema):
     s = get(project_id)
     if s is not None:
         return update(tenant_id=tenant_id, project_id=project_id,
-                      changes={"apiKey": data["apiKey"],
-                               "applicationKey": data["applicationKey"]})
+                      changes={"apiKey": data.api_key,
+                               "applicationKey": data.application_key})
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   api_key=data["apiKey"],
-                   application_key=data["applicationKey"])
+                   api_key=data.api_key,
+                   application_key=data.application_key)

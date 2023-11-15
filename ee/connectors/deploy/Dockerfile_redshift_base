@@ -1,7 +1,7 @@
-FROM amancevice/pandas:2.0.2-alpine
+FROM amancevice/pandas:alpine-2.1.1
 
 WORKDIR /usr/src/app
-ENV LIBRD_VER=2.1.1
+ENV LIBRD_VER=2.2.0
 WORKDIR /work
 RUN apk add --no-cache --virtual .make-deps postgresql-dev gcc python3-dev \
   musl-dev linux-headers g++ libc-dev libffi-dev make cmake py-pip build-base \

@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"openreplay/backend/pkg/db/postgres/pool"
 
 	"github.com/jackc/pgx/v4"
+
+	"openreplay/backend/pkg/db/postgres/pool"
 )
 
 type Listener struct {

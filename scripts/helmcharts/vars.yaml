@@ -1,4 +1,4 @@
-fromVersion: "v1.14.0"
+fromVersion: "v1.15.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -65,6 +65,10 @@ minio:
       secretKey: "changeMeMinioPassword"
 
 ingress-nginx: &ingress-nginx
+  # If you're using an external proxy in front of OpenReplay, update the proxy ports below.
+  # externalProxyPorts:
+  #   http: 80
+  #   https: 443
   controller:
     ingressClassResource:
       # -- Name of the ingressClass
@@ -72,6 +76,12 @@ ingress-nginx: &ingress-nginx
   # -- For backwards compatibility with ingress.class annotation, use ingressClass.
   # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
     ingressClass: openreplay
+    addHeaders:
+      # Enable only if you know what you're doing!!!
+      # X-Frame-Options: "DENY"
+      X-XSS-Protection: "1; mode=block"
+      X-Content-Type-Options: "nosniff"
+      Referrer-Policy: "same-origin"
     service:
       externalTrafficPolicy: "Local"
       ports:

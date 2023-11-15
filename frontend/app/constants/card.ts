@@ -20,7 +20,7 @@ export const ERRORS = 'errors';
 export const PERFORMANCE = 'performance';
 export const RESOURCE_MONITORING = 'resources';
 export const WEB_VITALS = 'webVitals';
-export const USER_PATH = 'userPath';
+export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
 export const FEATURE_ADOPTION = 'featureAdoption';
 export const INSIGHTS = 'insights';
@@ -185,17 +185,18 @@ export const TYPES: CardType[] = [
       { title: 'Captured Sessions', slug: FilterKey.COUNT_SESSIONS, description: '' },
     ],
   },
-  // {
-  //   title: 'Path Analysis',
-  //   icon: 'signpost-split',
-  //   description: 'See where users are flowing and explore their journeys.',
-  //   slug: USER_PATH,
-  // },
+  {
+    title: 'Path Analysis',
+    icon: 'signpost-split',
+    description: 'See where users are flowing and explore their journeys.',
+    slug: USER_PATH,
+  },
   // {
   //   title: 'Retention',
   //   icon: 'arrow-repeat',
   //   description: 'Get an understanding of how many users are returning.',
   //   slug: RETENTION,
+  //   disabled: true,
   // },
   // {
   //   title: 'Feature Adoption',

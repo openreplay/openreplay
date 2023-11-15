@@ -50,6 +50,7 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
                 ? 'Please check your data retention policy.'
                 : 'Please check it again in a few minutes.'}
             </div>
+            {error ? <div style={{ opacity: 0 }}>{error}</div> : null}
           </div>
         </div>
       ) : (

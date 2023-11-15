@@ -38,7 +38,10 @@ export default class Call {
     private peerID: string,
     private getAssistVersion: () => number
   ) {
-    socket.on('call_end', this.onRemoteCallEnd);
+    socket.on('call_end', (d) => {
+      console.log(d, socket.id)
+      this.onRemoteCallEnd()
+    });
     socket.on('videofeed', ({ streamId, enabled }) => {
       console.log(streamId, enabled);
       console.log(this.videoStreams);
@@ -150,9 +153,9 @@ export default class Call {
   }
 
   private handleCallEnd() {
-    this.callArgs && this.callArgs.onCallEnd();
-    this.callConnection[0] && this.callConnection[0].close();
+    if (this.store.get().calling !== CallingState.NoCall) this.callArgs && this.callArgs.onCallEnd();
     this.store.update({ calling: CallingState.NoCall });
+    this.callConnection[0] && this.callConnection[0].close();
     this.callArgs = null;
     // TODO:  We have it separated, right? (check)
     //this.toggleAnnotation(false)

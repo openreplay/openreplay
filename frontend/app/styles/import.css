@@ -1,12 +1,11 @@
 @import 'react-toastify/dist/ReactToastify.css';
-/* @import 'react-circular-progressbar/dist/styles.css'; */
 @import "react-daterange-picker/dist/css/react-calendar.css";
 @import 'rc-time-picker/assets/index.css';
 @import 'highlight.js/styles/github-gist.css';
 @import 'react-tippy/dist/tippy.css';
 @import 'react-daterange-picker.css';
 @import 'rc-time-picker.css';
-@import 'antd/dist/reset.css';
+/*@import 'antd/dist/reset.css';*/
 @import 'tailwind-preflight.css';
 
 @tailwind base;

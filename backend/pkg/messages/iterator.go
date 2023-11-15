@@ -43,6 +43,7 @@ func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, auto
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
+		MsgIOSBatchMeta: {},
 	}
 	return iter
 }
@@ -110,7 +111,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 		// Update timestamp value for iOS message types
 		if IsIOSType(msgType) {
-			msg.Meta().Timestamp = i.getIOSTimestamp(msg)
+			msgTime := i.getIOSTimestamp(msg)
+			msg.Meta().Timestamp = msgTime
 		}
 
 		// Process message
@@ -184,6 +186,16 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Url = m.URL
 		// Save session page url in cache for using in next batches
 		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
+
+	case *IOSBatchMeta:
+		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
+			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
+		}
+		i.messageInfo.Index = m.FirstIndex
+		i.messageInfo.Timestamp = m.Timestamp
+		if m.Timestamp == 0 {
+			i.zeroTsLog("IOSBatchMeta")
+		}
 	}
 	return nil
 }

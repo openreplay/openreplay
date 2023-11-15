@@ -3,6 +3,16 @@ const {request_logger} = require('./utils/helper');
 const express = require('express');
 const health = require("./utils/health");
 const assert = require('assert').strict;
+const register = require('./utils/metrics').register;
+
+health.healthApp.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (ex) {
+        res.status(500).end(ex);
+    }
+});
 
 let socket;
 if (process.env.redis === "true") {
@@ -59,14 +69,12 @@ if (process.env.uws !== "true") {
 
 
     /* Either onAborted or simply finished request */
-    const onAbortedOrFinishedResponse = function (res, readStream) {
+    const onAbortedOrFinishedResponse = function (res) {
 
         if (res.id === -1) {
             debug && console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
         } else {
             debug && console.log('Stream was closed');
-            console.timeEnd(res.id);
-            readStream.destroy();
         }
 
         /* Mark this response already accounted for */
@@ -76,8 +84,10 @@ if (process.env.uws !== "true") {
     const uWrapper = function (fn) {
         return (res, req) => {
             res.id = 1;
+            req.startTs = performance.now(); // track request's start timestamp
+            req.method = req.getMethod();
             res.onAborted(() => {
-                onAbortedOrFinishedResponse(res, readStream);
+                onAbortedOrFinishedResponse(res);
             });
             return fn(req, res);
         }
@@ -94,7 +104,7 @@ if (process.env.uws !== "true") {
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveBySession));
 
     socket.start(uapp);
 

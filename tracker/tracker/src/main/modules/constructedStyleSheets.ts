@@ -1,9 +1,7 @@
 import type App from '../app/index.js'
 import {
-  TechnicalInfo,
   AdoptedSSReplaceURLBased,
   AdoptedSSInsertRuleURLBased,
-  AdoptedSSDeleteRule,
   AdoptedSSAddOwner,
   AdoptedSSRemoveOwner,
 } from '../app/messages.gen.js'
@@ -19,11 +17,13 @@ function hasAdoptedSS(node: Node): node is StyleSheetOwner {
   )
 }
 
-// TODO: incapsulate to be init-ed on-start and join with cssrules.ts under one folder
+// TODO: encapsulate to be init-ed on-start and join with cssrules.ts under one folder
 let _id = 0xf
+
 export function nextID(): number {
   return _id++
 }
+
 export const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
 
 export default function (app: App | null) {
@@ -52,35 +52,39 @@ export default function (app: App | null) {
       }
       const nowOwning: number[] = []
       const styleSheets = root.adoptedStyleSheets
-      for (const s of styleSheets) {
-        let sheetID = styleSheetIDMap.get(s)
-        const init = !sheetID
-        if (!sheetID) {
-          sheetID = nextID()
-          styleSheetIDMap.set(s, sheetID)
-        }
-        if (!pastOwning.includes(sheetID)) {
-          app.send(AdoptedSSAddOwner(sheetID, nodeID))
-        }
-        if (init) {
-          const rules = s.cssRules
-          for (let i = 0; i < rules.length; i++) {
-            app.send(AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()))
+      if (Symbol.iterator in styleSheets) {
+        for (const s of styleSheets) {
+          let sheetID = styleSheetIDMap.get(s)
+          const init = !sheetID
+          if (!sheetID) {
+            sheetID = nextID()
+            styleSheetIDMap.set(s, sheetID)
           }
+          if (!pastOwning.includes(sheetID)) {
+            app.send(AdoptedSSAddOwner(sheetID, nodeID))
+          }
+          if (init) {
+            const rules = s.cssRules
+            for (let i = 0; i < rules.length; i++) {
+              app.send(AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()))
+            }
+          }
+          nowOwning.push(sheetID)
         }
-        nowOwning.push(sheetID)
       }
-      for (const sheetID of pastOwning) {
-        if (!nowOwning.includes(sheetID)) {
-          app.send(AdoptedSSRemoveOwner(sheetID, nodeID))
+      if (Symbol.iterator in pastOwning) {
+        for (const sheetID of pastOwning) {
+          if (!nowOwning.includes(sheetID)) {
+            app.send(AdoptedSSRemoveOwner(sheetID, nodeID))
+          }
         }
       }
       adoptedStyleSheetsOwnings.set(nodeID, nowOwning)
-    }, 20) // Misterious bug:
+    }, 20) // Mysterious bug:
   /* On the page https://explore.fast.design/components/fast-accordion 
     the only rule inside the only adoptedStyleSheet of the iframe-s document
     gets changed during first milliseconds after the load. 
-    Howerer, none of the documented methods (replace, insertRule) is triggered.
+    However, none of the documented methods (replace, insertRule) is triggered.
     The rule is not substituted (remains the same object), however the text gets changed.
   */
 

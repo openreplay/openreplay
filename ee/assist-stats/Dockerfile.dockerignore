@@ -1,0 +1,7 @@
+# ignore .git and .cache folders
+.git
+.cache
+**/build.sh
+**/build_*.sh
+**/*deploy.sh
+Dockerfile*

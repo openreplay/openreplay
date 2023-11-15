@@ -1,4 +1,4 @@
-import {audioContextManager} from "App/utils/screenRecorder";
+import { audioContextManager } from 'App/utils/screenRecorder';
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
@@ -13,7 +13,7 @@ import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
 import { useLocation } from 'react-router-dom';
-import { toast } from 'react-toastify'
+import { toast } from 'react-toastify';
 
 interface Props {
   session: Session;
@@ -25,6 +25,8 @@ interface Props {
   isMultiview?: boolean;
   query?: Record<string, (key: string) => any>;
   request: () => void;
+  userId: number;
+  siteId: number;
 }
 
 let playerInst: ILivePlayerContext['player'] | undefined;
@@ -36,20 +38,21 @@ function LivePlayer({
   isMultiview,
   customSession,
   query,
-  isEnterprise
+  isEnterprise,
+  userId,
+  siteId,
 }: Props) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
   const [fullView, setFullView] = useState(false);
-  const openedFromMultiview = query?.get('multi') === 'true'
+  const openedFromMultiview = query?.get('multi') === 'true';
   const usedSession = isMultiview ? customSession! : session;
-
   const location = useLocation();
 
   useEffect(() => {
     playerInst = undefined;
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
-    console.debug('creating live player for', usedSession.sessionId)
+    console.debug('creating live player for', usedSession.sessionId);
     const sessionWithAgentData = {
       ...usedSession,
       agentInfo: {
@@ -58,21 +61,27 @@ function LivePlayer({
       },
     };
     if (isEnterprise) {
-      new APIClient().get('/config/assist/credentials').then(r => r.json())
+      new APIClient()
+        .get('/config/assist/credentials')
+        .then((r) => r.json())
         .then(({ data }) => {
           const [player, store] = createLiveWebPlayer(
             sessionWithAgentData,
             data,
+            userId,
+            siteId,
             (state) => makeAutoObservable(state),
             toast
           );
           setContextValue({ player, store });
           playerInst = player;
-        })
+        });
     } else {
       const [player, store] = createLiveWebPlayer(
         sessionWithAgentData,
         null,
+        userId,
+        siteId,
         (state) => makeAutoObservable(state),
         toast
       );
@@ -81,14 +90,17 @@ function LivePlayer({
     }
 
     return () => {
-      if (!location.pathname.includes('multiview') || !location.pathname.includes(usedSession.sessionId)) {
-        console.debug('cleaning live player for', usedSession.sessionId)
+      if (
+        !location.pathname.includes('multiview') ||
+        !location.pathname.includes(usedSession.sessionId)
+      ) {
+        console.debug('cleaning live player for', usedSession.sessionId);
         audioContextManager.clear();
         playerInst?.clean?.();
         // @ts-ignore default empty
-        setContextValue(defaultContextValue)
+        setContextValue(defaultContextValue);
       }
-    }
+    };
   }, [location.pathname, usedSession.sessionId]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
@@ -130,15 +142,15 @@ export default withPermissions(
   '',
   true
 )(
-  connect(
-    (state: any) => {
-      return {
-        session: state.getIn(['sessions', 'current']),
-        showAssist: state.getIn(['sessions', 'showChatWindow']),
-        isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-        userEmail: state.getIn(['user', 'account', 'email']),
-        userName: state.getIn(['user', 'account', 'name']),
-      };
-    }
-  )(withLocationHandlers()(React.memo(LivePlayer)))
-)
+  connect((state: any) => {
+    return {
+      siteId: state.getIn([ 'site', 'siteId' ]),
+      session: state.getIn(['sessions', 'current']),
+      showAssist: state.getIn(['sessions', 'showChatWindow']),
+      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+      userEmail: state.getIn(['user', 'account', 'email']),
+      userName: state.getIn(['user', 'account', 'name']),
+      userId: state.getIn(['user', 'account', 'id']),
+    };
+  })(withLocationHandlers()(React.memo(LivePlayer)))
+);

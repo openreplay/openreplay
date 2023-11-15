@@ -19,6 +19,7 @@ const RESET_ERRORS = 'user/RESET_ERRORS';
 
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
+const UPDATE_ACCOUNT_MODULE = 'user/UPDATE_ACCOUNT_MODULE';
 
 export const initialState = Map({
   account: Account(),
@@ -34,20 +35,21 @@ export const initialState = Map({
   loginRequest: {
     loading: false,
     errors: []
-  },
+  }
 });
 
 const setClient = (state, data) => {
   const client = Client(data);
-  return state.set('client', client)
-}
+  return state.set('client', client);
+};
 
 export const UPDATE_JWT = 'jwt/UPDATE';
-export const DELETE = new RequestTypes('jwt/DELETE')
+export const DELETE = new RequestTypes('jwt/DELETE');
+
 export function setJwt(data) {
   return {
     type: UPDATE_JWT,
-    data,
+    data
   };
 }
 
@@ -59,15 +61,15 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_JWT:
       return state.set('jwt', action.data);
     case LOGIN.REQUEST:
-      return state.set('loginRequest', { loading: true, errors: [] })
+      return state.set('loginRequest', { loading: true, errors: [] });
     case RESET_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      return state.set('account', Account({...action.data.user })).set('loginRequest', { loading: false, errors: [] })
+      return state.set('account', Account({ ...action.data.user })).set('loginRequest', { loading: false, errors: [] });
     case UPDATE_PASSWORD.REQUEST:
     case UPDATE_PASSWORD.SUCCESS:
-      return state.set('passwordErrors', List())
+      return state.set('passwordErrors', List());
     case SIGNUP.SUCCESS:
-      state.set('account', Account(action.data.user)).set('onboarding', true);
+      return state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:
@@ -76,25 +78,33 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
     case UPDATE_PASSWORD.FAILURE:
-      return state.set('passwordErrors', List(action.errors))
+      return state.set('passwordErrors', List(action.errors));
     case LOGIN.FAILURE:
       console.log('login failed', action);
-      deleteCookie('jwt', '/', 'openreplay.com')
+      deleteCookie('jwt', '/', 'openreplay.com');
       return state.set('loginRequest', { loading: false, errors: action.errors });
     case FETCH_ACCOUNT.FAILURE:
     case DELETE.SUCCESS:
     case DELETE.FAILURE:
-      deleteCookie('jwt', '/', 'openreplay.com')
+      deleteCookie('jwt', '/', 'openreplay.com');
       return initialState;
     case PUT_CLIENT.REQUEST:
-      return state.mergeIn([ 'account' ], action.params);
+      return state.mergeIn(['account'], action.params);
     case FETCH_CLIENT.SUCCESS:
       return setClient(state, action.data);
     case PUSH_NEW_SITE:
-      return state.updateIn([ 'site', 'list' ], list =>
+      return state.updateIn(['site', 'list'], list =>
         list.push(action.newSite));
     case SET_ONBOARDING:
-      return state.set('onboarding', action.state)
+      return state.set('onboarding', action.state);
+    case UPDATE_ACCOUNT_MODULE:
+      return state.updateIn(['account', 'settings', 'modules'], modules => {
+        if (modules.includes(action.moduleKey)) {
+          return modules.filter(module => module !== action.moduleKey);
+        } else {
+          return modules.concat(action.moduleKey);
+        }
+      });
   }
   return state;
 };
@@ -106,19 +116,19 @@ export default withRequestState({
   updatePasswordRequest: UPDATE_PASSWORD,
   requestResetPassowrd: REQUEST_RESET_PASSWORD,
   resetPassword: RESET_PASSWORD,
-  fetchUserInfoRequest: [ FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS ],
+  fetchUserInfoRequest: [FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS],
   putClientRequest: PUT_CLIENT,
-  updateAccountRequest: UPDATE_ACCOUNT,
+  updateAccountRequest: UPDATE_ACCOUNT
 }, reducer);
 
 export const login = params => ({
   types: LOGIN.toArray(),
-  call: client => client.post('/login', params),
+  call: client => client.post('/login', params)
 });
 
 export const signup = params => dispatch => dispatch({
   types: SIGNUP.toArray(),
-  call: client => client.post('/signup', params),
+  call: client => client.post('/signup', params)
 });
 
 export const resetPassword = params => dispatch => dispatch({
@@ -128,25 +138,25 @@ export const resetPassword = params => dispatch => dispatch({
 
 export const requestResetPassword = params => dispatch => dispatch({
   types: REQUEST_RESET_PASSWORD.toArray(),
-  call: client => client.post('/password/reset-link', params),
+  call: client => client.post('/password/reset-link', params)
 });
 
 export const updatePassword = params => dispatch => dispatch({
   types: UPDATE_PASSWORD.toArray(),
-  call: client => client.post('/account/password', params),
-})
+  call: client => client.post('/account/password', params)
+});
 
 export function fetchTenants() {
   return {
     types: FETCH_TENANTS.toArray(),
     call: client => client.get('/signup')
-  }
+  };
 }
 
 export const fetchUserInfo = () => ({
-    types: FETCH_ACCOUNT.toArray(),
-    call: client => client.get('/account'),
-  });
+  types: FETCH_ACCOUNT.toArray(),
+  call: client => client.get('/account')
+});
 
 export function logout() {
   return {
@@ -159,28 +169,28 @@ export function updateClient(params) {
   return {
     types: PUT_CLIENT.toArray(),
     call: client => client.post('/account', params),
-    params,
+    params
   };
 }
 
 export function updateAccount(params) {
   return {
     types: UPDATE_ACCOUNT.toArray(),
-    call: client => client.post('/account', params),
-  }
+    call: client => client.post('/account', params)
+  };
 }
 
 export function resendEmailVerification(email) {
   return {
     types: RESEND_EMAIL_VERIFICATION.toArray(),
-    call: client => client.post('/re-validate', { email }),
-  }
+    call: client => client.post('/re-validate', { email })
+  };
 }
 
 export function pushNewSite(newSite) {
   return {
     type: PUSH_NEW_SITE,
-    newSite,
+    newSite
   };
 }
 
@@ -193,6 +203,13 @@ export function setOnboarding(state = false) {
 
 export function resetErrors() {
   return {
-    type: RESET_ERRORS,
+    type: RESET_ERRORS
+  };
+}
+
+export function updateModule(moduleKey) {
+  return {
+    type: UPDATE_ACCOUNT_MODULE,
+    moduleKey
   };
 }

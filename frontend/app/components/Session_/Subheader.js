@@ -26,6 +26,7 @@ function SubHeader(props) {
     const { width, height, endTime, location: currentLocation = 'loading...', } = store.get();
     const hasIframe = localStorage.getItem(IFRAME) === "true";
 
+
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;
         if (!integrations || !integrations.size) {
@@ -33,7 +34,7 @@ function SubHeader(props) {
         }
 
         return integrations.some((i) => i.token);
-    });
+    }, [props.integrations]);
 
     const { showModal, hideModal } = useModal();
 
@@ -163,4 +164,5 @@ function SubHeader(props) {
 export default connect((state) => ({
     siteId: state.getIn(['site', 'siteId']),
     integrations: state.getIn(['issues', 'list']),
+    modules: state.getIn(['user', 'account', 'modules']) || [],
 }))(observer(SubHeader));

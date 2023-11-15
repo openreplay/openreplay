@@ -1,11 +1,11 @@
 from decouple import config
 from fastapi.security import SecurityScopes
 
-import schemas_ee
+import schemas
 from chalicelib.core import permissions
 from chalicelib.utils.storage import StorageClient
 
-SCOPES = SecurityScopes([schemas_ee.Permissions.dev_tools])
+SCOPES = SecurityScopes([schemas.Permissions.dev_tools])
 
 
 def __get_devtools_keys(project_id, session_id):
@@ -18,7 +18,7 @@ def __get_devtools_keys(project_id, session_id):
     ]
 
 
-def get_urls(session_id, project_id, context: schemas_ee.CurrentContext, check_existence: bool = True):
+def get_urls(session_id, project_id, context: schemas.CurrentContext, check_existence: bool = True):
     if not permissions.check(security_scopes=SCOPES, context=context):
         return []
     results = []

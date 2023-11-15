@@ -42,12 +42,12 @@ def __update(tenant_id, project_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __create(tenant_id, name):
+def __create(tenant_id, data):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, active)
-                                VALUES (%(tenant_id)s,%(name)s,TRUE)
+        query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, platform, active)
+                                VALUES (%(tenant_id)s,%(name)s,%(platform)s,TRUE)
                                 RETURNING project_id;""",
-                            {"tenant_id": tenant_id, "name": name})
+                            {"tenant_id": tenant_id, **data})
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
@@ -79,14 +79,15 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False, use
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       created_at, sessions_last_check_at, sample_rate {extra_projection}
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       {extra_projection}
                                 FROM public.projects AS s
                                         {role_query if user_id is not None else ""}
                                 WHERE s.tenant_id =%(tenant_id)s
                                     AND s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""",
-                            {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now(),
-                             "check_delta": TimeUTC.MS_HOUR * 4})
+                            {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4,
+                             "tenant_id": tenant_id, "user_id": user_id})
         cur.execute(query)
         rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed
@@ -131,7 +132,8 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         query = cur.mogrify(f"""SELECT s.project_id,
                                        s.project_key,
                                        s.name,
-                                       s.save_request_payloads
+                                       s.save_request_payloads,
+                                       s.platform
                                        {extra_select}
                                 FROM public.projects AS s
                                 WHERE s.tenant_id =%(tenant_id)s 
@@ -140,6 +142,29 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
                                 LIMIT 1;""",
                             {"tenant_id": tenant_id, "project_id": project_id})
 
+        cur.execute(query=query)
+        row = cur.fetchone()
+        return helper.dict_to_camel_case(row)
+
+
+def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
+    with pg_client.PostgresClient() as cur:
+        extra_select = ""
+        if include_last_session:
+            extra_select += """,(SELECT max(ss.start_ts) 
+                                 FROM public.sessions AS ss 
+                                 WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at"""
+        if include_gdpr:
+            extra_select += ",s.gdpr"
+        query = cur.mogrify(f"""SELECT s.project_key,
+                                       s.name
+                                       {extra_select}
+                                FROM public.projects AS s
+                                WHERE s.project_key =%(project_key)s
+                                    AND s.tenant_id =%(tenant_id)s
+                                    AND s.deleted_at IS NULL
+                                LIMIT 1;""",
+                            {"project_key": project_key, "tenant_id": tenant_id})
         cur.execute(query=query)
         row = cur.fetchone()
         return helper.dict_to_camel_case(row)
@@ -154,7 +179,7 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
             return {"errors": ["unauthorized"]}
         if admin["roleId"] is not None and not admin["allProjects"]:
             return {"errors": ["unauthorized: you need allProjects permission to create a new project"]}
-    return {"data": __create(tenant_id=tenant_id, name=data.name)}
+    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
 def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -164,7 +189,7 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes={"name": data.name})}
+                             changes=data.model_dump())}
 
 
 def delete(tenant_id, user_id, project_id):
@@ -195,14 +220,14 @@ def get_gdpr(project_id):
         return row
 
 
-def edit_gdpr(project_id, gdpr):
+def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects 
-                               SET gdpr = gdpr|| %(gdpr)s
+                               SET gdpr = gdpr|| %(gdpr)s::jsonb
                                WHERE project_id = %(project_id)s
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
-                            {"project_id": project_id, "gdpr": json.dumps(gdpr)})
+                            {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump())})
         cur.execute(query=query)
         row = cur.fetchone()
         if not row:
@@ -212,11 +237,13 @@ def edit_gdpr(project_id, gdpr):
         return row
 
 
-def get_internal_project_id(project_key):
+def get_by_project_key(project_key):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT project_id
+        query = cur.mogrify("""SELECT project_id,
+                                      project_key,
+                                      platform
                                FROM public.projects
-                               WHERE project_key =%(project_key)s
+                               WHERE project_key =%(project_key)s 
                                     AND deleted_at ISNULL;""",
                             {"project_key": project_key})
         cur.execute(query=query)
@@ -247,20 +274,14 @@ def get_capture_status(project_id):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update_capture_status(project_id, changes):
-    if "rate" not in changes and "captureAll" not in changes:
-        return {"errors": ["please provide 'rate' and/or 'captureAll' attributes to update."]}
-    if int(changes["rate"]) < 0 or int(changes["rate"]) > 100:
-        return {"errors": ["'rate' must be between 0..100."]}
-    sample_rate = 0
-    if "rate" in changes:
-        sample_rate = int(changes["rate"])
-    if changes.get("captureAll"):
+def update_capture_status(project_id, changes: schemas.SampleRateSchema):
+    sample_rate = changes.rate
+    if changes.capture_all:
         sample_rate = 100
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""UPDATE public.projects
                                SET sample_rate= %(sample_rate)s
-                               WHERE project_id =%(project_id)s 
+                               WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id, "sample_rate": sample_rate})
         cur.execute(query=query)
@@ -278,30 +299,6 @@ def get_projects_ids(tenant_id):
         cur.execute(query=query)
         rows = cur.fetchall()
     return [r["project_id"] for r in rows]
-
-
-def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
-    with pg_client.PostgresClient() as cur:
-        extra_select = ""
-        if include_last_session:
-            extra_select += """,(SELECT max(ss.start_ts) 
-                                 FROM public.sessions AS ss 
-                                 WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at"""
-        if include_gdpr:
-            extra_select += ",s.gdpr"
-        query = cur.mogrify(f"""SELECT s.project_key,
-                                       s.name
-                                       {extra_select}
-                                FROM public.projects AS s
-                                WHERE s.project_key =%(project_key)s
-                                    AND s.tenant_id =%(tenant_id)s
-                                    AND s.deleted_at IS NULL
-                                LIMIT 1;""",
-                            {"project_key": project_key, "tenant_id": tenant_id})
-
-        cur.execute(query=query)
-        row = cur.fetchone()
-        return helper.dict_to_camel_case(row)
 
 
 def is_authorized(project_id, tenant_id, user_id=None):

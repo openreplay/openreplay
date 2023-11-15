@@ -1,7 +1,8 @@
-# from elasticsearch import Elasticsearch, RequestsHttpConnection
 from elasticsearch import Elasticsearch
 from chalicelib.core import log_tools
 import logging
+
+from schemas import schemas
 
 logging.getLogger('elasticsearch').level = logging.ERROR
 
@@ -44,17 +45,16 @@ def delete(tenant_id, project_id):
     return log_tools.delete(project_id=project_id, integration=IN_TY)
 
 
-def add_edit(tenant_id, project_id, data):
+def add_edit(tenant_id, project_id, data: schemas.IntegrationElasticsearchSchema):
     s = get(project_id)
     if s is not None:
         return update(tenant_id=tenant_id, project_id=project_id,
-                      changes={"host": data["host"], "apiKeyId": data["apiKeyId"], "apiKey": data["apiKey"],
-                               "indexes": data["indexes"], "port": data["port"]})
+                      changes={"host": data.host, "apiKeyId": data.api_key_id, "apiKey": data.api_key,
+                               "indexes": data.indexes, "port": data.port})
     else:
-        return add(tenant_id=tenant_id,
-                   project_id=project_id,
-                   host=data["host"], api_key=data["apiKey"], api_key_id=data["apiKeyId"], indexes=data["indexes"],
-                   port=data["port"])
+        return add(tenant_id=tenant_id, project_id=project_id,
+                   host=data.host, api_key=data.api_key, api_key_id=data.api_key_id,
+                   indexes=data.indexes, port=data.port)
 
 
 def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
@@ -64,15 +64,9 @@ def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
         args = {
             "hosts": [{"host": host, "port": port, "scheme": scheme}],
             "verify_certs": False,
-            # "ca_certs": False,
-            # "connection_class": RequestsHttpConnection,
             "request_timeout": timeout,
             "api_key": (api_key_id, api_key)
         }
-        # if api_key_id is not None and len(api_key_id) > 0:
-        #     # args["http_auth"] = (username, password)
-        #     token = "ApiKey " + base64.b64encode(f"{api_key_id}:{api_key}".encode("utf-8")).decode("utf-8")
-        #     args["headers"] = {"Authorization": token}
         es = Elasticsearch(
             **args
         )
@@ -88,8 +82,8 @@ def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
     return es
 
 
-def ping(tenant_id, host, port, apiKeyId, apiKey):
-    es = __get_es_client(host, port, apiKeyId, apiKey, timeout=3)
+def ping(tenant_id, data: schemas.IntegrationElasticsearchTestSchema):
+    es = __get_es_client(data.host, data.port, data.api_key_id, data.api_key, timeout=3)
     if es is None:
         return {"state": False}
     return {"state": es.ping()}

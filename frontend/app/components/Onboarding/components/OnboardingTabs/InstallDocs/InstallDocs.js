@@ -104,6 +104,4 @@ function InstallDocs({ site }) {
   );
 }
 
-export default connect((state) => ({
-  site: state.getIn(['site', 'instance']),
-}))(InstallDocs);
+export default InstallDocs;

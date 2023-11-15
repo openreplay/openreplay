@@ -14,10 +14,9 @@ class SkipIntervalCls {
 
 export type SkipInterval = InstanceType<typeof SkipIntervalCls>;
 
-
 export default class ActivityManager extends ListWalker<SkipInterval> {
-	private endTime: number = 0;
-	private minInterval: number = 0;
+	private readonly endTime: number = 0;
+	private readonly minInterval: number = 0;
 	private lastActivity: number = 0;
 	constructor(duration: number) {
 		super();

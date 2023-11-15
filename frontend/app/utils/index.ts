@@ -181,7 +181,7 @@ export const camelCased = (val) =>
   });
 
 export function capitalize(s: string) {
-  if (s.length === 0) return s;
+  if (!s || !s.length) return s;
   return s[0].toUpperCase() + s.slice(1);
 }
 
@@ -426,3 +426,42 @@ export function deleteCookie(name: string, path: string, domain: string) {
     (domain ? ';domain=' + domain : '') +
     ';expires=Thu, 01 Jan 1970 00:00:01 GMT';
 }
+
+/**
+ * Checks if a specified query parameter exists in the URL and if its value is set to 'true'.
+ * If a storageKey is provided, stores the result in localStorage under that key.
+ *
+ * @function
+ * @param {string} paramName - The name of the URL parameter to check.
+ * @param {string} [storageKey] - The optional key to use for storing the result in localStorage.
+ * @param search
+ * @returns {boolean} - Returns true if the parameter exists and its value is 'true'. Otherwise, returns false.
+ *
+ * @example
+ * // Assuming URL is: http://example.com/?iframe=true
+ * const isIframeEnabled = checkParam('iframe');  // Returns true, doesn't store in localStorage
+ * const isIframeEnabledWithStorage = checkParam('iframe', 'storageKey');  // Returns true, stores in localStorage
+ *
+ * @description
+ * The function inspects the current URL's query parameters. If the specified parameter exists
+ * and its value is set to 'true', and a storageKey is provided, the function stores 'true' under
+ * the provided storage key in the localStorage. If the condition is not met, or if the parameter
+ * does not exist, and a storageKey is provided, any existing localStorage entry with the storageKey
+ * is removed.
+ */
+export const checkParam = (paramName: string, storageKey?: string, search?: string): boolean => {
+  const urlParams = new URLSearchParams(search ? search : window.location.search);
+  const paramValue = urlParams.get(paramName);
+
+  const existsAndTrue = paramValue && paramValue === 'true' || paramValue?.length > 0;
+
+  if (storageKey) {
+    if (existsAndTrue) {
+      localStorage.setItem(storageKey, 'true');
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }
+
+  return existsAndTrue;
+};

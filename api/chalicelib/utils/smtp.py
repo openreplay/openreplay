@@ -72,10 +72,11 @@ class SMTPClient:
 
 VALID_SMTP = None
 SMTP_ERROR = None
+SMTP_NOTIFIED = False
 
 
 def has_smtp():
-    global VALID_SMTP, SMTP_ERROR
+    global VALID_SMTP, SMTP_ERROR, SMTP_NOTIFIED
     if SMTP_ERROR is not None:
         logging.error("!!! SMTP error found, disabling SMTP configuration:")
         logging.error(SMTP_ERROR)
@@ -86,7 +87,8 @@ def has_smtp():
     if config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0:
         VALID_SMTP, SMTP_ERROR = check_connexion()
         return VALID_SMTP
-    else:
+    elif not SMTP_NOTIFIED:
+        SMTP_NOTIFIED = True
         logging.info("no SMTP configuration found")
     return False
 

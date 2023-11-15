@@ -10,7 +10,6 @@ from starlette.background import BackgroundTask
 
 import app as main_app
 import schemas
-import schemas_ee
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext
@@ -64,7 +63,7 @@ class TraceSchema(BaseModel):
 
 
 def __process_trace(trace: TraceSchema):
-    data = trace.dict()
+    data = trace.model_dump()
     data["parameters"] = json.dumps(trace.parameters) if trace.parameters is not None and len(
         trace.parameters.keys()) > 0 else None
     data["payload"] = json.dumps(trace.payload) if trace.payload is not None and len(trace.payload.keys()) > 0 else None
@@ -158,7 +157,7 @@ async def process_traces_queue():
         await write_traces_batch(traces)
 
 
-def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
+def get_all(tenant_id, data: schemas.TrailSearchPayloadSchema):
     with pg_client.PostgresClient() as cur:
         conditions = ["traces.tenant_id=%(tenant_id)s",
                       "traces.created_at>=%(startDate)s",
@@ -168,7 +167,7 @@ def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
                   "endDate": data.endDate,
                   "p_start": (data.page - 1) * data.limit,
                   "p_end": data.page * data.limit,
-                  **data.dict()}
+                  **data.model_dump()}
         if data.user_id is not None:
             conditions.append("user_id=%(user_id)s")
         if data.action is not None:
@@ -184,10 +183,10 @@ def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
                            COALESCE(JSONB_AGG(full_traces ORDER BY rn) 
                                     FILTER (WHERE rn > %(p_start)s AND rn <= %(p_end)s), '[]'::JSONB) AS sessions
                     FROM (SELECT traces.*,users.email,users.name AS username, 
-                                ROW_NUMBER() OVER (ORDER BY traces.created_at {data.order.value}) AS rn 
+                                ROW_NUMBER() OVER (ORDER BY traces.created_at {data.order}) AS rn 
                             FROM traces LEFT JOIN users USING (user_id)
                             WHERE {" AND ".join(conditions)}
-                            ORDER BY traces.created_at {data.order.value}) AS full_traces;""", params)
+                            ORDER BY traces.created_at {data.order}) AS full_traces;""", params)
         )
         rows = cur.fetchone()
     return helper.dict_to_camel_case(rows)

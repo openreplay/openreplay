@@ -16,6 +16,7 @@ type Config struct {
 	GroupDB            string        `env:"GROUP_DB,required"`
 	TopicRawWeb        string        `env:"TOPIC_RAW_WEB,required"`
 	TopicAnalytics     string        `env:"TOPIC_ANALYTICS,required"`
+	TopicRawIOS        string        `env:"TOPIC_RAW_IOS,required"`
 	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
 	BatchQueueLimit    int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
 	BatchSizeLimit     int           `env:"DB_BATCH_SIZE_LIMIT,required"`

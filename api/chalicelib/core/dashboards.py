@@ -12,7 +12,7 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
         pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description) 
                         VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s)
                         RETURNING *"""
-        params = {"userId": user_id, "projectId": project_id, **data.dict()}
+        params = {"userId": user_id, "projectId": project_id, **data.model_dump()}
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
@@ -109,7 +109,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         pg_query = """SELECT COALESCE(COUNT(*),0) AS count
                     FROM dashboard_widgets
                     WHERE dashboard_id = %(dashboard_id)s;"""
-        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.model_dump()}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
         offset = row["count"]
@@ -178,7 +178,7 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
                                           AND dashboard_id = %(dashboard_id)s
                                           AND (dashboards.user_id = %(userId)s OR is_public))
                       RETURNING *;"""
-        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.model_dump()}
         params["config"] = json.dumps(data.config)
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
@@ -192,7 +192,7 @@ def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.Up
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s
                       RETURNING *;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id,
-                  "widget_id": widget_id, **data.dict()}
+                  "widget_id": widget_id, **data.model_dump()}
         params["config"] = json.dumps(data.config)
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
@@ -224,7 +224,7 @@ def pin_dashboard(project_id, user_id, dashboard_id):
 
 
 def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.CardSchema):
-    metric_id = custom_metrics.create(project_id=project_id, user_id=user_id, data=data, dashboard=True)
+    metric_id = custom_metrics.create_card(project_id=project_id, user_id=user_id, data=data, dashboard=True)
     return add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
                       data=schemas.AddWidgetToDashboardPayloadSchema(metricId=metric_id))
 
@@ -234,7 +234,7 @@ def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.Ca
 #         return None
 #     metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate(**raw_metric)
 #     if metric.is_template:
-#         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
+#         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.model_dump())
 #     else:
 #         return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=raw_metric["metricId"],
 #                                          data=data, metric=raw_metric)

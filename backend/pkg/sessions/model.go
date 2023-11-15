@@ -3,6 +3,7 @@ package sessions
 type Session struct {
 	SessionID            uint64
 	Timestamp            uint64
+	Timezone             string
 	ProjectID            uint32
 	TrackerVersion       string
 	RevID                string

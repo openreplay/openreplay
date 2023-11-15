@@ -58,13 +58,18 @@ func main() {
 		return
 	}
 
+	mobileMessages := []int{90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
+
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewConsumer(
 		cfg.GroupEnder,
-		[]string{cfg.TopicRawWeb},
+		[]string{
+			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
+		},
 		messages.NewEnderMessageIterator(
 			func(msg messages.Message) { sessionEndGenerator.UpdateSession(msg) },
-			[]int{messages.MsgTimestamp},
+			append([]int{messages.MsgTimestamp}, mobileMessages...),
 			false),
 		false,
 		cfg.MessageSizeLimit,
@@ -168,10 +173,19 @@ func main() {
 						}
 					}
 				}
-				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
-					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
-					return false, 0
+				if sess != nil && sess.Platform == "ios" {
+					msg := &messages.IOSSessionEnd{Timestamp: timestamp}
+					if err := producer.Produce(cfg.TopicRawIOS, sessionID, msg.Encode()); err != nil {
+						log.Printf("can't send iOSSessionEnd to topic: %s; sessID: %d", err, sessionID)
+						return false, 0
+					}
+				} else {
+					if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
+						log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
+						return false, 0
+					}
 				}
+
 				if currDuration != 0 {
 					diffDuration[sessionID] = int64(newDuration) - int64(currDuration)
 					updatedDurations++

@@ -103,7 +103,7 @@ async function recordScreen() {
       // @ts-ignore
       restrictOwnAudio: false,
       echoCancellation: true,
-      noiseSuppression: false,
+      noiseSuppression: true,
       sampleRate: 44100,
     },
     video: { frameRate: FRAME_RATE },

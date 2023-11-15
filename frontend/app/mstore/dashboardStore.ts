@@ -423,21 +423,19 @@ export default class DashboardStore {
       params['limit'] = metric.limit;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       this.pendingRequests += 1;
-      return metricService
-        .getMetricChartData(metric, params, isWidget)
-        .then((data: any) => {
-          resolve(metric.setData(data, period));
-        })
-        .catch((err: any) => {
-          reject(err);
-        })
-        .finally(() => {
-          setTimeout(() => {
-            this.pendingRequests = this.pendingRequests - 1;
-          }, 100);
-        });
+
+      try {
+        const data = await metricService.getMetricChartData(metric, params, isWidget);
+        resolve(metric.setData(data, period));
+      } catch (error) {
+        reject(error);
+      } finally {
+        setTimeout(() => {
+          this.pendingRequests -= 1;
+        }, 100);
+      }
     });
   }
 }

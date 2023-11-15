@@ -188,6 +188,7 @@ Pipfile.lock
 /chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
+/chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py
 #exp /chalicelib/core/errors.py
 /chalicelib/core/errors_favorite.py
@@ -260,7 +261,6 @@ Pipfile.lock
 /Dockerfile_bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
-/schemas.py
 #exp /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
@@ -271,3 +271,8 @@ Pipfile.lock
 /run-alerts-dev.sh
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py
+/schemas/overrides.py
+/schemas/schemas.py
+/chalicelib/core/authorizers.py
+/schemas/transformers_validators.py
+/test/

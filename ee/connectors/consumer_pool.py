@@ -17,21 +17,9 @@ def main():
     except Exception as e:
         print('[WORKER WARN] Checkpoint not found')
         print(repr(e))
-    # ssl_protocol = config('KAFKA_USE_SSL', default=True, cast=bool)
-    # consumer_settings = {
-    #     "bootstrap.servers": config('KAFKA_SERVERS'),
-    #     "group.id": f"connector_{DATABASE}",
-    #     "auto.offset.reset": "earliest",
-    #     "enable.auto.commit": False
-    #     }
-    # if ssl_protocol:
-    #     consumer_settings['security.protocol'] = 'SSL'
-    # consumer = Consumer(consumer_settings)
 
-    # consumer.subscribe(config("TOPICS", default="saas-raw").split(','))
     print("[WORKER INFO] Kafka consumer subscribed")
 
-    # w_pool.run_workers(kafka_consumer=consumer, database_api=database_api)
     w_pool.run_workers(database_api=database_api)
 
 

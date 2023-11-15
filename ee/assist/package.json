@@ -18,13 +18,14 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
-    "@maxmind/geoip2-node": "^3.5.0",
-    "@socket.io/redis-adapter": "^8.1.0",
+    "@maxmind/geoip2-node": "^4.2.0",
+    "@socket.io/redis-adapter": "^8.2.1",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0",
-    "redis": "^4.6.6",
-    "socket.io": "^4.6.1",
-    "ua-parser-js": "^1.0.35",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.23.0"
+    "jsonwebtoken": "^9.0.2",
+    "prom-client": "^15.0.0",
+    "redis": "^4.6.10",
+    "socket.io": "^4.7.2",
+    "ua-parser-js": "^1.0.37",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0"
   }
 }

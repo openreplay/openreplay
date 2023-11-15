@@ -105,3 +105,75 @@ export function generateRandomId(len?: number) {
   safeCrypto.getRandomValues(arr)
   return Array.from(arr, dec2hex).join('')
 }
+
+export function inIframe() {
+  try {
+    return window.self !== window.top
+  } catch (e) {
+    return true
+  }
+}
+
+/**
+ * Because angular devs decided that its a good idea to override a browser apis
+ * we need to use this to achieve safe behavior
+ * */
+export function ngSafeBrowserMethod(method: string): string {
+  // @ts-ignore
+  return window.Zone && '__symbol__' in window.Zone
+    ? // @ts-ignore
+      window['Zone']['__symbol__'](method)
+    : method
+}
+
+export function createMutationObserver(cb: MutationCallback) {
+  const mObserver = ngSafeBrowserMethod('MutationObserver') as 'MutationObserver'
+  return new window[mObserver](cb)
+}
+
+export function createEventListener(
+  target: EventTarget,
+  event: string,
+  cb: EventListenerOrEventListenerObject,
+  capture?: boolean,
+) {
+  const safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
+  target[safeAddEventListener](event, cb, capture)
+}
+
+export function deleteEventListener(
+  target: EventTarget,
+  event: string,
+  cb: EventListenerOrEventListenerObject,
+  capture?: boolean,
+) {
+  const safeRemoveEventListener = ngSafeBrowserMethod(
+    'removeEventListener',
+  ) as 'removeEventListener'
+  target[safeRemoveEventListener](event, cb, capture)
+}
+
+/**
+ * This is a brief polyfill that suits our needs
+ * I took inspiration from Microsoft Clarity polyfill on this one
+ * then adapted it a little bit
+ *
+ * I'm very grateful for their bright idea
+ * */
+export function requestIdleCb(callback: () => void) {
+  const taskTimeout = 3000
+  if (window.requestIdleCallback) {
+    return window.requestIdleCallback(callback, { timeout: taskTimeout })
+  } else {
+    const channel = new MessageChannel()
+    const incoming = channel.port1
+    const outgoing = channel.port2
+
+    incoming.onmessage = (): void => {
+      callback()
+    }
+    requestAnimationFrame((): void => {
+      outgoing.postMessage(1)
+    })
+  }
+}

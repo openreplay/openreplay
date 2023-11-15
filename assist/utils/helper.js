@@ -1,5 +1,6 @@
 let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
 let debug = process.env.debug === "1" || false;
+
 const extractRoomId = (peerId) => {
     let {projectKey, sessionId, tabId} = extractPeerId(peerId);
     if (projectKey && sessionId) {
@@ -7,6 +8,7 @@ const extractRoomId = (peerId) => {
     }
     return null;
 }
+
 const extractTabId = (peerId) => {
     let {projectKey, sessionId, tabId} = extractPeerId(peerId);
     if (tabId) {
@@ -14,6 +16,7 @@ const extractTabId = (peerId) => {
     }
     return null;
 }
+
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
     if (splited.length < 2 || splited.length > 3) {
@@ -25,13 +28,15 @@ const extractPeerId = (peerId) => {
         return {};
     }
     if (splited.length === 2) {
-        return {projectKey: splited[0], sessionId: splited[1], tabId: null};
+        return {projectKey: splited[0], sessionId: splited[1], tabId: (Math.random() + 1).toString(36).substring(2)};
     }
     return {projectKey: splited[0], sessionId: splited[1], tabId: splited[2]};
 };
+
 const request_logger = (identity) => {
     return (req, res, next) => {
         debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
+        req.startTs = performance.now(); // track request's start timestamp
         res.on('finish', function () {
             if (this.statusCode !== 200 || debug) {
                 console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
@@ -41,6 +46,7 @@ const request_logger = (identity) => {
         next();
     }
 };
+
 const extractProjectKeyFromRequest = function (req) {
     if (req.params.projectKey) {
         debug && console.log(`[WS]where projectKey=${req.params.projectKey}`);
@@ -48,6 +54,7 @@ const extractProjectKeyFromRequest = function (req) {
     }
     return undefined;
 }
+
 const extractSessionIdFromRequest = function (req) {
     if (req.params.sessionId) {
         debug && console.log(`[WS]where sessionId=${req.params.sessionId}`);
@@ -55,6 +62,7 @@ const extractSessionIdFromRequest = function (req) {
     }
     return undefined;
 }
+
 const isValidSession = function (sessionInfo, filters) {
     let foundAll = true;
     for (const [key, body] of Object.entries(filters)) {
@@ -89,6 +97,7 @@ const isValidSession = function (sessionInfo, filters) {
     }
     return foundAll;
 }
+
 const getValidAttributes = function (sessionInfo, query) {
     let matches = [];
     let deduplicate = [];
@@ -106,9 +115,11 @@ const getValidAttributes = function (sessionInfo, query) {
     }
     return matches;
 }
+
 const hasFilters = function (filters) {
     return filters && filters.filter && Object.keys(filters.filter).length > 0;
 }
+
 const objectToObjectOfArrays = function (obj) {
     let _obj = {}
     if (obj) {
@@ -126,6 +137,7 @@ const objectToObjectOfArrays = function (obj) {
     }
     return _obj;
 }
+
 const transformFilters = function (filter) {
     for (let key of Object.keys(filter)) {
         //To support old v1.7.0 payload
@@ -142,7 +154,8 @@ const transformFilters = function (filter) {
     }
     return filter;
 }
-const extractPayloadFromRequest = async function (req) {
+
+const extractPayloadFromRequest = async function (req, res) {
     let filters = {
         "query": {}, // for autocomplete
         "filter": {}, // for sessions search
@@ -173,6 +186,7 @@ const extractPayloadFromRequest = async function (req) {
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return filters;
 }
+
 const getValue = function (obj, key) {
     if (obj !== undefined && obj !== null) {
         let val;
@@ -190,6 +204,7 @@ const getValue = function (obj, key) {
     }
     return undefined;
 }
+
 const sortPaginate = function (list, filters) {
     if (typeof (list) === "object" && !Array.isArray(list)) {
         for (const [key, value] of Object.entries(list)) {
@@ -224,6 +239,7 @@ const sortPaginate = function (list, filters) {
     }
     return {"total": total, "sessions": list};
 }
+
 const uniqueAutocomplete = function (list) {
     let _list = [];
     let deduplicate = [];
@@ -235,9 +251,11 @@ const uniqueAutocomplete = function (list) {
     }
     return _list;
 }
+
 const getAvailableRooms = async function (io) {
     return io.sockets.adapter.rooms;
 }
+
 const getCompressionConfig = function () {
     // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
     let perMessageDeflate = false;
@@ -261,6 +279,7 @@ const getCompressionConfig = function () {
     };
 
 }
+
 module.exports = {
     transformFilters,
     extractRoomId,

@@ -41,8 +41,6 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
@@ -55,9 +53,9 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                         if e["type"].endswith("_IOS"):
                             e["type"] = e["type"][:-len("_IOS")]
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                    data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                             session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                              session_id=session_id)
+                    data['mobsUrl'] = []
                 else:
                     data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                               group_clickrage=True)
@@ -117,8 +115,6 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
@@ -126,7 +122,9 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
+                    data['domURL'] = []
+                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
+                                                                    check_existence=False)
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
@@ -154,8 +152,6 @@ def get_events(project_id, session_id):
                     AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         s_data = cur.fetchone()
@@ -168,8 +164,8 @@ def get_events(project_id, session_id):
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
                 data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
-                                                                         session_id=session_id)
+                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
@@ -199,11 +195,11 @@ def reduce_issues(issues_list):
     i = 0
     # remove same-type issues if the time between them is <2s
     while i < len(issues_list) - 1:
-        for j in range(i+1,len(issues_list)):
+        for j in range(i + 1, len(issues_list)):
             if issues_list[i]["type"] == issues_list[j]["type"]:
                 break
         else:
-            i+=1
+            i += 1
             break
 
         if issues_list[i]["timestamp"] - issues_list[j]["timestamp"] < 2000:

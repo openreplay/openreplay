@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch } from 'UI';
+import { Switch } from 'antd';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { toast } from 'react-toastify';

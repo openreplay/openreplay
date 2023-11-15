@@ -11,7 +11,7 @@ import NewFFlag from 'Components/FFlags/NewFFlag';
 import { Switch, Route } from 'react-router';
 import { sessions, fflags, withSiteId, newFFlag, fflag, notes, fflagRead, bookmarks } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import FlagView from 'Components/FFlags/FlagView/FlagView'
+import FlagView from 'Components/FFlags/FlagView/FlagView';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -27,36 +27,30 @@ function Overview({ match: { params } }: IProps) {
   const { siteId, fflagId } = params;
 
   return (
-    <div className="page-margin container-90 flex relative">
-      <div className={cn('side-menu')}>
-        <OverviewMenu />
-      </div>
-      <div className={cn('side-menu-margined w-full')}>
-        <Switch>
-          <Route exact strict path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
-            <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px' }}>
-              <NoSessionsMessage siteId={siteId} />
-              <MainSearchBar />
-              <SessionSearch />
-              <div className="my-4" />
-              <SessionsTabOverview />
-            </div>
-          </Route>
-          <Route exact strict path={withSiteId(fflags(), siteId)}>
-            <FFlagsList siteId={siteId} />
-          </Route>
-          <Route exact strict path={withSiteId(newFFlag(), siteId)}>
-            <NewFFlag siteId={siteId} />
-          </Route>
-          <Route exact strict path={withSiteId(fflag(), siteId)}>
-            <NewFFlag siteId={siteId} fflagId={fflagId} />
-          </Route>
-          <Route exact strict path={withSiteId(fflagRead(), siteId)}>
-            <FlagView siteId={siteId} fflagId={fflagId!} />
-          </Route>
-        </Switch>
-      </div>
-    </div>
+    <Switch>
+      <Route exact strict
+             path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
+        <div className='mb-5 w-full mx-auto' style={{ maxWidth: '1360px' }}>
+          <NoSessionsMessage siteId={siteId} />
+          <MainSearchBar />
+          <SessionSearch />
+          <div className='my-4' />
+          <SessionsTabOverview />
+        </div>
+      </Route>
+      <Route exact strict path={withSiteId(fflags(), siteId)}>
+        <FFlagsList siteId={siteId} />
+      </Route>
+      <Route exact strict path={withSiteId(newFFlag(), siteId)}>
+        <NewFFlag siteId={siteId} />
+      </Route>
+      <Route exact strict path={withSiteId(fflag(), siteId)}>
+        <NewFFlag siteId={siteId} fflagId={fflagId} />
+      </Route>
+      <Route exact strict path={withSiteId(fflagRead(), siteId)}>
+        <FlagView siteId={siteId} fflagId={fflagId!} />
+      </Route>
+    </Switch>
   );
 }
 

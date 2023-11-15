@@ -61,9 +61,7 @@ class Login extends React.Component {
 
   handleSubmit = (token) => {
     const { email, password } = this.state;
-    this.props.login({ email: email.trim(), password, 'g-recaptcha-response': token }).then(() => {
-      const { errors } = this.props;
-    });
+    this.props.login({ email: email.trim(), password, 'g-recaptcha-response': token });
   };
 
   onSubmit = (e) => {
@@ -96,6 +94,7 @@ class Login extends React.Component {
               <Form
                 onSubmit={this.onSubmit}
                 className={cn('flex items-center justify-center flex-col')}
+                style={{ width: '350px' }}
               >
                 <Loader loading={loading}>
                   {CAPTCHA_ENABLED && (

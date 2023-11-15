@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -19,11 +20,19 @@ type Pool interface {
 	Exec(sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
 	Begin() (*_Tx, error)
+	IsConnected() bool
 	Close()
 }
 
 type poolImpl struct {
+	url  string
 	conn *pgxpool.Pool
+}
+
+func (p *poolImpl) IsConnected() bool {
+	stat := p.conn.Stat()
+	log.Println("stat: ", stat.AcquireCount(), stat.IdleConns(), stat.MaxConns(), stat.TotalConns())
+	return true
 }
 
 func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
@@ -81,9 +90,11 @@ func New(url string) (Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.Connect error: %v", err)
 	}
-	return &poolImpl{
+	res := &poolImpl{
+		url:  url,
 		conn: conn,
-	}, nil
+	}
+	return res, nil
 }
 
 // TX - start

@@ -300,9 +300,9 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+func DecodeNetworkRequestDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &NetworkRequest{}
+	msg := &NetworkRequestDeprecated{}
 	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1221,6 +1221,39 @@ func DecodePartitionedMessage(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NetworkRequest{}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TransferredBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeInputChange(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
@@ -1383,21 +1416,6 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IOSBatchMeta{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Length, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeIOSSessionStart(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IOSSessionStart{}
@@ -1461,9 +1479,9 @@ func DecodeIOSMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSCustomEvent(reader BytesReader) (Message, error) {
+func DecodeIOSEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSCustomEvent{}
+	msg := &IOSEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1488,7 +1506,7 @@ func DecodeIOSUserID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1503,7 +1521,7 @@ func DecodeIOSUserAnonymousID(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ID, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1554,37 +1572,22 @@ func DecodeIOSCrash(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSScreenEnter(reader BytesReader) (Message, error) {
+func DecodeIOSViewComponentEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSScreenEnter{}
+	msg := &IOSViewComponentEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Title, err = reader.ReadString(); err != nil {
+	if msg.ScreenName, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.ViewName, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	return msg, err
-}
-
-func DecodeIOSScreenLeave(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &IOSScreenLeave{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Length, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Title, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.ViewName, err = reader.ReadString(); err != nil {
+	if msg.Visible, err = reader.ReadBoolean(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1692,25 +1695,64 @@ func DecodeIOSNetworkCall(reader BytesReader) (Message, error) {
 	if msg.Length, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Headers, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Body, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Success, err = reader.ReadBoolean(); err != nil {
+	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.Method, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
 	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeIOSSwipeEvent(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &IOSSwipeEvent{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Length, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.X, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Y, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Direction, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &IOSBatchMeta{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Length, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstIndex, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1828,7 +1870,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 20:
 		return DecodeMouseMove(reader)
 	case 21:
-		return DecodeNetworkRequest(reader)
+		return DecodeNetworkRequestDeprecated(reader)
 	case 22:
 		return DecodeConsoleLog(reader)
 	case 23:
@@ -1935,6 +1977,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
+	case 83:
+		return DecodeNetworkRequest(reader)
 	case 112:
 		return DecodeInputChange(reader)
 	case 113:
@@ -1955,8 +1999,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSessionEnd(reader)
 	case 127:
 		return DecodeSessionSearch(reader)
-	case 107:
-		return DecodeIOSBatchMeta(reader)
 	case 90:
 		return DecodeIOSSessionStart(reader)
 	case 91:
@@ -1964,7 +2006,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 92:
 		return DecodeIOSMetadata(reader)
 	case 93:
-		return DecodeIOSCustomEvent(reader)
+		return DecodeIOSEvent(reader)
 	case 94:
 		return DecodeIOSUserID(reader)
 	case 95:
@@ -1974,9 +2016,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 97:
 		return DecodeIOSCrash(reader)
 	case 98:
-		return DecodeIOSScreenEnter(reader)
-	case 99:
-		return DecodeIOSScreenLeave(reader)
+		return DecodeIOSViewComponentEvent(reader)
 	case 100:
 		return DecodeIOSClickEvent(reader)
 	case 101:
@@ -1989,6 +2029,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeIOSInternalError(reader)
 	case 105:
 		return DecodeIOSNetworkCall(reader)
+	case 106:
+		return DecodeIOSSwipeEvent(reader)
+	case 107:
+		return DecodeIOSBatchMeta(reader)
 	case 110:
 		return DecodeIOSPerformanceAggregated(reader)
 	case 111:

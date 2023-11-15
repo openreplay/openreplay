@@ -8,7 +8,7 @@ export default function DocLink({ className = '', url, label }) {
   
   return (
     <div className={className}>
-      <Button variant="outline" onClick={openLink}>
+      <Button variant="text-primary" onClick={openLink}>
           <span className="mr-2">{ label }</span>
           <Icon name="external-link-alt" color="teal" />
       </Button>

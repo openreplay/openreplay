@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -13,8 +12,6 @@ import (
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
-
-var EmptyLabel = errors.New("empty label")
 
 func getAutocompleteType(baseType string, platform string) string {
 	if platform == "web" {
@@ -77,6 +74,11 @@ func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEven
 		payload = nil
 	}
 
+	if e.Type == "app_crash" {
+		log.Printf("app crash event: %+v", e)
+		return nil
+	}
+
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
@@ -136,17 +138,6 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 	return nil
 }
 
-func (conn *Conn) InsertWebInputEvent(sess *sessions.Session, e *messages.InputEvent) error {
-	if e.Label == "" {
-		return EmptyLabel
-	}
-	if err := conn.bulks.Get("webInputEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label); err != nil {
-		log.Printf("insert web input event err: %s", err)
-	}
-	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
-	return nil
-}
-
 func (conn *Conn) InsertInputChangeEvent(sess *sessions.Session, e *messages.InputChange) error {
 	if e.Label == "" {
 		return nil
@@ -192,7 +183,7 @@ func (conn *Conn) InsertWebNetworkRequest(sess *sessions.Session, e *messages.Ne
 		return err
 	}
 	conn.bulks.Get("webNetworkRequest").Append(sess.SessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400, e.TransferredBodySize)
 	return nil
 }
 

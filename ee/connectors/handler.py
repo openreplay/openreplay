@@ -29,10 +29,10 @@ def handle_normal_message(message: Message) -> Optional[Event]:
         return n
 
     if isinstance(message, MouseClick):
-        n.mouseclick_hesitationtime = message.hesitation_time
-        n.mouseclick_id = message.id
-        n.mouseclick_label = message.label
-        n.mouseclick_selector = message.selector
+        n.clickevent_hesitationtime = message.hesitation_time
+        n.clickevent_messageid = message.id
+        n.clickevent_label = message.label
+        n.clickevent_selector = message.selector
         return n
 
     if isinstance(message, NetworkRequest):
@@ -705,13 +705,13 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
     if isinstance(message, IOSUserID):
         n.iosuserid_timestamp = message.timestamp
         n.iosuserid_length = message.length
-        n.iosuserid_value = message.value
+        n.iosuserid_id = message.id
         return n
 
     if isinstance(message, IOSUserAnonymousID):
         n.iosuseranonymousid_timestamp = message.timestamp
         n.iosuseranonymousid_length = message.length
-        n.iosuseranonymousid_value = message.value
+        n.iosuseranonymousid_id = message.id
         return n
 
     if isinstance(message, IOSScreenEnter):
@@ -779,11 +779,11 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.iosissueevent_payload = message.payload
         return n
 
-    if isinstance(message, IOSCustomEvent):
-        n.ioscustomevent_timestamp = message.timestamp
-        n.ioscustomevent_length = message.length
-        n.ioscustomevent_name = message.name
-        n.ioscustomevent_payload = message.payload
+    if isinstance(message, IOSEvent):
+        n.iosevent_timestamp = message.timestamp
+        n.iosevent_length = message.length
+        n.iosevent_name = message.name
+        n.iosevent_payload = message.payload
         return n
 
     if isinstance(message, IOSInternalError):

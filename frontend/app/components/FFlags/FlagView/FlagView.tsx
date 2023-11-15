@@ -47,7 +47,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   };
 
   return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: 1300 }}>
+    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },

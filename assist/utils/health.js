@@ -2,7 +2,6 @@ const express = require('express');
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.HEALTH_PORT || 8888;
 
-
 const {request_logger} = require("./helper");
 const debug = process.env.debug === "1";
 const respond = function (res, data) {
@@ -20,7 +19,6 @@ const check_health = async function (req, res) {
         }
     });
 }
-
 
 const healthApp = express();
 healthApp.use(express.json());

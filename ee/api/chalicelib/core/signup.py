@@ -1,25 +1,27 @@
 import json
+import logging
 
 from decouple import config
 
 import schemas
-import schemas_ee
 from chalicelib.core import users, telemetry, tenants
-from chalicelib.utils import captcha
+from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+logger = logging.getLogger(__name__)
+
 
 def create_tenant(data: schemas.UserSignupSchema):
-    print(f"===================== SIGNUP STEP 1 AT {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
+    logger.info(f"==== Signup started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
     if not config("MULTI_TENANTS", cast=bool, default=False) and tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
     email = data.email
-    print(f"=====================> {email}")
-    password = data.password
+    logger.debug(f"email: {email}")
+    password = data.password.get_secret_value()
 
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")
@@ -44,15 +46,16 @@ def create_tenant(data: schemas.UserSignupSchema):
         errors.append("Invalid organization name.")
 
     if len(errors) > 0:
-        print(f"==> error for email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
-        print(errors)
+        logger.warning(
+            f"==> signup error for:\n email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
+        logger.warning(errors)
         return {"errors": errors}
 
     project_name = "my first project"
     params = {
         "email": email, "password": password, "fullname": fullname, "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}), "organizationName": organization_name,
-        "permissions": [p.value for p in schemas_ee.Permissions]
+        "permissions": [p.value for p in schemas.Permissions]
     }
     query = """WITH t AS (
                 INSERT INTO public.tenants (name)
@@ -80,46 +83,17 @@ def create_tenant(data: schemas.UserSignupSchema):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
-        data = cur.fetchone()
-        project_id = data["project_id"]
-        api_key = data["api_key"]
-    telemetry.new_client(tenant_id=data["tenant_id"])
-    created_at = TimeUTC.now()
+        t = cur.fetchone()
+
+    telemetry.new_client(tenant_id=t["tenant_id"])
     r = users.authenticate(email, password)
-    r["banner"] = False
-    r["limits"] = {
-        "teamMember": {"limit": 99, "remaining": 98, "count": 1},
-        "projects": {"limit": 99, "remaining": 98, "count": 1},
-        "metadata": [{
-            "projectId": project_id,
-            "name": project_name,
-            "limit": 10,
-            "remaining": 10,
-            "count": 0
-        }]
-    }
-    c = {
-        "tenantId": 1,
-        "name": organization_name,
-        "apiKey": api_key,
-        "remainingTrial": 14,
-        "trialEnded": False,
-        "billingPeriodStartDate": created_at,
-        "hasActivePlan": True,
-        "projects": [
-            {
-                "projectId": project_id,
-                "name": project_name,
-                "recorded": False,
-                "stackIntegrations": False,
-                "status": "red"
-            }
-        ]
-    }
+    r["smtp"] = smtp.has_smtp()
+
     return {
         'jwt': r.pop('jwt'),
+        'refreshToken': r.pop('refreshToken'),
+        'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
         'data': {
-            "user": r,
-            "client": c,
+            "user": r
         }
     }

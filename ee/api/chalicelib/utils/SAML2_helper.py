@@ -5,8 +5,10 @@ from urllib.parse import urlparse
 
 from decouple import config
 from fastapi import Request
-from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from starlette.datastructures import FormData
+
+if config("ENABLE_SSO", cast=bool, default=True):
+    from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
 SAML2 = {
     "strict": config("saml_strict", cast=bool, default=True),

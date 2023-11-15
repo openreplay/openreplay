@@ -36,7 +36,7 @@ function UsersView(props: Props) {
   }, []);
 
   return (
-    <div>
+    <div className="bg-white rounded-lg">
       <div className="flex items-center justify-between px-5 pt-5">
         <PageTitle
           title={

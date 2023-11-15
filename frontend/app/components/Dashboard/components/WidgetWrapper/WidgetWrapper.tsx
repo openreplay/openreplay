@@ -12,6 +12,7 @@ import AlertButton from './AlertButton';
 import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
 import LazyLoad from 'react-lazyload';
+import { TIMESERIES } from "App/constants/card";
 
 interface Props {
   className?: string;
@@ -44,7 +45,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     isGridView = false,
   } = props;
   const widget: any = props.widget;
-  const isTimeSeries = widget.metricType === 'timeseries';
+  const isTimeSeries = widget.metricType === TIMESERIES;
   const isPredefined = widget.metricType === 'predefined';
   const dashboard = dashboardStore.selectedDashboard;
 

@@ -16,7 +16,7 @@ import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 
-const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
+const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
 interface Props {
@@ -88,7 +88,7 @@ function LiveSessionList(props: Props) {
         <div className="flex mb-6 justify-between items-center">
           <div className="flex items-center">
             <h3 className="text-2xl capitalize mr-2">
-              <span>Live Sessions</span>
+              <span>Cobrowse</span>
               {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
             </h3>
 
@@ -104,7 +104,7 @@ function LiveSessionList(props: Props) {
                   options={sortOptions}
                   onChange={onSortChange}
                   value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                />
+              />
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => props.applyFilter({ order: state })}
@@ -126,7 +126,7 @@ function LiveSessionList(props: Props) {
             subtext={
               <div className="text-center flex justify-center items-center flex-col">
                 <span>
-                  Support users with live sessions, co-browsing, and video calls.
+                  Support users with live sessions, cobrowsing, and video calls.
                   <a
                     target="_blank"
                     className="link ml-1"

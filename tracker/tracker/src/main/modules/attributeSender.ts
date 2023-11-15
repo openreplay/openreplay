@@ -18,20 +18,24 @@ export class StringDictionary {
 export default class AttributeSender {
   private dict = new StringDictionary()
 
-  constructor(private readonly app: App, private readonly isDictDisabled: boolean) {}
+  constructor(
+    private readonly app: App,
+    private readonly isDictDisabled: boolean,
+  ) {}
 
   public sendSetAttribute(id: number, name: string, value: string) {
     if (this.isDictDisabled) {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
-      this.app.send(msg)
+      return this.app.send(msg)
+    } else {
+      const message: SetNodeAttributeDict = [
+        Type.SetNodeAttributeDict,
+        id,
+        this.applyDict(name),
+        this.applyDict(value),
+      ]
+      return this.app.send(message)
     }
-    const message: SetNodeAttributeDict = [
-      Type.SetNodeAttributeDict,
-      id,
-      this.applyDict(name),
-      this.applyDict(value),
-    ]
-    this.app.send(message)
   }
 
   private applyDict(str: string): number {

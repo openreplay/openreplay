@@ -21,7 +21,7 @@ import type {
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
-  RawNetworkRequest,
+  RawNetworkRequestDeprecated,
   RawConsoleLog,
   RawCssInsertRule,
   RawCssDeleteRule,
@@ -55,18 +55,22 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
+  RawNetworkRequest,
   RawSelectionChange,
   RawMouseThrashing,
   RawResourceTiming,
   RawTabChange,
   RawTabData,
-  RawIosSessionStart,
-  RawIosCustomEvent,
+  RawIosEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
+  RawIosInputEvent,
   RawIosPerformanceEvent,
   RawIosLog,
+  RawIosInternalError,
   RawIosNetworkCall,
+  RawIosSwipeEvent,
+  RawIosIssueEvent,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -106,7 +110,7 @@ export type SetInputChecked = RawSetInputChecked & Timed
 
 export type MouseMove = RawMouseMove & Timed
 
-export type NetworkRequest = RawNetworkRequest & Timed
+export type NetworkRequestDeprecated = RawNetworkRequestDeprecated & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
 
@@ -174,6 +178,8 @@ export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
 
+export type NetworkRequest = RawNetworkRequest & Timed
+
 export type SelectionChange = RawSelectionChange & Timed
 
 export type MouseThrashing = RawMouseThrashing & Timed
@@ -184,17 +190,23 @@ export type TabChange = RawTabChange & Timed
 
 export type TabData = RawTabData & Timed
 
-export type IosSessionStart = RawIosSessionStart & Timed
-
-export type IosCustomEvent = RawIosCustomEvent & Timed
+export type IosEvent = RawIosEvent & Timed
 
 export type IosScreenChanges = RawIosScreenChanges & Timed
 
 export type IosClickEvent = RawIosClickEvent & Timed
 
+export type IosInputEvent = RawIosInputEvent & Timed
+
 export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 
 export type IosLog = RawIosLog & Timed
 
+export type IosInternalError = RawIosInternalError & Timed
+
 export type IosNetworkCall = RawIosNetworkCall & Timed
+
+export type IosSwipeEvent = RawIosSwipeEvent & Timed
+
+export type IosIssueEvent = RawIosIssueEvent & Timed
 

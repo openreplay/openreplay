@@ -3,6 +3,9 @@ from fastapi import HTTPException, Request, Response, status
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 from routers.base import get_routers
+import logging
+
+logger = logging.getLogger(__name__)
 
 public_app, app, app_apikey = get_routers()
 from decouple import config
@@ -41,31 +44,30 @@ async def process_sso_assertion(request: Request):
         if 'AuthNRequestID' in session:
             del session['AuthNRequestID']
         user_data = auth.get_attributes()
-    elif auth.get_settings().is_debug_active():
+    else:
         error_reason = auth.get_last_error_reason()
-        print("SAML2 error:")
-        print(error_reason)
+        logger.error("SAML2 error:")
+        logger.error(error_reason)
         return {"errors": [error_reason]}
 
     email = auth.get_nameid()
-    print("received nameId:")
-    print(email)
+    logger.debug(f"received nameId: {email}")
     existing = users.get_by_email_only(auth.get_nameid())
 
     internal_id = next(iter(user_data.get("internalId", [])), None)
     tenant_key = user_data.get("tenantKey", [])
     if len(tenant_key) == 0:
-        print("tenantKey not present in assertion, please check your SP-assertion-configuration")
+        logger.error("tenantKey not present in assertion, please check your SP-assertion-configuration")
         return {"errors": ["tenantKey not present in assertion, please check your SP-assertion-configuration"]}
     else:
         t = tenants.get_by_tenant_key(tenant_key[0])
         if t is None:
-            print("invalid tenantKey, please copy the correct value from Preferences > Account")
+            logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-    print(user_data)
+    logger.debug(user_data)
     role_name = user_data.get("role", [])
     if len(role_name) == 0:
-        print("No role specified, setting role to member")
+        logger.info("No role specified, setting role to member")
         role_name = ["member"]
     role_name = role_name[0]
     role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
@@ -80,24 +82,24 @@ async def process_sso_assertion(request: Request):
     if existing is None:
         deleted = users.get_deleted_user_by_email(auth.get_nameid())
         if deleted is not None:
-            print("== restore deleted user ==")
+            logger.info("== restore deleted user ==")
             users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
                                    admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
                                    name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                                    internal_id=internal_id, role_id=role["roleId"])
         else:
-            print("== new user ==")
+            logger.info("== new user ==")
             users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
                                   origin=SAML2_helper.get_saml2_provider(),
                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                                   internal_id=internal_id, role_id=role["roleId"])
     else:
         if t['tenantId'] != existing["tenantId"]:
-            print("user exists for a different tenant")
+            logger.warning("user exists for a different tenant")
             return {"errors": ["user exists for a different tenant"]}
         if existing.get("origin") is None:
-            print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing["id"],
+            logger.info(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
+            users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
@@ -105,9 +107,14 @@ async def process_sso_assertion(request: Request):
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    return Response(
+    refresh_token = jwt["refreshToken"]
+    refresh_token_max_age = jwt["refreshTokenMaxAge"]
+    response = Response(
         status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt)})
+        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"])})
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    return response
 
 
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
@@ -128,27 +135,26 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
         if 'AuthNRequestID' in session:
             del session['AuthNRequestID']
         user_data = auth.get_attributes()
-    elif auth.get_settings().is_debug_active():
+    else:
         error_reason = auth.get_last_error_reason()
-        print("SAML2 error:")
-        print(error_reason)
+        logger.error("SAML2 error:")
+        logger.error(error_reason)
         return {"errors": [error_reason]}
 
     email = auth.get_nameid()
-    print("received nameId:")
-    print(email)
+    logger.debug(f"received nameId: {email}")
     existing = users.get_by_email_only(auth.get_nameid())
 
     internal_id = next(iter(user_data.get("internalId", [])), None)
 
     t = tenants.get_by_tenant_key(tenantKey)
     if t is None:
-        print("invalid tenantKey, please copy the correct value from Preferences > Account")
+        logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
         return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-    print(user_data)
+    logger.debug(user_data)
     role_name = user_data.get("role", [])
     if len(role_name) == 0:
-        print("No role specified, setting role to member")
+        logger.info("No role specified, setting role to member")
         role_name = ["member"]
     role_name = role_name[0]
     role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
@@ -163,24 +169,24 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
     if existing is None:
         deleted = users.get_deleted_user_by_email(auth.get_nameid())
         if deleted is not None:
-            print("== restore deleted user ==")
+            logger.info("== restore deleted user ==")
             users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
                                    admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
                                    name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                                    internal_id=internal_id, role_id=role["roleId"])
         else:
-            print("== new user ==")
+            logger.info("== new user ==")
             users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
                                   origin=SAML2_helper.get_saml2_provider(),
                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                                   internal_id=internal_id, role_id=role["roleId"])
     else:
         if t['tenantId'] != existing["tenantId"]:
-            print("user exists for a different tenant")
+            logger.warning("user exists for a different tenant")
             return {"errors": ["user exists for a different tenant"]}
         if existing.get("origin") is None:
-            print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing["id"],
+            logger.info(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
+            users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
@@ -215,13 +221,13 @@ async def process_sls_assertion(request: Request):
             user_email = logout_request.get_nameid(auth.get_last_request_xml())
             to_logout = users.get_by_email_only(user_email)
 
-            if len(to_logout) > 0:
-                to_logout = to_logout[0]['id']
-                users.change_jwt_iat(to_logout)
+            if to_logout is not None:
+                to_logout = to_logout['userId']
+                users.refresh_jwt_iat_jti(to_logout)
             else:
-                print("Unknown user SLS-Request By IdP")
+                logger.warning("Unknown user SLS-Request By IdP")
         else:
-            print("Preprocessed SLS-Request by SP")
+            logger.info("Preprocessed SLS-Request by SP")
 
         if url is not None:
             return RedirectResponse(url=url)

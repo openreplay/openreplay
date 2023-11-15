@@ -5,9 +5,10 @@ export function resolveURL(baseURL: string, relURL: string): string {
   return new URL(relURL, baseURL).toString();
 }
 
-
+// url("url") or url('url') or url(url)
 const re1 = /url\(("[^"]*"|'[^']*'|[^)]*)\)/g
-const re2 = /@import "(.*?)"/g
+// @import "url" or @import 'url'
+const re2 = /@import (["'])(.*?)\1/g
 function cssUrlsIndex(css: string): Array<[number, number]> {
   const idxs: Array<[number, number]> = [];
   const i1 = css.matchAll(re1);

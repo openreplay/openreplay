@@ -46,7 +46,7 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
 
       Object.assign(endPointer.style, {
         top: endCoords.top + 'px',
-        right: (endCoords.right) + 'px',
+        left: (endCoords.left) + 'px',
         width: (endCoords.width) + 'px',
         height: endCoords.height + 'px',
         position: 'absolute',

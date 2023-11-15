@@ -29,7 +29,11 @@ dtypes_events = {
     'customissue_name': "string",
     'customissue_payload': "string",
     'received_at': "Int64",
-    'batch_order_number': "Int64"}
+    'batch_order_number': "Int64",
+    'clickevent_hesitationtime': "Int64",
+    'clickevent_label': "string",
+    'clickevent_messageid': "Int64",
+    'clickevent_selector': "string"}
 dtypes_detailed_events = {
 "sessionid": "Int64",
 "clickevent_hesitationtime": "Int64",
@@ -194,10 +198,14 @@ def get_df_from_batch(batch, level):
 
     if level == 'normal':
         current_types = dtypes_events
+        #df['clickevent_hesitationtime'] = df['clickevent_hesitationtime'].fillna(0)
+        #df['clickevent_messageid'] = df['clickevent_messageid'].fillna(0)
     if level == 'detailed':
         current_types = dtypes_detailed_events
         df['inputevent_value'] = None
         df['customevent_payload'] = None
+        #df['clickevent_hesitationtime'] = df['clickevent_hesitationtime'].fillna(0)
+        #df['clickevent_messageid'] = df['clickevent_messageid'].fillna(0)
     if level == 'sessions':
         current_types = dtypes_sessions
         df['js_exceptions_count'] = df['js_exceptions_count'].fillna(0)
@@ -214,12 +222,14 @@ def get_df_from_batch(batch, level):
     for x in df.columns:
         try:
             if df[x].dtype == "string" or current_types[x] == "string":
-                df[x] = df[x].fillna('NULL')
+                df[x] = df[x].fillna("NULL")
                 if x == 'user_id' or x == 'user_anonymous_id':
                     df[x] = df[x].str.slice(0, 7999)
                 else:
                     df[x] = df[x].str.slice(0, 255)
                 df[x] = df[x].str.replace("|", "")
+            elif current_types[x] == 'Int64':
+                df[x] = df[x].fillna(0)
         except TypeError as e:
             print(repr(e))
             if df[x].dtype == 'str':

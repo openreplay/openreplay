@@ -2,9 +2,10 @@
 # Index config file for gh-archive dataset.
 #
 
-version: 0.4
+version: 0.6
 
-index_id: pageevent
+index_id: "pageevent"
+index_uri: "s3://openreplay-quickwit/quickwit-indexes/pageevent"
 
 doc_mapping:
   mode: strict

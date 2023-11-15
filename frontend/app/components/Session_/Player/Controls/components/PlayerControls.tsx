@@ -1,3 +1,4 @@
+import * as constants from "constants";
 import React from 'react';
 import { Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
@@ -21,7 +22,15 @@ interface Props {
   forthTenSeconds: () => void;
   toggleSpeed: (speedIndex: number) => void;
   toggleSkip: () => void;
+  sessionTz?: string;
 }
+
+export const TimeMode = {
+  Real: 'real',
+  UserReal: 'user_real',
+  Timestamp: 'current',
+} as const
+export type ITimeMode = typeof TimeMode[keyof typeof TimeMode]
 
 function PlayerControls(props: Props) {
   const {
@@ -37,17 +46,18 @@ function PlayerControls(props: Props) {
     setSkipInterval,
     currentInterval,
     startedAt,
+    sessionTz,
   } = props;
   const [showTooltip, setShowTooltip] = React.useState(false);
-  const [isUniTime, setUniTime] = React.useState(localStorage.getItem('__or_player_time_mode') === 'real');
+  const [timeMode, setTimeMode] = React.useState<ITimeMode>(localStorage.getItem('__or_player_time_mode') as ITimeMode);
   const speedRef = React.useRef<HTMLButtonElement>(null);
   const arrowBackRef = React.useRef<HTMLButtonElement>(null);
   const arrowForwardRef = React.useRef<HTMLButtonElement>(null);
   const skipRef = React.useRef<HTMLDivElement>(null);
 
-  const setIsUniTime = (isUniTime: boolean) => {
-    localStorage.setItem('__or_player_time_mode', isUniTime ? 'real' : 'current');
-    setUniTime(isUniTime);
+  const saveTimeMode = (mode: ITimeMode) => {
+    localStorage.setItem('__or_player_time_mode', mode);
+    setTimeMode(mode);
   }
 
   React.useEffect(() => {
@@ -83,7 +93,7 @@ function PlayerControls(props: Props) {
 
 
       <button className={cn(styles.speedButton, 'focus:border focus:border-blue')}>
-        <PlayingTime isUniTime={isUniTime} setIsUniTime={setIsUniTime} startedAt={startedAt} />
+        <PlayingTime timeMode={timeMode} setTimeMode={saveTimeMode} startedAt={startedAt} sessionTz={sessionTz} />
       </button>
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">

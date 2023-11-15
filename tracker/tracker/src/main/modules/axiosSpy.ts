@@ -71,6 +71,7 @@ export default function (
   stringify: (data: { headers: Record<string, string>; body: any }) => string,
 ) {
   app.debug.log('Openreplay: attaching axios spy to instance', instance)
+
   function captureResponseData(axiosResponseObj: AxiosResponse) {
     app.debug.log('Openreplay: capturing axios response data', axiosResponseObj)
     const { headers: reqHs, data: reqData, method, url, baseURL } = axiosResponseObj.config
@@ -144,6 +145,7 @@ export default function (
         reqResInfo.status,
         requestStart + getTimeOrigin(),
         duration,
+        0,
       ),
     )
   }
@@ -183,6 +185,7 @@ export default function (
   function logRequestError(ev: any) {
     app.debug.log('Openreplay: failed API request, skipping', ev)
   }
+
   const reqInt = instance.interceptors.request.use(getStartTime, logRequestError, {
     synchronous: true,
   })

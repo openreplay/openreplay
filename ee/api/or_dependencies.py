@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Callable
 
 from fastapi import HTTPException, Depends
@@ -10,12 +11,14 @@ from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-import schemas_ee
-from chalicelib.utils import helper
+import schemas
 from chalicelib.core import traces
+from chalicelib.utils import helper
+
+logger = logging.getLogger(__name__)
 
 
-async def OR_context(request: Request) -> schemas_ee.CurrentContext:
+async def OR_context(request: Request) -> schemas.CurrentContext:
     if hasattr(request.state, "currentContext"):
         return request.state.currentContext
     else:
@@ -27,6 +30,7 @@ class ORRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
+            logger.debug(f"call processed by: {self.methods} {self.path_format}")
             try:
                 response: Response = await original_route_handler(request)
             except HTTPException as e:
@@ -55,13 +59,13 @@ class ORRoute(APIRoute):
         return custom_route_handler
 
 
-def __check(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
+def __check(security_scopes: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
     s_p = 0
     for scope in security_scopes.scopes:
-        if isinstance(scope, schemas_ee.ServicePermissions):
+        if isinstance(scope, schemas.ServicePermissions):
             s_p += 1
-        if context.service_account and not isinstance(scope, schemas_ee.ServicePermissions) \
-                or not context.service_account and not isinstance(scope, schemas_ee.Permissions):
+        if context.service_account and not isinstance(scope, schemas.ServicePermissions) \
+                or not context.service_account and not isinstance(scope, schemas.Permissions):
             continue
         if scope not in context.permissions:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,3 +77,14 @@ def __check(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext 
 
 def OR_scope(*scopes):
     return Security(__check, scopes=list(scopes))
+
+
+def __check_role(required_roles: SecurityScopes, context: schemas.CurrentContext = Depends(OR_context)):
+    if len(required_roles.scopes) > 0:
+        if context.role not in required_roles.scopes:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You need a different role to access this resource")
+
+
+def OR_role(*required_roles):
+    return Security(__check_role, scopes=list(required_roles))

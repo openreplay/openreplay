@@ -7,7 +7,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 def create(project_id, user_id, data: schemas.SavedSearchSchema):
     with pg_client.PostgresClient() as cur:
-        data = data.dict()
+        data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify("""\
             INSERT INTO public.searches (project_id, user_id, name, filter,is_public) 
@@ -25,7 +25,7 @@ def create(project_id, user_id, data: schemas.SavedSearchSchema):
 
 def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
     with pg_client.PostgresClient() as cur:
-        data = data.dict()
+        data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify(f"""\
             UPDATE public.searches 
@@ -43,7 +43,6 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
-        # r["filter"]["startDate"], r["filter"]["endDate"] = TimeUTC.get_start_end_from_range(r["filter"]["rangeValue"])
         return r
 
 

@@ -11,6 +11,8 @@ import {
   hasOpenreplayAttribute,
   canAccessIframe,
   generateRandomId,
+  ngSafeBrowserMethod,
+  requestIdleCb,
 } from '../main/utils.js'
 
 describe('adjustTimeOrigin', () => {
@@ -182,5 +184,61 @@ describe('generateRandomId', () => {
     const id = generateRandomId()
     expect(id).toHaveLength(40)
     expect(/^[0-9a-f]+$/.test(id)).toBe(true)
+  })
+})
+
+describe('ngSafeBrowserMethod', () => {
+  test('returns the method as-is if Zone and __symbol__ are not in window.Zone', () => {
+    //@ts-ignore
+    window.Zone = undefined // Ensure Zone is not in the window object
+    expect(ngSafeBrowserMethod('someMethod')).toBe('someMethod')
+  })
+
+  test('returns the __symbol__ of the method if Zone and __symbol__ are in window.Zone', () => {
+    //@ts-ignore
+    window.Zone = {
+      __symbol__: (method: string) => `__${method}__`,
+    }
+    expect(ngSafeBrowserMethod('someMethod')).toBe('__someMethod__')
+  })
+})
+
+describe('requestIdleCb', () => {
+  test('uses window.requestIdleCallback when available', () => {
+    const callback = jest.fn()
+    // @ts-ignore
+    window.requestIdleCallback = callback
+
+    requestIdleCb(callback)
+
+    expect(callback).toBeCalled()
+  })
+
+  test('falls back to using a MessageChannel if requestIdleCallback is not available', () => {
+    const callback = jest.fn()
+    class MessageChannelMock {
+      port1 = {
+        // @ts-ignore
+        postMessage: (v: any) => this.port2.onmessage(v),
+        onmessage: null,
+      }
+      port2 = {
+        onmessage: null,
+        // @ts-ignore
+        postMessage: (v: any) => this.port1.onmessage(v),
+      }
+    }
+    // @ts-ignore
+    globalThis.MessageChannel = MessageChannelMock
+    // @ts-ignore
+    globalThis.requestAnimationFrame = (cb: () => void) => cb()
+    // @ts-ignore
+    window.requestIdleCallback = undefined
+
+    requestIdleCb(callback)
+
+    // You can assert that the callback was called using the MessageChannel approach.
+    // This is more challenging to test, so it's recommended to mock MessageChannel.
+    expect(callback).toBeCalled()
   })
 })

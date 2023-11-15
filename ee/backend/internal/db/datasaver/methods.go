@@ -50,8 +50,6 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return s.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.MouseClick:
 		return s.ch.InsertWebClickEvent(session, m)
-	case *messages.InputEvent:
-		return s.ch.InsertWebInputEvent(session, m)
 	// Unique for Web
 	case *messages.PageEvent:
 		return s.ch.InsertWebPageEvent(session, m)
@@ -75,6 +73,22 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return s.ch.InsertWebInputDuration(session, m)
 	case *messages.MouseThrashing:
 		return s.ch.InsertMouseThrashing(session, m)
+
+	// Mobile messages
+	case *messages.IOSSessionEnd:
+		return s.ch.InsertMobileSession(session)
+	case *messages.IOSEvent:
+		return s.ch.InsertMobileCustom(session, m)
+	case *messages.IOSClickEvent:
+		return s.ch.InsertMobileClick(session, m)
+	case *messages.IOSSwipeEvent:
+		return s.ch.InsertMobileSwipe(session, m)
+	case *messages.IOSInputEvent:
+		return s.ch.InsertMobileInput(session, m)
+	case *messages.IOSNetworkCall:
+		return s.ch.InsertMobileRequest(session, m, session.SaveRequestPayload)
+	case *messages.IOSCrash:
+		return s.ch.InsertMobileCrash(session, m)
 	}
 	return nil
 }

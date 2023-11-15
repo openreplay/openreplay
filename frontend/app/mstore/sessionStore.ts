@@ -120,16 +120,21 @@ export default class SessionStore {
   timelinePointer = {}
   sessionPath = {}
   lastPlayedSessionId: string
-  timeLineTooltip = { time: 0, offset: 0, isVisible: false, timeStr: '' }
+  timeLineTooltip = { time: 0, offset: 0, isVisible: false, localTime: '', userTime: '' }
   createNoteTooltip = { time: 0, isVisible: false, isEdit: false, note: null }
   previousId = ''
   nextId = ''
+  userTimezone = ''
 
   constructor() {
     makeAutoObservable(this, {
       userFilter: observable,
       devTools: observable,
     });
+  }
+
+  setUserTimezone(timezone: string) {
+    this.userTimezone = timezone;
   }
 
   resetUserFilter() {
@@ -345,7 +350,7 @@ export default class SessionStore {
     this.timelinePointer = pointer
   }
 
-  setTimelineTooltip(tp: { time: number, offset: number, isVisible: boolean, timeStr: string }) {
+  setTimelineTooltip(tp: { time: number, offset: number, isVisible: boolean, localTime: string, userTime?: string }) {
     this.timeLineTooltip = tp
   }
 

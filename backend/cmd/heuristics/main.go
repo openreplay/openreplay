@@ -7,6 +7,7 @@ import (
 	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/handlers/ios"
 	"openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -26,7 +27,6 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			custom.NewInputEventBuilder(),
 			custom.NewPageEventBuilder(),
 			web.NewDeadClickDetector(),
 			&web.ClickRageDetector{},
@@ -34,6 +34,9 @@ func main() {
 			&web.MemoryIssueDetector{},
 			&web.NetworkIssueDetector{},
 			&web.PerformanceAggregator{},
+			web.NewAppCrashDetector(),
+			&ios.TapRageDetector{},
+			ios.NewViewComponentDurations(),
 		}
 	}
 
@@ -43,6 +46,7 @@ func main() {
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
+			cfg.TopicRawIOS,
 		},
 		messages.NewMessageIterator(eventBuilder.HandleMessage, nil, true),
 		false,

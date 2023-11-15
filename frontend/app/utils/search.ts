@@ -52,7 +52,7 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
   const period: any = getPeriodFromEntries(entires);
   const filters = getFiltersFromEntries(entires);
 
-  return Filter({ filters, rangeValue: period.rangeName });
+  return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
 
 const getFiltersFromEntries = (entires: any) => {

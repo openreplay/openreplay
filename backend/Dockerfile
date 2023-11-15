@@ -1,13 +1,10 @@
-FROM golang:1.19-alpine3.17 AS prepare
-
-RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
+FROM openreplayalexander/golang_with_librdkafka:v1-release AS prepare
 
 WORKDIR /root
 
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
-
 
 FROM prepare AS build
 COPY cmd cmd
@@ -18,11 +15,10 @@ ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 
-FROM alpine AS entrypoint
+FROM openreplayalexander/alpine_with_librdkafka:v1-release AS entrypoint
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
-RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
 ARG SERVICE_NAME
@@ -50,15 +46,19 @@ ENV TZ=UTC \
     REDIS_STREAMS_MAX_LEN=10000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \
+    TOPIC_RAW_IMAGES=raw-images \
     TOPIC_CACHE=cache \
     TOPIC_ANALYTICS=analytics \
     TOPIC_TRIGGER=trigger \
+    TOPIC_MOBILE_TRIGGER=mobile-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
     GROUP_ENDER=ender \
     GROUP_CACHE=cache \
     GROUP_HEURISTICS=heuristics \
+    GROUP_IMAGE_STORAGE=image-storage \
+    GROUP_VIDEO_STORAGE=video-storage \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
@@ -95,8 +95,11 @@ ENV TZ=UTC \
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
-  wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; fi
+      wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
+      wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
+    elif [ "$SERVICE_NAME" = "videostorage" ]; then \
+      apk add --no-cache ffmpeg; \
+    fi
 
 
 COPY --from=build /root/service /home/openreplay/service

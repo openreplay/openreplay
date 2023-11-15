@@ -19,3 +19,4 @@ cypress.env.json
 **/__diff_output__/*
 *.diff.png
 cypress/videos/
+coverage

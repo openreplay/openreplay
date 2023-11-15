@@ -54,7 +54,9 @@ export default class CallWindow {
 			.then((text) => {
 				iframe.onload = () => {
 					const assistSection = doc.getElementById('or-assist')
-					assistSection?.classList.remove('status-connecting')
+					setTimeout(() => {
+						assistSection?.classList.remove('status-connecting')
+					}, 0)
 					//iframe.style.height = doc.body.scrollHeight + 'px';
 					//iframe.style.width = doc.body.scrollWidth + 'px';
 					this.adjustIframeSize()
@@ -110,6 +112,11 @@ export default class CallWindow {
 					// TODO: save coordinates on the new page
 					attachDND(iframe, dragArea, doc.documentElement)
 				}
+				setTimeout(() => {
+					const assistSection = doc.getElementById('or-assist')
+					assistSection?.classList.remove('status-connecting')
+					this.adjustIframeSize()
+				}, 250)
 			})
 
 		//this.toggleVideoUI(false)

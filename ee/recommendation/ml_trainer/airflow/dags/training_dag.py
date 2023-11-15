@@ -81,7 +81,7 @@ dag = DAG(
     },
     start_date=pendulum.datetime(2015, 12, 1, tz="UTC"),
     description="My first test",
-    schedule=config('crons_train', default='@daily'),
+    schedule=config('crons_train', default='@weekly'),
     catchup=False,
 )
 

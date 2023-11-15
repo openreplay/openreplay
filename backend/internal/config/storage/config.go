@@ -23,6 +23,7 @@ type Config struct {
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`
 	UseSort              bool          `env:"USE_SESSION_SORT,default=true"`
 	UseProfiler          bool          `env:"PROFILER_ENABLED,default=false"`
+	UseBrotli            bool          `env:"USE_BROTLI,default=true"`
 }
 
 func New() *Config {

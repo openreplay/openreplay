@@ -1,0 +1,204 @@
+name: PR-Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'For which PR to deploy'
+        required: true
+      build_service:
+        description: 'Name of a single service to build(in small letters). "backend:all" to build complete backend'
+        required: true
+        default: 'frontend'
+      env_flavour:
+        description: 'Which env to build. Values: foss/ee'
+        required: false
+        default: 'foss'
+
+jobs:
+  create-vcluster-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Install vCluster CLI
+      run: |
+        # Replace with the command to install vCluster CLI
+        curl -s -L "https://github.com/loft-sh/vcluster/releases/download/v0.16.4/vcluster-linux-amd64" -o /usr/local/bin/vcluster
+        chmod +x /usr/local/bin/vcluster
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    - name: Check existing vcluster
+      id: vcluster_exists
+      continue-on-error: true
+      run: |
+        PR_NUMBER=pr-$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        if [ ! $(vcluster list | grep $PR_NUMBER) ]; then
+          echo "failed state"
+          echo "::set-output name=failed::true"
+          exit 100
+        fi
+        DOMAIN_NAME=${PR_NUMBER}-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}
+        vcluster connect ${PR_NUMBER}-vcluster --update-current=false --server=https://$DOMAIN_NAME
+        mv kubeconfig.yaml /tmp/kubeconfig.yaml
+
+    - name: Get LoadBalancer IP
+      if: steps.vcluster_exists.outputs.failed == 'true'
+      id: lb-ip
+      run: |
+        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "::set-output name=ip::$LB_IP"
+
+    - name: Create vCluster
+      if: steps.vcluster_exists.outputs.failed == 'true'
+      run: |
+        PR_NUMBER=pr-$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        # Replace with the actual command to create a vCluster
+        pwd
+        ls
+        readlink -f .
+        cd scripts/pr-env/
+        bash create.sh ${PR_NUMBER}.${{ secrets.OR_PR_DOMAIN_NAME }}
+        cp kubeconfig.yaml /tmp/
+
+    - name: Update AWS Route53 Record
+      if: steps.vcluster_exists.outputs.failed == 'true'
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.OR_PR_AWS_DEFAULT_REGION }}
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME_1=pr-$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME_2=pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+
+        cat <<EOF > route53-changes.json
+        {
+          "Comment": "Create record set for VCluster",
+          "Changes": [
+            {
+              "Action": "CREATE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_1",
+                "Type": "A",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            },
+            {
+              "Action": "CREATE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_2",
+                "Type": "A",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            }
+          ]
+        }
+        EOF
+        #
+        NEW_IP=${{ steps.lb-ip.outputs.ip }} 
+
+        # Get the current IP address associated with the domain
+        CURRENT_IP=$(dig +short $DOMAIN_NAME_1 @1.1.1.1)
+        echo "current ip: $CURRENT_IP"
+        # Check if the domain has no IP association or if the IPs are different
+        if [ -z "$CURRENT_IP" ] || [ "$CURRENT_IP" != "$NEW_IP" ]; then
+          aws route53 change-resource-record-sets --hosted-zone-id ${{ secrets.OR_PR_HOSTED_ZONE_ID }} --change-batch file://route53-changes.json
+        fi
+
+
+    - name: Wait for DNS Propagation
+      if: steps.vcluster_exists.outputs.failed == 'true'
+      env:
+        EXPECTED_IP: ${{ steps.lb-ip.outputs.ip }}
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME_1=pr-"$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
+        MAX_ATTEMPTS=30
+        attempt=1
+        until [[ $attempt -gt $MAX_ATTEMPTS ]]
+        do
+          DNS_IP=$(dig +short $DOMAIN_NAME_1 @8.8.8.8)
+          if [[ "$DNS_IP" == "$EXPECTED_IP" ]]; then
+            echo "DNS has propagated for $DOMAIN_NAME_1"
+            break
+          fi
+          echo "Waiting for DNS propagation... Attempt $attempt of $MAX_ATTEMPTS"
+          ((attempt++))
+          sleep 20
+        done
+
+        if [[ $attempt -gt $MAX_ATTEMPTS ]]; then
+          echo "DNS propagation check failed for $DOMAIN_NAME_1 after $MAX_ATTEMPTS attempts."
+          exit 1
+        fi
+
+    - name: Install openreplay
+      if: steps.vcluster_exists.outputs.failed == 'true'
+      env:
+        KUBECONFIG: /tmp/kubeconfig.yaml
+      run: |
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME=pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        cd scripts/helmcharts
+        sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+        helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait
+        helm upgrade -i openreplay -n app ./openreplay -f vars.yaml --create-namespace --set ingress-nginx.enabled=false -f ../pr-env/resources.yaml --wait
+
+    - name: Sent results to slack
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.OR_PR_SLACK_BOT_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.OR_PR_SLACK_CHANNEL }}
+      run: |
+        echo hi ${{ steps.vcluster_exists.outputs.failed }}
+        PR_NUMBER=$(echo ${{ github.event.pull_request.number }} || echo $GITHUB_RUN_NUMBER)
+        DOMAIN_NAME=https://pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+
+        # Variables
+        PR_NUMBER=https://github.com/${{ github.repository }}/pull/$PR_NUMBER
+        BRANCH_NAME=${GITHUB_HEAD_REF}
+        ORIGIN=$DOMAIN_NAME
+        ASSETS_HOST=$DOMAIN_NAME/assets
+        API_EDP=$DOMAIN_NAME/api
+        INGEST_POINT=$DOMAIN_NAME/ingest
+
+        # File to be uploaded
+        FILE_PATH="/tmp/kubeconfig.yaml"
+        if [! -f $FILE_PATH ]; then
+          echo "Kubeconfig file not found: $FILE_PATH"
+          exit 100
+        fi
+
+        # Form the message payload
+        PAYLOAD=$(cat <<EOF
+        {
+            "channel": "$SLACK_CHANNEL",
+            "text": "Deployment Information:\n- PR#: $PR_NUMBER\n- Branch Name: $BRANCH_NAME\n- Origin: $ORIGIN\n- Assets Host: $ASSETS_HOST\n- API Endpoint: $API_EDP\n- Ingest Point: $INGEST_POINT\n- To use the cluster: download the following file and run the following commands, \n  export KUBECONFIG=/path/to/kubeconfig.yaml\n  k9s"
+        }
+        EOF
+        )
+
+        # Send the message to Slack
+        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -H 'Content-type: application/json' --data "$PAYLOAD" https://slack.com/api/chat.postMessage
+
+        # Upload the file to Slack
+        curl -F file=@"$FILE_PATH" -F channels="$SLACK_CHANNEL" -F token="$SLACK_BOT_TOKEN" https://slack.com/api/files.upload
+
+    # - name: Cleanup
+    #   if: always()
+    #   run: |
+    #     # Add any cleanup commands if necessary
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging

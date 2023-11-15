@@ -1,6 +1,4 @@
 import React from 'react';
-// @ts-ignore
-import { Duration } from 'luxon';
 import { connect } from 'react-redux';
 import stl from './styles.module.css';
 
@@ -8,14 +6,16 @@ interface Props {
   time: number;
   offset: number;
   isVisible: boolean;
-  timeStr: string;
+  localTime: string;
+  userTime?: string;
 }
 
 function TimeTooltip({
   time,
   offset,
   isVisible,
-  timeStr,
+  localTime,
+  userTime
 }: Props) {
   return (
     <div
@@ -30,10 +30,16 @@ function TimeTooltip({
       }}
     >
       {!time ? 'Loading' : time}
-      {timeStr ? (
+      {localTime ? (
         <>
           <br />
-          <span className="text-gray-light">({timeStr})</span>
+          <span className="text-gray-light">local: {localTime}</span>
+        </>
+      ) : null}
+      {userTime ? (
+        <>
+          <br />
+          <span className="text-gray-light">user: {userTime}</span>
         </>
       ) : null}
     </div>
@@ -41,6 +47,7 @@ function TimeTooltip({
 }
 
 export default connect((state) => {
-  const { time = 0, offset = 0, isVisible, timeStr } = state.getIn(['sessions', 'timeLineTooltip']);
-  return { time, offset, isVisible, timeStr };
+  // @ts-ignore
+  const { time = 0, offset = 0, isVisible, localTime, userTime } = state.getIn(['sessions', 'timeLineTooltip']);
+  return { time, offset, isVisible, localTime, userTime };
 })(TimeTooltip);

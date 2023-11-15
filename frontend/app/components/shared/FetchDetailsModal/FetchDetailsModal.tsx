@@ -17,7 +17,11 @@ function FetchDetailsModal(props: Props) {
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
-  const isXHR = resource.type === ResourceType.XHR || resource.type === ResourceType.FETCH
+
+  const isXHR = resource.type === ResourceType.XHR
+      || resource.type === ResourceType.FETCH
+      || resource.type === ResourceType.IOS
+
   const {
     sessionStore: { devTools },
     settingsStore: { sessionSettings: { timezone }},
@@ -45,6 +49,7 @@ function FetchDetailsModal(props: Props) {
       devTools.update('network', { index: index + 1 })
     }
   };
+
 
   return (
     <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>

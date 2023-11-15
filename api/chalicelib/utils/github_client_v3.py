@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 
 import requests
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 
 class github_formatters:
@@ -122,8 +125,8 @@ class githubV3Request:
             pages = get_response_links(response)
             result = response.json()
             if response.status_code != 200:
-                print(f"=>GITHUB Exception")
-                print(result)
+                logger.warning(f"=>GITHUB Exception")
+                logger.error(result)
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"GITHUB: {result['message']}")
             if isinstance(result, dict):
                 return result

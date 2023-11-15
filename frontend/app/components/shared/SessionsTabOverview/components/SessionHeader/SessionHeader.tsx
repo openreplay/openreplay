@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { numberWithCommas } from 'App/utils';
 import { applyFilter } from 'Duck/search';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
@@ -8,7 +7,6 @@ import NoteTags from '../Notes/NoteTags';
 import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { setActiveTab } from 'Duck/search';
-import SessionSettingButton from '../SessionSettingButton';
 
 interface Props {
   listCount: number;
@@ -18,12 +16,13 @@ interface Props {
   applyFilter: (filter: any) => void;
   setActiveTab: (tab: any) => void;
 }
+
 function SessionHeader(props: Props) {
   const {
     filter: { startDate, endDate, rangeValue },
     activeTab,
     isEnterprise,
-    listCount,
+    listCount
   } = props;
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
@@ -33,7 +32,7 @@ function SessionHeader(props: Props) {
       return 'Notes';
     }
     if (activeTab === 'bookmark') {
-      return isEnterprise? 'Vault' : 'Bookmarks';
+      return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
   }, [activeTab]);
@@ -44,29 +43,24 @@ function SessionHeader(props: Props) {
   };
 
   return (
-    <div className="flex items-center px-4 py-1 justify-between w-full">
-      <h2 className="text-2xl capitalize mr-4">{title}</h2>
+    <div className='flex items-center px-4 py-1 justify-between w-full'>
+      <h2 className='text-2xl capitalize mr-4'>{title}</h2>
       {activeTab !== 'notes' ? (
-        <div className="flex items-center w-full justify-end">
+        <div className='flex items-center w-full justify-end'>
           {activeTab !== 'bookmark' && (
             <>
               <SessionTags />
-              <div className="mr-auto" />
-              {listCount > 0 && (
-                <>
-                  <SelectDateRange period={period} onChange={onDateChange} right={true} />
-                  <div className="mx-2" />
-                </>
-              )}
+              <div className='mr-auto' />
+              <SelectDateRange period={period} onChange={onDateChange} right={true} />
+              <div className='mx-2' />
             </>
           )}
           <SessionSort />
-          <SessionSettingButton />
         </div>
       ) : null}
 
       {activeTab === 'notes' && (
-        <div className="flex items-center justify-end w-full">
+        <div className='flex items-center justify-end w-full'>
           <NoteTags />
         </div>
       )}
@@ -79,7 +73,7 @@ export default connect(
     filter: state.getIn(['search', 'instance']),
     listCount: state.getIn(['sessions', 'total']),
     activeTab: state.getIn(['search', 'activeTab', 'type']),
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
   }),
   { applyFilter, setActiveTab }
 )(SessionHeader);
