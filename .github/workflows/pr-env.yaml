@@ -61,8 +61,6 @@ jobs:
       run: |
         # Replace with the actual command to create a vCluster
         pwd
-        ls
-        readlink -f .
         cd scripts/pr-env/
         bash create.sh ${PR_NUMBER}.${{ secrets.OR_PR_DOMAIN_NAME }}
         cp kubeconfig.yaml /tmp/
@@ -74,8 +72,8 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.OR_PR_AWS_DEFAULT_REGION }}
       run: |
-        DOMAIN_NAME_1=pr-$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}
-        DOMAIN_NAME_2=pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME_1=$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME_2=$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
 
         cat <<EOF > route53-changes.json
         {
@@ -119,7 +117,7 @@ jobs:
       env:
         EXPECTED_IP: ${{ steps.lb-ip.outputs.ip }}
       run: |
-        DOMAIN_NAME_1=pr-"$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
+        DOMAIN_NAME_1="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
         MAX_ATTEMPTS=30
         attempt=1
         until [[ $attempt -gt $MAX_ATTEMPTS ]]
@@ -144,7 +142,7 @@ jobs:
       env:
         KUBECONFIG: /tmp/kubeconfig.yaml
       run: |
-        DOMAIN_NAME=pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME=$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
         cd scripts/helmcharts
         sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
         helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait
@@ -156,7 +154,7 @@ jobs:
         SLACK_CHANNEL: ${{ secrets.OR_PR_SLACK_CHANNEL }}
       run: |
         echo hi ${{ steps.vcluster_exists.outputs.failed }}
-        DOMAIN_NAME=https://pr-$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
+        DOMAIN_NAME=https://$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
 
         # Variables
         PR_NUMBER=https://github.com/${{ github.repository }}/pull/$PR_NUMBER
