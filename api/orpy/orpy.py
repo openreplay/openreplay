@@ -1,4 +1,5 @@
 import asyncio
+import re
 import sys
 import time
 from collections import namedtuple
@@ -21,6 +22,23 @@ ORPY_DEBUG = config("ORPY_DEBUG", False)
 
 log.info("orpy logging setup, and working!")
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+
+def make_jinja_environment():
+    env = Environment(
+        loader=PackageLoader("orpy"),
+        autoescape=select_autoescape(),
+    )
+    return env
+
+
+async def jinja(template, context):
+    env = application.get().jinja
+    template = await asyncio.to_thread(env.get_template, template)
+    out = template.render(**context)
+    return out
+
 
 def make_timestamper():
     start = time.time()
@@ -42,6 +60,7 @@ Application = namedtuple(
         "http",
         "make_timestamp",
         "cache",
+        "jinja",
         # Background tasks runner
         "runner",
         "on_task",
@@ -58,11 +77,12 @@ def runner_spawn(coroutine):
 async def runner_run():
     while not application.get():
         await asyncio.sleep(0.1)
-    while asyncio.get_event_loop().is_running(): 
+    while asyncio.get_event_loop().is_running():
         await application.get().on_task
         while application.get() and application.get().tasks:
             task = application.get().tasks.pop()
             await task
+
 
 # TODO: use uvicorn lifespan
 async def make_application():
@@ -78,8 +98,6 @@ async def make_application():
         "dbname=amirouche user=amirouche password=amirouche"
     )
 
-    database = None
-
     # setup app
     make_timestamp = make_timestamper()
     http = httpx.AsyncClient()
@@ -87,10 +105,16 @@ async def make_application():
     app = Application(
         database,
         http,
-        dict(),
         make_timestamp,
+        # cache
+        dict(),
+        # jinja
+        make_jinja_environment(),
+        # Background coroutine that execute tasks
         asyncio.create_task(runner_run()),
+        # Event used to signal new task
         asyncio.Event(),
+        # tasks
         set(),
     )
 
@@ -130,9 +154,9 @@ async def txn():
             yield cnx
 
 
-async def _query_basic_authentication_new_invitation(txn, user_id, invitation_token):
-    # XXX: Investigate whether this will break user password? What does
-    # the table basic authentication do?
+async def _query_authentication_set_new_invitation(txn, user_id, invitation_token):
+    # XXX: Investigate whether this will break user password? What
+    # does the table basic authentication do?
     sql = """
     UPDATE public.basic_authentication
     SET invitation_token = %(invitation_token)s,
@@ -174,45 +198,22 @@ async def _query_user_by_email(txn, email):
 import os
 
 
-def _read(filepath):
-    # XXX: dangerous to use that with a filepath that is not hardcoded.
-    for path in sys.path:
-        filename = os.path.join(directory, filepath)
-        if os.path.exists(filename):
-            with open(filename) as f:
-                return f.read()
-    raise RuntimeError("File not found: {}".format(filepath))
-
-
-async def read(filepath):
-    try:
-        content = context.get().application.cache[filepath]
-    except KeyError:
-        content = asyncio.to_thread(_read(filepath))
-        context.get().application.cache[filepath] = content
-    return content
-
-
-def _file_format(source, formatting_variables=None):
-    if formatting_variables is None:
-        formatting_variables = {}
-    formatting_variables["frontend_url"] = config("SITE_URL")
-    source = re.sub(r"%(?![(])", "%%", source)
-    source = source % formatting_variables
-    return source
-
-
 async def _task_reset_password_link(email):
     async with txn() as txn:
-        user = await user_by_email(txn, email)
+        user = await _query_user_by_email(txn, email)
         if user is None:
+            # There is no user with the given email, bail out.
             return
         # TODO: document magic number 64
         token = secrets.token_urlsafe(64)
-        invitation_link = await user_new_invitation(txn, user["userId"])
-    template = await read("chalicelib/utils/html/reset_password.html")
-    html = _file_format(template, dict(invitation_link=invitation_link))
-    await send_html(html, "Password recovery", email)
+        await _query_authentication_set_new_invitation(txn, user["userId"], token)
+
+    invitation_link = _format_invitation_link(token)
+    body = await jinja(
+        "account/reset-password.html",
+        dict(invitation_link=invitation_link),
+    )
+    await send_html(html, "Password recovery", body)
 
 
 @route("GET", "password", "reset-link")
@@ -367,7 +368,7 @@ async def http(send):
 async def orpy(scope, receive, send):
     log.debug("ASGI scope: {}", scope)
 
-    if scope['type'] == 'lifespan' and application.get() is None:
+    if scope["type"] == "lifespan" and application.get() is None:
         application.set(await make_application())
 
     context.set(Context(application, scope, receive))

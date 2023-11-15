@@ -5,3 +5,4 @@ python-decouple
 httpx
 pampy
 loguru
+jinja2
