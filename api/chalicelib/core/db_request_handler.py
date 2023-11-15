@@ -150,3 +150,39 @@ class DatabaseRequestHandler:
         except Exception as e:
             self.logger.error(f"Database batch insert operation failed: {e}")
             raise
+
+    def batch_update(self, items):
+        if not items:
+            return None
+
+        id_column = list(items[0])[0]
+
+        # Building the set clause for the update statement
+        update_columns = list(items[0].keys())
+        update_columns.remove(id_column)
+        set_clause = ', '.join([f"{col} = v.{col}" for col in update_columns])
+
+        # Building the values part for the 'VALUES' section
+        values_rows = []
+        for item in items:
+            values = ', '.join([f"%({key})s" for key in item.keys()])
+            values_rows.append(f"({values})")
+        values_query = ', '.join(values_rows)
+
+        # Constructing the full update query
+        query = f"""
+            UPDATE {self.table_name} AS t 
+            SET {set_clause} 
+            FROM (VALUES {values_query}) AS v ({', '.join(items[0].keys())}) 
+            WHERE t.{id_column} = v.{id_column};
+        """
+
+        try:
+            with self.client.PostgresClient() as cur:
+                # Flatten items into a single dictionary for mogrify
+                combined_params = {k: v for item in items for k, v in item.items()}
+                mogrified_query = cur.mogrify(query, combined_params)
+                cur.execute(mogrified_query)
+        except Exception as e:
+            self.logger.error(f"Database batch update operation failed: {e}")
+            raise

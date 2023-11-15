@@ -184,49 +184,47 @@ def check_tasks_update(db_handler, test_id, tasks):
 
     db_handler = DatabaseRequestHandler("ut_tests_tasks")
     existing_tasks = get_test_tasks(db_handler, test_id)
-    to_be_deleted = []
-    to_be_updated = []
-    to_be_created = []
+    existing_task_ids = {task['task_id'] for task in existing_tasks}
 
-    existing_ids = [task['task_id'] for task in existing_tasks]
+    to_be_updated = [task for task in tasks if task.task_id in existing_task_ids]
+    to_be_created = [task for task in tasks if task.task_id not in existing_task_ids]
+    to_be_deleted = existing_task_ids - {task.task_id for task in tasks}
 
-    for task_id in existing_ids:
-        if task_id not in [task.task_id for task in tasks]:
-            to_be_deleted.append(task_id)
+    # Perform batch operations
+    if to_be_updated:
+        batch_update_tasks(db_handler, to_be_updated)
 
-    for task in tasks:
-        if task.task_id is None:
-            to_be_created.append(task)
-        elif task.task_id in existing_ids:
-            to_be_updated.append(task)
-
-    if len(to_be_created) > 0:
+    if to_be_created:
         insert_tasks(test_id, to_be_created)
 
-    if len(to_be_deleted) > 0:
+    if to_be_deleted:
         delete_tasks(db_handler, to_be_deleted)
-
-    if len(to_be_updated) > 0:
-        update_tasks(db_handler, to_be_updated)
 
     return get_test_tasks(db_handler, test_id)
 
 
 def delete_tasks(db_handler, task_ids):
-    db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    db_handler.constraints.clear()
     db_handler.add_constraint("task_id IN %(task_ids)s", {'task_ids': tuple(task_ids)})
     db_handler.delete()
 
 
-def update_tasks(db_handler, tasks):
+def batch_update_tasks(db_handler, tasks):
     db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    data = []
     for task in tasks:
-        update_data = task.model_dump(exclude_unset=True)
-        db_handler.add_constraint("task_id = %(task_id)s", {'task_id': task.task_id})
-        db_handler.update(update_data)
+        data.append({
+            'task_id': task.task_id,
+            'title': task.title,
+            'description': task.description,
+            'allow_typing': task.allow_typing,
+        })
+
+    db_handler.batch_update(data)
 
 
 def get_test_tasks(db_handler, test_id):
+    db_handler.constraints.clear()
     db_handler.set_select_columns(['task_id', 'title', 'description', 'allow_typing'])
     db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
 
