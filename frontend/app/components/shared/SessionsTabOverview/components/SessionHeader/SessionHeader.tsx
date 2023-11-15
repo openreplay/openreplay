@@ -58,12 +58,12 @@ function SessionHeader(props: Props) {
                   <div className="mx-2" />
                   <SelectDateRange period={period} onChange={onDateChange} right={true} />
                   <div className="mx-2" />
+                  <SessionGroupBy />
+                  <div className="mx-2" />
                 </>
               )}
             </>
           )}
-          <SessionGroupBy />
-          <div className="mx-2" />
           <SessionSort />
           <SessionSettingButton />
         </div>

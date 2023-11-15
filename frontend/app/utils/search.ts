@@ -57,8 +57,8 @@ export const createUrlQuery = (filter: {
   return query.map(({ key, value }) => `${key}=${value}`).join('&');
 };
 
-export const getFiltersFromQuery = (search: string, filter: any) => {
-  if (!search || filter.filters.size > 0) {
+export const getFiltersFromQuery = (search: string) => {
+  if (!search) {
     return;
   }
 

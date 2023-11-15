@@ -6,26 +6,19 @@ import { fetchList } from 'Duck/customField';
 
 interface Props {
   filter: any;
-  site: any;
   fields: any[];
   applyFilter: (filter: any) => void;
-  fetchList: (siteId: string) => void;
 }
 
 function SessionGroupBy(props: Props) {
   const {
     filter: { groupBy },
-    site,
     fields,
   } = props;
   const onGroupBy = ({ value }: any) => {
     const metadata_name = value?.value;
     props.applyFilter({ groupBy: metadata_name });
   };
-
-  useEffect(() => {
-    props.fetchList(site.id);
-  }, []);
 
   const groupByOptions = fields
     ? fields.map((field: any, index: number) => ({
@@ -34,9 +27,6 @@ function SessionGroupBy(props: Props) {
       }))
     : [];
 
-  console.log(fields);
-
-  const defaultOption = groupBy;
   return (
     <Select
       name="groupSessions"
@@ -46,16 +36,15 @@ function SessionGroupBy(props: Props) {
       placeholder="Group by"
       options={groupByOptions}
       onChange={onGroupBy}
-      defaultValue={defaultOption}
+      defaultValue={groupBy}
     />
   );
 }
 
 export default connect(
   (state: any) => ({
-    site: state.getIn(['site', 'instance']),
     filter: state.getIn(['search', 'instance']),
     fields: state.getIn(['customFields', 'list']).sortBy((i: any) => i.index),
   }),
-  { fetchList, applyFilter }
+  { applyFilter }
 )(SessionGroupBy);

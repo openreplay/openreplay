@@ -87,7 +87,7 @@ function SessionList(props: Props) {
   const isVault = isBookmark && isEnterprise;
   const activeSite: any = sites.find((s: any) => s.id === siteId);
   const hasNoRecordings = !activeSite || !activeSite.recorded;
-  console.log('isGroupedSessions', isGroupedSessions);
+
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
       setNoContentType(NoContentType.Bookmarked);

@@ -54,9 +54,9 @@ const initialState = Map({
     REFERRER: Set(),
     USERCOUNTRY: Set(),
     PLATFORM: Set([
-      {label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'desktop', isFilter: true},
-      {label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'mobile', isFilter: true},
-      {label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'tablet', isFilter: true},
+      { label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'desktop', isFilter: true },
+      { label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'mobile', isFilter: true },
+      { label: 'Platform', type: KEYS.PLATFORM, key: KEYS.PLATFORM, value: 'tablet', isFilter: true },
     ]),
   }),
 });
@@ -66,7 +66,7 @@ let hasFilterOptions = false;
 const updateList = (state, instance) => state.update('list', (list) => {
   const index = list.findIndex(item => item.filterId === instance.filterId);
   return (index >= 0
-    ? list.mergeIn([ index ], instance)
+    ? list.mergeIn([index], instance)
     : list.push(instance)
   );
 });
@@ -75,7 +75,7 @@ const reducer = (state = initialState, action = {}) => {
   let optionsMap = null;
   switch (action.type) {
     case EDIT:
-      return state.mergeIn([ 'appliedFilter' ], action.instance);
+      return state.mergeIn(['appliedFilter'], action.instance);
     case FETCH_FILTER_OPTIONS.SUCCESS:
       optionsMap = state.getIn(['filterOptions', action.key]).map(i => i.value).toJS();
       return state.mergeIn(['filterOptions', action.key], Set(action.data.filter(i => !optionsMap.includes(i.value))));
@@ -86,7 +86,7 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_LIST.SUCCESS:
       const flows = List(action.data).map(SavedFilter)
       let _state = state.set('list', flows)
-      
+
       if (!hasFilterOptions) {
         const tmp = {}
         flows.forEach(i => {
@@ -98,7 +98,7 @@ const reducer = (state = initialState, action = {}) => {
         });
 
         Object.keys(tmp).forEach(f => {
-          const options =  List(tmp[f]).map(i => ({type: i, value: i})) // TODO should get the unique items
+          const options = List(tmp[f]).map(i => ({ type: i, value: i })) // TODO should get the unique items
           _state = _state.mergeIn(['filterOptions', f], options);
         })
       }
@@ -120,12 +120,12 @@ const reducer = (state = initialState, action = {}) => {
     case SET_ACTIVE_KEY:
       return state.set('activeFilterKey', action.filterKey);
     case APPLY:
-      return action.fromUrl 
-        ? state.set('appliedFilter', 
-            Filter(action.filter)
-            .set('events', state.getIn([ 'appliedFilter', 'events' ]))
-          )
-        : state.mergeIn([ 'appliedFilter' ], action.filter);
+      return action.fromUrl
+        ? state.set('appliedFilter',
+          Filter(action.filter)
+            .set('events', state.getIn(['appliedFilter', 'events']))
+        )
+        : state.mergeIn(['appliedFilter'], action.filter);
     case ADD_CUSTOM_FILTER:
       return state.update('customFilters', vars => vars.set(action.filter, action.value));
     case REMOVE_CUSTOM_FILTER:
@@ -133,82 +133,82 @@ const reducer = (state = initialState, action = {}) => {
     case RESET_KEY:
       if (action.key === 'rangeValue') {
         return state
-          .removeIn([ 'appliedFilter', 'rangeValue' ])
-          .removeIn([ 'appliedFilter', 'startDate' ])
-          .removeIn([ 'appliedFilter', 'endDate' ]);
+          .removeIn(['appliedFilter', 'rangeValue'])
+          .removeIn(['appliedFilter', 'startDate'])
+          .removeIn(['appliedFilter', 'endDate']);
       } else if (action.key === 'duration') {
         return state
-          .removeIn([ 'appliedFilter', 'minDuration' ])
-          .removeIn([ 'appliedFilter', 'maxDuration' ]);
+          .removeIn(['appliedFilter', 'minDuration'])
+          .removeIn(['appliedFilter', 'maxDuration']);
       }
-      return state.removeIn([ 'appliedFilter', action.key ]);
+      return state.removeIn(['appliedFilter', action.key]);
     case ADD_EVENT:
       // const eventValue = action.event.type === TYPES.INPUT ? (action.event.target ? action.event.target.label : '') : action.event.value;
       const eventValue = action.event.value;
       const event = Event(action.event).set('value', eventValue);
       if (action.index >= 0) // replacing an event
-        return state.setIn([ 'appliedFilter', 'events', action.index ], event)
+        return state.setIn(['appliedFilter', 'events', action.index], event)
       else
-        return state.updateIn([ 'appliedFilter', 'events' ], list => action.single 
-          ? List([ event ])
+        return state.updateIn(['appliedFilter', 'events'], list => action.single
+          ? List([event])
           : list.push(event));
     case REMOVE_EVENT:
-      return state.removeIn([ 'appliedFilter', 'events', action.index ]);
+      return state.removeIn(['appliedFilter', 'events', action.index]);
     case EDIT_EVENT:
-      return state.mergeIn([ 'appliedFilter', 'events', action.index], action.filter);
+      return state.mergeIn(['appliedFilter', 'events', action.index], action.filter);
     case TOGGLE_FILTER_MODAL:
       return state.set('saveModalOpen', action.show);
     case MOVE_EVENT:
       const { fromI, toI } = action;
       return state
-        .updateIn([ 'appliedFilter', 'events' ], list =>
+        .updateIn(['appliedFilter', 'events'], list =>
           list.remove(fromI).insert(toI, list.get(fromI)));
     case CLEAR_EVENTS:
-      return state.setIn([ 'appliedFilter', 'events' ], List())
-        .setIn([ 'appliedFilter', 'filters' ], List())
+      return state.setIn(['appliedFilter', 'events'], List())
+        .setIn(['appliedFilter', 'filters'], List())
         .set('searchQuery', '');
-    
+
     case ADD_ATTRIBUTE:
       const filter = CustomFilter(action.filter);
 
       if (action.index >= 0) // replacing the filter
-        return state.setIn([ 'appliedFilter', 'filters', action.index], filter);
+        return state.setIn(['appliedFilter', 'filters', action.index], filter);
       else
-        return state.updateIn([ 'appliedFilter', 'filters'], filters => filters.push(filter));
-        
+        return state.updateIn(['appliedFilter', 'filters'], filters => filters.push(filter));
+
     case EDIT_ATTRIBUTE:
-      return state.setIn([ 'appliedFilter', 'filters', action.index, action.key ], action.value );
+      return state.setIn(['appliedFilter', 'filters', action.index, action.key], action.value);
     case REMOVE_ATTRIBUTE:
-      return state.removeIn([ 'appliedFilter', 'filters', action.index ]);
+      return state.removeIn(['appliedFilter', 'filters', action.index]);
     case SET_SEARCH_QUERY:
       return state.set('searchQuery', action.query);
     case UPDATE_VALUE:
-      return state.setIn([ 'appliedFilter', action.filterType, action.index, 'value' ], action.value);
+      return state.setIn(['appliedFilter', action.filterType, action.index, 'value'], action.value);
     default:
       return state;
   }
 };
 
 export default withRequestState({
-  _: [ REMOVE ],
+  _: [REMOVE],
   fetchListRequest: FETCH_LIST,
   saveRequest: SAVE,
   fetchFilterOptions: FETCH_FILTER_OPTIONS,
 }, reducer);
 
-const eventMap = ({value, searchType, key, operator, source, custom}) => ({value, type: searchType, key, operator, source, custom});
-const filterMap = ({value, type, key, operator, source, custom }) => ({value: Array.isArray(value) ? value: [value], custom, type, key, operator, source});
+const eventMap = ({ value, searchType, key, operator, source, custom }) => ({ value, type: searchType, key, operator, source, custom });
+const filterMap = ({ value, type, key, operator, source, custom }) => ({ value: Array.isArray(value) ? value : [value], custom, type, key, operator, source });
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
-  const appliedFilters = getState().getIn([ 'filters', 'appliedFilter' ]);
+  const appliedFilters = getState().getIn(['filters', 'appliedFilter']);
   const filter = appliedFilters
     .update('events', list => list.map(event => event.set('value', event.value || '*')).map(eventMap))
     .set('strict', true) // Temp backend issue
     .toJS();
-  filter.filters = getState().getIn([ 'filters', 'appliedFilter', 'filters' ])
+  filter.filters = getState().getIn(['filters', 'appliedFilter', 'filters'])
     .map(filterMap).toJS();
-
-    // Hello AGILE!
+  console.log('filters/reduceThenFetchResource', filter)
+  // Hello AGILE!
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
     : dispatch(fetchSessionList(filter));
@@ -272,7 +272,7 @@ export function save(instance) {
 export function remove(id) {
   return {
     types: REMOVE.toArray(),
-    call: client => client.delete(`/filters/${ id }`),
+    call: client => client.delete(`/filters/${id}`),
     id,
   };
 }
@@ -309,13 +309,13 @@ export const removeCustomFilter = reduceThenFetchResource(filterKey => ({
   filterKey,
 }));
 
-export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
+export const applyFilter = reduceThenFetchResource((filter, fromUrl = false) => ({
   type: APPLY,
   filter,
   fromUrl,
 }));
 
-export const applySavedFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
+export const applySavedFilter = reduceThenFetchResource((filter, fromUrl = false) => ({
   type: APPLY,
   filter,
   fromUrl,
@@ -384,10 +384,10 @@ export const edit = instance => {
 };
 
 // filterType: 'events' or 'filters'
-export const updateValue  = (filterType, index, value) => {
+export const updateValue = (filterType, index, value) => {
   return {
     type: UPDATE_VALUE,
-    filterType, 
+    filterType,
     index,
     value
   }
