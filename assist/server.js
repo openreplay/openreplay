@@ -3,7 +3,17 @@ const express = require('express');
 const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 const health = require("./utils/health");
-const assert = require('assert').strict;
+const assert = require('assert').strict
+const register = require('./utils/metrics').register;
+
+health.healthApp.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (ex) {
+        res.status(500).end(ex);
+    }
+});
 
 const debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";

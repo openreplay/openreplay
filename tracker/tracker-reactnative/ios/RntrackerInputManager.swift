@@ -1,4 +1,4 @@
-import ORTracker
+import Openreplay
 
 @objc(RntrackerInputManager)
 class RntrackerInputManager: RCTViewManager {

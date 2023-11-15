@@ -34,6 +34,7 @@ const wsRouter = express.Router();
 const debug_log = process.env.debug === "1";
 
 const socketsLive = async function (req, res) {
+    res.handlerName = 'socketsLive';
     debug_log && console.log("[WS]looking for all available LIVE sessions");
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
@@ -61,7 +62,7 @@ const socketsLive = async function (req, res) {
     liveSessionsPerProject.forEach((sessions, projectId) => {
         liveSessions[projectId] = Array.from(sessions);
     });
-    respond(res, sortPaginate(liveSessions, filters));
+    respond(req, res, sortPaginate(liveSessions, filters));
 }
 
 wsRouter.get(`/sockets-list`, socketsList);

@@ -1,4 +1,4 @@
-import ORTracker
+import Openreplay
 
 @objc(RntrackerSanitizedViewManager)
 class RntrackerSanitizedViewManager: RCTViewManager {
@@ -15,7 +15,7 @@ class RntrackerSanitizedViewManager: RCTViewManager {
 class RntrackerSanitizedView : UIView {
     override func didMoveToSuperview() {
         super.didMoveToSuperview()
-        
+
         if superview != nil {
             ScreenshotManager.shared.addSanitizedElement(self)
         }

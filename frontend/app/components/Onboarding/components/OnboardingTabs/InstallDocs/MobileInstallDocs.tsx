@@ -5,9 +5,18 @@ import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
 import { CopyButton } from 'UI';
 
-const installationCommand = 'add command after publishing!';
+const installationCommand = `
+// Cocoapods
+pod 'Openreplay', '~> 1.0.5'
+
+// Swift Package Manager
+dependencies: [
+    .package(url: "https://github.com/openreplay/ios-tracker.git", from: "1.0.5"),
+]
+`;
+
 const usageCode = `// AppDelegate.swift
-import ORTracker
+import OpenReplay
 
 //... 
 
@@ -15,8 +24,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        ORTracker.shared.serverURL = "https://your.instance.com/ingest"
-        ORTracker.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
+        OpenReplay.shared.serverURL = "https://your.instance.com/ingest"
+        OpenReplay.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
         
         // ...
         return true
@@ -30,7 +39,7 @@ let screen: Bool
 let wifiOnly: Bool`;
 
 const touches = `// SceneDelegate.Swift
-import ORTracker
+import OpenReplay
 
 // ...
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -46,14 +55,14 @@ import ORTracker
     }
 // ...`
 
-const sensitive = `import ORTracker
+const sensitive = `import OpenReplay
 
 // swiftUI
 Text("Very important sensitive text")
     .sensitive()
     
 // UIKit
-ORTracker.shared.addIgnoredView(view)`
+OpenReplay.shared.addIgnoredView(view)`
 
 const inputs = `// swiftUI
 TextField("Input", text: $text)

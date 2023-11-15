@@ -68,7 +68,7 @@ function IdentifyUsersTab(props: Props) {
           {platform.value === 'web' ? (
             <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
           ) : (
-            <HighlightCode className="swift" text={`ORTracker.shared.setUserID('john@doe.com');`} />
+            <HighlightCode className="swift" text={`OpenReplay.shared.setUserID('john@doe.com');`} />
           )}
           {platform.value === 'web' ? (
             <div className="flex items-center my-2">
@@ -119,7 +119,7 @@ function IdentifyUsersTab(props: Props) {
                 ) : (
                   <HighlightCode
                     className="swift"
-                    text={`ORTracker.shared.setMetadata('plan', 'premium');`}
+                    text={`OpenReplay.shared.setMetadata('plan', 'premium');`}
                   />
                 )}
               </div>

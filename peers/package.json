@@ -19,7 +19,6 @@
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
     "express": "^4.18.2",
-    "peer": "^v1.0.1",
-    "prom-client": "^15.0.0"
+    "peer": "^v1.0.1"
   }
 }

@@ -1,4 +1,4 @@
-import ORTracker
+import Openreplay
 
 @objc(RntrackerViewManager)
 class RntrackerViewManager: RCTViewManager {
@@ -26,10 +26,10 @@ class RntrackerView : UIView {
             self._orScreenName = screenName
         }
     }
-    
+
     override func didMoveToSuperview() {
         super.didMoveToSuperview()
-        
+
         if superview != nil {
             Analytics.shared.addObservedView(view: self, screenName: self._orScreenName, viewName: self._orViewName)
         }
