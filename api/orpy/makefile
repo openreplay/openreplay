@@ -34,7 +34,7 @@ xxx: ## Things that require attention
 	@grep -nR --color=always --before-context=2  --after-context=2 XXX .
 
 serve: ## Run the server
-	uvicorn --log-level warning --port 9998 --reload orpy:orpy
+	uvicorn --lifespan on --log-level warning --port 9998 --reload orpy:orpy
 
 lock: ## Lock dependencies
 	pip-compile -o requirements.txt requirements.source.txt
