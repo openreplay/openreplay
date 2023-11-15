@@ -95,7 +95,7 @@ export const assist = params => queried('/assist', params);
 export const recordings = params => queried("/recordings", params);
 export const multiviewIndex = params => queried('/multiview', params);
 export const multiview = (sessionsQuery = ':sessionsquery', hash) => hashed(`/multiview/${sessionsQuery}`, hash);
-export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${sessionId}`, hash);
+export const session = (sessionId = ':sessionId', params, hash) => hashed(queried(`/session/${sessionId}`, params), hash);
 export const liveSession = (sessionId = ':sessionId', params, hash) => hashed(queried(`/assist/${sessionId}`, params), hash);
 
 export const errors = params => queried('/errors', params);

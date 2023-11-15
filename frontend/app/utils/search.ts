@@ -8,7 +8,15 @@ type QueryItem = {
   value: string;
 };
 
-export const createUrlQuery = (filter: { filters: any[]; rangeValue: string; startDate?: string; endDate?: string }) => {
+export const createUrlQuery = (filter: {
+  filters: any[];
+  rangeValue: string;
+  startDate?: string;
+  endDate?: string;
+  sort?: string;
+  order?: string;
+  groupBy?: string;
+}) => {
   const query: QueryItem[] = [];
 
   filter.filters.forEach((f: any) => {
@@ -31,17 +39,23 @@ export const createUrlQuery = (filter: { filters: any[]; rangeValue: string; sta
     query.push({ key, value: str });
   });
 
-  if (query.length > 0) {
-    query.push({ key: 'range', value: filter.rangeValue });
-    if (filter.rangeValue === CUSTOM_RANGE) {
-      query.push({ key: 'rStart', value: filter.startDate! });
-      query.push({ key: 'rEnd', value: filter.endDate! });
-    }
+  query.push({ key: 'range', value: filter.rangeValue });
+  if (filter.rangeValue === CUSTOM_RANGE) {
+    query.push({ key: 'rStart', value: filter.startDate! });
+    query.push({ key: 'rEnd', value: filter.endDate! });
+  }
+
+  if (filter.sort && filter.order) {
+    query.push({ key: 'sort', value: filter.sort });
+    query.push({ key: 'order', value: filter.order });
+  }
+
+  if (filter.groupBy) {
+    query.push({ key: 'groupBy', value: filter.groupBy });
   }
 
   return query.map(({ key, value }) => `${key}=${value}`).join('&');
 };
-
 
 export const getFiltersFromQuery = (search: string, filter: any) => {
   if (!search || filter.filters.size > 0) {
@@ -52,7 +66,15 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
   const period: any = getPeriodFromEntries(entires);
   const filters = getFiltersFromEntries(entires);
 
-  return Filter({ filters, rangeValue: period.rangeName });
+  const { sort, order } = getSortFromEntries(entires);
+  const groupBy = getGroupByFromEntries(entires);
+  return Filter({
+    filters,
+    rangeValue: period.rangeName,
+    sort,
+    order,
+    groupBy,
+  });
 };
 
 const getFiltersFromEntries = (entires: any) => {
@@ -119,6 +141,22 @@ const getPeriodFromEntries = (entires: any) => {
   }
 
   return Period({ rangeName: rangeFilter.value });
+};
+
+const getSortFromEntries = (entires: any) => {
+  const sort = entires.find(({ key }: any) => key === 'sort');
+  const order = entires.find(({ key }: any) => key === 'order');
+
+  if (!sort || !order) {
+    return { sort: 'startTs', order: 'desc' };
+  }
+
+  return { sort: sort.value, order: order.value };
+};
+
+const getGroupByFromEntries = (entires: any) => {
+  const groupBy = entires.find(({ key }: any) => key === 'groupBy');
+  return groupBy?.value;
 };
 
 function getQueryObject(search: any) {
