@@ -364,7 +364,7 @@ async def http(send):
 async def orpy(scope, receive, send):
     log.debug("ASGI scope: {}", scope)
 
-    if application.get() is None:
+    if scope['type'] == 'lifespan' and application.get() is None:
         application.set(await make_application())
 
     context.set(Context(application, scope, receive))
