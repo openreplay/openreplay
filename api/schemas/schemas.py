@@ -7,7 +7,7 @@ from pydantic import field_validator, model_validator, computed_field
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
-    force_is_event
+    force_is_event, NAME_PATTERN
 
 
 def transform_old_filter_type(cls, values):
@@ -75,16 +75,16 @@ class UserLoginSchema(_GRecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(..., min_length=1)
-    organizationName: str = Field(..., min_length=1)
+    fullname: str = Field(..., min_length=1, pattern=NAME_PATTERN)
+    organizationName: str = Field(..., min_length=1, pattern=NAME_PATTERN)
 
     _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
     _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
 
 
 class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(default=None)
-    tenantName: Optional[str] = Field(default=None)
+    name: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
+    tenantName: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
     opt_out: Optional[bool] = Field(default=None)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
@@ -103,7 +103,7 @@ class EditUserPasswordSchema(BaseModel):
 
 
 class CreateProjectSchema(BaseModel):
-    name: str = Field(default="my first project")
+    name: str = Field(default="my first project", pattern=NAME_PATTERN)
     platform: Literal["web", "ios"] = Field(default="web")
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
@@ -144,7 +144,7 @@ class CurrentContext(CurrentAPIContext):
 
 
 class AddCollaborationSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., pattern=NAME_PATTERN)
     url: HttpUrl = Field(...)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
@@ -152,7 +152,7 @@ class AddCollaborationSchema(BaseModel):
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
-    name: Optional[str] = Field(default=None)
+    name: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
 
 
 class _TimedSchema(BaseModel):
@@ -207,7 +207,7 @@ class WebhookSchema(BaseModel):
     webhook_id: Optional[int] = Field(default=None)
     endpoint: AnyHttpUrl = Field(...)
     auth_header: Optional[str] = Field(default=None)
-    name: str = Field(default="", max_length=100)
+    name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
@@ -223,7 +223,7 @@ class CreateMemberSchema(BaseModel):
 
 
 class EditMemberSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., pattern=NAME_PATTERN)
     email: EmailStr = Field(...)
     admin: bool = Field(default=False)
 
@@ -422,7 +422,7 @@ class AlertDetectionMethod(str, Enum):
 
 
 class AlertSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., pattern=NAME_PATTERN)
     detection_method: AlertDetectionMethod = Field(...)
     change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
     description: Optional[str] = Field(default=None)

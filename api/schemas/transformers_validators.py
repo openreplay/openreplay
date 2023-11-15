@@ -2,6 +2,8 @@ from .overrides import Enum
 
 from typing import Union, Any, Type
 
+NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#]*$"
+
 
 def transform_email(email: str) -> str:
     return email.lower().strip() if isinstance(email, str) else email
