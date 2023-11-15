@@ -393,46 +393,51 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 
 	// Parse the multipart form
 	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
+		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		return
+	} else if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 
 	// Iterate over uploaded files
-	files := r.MultipartForm.File["upload[]"]
-	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	for _, fileHeaderList := range r.MultipartForm.File {
+		for _, fileHeader := range fileHeaderList {
+			file, err := fileHeader.Open()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-		// Read the file content
-		fileBytes, err := ioutil.ReadAll(file)
-		if err != nil {
+			// Read the file content
+			fileBytes, err := ioutil.ReadAll(file)
+			if err != nil {
+				file.Close()
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			file.Close()
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		file.Close()
 
-		fileName := util.SafeString(fileHeader.Filename)
-		log.Printf("fileName: %s, fileSize: %d", fileName, len(fileBytes))
+			fileName := util.SafeString(fileHeader.Filename)
+			log.Printf("fileName: %s, fileSize: %d", fileName, len(fileBytes))
 
-		// Create a message to send to Kafka
-		msg := ScreenshotMessage{
-			Name: fileName,
-			Data: fileBytes,
-		}
-		data, err := json.Marshal(&msg)
-		if err != nil {
-			log.Printf("can't marshal screenshot message, err: %s", err)
-			continue
-		}
+			// Create a message to send to Kafka
+			msg := ScreenshotMessage{
+				Name: fileName,
+				Data: fileBytes,
+			}
+			data, err := json.Marshal(&msg)
+			if err != nil {
+				log.Printf("can't marshal screenshot message, err: %s", err)
+				continue
+			}
 
-		// Send the message to queue
-		if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-			log.Printf("failed to produce canvas image message: %v", err)
+			// Send the message to queue
+			if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+				log.Printf("failed to produce canvas image message: %v", err)
+			}
 		}
 	}
+	ResponseOK(w, startTime, r.URL.Path, 0)
 }
