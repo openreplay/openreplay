@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS ut_tests_signals
 
 CREATE TABLE IF NOT EXISTS ut_tests_aggregated
 (
-    test_id         SERIAL PRIMARY KEY,
+    test_id         INT PRIMARY KEY,
     attempted_test  INT       NOT NULL,
     aborted_test    INT       NOT NULL,
     tasks_completed INT       NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS ut_tests_aggregated
 
 CREATE TABLE IF NOT EXISTS ui_tasks_aggregated
 (
-    task_id             SERIAL PRIMARY KEY,
+    task_id             INT PRIMARY KEY,
     completed_count     INT   NOT NULL,
     skipped_count       INT   NOT NULL,
     completion_time_avg FLOAT NOT NULL

@@ -1,28 +1,37 @@
 from fastapi import HTTPException, status
 
-from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate
-from chalicelib.utils import helper, pg_client
+from chalicelib.core.db_request_handler import DatabaseRequestHandler
+from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate, UTTestStatusUpdate
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.helper import dict_to_camel_case, list_to_camel_case
 
 table_name = "ut_tests"
 
 
 def search_ui_tests(project_id: int, search: UTTestSearch):
-    constraints, params = prepare_constraints_params_to_search(search, project_id)
+    select_columns = [
+        "ut.test_id",
+        "ut.title",
+        "ut.description",
+        "ut.created_at",
+        "ut.updated_at",
+        "json_build_object('user_id', u.user_id, 'name', u.name) AS created_by"
+    ]
 
-    select_columns = ["id", "title", "description", "is_active", "created_by", "created_at", "updated_at"]
-    sql = """
-        SELECT COUNT(*) OVER() AS count, {columns}
-        FROM {table}
-        WHERE {constraints}
-        ORDER BY %(sort_by)s %(sort_order)s
-        LIMIT %(limit)s OFFSET %(offset)s;
-    """.format(columns=", ".join(select_columns), table=table_name, constraints=" AND ".join(constraints))
+    db_handler = DatabaseRequestHandler("ut_tests AS ut")
+    db_handler.set_select_columns([f"COUNT(*) OVER() AS count"] + select_columns)
+    db_handler.add_join("LEFT JOIN users u ON ut.created_by = u.user_id")
+    db_handler.add_constraint("ut.project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.set_sort_by(f"ut.{search.sort_by} {search.sort_order}")
+    db_handler.set_pagination(page=search.page, page_size=search.limit)
 
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(sql, params)
-        cur.execute(query)
-        rows = cur.fetchall()
+    if (search.user_id is not None) and (search.user_id != 0):
+        db_handler.add_constraint("ut.created_by = %(user_id)s", {'user_id': search.user_id})
+
+    if search.query:
+        db_handler.add_constraint("ut.title ILIKE %(query)s", {'query': f"%{search.query}%"})
+
+    rows = db_handler.fetchall()
 
     if not rows or len(rows) == 0:
         return {"data": {"total": 0, "list": []}}
@@ -30,8 +39,7 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
     total = rows[0]["count"]
     return {
         "data": {
-            "list": [helper.dict_to_camel_case({key: value
-                                                for key, value in row.items()}) for row in rows],
+            "list": list_to_camel_case(rows),
             "total": total,
             "page": search.page,
             "limit": search.limit
@@ -39,130 +47,229 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
     }
 
 
-def create_ut_test(project_id: int, test_data: UTTestCreate):
-    columns = test_data.model_dump().keys()
-    values = test_data.model_dump().values()
-    sql = f"""
-        INSERT INTO {table_name} ({', '.join(columns)})
-        VALUES ({', '.join(['%s'] * len(values))})
-        RETURNING *;
-    """
+def create_ut_test(test_data: UTTestCreate):
+    db_handler = DatabaseRequestHandler("ut_tests")
+    data = {
+        'project_id': test_data.project_id,
+        'title': test_data.title,
+        'description': test_data.description,
+        'created_by': test_data.created_by,
+        'status': test_data.status,
+    }
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(sql, list(values))
-        row = cur.fetchone()
+    # Execute the insert query
+    new_test = db_handler.insert(data)
+    test_id = new_test['test_id']
+
+    # Insert tasks
+    if test_data.tasks:
+        new_test['tasks'] = insert_tasks(test_id, test_data.tasks)
+    else:
+        new_test['tasks'] = []
 
     return {
-        "data": helper.dict_to_camel_case({key: TimeUTC.datetime_to_timestamp(value) if '_at' in key else value
-                                           for key, value in row.items()})
+        "data": dict_to_camel_case(new_test)
     }
 
 
+def insert_tasks(test_id, tasks):
+    db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    data = []
+    for task in tasks:
+        data.append({
+            'test_id': test_id,
+            'title': task.title,
+            'description': task.description,
+            'allow_typing': task.allow_typing,
+        })
+
+    return db_handler.batch_insert(data)
+
+
 def get_ut_test(project_id: int, test_id: int):
-    select_columns = ["test_id", "title", "description", "is_active", "created_by", "created_at", "updated_at"]
+    db_handler = DatabaseRequestHandler("ut_tests AS ut")
 
-    tasks_sql = f"""
-        SELECT * FROM public.ut_test_tasks AS utt
-        WHERE utt.test_id = %(test_id)s;
+    tasks_sql = """
+        SELECT COALESCE(jsonb_agg(utt ORDER BY task_id), '[]'::jsonb) AS tasks
+        FROM public.ut_tests_tasks AS utt
+        WHERE utt.test_id = %(test_id)s
     """
 
-    sql = f"""
-        SELECT {', '.join(select_columns)},
-            ({tasks_sql}) AS tasks
-        FROM {table_name}
-        WHERE project_id = %(project_id)s AND test_id = %(test_id)s AND deleted_at IS NULL;
-    """
+    select_columns = [
+        "ut.test_id",
+        "ut.title",
+        "ut.description",
+        "ut.status",
+        "ut.created_at",
+        "ut.updated_at",
+        "json_build_object('id', u.user_id, 'name', u.name) AS created_by"
+    ]
+    db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
+    db_handler.add_join("LEFT JOIN users u ON ut.created_by = u.user_id")
+    db_handler.add_constraint("ut.project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("ut.test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.add_constraint("ut.deleted_at IS NULL")
 
-    print(sql.replace("  ", ""))
-
-    with pg_client.PostgresClient() as cur:
-        cur.execute(sql, {'project_id': project_id, 'test_id': test_id})
-        row = cur.fetchone()
+    row = db_handler.fetchone()
 
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
 
     row['created_at'] = TimeUTC.datetime_to_timestamp(row['created_at'])
     row['updated_at'] = TimeUTC.datetime_to_timestamp(row['updated_at'])
-    row['tasks'] = [helper.dict_to_camel_case(task) for task in row['tasks']]
+    row['tasks'] = [dict_to_camel_case(task) for task in row['tasks']]
 
     return {
-        "data": helper.dict_to_camel_case(row)
+        "data": dict_to_camel_case(row)
     }
 
 
 def delete_ut_test(project_id: int, test_id: int):
-    sql = f"""
-        UPDATE {table_name}
-        SET deleted_at = NOW()
-        WHERE project_id = %(project_id)s AND test_id = %(test_id)s AND deleted_at IS NULL;
-    """
+    db_handler = DatabaseRequestHandler("ut_tests")
+    update_data = {'deleted_at': 'NOW()'}  # Using a SQL function directly
+    db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.add_constraint("deleted_at IS NULL")
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(sql, {'project_id': project_id, 'test_id': test_id})
+    try:
+        db_handler.update(update_data)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    return {"status": "ok"}
+
+def check_test_exists(db_handler, project_id, test_id):
+    db_handler.set_select_columns(['1'])  # '1' as a dummy column for existence check
+    db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.add_constraint("deleted_at IS NULL")
+
+    return bool(db_handler.fetchone())
 
 
 def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdate):
+    db_handler = DatabaseRequestHandler("ut_tests")
+
+    # Check if the test exists
+    if not check_test_exists(db_handler, project_id, test_id):
+        return {"status": "error", "message": "Test not found"}
+
+    tasks = test_update.tasks
+    del test_update.tasks
+
     update_data = test_update.model_dump(exclude_unset=True)
     if not update_data:
         return {"status": "no_update"}
 
-    set_clauses = [f"{key} = %({key})s" for key in update_data.keys()]
-    update_data.update({"project_id": project_id, "test_id": test_id})
-    sql = f"""
-        UPDATE {table_name}
-        SET {', '.join(set_clauses)}
-        WHERE project_id = %(project_id)s AND test_id = %(test_id)s AND deleted_at IS NULL;
-    """
+    db_handler.constraints.clear()
+    db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.add_constraint("deleted_at IS NULL")
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(sql, update_data)
+    result = db_handler.update(update_data)
 
-    return {"status": "ok"}
+    if result is None:
+        return {"status": "error", "message": "No update was made"}
 
+    result['tasks'] = check_tasks_update(db_handler, test_id, tasks)
 
-def get_sessions(project_id: int, test_id: int):
-    return {"status": "ok"}
-
-
-def get_responses(project_id: int, test_id: int):
-    sql = f"""
-        SELECT * FROM public.ut_test_responses AS utr
+    return {
+        "data": dict_to_camel_case(result)
+    }
 
 
-def update_status(project_id: int, test_id: int, status: str):
-    sql = f"""
-        UPDATE {table_name}
-        SET status = %(status)s
-        WHERE project_id = %(project_id)s AND test_id = %(test_id)s AND deleted_at IS NULL;
-    """
+def check_tasks_update(db_handler, test_id, tasks):
+    if tasks is None:
+        return []
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(sql, {'project_id': project_id, 'test_id': test_id, 'status': status})
+    db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    existing_tasks = get_test_tasks(db_handler, test_id)
+    to_be_deleted = []
+    to_be_updated = []
+    to_be_created = []
 
-    return {"status": status}
+    existing_ids = [task['task_id'] for task in existing_tasks]
+
+    for task_id in existing_ids:
+        if task_id not in [task.task_id for task in tasks]:
+            to_be_deleted.append(task_id)
+
+    for task in tasks:
+        if task.task_id is None:
+            to_be_created.append(task)
+        elif task.task_id in existing_ids:
+            to_be_updated.append(task)
+
+    if len(to_be_created) > 0:
+        insert_tasks(test_id, to_be_created)
+
+    if len(to_be_deleted) > 0:
+        delete_tasks(db_handler, to_be_deleted)
+
+    if len(to_be_updated) > 0:
+        update_tasks(db_handler, to_be_updated)
+
+    return get_test_tasks(db_handler, test_id)
 
 
-def prepare_constraints_params_to_search(data, project_id):
-    constraints = ["project_id = %(project_id)s", "deleted_at IS NULL"]
-    params = {"project_id": project_id, "limit": data.limit, "offset": (data.page - 1) * data.limit}
-
-    if data.is_active is not None:
-        constraints.append("is_active = %(is_active)s")
-        params["is_active"] = data.is_active
-
-    if data.user_id is not None:
-        constraints.append("created_by = %(user_id)s")
-        params["user_id"] = data.user_id
-
-    if data.query:
-        constraints.append("title ILIKE %(query)s")
-        params["query"] = f"%{data.query}%"
-
-    return " AND ".join(constraints), params
+def delete_tasks(db_handler, task_ids):
+    db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    db_handler.add_constraint("task_id IN %(task_ids)s", {'task_ids': tuple(task_ids)})
+    db_handler.delete()
 
 
-def __prefix_table_name(source):
-    return [f"{table_name}.{x}" for x in source]
+def update_tasks(db_handler, tasks):
+    db_handler = DatabaseRequestHandler("ut_tests_tasks")
+    for task in tasks:
+        update_data = task.model_dump(exclude_unset=True)
+        db_handler.add_constraint("task_id = %(task_id)s", {'task_id': task.task_id})
+        db_handler.update(update_data)
+
+
+def get_test_tasks(db_handler, test_id):
+    db_handler.set_select_columns(['task_id', 'title', 'description', 'allow_typing'])
+    db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
+
+    return db_handler.fetchall()
+
+
+def ut_tests_sessions(project_id: int, test_id: int, page: int, limit: int):
+    db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
+    db_handler.set_select_columns(["s.*"])
+    db_handler.add_join("JOIN sessions s ON uts.session_id = s.session_id AND s.project_id = %(project_id)s")
+    db_handler.add_constraint("uts.type = %(type)s", {'type': 'test'})
+    db_handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('finished', 'aborted')})
+    db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("uts.type_id = %(test_id)s", {'test_id': test_id})
+    db_handler.set_pagination(page, limit)
+
+    sessions = db_handler.fetchall()
+
+    return {
+        "data": {
+            "list": list_to_camel_case(sessions),
+            "page": page,
+            "limit": limit
+        }
+    }
+
+
+def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
+    db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
+    db_handler.set_select_columns(["uts.*"])
+    db_handler.add_constraint("uts.comment IS NOT NULL")
+    db_handler.add_constraint("uts.type = %(type)s", {'type': 'task'})
+    db_handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
+    # db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("uts.type_id = %(test_id)s", {'test_id': task_id})
+    db_handler.set_pagination(page, limit)
+
+    responses = db_handler.fetchall()
+
+    return {
+        "data": {
+            "list": responses,
+            "page": page,
+            "limit": limit
+        }
+    }

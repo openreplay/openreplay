@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 
 from chalicelib.core.usability_testing.service import search_ui_tests, create_ut_test, get_ut_test, delete_ut_test, \
-    update_ut_test, \
-    update_status, prepare_constraints_params_to_search
+    update_ut_test
 
 from chalicelib.core.usability_testing.schema import UTTestSearch, UTTestCreate, UTTestUpdate
 
@@ -65,7 +64,7 @@ class TestUsabilityTesting(unittest.TestCase):
             "updated_at": datetime.datetime.now().isoformat(),
         }
 
-        result = create_ut_test(1, data)
+        result = create_ut_test(data)
 
         self.assertEqual(result['data']['testId'], 123)
         self.assertEqual(result['data']['title'], "Test")
@@ -107,57 +106,21 @@ class TestUsabilityTesting(unittest.TestCase):
 
         result = delete_ut_test(1, 123)
 
-        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['status'], 'success')
 
     def test_update_ut_test_updates_record(self):
         self.mock_pg_client.return_value.rowcount = 1
 
         result = update_ut_test(1, 123, UTTestUpdate(title="Updated Test"))
 
-        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['status'], 'success')
 
-    def test_update_status_updates_status(self):
-        self.mock_pg_client.PostgresClient.return_value.__enter__.return_value.rowcount = 1
-
-        result = update_status(1, 123, 'active')
-
-        self.assertEqual('active', result['status'])
-
-    def test_prepare_constraints_params_to_search(self):
-        # Test with page 1 and is_active True
-        test_data = UTTestSearch(page=1, limit=10, sort_by='test_id', sort_order='asc', is_active=True)
-        constraints, params = prepare_constraints_params_to_search(test_data, 1)
-
-        self.assertEqual(constraints,
-                         'project_id = %(project_id)s AND deleted_at IS NULL AND is_active = %(is_active)s')
-        self.assertEqual(params['is_active'], True)
-        self.assertEqual(params['limit'], 10)
-        self.assertEqual(params['offset'], 0)
-        self.assertEqual(params['project_id'], 1)
-
-        # Test with page 3 and is_active False
-        test_data = UTTestSearch(page=3, limit=10, sort_by='test_id', sort_order='asc', is_active=False)
-        constraints, params = prepare_constraints_params_to_search(test_data, 2)
-
-        self.assertEqual(constraints,
-                         'project_id = %(project_id)s AND deleted_at IS NULL AND is_active = %(is_active)s')
-        self.assertEqual(params['is_active'], False)
-        self.assertEqual(params['offset'], 20)
-        self.assertEqual(params['limit'], 10)
-        self.assertEqual(params['project_id'], 2)
-
-        # Test with page 3 and user_id 1
-        test_data = UTTestSearch(page=3, limit=10, sort_by='test_id', sort_order='asc', is_active=False, user_id=1)
-        constraints, params = prepare_constraints_params_to_search(test_data, 2)
-
-        self.assertEqual(constraints,
-                         'project_id = %(project_id)s AND deleted_at IS NULL AND is_active = %(is_active)s AND '
-                         'created_by = %(user_id)s')
-        self.assertEqual(params['is_active'], False)
-        self.assertEqual(params['offset'], 20)
-        self.assertEqual(params['limit'], 10)
-        self.assertEqual(params['project_id'], 2)
-        self.assertEqual(params['user_id'], 1)
+    # def test_update_status_updates_status(self):
+    #     self.mock_pg_client.PostgresClient.return_value.__enter__.return_value.rowcount = 1
+    #
+    #     result = update_status(1, 123, 'active')
+    #
+    #     self.assertEqual('active', result['status'])
 
 
 if __name__ == '__main__':
