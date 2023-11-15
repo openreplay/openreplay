@@ -74,9 +74,9 @@ async def make_application():
 
     # TODO: pick configuration from .env with decouple
 
-    # database = psycopg_pool.AsyncConnectionPool(
-    #     "dbname=amirouche user=amirouche password=amirouche"
-    # )
+    database = psycopg_pool.AsyncConnectionPool(
+        "dbname=amirouche user=amirouche password=amirouche"
+    )
 
     database = None
 
