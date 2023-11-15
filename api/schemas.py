@@ -7,6 +7,8 @@ from pydantic.types import Json
 from chalicelib.utils.TimeUTC import TimeUTC
 import re
 
+NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#]*$"
+
 
 def attribute_to_camel_case(snake_str):
     components = snake_str.split("_")
@@ -32,16 +34,16 @@ class UserLoginSchema(_Grecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(...)
-    organizationName: str = Field(...)
+    fullname: str = Field(..., regex=NAME_PATTERN)
+    organizationName: str = Field(..., regex=NAME_PATTERN)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(None)
-    tenantName: Optional[str] = Field(None)
+    name: Optional[str] = Field(None, regex=NAME_PATTERN)
+    tenantName: Optional[str] = Field(None, regex=NAME_PATTERN)
     opt_out: Optional[bool] = Field(None)
 
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
@@ -63,16 +65,16 @@ class EditUserPasswordSchema(BaseModel):
 
 
 class UpdateTenantSchema(BaseModel):
-    name: Optional[str] = Field(None)
+    name: Optional[str] = Field(None, regex=NAME_PATTERN)
     opt_out: Optional[bool] = Field(None)
-    tenant_name: Optional[str] = Field(None)
+    tenant_name: Optional[str] = Field(None, regex=NAME_PATTERN)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class CreateProjectSchema(BaseModel):
-    name: str = Field(default="my first project")
+    name: str = Field(default="my first project", regex=NAME_PATTERN)
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
@@ -88,14 +90,14 @@ class CurrentContext(CurrentAPIContext):
 
 
 class AddCollaborationSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., regex=NAME_PATTERN)
     url: HttpUrl = Field(...)
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
     _transform_url = validator('url', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
-    name: Optional[str] = Field(None)
+    name: Optional[str] = Field(None, regex=NAME_PATTERN)
 
 
 class CreateNotificationSchema(BaseModel):
@@ -138,13 +140,13 @@ class CreateEditWebhookSchema(BaseModel):
     webhookId: Optional[int] = Field(None)
     endpoint: str = Field(...)
     authHeader: Optional[str] = Field(None)
-    name: Optional[str] = Field(...)
+    name: Optional[str] = Field(..., regex=NAME_PATTERN)
     _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class CreateMemberSchema(BaseModel):
     userId: Optional[int] = Field(None)
-    name: str = Field(...)
+    name: str = Field(..., regex=NAME_PATTERN)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
 
@@ -153,7 +155,7 @@ class CreateMemberSchema(BaseModel):
 
 
 class EditMemberSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., regex=NAME_PATTERN)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
 
@@ -328,7 +330,7 @@ class AlertDetectionMethod(str, Enum):
 
 
 class AlertSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., regex=NAME_PATTERN)
     detection_method: AlertDetectionMethod = Field(...)
     change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
     description: Optional[str] = Field(None)
@@ -1036,11 +1038,11 @@ class __CardSchema(BaseModel):
 
 class CardSchema(__CardSchema, CardChartSchema):
     view_type: Union[MetricTimeseriesViewType, \
-                     MetricTableViewType, MetricOtherViewType] = Field(...)
+        MetricTableViewType, MetricOtherViewType] = Field(...)
     metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-                     MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
-                     MetricOfClickMap] = Field(default=MetricOfTable.user_id)
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(default=MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     is_template: bool = Field(default=False)
 
@@ -1212,7 +1214,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator._is, \
-                      SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     transform = root_validator(pre=True, allow_reuse=True)(transform_old_FilterType)
 
