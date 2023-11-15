@@ -37,7 +37,8 @@ def compute():
                     (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
         data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
+        if len(data) > 0:
+            requests.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
 
 
 def new_client():
