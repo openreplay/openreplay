@@ -1,10 +1,13 @@
 import asyncio
+import os
 import re
+import secrets
 import sys
 import time
 from collections import namedtuple
 from contextvars import ContextVar
 from mimetypes import guess_type
+from pathlib import Path
 
 import httpx
 import psycopg
@@ -17,6 +20,7 @@ import helper
 
 ROUTE_REGISTRY = []
 
+ORPY_ROOT = Path(".").resolve()
 ORPY_DEBUG = config("ORPY_DEBUG", False)
 
 
@@ -94,9 +98,17 @@ async def make_application():
 
     # TODO: pick configuration from .env with decouple
 
-    database = psycopg_pool.AsyncConnectionPool(
-        "dbname=amirouche user=amirouche password=amirouche"
-    )
+    database = {
+        "host": config("pg_host"),
+        "dbname": config("pg_dbname"),
+        "user": config("pg_user"),
+        "password": config("pg_password"),
+        "port": config("pg_port", cast=int),
+        "application_name": config("APP_NAME", default="ORPY"),
+    }
+
+    database = " ".join("{}={}".format(k, v) for k, v in database.items())
+    database = psycopg_pool.AsyncConnectionPool(database)
 
     # setup app
     make_timestamp = make_timestamper()
@@ -172,9 +184,6 @@ def _format_invitation_link(token):
     return "{}{}{}".format(config("SITE_URL"), config("invitation_link"), token)
 
 
-import secrets
-
-
 async def _query_user_by_email(txn, email):
     sql = """
     SELECT  users.user_id,
@@ -193,9 +202,6 @@ async def _query_user_by_email(txn, email):
     await txn.execute(sql, email)
     row = await txn.fetchrow()
     return helpers.dict_to_camel_case(row)
-
-
-import os
 
 
 async def _task_reset_password_link(email):
@@ -218,6 +224,7 @@ async def _task_reset_password_link(email):
 
 @route("GET", "password", "reset-link")
 async def public_reset_password_link():
+    # TODO: check receive fetch a complete body
     data = json.loads(await orpy.get().receive())
     if not captcha.is_valid(data.captcha):
         out = jsonify({"errors": ["Invalid capatcha"]})
@@ -258,7 +265,7 @@ async def http(send):
         else:
             components = path.split("/")
             filename = components[-1]
-            filepath = ROOT / "/".join(components[1:])
+            filepath = ORPY_ROOT / "/".join(components[1:])
             mimetype = guess_type(filename)[0] or "application/octet-stream"
 
             await send(
@@ -365,13 +372,73 @@ async def http(send):
         )
 
 
+async def websocket(send):
+    import json
+
+    import ffw
+
+    event = await context.get().receive()
+
+    assert event["type"] == "websocket.connect"
+
+    async def on_message():
+        await send({"type": "websocket.send", "text": json.dumps(root)})
+
+    dispatch = {
+        "websocket.receive": on_message,
+    }
+
+    while True:
+        event = await context.get().receive()
+
+        if event["type"] == "websocket.disconnect":
+            return
+
+        log.info("message: {}", event)
+
+        try:
+            message = json.loads(event["text"])
+            log.info(message)
+            root = ffw.h.div()["Hello, World!"]
+            log.critical(root)
+            html, events = ffw.serialize(html)
+            previous = events
+        except Exception:
+            log.exception("error!")
+
+
 async def orpy(scope, receive, send):
     log.debug("ASGI scope: {}", scope)
 
     if scope["type"] == "lifespan" and application.get() is None:
         application.set(await make_application())
+        return
 
     context.set(Context(application, scope, receive))
 
-    if scope["type"] == "http":
+    if not ORPY_DEBUG and scope["type"] == "http":
+        await http(send)
+
+    if not ORPY_DEBUG:
+        return
+
+    if scope["type"] == "http" and scope["path"] == "/":
+        with open("static/index.html", "rb") as f:
+            body = f.read()
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [[b"content-type", b"text/html"]],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": body,
+            }
+        )
+    elif scope["type"] == "websocket":
+        await websocket(send)
+    else:
         await http(send)
