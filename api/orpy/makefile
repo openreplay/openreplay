@@ -28,7 +28,7 @@ clean: ## Clean up
 	git clean -fX
 
 todo: ## Things that should be done
-	@grep -nR --color=always  --before-context=2  --after-context=2 TODO .
+	@grep -nR --color=always --before-context=2  --after-context=2 TODO .
 
 xxx: ## Things that require attention
 	@grep -nR --color=always --before-context=2  --after-context=2 XXX .
