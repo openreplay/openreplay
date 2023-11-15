@@ -348,6 +348,128 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         return sessions
 
 
+def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
+                  metric_of: schemas.MetricOfTable, metric_value: List):
+    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                   density=density))
+    extra_event = None
+    if metric_of == schemas.MetricOfTable.visited_url:
+        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
+                            FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                            WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
+                              AND ev.datetime <= toDateTime(%(endDate)s / 1000)
+                              AND ev.project_id = %(project_id)s
+                              AND ev.event_type = 'LOCATION'"""
+    elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
+                                                              operator=schemas.SearchEventOperator._is))
+    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
+                                                  favorite_only=False, issue=None, project_id=project_id,
+                                                  user_id=None, extra_event=extra_event)
+    full_args["step_size"] = step_size
+    sessions = []
+    with ch_client.ClickHouseClient() as cur:
+        full_args["limit_s"] = 0
+        full_args["limit_e"] = 200
+        if isinstance(metric_of, schemas.MetricOfTable):
+            main_col = "user_id"
+            extra_col = "s.user_id"
+            extra_where = ""
+            pre_query = ""
+            if metric_of == schemas.MetricOfTable.user_country:
+                main_col = "user_country"
+                extra_col = "s.user_country"
+            elif metric_of == schemas.MetricOfTable.user_device:
+                main_col = "user_device"
+                extra_col = "s.user_device"
+            elif metric_of == schemas.MetricOfTable.user_browser:
+                main_col = "user_browser"
+                extra_col = "s.user_browser"
+            elif metric_of == schemas.MetricOfTable.issues:
+                main_col = "issue"
+                extra_col = f"arrayJoin(s.issue_types) AS {main_col}"
+                if len(metric_value) > 0:
+                    extra_where = []
+                    for i in range(len(metric_value)):
+                        arg_name = f"selected_issue_{i}"
+                        extra_where.append(f"{main_col} = %({arg_name})s")
+                        full_args[arg_name] = metric_value[i]
+                    extra_where = f"WHERE ({' OR '.join(extra_where)})"
+            elif metric_of == schemas.MetricOfTable.visited_url:
+                main_col = "url_path"
+                extra_col = "s.url_path"
+            main_query = cur.format(f"""{pre_query}
+                                        SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                             {main_col} AS name,
+                                             count(DISTINCT session_id) AS session_count
+                                        FROM (SELECT s.session_id AS session_id, 
+                                                    {extra_col}
+                                        {query_part}
+                                        ORDER BY s.session_id desc) AS filtred_sessions
+                                        {extra_where}
+                                        GROUP BY {main_col}
+                                        ORDER BY session_count DESC
+                                        LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
+                                    full_args)
+            logging.debug("--------------------")
+            logging.debug(main_query)
+            logging.debug("--------------------")
+            sessions = cur.execute(main_query)
+            count = 0
+            if len(sessions) > 0:
+                count = sessions[0]["main_count"]
+                for s in sessions:
+                    s.pop("main_count")
+            sessions = {"count": count, "values": helper.list_to_camel_case(sessions)}
+
+        return sessions
+
+
+def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
+    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
+                                                  favorite_only=False, issue=None, project_id=project_id,
+                                                  user_id=None)
+
+    with ch_client.ClickHouseClient() as cur:
+        full_args["issues_limit"] = data.limit
+        full_args["issues_limit_s"] = (data.page - 1) * data.limit
+        full_args["issues_limit_e"] = data.page * data.limit
+        print(full_args)
+        main_query = cur.format(f"""SELECT issues.type                             AS name,
+                                                 issues.context_string                   AS value,
+                                                 COUNT(DISTINCT raw_sessions.session_id) AS session_count,
+                                                 sum(session_count) OVER ()              AS total_sessions,
+                                                 COUNT(1) OVER ()                        AS count
+                                          FROM (SELECT session_id
+                                                {query_part}) AS raw_sessions
+                                                   INNER JOIN experimental.events ON (raw_sessions.session_id = events.session_id)
+                                                   INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
+                                          WHERE event_type = 'ISSUE'
+                                            AND events.datetime >= toDateTime(%(startDate)s / 1000)
+                                            AND events.datetime <= toDateTime(%(endDate)s / 1000)
+                                            AND events.project_id = %(projectId)s
+                                            AND issues.project_id = %(projectId)s
+                                          GROUP BY issues.type, issues.context_string
+                                          ORDER BY session_count DESC
+                                          LIMIT %(issues_limit)s OFFSET %(issues_limit_s)s""", full_args)
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
+        issues = cur.execute(main_query)
+        issues = helper.list_to_camel_case(issues)
+        if len(issues) > 0:
+            total_sessions = issues[0]["totalSessions"]
+            issues_count = issues[0]["count"]
+            for s in issues:
+                s.pop("totalSessions")
+                s.pop("count")
+        else:
+            total_sessions = 0
+            issues_count = 0
+
+        return {"count": issues_count, "totalSessions": total_sessions, "values": issues}
+
+
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
                                                                             schemas.EventType.graphql] \
