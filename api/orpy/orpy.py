@@ -44,6 +44,7 @@ Application = namedtuple(
         "cache",
         # Background tasks runner
         "runner",
+        "on_task",
         "tasks",
     ),
 )
@@ -51,25 +52,26 @@ Application = namedtuple(
 
 def runner_spawn(coroutine):
     context.get().tasks.add(coroutine)
+    context.get().application.on_task.set()
 
 
 async def runner_run():
-    while asyncio.get_event_loop().is_running():
-        log.debug("Runner falling to sleep for one second")
-        await asyncio.sleep(1)
+    while not application.get():
+        await asyncio.sleep(0.1)
+    while asyncio.get_event_loop().is_running(): 
+        await application.get().on_task
         while application.get() and application.get().tasks:
             task = application.get().tasks.pop()
             await task
 
-
 # TODO: use uvicorn lifespan
 async def make_application():
+    log.debug("orpy:make_application()")
     # https://loguru.readthedocs.io/en/stable/resources/migration.html
     log.remove()
     level = "DEBUG" if ORPY_DEBUG else "WARNING"
     log.add(sys.stderr, enqueue=True, backtrace=True, diagnose=ORPY_DEBUG, level=level)
 
-    # TODO: replace with uvicorn lifespan
     # TODO: pick configuration from .env with decouple
 
     # database = psycopg_pool.AsyncConnectionPool(
@@ -88,6 +90,7 @@ async def make_application():
         dict(),
         make_timestamp,
         asyncio.create_task(runner_run()),
+        asyncio.Event(),
         set(),
     )
 
