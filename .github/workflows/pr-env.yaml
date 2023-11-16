@@ -3,9 +3,6 @@ name: PR-Deployment
 on:
   workflow_dispatch:
     inputs:
-      pr_number:
-        description: 'For which PR to deploy'
-        required: true
       build_service:
         description: 'Name of a single service to build(in small letters). "backend:all" to build complete backend'
         required: true
@@ -19,12 +16,37 @@ jobs:
   create-vcluster-pr:
     runs-on: ubuntu-latest
     env:
-      PR_NUMBER: ${{ format('pr-{0}{1}', github.event.inputs.pr_number, (github.event.inputs.env_flavour == 'ee' && '-ee' || '')) }}
       build_service: ${{ github.event.inputs.build_service }}
       env_flavour: ${{ github.event.inputs.env_flavour }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@v2
+    - name: Setting up env variables
+      run: |
+        # Fetching PR details
+        PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls" \
+            | jq -r --arg BRANCH "${{ github.ref_name }}" '.[] | select(.head.ref==$BRANCH)')
+
+        # Extracting PR number
+        PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number' | head -n 1)
+        if [-z $PR_NUMBER]; then
+          echo "No PR found for ${{ github.ref_name}}"
+          exit 100
+        fi
+
+        echo "PR_NUMBER_PRE=$PR_NUMBER" >> $GITHUB_ENV
+        PR_NUMBER=pr-$PR_NUMBER
+        if [ $env_flavour == "ee" ]; then
+          PR_NUMBER=$PR_NUMBER-ee
+        fi
+        echo "PR number: $PR_NUMBER"
+        echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+        # Extracting PR status (open, closed, merged)
+        PR_STATUS=$(echo "$PR_DATA" | jq -r '.state' | head -n 1)
+        echo "PR status: $PR_STATUS"
+        echo "PR_STATUS=$PR_STATUS" >> $GITHUB_ENV
     - name: Install vCluster CLI
       run: |
         # Replace with the command to install vCluster CLI
@@ -157,8 +179,8 @@ jobs:
         DOMAIN_NAME=https://$PR_NUMBER.${{ secrets.OR_PR_DOMAIN_NAME }}
 
         # Variables
-        PR_NUMBER=https://github.com/${{ github.repository }}/pull/$PR_NUMBER
-        BRANCH_NAME=${GITHUB_HEAD_REF}
+        PR_NUMBER=https://github.com/${{ github.repository }}/pull/${PR_NUMBER_PRE}
+        BRANCH_NAME=${{ github.ref_name }}
         ORIGIN=$DOMAIN_NAME
         ASSETS_HOST=$DOMAIN_NAME/assets
         API_EDP=$DOMAIN_NAME/api
@@ -175,26 +197,26 @@ jobs:
         PAYLOAD=$(cat <<EOF
         {
             "channel": "$SLACK_CHANNEL",
-            "text": "Deployment Information:\n- PR#: $PR_NUMBER\n- Branch Name: $BRANCH_NAME\n- Origin: $ORIGIN\n- Assets Host: $ASSETS_HOST\n- API Endpoint: $API_EDP\n- Ingest Point: $INGEST_POINT\n- To use the cluster: download the following file and run the following commands, \n  export KUBECONFIG=/path/to/kubeconfig.yaml\n  k9s"
+            "text": "Deployment Information:\n- PR#: $PR_NUMBER\n- PR Status: $PR_STATUS\n- Branch Name: $BRANCH_NAME\n- Origin: $ORIGIN\n- Assets Host: $ASSETS_HOST\n- API Endpoint: $API_EDP\n- Ingest Point: $INGEST_POINT\n- To use the cluster: download the following file and run the following commands, \n  export KUBECONFIG=/path/to/kubeconfig.yaml\n  k9s"
         }
         EOF
         )
 
         # Send the message to Slack
-        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -H 'Content-type: application/json' --data "$PAYLOAD" https://slack.com/api/chat.postMessage
+        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -H 'Content-type: application/json' --data "$PAYLOAD" https://slack.com/api/chat.postMessage > /dev/null
 
         # Upload the file to Slack
-        curl -F file=@"$FILE_PATH" -F channels="$SLACK_CHANNEL" -F token="$SLACK_BOT_TOKEN" https://slack.com/api/files.upload
+        curl -F file=@"$FILE_PATH" -F channels="$SLACK_CHANNEL" -F token="$SLACK_BOT_TOKEN" https://slack.com/api/files.upload > /dev/null
 
     # - name: Cleanup
     #   if: always()
     #   run: |
     #     # Add any cleanup commands if necessary
 
-    - name: Debug Job
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}
-        ENVIRONMENT: staging
+    # - name: Debug Job
+    #   if: failure()
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
