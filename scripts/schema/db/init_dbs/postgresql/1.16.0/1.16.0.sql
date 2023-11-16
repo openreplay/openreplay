@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS ut_tests_tasks
 CREATE TABLE IF NOT EXISTS ut_tests_signals
 (
     signal_id  INT PRIMARY KEY,
-    session_id INT         NOT NULL,
+    session_id BIGINT         NOT NULL,
     status     VARCHAR(20) NOT NULL CHECK (status IN ('begin', 'finished', 'aborted', 'done', 'skipped')),
     type       VARCHAR(10) NOT NULL CHECK (type IN ('test', 'task')),
     type_id    INT         NOT NULL,
