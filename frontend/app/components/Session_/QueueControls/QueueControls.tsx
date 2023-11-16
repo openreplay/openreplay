@@ -49,14 +49,14 @@ function QueueControls(props: Props) {
         props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
       }
     }
-  }, []);
+  }, [sessionIds]);
 
   const nextHandler = () => {
-    props.history.push(withSiteId(sessionRoute(nextId), siteId));
+    props.history.push(withSiteId(sessionRoute(nextId, props.location.search), siteId));
   };
 
   const prevHandler = () => {
-    props.history.push(withSiteId(sessionRoute(previousId), siteId));
+    props.history.push(withSiteId(sessionRoute(previousId, props.location.search), siteId));
   };
 
   return (
