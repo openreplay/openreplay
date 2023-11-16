@@ -32,7 +32,7 @@ function ResetPasswordRequest(props: Props) {
   };
 
   const handleSubmit = (token?: any) => {
-    if (token === null || token === undefined)  return;
+    if (CAPTCHA_ENABLED && recaptchaRef.current && (token === null || token === undefined))  return;
 
     setError(null);
     props
