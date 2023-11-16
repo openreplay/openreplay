@@ -117,32 +117,29 @@ function WebPlayer(props: any) {
     const groupBy = props.query.get('groupBy');
     if (groupBy && groupBy in session.metadata) {
       console.log('fetching sessions for group by', groupBy, session.metadata[groupBy]);
-      fetchAutoplayList(
-        Filter({
-          name: 'groupByAutoPlayFilter',
-          filters: [
-            {
-              key: groupBy,
-              type: 'MULTIPLE',
-              category: 'Session & User Metadata',
-              operator: 'is',
-              operatorOptions: [
-                {
-                  key: 'is',
-                  label: 'is',
-                  value: 'is',
-                },
-              ],
-              value: [session.metadata[groupBy]],
-              filters: null,
-            },
-          ],
-          custom: {},
-          rangeValue: 'LAST_30_DAYS',
-          startDate: 1697439600000,
-          endDate: 1700117999000,
-        })
-      );
+      fetchAutoplayList({
+        events: [],
+        filters: [
+          {
+            value: [session.metadata[groupBy]],
+            type: 'metadata',
+            operator: 'is',
+            source: groupBy,
+            filters: [],
+          },
+        ],
+        custom: {},
+        rangeValue: 'LAST_30_DAYS',
+        startDate: 1697500800000,
+        endDate: 1700179199000,
+        groupByUser: false,
+        sort: 'startTs',
+        order: 'asc',
+        strict: false,
+        eventsOrder: 'then',
+        limit: 200,
+        page: 1,
+      });
     }
   }, [props.location.search, session]);
 

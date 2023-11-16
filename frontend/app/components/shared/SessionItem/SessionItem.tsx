@@ -79,8 +79,6 @@ function getSessionLink(
 ) {
   if (isAssist) {
     return liveSessionRoute(sessionId, queryParams);
-  } else if (isGroupedSessions) {
-    return sessionRoute(sessionId, { ...queryParams });
   } else {
     return sessionRoute(sessionId, queryParams);
   }

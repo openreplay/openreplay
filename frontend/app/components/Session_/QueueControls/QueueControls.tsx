@@ -39,24 +39,26 @@ function QueueControls(props: Props) {
   const disabled = sessionIds.length === 0;
 
   useEffect(() => {
-    if (latestRequestTime) {
+    if (sessionIds && sessionIds.length > 0) {
       props.setAutoplayValues();
       const totalPages = Math.ceil(total / PER_PAGE);
       const index = sessionIds.indexOf(sessionId);
 
       // check for the last page and load the next
-      if (currentPage !== totalPages && index === sessionIds.length - 1) {
+      if (latestRequestTime && currentPage !== totalPages && index === sessionIds.length - 1) {
         props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
       }
     }
   }, [sessionIds]);
 
   const nextHandler = () => {
-    props.history.push(withSiteId(sessionRoute(nextId, props.location.search), siteId));
+    const queryParams = Object.fromEntries(new URLSearchParams(location.search));
+    props.history.push(withSiteId(sessionRoute(nextId, queryParams), siteId));
   };
 
   const prevHandler = () => {
-    props.history.push(withSiteId(sessionRoute(previousId, props.location.search), siteId));
+    const queryParams = Object.fromEntries(new URLSearchParams(location.search));
+    props.history.push(withSiteId(sessionRoute(previousId, queryParams), siteId));
   };
 
   return (
