@@ -23,6 +23,7 @@ import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
+import CanvasRecorder from './canvas.js'
 
 import type {
   Options as WebworkerOptions,
@@ -142,6 +143,12 @@ export default class App {
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId
   public attributeSender: AttributeSender
+  private canvasRecorder: CanvasRecorder | null = null
+  private canvasOptions = {
+    canvasEnabled: false,
+    canvasQuality: 'medium',
+    canvasFPS: 1,
+  }
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -631,6 +638,9 @@ export default class App {
           userDevice,
           userOS,
           userState,
+          canvasEnabled,
+          canvasQuality,
+          canvasFPS,
         } = r
         if (
           typeof token !== 'string' ||
@@ -679,9 +689,15 @@ export default class App {
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
         // TODO: start as early as possible (before receiving the token)
+        this.canvasRecorder =
+          this.canvasRecorder ?? new CanvasRecorder(this, { fps: 2, quality: 'high' })
+        this.canvasRecorder.startTracking()
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
+        // if (canvasEnabled) {
+        //   canvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
+        // }
         this.activityState = ActivityState.Active
 
         this.notify.log('OpenReplay tracking started.')
@@ -752,6 +768,7 @@ export default class App {
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
+        this.canvasRecorder?.clear()
       } finally {
         this.activityState = ActivityState.NotActive
       }

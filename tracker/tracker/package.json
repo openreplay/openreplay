@@ -1,14 +1,15 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "10.0.3-0",
+  "version": "10.0.3-42",
   "keywords": [
     "logging",
     "replay"
   ],
   "author": "Alex Tsokurov",
   "contributors": [
-    "Aleksandr K <alex@openreplay.com>"
+    "Aleksandr K <alex@openreplay.com>",
+    "Nikita D <nikita@openreplay.com>"
   ],
   "license": "MIT",
   "type": "module",
@@ -51,7 +52,6 @@
   },
   "dependencies": {
     "@medv/finder": "^3.1.0",
-    "@openreplay/tracker": "",
     "error-stack-parser": "^2.0.6",
     "fflate": "^0.8.1"
   },
