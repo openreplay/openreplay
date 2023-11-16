@@ -23,14 +23,13 @@ jobs:
       uses: actions/checkout@v2
     - name: Setting up env variables
       run: |
-        # Fetching PR details
+        # Fetching details open/draft PR for current branch
         PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/pulls" \
-            | jq -r --arg BRANCH "${{ github.ref_name }}" '.[] | select(.head.ref==$BRANCH)')
-
+            | jq -r --arg BRANCH "${{ github.ref_name }}" '.[] | select((.head.ref==$BRANCH) and (.state=="open") and (.draft==true or .draft==false))')
         # Extracting PR number
         PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number' | head -n 1)
-        if [-z $PR_NUMBER]; then
+        if [ -z $PR_NUMBER ]; then
           echo "No PR found for ${{ github.ref_name}}"
           exit 100
         fi
