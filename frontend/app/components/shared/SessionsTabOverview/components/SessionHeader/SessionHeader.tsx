@@ -16,6 +16,7 @@ interface Props {
   filter: any;
   activeTab: string;
   isEnterprise: boolean;
+  metaLoading: boolean;
   applyFilter: (filter: any) => void;
   setActiveTab: (tab: any) => void;
 }
@@ -28,6 +29,7 @@ function SessionHeader(props: Props) {
     activeTab,
     isEnterprise,
     listCount,
+    metaLoading,
   } = props;
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
@@ -61,13 +63,17 @@ function SessionHeader(props: Props) {
                   <div className="mx-2" />
                   <SelectDateRange period={period} onChange={onDateChange} right={true} />
                   <div className="mx-2" />
-                  <SessionGroupBy />
-                  <div className="mx-2" />
                 </>
               )}
             </>
           )}
-          <SessionSort />
+          {!metaLoading && (
+            <>
+              <SessionGroupBy />
+              <div className="mx-2" />
+              <SessionSort />
+            </>
+          )}
           <SessionSettingButton />
         </div>
       ) : null}
@@ -87,6 +93,7 @@ export default connect(
     listCount: state.getIn(['sessions', 'total']),
     activeTab: state.getIn(['search', 'activeTab', 'type']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
   }),
   { applyFilter, setActiveTab }
 )(SessionHeader);

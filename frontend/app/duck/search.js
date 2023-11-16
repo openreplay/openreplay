@@ -51,21 +51,17 @@ const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 
 // Metric - Series - [] - filters
 function reducer(state, action = {}) {
-    // console.log('search/reducer', state, action)
+    console.log('search/reducer', state, action)
     switch (action.type) {
         case INIT:
-            // in order to prevent double/bad loads grab the filter from the url if it exists
-            // if not it'll just be an empty filter
-            console.log(window.location.search)
-            const filter = getFiltersFromQuery(window.location.search);
-            const initialState = Map({
+            return Map({
                 filterList: generateFilterOptions(filtersMap),
                 filterListLive: generateFilterOptions(liveFiltersMap),
                 list: List(),
                 latestRequestTime: null,
                 latestList: List(),
                 alertMetricId: null,
-                instance: filter,
+                instance: Filter(),
                 savedSearch: new SavedFilter({}),
                 filterSearchList: {},
                 currentPage: 1,
@@ -73,16 +69,12 @@ function reducer(state, action = {}) {
                 activeTab: { name: 'All', type: 'all' },
                 scrollY: 0,
             });
-
-            console.log('search/reducer/init', initialState?.toJSON().instance?.toJSON())
-
-            return initialState;
         case REFRESH_FILTER_OPTIONS:
             return state.set('filterList', generateFilterOptions(filtersMap)).set('filterListLive', generateFilterOptions(liveFiltersMap));
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:
-            console.log('incoming update', action)
+            console.log('incoming update', action.filter)
             const _state = action.fromUrl ? state.set('instance', Filter(action.filter)) : state.mergeIn(['instance'], action.filter);
             if (action.resetPage) {
                 _state.set('currentPage', 1)
@@ -286,7 +278,14 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
 };
 
 export const fetchSessions = (filter, force = false) => (dispatch, getState) => {
-    const _filter = filter ? filter : getState().getIn(['search', 'instance']);
+    console.log('search/fetchSessions', filter, force)
+    let _filter = filter ? filter : getState().getIn(['search', 'instance']);
+    if (!getState().getIn(['search', 'latestRequestTime'])) {
+        // in order to prevent double/bad loads grab the filter from the url if it exists
+        // if not it'll just be an empty filter
+        console.log(window.location.search)
+        _filter = getFiltersFromQuery(window.location.search);
+    }
     return dispatch(applyFilter(_filter, force));
 };
 

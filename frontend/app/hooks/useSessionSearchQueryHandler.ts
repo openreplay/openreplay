@@ -21,6 +21,8 @@ const useSessionSearchQueryHandler = (props: Props) => {
       }
     };
 
+    
+
     applyFilterFromQuery();
   }, [loading]);
 

@@ -39,6 +39,7 @@ const STATUS_FREQUENCY = 5000;
 
 interface Props extends RouteComponentProps {
   loading: boolean;
+  metaLoading: boolean;
   list: any;
   currentPage: number;
   pageSize: number;
@@ -67,6 +68,7 @@ function SessionList(props: Props) {
 
   const {
     loading,
+    metaLoading,
     list,
     currentPage,
     pageSize,
@@ -141,6 +143,7 @@ function SessionList(props: Props) {
     if (statusData.status === 2 && activeSite) {
       // recording && processed
       props.updateProjectRecordingStatus(activeSite.id, true);
+      console.log('updateProjectRecordingStatus', activeSite.id, true);
       props.fetchSessions(null, true);
       clearInterval(sessionStatusTimeOut);
     }
@@ -159,18 +162,23 @@ function SessionList(props: Props) {
     // handle scroll position
     const { scrollY } = props;
     window.scrollTo(0, scrollY);
+    let timeout: NodeJS.Timeout | null = null;
+    if (total === 0 && !loading && !metaLoading && !hasNoRecordings) {
+      timeout = setTimeout(() => {
+        console.log('timeout hit');
 
-    if (total === 0 && !loading && !hasNoRecordings) {
-      setTimeout(() => {
         props.fetchSessions(null, true);
       }, 300);
     }
     // props.fetchMetadata();
 
     return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
       props.setScrollPosition(window.scrollY);
     };
-  }, []);
+  }, [loading, metaLoading, hasNoRecordings]);
 
   const refreshOnActive = () => {
     if (document.hidden && !!sessionTimeOut) {
@@ -207,7 +215,7 @@ function SessionList(props: Props) {
   };
 
   return (
-    <Loader loading={loading}>
+    <Loader loading={loading || metaLoading}>
       {hasNoRecordings && statusData.status == 1 ? (
         <RecordingStatus data={statusData} />
       ) : (
@@ -284,10 +292,10 @@ export default connect(
   (state: any) => ({
     list: state.getIn(['sessions', 'list']),
     filters: state.getIn(['search', 'instance', 'filters']),
-    groupBy: state.getIn(['search', 'instance', 'groupBy']),
     lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
     metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     loading: state.getIn(['sessions', 'loading']),
+    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
     total: state.getIn(['sessions', 'total']) || 0,
     scrollY: state.getIn(['search', 'scrollY']),

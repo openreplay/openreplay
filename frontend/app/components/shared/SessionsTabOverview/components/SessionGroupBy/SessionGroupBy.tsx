@@ -37,6 +37,7 @@ function SessionGroupBy(props: Props) {
       options={groupByOptions}
       onChange={onGroupBy}
       defaultValue={groupBy}
+      value={groupByOptions.find((i: any) => i.value === groupBy)}
     />
   );
 }

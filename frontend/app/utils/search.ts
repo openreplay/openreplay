@@ -21,7 +21,7 @@ export const createUrlQuery = (filter: {
   if (!filter) {
     return '';
   }
-  filter.filters.forEach((f: any) => {
+  filter.filters?.forEach((f: any) => {
     if (!f.value.length) {
       return;
     }
@@ -41,7 +41,9 @@ export const createUrlQuery = (filter: {
     query.push({ key, value: str });
   });
 
-  query.push({ key: 'range', value: filter.rangeValue });
+  if (filter.rangeValue) {
+    query.push({ key: 'range', value: filter.rangeValue });
+  }
   if (filter.rangeValue === CUSTOM_RANGE) {
     query.push({ key: 'rStart', value: filter.startDate! });
     query.push({ key: 'rEnd', value: filter.endDate! });

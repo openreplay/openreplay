@@ -39,6 +39,7 @@ function SessionSort(props: Props) {
       options={sortOptions}
       onChange={onSort}
       defaultValue={defaultOption}
+      value={sortOptions.find((i: any) => i.value === defaultOption)}
     />
   );
 }
