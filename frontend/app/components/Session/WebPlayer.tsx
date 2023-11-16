@@ -15,7 +15,7 @@ import { observer } from 'mobx-react-lite';
 import { Note } from 'App/services/NotesService';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { fetchAutoplayList } from '../../duck/sessions';
+import { fetchAutoplayList, clearAutoplayList } from '../../duck/sessions';
 import Filter from 'Types/filter/filter';
 
 const TABS = {
@@ -23,11 +23,20 @@ const TABS = {
   CLICKMAP: 'Click Map',
 };
 
+const THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000;
+
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList, fetchAutoplayList } =
-    props;
+  const {
+    session,
+    toggleFullscreen,
+    closeBottomBlock,
+    fullscreen,
+    fetchList,
+    fetchAutoplayList,
+    clearAutoplayList,
+  } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
@@ -111,14 +120,14 @@ function WebPlayer(props: any) {
     },
     [params.sessionId]
   );
-  console.log(props.location);
 
   useEffect(() => {
     const groupBy = props.query.get('groupBy');
     if (groupBy && groupBy in session.metadata) {
-      console.log('fetching sessions for group by', groupBy, session.metadata[groupBy]);
+      const startDate = session.startedAt - THIRTY_DAYS_IN_MS;
+      const endDate = session.startedAt + THIRTY_DAYS_IN_MS;
+      clearAutoplayList();
       fetchAutoplayList({
-        events: [],
         filters: [
           {
             value: [session.metadata[groupBy]],
@@ -128,10 +137,9 @@ function WebPlayer(props: any) {
             filters: [],
           },
         ],
-        custom: {},
-        rangeValue: 'LAST_30_DAYS',
-        startDate: 1697500800000,
-        endDate: 1700179199000,
+        rangeValue: 'CUSTOM',
+        startDate,
+        endDate,
         groupByUser: false,
         sort: 'startTs',
         order: 'asc',
@@ -209,5 +217,6 @@ export default connect(
     closeBottomBlock,
     fetchList,
     fetchAutoplayList,
+    clearAutoplayList,
   }
 )(withLocationHandlers()(observer(WebPlayer)));

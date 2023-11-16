@@ -51,7 +51,6 @@ const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 
 // Metric - Series - [] - filters
 function reducer(state, action = {}) {
-    console.log('search/reducer', state, action)
     switch (action.type) {
         case INIT:
             return Map({
@@ -216,8 +215,6 @@ export const reduceThenFetchResource =
                     filter.startDate = newTimestamps.startDate
                     filter.endDate = newTimestamps.endDate
                 }
-
-                console.log('search/reduceThenFetchResource', filter)
 
                 dispatch(updateLatestRequestTime())
                 return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter, forceFetch));

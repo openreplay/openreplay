@@ -37,6 +37,7 @@ const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
+const CLEAR_AUTOPLAY_LIST = 'sessions/CLEAR_AUTOPLAY_LIST';
 const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
@@ -134,6 +135,10 @@ const reducer = (state = initialState, action: IAction) => {
         'sessionIds',
         sessionIds.filter((i, index) => sessionIds.indexOf(i) === index)
       );
+    case CLEAR_AUTOPLAY_LIST: {
+      console.log('clearing autoplay list');
+      return state.set('sessionIds', []).remove('previousId').remove('nextId');
+    }
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds');
       const currentSessionId = state.get('current').sessionId;
@@ -549,6 +554,12 @@ export const setAutoplayValues = (sessionId) => {
   return {
     type: SET_AUTOPLAY_VALUES,
     sessionId,
+  };
+};
+
+export const clearAutoplayList = () => {
+  return {
+    type: CLEAR_AUTOPLAY_LIST,
   };
 };
 

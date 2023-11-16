@@ -43,9 +43,11 @@ function QueueControls(props: Props) {
       props.setAutoplayValues();
       const totalPages = Math.ceil(total / PER_PAGE);
       const index = sessionIds.indexOf(sessionId);
-
+      const hasGroupBy = props.location.search.includes('groupBy');
+      console.log(hasGroupBy, 'hasGroupBy');
       // check for the last page and load the next
-      if (latestRequestTime && currentPage !== totalPages && index === sessionIds.length - 1) {
+      // ignore for group by sessions since they're loaded elsewhere
+      if (!hasGroupBy && currentPage !== totalPages && index === sessionIds.length - 1) {
         props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
       }
     }
