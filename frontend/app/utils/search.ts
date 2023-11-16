@@ -54,7 +54,7 @@ export const createUrlQuery = (filter: {
     query.push({ key: 'order', value: filter.order });
   }
 
-  if (filter.groupBy) {
+  if (filter.groupBy && typeof filter.groupBy === 'string') {
     query.push({ key: 'groupBy', value: filter.groupBy });
   }
 

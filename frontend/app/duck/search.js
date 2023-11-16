@@ -49,36 +49,34 @@ const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 // const updateInstance = (state, instance) =>
 //     state.getIn(['savedSearch', savedSearchIdKey]) === instance[savedSearchIdKey] ? state.mergeIn(['savedSearch'], SavedFilter(instance)) : state;
 
+const initialState = Map({
+    filterList: generateFilterOptions(filtersMap),
+    filterListLive: generateFilterOptions(liveFiltersMap),
+    list: List(),
+    latestRequestTime: null,
+    latestList: List(),
+    alertMetricId: null,
+    instance: Filter(),
+    savedSearch: new SavedFilter({}),
+    filterSearchList: {},
+    currentPage: 1,
+    pageSize: PER_PAGE,
+    activeTab: { name: 'All', type: 'all' },
+    scrollY: 0,
+});
+
 // Metric - Series - [] - filters
-function reducer(state, action = {}) {
+function reducer(state = initialState, action = {}) {
     switch (action.type) {
-        case INIT:
-            return Map({
-                filterList: generateFilterOptions(filtersMap),
-                filterListLive: generateFilterOptions(liveFiltersMap),
-                list: List(),
-                latestRequestTime: null,
-                latestList: List(),
-                alertMetricId: null,
-                instance: Filter(),
-                savedSearch: new SavedFilter({}),
-                filterSearchList: {},
-                currentPage: 1,
-                pageSize: PER_PAGE,
-                activeTab: { name: 'All', type: 'all' },
-                scrollY: 0,
-            });
         case REFRESH_FILTER_OPTIONS:
             return state.set('filterList', generateFilterOptions(filtersMap)).set('filterListLive', generateFilterOptions(liveFiltersMap));
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:
-            console.log('incoming update', action.filter)
             const _state = action.fromUrl ? state.set('instance', Filter(action.filter)) : state.mergeIn(['instance'], action.filter);
             if (action.resetPage) {
                 _state.set('currentPage', 1)
             }
-            console.log('post update', _state)
             return _state
         case success(FETCH):
             return state.set('instance', action.data);
