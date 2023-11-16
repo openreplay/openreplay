@@ -56,4 +56,4 @@ function build(){
 
 check_prereq
 build $1
-[[ $PATCH -eq 1 ]] && update_helm_release
+[[ $PATCH -eq 1 ]] && update_helm_release || true
