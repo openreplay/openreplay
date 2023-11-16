@@ -79,7 +79,7 @@ def runner_spawn(coroutine):
 
 
 async def runner_run():
-    while not application.get():
+    while application.get() is None:
         await asyncio.sleep(0.1)
     while asyncio.get_event_loop().is_running():
         await application.get().on_task
@@ -289,7 +289,7 @@ async def http(send):
         await send(
             {
                 "type": "http.response.start",
-                "status": 200,
+                "status": 404,
             }
         )
         await send(
@@ -336,6 +336,7 @@ async def http(send):
         )
 
         if view is None:
+            # TODO: factor into a function http_404_not_found
             await send(
                 {
                     "type": "http.response.start",
