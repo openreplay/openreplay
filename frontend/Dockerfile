@@ -1,6 +1,7 @@
 from node:14-stretch-slim AS builder
 workdir /work
 COPY . .
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cp .env.sample .env
 RUN yarn 
 RUN yarn build
