@@ -30,7 +30,7 @@ def events_search(projectId: int, q: str,
         return {"data": []}
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
-                                   key=key if key is not None else type.value if type is not None else None)
+                                   key=key if key is not None else type)
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request
     elif type in [schemas.GraphqlFilterType._name]:

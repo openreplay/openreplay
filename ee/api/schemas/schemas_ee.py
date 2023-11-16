@@ -113,7 +113,7 @@ class SessionModel(BaseModel):
     projectId: int
     sessionId: str
     startTs: int
-    timezone: str
+    timezone: Optional[str]
     userAnonymousId: Optional[str]
     userBrowser: str
     userCity: str
