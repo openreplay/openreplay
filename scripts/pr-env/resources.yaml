@@ -1,3 +1,22 @@
+persistence: &persistence
+  enabled: true
+  size: 1Gi
+minio:
+  persistence: *persistence
+postgresql:
+  persistence: *persistence
+redis:
+  persistence: *persistence
+kafka:
+  persistence: *persistence
+  zookeeper:
+    persistence: *persistence
+clickhouse:
+  storageSize: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
 alerts:
   resources:
     requests:

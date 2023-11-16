@@ -182,7 +182,7 @@ jobs:
           sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
           sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
         fi
-        helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait
+        helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait -f ../pr-env/resources.yaml
         helm upgrade -i openreplay -n app ./openreplay -f vars.yaml --create-namespace --set ingress-nginx.enabled=false -f ../pr-env/resources.yaml --wait
 
     - name: Sent results to slack
