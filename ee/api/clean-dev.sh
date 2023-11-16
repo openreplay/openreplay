@@ -94,3 +94,4 @@ rm -rf ./run-dev.sh
 rm -rf ./run-alerts-dev.sh
 rm -rf ./schemas/overrides.py
 rm -rf ./schemas/schemas.py
+rm -rf ./schemas/transformers_validators.py
