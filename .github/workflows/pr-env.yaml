@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       build_service:
-        description: 'Name of a single service to build(in small letters). "backend:all" to build complete backend'
+        description: 'Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service'
         required: true
         default: 'frontend'
       env_flavour:
@@ -185,7 +185,35 @@ jobs:
         helm upgrade -i databases -n db ./databases -f vars.yaml --create-namespace --wait -f ../pr-env/resources.yaml
         helm upgrade -i openreplay -n app ./openreplay -f vars.yaml --create-namespace --set ingress-nginx.enabled=false -f ../pr-env/resources.yaml --wait
 
+    - name: Build and deploy application
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        env: ${{ github.event.inputs.env_flavour }}
+      run: |
+
+        app_name=${{github.event.inputs.build_service}}
+        echo "building and deploying $app_name"
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+        export KUBECONFIG=/tmp/kubeconfig.yaml
+
+        case $app_name in
+          backend*)
+            echo "In backend build"
+            cd backend
+            component=`echo $app_name | cut -d ':' -f 2`
+            PUSH_IMAGE=1 bash -x ./build.sh $env $component
+            kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+            ;;
+          *)
+            set -x
+            cd $app_name || (Nothing to build: $app_name; exit 100)
+            PUSH_IMAGE=1 bash -x ./build.sh $env
+            kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
+            ;;
+        esac
     - name: Sent results to slack
+      if: steps.vcluster_exists.outputs.failed == 'true'
       env:
         SLACK_BOT_TOKEN: ${{ secrets.OR_PR_SLACK_BOT_TOKEN }}
         SLACK_CHANNEL: ${{ secrets.OR_PR_SLACK_CHANNEL }}
