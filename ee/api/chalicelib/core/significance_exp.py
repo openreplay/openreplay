@@ -27,10 +27,11 @@ from chalicelib.utils import pg_client, helper
 
 logger = logging.getLogger(__name__)
 SIGNIFICANCE_THRSH = 0.4
-
+# Taha: the value 24 was estimated in v1.15
 T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
             11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.13, 16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
-            21: 2.080, 22: 2.074, 23: 2.069, 25: 2.064, 26: 2.060, 27: 2.056, 28: 2.052, 29: 2.045, 30: 2.042}
+            21: 2.080, 22: 2.074, 23: 2.069, 24: 2.067, 25: 2.064, 26: 2.060, 27: 2.056, 28: 2.052, 29: 2.045,
+            30: 2.042}
 
 
 def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
