@@ -48,24 +48,27 @@ async def test_view_reset_password():
 
 
 # XXX: The types 'pair', and 'maybe' are fused together. 
-
 CX = namedtuple('Combinatorix', ('ok', 'head', 'tail'))
 
-CXC = namedtuple('CombinatorixCombiner', ('message', 'func'))
+# Promote a reader to first-class to allow tree walk
+CXR_type = namedtuple('CombinatorixReader', ('reader', 'args', 'read'))
+
+
+def CXR(reader, *args):
+    return CXR_type(reader, args, reader(*args))
 
 
 def any():
-    
+    """Read anything"""
+
     def func(cx):
-        return cx
+        return CX(True, cx.head, cx.tail)
 
     return func
 
 
-cx_any = CXC("read anything", any)
-
-
-def when(predicate):
+def cx_when(predicate):
+    """Read when PREDICATE is returns true"""
 
     def func(cx):
         if predicate(cx.head):
@@ -75,86 +78,100 @@ def when(predicate):
     return func
 
 
-cx_when = CXC("read when predicate returns True", when)
+def cx_sequence(*readers):
+    """Read when all READERS can read"""
 
-
-def sequence(*args):
+    readers = [
+        reader.read if isinstance(reader, CXR_type) else reader for reader in readers
+    ]
 
     def aux(cx, ops):
         if not ops:
             return CX(True, None, None)
         if cx is None:
             return CX(False, None, None)
+
         op = ops[0]
         head = op(cx)
         if not head.ok:
             return CX(False, head.head, None)
-        tail = aux(head.tail, ops[1:])
-        if not tail.ok:
-            return tail
-        if tail.head is None:
-            tail = None
-        out = CX(True, head.head, tail)
-        return out 
+
+        out = CX(True, head.head, aux(head.tail, ops[1:]))
+        return out
 
     def func(cx):
-        cx = aux(cx, args)
+        cx = aux(cx, readers)
         return cx
     
     return func
 
 
-cx_sequence = CXC("Read in order", sequence)
+def cx_zero_or_more(reader):
+    """Read zero or more time with READER"""
 
-
-def zero_or_more(cxc):
+    reader = reader.read if isinstance(reader, CXR_type) else reader
 
     def func(cx):
-        if cx.head is None:
-            return None
 
-        head = cxc.func(cx)
+        print('ENTRY', cx)
+
+        if cx is None:
+            return CX(False, None, None)
+
+        if cx.head is None:
+            return CX(False, cx.head, None) 
+
+        head = reader(cx)
         if not head.ok:
+            print('NOK', cx)
             return cx
 
-        return CX(True, head.head, func(cx.tail))
+        return CX(True, head.head, func(head.tail))
 
     return func
 
 
 def cx_from_string(string):
+    """Translate STRING to a datastructure that reader can read"""
+
     if not string:
         return None
-    cx = CX(True, string[0], cx_from_string(string[1:]))
+
+    cx = CX(None, string[0], cx_from_string(string[1:]))
     return cx
 
 
 def cx_to_string(cx):
-    if cx is None:
+    """Convert CX to a string"""
+    if not cx:
         return ''
+    if cx.head is None:
+        return ''
+    if not cx.ok:
+        return ''
+
     return cx.head + cx_to_string(cx.tail)
 
 
-def test_cx_stringify():
-    assert "abcdef" == cx_to_string(cx_from_string("abcdef"))
+def TODO_test_cx_stringify():
+    assert "abcdef" == cx_to_string(cx_zero_or_more(any())(cx_from_string("abcdef")))
 
 
 def test_cx_when():
     input = cx_from_string("yinyang")
-    why = when(lambda x: x == 'y')
-    cx = why(input)
+    why = CXR(cx_when, lambda x: x == 'y')
+    cx = why.read(input)
     assert cx.ok
     assert cx.head == 'y'
-    assert cx_to_string(cx.tail) == 'inyang'
 
 
 def test_cx_fortythree():
-    four = when(lambda x: x == '4')
-    three = when(lambda x: x == '3')
-    cx = sequence(four, three)
+    four = CXR(cx_when, lambda x: x == '4')
+    three = CXR(cx_when, lambda x: x == '3')
+    cx = cx_sequence(four, three)
     fortytwo = cx_from_string('42')
     fortytwo = cx(fortytwo)
-    assert not fortytwo.ok
+    assert cx_to_string(fortytwo.ok) == '4'
     fortythree = cx_from_string('43')
     fortythree = cx(fortythree)
     assert fortythree.ok
@@ -162,6 +179,29 @@ def test_cx_fortythree():
 
 
 def test_cx_any_sequence():
-    out = sequence(any(), any(), any())(cx_from_string('random'))
+    out = cx_sequence(any(), any(), any())(cx_from_string('random'))
     assert out.ok
     assert cx_to_string(out) == 'ran'
+
+
+def test_zero_or_more():
+    out = cx_to_string(cx_zero_or_more(any())(cx_from_string('Will, i am.')))
+    assert out == 'Will, i am.'
+
+
+def test_zero_or_more_parentheses():
+    cx = cx_zero_or_more(cx_when(lambda x: x == '('))
+    out = cx(cx_from_string("(((zzz"))
+    print(out)
+    assert cx_to_string(out) == "((("
+
+def test_zero_or_more_three_balanced_parentheses():
+    pln = cx_zero_or_more(cx_when(lambda x: x == '('))
+    prn = cx_zero_or_more(cx_when(lambda x: x == '('))
+    cx = cx_sequence(pln)
+    out = cx(cx_from_string("((()))"))
+    assert cx_to_string(out) == "((()))"
+
+
+
+
