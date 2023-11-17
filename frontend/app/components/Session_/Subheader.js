@@ -123,18 +123,8 @@ function SubHeader(props) {
                             </div>
                         }
                     />
-                    <ItemMenu
-                        items={[
-                            {
-                                key: 1,
-                                component: <AutoplayToggle />,
-                            },
-                            {
-                                key: 2,
-                                component: <Bookmark noMargin sessionId={props.sessionId} />,
-                            },
-                        ]}
-                    />
+                    <Bookmark noMargin sessionId={props.sessionId} />,
+                    <AutoplayToggle />
 
                     <div>
                         <QueueControls />
