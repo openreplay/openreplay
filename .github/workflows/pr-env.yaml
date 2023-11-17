@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       build_service:
-        description: 'Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service'
+        description: "Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service.  
+                      Options: all/service-name/backend:{service-name/all}"
         required: true
         default: 'frontend'
       env_flavour:
