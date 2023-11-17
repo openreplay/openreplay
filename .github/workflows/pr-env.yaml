@@ -219,14 +219,14 @@ jobs:
             # Iterate over the array and print each folder name
             for component in "${components[@]}"; do
               echo "Building backend:$component"
-              PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              docker pull ${DOCKER_REPO}/$component:${IMAGE_TAG} || PUSH_IMAGE=1 bash -x ./build.sh $env $component
               kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
             done
             ;;
           *)
             set -x
             cd $app_name || (Nothing to build: $app_name; exit 100)
-            PUSH_IMAGE=1 bash -x ./build.sh $env
+            docker pull ${DOCKER_REPO}/$component:${IMAGE_TAG} || PUSH_IMAGE=1 bash -x ./build.sh $env
             kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
             ;;
         esac
