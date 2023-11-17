@@ -39,7 +39,7 @@ serve: ## Run the server
 lock: ## Lock dependencies
 	pip-compile -o requirements.txt requirements.source.txt
 
-wip:
+wip: ## clean up code, and commit wip
 	black orpy.py
 	isort --profile black orpy.py
 	git add .

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import re
 import secrets
@@ -108,7 +109,7 @@ async def make_application():
     }
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
-    database = psycopg_pool.AsyncConnectionPool(database)
+    # database = psycopg_pool.AsyncConnectionPool(database)
 
     # setup app
     make_timestamp = make_timestamper()
@@ -222,14 +223,27 @@ async def _task_reset_password_link(email):
     await send_html(html, "Password recovery", body)
 
 
+import time
+
+
+@route("GET", "health")
+def view_health():
+    time.sleep(0.1)
+    return (
+        200,
+        [(b"content-type", b"application/javascript")],
+        jsonify({"status": "ok"}),
+    )
+
+
 @route("GET", "password", "reset-link")
-async def public_reset_password_link():
+async def view_public_reset_password_link():
     # TODO: check receive fetch a complete body
     data = json.loads(await orpy.get().receive())
     if not captcha.is_valid(data.captcha):
         out = jsonify({"errors": ["Invalid capatcha"]})
         return 400, [(b"content-type", "application/javascript")], out
-    if not context.features.smtp():
+    if not context.features.get("smtp", False):
         out = jsonify(
             {
                 "errors": [
@@ -356,7 +370,7 @@ async def http(send):
 
         # XXX: the body must be bytes, TODO it will be
         # wise to support a body that is a generator
-        code, headers, body = await view()
+        code, headers, body = view()
 
         await send(
             {
