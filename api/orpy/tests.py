@@ -51,7 +51,7 @@ async def test_view_reset_password():
 
 CX = namedtuple('Combinatorix', ('ok', 'head', 'tail'))
 
-CXC = namedtuple('CXCombiner', ('message', 'func'))
+CXC = namedtuple('CombinatorixCombiner', ('message', 'func'))
 
 
 def any():
@@ -62,6 +62,9 @@ def any():
     return func
 
 
+cx_any = CXC("read anything", any)
+
+
 def when(predicate):
 
     def func(cx):
@@ -70,6 +73,9 @@ def when(predicate):
         return CX(False, cx.head, cx.tail)
 
     return func
+
+
+cx_when = CXC("read when predicate returns True", when)
 
 
 def sequence(*args):
@@ -95,6 +101,24 @@ def sequence(*args):
         cx = aux(cx, args)
         return cx
     
+    return func
+
+
+cx_sequence = CXC("Read in order", sequence)
+
+
+def zero_or_more(cxc):
+
+    def func(cx):
+        if cx.head is None:
+            return None
+
+        head = cxc.func(cx)
+        if not head.ok:
+            return cx
+
+        return CX(True, head.head, func(cx.tail))
+
     return func
 
 
@@ -140,5 +164,4 @@ def test_cx_fortythree():
 def test_cx_any_sequence():
     out = sequence(any(), any(), any())(cx_from_string('random'))
     assert out.ok
-    assert out.head is None
-    assert cx_to_string(out.tail) == 'dom'
+    assert cx_to_string(out) == 'ran'
