@@ -141,7 +141,7 @@ function WebPlayer(props: any) {
         startDate,
         endDate,
         groupByUser: false,
-        sort: 'startTs',
+        sort: 'session_id',
         order: 'asc',
         strict: false,
         eventsOrder: 'then',

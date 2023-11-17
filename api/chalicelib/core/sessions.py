@@ -134,9 +134,13 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ) AS users_sessions;""",
                                      full_args)
         elif ids_only:
+            if data.order is None:
+                data.order = schemas.SortOrderType.desc.value
+            else:
+                data.order = data.order.value
             main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
                                              {query_part}
-                                             ORDER BY s.session_id desc
+                                             ORDER BY s.session_id {data.order}
                                              LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
                                      full_args)
         else:
