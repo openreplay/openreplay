@@ -140,7 +140,7 @@ def route(method, *components):
 
     def wrapper(func):
         log.debug("Registring route: {} @ {}", route, func)
-        ROUTE_REGISTRY.extend((route, lambda x: func))
+        ROUTE_REGISTRY.extend((route, lambda *x: lambda : func(*x)))
         return func
 
     return wrapper
