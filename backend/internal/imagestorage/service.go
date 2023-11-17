@@ -3,6 +3,7 @@ package imagestorage
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -14,9 +15,17 @@ import (
 	config "openreplay/backend/internal/config/imagestorage"
 )
 
+type ImageType uint8
+
+const (
+	screenshot ImageType = iota
+	canvas
+)
+
 type Task struct {
 	sessionID   uint64 // to generate path
 	images      map[string]*bytes.Buffer
+	imageType   ImageType
 	isBreakTask bool
 }
 
@@ -60,6 +69,22 @@ func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 	return nil
 }
 
+type ScreenshotMessage struct {
+	Name string
+	Data []byte
+}
+
+func (v *ImageStorage) ProcessCanvas(sessID uint64, data []byte) error {
+	var msg = &ScreenshotMessage{}
+	if err := json.Unmarshal(data, msg); err != nil {
+		log.Printf("can't parse canvas message, err: %s", err)
+	}
+	// Use the same workflow
+	v.writeToDiskTasks <- &Task{sessionID: sessID, images: map[string]*bytes.Buffer{msg.Name: bytes.NewBuffer(msg.Data)}, imageType: canvas}
+	log.Printf("new canvas image, sessID: %d, name: %s, size: %d mb", sessID, msg.Name, len(msg.Data)/1024/1024)
+	return nil
+}
+
 func (v *ImageStorage) extract(sessID uint64, data []byte) error {
 	images := make(map[string]*bytes.Buffer)
 	uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
@@ -88,16 +113,23 @@ func (v *ImageStorage) extract(sessID uint64, data []byte) error {
 		}
 	}
 
-	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images}
+	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images, imageType: screenshot}
 	return nil
 }
 
 func (v *ImageStorage) writeToDisk(task *Task) {
 	// Build the directory path
 	path := v.cfg.FSDir + "/"
-	if v.cfg.ScreenshotsDir != "" {
-		path += v.cfg.ScreenshotsDir + "/"
+	if task.imageType == screenshot {
+		if v.cfg.ScreenshotsDir != "" {
+			path += v.cfg.ScreenshotsDir + "/"
+		}
+	} else {
+		if v.cfg.CanvasDir != "" {
+			path += v.cfg.CanvasDir + "/"
+		}
 	}
+
 	path += strconv.FormatUint(task.sessionID, 10) + "/"
 
 	// Ensure the directory exists
