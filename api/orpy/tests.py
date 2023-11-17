@@ -47,7 +47,7 @@ async def test_view_reset_password():
 
 
 
-# XXX: The type pair, and maybe are fused together. 
+# XXX: The types 'pair', and 'maybe' are fused together. 
 CX = namedtuple('Combinatorix', ('ok', 'head', 'tail'))
 
 
@@ -68,8 +68,8 @@ def when(predicate):
 
     def func(cx):
         if predicate(cx.head):
-            return CX(True, cx.head, cx)
-        return CX(False, cx.head, cx)
+            return CX(True, cx.head, cx.tail)
+        return CX(False, cx.head, cx.tail)
 
     return func
 
@@ -78,12 +78,20 @@ def sequence(*args):
 
     def aux(cx, ops):
         if not ops:
-            return cx
+            return CX(True, None, None)
+        if cx is None:
+            return CX(False, None, None)
         op = ops[0]
-        tail = aux(cx.tail, ops[1:])
-        head = cx(cx.head)
-        cx = CX(True, head, tail)
-        return cx
+        head = op(cx)
+        if not head.ok:
+            return CX(False, head.head, None)
+        tail = aux(head.tail, ops[1:])
+        if not tail.ok:
+            return tail
+        if tail.head is None:
+            tail = None
+        out = CX(True, head.head, tail)
+        return out 
 
     def func(cx):
         cx = aux(cx, args)
@@ -95,11 +103,13 @@ def sequence(*args):
 def cx_from_string(string):
     if not string:
         return None
-    cx = CX(string[0], cx_from_string(string[1:]))
+    cx = CX(True, string[0], cx_from_string(string[1:]))
     return cx
 
 
 def cx_to_string(cx):
+    if cx is None:
+        return ''
     return cx.head + cx_to_string(cx.tail)
 
 
@@ -107,12 +117,23 @@ def test_cx_stringify():
     assert "abcdef" == cx_to_string(cx_from_string("abcdef"))
 
 
+def test_cx_predicate():
+    input = cx_from_string("yinyang")
+    why = when(lambda x: x == 'y')
+    cx = why(input)
+    assert cx.ok
+    assert cx.head == 'y'
+    assert cx_to_string(cx.tail) == 'inyang'
+
+
 def test_cx_fortythree():
     four = when(lambda x: x == '4')
     three = when(lambda x: x == '3')
-    fourthree = sequence(four, three)
-    fortytwo = '42'
-    assert not fourthree(fortytwo)
-    fortythree = '43'
-    assert fourthree(fortythree)
-
+    cx = sequence(four, three)
+    fortytwo = cx_from_string('42')
+    fortytwo = cx(fortytwo)
+    assert not fortytwo.ok
+    fortythree = cx_from_string('43')
+    fortythree = cx(fortythree)
+    assert fortythree.ok
+    assert cx_to_string(fortythree) == '43'

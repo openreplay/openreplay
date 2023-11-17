@@ -8,7 +8,7 @@ init: ## Prepare the host sytem for development
 	@echo "\033[95m\n\nYou may now run 'make check'.\n\033[0m"
 
 check: ## Run tests
-	pytest -vvv --capture=no tests.py
+	pytest -vvv --exitfirst --capture=no tests.py
 	bandit --skip=B101 -r .
 
 check-fast: ## Run tests, fail fast
@@ -34,7 +34,7 @@ xxx: ## Things that require attention
 	@grep -nR --color=always --before-context=2 --after-context=2 XXX .
 
 serve: ## Run the server
-	ORPY_DEBUG=1 uvicorn --lifespan on --log-level warning --reload orpy:orpy
+	uvicorn --lifespan on --log-level warning --reload orpy:orpy
 
 lock: ## Lock dependencies
 	pip-compile -o requirements.txt requirements.source.txt
