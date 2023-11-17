@@ -105,38 +105,6 @@ def cx_sequence(*readers):
     return func
 
 
-def cx_zero_or_more(reader):
-    """Read zero or more time with READER"""
-
-    reader = reader.read if isinstance(reader, CXR_type) else reader
-
-    def aux(cx):
-        if cx is None:
-            return CX(False, None, None)
-
-        if cx.head is None:
-            return CX(False, cx.head, cx.tail)
-
-        head = reader(cx)
-
-        if not head.ok:
-            return cx
-        else:
-            return head
-        
-    def func(cx):
-        out = []
-        while cx := aux(cx):
-            if cx.ok:
-                out.append(cx.head)
-                cx = cx.tail
-            else:
-                return CX(True, out, CX(None, cx.head, cx.tail))
-                
-
-    return func
-
-
 def cx_from_string(string):
     """Translate STRING to a datastructure that reader can read"""
 
@@ -201,6 +169,62 @@ def test_zero_or_more_parentheses():
     cx = cx_zero_or_more(cx_when(lambda x: x == '('))
     out = cx(cx_from_string("(((zzz"))
     assert cx_to_string(out) == "((("
+
+
+def cx_zero_or_more(reader):
+    """Read zero or more time with READER"""
+
+    reader = reader.read if isinstance(reader, CXR_type) else reader
+
+    def aux(cx):
+        if cx is None:
+            return CX(False, None, None)
+
+        if cx.head is None:
+            return CX(False, cx.head, cx.tail)
+
+        head = reader(cx)
+
+        if not head.ok:
+            return cx
+        else:
+            return head
+        
+    def func(cx):
+        out = []
+        while cx := aux(cx):
+            if cx.ok:
+                out.append(cx.head)
+                cx = cx.tail
+            else:
+                return CX(True, out, CX(None, cx.head, cx.tail))                
+
+    return func
+
+def cx_apply(func):
+
+    def wrapper(cx):
+        return func(cx)
+
+    return wrapper
+
+
+def test_cx_apply():
+    expected  = object()
+    cx = cx_apply(lambda cx: CX(True, expected, cx))
+    hello = cx_from_string("hello")
+    out = cx(hello)
+    assert out.ok
+    assert out.head == expected
+    assert out.hello == hello
+
+
+def cx_one_or_more(reader):
+
+    def func(cx):
+        return CX(True, cx.head + cx.tail.head, cx.tail.tail)
+
+    return cx_lift(func, cx_sequence(reader, cx_zero_or_more(reader)))
 
 
 def test_zero_or_more_three_balanced_parentheses():
