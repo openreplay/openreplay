@@ -5,8 +5,7 @@ on:
     inputs:
       build_service:
         description: |
-          Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service.  
-
+          Name of a single service to build(in small letters), eg: api or frontend etc. backend:sevice-name to build service.  
           Options: all/service-name/backend:{app1/app1,app2,app3/all}
         required: true
         default: 'frontend'
@@ -200,8 +199,16 @@ jobs:
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
         export KUBECONFIG=/tmp/kubeconfig.yaml
 
+        # Creating folder app association for different app:folder combo
+        declare -A folder_to_app
+        map["api"]="chalice"
+        map["sourcemap-reader"]="sourcemaps-reader"
+
         case $app_name in
           all)
+            echo Building all components
+            cd scripts/helmcharts
+            bash -x build_deploy.sh $env
             ;;
           backend*)
             echo "Building backend build"
@@ -218,7 +225,6 @@ jobs:
             # "${app_name#*:}" :: Strip backend: and output app1,app2,app3 to read -ra
             IFS=',' read -ra components <<< "${app_name#*:}"
             fi
-            # Iterate over the array and print each folder name
             for component in "${components[@]}"; do
               if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
                 echo Image present upstream. Skipping build: $component
