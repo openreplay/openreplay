@@ -4,8 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       build_service:
-        description: "Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service.  
-                      Options: all/service-name/backend:{app1/app1,app2,app3/all}"
+        description: |
+          Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service.  
+
+          Options: all/service-name/backend:{app1/app1,app2,app3/all}
         required: true
         default: 'frontend'
       env_flavour:
@@ -218,15 +220,24 @@ jobs:
             fi
             # Iterate over the array and print each folder name
             for component in "${components[@]}"; do
-              echo "Building backend:$component"
-              docker pull ${DOCKER_REPO}/$component:${IMAGE_TAG} || PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
+                echo Image present upstream. Skipping build: $component
+              else
+                echo "Building backend:$component"
+                PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              fi
               kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
             done
             ;;
           *)
             set -x
             cd $app_name || (Nothing to build: $app_name; exit 100)
-            docker pull ${DOCKER_REPO}/$component:${IMAGE_TAG} || PUSH_IMAGE=1 bash -x ./build.sh $env
+            if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
+              echo Image present upstream. Skipping build: $component
+            else
+              echo "Building backend:$component"
+              PUSH_IMAGE=1 bash -x ./build.sh $env $component
+            fi
             kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
             ;;
         esac

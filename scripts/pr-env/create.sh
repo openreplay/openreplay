@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 if [ $# -lt 1 ]; then
   echo "bash $0 pr-number.openreplay.tools"
   echo "eg: bash $0 pr-111.openreplay.tools"
