@@ -46,11 +46,31 @@ func main() {
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.IOSSessionEnd)
 				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/"); err != nil {
+				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", false); err != nil {
 					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 				}
 			},
 			[]int{messages.MsgIOSSessionEnd},
+			true,
+		),
+		false,
+		cfg.MessageSizeLimit,
+	)
+
+	canvasConsumer := queue.NewConsumer(
+		cfg.GroupVideoStorage,
+		[]string{
+			cfg.TopicTrigger,
+		},
+		messages.NewMessageIterator(
+			func(msg messages.Message) {
+				sesEnd := msg.(*messages.SessionEnd)
+				log.Printf("recieved session end: %d, let's check canvas", sesEnd.SessionID())
+				if err := srv.Process(sesEnd.SessionID(), workDir+"/canvas/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", true); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+				}
+			},
+			[]int{messages.MsgSessionEnd},
 			true,
 		),
 		false,
@@ -75,10 +95,17 @@ func main() {
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+			if err := canvasConsumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
 			err = consumer.ConsumeNext()
+			if err != nil {
+				log.Fatalf("Error on end event consumption: %v", err)
+			}
+			err = canvasConsumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on end event consumption: %v", err)
 			}
