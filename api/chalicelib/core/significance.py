@@ -1,9 +1,11 @@
 __author__ = "AZNAUROV David"
 __maintainer__ = "KRAIEM Taha Yassine"
 
-from chalicelib.utils import sql_helper as sh
+import logging
+
 import schemas
 from chalicelib.core import events, metadata, sessions
+from chalicelib.utils import sql_helper as sh
 
 """
 todo: remove LIMIT from the query
@@ -17,6 +19,7 @@ from collections import defaultdict
 from psycopg2.extras import RealDictRow
 from chalicelib.utils import pg_client, helper
 
+logger = logging.getLogger(__name__)
 SIGNIFICANCE_THRSH = 0.4
 
 T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
@@ -89,7 +92,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                 filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f["value"], value_key=f_k))
+                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -98,24 +101,24 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                 if f.source in meta_keys.keys():
                     first_stage_extra_constraints.append(
                         sh.multi_conditions(
-                            f's.{metadata.index_to_colname(meta_keys[f["key"]])} {op} %({f_k})s', f["value"],
+                            f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
                             value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
     i = -1
     for s in stages:
@@ -162,7 +165,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             next_table = events.EventType.CUSTOM_IOS.table
             next_col_name = events.EventType.CUSTOM_IOS.column
         else:
-            print(f"=================UNDEFINED:{event_type}")
+            logging.warning(f"=================UNDEFINED:{event_type}")
             continue
 
         values = {**values, **sh.multi_values(helper.values_for_operator(value=s.value, op=s.operator),
@@ -230,18 +233,18 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(n_stages_query, params)
-        # print("---------------------------------------------------")
-        # print(query)
-        # print("---------------------------------------------------")
+        logging.debug("---------------------------------------------------")
+        logging.debug(query)
+        logging.debug("---------------------------------------------------")
         try:
             cur.execute(query)
             rows = cur.fetchall()
         except Exception as err:
-            print("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
-            print(query.decode('UTF-8'))
-            print("--------- PAYLOAD -----------")
-            print(filter_d.model_dump_json())
-            print("--------------------")
+            logging.warning("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
+            logging.warning(query.decode('UTF-8'))
+            logging.warning("--------- PAYLOAD -----------")
+            logging.warning(filter_d.model_dump_json())
+            logging.warning("--------------------")
             raise err
     return rows
 
@@ -484,7 +487,8 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     if last_stage is None:
         last_stage = n_stages
     if last_stage > n_stages:
-        print("The number of the last stage provided is greater than the number of stages. Using n_stages instead")
+        logging.debug(
+            "The number of the last stage provided is greater than the number of stages. Using n_stages instead")
         last_stage = n_stages
 
     n_critical_issues = 0
@@ -550,7 +554,7 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     stages = filter_d.events
     # TODO: handle 1 stage alone
     if len(stages) == 0:
-        print("no stages found")
+        logging.debug("no stages found")
         return output, 0
     elif len(stages) == 1:
         # TODO: count sessions, and users for single stage
@@ -596,8 +600,6 @@ def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_
     stages = filter_d.events
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
-    # print(json.dumps(rows[0],indent=4))
-    # return
     if len(rows) == 0:
         return output
         # Obtain the second part of the output
