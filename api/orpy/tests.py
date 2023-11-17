@@ -95,7 +95,6 @@ def cx_sequence(*readers):
         head = op(cx)
         if not head.ok:
             return CX(False, head.head, None)
-
         out = CX(True, head.head, aux(head.tail, ops[1:]))
         return out
 
@@ -111,22 +110,29 @@ def cx_zero_or_more(reader):
 
     reader = reader.read if isinstance(reader, CXR_type) else reader
 
-    def func(cx):
-
-        print('ENTRY', cx)
-
+    def aux(cx):
         if cx is None:
             return CX(False, None, None)
 
         if cx.head is None:
-            return CX(False, cx.head, None) 
+            return CX(False, cx.head, cx.tail)
 
         head = reader(cx)
-        if not head.ok:
-            print('NOK', cx)
-            return cx
 
-        return CX(True, head.head, func(head.tail))
+        if not head.ok:
+            return cx
+        else:
+            return head
+        
+    def func(cx):
+        out = []
+        while cx := aux(cx):
+            if cx.ok:
+                out.append(cx.head)
+                cx = cx.tail
+            else:
+                return CX(True, out, CX(None, cx.head, cx.tail))
+                
 
     return func
 
@@ -149,8 +155,10 @@ def cx_to_string(cx):
         return ''
     if not cx.ok:
         return ''
+    
+    head = cx.head if isinstance(cx.head, str) else ''.join(cx.head)
 
-    return cx.head + cx_to_string(cx.tail)
+    return head + cx_to_string(cx.tail)
 
 
 def TODO_test_cx_stringify():
@@ -171,7 +179,7 @@ def test_cx_fortythree():
     cx = cx_sequence(four, three)
     fortytwo = cx_from_string('42')
     fortytwo = cx(fortytwo)
-    assert cx_to_string(fortytwo.ok) == '4'
+    assert cx_to_string(fortytwo) == '4'
     fortythree = cx_from_string('43')
     fortythree = cx(fortythree)
     assert fortythree.ok
@@ -192,13 +200,13 @@ def test_zero_or_more():
 def test_zero_or_more_parentheses():
     cx = cx_zero_or_more(cx_when(lambda x: x == '('))
     out = cx(cx_from_string("(((zzz"))
-    print(out)
     assert cx_to_string(out) == "((("
+
 
 def test_zero_or_more_three_balanced_parentheses():
     pln = cx_zero_or_more(cx_when(lambda x: x == '('))
-    prn = cx_zero_or_more(cx_when(lambda x: x == '('))
-    cx = cx_sequence(pln)
+    prn = cx_zero_or_more(cx_when(lambda x: x == ')'))
+    cx = cx_sequence(pln, prn)
     out = cx(cx_from_string("((()))"))
     assert cx_to_string(out) == "((()))"
 
