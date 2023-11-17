@@ -58,11 +58,15 @@ def CXR(reader, *args):
     return CXR_type(reader, args, reader(*args))
 
 
-def any():
+def cx_any(*ops):
     """Read anything"""
 
     def func(cx):
-        return CX(True, cx.head, cx.tail)
+        for op in ops:
+            out = op(cx)
+            if out.ok:
+                return out
+        return CX(False, cx.head, cx.tail)
 
     return func
 
@@ -93,8 +97,9 @@ def cx_sequence(*readers):
 
         op = ops[0]
         head = op(cx)
+        pk('HEAD', head)
         if not head.ok:
-            return CX(False, head.head, None)
+            return CX(False, head.head, head.tail)
         out = CX(True, head.head, aux(head.tail, ops[1:]))
         return out
 
@@ -129,10 +134,6 @@ def cx_to_string(cx):
     return head + cx_to_string(cx.tail)
 
 
-def TODO_test_cx_stringify():
-    assert "abcdef" == cx_to_string(cx_zero_or_more(any())(cx_from_string("abcdef")))
-
-
 def test_cx_when():
     input = cx_from_string("yinyang")
     why = CXR(cx_when, lambda x: x == 'y')
@@ -154,14 +155,9 @@ def test_cx_fortythree():
     assert cx_to_string(fortythree) == '43'
 
 
-def test_cx_any_sequence():
-    out = cx_sequence(any(), any(), any())(cx_from_string('random'))
-    assert out.ok
-    assert cx_to_string(out) == 'ran'
-
-
 def test_zero_or_more():
-    out = cx_to_string(cx_zero_or_more(any())(cx_from_string('Will, i am.')))
+    cx = cx_zero_or_more(cx_any(cx_when(lambda x: True)))
+    out = cx_to_string(cx(cx_from_string('Will, i am.')))
     assert out == 'Will, i am.'
 
 
@@ -201,9 +197,13 @@ def cx_zero_or_more(reader):
 
     return func
 
-def cx_apply(func):
+
+def cx_apply(func, op):
 
     def wrapper(cx):
+        cx = op(cx)
+        if not cx.ok:
+            return cx
         return func(cx)
 
     return wrapper
@@ -211,20 +211,39 @@ def cx_apply(func):
 
 def test_cx_apply():
     expected  = object()
-    cx = cx_apply(lambda cx: CX(True, expected, cx))
-    hello = cx_from_string("hello")
+    hello = cx_from_string("xxx")
+    cx = cx_apply(lambda cx: CX(True, expected, hello), cx_zero_or_more(cx_when(lambda x: x == 'x')))
     out = cx(hello)
     assert out.ok
     assert out.head == expected
-    assert out.hello == hello
+    assert out.tail == hello
 
 
 def cx_one_or_more(reader):
 
-    def func(cx):
-        return CX(True, cx.head + cx.tail.head, cx.tail.tail)
+    def frob(cx):
+        if cx is None:
+            return None
+        if cx.head is None:
+            return CX(True, None, None)
+        if cx.tail is None:
+            return CX(True, cx.head, None)
 
-    return cx_lift(func, cx_sequence(reader, cx_zero_or_more(reader)))
+        return CX(True, [cx.head] + cx.tail.head, cx.tail.tail)
+
+    return cx_apply(frob, cx_sequence(reader, cx_zero_or_more(reader)))
+
+
+def pk(*args):
+    print(*args)
+    return args[-1]
+
+
+def test_cx_one_or_more():
+    cx = cx_one_or_more(cx_when(lambda x: pk(x, x == 'x')))
+    assert not cx(cx_from_string("z")).ok
+    assert cx(cx_from_string("xxx")).head == ['x', 'x', 'x']
+    assert cx(cx_from_string("xxxyyy")).head == ['x', 'x', 'x']
 
 
 def test_zero_or_more_three_balanced_parentheses():
