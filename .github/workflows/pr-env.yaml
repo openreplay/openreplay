@@ -5,7 +5,7 @@ on:
     inputs:
       build_service:
         description: "Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service.  
-                      Options: all/service-name/backend:{service-name/all}"
+                      Options: all/service-name/backend:{app1/app1,app2,app3/all}"
         required: true
         default: 'frontend'
       env_flavour:
@@ -199,12 +199,29 @@ jobs:
         export KUBECONFIG=/tmp/kubeconfig.yaml
 
         case $app_name in
+          all)
+            ;;
           backend*)
-            echo "In backend build"
+            echo "Building backend build"
             cd backend
-            component=`echo $app_name | cut -d ':' -f 2`
-            PUSH_IMAGE=1 bash -x ./build.sh $env $component
-            kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+            components=()
+            if [ $app_name == "all" ]; then
+              # Append all folder names from 'cmd/' directory to the array
+              for folder in cmd/*/; do
+                # Use basename to extract the folder name without path
+                folder_name=$(basename "$folder")
+                components+=("$folder_name")
+              done
+            else
+            # "${app_name#*:}" :: Strip backend: and output app1,app2,app3 to read -ra
+            IFS=',' read -ra components <<< "${app_name#*:}"
+            fi
+            # Iterate over the array and print each folder name
+            for component in "${components[@]}"; do
+              echo "Building backend:$component"
+              PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+            done
             ;;
           *)
             set -x
