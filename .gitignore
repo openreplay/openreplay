@@ -7,3 +7,4 @@ node_modules
 **/*.envrc
 .idea
 *.mob*
+.vscode

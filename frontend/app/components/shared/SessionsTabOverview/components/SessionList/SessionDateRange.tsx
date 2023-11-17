@@ -9,11 +9,14 @@ interface Props {
   applyFilter: (filter: any) => void;
 }
 function SessionDateRange(props: Props) {
+  if (!props.filter) {
+    return <></>;
+  }
   const {
     filter: { startDate, endDate, rangeValue },
   } = props;
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
-  const isCustom = period.rangeName === 'CUSTOM_RANGE'
+  const isCustom = period.rangeName === 'CUSTOM_RANGE';
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
     props.applyFilter(dateValues);
@@ -21,7 +24,9 @@ function SessionDateRange(props: Props) {
   return (
     <div className="flex items-center">
       <span className="mr-1">No sessions {isCustom ? 'between' : 'in the'}</span>
-      <div className="border rounded"><SelectDateRange period={period} onChange={onDateChange} right={true} /></div>
+      <div className="border rounded">
+        <SelectDateRange period={period} onChange={onDateChange} right={true} />
+      </div>
     </div>
   );
 }

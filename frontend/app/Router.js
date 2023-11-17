@@ -261,7 +261,7 @@ class Router extends React.Component {
                         </Switch>
                     </Suspense>
                 </Loader>
-                {!isEnterprise && !isPlayer && <SupportCallout /> }
+                {!isEnterprise && !isPlayer && <SupportCallout />}
             </ModalProvider>
         ) : (
             <Suspense fallback={<Loader loading={true} className="flex-1" />}>
@@ -271,7 +271,7 @@ class Router extends React.Component {
                     <Route exact strict path={SIGNUP_PATH} component={Signup} />
                     <Redirect to={LOGIN_PATH} />
                 </Switch>
-                {!isEnterprise && <SupportCallout /> }
+                {!isEnterprise && <SupportCallout />}
             </Suspense>
         );
     }

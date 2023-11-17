@@ -9,18 +9,20 @@ import { toJS } from 'mobx';
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
-export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
+export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(
+  arr1: T[],
+  arr2: Y[]
+): Array<T | Y> {
   let merged = [];
   let index1 = 0;
   let index2 = 0;
   let current = 0;
 
-  while (current < (arr1.length + arr2.length)) {
-
+  while (current < arr1.length + arr2.length) {
     let isArr1Depleted = index1 >= arr1.length;
     let isArr2Depleted = index2 >= arr2.length;
 
-    if (!isArr1Depleted && (isArr2Depleted || (arr1[index1].timestamp < arr2[index2].timestamp))) {
+    if (!isArr1Depleted && (isArr2Depleted || arr1[index1].timestamp < arr2[index2].timestamp)) {
       merged[current] = arr1[index1];
       index1++;
     } else {
@@ -34,7 +36,6 @@ export function mergeEventLists<T extends Record<string, any>, Y extends Record<
   return merged;
 }
 export function sortEvents(a: Record<string, any>, b: Record<string, any>) {
-
   const aTs = a.time || a.timestamp;
   const bTs = b.time || b.timestamp;
 
@@ -195,7 +196,7 @@ export default class Session {
   agentToken: ISession['agentToken'];
   notes: ISession['notes'];
   notesWithEvents: ISession['notesWithEvents'];
-  frustrations: Array<IIssue | InjectedEvent>
+  frustrations: Array<IIssue | InjectedEvent>;
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
@@ -260,22 +261,21 @@ export default class Session {
 
     const rawNotes = notes;
 
-    const frustrationEvents = events.filter(ev => {
-        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
-          // @ts-ignore
-          return ev.hesitation > 1000
-        }
-        return ev.type === TYPES.CLICKRAGE
+    const frustrationEvents = events.filter((ev) => {
+      if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+        // @ts-ignore
+        return ev.hesitation > 1000;
       }
-    )
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+      return ev.type === TYPES.CLICKRAGE;
+    });
+    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING);
 
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       mergeEventLists(rawEvents, rawNotes),
       frustrationIssues
-    ).sort(sortEvents)
+    ).sort(sortEvents);
 
     Object.assign(this, {
       ...session,
@@ -299,7 +299,11 @@ export default class Session {
           ''
       ),
       userDisplayName:
-        session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
+        session.userDisplayName ||
+        session.userId ||
+        session.userAnonymousId ||
+        session.userID ||
+        'Anonymous User',
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
@@ -349,22 +353,18 @@ export default class Session {
       });
     }
 
-    const frustrationEvents = events.filter(ev => {
-        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
-          // @ts-ignore
-          return ev.hesitation > 1000
-        }
-        return ev.type === TYPES.CLICKRAGE
+    const frustrationEvents = events.filter((ev) => {
+      if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+        // @ts-ignore
+        return ev.hesitation > 1000;
       }
-    )
+      return ev.type === TYPES.CLICKRAGE;
+    });
 
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING);
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
-    const mixedEventsWithIssues = mergeEventLists(
-      rawEvents,
-      frustrationIssues
-    )
+    const mixedEventsWithIssues = mergeEventLists(rawEvents, frustrationIssues);
 
     this.events = events;
     // @ts-ignore
@@ -382,11 +382,10 @@ export default class Session {
   addNotes(sessionNotes: Note[]) {
     sessionNotes.forEach((note) => {
       // @ts-ignore veri dirti
-      note.time = note.timestamp
-    })
+      note.time = note.timestamp;
+    });
     // @ts-ignore
-    this.notesWithEvents =
-      [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
+    this.notesWithEvents = [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
     this.notes = sessionNotes;
 
     return this;

@@ -1,4 +1,4 @@
-import { runInAction, makeAutoObservable, observable } from 'mobx'
+import { runInAction, makeAutoObservable, observable } from 'mobx';
 import { Map } from 'immutable';
 import { Duration } from 'luxon';
 
@@ -9,59 +9,72 @@ function hashString(s: string): number {
   let hash = 0;
   for (let i = 0; i < s.length; i++) {
     hash = (hash + s.charCodeAt(i) * mul) % HASH_MOD;
-    mul = (mul*HASH_P) % HASH_MOD;
+    mul = (mul * HASH_P) % HASH_MOD;
   }
   return hash;
 }
 
 export default class Session {
-    sessionId: string = "";
-    viewed: boolean = false
-    duration: number = 0
-    metadata: any = Map()
-    startedAt: number = 0
-    userBrowser: string = ""
-    userOs: string = ""
-    userId: string = ""
-    userDeviceType: string = ""
-    userCountry: string = ""
-    userCity: string = ""
-    userState: string = ""
-    eventsCount: number = 0
-    userNumericHash: number = 0
-    userDisplayName: string = ""
+  sessionId: string = '';
+  viewed: boolean = false;
+  duration: number = 0;
+  metadata: any = Map();
+  startedAt: number = 0;
+  userBrowser: string = '';
+  userOs: string = '';
+  userId: string = '';
+  userDeviceType: string = '';
+  userCountry: string = '';
+  userCity: string = '';
+  userState: string = '';
+  eventsCount: number = 0;
+  userNumericHash: number = 0;
+  userDisplayName: string = '';
 
-    constructor() {
-        makeAutoObservable(this, {
-            sessionId: observable,
-        })
-    }
+  constructor() {
+    makeAutoObservable(this, {
+      sessionId: observable,
+    });
+  }
 
-    fromJson(session: any) {
-        runInAction(() => {
-            Object.keys(session).forEach(key => {
-                this[key] = session[key]
-            })
+  fromJson(session: any) {
+    runInAction(() => {
+      Object.keys(session).forEach((key) => {
+        this[key] = session[key];
+      });
 
-            const { startTs, timestamp } = session;
-            const startedAt = +startTs || +timestamp;
+      const { startTs, timestamp } = session;
+      const startedAt = +startTs || +timestamp;
 
-            this.sessionId = session.sessionId
-            this.viewed = session.viewed
-            this.duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
-            this.metadata = Map(session.metadata)
-            this.startedAt = startedAt
-            this.userBrowser = session.userBrowser
-            this.userOs = session.userOs
-            this.userId = session.userId
-            this.userDeviceType = session.userDeviceType
-            this.eventsCount = session.eventsCount
-            this.userCountry = session.userCountry
-            this.userCity = session.userCity
-            this.userState = session.userState
-            this.userNumericHash = hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || "")
-            this.userDisplayName = session.userId || session.userAnonymousId || session.userID || 'Anonymous User'
-        })  
-        return this
-    }
+      this.sessionId = session.sessionId;
+      this.viewed = session.viewed;
+      this.duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
+      this.metadata = Map(session.metadata);
+      this.startedAt = startedAt;
+      this.userBrowser = session.userBrowser;
+      this.userOs = session.userOs;
+      this.userId = session.userId;
+      this.userDeviceType = session.userDeviceType;
+      this.eventsCount = session.eventsCount;
+      this.userCountry = session.userCountry;
+      this.userCity = session.userCity;
+      this.userState = session.userState;
+      this.userNumericHash = hashString(
+        session.userId ||
+          session.userAnonymousId ||
+          session.userUuid ||
+          session.userID ||
+          session.userUUID ||
+          ''
+      );
+      console.log(session);
+      this.userDisplayName =
+        session.userDisplayName ||
+        session.userId ||
+        session.userAnonymousId ||
+        session.userID ||
+        'Anonymous User';
+    });
+    return this;
+  }
 }

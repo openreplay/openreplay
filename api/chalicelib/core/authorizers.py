@@ -21,7 +21,7 @@ def jwt_authorizer(token):
         print("! JWT Expired signature")
         return None
     except BaseException as e:
-        print("! JWT Base Exception")
+        print("! JWT Base Exception", e)
         return None
     return payload
 

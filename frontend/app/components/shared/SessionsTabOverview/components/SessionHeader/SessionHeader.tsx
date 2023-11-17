@@ -9,21 +9,27 @@ import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { setActiveTab } from 'Duck/search';
 import SessionSettingButton from '../SessionSettingButton';
+import SessionGroupBy from '../SessionGroupBy';
 
 interface Props {
   listCount: number;
   filter: any;
   activeTab: string;
   isEnterprise: boolean;
+  metaLoading: boolean;
   applyFilter: (filter: any) => void;
   setActiveTab: (tab: any) => void;
 }
 function SessionHeader(props: Props) {
+  if (!props.filter) {
+    return null;
+  }
   const {
     filter: { startDate, endDate, rangeValue },
     activeTab,
     isEnterprise,
     listCount,
+    metaLoading,
   } = props;
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
@@ -33,7 +39,7 @@ function SessionHeader(props: Props) {
       return 'Notes';
     }
     if (activeTab === 'bookmark') {
-      return isEnterprise? 'Vault' : 'Bookmarks';
+      return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
   }, [activeTab]);
@@ -54,13 +60,20 @@ function SessionHeader(props: Props) {
               <div className="mr-auto" />
               {listCount > 0 && (
                 <>
+                  <div className="mx-2" />
                   <SelectDateRange period={period} onChange={onDateChange} right={true} />
                   <div className="mx-2" />
                 </>
               )}
             </>
           )}
-          <SessionSort />
+          {!metaLoading && (
+            <>
+              <SessionGroupBy />
+              <div className="mx-2" />
+              <SessionSort />
+            </>
+          )}
           <SessionSettingButton />
         </div>
       ) : null}
@@ -80,6 +93,7 @@ export default connect(
     listCount: state.getIn(['sessions', 'total']),
     activeTab: state.getIn(['search', 'activeTab', 'type']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
   }),
   { applyFilter, setActiveTab }
 )(SessionHeader);

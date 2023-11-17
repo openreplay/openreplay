@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import zoneinfo
 
@@ -100,6 +100,9 @@ class TimeUTC:
             if fp > 0:
                 date += '0' * (6 - len(date[fp + 1:]))
             date = datetime.fromisoformat(date)
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc) # force utc time for date time coming from postgres
+
         return int(datetime.timestamp(date) * 1000)
 
     @staticmethod

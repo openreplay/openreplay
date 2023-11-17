@@ -12,7 +12,7 @@ import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import {
   assist as assistRoute,
-  liveSession,
+  liveSession as liveSessionRoute,
   sessions as sessionsRoute,
   session as sessionRoute,
   isRoute,
@@ -23,7 +23,7 @@ import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 
 const ASSIST_ROUTE = assistRoute();
-const ASSIST_LIVE_SESSION = liveSession();
+const ASSIST_LIVE_SESSION = liveSessionRoute();
 const SESSIONS_ROUTE = sessionsRoute();
 
 interface Props {
@@ -36,7 +36,7 @@ interface Props {
     userDisplayName: string;
     userCountry: string;
     userCity: string;
-    usetState: string;
+    userState: string;
     startedAt: number;
     duration: Duration;
     eventsCount: number;
@@ -67,7 +67,21 @@ interface Props {
   isAdd?: boolean;
   ignoreAssist?: boolean;
   bookmarked?: boolean;
+  isGroupedSessions?: boolean;
   toggleFavorite?: (sessionId: string) => void;
+}
+
+function getSessionLink(
+  sessionId: string,
+  queryParams: Record<string, string>,
+  isAssist = false,
+  isGroupedSessions = false
+) {
+  if (isAssist) {
+    return liveSessionRoute(sessionId, queryParams);
+  } else {
+    return sessionRoute(sessionId, queryParams);
+  }
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -85,6 +99,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     compact = false,
     ignoreAssist = false,
     bookmarked = false,
+    isGroupedSessions = false,
   } = props;
 
   const {
@@ -120,6 +135,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     (isRoute(ASSIST_ROUTE, location.pathname) ||
       isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
       location.pathname.includes('multiview'));
+  const sessionLink = getSessionLink(sessionId, queryParams, isAssist, isGroupedSessions);
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
@@ -137,7 +153,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         onClick: () => {
           const sessionPath = `${window.location.origin}/${
             window.location.pathname.split('/')[1]
-          }${sessionRoute(sessionId)}`;
+          }${sessionLink}`;
           copy(sessionPath);
           toast.success('Session URL copied to clipboard');
         },
@@ -222,7 +238,12 @@ function SessionItem(props: RouteComponentProps & Props) {
             </div>
             <div style={{ width: '30%' }} className="px-2 flex flex-col justify-between">
               <div style={{ height: '21px' }}>
-                <CountryFlag userCity={userCity} userState={userState} country={userCountry} showLabel={true} />
+                <CountryFlag
+                  userCity={userCity}
+                  userState={userState}
+                  country={userCountry}
+                  showLabel={true}
+                />
               </div>
               <div className="color-gray-medium flex items-center py-1">
                 <span className="capitalize" style={{ maxWidth: '70px' }}>
@@ -294,13 +315,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
               ) : (
                 <>
-                  <PlayLink
-                    isAssist={isAssist}
-                    sessionId={sessionId}
-                    viewed={viewed}
-                    onClick={onClick}
-                    queryParams={queryParams}
-                  />
+                  <PlayLink sessionLink={sessionLink} viewed={viewed} onClick={onClick} />
                   {bookmarked && (
                     <div className="ml-2 cursor-pointer">
                       <ItemMenu bold items={menuItems} />

@@ -26,7 +26,8 @@ function AutoplayTimer({ nextId, siteId, history }: IProps) {
     }
 
     if (counter === 0) {
-      history.push(withSiteId(sessionRoute(nextId), siteId));
+      const queryParams = Object.fromEntries(new URLSearchParams(location.search));
+      history.push(withSiteId(sessionRoute(nextId, queryParams), siteId));
     }
 
     return () => clearTimeout(timer);

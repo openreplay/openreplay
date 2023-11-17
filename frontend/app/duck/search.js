@@ -11,6 +11,7 @@ import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions } from 'Types/filter/newFilter';
 import { DURATION_FILTER } from 'App/constants/storageKeys';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
+import { getFiltersFromQuery } from 'App/utils/search';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -29,6 +30,7 @@ const APPLY_SAVED_SEARCH = `${name}/APPLY_SAVED_SEARCH`;
 const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const UPDATE = `${name}/UPDATE`;
 const APPLY = `${name}/APPLY`;
+const INIT = '@@INIT';
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
 const SET_ACTIVE_TAB = `${name}/SET_ACTIVE_TAB`;
@@ -54,7 +56,7 @@ const initialState = Map({
     latestRequestTime: null,
     latestList: List(),
     alertMetricId: null,
-    instance: new Filter({ filters: [] }),
+    instance: Filter(),
     savedSearch: new SavedFilter({}),
     filterSearchList: {},
     currentPage: 1,
@@ -148,6 +150,9 @@ export const filterMap = ({ category, value, key, operator, sourceOperator, sour
 
 
 const getFilters = (state) => {
+    if (!state.getIn(['search', 'instance'])) {
+        return;
+    }
     const filter = state.getIn(['search', 'instance']).toData();
     const activeTab = state.getIn(['search', 'activeTab']);
     if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
@@ -188,29 +193,30 @@ const getFilters = (state) => {
 
 export const reduceThenFetchResource =
     (actionCreator) =>
-    (...args) =>
-    (dispatch, getState) => {
-        dispatch(actionCreator(...args));
-        const activeTab = getState().getIn(['search', 'activeTab']);
-        if (['notes', 'flags'].includes(activeTab.type)) return;
-        
-        const filter = getFilters(getState());
-        filter.limit = PER_PAGE;
-        filter.page = getState().getIn(['search', 'currentPage']);
+        (...args) =>
+            (dispatch, getState) => {
+                dispatch(actionCreator(...args));
+                const activeTab = getState().getIn(['search', 'activeTab']);
+                if (['notes', 'flags'].includes(activeTab.type)) return;
 
-        const forceFetch = filter.filters.length === 0 || args[1] === true;
+                const filter = getFilters(getState());
+                if (!filter) return;
+                filter.limit = PER_PAGE;
+                filter.page = getState().getIn(['search', 'currentPage']);
 
-        // reset the timestamps to latest
-        if (filter.rangeValue !== CUSTOM_RANGE) {
-            const period = new Period({ rangeName: filter.rangeValue })
-            const newTimestamps = period.toJSON();
-            filter.startDate = newTimestamps.startDate
-            filter.endDate = newTimestamps.endDate
-        }
+                const forceFetch = filter.filters.length === 0 || args[1] === true;
 
-        dispatch(updateLatestRequestTime())
-        return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter, forceFetch));
-    };
+                // reset the timestamps to latest
+                if (filter.rangeValue !== CUSTOM_RANGE) {
+                    const period = new Period({ rangeName: filter.rangeValue })
+                    const newTimestamps = period.toJSON();
+                    filter.startDate = newTimestamps.startDate
+                    filter.endDate = newTimestamps.endDate
+                }
+
+                dispatch(updateLatestRequestTime())
+                return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter, forceFetch));
+            };
 
 export const edit = reduceThenFetchResource((instance) => ({
     type: EDIT,
@@ -218,8 +224,8 @@ export const edit = reduceThenFetchResource((instance) => ({
 }));
 
 export const editDefault = (instance) => ({
-  type: EDIT,
-  instance,
+    type: EDIT,
+    instance,
 });
 
 export const setActiveTab = reduceThenFetchResource((tab) => ({
@@ -267,7 +273,14 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
 };
 
 export const fetchSessions = (filter, force = false) => (dispatch, getState) => {
-    const _filter = filter ? filter : getState().getIn(['search', 'instance']);
+    console.log('search/fetchSessions', filter, force)
+    let _filter = filter ? filter : getState().getIn(['search', 'instance']);
+    if (!getState().getIn(['search', 'latestRequestTime'])) {
+        // in order to prevent double/bad loads grab the filter from the url if it exists
+        // if not it'll just be an empty filter
+        console.log(window.location.search)
+        _filter = getFiltersFromQuery(window.location.search);
+    }
     return dispatch(applyFilter(_filter, force));
 };
 
@@ -333,10 +346,10 @@ export const clearSearch = () => (dispatch, getState) => {
     dispatch(
         edit(
             new Filter({
-              rangeValue: instance.rangeValue,
-              startDate: instance.startDate,
-              endDate: instance.endDate,
-              filters: [],
+                rangeValue: instance.rangeValue,
+                startDate: instance.startDate,
+                endDate: instance.endDate,
+                filters: [],
             })
         )
     );
@@ -351,55 +364,55 @@ export const hasFilterApplied = (filters, filter) => {
 
 export const getAppliedFilterIndex = (filters, filterToFind) => {
     if (!filterToFind.isEvent) {
-      return filters.findIndex((filter) => filter.key === filterToFind.key);
+        return filters.findIndex((filter) => filter.key === filterToFind.key);
     }
     return -1;
-  };
-  
+};
+
 export const addFilter = (filter) => (dispatch, getState) => {
-  const instance = getState().getIn(['search', 'instance']);
-  const filters = instance.get('filters');
-  const index = getAppliedFilterIndex(filters, filter);
+    const instance = getState().getIn(['search', 'instance']);
+    const filters = instance.get('filters');
+    const index = getAppliedFilterIndex(filters, filter);
 
-  filter.value = checkFilterValue(filter.value);
+    filter.value = checkFilterValue(filter.value);
 
-  filter.filters = filter.filters
-    ? filter.filters.map((subFilter) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value),
-      }))
-    : null;
+    filter.filters = filter.filters
+        ? filter.filters.map((subFilter) => ({
+            ...subFilter,
+            value: checkFilterValue(subFilter.value),
+        }))
+        : null;
 
-  if (index !== -1) {
-    const oldFilter = filters.get(index);
-    const updatedFilter = {
-      ...oldFilter,
-      value: oldFilter.value.concat(filter.value),
-    };
+    if (index !== -1) {
+        const oldFilter = filters.get(index);
+        const updatedFilter = {
+            ...oldFilter,
+            value: oldFilter.value.concat(filter.value),
+        };
 
-    const updatedFilters = filters.set(index, updatedFilter);
-    return dispatch(edit(instance.set('filters', updatedFilters)));
-  } else {
-    const updatedFilters = filters.push(filter);
-    return dispatch(edit(instance.set('filters', updatedFilters)));
-  }
+        const updatedFilters = filters.set(index, updatedFilter);
+        return dispatch(edit(instance.set('filters', updatedFilters)));
+    } else {
+        const updatedFilters = filters.push(filter);
+        return dispatch(edit(instance.set('filters', updatedFilters)));
+    }
 };
 
 export const addFilterByKeyAndValue =
     (key, value, operator = undefined, sourceOperator = undefined, source = undefined) =>
-    (dispatch, getState) => {
-        let defaultFilter = {...filtersMap[key]};
-        defaultFilter.value = value;
-        if (operator) {
-            defaultFilter.operator = operator;
-        }
-        if (defaultFilter.hasSource && source && sourceOperator) {
-            defaultFilter.sourceOperator = sourceOperator;
-            defaultFilter.source = source;
-        }
+        (dispatch, getState) => {
+            let defaultFilter = { ...filtersMap[key] };
+            defaultFilter.value = value;
+            if (operator) {
+                defaultFilter.operator = operator;
+            }
+            if (defaultFilter.hasSource && source && sourceOperator) {
+                defaultFilter.sourceOperator = sourceOperator;
+                defaultFilter.source = source;
+            }
 
-        dispatch(addFilter(defaultFilter));
-    };
+            dispatch(addFilter(defaultFilter));
+        };
 
 export const editSavedSearch = (instance) => {
     return {
@@ -437,7 +450,7 @@ export const checkForLatestSessions = () => (dispatch, getState) => {
         filter.startDate = newTimestamps.startDate
         filter.endDate = newTimestamps.endDate
     }
-    
+
     return dispatch({
         types: array(CHECK_LATEST),
         call: (client) => client.post(`/sessions/search/ids`, filter),
