@@ -48,18 +48,16 @@ async def test_view_reset_password():
 
 
 # XXX: The types 'pair', and 'maybe' are fused together. 
+
 CX = namedtuple('Combinatorix', ('ok', 'head', 'tail'))
+
+CXC = namedtuple('CXCombiner', ('message', 'func'))
 
 
 def any():
     
     def func(cx):
-        op = cx(objects)
-        if not op.ok:
-            # Return the error as-is.
-            return op
-        out = CX(True, objects.head, cx)
-        return out
+        return cx
 
     return func
 
@@ -117,7 +115,7 @@ def test_cx_stringify():
     assert "abcdef" == cx_to_string(cx_from_string("abcdef"))
 
 
-def test_cx_predicate():
+def test_cx_when():
     input = cx_from_string("yinyang")
     why = when(lambda x: x == 'y')
     cx = why(input)
@@ -137,3 +135,10 @@ def test_cx_fortythree():
     fortythree = cx(fortythree)
     assert fortythree.ok
     assert cx_to_string(fortythree) == '43'
+
+
+def test_cx_any_sequence():
+    out = sequence(any(), any(), any())(cx_from_string('random'))
+    assert out.ok
+    assert out.head is None
+    assert cx_to_string(out.tail) == 'dom'
