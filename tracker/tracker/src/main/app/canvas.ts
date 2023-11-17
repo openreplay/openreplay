@@ -96,7 +96,7 @@ const qualityInt = {
 }
 
 function captureSnapshot(canvas: HTMLCanvasElement, quality: 'low' | 'medium' | 'high' = 'medium') {
-  const imageFormat = 'image/png' // or /jpeg'
+  const imageFormat = 'image/jpeg' // or /png'
   return canvas.toDataURL(imageFormat, qualityInt[quality])
 }
 
