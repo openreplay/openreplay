@@ -1,5 +1,6 @@
 import App from '../app/index.js'
-import { hasTag } from '../app/guards.js'
+import { hasTag } from './guards.js'
+import Message, { CanvasNode } from './messages.gen.js'
 
 interface CanvasSnapshot {
   images: { data: string; id: number }[]
@@ -16,10 +17,7 @@ class CanvasRecorder {
   private readonly intervals: NodeJS.Timeout[] = []
   private readonly interval: number
 
-  constructor(
-    private readonly app: App,
-    private readonly options: Options,
-  ) {
+  constructor(private readonly app: App, private readonly options: Options) {
     this.interval = 1000 / options.fps
   }
 
@@ -29,16 +27,18 @@ class CanvasRecorder {
       if (!id || !hasTag(node, 'canvas') || this.snapshots[id]) {
         return
       }
+      const ts = this.app.timestamp()
       this.snapshots[id] = {
         images: [],
-        createdAt: this.app.timestamp(),
+        createdAt: ts,
       }
-      console.log('got canvas', id, node)
+      const canvasMsg = CanvasNode(id.toString(), ts)
+      this.app.send(canvasMsg as Message)
       const int = setInterval(() => {
         const cid = this.app.nodes.getID(node)
         const canvas = cid ? this.app.nodes.getNode(cid) : undefined
         if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
-          console.log('Canvas element not sync')
+          console.log('Canvas element not in sync')
           clearInterval(int)
         } else {
           const snapshot = captureSnapshot(canvas, this.options.quality)
@@ -60,7 +60,7 @@ class CanvasRecorder {
     }
     const formData = new FormData()
     images.forEach((snapshot) => {
-      const [blob, arr] = dataUrlToBlob(snapshot.data)
+      const blob = dataUrlToBlob(snapshot.data)[0]
       formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.png`)
       saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.png`)
     })
@@ -68,7 +68,7 @@ class CanvasRecorder {
     fetch(this.app.options.ingestPoint + '/v1/web/images', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.app.session.getSessionToken()}`,
+        Authorization: `Bearer ${this.app.session.getSessionToken() ?? ''}`,
         // contentType: 'deflate',
         // contentDisposition: 'form-data',
       },

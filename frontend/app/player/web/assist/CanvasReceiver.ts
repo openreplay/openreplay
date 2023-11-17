@@ -43,7 +43,6 @@ export default class CanvasReceiver {
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
-          console.log(canvasId, this.streams, node);
           spawnVideo(this.streams.get(canvasId)?.clone() as MediaStream, node as VElement);
         }, 500);
       });
