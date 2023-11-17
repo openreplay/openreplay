@@ -814,12 +814,12 @@ def add_msteams_integration(data: schemas.AddCollaborationSchema,
 @app.post('/integrations/msteams/{webhookId}', tags=['integrations'])
 def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
-    if len(data.url) > 0:
+    if len(data.url.unicode_string()) > 0:
         old = MSTeams.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)
         if not old:
             return {"errors": ["MsTeams integration not found."]}
-        if old["endpoint"] != data.url:
-            if not MSTeams.say_hello(data.url):
+        if old["endpoint"] != data.url.unicode_string():
+            if not MSTeams.say_hello(data.url.unicode_string()):
                 return {
                     "errors": [
                         "We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
