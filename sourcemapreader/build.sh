@@ -8,7 +8,7 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 set -e
 
-image_name="sourcemaps-reader"
+image_name="sourcemapreader"
 
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
