@@ -210,14 +210,14 @@ services:
     restart: on-failure
 
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemaps-reader:${COMMON_VERSION}
-    container_name: sourcemaps-reader
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
+    container_name: sourcemapreader
     depends_on:
       - db-migration
     networks:
       - opereplay-net
     env_file:
-      - sourcemaps-reader.env
+      - sourcemapreader.env
     restart: on-failure
 
   # videostorage-openreplay:

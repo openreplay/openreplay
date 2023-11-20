@@ -27,7 +27,7 @@ HEALTH_ENDPOINTS = {
     "integrations": app_connection_string("integrations-openreplay", 8888, "metrics"),
     "peers": app_connection_string("peers-openreplay", 8888, "health"),
     "sink": app_connection_string("sink-openreplay", 8888, "metrics"),
-    "sourcemaps-reader": app_connection_string(
+    "sourcemapreader": app_connection_string(
         "sourcemapreader-openreplay", 8888, "health"
     ),
     "storage": app_connection_string("storage-openreplay", 8888, "metrics"),
@@ -196,7 +196,7 @@ def get_health():
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
             "sink": __check_be_service("sink"),
-            "sourcemaps-reader": __check_be_service("sourcemaps-reader"),
+            "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage")
         },
         "details": __get_sessions_stats,
