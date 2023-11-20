@@ -259,9 +259,7 @@ def test_zero_or_more_three_balanced_parentheses():
 def cx_echo(op):
 
     def func(cx):
-        pk('ECHO ENTRY', op, cx)
         out = op(cx)
-        print('ECHO OUT', op, out)
         return out
 
     return func
