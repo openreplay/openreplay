@@ -54,6 +54,7 @@ class DatabaseRequestHandler:
         }
 
     def build_query(self, action="select", additional_clauses=None, data=None):
+
         if action == "select":
             query = f"SELECT {', '.join(self.select_columns)} FROM {self.table_name}"
         elif action == "insert":
@@ -149,6 +150,16 @@ class DatabaseRequestHandler:
                 return cur.fetchall()
         except Exception as e:
             self.logger.error(f"Database batch insert operation failed: {e}")
+            raise
+
+    def raw_query(self, query, params=None):
+        try:
+            with self.client.PostgresClient() as cur:
+                mogrified_query = cur.mogrify(query, params)
+                cur.execute(mogrified_query)
+                return cur.fetchall() if cur.description else None
+        except Exception as e:
+            self.logger.error(f"Database operation failed: {e}")
             raise
 
     def batch_update(self, items):

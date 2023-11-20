@@ -53,33 +53,15 @@ CREATE TABLE IF NOT EXISTS ut_tests_tasks
 
 CREATE TABLE IF NOT EXISTS ut_tests_signals
 (
-    signal_id  varchar NOT NULL PRIMARY KEY,
     session_id BIGINT      NOT NULL,
-    status     VARCHAR(20) NOT NULL CHECK (status IN ('begin', 'finished', 'aborted', 'done', 'skipped')),
-    type       VARCHAR(10) NOT NULL CHECK (type IN ('test', 'task')),
-    type_id    BIGINT      NOT NULL,
+    test_id    BIGINT      NOT NULL,
+    task_id    BIGINT      NULL,
+    status     VARCHAR(20) NOT NULL CHECK (status IN ('begin', 'done', 'skipped')),
     comment    TEXT        NULL,
-    timestamp  BIGINT      NOT NULL
+    timestamp  BIGINT      NOT NULL,
+    duration   BIGINT      NULL,
+    PRIMARY KEY (session_id, test_id, status, timestamp)
 );
-
-CREATE TABLE IF NOT EXISTS ut_tests_aggregated
-(
-    test_id         BIGINT PRIMARY KEY,
-    attempted_test  INT       NOT NULL,
-    aborted_test    INT       NOT NULL,
-    tasks_completed INT       NOT NULL,
-    tasks_skipped   INT       NOT NULL,
-    timestamp       TIMESTAMP NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS ui_tasks_aggregated
-(
-    task_id             BIGINT PRIMARY KEY,
-    completed_count     INT   NOT NULL,
-    skipped_count       INT   NOT NULL,
-    completion_time_avg FLOAT NOT NULL
-);
-
 
 COMMIT;
 

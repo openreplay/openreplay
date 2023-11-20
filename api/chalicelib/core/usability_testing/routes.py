@@ -98,3 +98,27 @@ async def get_responses(project_id: int, test_id: int, task_id: int, page: int =
     - **test_id**: The unique identifier of the UT test.
     """
     return service.get_responses(project_id, test_id, task_id, page, limit)
+
+
+@app.get("/{project_id}/usability-tests/{test_id}/statistics", tags=tags)
+async def get_statistics(project_id: int, test_id: int):
+    """
+    Get statistics related to a specific UT test.
+
+    :param project_id:
+    :param test_id:
+    :return:
+    """
+    return service.get_statistics(test_id=test_id)
+
+
+@app.get("/{project_id}/usability-tests/{test_id}/task-statistics", tags=tags)
+async def get_task_statistics(project_id: int, test_id: int):
+    """
+    Get statistics related to a specific UT test.
+
+    :param project_id:
+    :param test_id:
+    :return:
+    """
+    return service.get_task_statistics(test_id=test_id)

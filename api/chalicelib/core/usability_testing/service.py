@@ -1,3 +1,6 @@
+import logging
+from datetime import datetime
+
 from fastapi import HTTPException, status
 
 from chalicelib.core.db_request_handler import DatabaseRequestHandler
@@ -270,4 +273,68 @@ def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, li
             "page": page,
             "limit": limit
         }
+    }
+
+
+def get_statistics(test_id: int):
+    try:
+        handler = DatabaseRequestHandler("ut_tests_signals sig")
+        results = handler.raw_query("""
+            WITH TaskCounts AS (SELECT test_id, COUNT(*) as total_tasks
+                    FROM ut_tests_tasks
+                    GROUP BY test_id),
+             CompletedSessions AS (SELECT s.session_id, s.test_id
+                                   FROM ut_tests_signals s
+                                   WHERE s.test_id = %(test_id)s
+                                     AND s.status = 'done'
+                                     AND s.task_id IS NOT NULL
+                                   GROUP BY s.session_id, s.test_id
+                                   HAVING COUNT(DISTINCT s.task_id) = (SELECT total_tasks FROM TaskCounts
+                                    WHERE test_id = s.test_id))
+        
+        SELECT sig.test_id,
+               sum(case when sig.task_id is null then 1 else 0 end)                                as tests_attempts,
+               sum(case when sig.task_id is null and sig.status = 'skipped' then 1 else 0 end)     as tests_skipped,
+               sum(case when sig.task_id is not null and sig.status = 'done' then 1 else 0 end)    as tasks_completed,
+               sum(case when sig.task_id is not null and sig.status = 'skipped' then 1 else 0 end) as tasks_skipped,
+               (SELECT COUNT(*) FROM CompletedSessions WHERE test_id = sig.test_id)                as completed_all_tasks
+        FROM ut_tests_signals sig
+                 LEFT JOIN TaskCounts tc ON sig.test_id = tc.test_id
+        WHERE sig.status IN ('done', 'skipped')
+          AND sig.test_id = %(test_id)s
+        GROUP BY sig.test_id;
+        """, params={
+            'test_id': test_id
+        })
+
+        if results is None or len(results) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
+
+        return {
+            "data": results[0]
+        }
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logging.error(f"Unexpected error occurred: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+def get_task_statistics(test_id: int):
+    db_handler = DatabaseRequestHandler("ut_tests_tasks utt")
+    db_handler.set_select_columns([
+        "utt.task_id",
+        "utt.title",
+        "sum(case when uts.status = 'done' then 1 else 0 end) as completed",
+        "avg(case when uts.status = 'done' then uts.duration else 0 end) as avg_completion_time",
+        "sum(case when uts.status = 'skipped' then 1 else 0 end) as skipped"
+    ])
+    db_handler.add_join("JOIN ut_tests_signals uts ON utt.task_id = uts.task_id")
+    db_handler.add_constraint("utt.test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.set_group_by("utt.task_id, utt.title")
+
+    rows = db_handler.fetchall()
+
+    return {
+        "data": list_to_camel_case(rows)
     }
