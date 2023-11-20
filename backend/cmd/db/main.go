@@ -60,7 +60,7 @@ func main() {
 		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction, messages.MsgMouseClick,
 		messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
-		messages.MsgUnbindNodes,
+		messages.MsgUnbindNodes, messages.MsgCanvasNode,
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
 		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,

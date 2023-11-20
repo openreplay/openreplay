@@ -211,6 +211,14 @@ func (conn *Conn) InsertMouseThrashing(sess *sessions.Session, e *messages.Mouse
 	return nil
 }
 
+func (conn *Conn) InsertCanvasNode(sess *sessions.Session, m *messages.CanvasNode) error {
+	canvasID := fmt.Sprintf("%d_%s", m.Timestamp, m.NodeId)
+	if err := conn.bulks.Get("canvasNodes").Append(sess.SessionID, canvasID, m.Timestamp); err != nil {
+		log.Printf("insert canvas node %s to db, err: %s", canvasID, err)
+	}
+	return nil
+}
+
 func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) error {
 	sessionID := p.SessionID()
 	timestamp := (p.TimestampEnd + p.TimestampStart) / 2

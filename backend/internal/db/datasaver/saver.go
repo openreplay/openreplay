@@ -190,6 +190,10 @@ func (s *saverImpl) handleMessage(msg Message) error {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 0, 50)
+	case *CanvasNode:
+		if err = s.pg.InsertCanvasNode(session, m); err != nil {
+			return err
+		}
 	}
 	return nil
 }
