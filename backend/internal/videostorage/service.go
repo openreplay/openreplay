@@ -18,6 +18,7 @@ import (
 type Task struct {
 	sessionID   string
 	path        string
+	name        string
 	isBreakTask bool
 }
 
@@ -153,7 +154,7 @@ func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath string) error {
 			log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 		}
 		log.Printf("made video replay in %v", time.Since(start))
-		v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath}
+		v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath, name: "/" + name + ".mp4"}
 	}
 	return nil
 }
@@ -166,7 +167,13 @@ func (v *VideoStorage) sendToS3(task *Task) {
 		log.Fatalf("Failed to read video file: %v", err)
 	}
 	// Upload video file to S3
-	if err := v.objStorage.Upload(bytes.NewReader(video), task.sessionID+"/replay.mp4", "video/mp4", objectstorage.NoCompression); err != nil {
+	key := task.sessionID
+	if task.name != "" {
+		key += task.name
+	} else {
+		key += "/replay.mp4"
+	}
+	if err := v.objStorage.Upload(bytes.NewReader(video), key, "video/mp4", objectstorage.NoCompression); err != nil {
 		log.Fatalf("Storage: start upload video replay failed. %s", err)
 	}
 	log.Printf("Video file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
