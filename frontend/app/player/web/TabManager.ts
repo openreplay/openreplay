@@ -2,6 +2,8 @@ import type { Store } from "Player";
 import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
 import ListWalker from "Player/common/ListWalker";
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, InitialLists, State as ListsState } from "Player/web/Lists";
+import CanvasManager from "Player/web/managers/CanvasManager";
+import { VElement } from "Player/web/managers/DOM/VirtualDOM";
 import PagesManager from "Player/web/managers/PagesManager";
 import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
 import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
@@ -59,6 +61,7 @@ export default class TabSessionManager {
   public readonly decoder = new Decoder();
   private lists: Lists;
   private navigationStartOffset = 0
+  private canvasReplayers: Map<string, CanvasManager> = new Map();
 
   constructor(
     private readonly session: any,
@@ -148,8 +151,20 @@ export default class TabSessionManager {
   distributeMessage(msg: Message): void {
     switch (msg.tp) {
       case MType.CanvasNode:
-        const filename = `${msg.timestamp}_${msg.nodeId}.mp4`;
-        console.log(msg, filename)
+        const managerId = `${msg.timestamp}_${msg.nodeId}`;
+        if (!this.canvasReplayers.has(managerId)) {
+          const filename = `${managerId}.mp4`;
+          const delta = msg.timestamp - this.sessionStart;
+          const manager = new CanvasManager(
+            msg.nodeId,
+            msg.timestamp,
+            delta,
+            filename,
+            this.getNode as (id: number) => VElement | undefined
+          );
+          this.canvasReplayers.set(managerId, manager);
+        }
+        console.log(msg, managerId)
         break;
       case MType.SetPageLocation:
         this.locationManager.append(msg);
