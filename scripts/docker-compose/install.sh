@@ -63,7 +63,7 @@ sudo usermod -aG docker "${USER}" || true
 
 # Prompt for DOMAIN_NAME input
 echo -e "${GREEN}Please provide your domain name.${NC}"
-echo "Let's get the exact domain PostHog will be installed on"
+echo "Let's get the exact domain OpenReplay will be installed on"
 echo "Make sure that you have a Host A DNS record pointing to this instance!"
 echo "This will be used for TLS 🔐"
 echo -e "ie: my-openreplay.company.com (NOT an IP address)\n"
