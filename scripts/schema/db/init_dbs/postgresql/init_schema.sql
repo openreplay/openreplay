@@ -1116,6 +1116,14 @@ $$
             CREATE INDEX swipes_timestamp_idx ON events_ios.swipes (timestamp);
             CREATE INDEX swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
 
+            CREATE TABLE events.canvas_recordings
+            (
+                session_id   bigint NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+                recording_id text   NOT NULL,
+                timestamp    bigint NOT NULL
+            );
+            CREATE INDEX canvas_recordings_session_id_idx ON events.canvas_recordings (session_id);
+
             raise notice 'DB created';
         END IF;
     END;
