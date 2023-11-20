@@ -160,7 +160,6 @@ export default class TabSessionManager {
           const fileUrl = this.session.canvasURL.find((url: string) => url.includes(filename));
           const manager = new CanvasManager(
             msg.nodeId,
-            msg.timestamp,
             delta,
             fileUrl,
             this.getNode as (id: number) => VElement | undefined
@@ -320,7 +319,6 @@ export default class TabSessionManager {
       }
       const canvasMsg = this.canvasReplayWalker.moveGetLast(t)
       if (canvasMsg) {
-        console.log(this.pagesManager)
         this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
         this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
       }

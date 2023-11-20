@@ -65,15 +65,13 @@ class CanvasRecorder {
     images.forEach((snapshot) => {
       const blob = dataUrlToBlob(snapshot.data)[0]
       formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
-      saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      // saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
     })
 
     fetch(this.app.options.ingestPoint + '/v1/web/images', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.app.session.getSessionToken() ?? ''}`,
-        // contentType: 'deflate',
-        // contentDisposition: 'form-data',
       },
       body: formData,
     })

@@ -2,6 +2,20 @@ import Peer from 'peerjs';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
 
+let frameCounter = 0;
+
+function draw(
+  video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+  canvasCtx: CanvasRenderingContext2D
+) {
+  if (frameCounter % 4 === 0) {
+    canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  }
+  frameCounter++;
+  requestAnimationFrame(() => draw(video, canvas, canvasCtx));
+}
+
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
   private peer: Peer | null = null;
@@ -43,7 +57,17 @@ export default class CanvasReceiver {
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
-          spawnVideo(this.streams.get(canvasId)?.clone() as MediaStream, node as VElement);
+          const videoEl = spawnVideo(
+            this.streams.get(canvasId)?.clone() as MediaStream,
+            node as VElement
+          );
+          if (node) {
+            draw(
+              videoEl,
+              node.node as HTMLCanvasElement,
+              (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
+            );
+          }
         }, 500);
       });
       call.on('error', (err) => console.error('canvas call error', err));
@@ -62,12 +86,16 @@ export default class CanvasReceiver {
 }
 
 function spawnVideo(stream: MediaStream, node: VElement) {
-  (node.node as HTMLVideoElement).srcObject = stream.clone();
-  (node.node as HTMLVideoElement).setAttribute('autoplay', 'true');
-  (node.node as HTMLVideoElement).setAttribute('muted', 'true');
-  (node.node as HTMLVideoElement).setAttribute('playsinline', 'true');
-  (node.node as HTMLVideoElement).setAttribute('crossorigin', 'anonymous');
-  void (node.node as HTMLVideoElement).play();
+  const videoEl = document.createElement('video');
+
+  videoEl.srcObject = stream
+  videoEl.setAttribute('autoplay', 'true');
+  videoEl.setAttribute('muted', 'true');
+  videoEl.setAttribute('playsinline', 'true');
+  videoEl.setAttribute('crossorigin', 'anonymous');
+  void videoEl.play();
+
+  return videoEl;
 }
 
 function spawnDebugVideo(stream: MediaStream, node: VElement) {
