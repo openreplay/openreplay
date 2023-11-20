@@ -327,9 +327,9 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         sessions_conditions.append("sessions.events_count>1")
         sessions_conditions.append("sessions.duration>0")
         main_table = f"""(SELECT DISTINCT session_id
-                        FROM sessions
+                        FROM {exp_ch_helper.get_main_sessions_table(data.startTimestamp)}
                         WHERE {" AND ".join(sessions_conditions)}) AS sub_sessions 
-                            INNER JOIN events USING (session_id)"""
+                            INNER JOIN {main_table} ON (sub_sessions.session_id = events.session_id)"""
     if len(start_points_conditions) == 0:
         start_points_subquery = """SELECT DISTINCT session_id
                                    FROM (SELECT event_type, e_value
@@ -358,7 +358,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                        WHERE {" AND ".join(start_point_conditions)}
                        GROUP BY session_id),"""
         ch_sub_query.append("events.datetime>=initial_event.start_event_timestamp")
-        main_table += " INNER JOIN initial_event USING (session_id)"
+        main_table += " INNER JOIN initial_event ON (sub_sessions.session_id = initial_event.session_id)"
     del start_points_conditions
 
     steps_query = ["""n1 AS (SELECT event_number_in_session,
