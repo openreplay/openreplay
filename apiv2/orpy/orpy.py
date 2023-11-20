@@ -140,7 +140,7 @@ def route(method, *components):
 
     def wrapper(func):
         log.debug("Registring route: {} @ {}", route, func)
-        ROUTE_REGISTRY.extend((route, lambda *x: lambda : func(*x)))
+        ROUTE_REGISTRY.extend((route, lambda *x: lambda: func(*x)))
         return func
 
     return wrapper
@@ -227,7 +227,7 @@ import time
 
 
 @route("GET", "health")
-def view_health(*_):
+def view_health(*args):
     return (
         200,
         [(b"content-type", b"application/javascript")],
@@ -347,6 +347,8 @@ async def http(send):
             _,
             lambda x: None,
         )
+
+        print(view)
 
         if view is None:
             # TODO: factor into a function http_404_not_found
