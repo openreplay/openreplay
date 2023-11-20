@@ -17,7 +17,10 @@ class CanvasRecorder {
   private readonly intervals: NodeJS.Timeout[] = []
   private readonly interval: number
 
-  constructor(private readonly app: App, private readonly options: Options) {
+  constructor(
+    private readonly app: App,
+    private readonly options: Options,
+  ) {
     this.interval = 1000 / options.fps
   }
 
@@ -61,8 +64,8 @@ class CanvasRecorder {
     const formData = new FormData()
     images.forEach((snapshot) => {
       const blob = dataUrlToBlob(snapshot.data)[0]
-      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.png`)
-      saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.png`)
+      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
     })
 
     fetch(this.app.options.ingestPoint + '/v1/web/images', {

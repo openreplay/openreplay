@@ -1,23 +1,25 @@
+import type { Store } from "Player";
+import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
 import ListWalker from "Player/common/ListWalker";
+import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, InitialLists, State as ListsState } from "Player/web/Lists";
+import PagesManager from "Player/web/managers/PagesManager";
+import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
+import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
 import {
   ConnectionInformation,
-  Message, MType, ResourceTiming,
+  Message,
+  MType,
+  ResourceTiming,
   SetPageLocation,
   SetViewportScroll,
   SetViewportSize
 } from "Player/web/messages";
-import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
-import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
-import PagesManager from "Player/web/managers/PagesManager";
+import { isDOMType } from "Player/web/messages/filters.gen";
+import Screen from "Player/web/Screen/Screen";
 // @ts-ignore
 import { Decoder } from "syncod";
-import Lists, { InitialLists, INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from "Player/web/Lists";
-import type  { Store } from 'Player';
-import Screen from "Player/web/Screen/Screen";
 import { TYPES as EVENT_TYPES } from "Types/session/event";
-import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
-import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
-import { isDOMType } from "Player/web/messages/filters.gen";
+import type { PerformanceChartPoint } from "./managers/PerformanceTrackManager";
 
 export interface TabState extends ListsState {
   performanceAvailability?: PerformanceTrackManager['availability']
@@ -145,6 +147,10 @@ export default class TabSessionManager {
 
   distributeMessage(msg: Message): void {
     switch (msg.tp) {
+      case MType.CanvasNode:
+        const filename = `${msg.timestamp}_${msg.nodeId}.mp4`;
+        console.log(msg, filename)
+        break;
       case MType.SetPageLocation:
         this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
