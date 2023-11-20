@@ -46,7 +46,6 @@ async def test_view_reset_password():
     assert ok[0] 
 
 
-
 # XXX: The types 'pair', and 'maybe' are fused together. 
 CX = namedtuple('Combinatorix', ('ok', 'head', 'tail'))
 
@@ -59,7 +58,7 @@ def CXR(reader, *args):
 
 
 def cx_any(*ops):
-    """Read anything"""
+    """Read with the first in order that succeed."""
 
     def func(cx):
         for op in ops:
@@ -72,7 +71,9 @@ def cx_any(*ops):
 
 
 def cx_when(predicate):
-    """Read when PREDICATE is returns true"""
+    """Read when PREDICATE returns true. 
+
+    PREDICATE read the object, and returns it as-is."""
 
     def func(cx):
         if predicate(cx.head):
@@ -83,7 +84,7 @@ def cx_when(predicate):
 
 
 def cx_sequence(*readers):
-    """Read when all READERS can read"""
+    """Read one after the other using READERS. If one fail, all fail."""
 
     readers = [
         reader.read if isinstance(reader, CXR_type) else reader for reader in readers
@@ -97,7 +98,6 @@ def cx_sequence(*readers):
 
         op = ops[0]
         head = op(cx)
-        pk('HEAD', head)
         if not head.ok:
             return CX(False, head.head, head.tail)
         out = CX(True, head.head, aux(head.tail, ops[1:]))
@@ -122,6 +122,7 @@ def cx_from_string(string):
 
 def cx_to_string(cx):
     """Convert CX to a string"""
+
     if not cx:
         return ''
     if cx.head is None:
@@ -180,7 +181,6 @@ def cx_zero_or_more(reader):
             return CX(False, cx.head, cx.tail)
 
         head = reader(cx)
-
         if not head.ok:
             return cx
         else:
@@ -199,6 +199,7 @@ def cx_zero_or_more(reader):
 
 
 def cx_apply(func, op):
+    """Read using OP, and process the result with FUNC"""
 
     def wrapper(cx):
         cx = op(cx)
@@ -220,6 +221,7 @@ def test_cx_apply():
 
 
 def cx_one_or_more(reader):
+    """Read with READER one or more times"""
 
     def frob(cx):
         if cx is None:
@@ -240,7 +242,7 @@ def pk(*args):
 
 
 def test_cx_one_or_more():
-    cx = cx_one_or_more(cx_when(lambda x: pk(x, x == 'x')))
+    cx = cx_one_or_more(cx_when(lambda x: x == 'x'))
     assert not cx(cx_from_string("z")).ok
     assert cx(cx_from_string("xxx")).head == ['x', 'x', 'x']
     assert cx(cx_from_string("xxxyyy")).head == ['x', 'x', 'x']
@@ -254,5 +256,48 @@ def test_zero_or_more_three_balanced_parentheses():
     assert cx_to_string(out) == "((()))"
 
 
+def cx_echo(op):
+
+    def func(cx):
+        pk('ECHO ENTRY', op, cx)
+        out = op(cx)
+        print('ECHO OUT', op, out)
+        return out
+
+    return func
+
+lilcode = cx_apply(
+    lambda x: CX(True, ["code", ''.join(x.tail.head)], x.tail.tail),
+    cx_sequence(
+        cx_echo(cx_when(lambda x: x == '`')),
+        cx_echo(cx_zero_or_more(cx_when(lambda x: x != '`'))),
+        cx_when(lambda x: x == '`'),
+    )
+)
+
+def test_lilcode():
+    assert lilcode(cx_from_string("`encoded` code")).head == ['code', 'encoded']
+
+liltag = cx_apply(
+    lambda x: CX(True, ["tag", ''.join(x.tail.head)], x.tail.tail),
+    cx_sequence(
+        cx_echo(cx_when(lambda x: x == '#')),
+        cx_echo(cx_zero_or_more(cx_when(lambda x: not x.isspace()))),
+    )
+)
+
+def test_liltag():
+    assert liltag(cx_from_string("#tagged chip")).head == ['tag', 'tagged'] 
 
 
+lilmark = cx_one_or_more(
+    cx_any(
+        lilcode,
+        liltag,
+        cx_when(lambda x : True)
+    )
+)
+
+def test_lilmark():
+    out = lilmark(cx_from_string("hello #people welcome to the `world`"))
+    assert out == []
