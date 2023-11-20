@@ -4,7 +4,7 @@ help: ## This help.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 init: ## Prepare the host sytem for development
-	pip install -r requirements.txt
+	pip install -r requirements.txt -r requirements.dev.txt
 	@echo "\033[95m\n\nYou may now run 'make check'.\n\033[0m"
 
 check: ## Run tests
@@ -34,7 +34,7 @@ xxx: ## Things that require attention
 	@grep -nR --color=always --before-context=2 --after-context=2 XXX .
 
 serve: ## Run the server
-	uvicorn --lifespan on --log-level warning --reload orpy:orpy
+	uvicorn --lifespan on --log-level warning --reload orpy.orpy:orpy
 
 lock: ## Lock dependencies
 	pip-compile -o requirements.txt requirements.source.txt

@@ -44,8 +44,6 @@ else
     curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     ./venv python get-pip.py
     rm -r get-pip.py
-    ./venv pip install pip-tools
-    ./venv pip install -r requirements.txt -r requirements.dev.txt
     echo VENV_PATH=$(pwd) > $VENV/bin/rc.sh
     cat $VENV/bin/activate >> $VENV/bin/rc.sh
     ./venv "$@"

@@ -1,8 +1,0 @@
-pyjwt
-psycopg[pool,binary]
-uvicorn[standard]
-python-decouple
-httpx
-pampy
-loguru
-jinja2

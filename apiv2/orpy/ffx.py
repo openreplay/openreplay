@@ -7,7 +7,7 @@ from pathlib import Path
 from collections import namedtuple
 from mimetypes import guess_type
 
-from lxml.html import fromstring as string2html
+from lxml.html import fromstring as string2html  # nosec - wip code
 from pampy import match, _
 from loguru import logger as log
 import httpx

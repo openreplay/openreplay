@@ -17,7 +17,7 @@ from decouple import config
 from loguru import logger as log
 from pampy import _, match
 
-import helper
+from orpy import helper
 
 ROUTE_REGISTRY = []
 
@@ -100,12 +100,12 @@ async def make_application():
     # TODO: pick configuration from .env with decouple
 
     database = {
-        "host": config("pg_host"),
-        "dbname": config("pg_dbname"),
-        "user": config("pg_user"),
-        "password": config("pg_password"),
-        "port": config("pg_port", cast=int),
-        "application_name": config("APP_NAME", default="ORPY"),
+        "host": config("ORPY_PG_HOST", default="localhost"),
+        "dbname": config("ORPY_PG_DBNAME", default="orpy"),
+        "user": config("ORPY_PG_USER", default="orpy"),
+        "password": config("ORPY_PG_PASSWORD", default="orpy"),
+        "port": config("ORPY_PG_PORT", cast=int, default=5432),
+        "application_name": config("ORPY_APP_NAME", default="orpy-apiv2"),
     }
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
@@ -182,7 +182,7 @@ async def _query_authentication_set_new_invitation(txn, user_id, invitation_toke
 
 
 def _format_invitation_link(token):
-    return "{}{}{}".format(config("SITE_URL"), config("invitation_link"), token)
+    return "{}{}{}".format(config("ORPY_SITE_URL"), config("ORPY_INVITATION_LINK"), token)
 
 
 async def _query_user_by_email(txn, email):
@@ -227,8 +227,7 @@ import time
 
 
 @route("GET", "health")
-def view_health():
-    time.sleep(0.1)
+def view_health(*_):
     return (
         200,
         [(b"content-type", b"application/javascript")],

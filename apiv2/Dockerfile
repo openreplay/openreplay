@@ -10,7 +10,7 @@ ARG envarg
 # Add Tini
 # Startup daemon
 ENV SOURCE_MAP_VERSION=0.7.4 \
-    APP_NAME=chalice \
+    APP_NAME=orpy \
     LISTEN_PORT=8000 \
     PRIVATE_ENDPOINTS=false \
     ENTERPRISE_BUILD=${envarg} \
@@ -27,5 +27,5 @@ RUN adduser -u 1001 openreplay -D
 USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ./entrypoint.sh
+CMD uvicorn uvicorn --lifespan on --log-level warning orpy.orpy:orpy
 

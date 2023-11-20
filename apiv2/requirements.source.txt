@@ -1,0 +1,8 @@
+httpx
+jinja2
+loguru
+pampy
+psycopg[pool,binary]
+pyjwt
+python-decouple
+uvicorn[standard]

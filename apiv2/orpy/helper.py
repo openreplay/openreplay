@@ -2,6 +2,7 @@ import math
 import random
 import re
 import string
+import uuid
 from typing import Union
 from urllib.parse import urlparse
 
@@ -153,8 +154,8 @@ def get_stage_name():
     return "OpenReplay"
 
 
-def random_string(length=36):
-    return "".join(random.choices(string.hexdigits, k=length))
+def random_string():
+    return str(uuid.uuid4())
 
 
 def list_to_camel_case(items: list[dict], flatten: bool = False) -> list[dict]:
