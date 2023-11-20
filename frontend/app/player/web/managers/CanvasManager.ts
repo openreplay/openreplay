@@ -39,7 +39,7 @@ export default class CanvasManager {
   }
 
   move(t: number) {
-    if (t - this.lastTs < 150) return;
+    if (t - this.lastTs < 100) return;
     this.lastTs = t;
     const playTime = t - this.delta
     if (playTime > 0) {
