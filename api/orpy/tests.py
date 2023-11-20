@@ -62,7 +62,6 @@ def cx_any(*ops):
 
     def func(cx):
         for op in ops:
-            pk('ANY', op)
             out = op(cx)
             if out.ok:
                 return out
@@ -183,9 +182,6 @@ def cx_zero_or_more(reader):
 
         head = reader(cx)
         if not head.ok:
-            pk('ZERO OR MORE', cx)
-            pk('ZERO OR MORE', reader)
-            pk('ZERO OR MORE', head)
             return cx
         else:
             return head
@@ -271,10 +267,10 @@ def cx_echo(op):
     return func
 
 lilcode = cx_apply(
-    lambda x: CX(True, ["code", ''.join(x.tail.head)], x.tail.tail),
+    lambda x: CX(True, ["code", ''.join(x.tail.head)], x.tail.tail.tail),
     cx_sequence(
-        cx_echo(cx_when(lambda x: x == '`')),
-        cx_echo(cx_zero_or_more(cx_when(lambda x: x != '`'))),
+        cx_when(lambda x: x == '`'),
+        cx_zero_or_more(cx_when(lambda x: x != '`')),
         cx_when(lambda x: x == '`'),
     )
 )
@@ -291,24 +287,43 @@ liltag = cx_apply(
     )
 )
 
+
+def _test_liltag_to_pyhtml(cx):
+    if cx is None:
+        return []
+    return [cx.head, *_test_liltag_to_pyhtml(cx.tail)]
+
+
 def test_liltag():
-    op = cx_sequence(
-        liltag, 
-        cx_apply(
-            lambda x: CX(True, ''.join(x.head), x.tail), 
-            one_or_more(cx_when(lambda x: True)))
-    )
-    assert liltag(cx_from_string("#tagged chip")) == ['tag', 'tagged'] 
+    op = cx_sequence(liltag, cx_apply(lambda x: CX(True, ''.join(x.head), None), cx_one_or_more(cx_when(lambda x: True))))
+    assert _test_liltag_to_pyhtml(op(cx_from_string("#tagged chip"))) == [['tag', 'tagged'], ' chip'] 
 
 
 lilmark = cx_one_or_more(
     cx_any(
         lilcode,
-        cx_echo(liltag),
+        liltag,
         cx_when(lambda x: True)
     )
 )
 
+
+
 def test_lilmark():
-    out = lilmark(cx_from_string("hello #people welcome to the `world`"))
-    assert out == []
+
+    def normalize(objects):
+        out = []
+        string = ''
+        for obj in objects:
+            if isinstance(obj, list):
+                if string:
+                    out.append(string)
+                    string = ""
+                out.append(obj)
+            else:
+                string += obj
+        out.append(string)
+        return out
+
+    out = lilmark(cx_from_string("hello #people welcome to the `world`!"))
+    assert normalize(out.head) == ["hello ", ['tag', 'people'], ' welcome to the ', ['code', 'world'], '!']
