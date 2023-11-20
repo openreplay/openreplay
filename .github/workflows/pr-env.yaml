@@ -63,7 +63,7 @@ jobs:
       id: vcluster_exists
       continue-on-error: true
       run: |
-        if [ ! $(vcluster list | grep $PR_NUMBER) ]; then
+        if [ ! $(vcluster list | grep $PR_NUMBER &> /dev/null) ]; then
           echo "failed state"
           echo "::set-output name=failed::true"
           exit 100
@@ -206,9 +206,16 @@ jobs:
 
         case $app_name in
           all)
-            backend
-            chalice
-            default
+            # Building all apps
+            cd scripts/helmcharts/
+            # IMAGE_TAG=v1.15.0 PUSH_IMAGE=1 DOCKER_REPO=public.ecr.aws/p1t3u8a3 bash build_deploy.sh
+            bash build_deploy.sh
+            # get all built docker image tags
+            docker images | grep ${IMAGE_TAG} | awk '{print $1}' > /tmp/images.txt
+            components=(`cat /tmp/images.txt | cut -d '/' -f 3`)
+            for component in "${components[@]}"; do
+              kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+            done
             ;;
           backend*)
             echo "Building backend build"
