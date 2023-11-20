@@ -286,6 +286,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1])
     break
 
+    case Messages.Type.CanvasNode:
+      return  this.string(msg[1]) && this.uint(msg[2])
+    break
+
     }
   }
 

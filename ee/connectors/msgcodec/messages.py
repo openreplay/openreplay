@@ -788,6 +788,14 @@ class TabData(Message):
         self.tab_id = tab_id
 
 
+class CanvasNode(Message):
+    __id__ = 119
+
+    def __init__(self, node_id, timestamp):
+        self.node_id = node_id
+        self.timestamp = timestamp
+
+
 class IssueEvent(Message):
     __id__ = 125
 

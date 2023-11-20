@@ -1164,6 +1164,17 @@ cdef class TabData(PyMessage):
         self.tab_id = tab_id
 
 
+cdef class CanvasNode(PyMessage):
+    cdef public int __id__
+    cdef public str node_id
+    cdef public unsigned long timestamp
+
+    def __init__(self, str node_id, unsigned long timestamp):
+        self.__id__ = 119
+        self.node_id = node_id
+        self.timestamp = timestamp
+
+
 cdef class IssueEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long message_id
