@@ -79,6 +79,7 @@ export interface ISession {
   metadata: [];
   favorite: boolean;
   filterId?: string;
+  canvasURL: string[];
   domURL: string[];
   devtoolsURL: string[];
   /**
@@ -148,6 +149,7 @@ const emptyValues = {
   devtoolsURL: [],
   mobsUrl: [],
   notes: [],
+  canvasURL: [],
   metadata: {},
   startedAt: 0,
   platform: 'web',
@@ -160,6 +162,7 @@ export default class Session {
   siteId: ISession['siteId'];
   projectKey: ISession['projectKey'];
   peerId: ISession['peerId'];
+  canvasURL: ISession['canvasURL'];
   live: ISession['live'];
   startedAt: ISession['startedAt'];
   duration: ISession['duration'];
@@ -234,6 +237,7 @@ export default class Session {
       mobsUrl = [],
       crashes = [],
       notes = [],
+      canvasURL = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -325,6 +329,7 @@ export default class Session {
       domURL,
       devtoolsURL,
       notes,
+      canvasURL,
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
     });

@@ -212,7 +212,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.CreateElementNode: {
-        if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
+        // if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
         const vElem = new VElement(msg.tag, msg.svg, msg.index)
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true

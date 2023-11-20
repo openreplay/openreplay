@@ -8,6 +8,7 @@ import PagesManager from "Player/web/managers/PagesManager";
 import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
 import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
 import {
+  CanvasNode,
   ConnectionInformation,
   Message,
   MType,
@@ -61,7 +62,8 @@ export default class TabSessionManager {
   public readonly decoder = new Decoder();
   private lists: Lists;
   private navigationStartOffset = 0
-  private canvasReplayers: Map<string, CanvasManager> = new Map();
+  private canvasManagers: { [key: string]: { manager: CanvasManager, start: number, running: boolean } } = {}
+  private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
   constructor(
     private readonly session: any,
@@ -81,7 +83,7 @@ export default class TabSessionManager {
     })
   }
 
-  public getNode(id: number) {
+  public getNode = (id: number) => {
     return this.pagesManager.getNode(id)
   }
 
@@ -152,19 +154,21 @@ export default class TabSessionManager {
     switch (msg.tp) {
       case MType.CanvasNode:
         const managerId = `${msg.timestamp}_${msg.nodeId}`;
-        if (!this.canvasReplayers.has(managerId)) {
+        if (!this.canvasManagers[managerId]) {
           const filename = `${managerId}.mp4`;
           const delta = msg.timestamp - this.sessionStart;
+          const fileUrl = this.session.canvasURL.find((url: string) => url.includes(filename));
           const manager = new CanvasManager(
             msg.nodeId,
             msg.timestamp,
             delta,
-            filename,
+            fileUrl,
             this.getNode as (id: number) => VElement | undefined
           );
-          this.canvasReplayers.set(managerId, manager);
+          this.canvasManagers[managerId] = { manager, start: msg.timestamp, running: false };
+          this.canvasReplayWalker.append(msg);
+
         }
-        console.log(msg, managerId)
         break;
       case MType.SetPageLocation:
         this.locationManager.append(msg);
@@ -314,6 +318,17 @@ export default class TabSessionManager {
       if (!!lastScroll && this.screen.window) {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
+      const canvasMsg = this.canvasReplayWalker.moveGetLast(t)
+      if (canvasMsg) {
+        console.log(this.pagesManager)
+        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
+        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
+      }
+      const runningManagers = Object.keys(this.canvasManagers).filter((key) => this.canvasManagers[key].running);
+      runningManagers.forEach((key) => {
+        const manager = this.canvasManagers[key].manager;
+        manager.move(t);
+      })
     })
   }
 
