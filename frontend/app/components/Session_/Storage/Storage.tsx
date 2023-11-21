@@ -111,7 +111,7 @@ function Storage(props: Props) {
       return <div style={{ flex: 3 }} className="p-1" />;
     }
 
-    const stateDiff = diff(prevItem.state, item.state);
+    const stateDiff = diff(prevItem.state, item?.state);
 
     if (!stateDiff) {
       return (
@@ -171,23 +171,23 @@ function Storage(props: Props) {
     switch (type) {
       case STORAGE_TYPES.REDUX:
       case STORAGE_TYPES.NGRX:
-        src = itemD.action;
+        src = itemD?.action;
         name = src && src.type;
         break;
       case STORAGE_TYPES.VUEX:
-        src = itemD.mutation;
+        src = itemD?.mutation;
         name = src && src.type;
         break;
       case STORAGE_TYPES.MOBX:
-        src = itemD.payload;
+        src = itemD?.payload;
         name = `@${item.type} ${src && src.type}`;
         break;
       case STORAGE_TYPES.ZUSTAND:
         src = null;
-        name = itemD.mutation.join('');
+        name = itemD?.mutation.join('');
     }
 
-    if (src !== null && !showDiffs && itemD.state) {
+    if (src !== null && !showDiffs && itemD?.state) {
       setShowDiffs(true);
     }
 
@@ -217,7 +217,7 @@ function Storage(props: Props) {
           style={{ flex: 1 }}
           className="flex-1 flex gap-2 pt-2 items-center justify-end self-start"
         >
-          {typeof item.duration === 'number' && (
+          {typeof item?.duration === 'number' && (
             <div className="font-size-12 color-gray-medium">{formatMs(itemD.duration)}</div>
           )}
           <div className="w-12">
