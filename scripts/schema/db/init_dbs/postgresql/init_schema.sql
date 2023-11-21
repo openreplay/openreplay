@@ -1116,7 +1116,7 @@ $$
             CREATE INDEX swipes_timestamp_idx ON events_ios.swipes (timestamp);
             CREATE INDEX swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
 
-            -- v1.16.0
+
             CREATE TYPE ui_tests_status AS ENUM ('preview', 'in-progress', 'paused', 'closed');
 
             CREATE TABLE IF NOT EXISTS ut_tests
@@ -1161,7 +1161,13 @@ $$
                 PRIMARY KEY (session_id, test_id, status, timestamp)
             );
 
-            -- end v1.16.0
+            CREATE TABLE events.canvas_recordings
+            (
+                session_id   bigint NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+                recording_id text   NOT NULL,
+                timestamp    bigint NOT NULL
+            );
+            CREATE INDEX canvas_recordings_session_id_idx ON events.canvas_recordings (session_id);
 
             raise notice 'DB created';
         END IF;

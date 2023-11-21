@@ -973,13 +973,13 @@ $$
 
             CREATE TABLE IF NOT EXISTS public.assist_events
             (
-                event_id    varchar NOT NULL PRIMARY KEY,
-                project_id  integer NOT NULL,
-                session_id  varchar NOT NULL,
-                event_type  varchar NOT NULL,
-                timestamp   bigint NOT NULL,
-                duration    integer,
-                agent_id    integer
+                event_id   varchar NOT NULL PRIMARY KEY,
+                project_id integer NOT NULL,
+                session_id varchar NOT NULL,
+                event_type varchar NOT NULL,
+                timestamp  bigint  NOT NULL,
+                duration   integer,
+                agent_id   integer
             );
 
             CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
@@ -1019,7 +1019,8 @@ $$
                                             ('pages'),
                                             ('performance'),
                                             ('resources'),
-                                            ('state_actions'))
+                                            ('state_actions'),
+                                            ('canvas_recordings'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'events'
@@ -1267,6 +1268,15 @@ $$
             CREATE INDEX IF NOT EXISTS performance_session_id_timestamp_idx ON events.performance (session_id, timestamp);
             CREATE INDEX IF NOT EXISTS performance_avg_cpu_gt0_idx ON events.performance (avg_cpu) WHERE avg_cpu > 0;
             CREATE INDEX IF NOT EXISTS performance_avg_used_js_heap_size_gt0_idx ON events.performance (avg_used_js_heap_size) WHERE avg_used_js_heap_size > 0;
+
+            CREATE TABLE IF NOT EXISTS events.canvas_recordings
+            (
+                session_id   bigint NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+                recording_id text   NOT NULL,
+                timestamp    bigint NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS canvas_recordings_session_id_idx ON events.canvas_recordings (session_id);
+
         END IF;
     END;
 $$

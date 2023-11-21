@@ -13,6 +13,8 @@ import { observer } from 'mobx-react-lite';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs'
+import { IFRAME } from 'App/constants/storageKeys';
+import cn from 'classnames';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 
@@ -22,6 +24,7 @@ function SubHeader(props) {
     const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
     const { player, store } = React.useContext(PlayerContext);
     const { width, height, endTime, location: currentLocation = 'loading...', } = store.get();
+    const hasIframe = localStorage.getItem(IFRAME) === "true";
 
 
     const enabledIntegration = useMemo(() => {
@@ -104,7 +107,7 @@ function SubHeader(props) {
                 ) : null}
                 <SessionTabs />
                 <div
-                    className="ml-auto text-sm flex items-center color-gray-medium gap-2"
+                    className={cn("ml-auto text-sm flex items-center color-gray-medium gap-2", { 'opacity-50 pointer-events-none' : hasIframe })}
                     style={{ width: 'max-content' }}
                 >
                     <Button icon="file-pdf" variant="text" onClick={showReportModal}>

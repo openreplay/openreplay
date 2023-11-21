@@ -1,5 +1,5 @@
-\set previous_version 'v1.15.0'
-\set next_version 'v1.16.0'
+\set previous_version 'v1.15.0-ee'
+\set next_version 'v1.16.0-ee'
 SELECT openreplay_version()                       AS current_version,
        openreplay_version() = :'previous_version' AS valid_previous,
        openreplay_version() = :'next_version'     AS is_next
@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS ut_tests_signals
     duration   BIGINT      NULL,
     PRIMARY KEY (session_id, test_id, status, timestamp)
 );
+
+CREATE TABLE IF NOT EXISTS events.canvas_recordings
+(
+    session_id   bigint NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+    recording_id text   NOT NULL,
+    timestamp    bigint NOT NULL
+);
+CREATE INDEX IF NOT EXISTS canvas_recordings_session_id_idx ON events.canvas_recordings (session_id);
 
 COMMIT;
 

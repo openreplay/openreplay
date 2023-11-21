@@ -6,7 +6,7 @@ RUN apk add --no-cache tini
 
 ARG envarg
 ENV SOURCE_MAP_VERSION=0.7.4 \
-    APP_NAME=sourcemaps-reader \
+    APP_NAME=sourcemapreader \
     LISTEN_PORT=9000 \
     MAPPING_WASM=/work/mappings.wasm \
     PRIVATE_ENDPOINTS=true \

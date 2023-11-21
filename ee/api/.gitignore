@@ -178,11 +178,18 @@ README/*
 Pipfile.lock
 
 .local/*
-
+/app_alerts.py
+/auth/__init__.py
+/auth/auth_apikey.py
+/build.sh
+/build_alerts.sh
+/build_crons.sh
 /chalicelib/core/alerts.py
-#exp /chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py
+/chalicelib/core/assist.py
+/chalicelib/core/authorizers.py
 /chalicelib/core/autocomplete.py
+/chalicelib/core/canvas.py
 /chalicelib/core/click_maps.py
 /chalicelib/core/collaboration_base.py
 /chalicelib/core/collaboration_msteams.py
@@ -190,11 +197,11 @@ Pipfile.lock
 /chalicelib/core/countries.py
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py
-#exp /chalicelib/core/errors.py
 /chalicelib/core/errors_favorite.py
-#exp /chalicelib/core/events.py
 /chalicelib/core/events_ios.py
+/chalicelib/core/feature_flags.py
 /chalicelib/core/funnels.py
+/chalicelib/core/heatmaps.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py
@@ -215,17 +222,15 @@ Pipfile.lock
 /chalicelib/core/log_tool_sumologic.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
+/chalicelib/core/performance_event.py
+/chalicelib/core/saved_search.py
 /chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
-#exp /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
-#exp /chalicelib/core/significance.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
-/chalicelib/core/feature_flags.py
 /chalicelib/saml
-/chalicelib/utils/html/
 /chalicelib/utils/__init__.py
 /chalicelib/utils/args_transformer.py
 /chalicelib/utils/captcha.py
@@ -236,43 +241,31 @@ Pipfile.lock
 /chalicelib/utils/event_filter_definition.py
 /chalicelib/utils/github_client_v3.py
 /chalicelib/utils/helper.py
+/chalicelib/utils/html/
 /chalicelib/utils/jira_client.py
 /chalicelib/utils/metrics_helper.py
 /chalicelib/utils/pg_client.py
 /chalicelib/utils/smtp.py
 /chalicelib/utils/sql_helper.py
-/chalicelib/utils/strings.py
-/chalicelib/utils/TimeUTC.py
 /chalicelib/utils/storage/generators.py
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
-/routers/app/__init__.py
+/chalicelib/utils/strings.py
+/chalicelib/utils/TimeUTC.py
 /crons/__init__.py
-/routers/subs/__init__.py
-/routers/__init__.py
-/chalicelib/core/assist.py
-/auth/__init__.py
-/auth/auth_apikey.py
-/build.sh
-/routers/base.py
-/routers/core.py
 /crons/core_crons.py
 /db_changes.sql
 /Dockerfile_bundle
 /entrypoint.bundle.sh
-/chalicelib/core/heatmaps.py
-#exp /chalicelib/core/custom_metrics.py
-/chalicelib/core/performance_event.py
-/chalicelib/core/saved_search.py
-/app_alerts.py
-/build_alerts.sh
-/build_crons.sh
-/run-dev.sh
-/run-alerts-dev.sh
+/routers/__init__.py
+/routers/app/__init__.py
+/routers/base.py
+/routers/core.py
+/routers/subs/__init__.py
 /routers/subs/v1_api.py
-#exp /chalicelib/core/dashboards.py
+/run-alerts-dev.sh
+/run-dev.sh
 /schemas/overrides.py
 /schemas/schemas.py
-/chalicelib/core/authorizers.py
 /schemas/transformers_validators.py
 /test/
