@@ -14,6 +14,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
+from chalicelib.core.usability_testing.routes import app as usability_testing_routes
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -860,3 +861,6 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
+
+
+app.include_router(usability_testing_routes)
