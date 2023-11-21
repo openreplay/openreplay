@@ -38,6 +38,7 @@ type TagTypeMap = {
   iframe: HTMLIFrameElement
   style: HTMLStyleElement | SVGStyleElement
   link: HTMLLinkElement
+  canvas: HTMLCanvasElement
 }
 export function hasTag<T extends keyof TagTypeMap>(
   el: Node,

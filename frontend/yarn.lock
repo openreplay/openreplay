@@ -1626,6 +1626,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-transform-class-properties@npm:^7.23.3":
+  version: 7.23.3
+  resolution: "@babel/plugin-transform-class-properties@npm:7.23.3"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.22.15
+    "@babel/helper-plugin-utils": ^7.22.5
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: bca30d576f539eef216494b56d610f1a64aa9375de4134bc021d9660f1fa735b1d7cc413029f22abc0b7cb737e3a57935c8ae9d8bd1730921ccb1deebce51bfd
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-transform-class-static-block@npm:^7.22.11":
   version: 7.22.11
   resolution: "@babel/plugin-transform-class-static-block@npm:7.22.11"
@@ -2224,6 +2236,18 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: a62f2e47ca30f6b8043201483c5a505e3d54416e6ddfbe7cb696a1db853a4281b1fffee9f883fe26ac72ba02bba0db5832d69e02f2eb4746e9811b8779287cc1
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-transform-private-methods@npm:^7.23.3":
+  version: 7.23.3
+  resolution: "@babel/plugin-transform-private-methods@npm:7.23.3"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.22.15
+    "@babel/helper-plugin-utils": ^7.22.5
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 745a655edcd111b7f91882b921671ca0613079760d8c9befe336b8a9bc4ce6bb49c0c08941831c950afb1b225b4b2d3eaac8842e732db095b04db38efd8c34f4
   languageName: node
   linkType: hard
 
@@ -19630,7 +19654,8 @@ __metadata:
     "@babel/plugin-proposal-decorators": ^7.23.2
     "@babel/plugin-proposal-private-methods": ^7.18.6
     "@babel/plugin-syntax-bigint": ^7.8.3
-    "@babel/plugin-transform-class-properties": ^7.22.5
+    "@babel/plugin-transform-class-properties": ^7.23.3
+    "@babel/plugin-transform-private-methods": ^7.23.3
     "@babel/plugin-transform-private-property-in-object": ^7.22.11
     "@babel/plugin-transform-runtime": ^7.17.12
     "@babel/preset-env": ^7.23.2

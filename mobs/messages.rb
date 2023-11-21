@@ -504,6 +504,11 @@ message 118, 'TabData' do
     string 'TabId'
 end
 
+message 119, 'CanvasNode' do
+    string 'NodeId'
+    uint 'Timestamp'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
