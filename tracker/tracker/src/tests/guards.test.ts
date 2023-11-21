@@ -8,7 +8,7 @@ import {
   isDocument,
   isRootNode,
   hasTag,
-} from '../main/app/guards' // Replace with your actual file name
+} from '../main/app/guards'
 
 describe('DOM utility functions', () => {
   let elementNode: Element
@@ -27,43 +27,43 @@ describe('DOM utility functions', () => {
     svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   })
 
-  test('isNode function', () => {
+  test('isNode', () => {
     expect(isNode(elementNode)).toBeTruthy()
     expect(isNode(null)).toBeFalsy()
   })
 
-  test('isSVGElement function', () => {
+  test('isSVGElement', () => {
     expect(isSVGElement(svgElement)).toBeTruthy()
     expect(isSVGElement(elementNode)).toBeFalsy()
   })
 
-  test('isElementNode function', () => {
+  test('isElementNode', () => {
     expect(isElementNode(elementNode)).toBeTruthy()
     expect(isElementNode(textNode)).toBeFalsy()
   })
 
-  test('isCommentNode function', () => {
+  test('isCommentNode', () => {
     expect(isCommentNode(commentNode)).toBeTruthy()
     expect(isCommentNode(elementNode)).toBeFalsy()
   })
 
-  test('isTextNode function', () => {
+  test('isTextNode', () => {
     expect(isTextNode(textNode)).toBeTruthy()
     expect(isTextNode(elementNode)).toBeFalsy()
   })
 
-  test('isDocument function', () => {
+  test('isDocument', () => {
     expect(isDocument(documentNode)).toBeTruthy()
     expect(isDocument(elementNode)).toBeFalsy()
   })
 
-  test('isRootNode function', () => {
+  test('isRootNode', () => {
     expect(isRootNode(documentNode)).toBeTruthy()
     expect(isRootNode(fragmentNode)).toBeTruthy()
     expect(isRootNode(elementNode)).toBeFalsy()
   })
 
-  test('hasTag function', () => {
+  test('hasTag', () => {
     const imgElement = document.createElement('img')
     expect(hasTag(imgElement, 'img')).toBeTruthy()
     expect(hasTag(elementNode, 'img')).toBeFalsy()
