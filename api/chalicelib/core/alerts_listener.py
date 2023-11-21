@@ -6,6 +6,7 @@ def get_all_alerts():
         query = """SELECT -1 AS tenant_id,
                            alert_id,
                            projects.project_id,
+                           projects.name AS project_name,
                            detection_method,
                            query,
                            options,

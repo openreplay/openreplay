@@ -241,7 +241,8 @@ def get_by_project_key(project_key):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT project_id,
                                       project_key,
-                                      platform
+                                      platform,
+                                      name
                                FROM public.projects
                                WHERE project_key =%(project_key)s 
                                     AND deleted_at ISNULL;""",
