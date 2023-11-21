@@ -1,3 +1,4 @@
+pydantic
 httpx
 jinja2
 loguru

@@ -13,11 +13,10 @@ from pathlib import Path
 import httpx
 import psycopg
 import psycopg_pool
+import pytest
 from decouple import config
 from loguru import logger as log
 from pampy import _, match
-
-from orpy import helper
 
 ROUTE_REGISTRY = []
 
@@ -167,94 +166,16 @@ async def txn():
             yield cnx
 
 
-async def _query_authentication_set_new_invitation(txn, user_id, invitation_token):
-    # XXX: Investigate whether this will break user password? What
-    # does the table basic authentication do?
-    sql = """
-    UPDATE public.basic_authentication
-    SET invitation_token = %(invitation_token)s,
-        invited_at = timezone('utc'::text, now()),
-        change_pwd_expire_at = NULL,
-        change_pwd_token = NULL
-    WHERE user_id=%(user_id)s
-    """
-    await txn.execute(query, user_id, invitation_token)
-
-
-def _format_invitation_link(token):
-    return "{}{}{}".format(
-        config("ORPY_SITE_URL"), config("ORPY_INVITATION_LINK"), token
-    )
-
-
-async def _query_user_by_email(txn, email):
-    sql = """
-    SELECT  users.user_id,
-            -1 AS tenant_id,
-            users.email,
-            users.role,
-            users.name,
-            -1 AS tenant_id,
-            (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
-            (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-            (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-            TRUE AS has_password
-    FROM public.users
-    WHERE users.email = %(email)s AND users.deleted_at IS NULL
-    """
-    await txn.execute(sql, email)
-    row = await txn.fetchrow()
-    return helpers.dict_to_camel_case(row)
-
-
-async def _task_reset_password_link(email):
-    async with txn() as txn:
-        user = await _query_user_by_email(txn, email)
-        if user is None:
-            # There is no user with the given email, bail out.
-            return
-        # TODO: document magic number 64
-        token = secrets.token_urlsafe(64)
-        await _query_authentication_set_new_invitation(txn, user["userId"], token)
-
-    invitation_link = _format_invitation_link(token)
-    body = await jinja(
-        "account/reset-password.html",
-        dict(invitation_link=invitation_link),
-    )
-    await send_html(html, "Password recovery", body)
-
-
-import time
-
-
 @route("GET", "health")
 def view_get_health(*_):
+    # XXX: For some reason pampy.match will pass all the matched
+    # value when there is no variable / placeholder, that is why
+    # there is a snake argument _*
     return (
         200,
         [(b"content-type", b"application/javascript")],
         jsonify({"status": "ok"}),
     )
-
-
-@route("GET", "password", "reset-link")
-async def view_public_reset_password_link():
-    # TODO: check receive fetch a complete body
-    data = json.loads(await orpy.get().receive())
-    if not captcha.is_valid(data.captcha):
-        out = jsonify({"errors": ["Invalid capatcha"]})
-        return 400, [(b"content-type", "application/javascript")], out
-    if not context.features.get("smtp", False):
-        out = jsonify(
-            {
-                "errors": [
-                    "No SMTP configuration. Please, ask your admin to reset your password manually."
-                ]
-            }
-        )
-        return 400, [(b"content-type", "application/javascript")], out
-    runner_spawn(_task_reset_password_link(email))
-    return 200, [(b"content-type", "application/javascript")], out
 
 
 async def not_found():
@@ -435,7 +356,13 @@ async def orpy(scope, receive, send):
         application.set(await make_application())
         return
 
-    context.set(Context(application.get(), scope, receive))
+    context.set(
+        Context(
+            application.get(),
+            scope,
+            await read_body(receive),
+        )
+    )
 
     if not ORPY_DEBUG and scope["type"] == "http":
         await http(send)
@@ -463,3 +390,53 @@ async def orpy(scope, receive, send):
         await websocket(send)
     else:
         await http(send)
+
+
+async def read_body(receive):
+    """
+    Read and return the entire body from an incoming ASGI message.
+    """
+    body = b""
+    more_body = True
+
+    while more_body:
+        message = await receive()
+        body += message.get("body", b"")
+        more_body = message.get("more_body", False)
+
+    if len(body) > 3 * 10**6:  # a body with 3 millions bytes
+        log.warning("Unexpected large HTTP request...")
+
+    return body
+
+
+def test_true():
+    assert True
+
+
+async def receive_empty():
+    return {"body": b""}
+
+
+def send_ok(called, status_code, headers, body):
+    async def func(message):
+        called[0] = True
+        type = message["type"]
+        if type == "http.response.start":
+            assert message["status"] == status_code
+            for header in headers:
+                assert header in message["headers"]
+        elif type == "http.response.body":
+            assert json.loads(message["body"]) == body
+        else:
+            assert False, "Unknown message type: {}".format(type)
+
+    return func
+
+
+@pytest.mark.asyncio
+async def test_health():
+    scope = {"type": "http", "path": "/health/", "method": "GET"}
+    ok = [False]
+    await orpy(scope, receive_empty, send_ok(ok, 200, [], {"status": "ok"}))
+    assert ok[0]
