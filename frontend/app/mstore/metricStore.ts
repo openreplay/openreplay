@@ -136,6 +136,9 @@ export default class MetricStore {
     const obj: any = { metricType: value };
     obj.series = this.instance.series;
 
+    obj.series = obj.series.slice(0, 1);
+    obj.series[0].filter.filters = [];
+
     obj['metricValue'] = [];
 
     if (value === TABLE) {
@@ -196,7 +199,6 @@ export default class MetricStore {
       }
     }
 
-    console.log('obj', obj);
     this.instance.update(obj);
   }
 
