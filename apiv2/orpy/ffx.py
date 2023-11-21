@@ -1,27 +1,24 @@
-from urllib.parse import urljoin
-import json
 import asyncio
-import time
+import json
 import sys
-from pathlib import Path
-from collections import namedtuple
+import time
+from collections import Counter, namedtuple
 from mimetypes import guess_type
-
-from lxml.html import fromstring as string2html  # nosec - wip code
-from pampy import match, _
-from loguru import logger as log
-import httpx
+from pathlib import Path
+from string import punctuation
+from urllib.parse import urljoin
 
 import found
-
+import httpx
 import pstore
 from html2text import html2text
-from string import punctuation
-from collections import Counter
+from loguru import logger as log
+from lxml.html import fromstring as string2html  # nosec - wip code
+from pampy import _, match
 
 ROOT = Path(__file__).parent.resolve()
 
-log.info('That is beautiful, and simple logging')
+log.info("That is beautiful, and simple logging")
 
 HELP = """Welcome!
 
@@ -43,7 +40,7 @@ That is all... foxes!
 def bagomatic(html):
     try:
         text = html2text(html)
-        text = ''.join(' ' if x in punctuation else x for x in text)
+        text = "".join(" " if x in punctuation else x for x in text)
         bag = Counter(x for x in text.split() if 256 > len(x) >= 2)
         return bag
     except Exception:
@@ -52,9 +49,20 @@ def bagomatic(html):
 
 def html2h(html, stack=None):
     # remove useless stuff
-    if html.tag in ["script", "style", 'form', 'input', 'button',
-                    'textarea', 'svg', 'nav', 'header', 'footer',
-                    'include-fragment', 'fragment']:
+    if html.tag in [
+        "script",
+        "style",
+        "form",
+        "input",
+        "button",
+        "textarea",
+        "svg",
+        "nav",
+        "header",
+        "footer",
+        "include-fragment",
+        "fragment",
+    ]:
         return ""
 
     # remove comments
@@ -62,8 +70,8 @@ def html2h(html, stack=None):
         return ""
 
     # try to sanitize links
-    if html.tag == 'a' and html.attrib.get('href', '').startswith('https://'):
-        attrib = dict(href=html.attrib.get('href'), target="_blank")
+    if html.tag == "a" and html.attrib.get("href", "").startswith("https://"):
+        attrib = dict(href=html.attrib.get("href"), target="_blank")
     else:
         attrib = dict()
 
@@ -72,7 +80,7 @@ def html2h(html, stack=None):
 
     stack.append(html.tag)
     try:
-        stack.index('pre')
+        stack.index("pre")
     except ValueError:
         pre = False
     else:
@@ -114,7 +122,7 @@ def make_timestamper():
     return timestamp
 
 
-Application = namedtuple('Application', ('database', 'http', 'make_timestamp', 'index'))
+Application = namedtuple("Application", ("database", "http", "make_timestamp", "index"))
 
 
 async def make_application():
@@ -131,44 +139,44 @@ async def make_application():
         database,
         http,
         make_timestamp,
-        pstore.make('index', ('indexv1',)),
+        pstore.make("index", ("indexv1",)),
     )
     return app
 
 
 async def view_index(app, scope):
-    index = ROOT / 'index.html'
-    with index.open('rb') as f:
+    index = ROOT / "index.html"
+    with index.open("rb") as f:
         index = f.read()
-    return 200, b'text/html', index
+    return 200, b"text/html", index
 
 
 application = None
 
 
 async def main(scope, receive, send):
-    log.debug('Scope: {}', scope)
+    log.debug("Scope: {}", scope)
     global application
 
     if application is None:
         application = await make_application()
 
     try:
-        if scope['type'] == 'http':
+        if scope["type"] == "http":
             out = await http(application, scope, receive, send)
             return out
-        elif scope['type'] == 'websocket':
+        elif scope["type"] == "websocket":
             out = await websocket(application, scope, receive, send)
             return out
         else:
-            raise HyperDevException('unknown scope type')
+            raise HyperDevException("unknown scope type")
     except Exception as exc:
         log.exception(exc)
 
 
 async def websocket(application, scope, receive, send):
     # https://asgi.readthedocs.io/en/latest/specs/www.html#websocket
-    assert scope['type'] == 'websocket'
+    assert scope["type"] == "websocket"
     events = dict()
     previous = dict()
     history = []
@@ -177,65 +185,69 @@ async def websocket(application, scope, receive, send):
 
     event = await receive()
 
-    assert event['type'] == 'websocket.connect'
+    assert event["type"] == "websocket.connect"
 
     # TODO: Accept only when path == /api/websocket
 
     # TODO: Authentication
 
-    await send({'type': 'websocket.accept'})
+    await send({"type": "websocket.accept"})
 
     while True:
         event = await receive()
 
         # TODO: support type == websocket.close
-        assert event['type'] == 'websocket.receive'
-        message = json.loads(event['text'])
+        assert event["type"] == "websocket.receive"
+        message = json.loads(event["text"])
         log.debug(message)
 
-        if message['type'] == 'init':
+        if message["type"] == "init":
 
             async def onQuery(event):
-                query = event['payload']['target.value']
-                context['query'] = query = query or context['query']
-                user = h.div(Class="babelia-convo")[
-                    h.span()["🐵 " + query],
-                ]
+                query = event["payload"]["target.value"]
+                context["query"] = query = query or context["query"]
+                user = h.div(Class="babelia-convo")[h.span()["🐵 " + query],]
                 history.append(user)
 
-                if query == 'next':
+                if query == "next":
                     try:
-                        hit = await context['hits'].__anext__()
+                        hit = await context["hits"].__anext__()
                     except StopAsyncIteration:
                         pass
                     else:
                         context["hit"] = hit
-                        history.append(h.div(Class="babelia-convo")[
-                            h.a(href=hit, target="_blank")[hit]
-                        ])
-                elif query == 'view':
-                    response = await application.http.get(context['hit'])
+                        history.append(
+                            h.div(Class="babelia-convo")[
+                                h.a(href=hit, target="_blank")[hit]
+                            ]
+                        )
+                elif query == "view":
+                    response = await application.http.get(context["hit"])
                     html = string2html(response.text)
-                    body = html.xpath('//body')[0]
-                    body.tag = 'div'
-                    if 'github.com' in context['hit'] and body.xpath('//*[@id="readme"]'):
+                    body = html.xpath("//body")[0]
+                    body.tag = "div"
+                    if "github.com" in context["hit"] and body.xpath(
+                        '//*[@id="readme"]'
+                    ):
                         body = body.xpath('//*[@id="readme"]')[0]
-                    if 'stackoverflow.com' in context['hit'] and body.xpath('//*[@id="content"]'):
+                    if "stackoverflow.com" in context["hit"] and body.xpath(
+                        '//*[@id="content"]'
+                    ):
                         body = body.xpath('//*[@id="content"]')[0]
 
-                    for a in body.xpath('//a'):
-                        href = a.attrib.get('href', '')
-                        href = urljoin(context['hit'], href)
-                        a.attrib['href'] = href
+                    for a in body.xpath("//a"):
+                        href = a.attrib.get("href", "")
+                        href = urljoin(context["hit"], href)
+                        a.attrib["href"] = href
 
                     html = html2h(body)
 
                     convo = h.div(Class="babelia-convo")
                     convo.append(html)
                     history.append(convo)
-                elif query == 'bookmark':
+                elif query == "bookmark":
                     try:
-                        url = context['hit']
+                        url = context["hit"]
                         response = await application.http.get(url)
                         bag = bagomatic(response.text)
                         await found.transactional(
@@ -256,8 +268,8 @@ async def websocket(application, scope, receive, send):
                         computer.append("🤖 ")
                         computer.append("bookmarked :]")
                         history.append(h.div(Class="babelia-convo")[computer])
-                elif query.startswith('search'):
-                    keywords = query[len("search"):].strip().split()
+                elif query.startswith("search"):
+                    keywords = query[len("search") :].strip().split()
 
                     out = await found.transactional(
                         application.database,
@@ -270,7 +282,7 @@ async def websocket(application, scope, receive, send):
                         for hit in out:
                             yield hit[0]
 
-                    context['hits'] = hits = shim()
+                    context["hits"] = hits = shim()
                     try:
                         hit = await hits.__anext__()
                     except StopAsyncIteration:
@@ -284,8 +296,9 @@ async def websocket(application, scope, receive, send):
 
                 else:
                     from hyperdev.raxes import search
+
                     hits = search(query)
-                    context['hits'] = hits
+                    context["hits"] = hits
                     try:
                         hit = await hits.__anext__()
                     except StopAsyncIteration:
@@ -304,22 +317,18 @@ async def websocket(application, scope, receive, send):
                         type="text",
                         onChange=onQuery,
                         value="",
-                        placeholder="somewhere over the rainbow..."
+                        placeholder="somewhere over the rainbow...",
                     ),
                 ]
                 html = h.div()
                 html.extend(history)
                 html.append(user)
-                babelia = h.div(Class="babelia-convo")[
-                    h.input(readonly=True)
-                ]
+                babelia = h.div(Class="babelia-convo")[h.input(readonly=True)]
                 html.append(babelia)
                 html, events = frontend.serialize(html)
                 return html, events
 
-            babelia = h.div(Class="babelia-convo")[
-                h.pre()["🤖 ", HELP]
-            ]
+            babelia = h.div(Class="babelia-convo")[h.pre()["🤖 ", HELP]]
 
             user = h.div(Class="babelia-convo")[
                 h.label(Class="blink", For="input")["🐵 "],
@@ -328,83 +337,93 @@ async def websocket(application, scope, receive, send):
                     type="text",
                     onChange=onQuery,
                     placeholder="somewhere over the rainbow...",
-                    value=""
+                    value="",
                 ),
             ]
             html = h.div()
             history = [babelia]
             html.extend(history)
             html.append(user)
-            babelia = h.div(Class="babelia-convo")[
-                h.input(readonly=True)
-            ]
+            babelia = h.div(Class="babelia-convo")[h.input(readonly=True)]
             html.append(babelia)
             html, events = frontend.serialize(html)
             previous = events
-            await send({'type': 'websocket.send', 'text': json.dumps(html)})
+            await send({"type": "websocket.send", "text": json.dumps(html)})
 
-        elif message['type'] == 'dom-event':
+        elif message["type"] == "dom-event":
             try:
-                handler = events[message['uid']]
+                handler = events[message["uid"]]
             except KeyError:
-                await send({'type': 'websocket.send', 'text': json.dumps(html)})
+                await send({"type": "websocket.send", "text": json.dumps(html)})
             else:
                 html, new_events = await handler(message)
                 events = dict(new_events)
                 events.update(previous)
                 previous = new_events
-            await send({'type': 'websocket.send', 'text': json.dumps(html)})
+            await send({"type": "websocket.send", "text": json.dumps(html)})
         else:
-            log.critical('Unknown event type: {}', message['type'])
+            log.critical("Unknown event type: {}", message["type"])
 
 
 async def http(application, scope, receive, send):
-    assert scope['type'] == 'http'
+    assert scope["type"] == "http"
 
-    path = scope['path']
+    path = scope["path"]
 
-    if path.startswith('/static/'):
+    if path.startswith("/static/"):
         # XXX: Secure the /static/* route, and avoid people poking at
         # files that are not in the local ./static/
         # directory. Security can be as simple as that.
-        if '..' in path:
-            await send({
-                'type': 'http.response.start',
-                'status': 404,
-            })
-            await send({
-                'type': 'http.response.body',
-                'body': b"File not found",
-            })
+        if ".." in path:
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 404,
+                }
+            )
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": b"File not found",
+                }
+            )
         else:
-            components = path.split('/')
+            components = path.split("/")
             filename = components[-1]
-            filepath = ROOT / '/'.join(components[1:])
-            mimetype = guess_type(filename)[0] or 'application/octet-stream'
+            filepath = ROOT / "/".join(components[1:])
+            mimetype = guess_type(filename)[0] or "application/octet-stream"
             log.critical("mimetype {}", mimetype)
-            await send({
-                'type': 'http.response.start',
-                'status': 200,
-                'headers': [
-                    [b'content-type', mimetype.encode('utf8')],
-                ],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [
+                        [b"content-type", mimetype.encode("utf8")],
+                    ],
+                }
+            )
 
-            with filepath.open('rb') as f:
-                await send({
-                    'type': 'http.response.body',
-                    'body': f.read(),
-            })
-    elif path == '/favicon.ico':
-        await send({
-            'type': 'http.response.start',
-            'status': 200,
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': b"File not found",
-            })
-    elif not path.endswith('/'):
+            with filepath.open("rb") as f:
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": f.read(),
+                    }
+                )
+    elif path == "/favicon.ico":
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"File not found",
+            }
+        )
+    elif not path.endswith("/"):
         # XXX: All paths but static path must end with a slash.  That
         # is a dubious choice when considering files, possibly large
         # files that are served dynamically.
@@ -412,24 +431,30 @@ async def http(application, scope, receive, send):
         # XXX: Also at this time it is not used, since all HTTP path
         # serve the ./index.html stuff which always connect via
         # websockets (and there is no check on the websocket path).
-        path += '/'
-        await send({
-            'type': 'http.response.start',
-            'status': 301,
-            'headers': [
-                [b'location', path.encode('utf8')],
-            ],
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': b"Moved permanently",
-        })
+        path += "/"
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 301,
+                "headers": [
+                    [b"location", path.encode("utf8")],
+                ],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"Moved permanently",
+            }
+        )
     else:
-        path = tuple(path.split('/')[1:-1])
+        path = tuple(path.split("/")[1:-1])
 
         # TODO: match on the HTTP method too, and fallback to 404
-        view = match(path,
-            _, lambda x: view_index,
+        view = match(
+            path,
+            _,
+            lambda x: view_index,
         )
 
         log.debug(view)
@@ -437,14 +462,18 @@ async def http(application, scope, receive, send):
         # support sendfiles and / or a body that is a bytes generator
         code, mimetype, body = await view(application, scope)
 
-        await send({
-            'type': 'http.response.start',
-            'status': code,
-            'headers': [
-                [b'content-type', mimetype],
-            ],
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': body,
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": code,
+                "headers": [
+                    [b"content-type", mimetype],
+                ],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": body,
+            }
+        )

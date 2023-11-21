@@ -40,7 +40,7 @@ lock: ## Lock dependencies
 	pip-compile -o requirements.txt requirements.source.txt
 
 wip: ## clean up code, and commit wip
-	black orpy.py
-	isort --profile black orpy.py
+	black orpy/
+	isort --profile black orpy/
 	git add .
 	git commit -m "wip"

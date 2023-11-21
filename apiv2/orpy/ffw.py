@@ -16,7 +16,7 @@ class HTMLElement:  # inspired from nevow
 
     """
 
-    __slots__ = ('_tag', '_children', '_properties')
+    __slots__ = ("_tag", "_children", "_properties")
 
     def __init__(self, tag):
         self._tag = tag
@@ -34,7 +34,7 @@ class HTMLElement:  # inspired from nevow
         return self
 
     def __repr__(self):
-        return '<HTMLElement: %s %s>' % (self._tag, self._properties)
+        return "<HTMLElement: %s %s>" % (self._tag, self._properties)
 
     def extend(self, nodes):
         for node in nodes:
@@ -151,7 +151,7 @@ def serialize(element):
             ]
 
             for key, value in element._properties.items():
-                if key.startswith('on'):
+                if key.startswith("on"):
                     uid = uuid4().hex
                     # XXX: mutate non-local dictionary called `events`
                     assert callable(value)

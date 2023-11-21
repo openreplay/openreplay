@@ -136,7 +136,7 @@ async def make_application():
 
 
 def route(method, *components):
-    route = tuple([method] + list(components))
+    route = [method] + list(components)
 
     def wrapper(func):
         log.debug("Registring route: {} @ {}", route, func)
@@ -182,7 +182,9 @@ async def _query_authentication_set_new_invitation(txn, user_id, invitation_toke
 
 
 def _format_invitation_link(token):
-    return "{}{}{}".format(config("ORPY_SITE_URL"), config("ORPY_INVITATION_LINK"), token)
+    return "{}{}{}".format(
+        config("ORPY_SITE_URL"), config("ORPY_INVITATION_LINK"), token
+    )
 
 
 async def _query_user_by_email(txn, email):
@@ -227,7 +229,7 @@ import time
 
 
 @route("GET", "health")
-def view_health(*args):
+def view_get_health(*_):
     return (
         200,
         [(b"content-type", b"application/javascript")],
@@ -255,62 +257,65 @@ async def view_public_reset_password_link():
     return 200, [(b"content-type", "application/javascript")], out
 
 
+async def not_found():
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 404,
+        }
+    )
+    await send(
+        {
+            "type": "http.response.body",
+            "body": b"File not found",
+        }
+    )
+
+
+async def serve_static(path):
+    # XXX: Secure the /static/* route, and avoid people poking at
+    # files that are not in the local ./static/
+    # directory. Security can be as simple as that.
+    if ".." in path:
+        await not_found()
+    else:
+        components = path.split("/")
+        filename = components[-1]
+        filepath = ORPY_ROOT / "/".join(components[1:])
+        mimetype = guess_type(filename)[0] or "application/octet-stream"
+
+        if not filepath.exists():
+            await not_found()
+            return
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    [b"content-type", mimetype.encode("utf8")],
+                ],
+            }
+        )
+
+        with filepath.open("rb") as f:
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": f.read(),
+                }
+            )
+
+
 async def http(send):
     path = context.get().scope["path"]
 
     if path.startswith("/static/"):
-        # XXX: Secure the /static/* route, and avoid people poking at
-        # files that are not in the local ./static/
-        # directory. Security can be as simple as that.
-        if ".." in path:
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 404,
-                }
-            )
-            await send(
-                {
-                    "type": "http.response.body",
-                    "body": b"File not found",
-                }
-            )
-        else:
-            components = path.split("/")
-            filename = components[-1]
-            filepath = ORPY_ROOT / "/".join(components[1:])
-            mimetype = guess_type(filename)[0] or "application/octet-stream"
-
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 200,
-                    "headers": [
-                        [b"content-type", mimetype.encode("utf8")],
-                    ],
-                }
-            )
-
-            with filepath.open("rb") as f:
-                await send(
-                    {
-                        "type": "http.response.body",
-                        "body": f.read(),
-                    }
-                )
+        await serve_static(path)
+        return
     elif path == "/favicon.ico":
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 404,
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": b"File not found",
-            }
-        )
+        await not_found()
+        return
     elif not path.endswith("/"):
         # XXX: All paths but static path must end with a slash.  That
         # is a dubious choice when considering files, possibly large
@@ -337,7 +342,7 @@ async def http(send):
         )
     else:
         method = context.get().scope["method"]
-        route = tuple([method] + path.split("/")[1:-1])
+        route = [method] + path.split("/")[1:-1]
 
         log.debug("matching route: {}", route)
 
@@ -430,7 +435,7 @@ async def orpy(scope, receive, send):
         application.set(await make_application())
         return
 
-    context.set(Context(application, scope, receive))
+    context.set(Context(application.get(), scope, receive))
 
     if not ORPY_DEBUG and scope["type"] == "http":
         await http(send)
