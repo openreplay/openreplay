@@ -685,19 +685,19 @@ export default class App {
         })
 
         this.compressionThreshold = compressionThreshold
-
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
         // TODO: start as early as possible (before receiving the token)
-        this.canvasRecorder =
-          this.canvasRecorder ?? new CanvasRecorder(this, { fps: 2, quality: 'high' })
-        this.canvasRecorder.startTracking()
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
-        // if (canvasEnabled) {
-        //   canvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
-        // }
+
+        if (canvasEnabled) {
+          this.canvasRecorder =
+            this.canvasRecorder ??
+            new CanvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
+          this.canvasRecorder.startTracking()
+        }
         this.activityState = ActivityState.Active
 
         this.notify.log('OpenReplay tracking started.')
