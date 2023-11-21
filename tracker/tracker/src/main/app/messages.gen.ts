@@ -912,3 +912,14 @@ export function TabData(
   ]
 }
 
+export function CanvasNode(
+  nodeId: string,
+  timestamp: number,
+): Messages.CanvasNode {
+  return [
+    Messages.Type.CanvasNode,
+    nodeId,
+    timestamp,
+  ]
+}
+

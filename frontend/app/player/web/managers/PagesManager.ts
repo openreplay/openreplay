@@ -56,6 +56,10 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		this.forEach(page => page.sort(comparator))
 	}
 
+	public getNode(id: number) {
+		return this.currentPage?.getNode(id)
+	}
+
 	moveReady(t: number): Promise<void> {
 		const requiredPage = this.moveGetLast(t)
 		if (requiredPage != null) {

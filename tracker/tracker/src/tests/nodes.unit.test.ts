@@ -1,5 +1,5 @@
-import Nodes from './nodes'
-import { describe, beforeEach, expect, it, jest } from '@jest/globals'
+import Nodes from '../main/app/nodes'
+import { describe, beforeEach, expect, test, jest } from '@jest/globals'
 
 describe('Nodes', () => {
   let nodes: Nodes
@@ -11,13 +11,13 @@ describe('Nodes', () => {
     mockCallback.mockClear()
   })
 
-  it('attachNodeCallback', () => {
+  test('attachNodeCallback', () => {
     nodes.attachNodeCallback(mockCallback)
     nodes.callNodeCallbacks(document.createElement('div'), true)
     expect(mockCallback).toHaveBeenCalled()
   })
 
-  it('attachNodeListener is listening to events', () => {
+  test('attachNodeListener is listening to events', () => {
     const node = document.createElement('div')
     const mockListener = jest.fn()
     document.body.appendChild(node)
@@ -26,7 +26,7 @@ describe('Nodes', () => {
     node.dispatchEvent(new Event('click'))
     expect(mockListener).toHaveBeenCalled()
   })
-  it('attachNodeListener is calling native method', () => {
+  test('attachNodeListener is calling native method', () => {
     const node = document.createElement('div')
     const mockListener = jest.fn()
     const addEventListenerSpy = jest.spyOn(node, 'addEventListener')
@@ -36,55 +36,55 @@ describe('Nodes', () => {
     expect(addEventListenerSpy).toHaveBeenCalledWith('click', mockListener, true)
   })
 
-  it('registerNode', () => {
+  test('registerNode', () => {
     const node = document.createElement('div')
     const [id, isNew] = nodes.registerNode(node)
     expect(id).toBeDefined()
     expect(isNew).toBe(true)
   })
 
-  it('unregisterNode', () => {
+  test('unregisterNode', () => {
     const node = document.createElement('div')
     const [id] = nodes.registerNode(node)
     const unregisteredId = nodes.unregisterNode(node)
     expect(unregisteredId).toBe(id)
   })
 
-  it('cleanTree', () => {
+  test('cleanTree', () => {
     const node = document.createElement('div')
     nodes.registerNode(node)
     nodes.cleanTree()
     expect(nodes.getNodeCount()).toBe(0)
   })
 
-  it('callNodeCallbacks', () => {
+  test('callNodeCallbacks', () => {
     nodes.attachNodeCallback(mockCallback)
     const node = document.createElement('div')
     nodes.callNodeCallbacks(node, true)
     expect(mockCallback).toHaveBeenCalledWith(node, true)
   })
 
-  it('getID', () => {
+  test('getID', () => {
     const node = document.createElement('div')
     const [id] = nodes.registerNode(node)
     const fetchedId = nodes.getID(node)
     expect(fetchedId).toBe(id)
   })
 
-  it('getNode', () => {
+  test('getNode', () => {
     const node = document.createElement('div')
     const [id] = nodes.registerNode(node)
     const fetchedNode = nodes.getNode(id)
     expect(fetchedNode).toBe(node)
   })
 
-  it('getNodeCount', () => {
+  test('getNodeCount', () => {
     expect(nodes.getNodeCount()).toBe(0)
     nodes.registerNode(document.createElement('div'))
     expect(nodes.getNodeCount()).toBe(1)
   })
 
-  it('clear', () => {
+  test('clear', () => {
     nodes.registerNode(document.createElement('div'))
     nodes.clear()
     expect(nodes.getNodeCount()).toBe(0)

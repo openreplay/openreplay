@@ -1,23 +1,28 @@
+import type { Store } from "Player";
+import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
 import ListWalker from "Player/common/ListWalker";
+import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, InitialLists, State as ListsState } from "Player/web/Lists";
+import CanvasManager from "Player/web/managers/CanvasManager";
+import { VElement } from "Player/web/managers/DOM/VirtualDOM";
+import PagesManager from "Player/web/managers/PagesManager";
+import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
+import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
 import {
+  CanvasNode,
   ConnectionInformation,
-  Message, MType, ResourceTiming,
+  Message,
+  MType,
+  ResourceTiming,
   SetPageLocation,
   SetViewportScroll,
   SetViewportSize
 } from "Player/web/messages";
-import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
-import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
-import PagesManager from "Player/web/managers/PagesManager";
+import { isDOMType } from "Player/web/messages/filters.gen";
+import Screen from "Player/web/Screen/Screen";
 // @ts-ignore
 import { Decoder } from "syncod";
-import Lists, { InitialLists, INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from "Player/web/Lists";
-import type  { Store } from 'Player';
-import Screen from "Player/web/Screen/Screen";
 import { TYPES as EVENT_TYPES } from "Types/session/event";
-import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
-import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
-import { isDOMType } from "Player/web/messages/filters.gen";
+import type { PerformanceChartPoint } from "./managers/PerformanceTrackManager";
 
 export interface TabState extends ListsState {
   performanceAvailability?: PerformanceTrackManager['availability']
@@ -57,6 +62,8 @@ export default class TabSessionManager {
   public readonly decoder = new Decoder();
   private lists: Lists;
   private navigationStartOffset = 0
+  private canvasManagers: { [key: string]: { manager: CanvasManager, start: number, running: boolean } } = {}
+  private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
   constructor(
     private readonly session: any,
@@ -74,6 +81,10 @@ export default class TabSessionManager {
         this.locationEventManager.append(e);
       }
     })
+  }
+
+  public getNode = (id: number) => {
+    return this.pagesManager.getNode(id)
   }
 
   public updateLists(lists: Partial<InitialLists>) {
@@ -141,6 +152,23 @@ export default class TabSessionManager {
 
   distributeMessage(msg: Message): void {
     switch (msg.tp) {
+      case MType.CanvasNode:
+        const managerId = `${msg.timestamp}_${msg.nodeId}`;
+        if (!this.canvasManagers[managerId]) {
+          const filename = `${managerId}.mp4`;
+          const delta = msg.timestamp - this.sessionStart;
+          const fileUrl = this.session.canvasURL.find((url: string) => url.includes(filename));
+          const manager = new CanvasManager(
+            msg.nodeId,
+            delta,
+            fileUrl,
+            this.getNode as (id: number) => VElement | undefined
+          );
+          this.canvasManagers[managerId] = { manager, start: msg.timestamp, running: false };
+          this.canvasReplayWalker.append(msg);
+
+        }
+        break;
       case MType.SetPageLocation:
         this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
@@ -289,6 +317,16 @@ export default class TabSessionManager {
       if (!!lastScroll && this.screen.window) {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
+      const canvasMsg = this.canvasReplayWalker.moveGetLast(t)
+      if (canvasMsg) {
+        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
+        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
+      }
+      const runningManagers = Object.keys(this.canvasManagers).filter((key) => this.canvasManagers[key].running);
+      runningManagers.forEach((key) => {
+        const manager = this.canvasManagers[key].manager;
+        manager.move(t);
+      })
     })
   }
 

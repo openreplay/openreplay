@@ -713,6 +713,16 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 119: {
+      const nodeId = this.readString(); if (nodeId === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      return {
+        tp: MType.CanvasNode,
+        nodeId,
+        timestamp,
+      };
+    }
+
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }

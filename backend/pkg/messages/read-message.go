@@ -1365,6 +1365,18 @@ func DecodeTabData(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeCanvasNode(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &CanvasNode{}
+	if msg.NodeId, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1993,6 +2005,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTabChange(reader)
 	case 118:
 		return DecodeTabData(reader)
+	case 119:
+		return DecodeCanvasNode(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:
