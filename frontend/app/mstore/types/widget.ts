@@ -215,12 +215,13 @@ export default class Widget {
       config: {
         ...this.config,
         col:
-          this.metricType === 'funnel' ||
+          this.metricType === FUNNEL ||
           this.metricOf === FilterKey.ERRORS ||
           this.metricOf === FilterKey.SESSIONS ||
           this.metricOf === FilterKey.SLOWEST_RESOURCES ||
           this.metricOf === FilterKey.MISSING_RESOURCES ||
-          this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION
+          this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION ||
+          this.metricType === USER_PATH
             ? 4
             : this.metricType === WEB_VITALS
               ? 1
