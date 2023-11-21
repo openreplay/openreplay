@@ -26,6 +26,7 @@ import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
 import PerfWarnings from "Components/Session/Player/MobilePlayer/PerfWarnings";
+import { debounceUpdate, getDefaultPanelHeight } from "Components/Session/Player/ReplayPlayer/PlayerInst";
 
 interface IProps {
   fullView: boolean;
@@ -42,6 +43,8 @@ interface IProps {
 }
 
 function Player(props: IProps) {
+  const defaultHeight = getDefaultPanelHeight()
+  const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const {
     fullscreen,
     fullscreenOff,
@@ -77,6 +80,30 @@ function Player(props: IProps) {
   if (!playerContext.player) return null;
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
+
+  const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = panelHeight;
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const diff = startHeight - deltaY;
+      const max = diff > window.innerHeight / 2 ? window.innerHeight / 2 : diff;
+      const newHeight = Math.max(50, max);
+      setPanelHeight(newHeight);
+      debounceUpdate(newHeight)
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
@@ -92,11 +119,23 @@ function Player(props: IProps) {
         </div>
       </div>
       {!fullscreen && !!bottomBlock && (
-        <div style={{ maxWidth, width: '100%' }}>
+        <div
+          style={{
+            height: panelHeight,
+            maxWidth,
+            width: '100%',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            onMouseDown={handleResize}
+            className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
+          />
           {bottomBlock === OVERVIEW && <MobileOverviewPanel />}
-          {bottomBlock === CONSOLE && <MobileConsolePanel isLive={false} />}
+          {bottomBlock === CONSOLE && <MobileConsolePanel />}
           {bottomBlock === STACKEVENTS && <MobileStackEventPanel />}
-          {bottomBlock === NETWORK && <MobileNetworkPanel />}
+          {bottomBlock === NETWORK && <MobileNetworkPanel panelHeight={panelHeight} />}
           {bottomBlock === PERFORMANCE && <MobilePerformance />}
           {bottomBlock === EXCEPTIONS && <MobileExceptions />}
         </div>
