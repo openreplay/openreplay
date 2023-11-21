@@ -43,9 +43,9 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_LIST_ACTIVE_SUCCESS:
       clearMetaFilters();
       action.data.forEach((item) => {
-        addElementToFiltersMap(FilterCategory.METADATA, item.key);
-        addElementToLiveFiltersMap(FilterCategory.METADATA, item.key);
-        addElementToFlagConditionsMap(FilterCategory.METADATA, item.key)
+        addElementToFiltersMap(FilterCategory.METADATA, '_' + item.key);
+        addElementToLiveFiltersMap(FilterCategory.METADATA, '_' + item.key);
+        addElementToFlagConditionsMap(FilterCategory.METADATA, '_' + item.key)
       });
       return state.set('list', List(action.data).map(CustomField))
 
