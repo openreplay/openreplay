@@ -188,27 +188,24 @@ def send_to_msteams_batch(notifications_list):
         if n.get("destination") not in webhookId_map:
             webhookId_map[n.get("destination")] = {"tenantId": n["notification"]["tenantId"], "batch": []}
 
-        link = f"[{n['notification']['buttonText']}]({config('SITE_URL')}{n['notification']['buttonUrl']})"
-        webhookId_map[n.get("destination")]["batch"].append({"type": "ColumnSet",
-                                                             "style": "emphasis",
-                                                             "separator": True,
-                                                             "bleed": True,
-                                                             "columns": [{
-                                                                 "width": "stretch",
-                                                                 "items": [
-                                                                     {"type": "TextBlock",
-                                                                      "text": n["notification"]["title"],
-                                                                      "style": "heading",
-                                                                      "size": "Large"},
-                                                                     {"type": "TextBlock",
-                                                                      "spacing": "small",
-                                                                      "text": n["notification"]["description"],
-                                                                      "wrap": True},
-                                                                     {"type": "TextBlock",
-                                                                      "spacing": "small",
-                                                                      "text": link}
-                                                                 ]
-                                                             }]})
+        link = f"{config('SITE_URL')}{n['notification']['buttonUrl']}"
+        # for MSTeams, the batch is the list of `sections`
+        webhookId_map[n.get("destination")]["batch"].append(
+            {
+                "activityTitle": n["notification"]["title"],
+                "activitySubtitle": f"On Project *{n['projectName']}*",
+                "facts": [
+                    {
+                        "name": "Target:",
+                        "value": link
+                    },
+                    {
+                        "name": "Description:",
+                        "value": n["notification"]["description"]
+                    }],
+                "markdown": True
+            }
+        )
     for batch in webhookId_map.keys():
         MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                            attachments=webhookId_map[batch]["batch"])

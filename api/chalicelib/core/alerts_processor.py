@@ -5,8 +5,9 @@ from decouple import config
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
+from chalicelib.core import alerts
 from chalicelib.core import alerts_listener
-from chalicelib.core import sessions, alerts
+from chalicelib.core import sessions
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -241,6 +242,8 @@ def generate_notification(alert, result):
         "buttonText": "Check metrics for more details",
         "buttonUrl": f"/{alert['projectId']}/metrics",
         "imageUrl": None,
+        "projectId": alert["projectId"],
+        "projectName": alert["projectName"],
         "options": {"source": "ALERT", "sourceId": alert["alertId"],
                     "sourceMeta": alert["detectionMethod"],
                     "message": alert["options"]["message"], "projectId": alert["projectId"],

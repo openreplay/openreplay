@@ -70,7 +70,8 @@ def integration_notify(projectId: int, integration: str, webhookId: int, source:
 
     args = {"tenant_id": context.tenant_id,
             "user": context.email, "comment": comment, "project_id": projectId,
-            "integration_id": webhookId}
+            "integration_id": webhookId,
+            "project_name": context.project.name}
     if integration == schemas.WebhookType.slack:
         if source == "sessions":
             return Slack.share_session(session_id=sourceId, **args)
