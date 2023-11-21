@@ -7,7 +7,7 @@ from pydantic import field_validator, model_validator, computed_field
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
-    force_is_event, NAME_PATTERN
+    force_is_event, NAME_PATTERN, int_to_string
 
 
 def transform_old_filter_type(cls, values):
@@ -364,6 +364,8 @@ class MemberInvitationPayloadSchema(BaseModel):
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)
+
+    _transform_value = field_validator('value', mode='before')(int_to_string)
 
 
 class AlertDetectionType(str, Enum):
