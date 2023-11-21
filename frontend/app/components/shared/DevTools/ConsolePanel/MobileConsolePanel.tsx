@@ -79,15 +79,11 @@ function MobileConsolePanel() {
 
   const {
     logList,
-    // exceptionsList,
     logListNow,
     exceptionsListNow,
   } = store.get();
 
   const list = logList as ILog[];
-  // useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-  //   [ logList.length, exceptionsList.length ],
-  // ) as ILog[]
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
   filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
@@ -163,7 +159,7 @@ function MobileConsolePanel() {
 
   return (
     <BottomBlock
-      style={{ height: '300px' }}
+      style={{ height: '100%' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

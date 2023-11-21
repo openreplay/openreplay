@@ -32,6 +32,7 @@ import { OverviewPanel } from 'Components/Session_/OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { debounce } from 'App/utils';
 
 interface IProps {
   fullView: boolean;
@@ -45,7 +46,23 @@ interface IProps {
   updateLastPlayedSession: (id: string) => void;
 }
 
+export const heightKey = 'playerPanelHeight'
+export const debounceUpdate = debounce((height: number) => {
+  localStorage.setItem(heightKey, height.toString());
+}, 500)
+export const getDefaultPanelHeight = () => {
+  const storageHeight = localStorage.getItem(heightKey)
+  if (storageHeight) {
+    const height = parseInt(storageHeight, 10)
+    return height > window.innerHeight / 2 ? window.innerHeight / 2 : height
+  } else {
+    return 300
+  }
+}
+
 function Player(props: IProps) {
+  const defaultHeight = getDefaultPanelHeight()
+  const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { fullscreen, fullscreenOff, nextId, bottomBlock, activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
   const isReady = playerContext.store.get().ready;
@@ -69,6 +86,30 @@ function Player(props: IProps) {
   if (!playerContext.player) return null;
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
+
+  const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = panelHeight;
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const diff = startHeight - deltaY;
+      const max = diff > window.innerHeight / 2 ? window.innerHeight / 2 : diff;
+      const newHeight = Math.max(50, max);
+      setPanelHeight(newHeight);
+      debounceUpdate(newHeight)
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
@@ -80,13 +121,25 @@ function Player(props: IProps) {
         <div className={cn(stl.screenWrapper)} ref={screenWrapper} />
       </div>
       {!fullscreen && !!bottomBlock && (
-        <div style={{ maxWidth, width: '100%' }}>
+        <div
+          style={{
+            height: panelHeight,
+            maxWidth,
+            width: '100%',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            onMouseDown={handleResize}
+            className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
+          />
           {bottomBlock === OVERVIEW && <OverviewPanel />}
           {bottomBlock === CONSOLE && <ConsolePanel />}
-          {bottomBlock === NETWORK && <WebNetworkPanel />}
+          {bottomBlock === NETWORK && <WebNetworkPanel panelHeight={panelHeight} />}
           {bottomBlock === STACKEVENTS && <WebStackEventPanel />}
           {bottomBlock === STORAGE && <Storage />}
-          {bottomBlock === PROFILER && <ProfilerPanel />}
+          {bottomBlock === PROFILER && <ProfilerPanel panelHeight={panelHeight} />}
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
           {bottomBlock === GRAPHQL && <GraphQL />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}

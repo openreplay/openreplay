@@ -139,7 +139,7 @@ function EventsPanel({
 
   return (
     <BottomBlock
-      style={{ height: '300px' }}
+      style={{ height: '100%' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
