@@ -604,7 +604,8 @@ export const addElementToFiltersMap = (
     key,
     type,
     category,
-    label: capitalize(key),
+    // remove _ from key
+    label: key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2),
     operator: operator,
     operatorOptions,
     icon,
