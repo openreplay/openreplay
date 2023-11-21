@@ -88,7 +88,6 @@ async def runner_run():
             await task
 
 
-# TODO: use uvicorn lifespan
 async def make_application():
     log.debug("orpy:make_application()")
     # https://loguru.readthedocs.io/en/stable/resources/migration.html
@@ -145,7 +144,7 @@ def route(method, *components):
     return wrapper
 
 
-Context = namedtuple("Context", ["application", "scope", "receive"])
+Context = namedtuple("Context", ["application", "scope", "body"])
 application: Application = ContextVar("application", default=None)
 context: Context = ContextVar("context", default=None)
 
@@ -277,22 +276,7 @@ async def http(send):
         print(view)
 
         if view is None:
-            # TODO: factor into a function http_404_not_found
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 404,
-                    "headers": [
-                        [b"content-type", b"text/html"],
-                    ],
-                }
-            )
-            await send(
-                {
-                    "type": "http.response.body",
-                    "body": b"Not found",
-                }
-            )
+            await not_found()
             return
 
         # XXX: the body must be bytes, TODO it will be

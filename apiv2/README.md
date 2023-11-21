@@ -1,16 +1,14 @@
-# api
-
-API v2 (uvicorn)
+# API v2 (uvicorn)
 
 The API service is responsible for handling request from the frontend 
-where customers can access features of openreplay. The users of the
-that frontend are managers, and developpers are openreplay customers.
+where customers can see features of openreplay in visual way. The users 
+of the that frontend are managers, and developpers, openreplay customers.
 
-End-users' frontends, that is customer of openreplay customer, send 
-data openreplay backend that is written in Go.
+End-users' frontends, that is, customers of openreplay customers, send 
+data to openreplay backend that is written in Go.
 
-The API communicate with several services including the database PostgreSQL,
-and in the entreprise edition ClickHouse.
+The API communicate with several services, including the database PostgreSQL;
+in the entreprise edition openreplay rely on ClickHouse.
 
 ## Glossary
 
@@ -27,6 +25,7 @@ and in the entreprise edition ClickHouse.
 ```sh
 $ ./venv
 % make init
+% make check-coverage
 % make serve
 ```
 
@@ -119,3 +118,30 @@ A route in orpy looks like the following:
 @route("GET", "stats", "path", _, "review")
 def view_get_stats_path_review(method, stats, path, uid, review):
     # method, stats, path, uid
+```
+
+### Tests
+
+Of primary importance, and as a matter of facts a good productivty kicker to get 
+into the flow: tests.
+
+Here is a test for a health route, it should return 200, with json saying ok:
+
+```python
+@pytest.mark.asyncio
+async def test_health():
+    scope = {"type": "http", "path": "/health/", "method": "GET"}
+    ok = [False]
+    await orpy(scope, receive_empty, send_ok(ok, 200, [], {"status": "ok"}))
+    assert ok[0]
+```
+
+Note:
+
+- The variable `orpy` is `orpy.base.orpy`;
+- The test construct a `scope` with just the necessary keys;
+- The use or `receive_empty` to yield an empty body in `context.body`;
+- Then `send_ok` will assert that the code is the one that is expected, 
+  that all required headers are present, and response's body is the same;
+- Do not forget to assert `ok[0]` is truty to make sure that something 
+  actually happened;
