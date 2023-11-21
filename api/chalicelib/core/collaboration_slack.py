@@ -80,16 +80,18 @@ class Slack(BaseCollaboration):
                 print(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, attachement):
+    def __share(cls, tenant_id, integration_id, attachement, extra=None):
+        if extra is None:
+            extra = {}
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         attachement["ts"] = datetime.now().timestamp()
-        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement]})
+        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement], **extra})
         return r.text
 
     @classmethod
-    def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
+    def share_session(cls, tenant_id, project_id, session_id, user, comment, project_name=None, integration_id=None):
         args = {"fallback": f"{user} has shared the below session!",
                 "pretext": f"{user} has shared the below session!",
                 "title": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
@@ -101,7 +103,7 @@ class Slack(BaseCollaboration):
         return {"data": data}
 
     @classmethod
-    def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
+    def share_error(cls, tenant_id, project_id, error_id, user, comment, project_name=None, integration_id=None):
         args = {"fallback": f"{user} has shared the below error!",
                 "pretext": f"{user} has shared the below error!",
                 "title": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",

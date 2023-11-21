@@ -123,6 +123,7 @@ def Build(a):
             logging.warning("Validation error for:")
             logging.warning(a["filter"])
             raise
+
         full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
                                                             issue=None, project_id=a["projectId"], user_id=None,
                                                             favorite_only=False)
@@ -245,6 +246,8 @@ def generate_notification(alert, result):
         "buttonText": "Check metrics for more details",
         "buttonUrl": f"/{alert['projectId']}/metrics",
         "imageUrl": None,
+        "projectId": alert["projectId"],
+        "projectName": alert["projectName"],
         "options": {"source": "ALERT", "sourceId": alert["alertId"],
                     "sourceMeta": alert["detectionMethod"],
                     "message": alert["options"]["message"], "projectId": alert["projectId"],
