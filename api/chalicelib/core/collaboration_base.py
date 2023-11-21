@@ -26,17 +26,17 @@ class BaseCollaboration(ABC):
 
     @classmethod
     @abstractmethod
-    def __share(cls, tenant_id, integration_id, attachments):
+    def __share(cls, tenant_id, integration_id, attachments, extra=None):
         pass
 
     @classmethod
     @abstractmethod
-    def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
+    def share_session(cls, tenant_id, project_id, session_id, user, comment, project_name=None, integration_id=None):
         pass
 
     @classmethod
     @abstractmethod
-    def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
+    def share_error(cls, tenant_id, project_id, error_id, user, comment, project_name=None, integration_id=None):
         pass
 
     @classmethod
