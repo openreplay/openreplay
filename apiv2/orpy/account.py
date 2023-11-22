@@ -1,16 +1,67 @@
 import pytest
+import json
+from unittest.mock import patch
+from decouple import config
 
+from typing import Optional
+from pydantic import EmailStr
+from pydantic import field_validator, model_validator, computed_field
+from pydantic import Field
+from orpy import schema
 from orpy import base as orpy
+from loguru import logger as log
 
 
-@orpy.route("GET", "password", "reset-link")
+
+async def captcha_is_valid(captcha):
+
+    def ok(x):
+        return not x and len(x) > 0
+
+    ORPY_CAPTCHA_SERVER = config('ORPY_CAPTCHA_SERVER', default=False)
+    ORPY_CAPTCHA_SECRET = config('ORPY_CAPTCHA_SECRET', default=False)
+
+    if not ok(ORPY_CAPTCHA_SERVER) or not ok (ORPY_CAPTCHA_SECRET):
+        log.warning("Captcha server, or secret is not setup")
+        # XXX: If captcha is not setup, the captcha from user
+        # is considered valid, and everything goes in.
+        return True
+
+    response = await orpy.context.get().application.http.get(
+        ORPY_CAPTCHA_SERVER,
+        data={
+            "secret": ORPY_CAPTCHA_SECRET,
+            "response": response,
+    })
+    if response.status_code != 200:
+        return False
+
+    out = response.json()
+    return out['success']
+
+
+class GRecaptcha(schema.BaseModel):
+    g_recaptcha_response: Optional[str] = Field(default=None, alias='g-recaptcha-response')
+
+
+class SchemaResetPassword(GRecaptcha):
+    email: EmailStr = Field(...)
+
+    _transform_email = field_validator('email', mode='before')(
+        schema.transform_email
+    )
+
+
+@orpy.route("GET", "password", "reset-link", Schema=SchemaResetPassword)
 async def view_public_reset_password_link(*_):
-    # TODO: check receive fetch a complete body
-    data = json.loads(await orpy.get().receive())
-    if not captcha.is_valid(data.captcha):
+    data = json.loads(orpy.context.get().body)
+
+    if not captcha_is_valid(data.captcha):
         out = jsonify({"errors": ["Invalid capatcha"]})
         return 400, [(b"content-type", "application/javascript")], out
-    if not context.features.get("smtp", False):
+
+    if not orpy.has_feature("smtp", False):
+        log.warning("Trial to use SMTP, but it is not disabled")
         out = jsonify(
             {
                 "errors": [
@@ -19,13 +70,21 @@ async def view_public_reset_password_link(*_):
             }
         )
         return 400, [(b"content-type", "application/javascript")], out
-    runner_spawn(_task_reset_password_link(email))
+
+    # TODO: move the following function to execute in background tasks runner
+    await _task_reset_password_link(email)
+
     return 200, [(b"content-type", "application/javascript")], out
 
 
+@patch(__name__ + '.config')
+def test_view_public_reset_password_link(config):
+    expected = object()
+    config.return_value = expected
+    assert config() is expected
+
+
 async def _query_authentication_set_new_invitation(txn, user_id, invitation_token):
-    # XXX: Investigate whether this will break user password? What
-    # does the table basic authentication do?
     sql = """
     UPDATE public.basic_authentication
     SET invitation_token = %(invitation_token)s,
@@ -83,9 +142,13 @@ async def _task_reset_password_link(email):
 
 @pytest.mark.asyncio
 async def test_view_reset_password():
-    scope = {"type": "http", "path": "/health/", "method": "GET"}
+    scope = {
+        "type": "http",
+        "path": "/password/reset-link/",
+        "method": "GET",
+    }
     ok = [False]
     await orpy.orpy(
-        scope, orpy.receive_empty, orpy.send_ok(ok, 200, [], {"status": "ok"})
+        scope, orpy.receive_body(b"{}"), orpy.send_ok(ok, 200, [], {"status": "ok"})
     )
     assert ok[0]

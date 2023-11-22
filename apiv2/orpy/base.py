@@ -1,3 +1,5 @@
+from pydantic import ValidationError
+from typing import Optional
 import asyncio
 import json
 import os
@@ -17,6 +19,10 @@ import pytest
 from decouple import config
 from loguru import logger as log
 from pampy import _, match
+
+from orpy import schema
+from pydantic import Field
+
 
 ROUTE_REGISTRY = []
 
@@ -55,6 +61,13 @@ def make_timestamper():
         return out
 
     return timestamp
+
+
+def has_feature(name, default):
+    FEATURES = dict(
+        smtp=True
+    )
+    return FEATURES.get(name, default)
 
 
 Application = namedtuple(
@@ -133,25 +146,55 @@ async def make_application():
     return app
 
 
-def route(method, *components):
+def route(method, *components, Schema=None):
     route = [method] + list(components)
 
-    def wrapper(func):
-        log.debug("Registring route: {} @ {}", route, func)
-        ROUTE_REGISTRY.extend((route, lambda *x: lambda: func(*x)))
-        return func
+    def wrapper(handler):
+        log.debug("Registring route: {} @ {}", route, handler)
+
+        # TODO: replace functor with functools.partial?
+        def action(*args):
+
+            async def route():
+                if Schema is None:
+                    out = await handler(*args)
+                    return out
+
+                headers = dict(context.get().scope['headers'])
+                content = headers.get(b'content-type')
+                if content != b'application/json':
+                    log.debug("Wrong content-type for: {} {} {}", handler, method, components)
+                    return 400, [(b"content-type", b"application/javascript")], b'{"ok": False, "reason": "wrong header content-type"}'
+                try:
+                    body = context.get().body
+                    log.debug('body: {}', body)
+                    kwargs = json.loads(body)
+                    payload = Schema(**kwargs)
+                except ValidationError as e:
+                    log.debug("Schema validation failed for: {} {} {}", handler, method, components)
+                    return 400, [(b"content-type", b"application/javascript")], b'{"ok": False, "reason": "schema validation failed"}'
+                context.get().cache["payload"] = payload
+                out = await handler(*args)
+                return out
+
+            return route
+
+        ROUTE_REGISTRY.extend((route, action))
+        return route
 
     return wrapper
 
 
-Context = namedtuple("Context", ["application", "scope", "body"])
+Context = namedtuple("Context", ["application", "scope", "body", "cache"])
 application: Application = ContextVar("application", default=None)
 context: Context = ContextVar("context", default=None)
 
 
 @route("GET")
-async def index():
-    return 200, [(b"content-type", b"text/plain")], b"hello from orpy"
+async def index(*_):
+    log.debug('index scope: {}', context.get().scope)
+    log.debug('index body: {}', context.get().body)
+    return 200, [(b"content-type", b"text/plain")], b"hello from orpy 3"
 
 
 def jsonify(obj):
@@ -165,8 +208,14 @@ async def txn():
             yield cnx
 
 
-@route("GET", "health")
-def view_get_health(*_):
+class SchemaHealth(schema.BaseModel):
+    # That is the simplest schema possible, to help with test schema
+    # validation at the lowest level.
+    pass
+
+
+@route("GET", "health", Schema=SchemaHealth)
+async def view_get_health(*_):
     # XXX: For some reason pampy.match will pass all the matched
     # value when there is no variable / placeholder, that is why
     # there is a snake argument _*
@@ -177,7 +226,7 @@ def view_get_health(*_):
     )
 
 
-async def not_found():
+async def not_found(send):
     await send(
         {
             "type": "http.response.start",
@@ -192,12 +241,12 @@ async def not_found():
     )
 
 
-async def serve_static(path):
+async def serve_static(send, path):
     # XXX: Secure the /static/* route, and avoid people poking at
     # files that are not in the local ./static/
     # directory. Security can be as simple as that.
     if ".." in path:
-        await not_found()
+        await not_found(send)
     else:
         components = path.split("/")
         filename = components[-1]
@@ -205,7 +254,7 @@ async def serve_static(path):
         mimetype = guess_type(filename)[0] or "application/octet-stream"
 
         if not filepath.exists():
-            await not_found()
+            await not_found(send)
             return
 
         await send(
@@ -231,10 +280,10 @@ async def http(send):
     path = context.get().scope["path"]
 
     if path.startswith("/static/"):
-        await serve_static(path)
+        await serve_static(send, path)
         return
     elif path == "/favicon.ico":
-        await not_found()
+        await not_found(send)
         return
     elif not path.endswith("/"):
         # XXX: All paths but static path must end with a slash.  That
@@ -273,15 +322,15 @@ async def http(send):
             lambda x: None,
         )
 
-        print(view)
-
         if view is None:
-            await not_found()
+            await not_found(send)
             return
 
         # XXX: the body must be bytes, TODO it will be
-        # wise to support a body that is a generator
-        code, headers, body = view()
+        # wise to support a body that is a generator?
+        response = await view()
+
+        code, headers, body = response
 
         await send(
             {
@@ -298,41 +347,6 @@ async def http(send):
         )
 
 
-async def websocket(send):
-    import json
-
-    import ffw
-
-    event = await context.get().receive()
-
-    assert event["type"] == "websocket.connect"
-
-    async def on_message():
-        await send({"type": "websocket.send", "text": json.dumps(root)})
-
-    dispatch = {
-        "websocket.receive": on_message,
-    }
-
-    while True:
-        event = await context.get().receive()
-
-        if event["type"] == "websocket.disconnect":
-            return
-
-        log.info("message: {}", event)
-
-        try:
-            message = json.loads(event["text"])
-            log.info(message)
-            root = ffw.h.div()["Hello, World!"]
-            log.critical(root)
-            html, events = ffw.serialize(html)
-            previous = events
-        except Exception:
-            log.exception("error!")
-
-
 async def orpy(scope, receive, send):
     log.debug("ASGI scope: {}", scope)
 
@@ -345,34 +359,11 @@ async def orpy(scope, receive, send):
             application.get(),
             scope,
             await read_body(receive),
+            dict(),
         )
     )
 
-    if not ORPY_DEBUG and scope["type"] == "http":
-        await http(send)
-
-    if not ORPY_DEBUG:
-        return
-
-    if scope["type"] == "http" and scope["path"] == "/":
-        with open("static/index.html", "rb") as f:
-            body = f.read()
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [[b"content-type", b"text/html"]],
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": body,
-            }
-        )
-    elif scope["type"] == "websocket":
-        await websocket(send)
-    else:
+    if scope["type"] == "http":
         await http(send)
 
 
@@ -400,6 +391,12 @@ def test_true():
 
 async def receive_empty():
     return {"body": b""}
+
+
+def receive_body(bytes):
+    async def receive():
+        return {"body": bytes}
+    return receive
 
 
 def send_ok(called, status_code, headers, body):

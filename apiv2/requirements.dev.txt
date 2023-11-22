@@ -6,3 +6,4 @@ pylama
 pytest
 pytest-asyncio
 pytest-cov
+ipython

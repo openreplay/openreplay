@@ -1,4 +1,4 @@
-pydantic
+pydantic[email]
 httpx
 jinja2
 loguru
