@@ -1,12 +1,14 @@
 import logging
-from datetime import datetime
 
 from fastapi import HTTPException, status
 
 from chalicelib.core.db_request_handler import DatabaseRequestHandler
 from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate, UTTestStatusUpdate
+from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import dict_to_camel_case, list_to_camel_case
+
+from chalicelib.core import sessions, metadata
 
 table_name = "ut_tests"
 
@@ -18,6 +20,7 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
         "ut.description",
         "ut.created_at",
         "ut.updated_at",
+        "ut.status",
         "json_build_object('user_id', u.user_id, 'name', u.name) AS created_by"
     ]
 
@@ -234,25 +237,20 @@ def get_test_tasks(db_handler, test_id):
     return db_handler.fetchall()
 
 
-def ut_tests_sessions(project_id: int, test_id: int, page: int, limit: int):
-    db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
-    db_handler.set_select_columns(["s.*"])
-    db_handler.add_join("JOIN sessions s ON uts.session_id = s.session_id AND s.project_id = %(project_id)s")
-    db_handler.add_constraint("uts.type = %(type)s", {'type': 'test'})
-    db_handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('finished', 'aborted')})
-    db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
-    db_handler.add_constraint("uts.type_id = %(test_id)s", {'test_id': test_id})
-    db_handler.set_pagination(page, limit)
+def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, limit: int):
+    handler = DatabaseRequestHandler("ut_tests_signals AS uts")
+    handler.set_select_columns(["uts.session_id"])
+    handler.add_constraint("uts.test_id = %(test_id)s", {'test_id': test_id})
+    handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
+    handler.add_constraint("uts.task_id is NULL")
+    handler.set_pagination(page, limit)
 
-    sessions = db_handler.fetchall()
+    session_ids = handler.fetchall()
+    session_ids = [session['session_id'] for session in session_ids]
+    sessions_list = sessions.search_sessions_by_ids(project_id=project_id, session_ids=session_ids, user_id=user_id)
+    sessions_list['page'] = page
 
-    return {
-        "data": {
-            "list": list_to_camel_case(sessions),
-            "page": page,
-            "limit": limit
-        }
-    }
+    return sessions_list
 
 
 def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
@@ -308,7 +306,15 @@ def get_statistics(test_id: int):
         })
 
         if results is None or len(results) == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
+            return {
+                "data": {
+                    "tests_attempts": 0,
+                    "tests_skipped": 0,
+                    "tasks_completed": 0,
+                    "tasks_skipped": 0,
+                    "completed_all_tasks": 0
+                }
+            }
 
         return {
             "data": results[0]

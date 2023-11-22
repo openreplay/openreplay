@@ -78,7 +78,7 @@ async def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdat
 
 
 @app.get("/{project_id}/usability-tests/{test_id}/sessions", tags=tags)
-async def get_sessions(project_id: int, test_id: int, page: int = 1, limit: int = 10):
+async def get_sessions(project_id: int, test_id: int, page: int = 1, limit: int = 10, context: schemas.CurrentContext = Depends(OR_context)):
     """
     Get sessions related to a specific UT test.
 
@@ -86,7 +86,9 @@ async def get_sessions(project_id: int, test_id: int, page: int = 1, limit: int 
     - **test_id**: The unique identifier of the UT test.
     """
 
-    return service.ut_tests_sessions(project_id, test_id, page, limit)
+    user_id = context.user_id
+
+    return service.ut_tests_sessions(project_id, user_id, test_id, page, limit)
 
 
 @app.get("/{project_id}/usability-tests/{test_id}/responses/{task_id}", tags=tags)
