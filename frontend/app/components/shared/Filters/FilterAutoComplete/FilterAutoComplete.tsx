@@ -146,7 +146,7 @@ function FilterAutoComplete(props: Props) {
     const loadOptions = (inputValue: string, callback: (options: []) => void) => {
         // remove underscore from params
         const _params = Object.keys(params).reduce((acc: any, key: string) => {
-            acc[key] = params[key].replace('_', '');
+            acc[key] = params[key].replace(/^_/, '');
             return acc;
         }, {});
 
