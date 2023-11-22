@@ -101,20 +101,30 @@ func (e *Router) init() {
 	e.router.HandleFunc("/", e.root)
 
 	handlers := map[string]func(http.ResponseWriter, *http.Request){
-		"/v1/web/not-started":   e.notStartedHandlerWeb,
-		"/v1/web/start":         e.startSessionHandlerWeb,
-		"/v1/web/i":             e.pushMessagesHandlerWeb,
-		"/v1/web/feature-flags": e.featureFlagsHandlerWeb,
-		"/v1/mobile/start":      e.startSessionHandlerIOS,
-		"/v1/mobile/i":          e.pushMessagesHandlerIOS,
-		"/v1/mobile/late":       e.pushLateMessagesHandlerIOS,
-		"/v1/mobile/images":     e.imagesUploadHandlerIOS,
+		"/v1/web/not-started":      e.notStartedHandlerWeb,
+		"/v1/web/start":            e.startSessionHandlerWeb,
+		"/v1/web/i":                e.pushMessagesHandlerWeb,
+		"/v1/web/feature-flags":    e.featureFlagsHandlerWeb,
+		"/v1/mobile/start":         e.startSessionHandlerIOS,
+		"/v1/mobile/i":             e.pushMessagesHandlerIOS,
+		"/v1/mobile/late":          e.pushLateMessagesHandlerIOS,
+		"/v1/mobile/images":        e.imagesUploadHandlerIOS,
+		"/v1/web/uxt/signals/test": e.sendUXTestSignal,
+		"/v1/web/uxt/signals/task": e.sendUXTaskSignal,
+	}
+	getHandlers := map[string]func(http.ResponseWriter, *http.Request){
+		"/v1/web/uxt/test/{id}":  e.getUXTaskInfo,
+		"/v1/web/uxt/upload-url": e.getUXUploadUrl,
 	}
 	prefix := "/ingest"
 
 	for path, handler := range handlers {
 		e.router.HandleFunc(path, handler).Methods("POST", "OPTIONS")
 		e.router.HandleFunc(prefix+path, handler).Methods("POST", "OPTIONS")
+	}
+	for path, handler := range getHandlers {
+		e.router.HandleFunc(path, handler).Methods("GET", "OPTIONS")
+		e.router.HandleFunc(prefix+path, handler).Methods("GET", "OPTIONS")
 	}
 
 	// CORS middleware
@@ -130,7 +140,7 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 		if e.cfg.UseAccessControlHeaders {
 			// Prepare headers for preflight requests
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST")
+			w.Header().Set("Access-Control-Allow-Methods", "POST,GET")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,Content-Encoding")
 		}
 		if r.Method == http.MethodOptions {

@@ -18,4 +18,5 @@ type ObjectStorage interface {
 	Get(key string) (io.ReadCloser, error)
 	Exists(key string) bool
 	GetCreationTime(key string) *time.Time
+	GetPreSignedUploadUrl(key string) (string, error)
 }
