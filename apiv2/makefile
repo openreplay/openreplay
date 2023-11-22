@@ -7,6 +7,14 @@ init: ## Prepare the host sytem for development
 	pip install -r requirements.txt -r requirements.dev.txt
 	@echo "\033[95m\n\nYou may now run 'make check'.\n\033[0m"
 
+postgresql-init: ## Initialize postgresql with defaults credentials
+	sudo -u postgres createdb orpy
+	echo 'grant all privileges on database orpy to orpy ;' | sudo -u postgres psql
+	echo orpy | psql -h localhost -U orpy -W < postgresql-init.sql
+
+postgresql-clear: ## Clear postgresql with defaults credentials
+	echo 'DROP DATABASE orpy' | sudo -u postgres psql 
+
 check: ## Run tests
 	pytest -vvv --exitfirst --capture=no orpy/*.py
 	bandit --skip=B101 -r .
