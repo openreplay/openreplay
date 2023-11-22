@@ -59,7 +59,7 @@ export default class FilterItem {
 
     fromJson(json: any, mainFilterKey = '') {
         const isMetadata = json.type === FilterKey.METADATA;
-        let _filter: any = (isMetadata ? filtersMap[json.source] : filtersMap[json.type]) || {};
+        let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
 
         if (mainFilterKey) {
             const mainFilter = filtersMap[mainFilterKey];
@@ -83,7 +83,7 @@ export default class FilterItem {
 
         (this.value = !json.value || json.value.length === 0 ? [''] : json.value);
         (this.operator = json.operator);
-        this.source = json.source;
+        this.source = isMetadata ? '_' + json.source : json.source;
         this.sourceOperator = json.sourceOperator;
 
         this.filters =
@@ -102,7 +102,7 @@ export default class FilterItem {
             isEvent: this.isEvent,
             value: this.value,
             operator: this.operator,
-            source: isMetadata ? this.key : this.source,
+            source: isMetadata ? this.key.replace(/^_/, '') : this.source,
             sourceOperator: this.sourceOperator,
             filters: Array.isArray(this.filters) ? this.filters.map((i) => i.toJson()) : [],
         };

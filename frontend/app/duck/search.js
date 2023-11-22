@@ -140,7 +140,7 @@ export const filterMap = ({ category, value, key, operator, sourceOperator, sour
     custom,
     type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
     operator,
-    source: category === FilterCategory.METADATA ? key : source,
+    source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
     sourceOperator,
     isEvent,
     filters: filters ? filters.map(filterMap) : [],
