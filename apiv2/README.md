@@ -149,3 +149,9 @@ Note:
   is the same;
 - Do not forget to assert `ok[0]` is truthy to make sure that
   something actually happened;
+
+## Link to documentation
+
+- psycopg3
+- httpx
+- https://docs.python.org/3/library/unittest.mock.html

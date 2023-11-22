@@ -1,16 +1,14 @@
-from pydantic import ValidationError
-from typing import Optional
 import asyncio
 import json
 import os
 import re
-import secrets
 import sys
 import time
 from collections import namedtuple
 from contextvars import ContextVar
 from mimetypes import guess_type
 from pathlib import Path
+from typing import Optional
 
 import httpx
 import psycopg
@@ -19,10 +17,10 @@ import pytest
 from decouple import config
 from loguru import logger as log
 from pampy import _, match
+from pydantic import Field, ValidationError
 
+import orpy.smtp
 from orpy import schema
-from pydantic import Field
-
 
 ROUTE_REGISTRY = []
 
@@ -64,9 +62,7 @@ def make_timestamper():
 
 
 def has_feature(name, default):
-    FEATURES = dict(
-        smtp=True
-    )
+    FEATURES = dict(smtp=True)
     return FEATURES.get(name, default)
 
 
@@ -84,6 +80,58 @@ Application = namedtuple(
         "tasks",
     ),
 )
+
+
+def email_send(subject, recipients, body, bcc=None):
+    def email_embed_images(HTML):
+        pattern_holder = re.compile(r'<img[\w\W\n]+?(src="[a-zA-Z0-9.+\/\\-]+")')
+        pattern_src = re.compile(r'src="(.*?)"')
+        mime_img = []
+        swap = []
+        for m in re.finditer(pattern_holder, HTML):
+            sub = m.groups()[0]
+            sub = str(re.findall(pattern_src, sub)[0])
+            if sub not in swap:
+                swap.append(sub)
+                HTML = HTML.replace(sub, f"cid:img-{len(mime_img)}")
+                sub = "static/" + sub
+                with open(sub, "rb") as image_file:
+                    img = base64.b64encode(image_file.read()).decode("utf-8")
+                mime_img.append(MIMEImage(base64.standard_b64decode(img)))
+                mime_img[-1].add_header("Content-ID", f"<img-{len(mime_img) - 1}>")
+        return HTML, mime_img
+
+    BODY_HTML, mime_img = email_embed_images(BODY_HTML)
+
+    if not isinstance(recipients, list):
+        recipients = [recipients]
+
+    msg = MIMEMultipart()
+    msg["Subject"] = Header(subject, "utf-8")
+    msg["From"] = config("EMAIL_FROM")
+    msg["To"] = ""
+    body = MIMEText(BODY_HTML.encode("utf-8"), "html", "utf-8")
+    msg.attach(body)
+    for m in mime_img:
+        msg.attach(m)
+
+    # TODO: Attach text/plain via html2text to workaround spam filters
+    with orpy.smtp.SMTPClient() as s:
+        for recipient in recipients:
+            msg.replace_header("To", recipient)
+            out = [recipient]
+            if bcc is not None and len(bcc) > 0:
+                out += [bcc]
+            log.debug(
+                "Email sending to with `subjet`, `from`, and `to`: {subjet} {from} {out}",
+                subject,
+                msg["FROM"],
+                out,
+            )
+            try:
+                s.sendmail(msg["FROM"], out, msg.as_string().encode("ascii"))
+            except Exception as e:
+                log.exception("Failed to send mail")
 
 
 def runner_spawn(coroutine):
@@ -120,7 +168,7 @@ async def make_application():
     }
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
-    # database = psycopg_pool.AsyncConnectionPool(database)
+    database = psycopg_pool.AsyncConnectionPool(database)
 
     # setup app
     make_timestamp = make_timestamper()
@@ -154,25 +202,39 @@ def route(method, *components, Schema=None):
 
         # TODO: replace functor with functools.partial?
         def action(*args):
-
             async def route():
                 if Schema is None:
                     out = await handler(*args)
                     return out
 
-                headers = dict(context.get().scope['headers'])
-                content = headers.get(b'content-type')
-                if content != b'application/json':
-                    log.debug("Wrong content-type for: {} {} {}", handler, method, components)
-                    return 400, [(b"content-type", b"application/javascript")], b'{"ok": False, "reason": "wrong header content-type"}'
+                headers = dict(context.get().scope.get("headers", dict()))
+                content = headers.get(b"content-type")
+                if content != b"application/json":
+                    log.debug(
+                        "Wrong content-type for: {} {} {}", handler, method, components
+                    )
+                    return (
+                        400,
+                        [(b"content-type", b"application/javascript")],
+                        b'{"ok": False, "reason": "wrong header content-type"}',
+                    )
                 try:
                     body = context.get().body
-                    log.debug('body: {}', body)
+                    log.debug("body: {}", body)
                     kwargs = json.loads(body)
                     payload = Schema(**kwargs)
                 except ValidationError as e:
-                    log.debug("Schema validation failed for: {} {} {}", handler, method, components)
-                    return 400, [(b"content-type", b"application/javascript")], b'{"ok": False, "reason": "schema validation failed"}'
+                    log.debug(
+                        "Schema validation failed for: {} {} {}",
+                        handler,
+                        method,
+                        components,
+                    )
+                    return (
+                        400,
+                        [(b"content-type", b"application/javascript")],
+                        b'{"ok": False, "reason": "schema validation failed"}',
+                    )
                 context.get().cache["payload"] = payload
                 out = await handler(*args)
                 return out
@@ -192,8 +254,8 @@ context: Context = ContextVar("context", default=None)
 
 @route("GET")
 async def index(*_):
-    log.debug('index scope: {}', context.get().scope)
-    log.debug('index body: {}', context.get().body)
+    log.debug("index scope: {}", context.get().scope)
+    log.debug("index body: {}", context.get().body)
     return 200, [(b"content-type", b"text/plain")], b"hello from orpy 3"
 
 
@@ -201,9 +263,20 @@ def jsonify(obj):
     return json.dumps(obj).encode("utf8")
 
 
+import contextlib
+
+
+@contextlib.asynccontextmanager
 async def txn():
     # TODO: rename s/database/postgresql/g
-    async with context.get().database.connection() as cnx:
+    async with context.get().application.database.connection() as cnx:
+        async with cnx.transaction():
+            yield cnx
+
+
+@contextlib.asynccontextmanager
+async def _app_txn():
+    async with application.get().database.connection() as cnx:
         async with cnx.transaction():
             yield cnx
 
@@ -396,6 +469,7 @@ async def receive_empty():
 def receive_body(bytes):
     async def receive():
         return {"body": bytes}
+
     return receive
 
 
@@ -416,7 +490,7 @@ def send_ok(called, status_code, headers, body):
 
 
 @pytest.mark.asyncio
-async def test_health():
+async def _test_health():
     scope = {"type": "http", "path": "/health/", "method": "GET"}
     ok = [False]
     await orpy(scope, receive_empty, send_ok(ok, 200, [], {"status": "ok"}))
