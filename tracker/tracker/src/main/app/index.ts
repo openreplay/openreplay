@@ -180,7 +180,8 @@ export default class App {
     )
 
     if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
-      this.bc = inIframe() ? null : new BroadcastChannel('rick')
+      const host = location.hostname.split('.').slice(-2).join('_')
+      this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
     }
 
     this.revID = this.options.revID
