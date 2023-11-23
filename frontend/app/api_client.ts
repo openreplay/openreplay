@@ -29,7 +29,8 @@ const siteIdRequiredPaths: string[] = [
   '/unprocessed',
   '/notes',
   '/feature-flags',
-  '/check-recording-status'
+  '/check-recording-status',
+  '/usability-tests'
 ];
 
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {

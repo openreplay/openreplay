@@ -5,6 +5,8 @@ import { Button, Typography, Select, Space, Popover, Dropdown, Input, Switch } f
 import { withSiteId, usabilityTesting } from 'App/routes';
 import { useParams } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
+import { observer } from 'mobx-react-lite';
+import { useStore } from "App/mstore";
 import {
   EditOutlined,
   ShareAltOutlined,
@@ -22,7 +24,7 @@ import {
   DownOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import { Pagination } from 'UI';
+import { Loader, Pagination } from "UI";
 
 const { Option } = Select;
 
@@ -56,8 +58,19 @@ const handleChange = (value: string) => {
 
 function TestOverview() {
   // @ts-ignore
-  const { siteId } = useParams();
+  const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
+  const { uxtestingStore } = useStore();
+
+  React.useEffect(() => {
+    uxtestingStore.getTest(testId);
+  }, [testId])
+
+  if (!uxtestingStore.instance) {
+    return <Loader loading={uxtestingStore.isLoading}>
+      No data.
+    </Loader>
+  }
 
   return (
     <>
@@ -68,16 +81,16 @@ function TestOverview() {
             to: withSiteId(usabilityTesting(), siteId),
           },
           {
-            label: 'Test name goes here',
+            label: uxtestingStore.instance.title,
           },
         ]}
       />
       <div className={'rounded border bg-white'}>
         <div className={'p-4 flex items-center gap-2 border-b'}>
           <div>
-            <Typography.Title level={4}>Product Search and Navigation Evaluation</Typography.Title>
+            <Typography.Title level={4}>{uxtestingStore.instance.title}</Typography.Title>
             <div className={'text-disabled-text'}>
-              Assess and improve product search and navigation efficiency.
+              {uxtestingStore.instance.description}
             </div>
           </div>
           <div className={'ml-auto'} />
@@ -247,4 +260,4 @@ function ResponsesOverview() {
   );
 }
 
-export default TestOverview;
+export default observer(TestOverview);

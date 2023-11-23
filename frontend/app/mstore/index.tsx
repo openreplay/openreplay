@@ -20,6 +20,7 @@ import AssistMultiviewStore from './assistMultiviewStore';
 import WeeklyReportStore from './weeklyReportConfigStore'
 import AlertStore from './alertsStore'
 import FeatureFlagsStore from "./featureFlagsStore";
+import UxtestingStore from './uxtestingStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -39,6 +40,7 @@ export class RootStore {
   weeklyReportStore: WeeklyReportStore
   alertsStore: AlertStore
   featureFlagsStore: FeatureFlagsStore
+  uxtestingStore: UxtestingStore
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -58,6 +60,7 @@ export class RootStore {
     this.weeklyReportStore = new WeeklyReportStore();
     this.alertsStore = new AlertStore();
     this.featureFlagsStore = new FeatureFlagsStore();
+    this.uxtestingStore = new UxtestingStore();
   }
 
   initClient() {
