@@ -21,7 +21,6 @@ module.exports = {
     server,
   ) {
     const sourcemaps = await readDir(sourcemap_dir_path, js_dir_url);
-        console.log(sourcemaps)
 
     return uploadSourcemaps(api_key, project_key, sourcemaps, server);
   },
