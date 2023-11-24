@@ -2,11 +2,13 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
+import psycopg_pool
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from psycopg import AsyncConnection
 from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
@@ -18,7 +20,7 @@ from routers.subs import insights, metrics, v1_api, health
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-from orpy import application
+import orpy
 from psycopg.rows import dict_row
 
 
@@ -59,15 +61,15 @@ async def lifespan(app: FastAPI):
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
     database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
-    application.set(Application(
+    orpy.application.set(orpy.Application(
         database,
-    )
+    ))
 
     # App listening
     yield
 
     # Shutdown
-    database.close()
+    await database.close()
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
     await pg_client.terminate()
