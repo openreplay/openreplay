@@ -2,6 +2,14 @@ import { uxtestingService } from 'App/services';
 import { UxTest, UxTask, UxTSearchFilters, UxTListEntry } from "App/services/UxtestingService";
 import { makeAutoObservable } from 'mobx';
 
+interface Stats {
+  completed_all_tasks: number;
+  tasks_completed: number;
+  tasks_skipped: number;
+  tests_attempts: number;
+  tests_skipped: number;
+}
+
 export default class UxtestingStore {
   client = uxtestingService;
   tests: UxTListEntry[] = [];
@@ -10,6 +18,7 @@ export default class UxtestingStore {
   total: number = 0;
   pageSize: number = 10;
   searchQuery: string = '';
+  testStats: Stats | null = null;
 
   isLoading: boolean = false;
 
@@ -98,7 +107,7 @@ export default class UxtestingStore {
         if (results[1].status === 'fulfilled') {
           const stats = results[1].value;
           if (stats) {
-            console.log(stats)
+            this.testStats = stats
           }
         }
         if (results[2].status === 'fulfilled') {
@@ -132,6 +141,8 @@ class UxTestInst {
   conclusion_message: string = '';
   visibility: boolean = false;
   tasks: UxTask[] = [];
+  status?: string
+  id?: number
 
   constructor(initialData: Partial<UxTestInst> = {}) {
     makeAutoObservable(this);

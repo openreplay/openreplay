@@ -25,10 +25,12 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import { Loader, Pagination } from "UI";
+import copy from 'copy-to-clipboard';
 
 const { Option } = Select;
 
-const items = [
+const statusItems = [
+  { value: 'preview', label: 'Preview', icon: <HourglassOutlined rev={undefined} /> },
   { value: 'in_progress', label: 'In Progress', icon: <HourglassOutlined rev={undefined} /> },
   { value: 'pause', label: 'Pause', icon: <PauseCircleOutlined rev={undefined} /> },
   { value: 'ended', label: 'End Testing', icon: <StopOutlined rev={undefined} /> },
@@ -59,7 +61,7 @@ const handleChange = (value: string) => {
 function TestOverview() {
   // @ts-ignore
   const { siteId, testId } = useParams();
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
   const { uxtestingStore } = useStore();
 
   React.useEffect(() => {
@@ -89,13 +91,15 @@ function TestOverview() {
         <div className={'p-4 flex items-center gap-2 border-b'}>
           <div>
             <Typography.Title level={4}>{uxtestingStore.instance.title}</Typography.Title>
-            <div className={'text-disabled-text'}>
-              {uxtestingStore.instance.description}
-            </div>
+            <div className={'text-disabled-text'}>{uxtestingStore.instance.description}</div>
           </div>
           <div className={'ml-auto'} />
-          <Select defaultValue="in_progress" style={{ width: 150 }} onChange={handleChange}>
-            {items.map((item) => (
+          <Select
+            value={uxtestingStore.instance.status}
+            style={{ width: 150 }}
+            onChange={handleChange}
+          >
+            {statusItems.map((item) => (
               <Option key={item.value} value={item.value} label={item.label}>
                 <Space align={'center'}>
                   {item.icon} {item.label}
@@ -105,7 +109,7 @@ function TestOverview() {
           </Select>
           <Button type={'primary'}>
             <Space align={'center'}>
-              5 Tasks <EditOutlined rev={undefined} />{' '}
+              {uxtestingStore.instance.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
             </Space>
           </Button>
           <Popover
@@ -114,9 +118,15 @@ function TestOverview() {
             content={
               <div style={{ width: '220px' }}>
                 <div className={'p-2 bg-white rounded border break-all mb-2'}>
-                  https://openreplay.company.com/UTID128738?rjs
+                  https://openreplay.company.com/?oruxt=${uxtestingStore.instance.id}
                 </div>
-                <Button>Copy</Button>
+                <Button
+                  onClick={() => {
+                    copy(`https://openreplay.company.com/?oruxt=${uxtestingStore.instance.id}`);
+                  }}
+                >
+                  Copy
+                </Button>
               </div>
             }
           >
@@ -155,28 +165,49 @@ function TestOverview() {
               <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
               <Typography.Text strong>Total Participants</Typography.Text>
             </div>
-            <Typography.Title level={5}>12,864</Typography.Title>
+            <Typography.Title level={5}>{uxtestingStore.testStats.tests_attempts}</Typography.Title>
           </div>
           <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
               <Typography.Text strong>Completed all tasks</Typography.Text>
             </div>
-            <Typography.Title level={5}>12,864</Typography.Title>
+            <div className={'flex items-center gap-2'}>
+              {uxtestingStore.testStats.tests_attempts > 0 ? <Typography.Title level={5}>
+                {Math.round(
+                  (uxtestingStore.testStats.completed_all_tasks / uxtestingStore.testStats.tests_attempts) * 100,
+                )}%
+              </Typography.Title> : null}
+              <Typography.Text>{uxtestingStore.testStats.completed_all_tasks}</Typography.Text>
+            </div>
           </div>
           <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
               <Typography.Text strong>Skipped tasks</Typography.Text>
             </div>
-            <Typography.Title level={5}>12,864</Typography.Title>
+            <div className={'flex items-center gap-2'}>
+              {uxtestingStore.testStats.tests_attempts > 0 ? <Typography.Title level={5}>
+                {Math.round(
+                  (uxtestingStore.testStats.tasks_skipped / uxtestingStore.testStats.tests_attempts) * 100,
+                )}%
+              </Typography.Title> : null}
+              <Typography.Text>{uxtestingStore.testStats.tasks_skipped}</Typography.Text>
+            </div>
           </div>
           <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
               <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
               <Typography.Text strong>Aborted the test</Typography.Text>
             </div>
-            <Typography.Title level={5}>12,864</Typography.Title>
+            <div className={'flex items-center gap-2'}>
+              {uxtestingStore.testStats.tests_attempts > 0 ? <Typography.Title level={5}>
+                {Math.round(
+                  (uxtestingStore.testStats.tests_skipped / uxtestingStore.testStats.tests_attempts) * 100,
+                )}%
+              </Typography.Title> : null}
+              <Typography.Text>{uxtestingStore.testStats.tests_skipped}</Typography.Text>
+            </div>
           </div>
           <div className={'flex-1'} />
         </div>
@@ -211,7 +242,7 @@ function TestOverview() {
           Sessions
         </Typography.Title>
         <Typography.Text>in your selection</Typography.Text>
-        <div className={'flex gap-1 link'}>clear selection</div>
+        {/*<div className={'flex gap-1 link'}>clear selection</div>*/}
       </div>
     </>
   );
