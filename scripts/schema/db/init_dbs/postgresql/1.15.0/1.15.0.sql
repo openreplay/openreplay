@@ -134,6 +134,14 @@ WHERE jsonb_typeof(gdpr) = 'array';
 
 ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'app_crash';
 
+UPDATE metrics
+SET default_config='{
+  "col": 4,
+  "row": 2,
+  "position": 0
+}'::jsonb
+WHERE metric_type = 'pathAnalysis';
+
 COMMIT;
 
 \elif :is_next
