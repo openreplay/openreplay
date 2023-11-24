@@ -19,6 +19,14 @@ loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
 from orpy import application
+from psycopg.rows import dict_row
+
+
+class ORPYAsyncConnection(AsyncConnection):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, row_factory=dict_row, **kwargs)
+
 
 
 @asynccontextmanager
@@ -50,7 +58,7 @@ async def lifespan(app: FastAPI):
     }
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
-    database = psycopg_pool.AsyncConnectionPool(database)
+    database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
     application.set(Application(
         database,
     )

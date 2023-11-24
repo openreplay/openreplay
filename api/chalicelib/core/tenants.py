@@ -53,9 +53,9 @@ def edit_tenant(tenant_id, changes):
 
 
 def tenants_exists_sync(use_pool=True):
-    with application.get().database as cnx:
-        cnx.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
-        return cnx.fetchone()["exists"]
+    with pg_client.PostgresClient(use_pool=use_pool) as cur:
+        cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        return cur.fetchone()["exists"]
 
 
 async def tenants_exists(use_pool=True):

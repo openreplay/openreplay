@@ -35,18 +35,19 @@ async def get_all_signup():
                      "edition": license.EDITION}}
 
 
-@public_app.post('/signup', tags=['signup'])
-@public_app.put('/signup', tags=['signup'])
-async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-    content = await signup.create_tenant(data)
-    if "errors" in content:
-        return content
-    refresh_token = content.pop("refreshToken")
-    refresh_token_max_age = content.pop("refreshTokenMaxAge")
-    response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
-    return response
+if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists(use_pool=False):
+    @public_app.post('/signup', tags=['signup'])
+    @public_app.put('/signup', tags=['signup'])
+    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+        content = await signup.create_tenant(data)
+        if "errors" in content:
+            return content
+        refresh_token = content.pop("refreshToken")
+        refresh_token_max_age = content.pop("refreshTokenMaxAge")
+        response = JSONResponse(content=content)
+        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        return response
 
 
 @public_app.post('/login', tags=["authentication"])
