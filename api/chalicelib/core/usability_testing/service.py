@@ -270,19 +270,34 @@ def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, li
 
 def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
     db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
-    db_handler.set_select_columns(["uts.*"])
+    db_handler.set_select_columns([
+        "COUNT(*) OVER() AS count",
+        "uts.status",
+        "uts.timestamp",
+        "uts.comment",
+        "s.user_id",
+    ])
     db_handler.add_constraint("uts.comment IS NOT NULL")
     db_handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
     db_handler.add_constraint("uts.test_id = %(test_id)s", {'test_id': test_id})
+    db_handler.add_constraint("uts.task_id = %(task_id)s", {'task_id': task_id})
     db_handler.set_pagination(page, limit)
+
+    db_handler.add_join("JOIN sessions s ON s.session_id = uts.session_id")
 
     if query:
         db_handler.add_constraint("uts.comment ILIKE %(query)s", {'query': f"%{query}%"})
 
     responses = db_handler.fetchall()
 
+    count = responses[0]['count'] if responses else 0
+
+    for response in responses:
+        del response['count']
+
     return {
         "data": {
+            "total": count,
             "list": responses,
             "page": page,
             "limit": limit
