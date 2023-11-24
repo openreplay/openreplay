@@ -71,6 +71,16 @@ CREATE TABLE IF NOT EXISTS events.canvas_recordings
 );
 CREATE INDEX IF NOT EXISTS canvas_recordings_session_id_idx ON events.canvas_recordings (session_id);
 
+DROP SCHEMA IF EXISTS backup_v1_10_0 CASCADE;
+
+UPDATE metrics
+SET default_config='{
+  "col": 4,
+  "row": 2,
+  "position": 0
+}'::jsonb
+WHERE metric_type = 'pathAnalysis';
+
 COMMIT;
 
 \elif :is_next
