@@ -22,6 +22,23 @@ function createElement(
   return element
 }
 
+interface Test {
+  title: string
+  description: string
+  startingPath: string
+  status: string
+  reqMic: boolean
+  reqCamera: boolean
+  guidelines: string
+  conclusion: string
+  tasks: {
+    task_id: number
+    title: string
+    description: string
+    allow_typing: boolean
+  }[]
+}
+
 export default class UserTestManager {
   private readonly userRecorder: Recorder
   private readonly bg = createElement('div', 'bg', styles.bgStyle, undefined, '__or_ut_bg')
@@ -39,13 +56,78 @@ export default class UserTestManager {
   private taskSection: HTMLElement | null = null
   private endSection: HTMLElement | null = null
   private stopButton: HTMLElement | null = null
-  private initialX = 0
-  private initialY = 0
-  private currentX = 0
-  private currentY = 0
+  private test: Test | null = null
+  private testId: number | null = null
+  private token: string | null = null
+  private readonly durations = {
+    testStart: 0,
+    tasks: [] as unknown as { taskId: number; started: number }[],
+  }
 
-  constructor(app: App) {
+  constructor(private readonly app: App) {
     this.userRecorder = new Recorder(app)
+  }
+
+  signalTask = (taskId: number, status: 'begin' | 'done' | 'skip', answer = '') => {
+    if (!taskId) return console.error('OR: no task id')
+    const taskStart = this.durations.tasks.find((t) => t.taskId === taskId)
+    const timestamp = this.app.timestamp()
+    const duration = taskStart ? timestamp - taskStart.started : 0
+    const ingest = this.app.options.ingestPoint
+    return fetch(`${ingest}/v1/web/uxt/signals/task`, {
+      method: 'POST',
+      headers: {
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        Authorization: `Bearer ${this.token}`,
+      },
+      body: JSON.stringify({
+        testId: this.testId,
+        taskId,
+        status,
+        duration,
+        timestamp,
+        answer,
+      }),
+    })
+  }
+
+  signalTest = (status: 'begin' | 'done' | 'skip') => {
+    const ingest = this.app.options.ingestPoint
+    const timestamp = this.app.timestamp()
+    const duration = timestamp - this.durations.testStart
+
+    return fetch(`${ingest}/v1/web/uxt/signals/test`, {
+      method: 'POST',
+      headers: {
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        Authorization: `Bearer ${this.token}`,
+      },
+      body: JSON.stringify({
+        testId: this.testId,
+        status,
+        duration,
+        timestamp,
+      }),
+    })
+  }
+
+  getTest = (id: number, token: string) => {
+    this.testId = id
+    this.token = token
+    const ingest = this.app.options.ingestPoint
+    fetch(`${ingest}/v1/web/uxt/test/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then(({ test }: { test: Test }) => {
+        this.test = test
+        this.createGreeting(test.title, test.reqMic, test.reqCamera)
+      })
+      .catch((err) => {
+        console.log('OR: Error fetching test', err)
+      })
   }
 
   hideTaskSection = () => false
@@ -64,7 +146,9 @@ export default class UserTestManager {
       'div',
       'notice',
       styles.noticeStyle,
-      'Please note that your audio, video, and screen will be recorded for research purposes during this test.',
+      `Please note that your ${micRequired ? 'audio,' : ''} ${cameraRequired ? 'video,' : ''} ${
+        micRequired || cameraRequired ? 'and' : ''
+      } screen will be recorded for research purposes during this test.`,
     )
     const buttonElement = createElement(
       'div',
@@ -76,23 +160,13 @@ export default class UserTestManager {
     buttonElement.onclick = () => {
       this.container.innerHTML = ''
       void this.userRecorder.startRecording(30, Quality.Standard)
-      this.showWidget(
-        [
-          'Please be honest and open with your feedback. We want to hear your thoughts, both positive and negative, about your experience using Product Name.',
-          'Feel free to think out loud during the test. Sharing your thought process as you complete tasks will help us understand your perspective better.',
-        ],
-        [
-          {
-            title: 'Task 1',
-            description: 'This is a test description here',
-          },
-          {
-            title: 'Task 2',
-            description:
-              'This is a test description here there and not only there, more stuff to come',
-          },
-        ],
-      )
+      this.durations.testStart = this.app.timestamp()
+      void this.signalTest('begin')
+      this.showWidget(this.test?.description || '', this.test?.tasks || [])
+      this.container.removeChild(buttonElement)
+      this.container.removeChild(noticeElement)
+      this.container.removeChild(descriptionElement)
+      this.container.removeChild(titleElement)
     }
 
     this.container.append(titleElement, descriptionElement, noticeElement, buttonElement)
@@ -101,15 +175,17 @@ export default class UserTestManager {
   }
 
   showWidget(
-    description: string[],
+    description: string,
     tasks: {
       title: string
       description: string
+      task_id: number
     }[],
   ) {
     this.container.innerHTML = ''
     Object.assign(this.bg.style, {
-      position: 'absolute',
+      position: 'fixed',
+      zIndex: 99999999999999,
       right: '8px',
       left: 'unset',
       width: 'fit-content',
@@ -133,6 +209,7 @@ export default class UserTestManager {
     this.stopButton = stopButton
     stopButton.onclick = () => {
       this.userRecorder.discard()
+      void this.signalTest('skip')
       document.body.removeChild(this.bg)
     }
     this.hideTaskSection()
@@ -141,7 +218,7 @@ export default class UserTestManager {
   createTitleSection() {
     const title = createElement('div', 'title', styles.titleWidgetStyle)
     const leftIcon = createElement('div', 'left_icon', {}, '(icn)')
-    const titleText = createElement('div', 'title_text', {}, 'Test name goes here')
+    const titleText = createElement('div', 'title_text', {}, this.test?.title)
     const rightIcon = createElement(
       'div',
       'right_icon',
@@ -193,14 +270,14 @@ export default class UserTestManager {
     return title
   }
 
-  createDescriptionSection(description: string[]) {
+  createDescriptionSection(description: string) {
     const section = createElement('div', 'description_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_s_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
     const icon = createElement('div', 'icon', styles.symbolIcon, '-')
     const content = createElement('div', 'content', styles.contentStyle)
     const ul = document.createElement('ul')
-    ul.innerHTML = description.map((item) => `<li>${item}</li>`).join('')
+    ul.innerHTML = description
     const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
 
     titleContainer.append(title, icon)
@@ -219,6 +296,19 @@ export default class UserTestManager {
     titleContainer.onclick = toggleDescriptionVisibility
     button.onclick = () => {
       toggleDescriptionVisibility()
+      if (this.test) {
+        if (
+          this.durations.tasks.findIndex(
+            (t) => this.test && t.taskId === this.test.tasks[0].task_id,
+          ) === -1
+        ) {
+          this.durations.tasks.push({
+            taskId: this.test.tasks[0].task_id,
+            started: this.app.timestamp(),
+          })
+        }
+        void this.signalTask(this.test.tasks[0].task_id, 'begin')
+      }
       this.showTaskSection()
     }
 
@@ -229,6 +319,7 @@ export default class UserTestManager {
     tasks: {
       title: string
       description: string
+      task_id: number
     }[],
   ) {
     let currentTaskIndex = 0
@@ -304,9 +395,19 @@ export default class UserTestManager {
     closePanelButton.onclick = this.collapseWidget
 
     nextButton.onclick = () => {
+      void this.signalTask(tasks[currentTaskIndex].task_id, 'done')
       if (currentTaskIndex < tasks.length - 1) {
         currentTaskIndex++
         updateTaskContent()
+        if (
+          this.durations.tasks.findIndex((t) => t.taskId === tasks[currentTaskIndex].task_id) === -1
+        ) {
+          this.durations.tasks.push({
+            taskId: tasks[currentTaskIndex].task_id,
+            started: this.app.timestamp(),
+          })
+        }
+        void this.signalTask(tasks[currentTaskIndex].task_id, 'begin')
         const activeTaskEl = document.getElementById(`or_task_${currentTaskIndex}`)
         if (activeTaskEl) {
           Object.assign(activeTaskEl.style, styles.taskNumberActive)
@@ -334,6 +435,7 @@ export default class UserTestManager {
   }
 
   showEndSection() {
+    void this.signalTest('done')
     void this.userRecorder.saveToFile()
     const section = createElement('div', 'end_section_or', styles.endSectionStyle)
     const title = createElement(

@@ -1,6 +1,7 @@
 import { uxtestingService } from 'App/services';
 import { UxTest, UxTask, UxTSearchFilters, UxTListEntry } from "App/services/UxtestingService";
 import { makeAutoObservable } from 'mobx';
+import Session from 'Types/session';
 
 interface Stats {
   completed_all_tasks: number;
@@ -8,6 +9,14 @@ interface Stats {
   tasks_skipped: number;
   tests_attempts: number;
   tests_skipped: number;
+}
+
+interface TaskStats {
+  taskId: number;
+  title: string;
+  completed: number;
+  avgCompletionTime: number;
+  skipped: number;
 }
 
 export default class UxtestingStore {
@@ -19,7 +28,8 @@ export default class UxtestingStore {
   pageSize: number = 10;
   searchQuery: string = '';
   testStats: Stats | null = null;
-
+  testSessions: any[] = [];
+  tastStats: TaskStats[] = [];
   isLoading: boolean = false;
 
   constructor() {
@@ -56,7 +66,11 @@ export default class UxtestingStore {
       visibility: true,
       tasks: [],
     };
-    this.instance = new UxTestInst(initialData);
+   this.setInstance(new UxTestInst(initialData))
+  }
+
+  setInstance(instance: UxTestInst) {
+    this.instance = instance;
   }
 
   getList = async () => {
@@ -101,7 +115,7 @@ export default class UxtestingStore {
         if (results[0].status === 'fulfilled') {
           const test = results[0].value;
           if (test) {
-            this.instance = new UxTestInst(test);
+            this.setInstance(new UxTestInst(test))
           }
         }
         if (results[1].status === 'fulfilled') {
@@ -112,14 +126,15 @@ export default class UxtestingStore {
         }
         if (results[2].status === 'fulfilled') {
           const taskStats = results[2].value;
+          console.log(taskStats)
           if (taskStats) {
-            console.log(taskStats)
+            this.tastStats = taskStats
           }
         }
         if (results[3].status === 'fulfilled') {
-          const sessions = results[3].value;
+          const { sessions } = results[3].value;
           if (sessions) {
-            console.log(sessions)
+            this.testSessions = sessions.map((s: any) => new Session(({ ...s, metadata: {} })));
           }
         }
       })

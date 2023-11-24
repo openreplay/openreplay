@@ -83,7 +83,6 @@ export default class UxtestingService extends BaseService {
     return this.client
       .get(`${this.prefix}/${id}/sessions`, { page, limit })
       .then((r) => r.json())
-      .then((j) => j.data || []);
   }
 
   fetchTaskResponses(id: string, task: number, page: number, limit: number) {

@@ -28,7 +28,6 @@ import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
-import UserTestManager from './modules/userTesting/index.js'
 
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
@@ -97,7 +96,6 @@ function processOptions(obj: any): obj is Options {
 
 export default class API {
   public featureFlags: FeatureFlags
-  private readonly userTestManager: UserTestManager
 
   private readonly app: App | null = null
 
@@ -152,7 +150,6 @@ export default class API {
       Tabs(app)
       this.featureFlags = new FeatureFlags(app)
       ;(window as any).__OPENREPLAY__ = this
-      this.userTestManager = new UserTestManager(app)
 
       app.attachStartCallback(() => {
         if (options.flags?.onFlagsLoad) {
@@ -377,9 +374,5 @@ export default class API {
         this.app.send(msg)
       }
     }
-  }
-
-  createTestingWidget() {
-    this.userTestManager.createGreeting('Test name goes here,', false, false)
   }
 }

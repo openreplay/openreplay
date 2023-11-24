@@ -1,3 +1,4 @@
+import { durationFormatted } from "App/date";
 import { useModal } from 'Components/Modal';
 import { Step } from 'Components/UsabilityTesting/TestEdit';
 import React from 'react';
@@ -24,7 +25,8 @@ import {
   DownOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import { Loader, Pagination } from "UI";
+import SessionItem from "Shared/SessionItem";
+import { Loader, NoContent, Pagination } from "UI";
 import copy from 'copy-to-clipboard';
 
 const { Option } = Select;
@@ -219,7 +221,10 @@ function TestOverview() {
 
           <div className={'p-2 rounded bg-tealx-light flex items-center gap-1'}>
             <Typography.Text>Average completion time for all tasks:</Typography.Text>
-            <Typography.Text strong>1min49sec</Typography.Text>
+            <Typography.Text strong>{uxtestingStore.tastStats
+              ? durationFormatted(uxtestingStore.tastStats.reduce((stats, task) => stats + task.avgCompletionTime, 0)/uxtestingStore.tastStats.length)
+              : null
+            }</Typography.Text>
             <ClockCircleOutlined rev={undefined} />
           </div>
         </div>
@@ -237,12 +242,21 @@ function TestOverview() {
         </Button>
       </div>
 
-      <div className={'mt-2 rounded border p-4 bg-white flex gap-1 items-center'}>
+      <div className={'mt-2 rounded border p-4 bg-white flex gap-1 items-start flex-col'}>
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Sessions
         </Typography.Title>
-        <Typography.Text>in your selection</Typography.Text>
+        {/*<Typography.Text>in your selection</Typography.Text>*/}
         {/*<div className={'flex gap-1 link'}>clear selection</div>*/}
+        <div className={'flex flex-col w-full'}>
+        <Loader loading={uxtestingStore.isLoading}>
+          <NoContent show={uxtestingStore.testSessions.length == 0} title='No data'>
+            {uxtestingStore.testSessions.map(session => (
+              <SessionItem session={session} />
+            ))}
+          </NoContent>
+        </Loader>
+        </div>
       </div>
     </>
   );
