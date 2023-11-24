@@ -124,9 +124,10 @@ def get_ut_test(project_id: int, test_id: int):
         "ut.guidelines",
         "ut.visibility",
         "json_build_object('id', u.user_id, 'name', u.name) AS created_by",
-        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.comment is NOT NULL), 0) AS responses_count",
+        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.status in %(response_statuses)s AND uts.comment is NOT NULL), 0) AS responses_count",
         "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.duration IS NULL AND uts.task_id IS NULL), 0) AS live_count",
     ]
+    db_handler.add_param("response_statuses", ('done', 'skipped'))
     db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
     db_handler.add_join("LEFT JOIN users u ON ut.created_by = u.user_id")
     db_handler.add_constraint("ut.project_id = %(project_id)s", {'project_id': project_id})

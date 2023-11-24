@@ -30,6 +30,9 @@ class DatabaseRequestHandler:
     def add_join(self, join_clause):
         self.joins.append(join_clause)
 
+    def add_param(self, key, value):
+        self.params[key] = value
+
     def set_order_by(self, order_by):
         self.order_clause = order_by
 
