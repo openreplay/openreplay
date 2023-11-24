@@ -45,6 +45,8 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
     total = rows[0]["count"]
     for row in rows:
         del row["count"]
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
 
     return {
         "data": {
@@ -75,6 +77,9 @@ def create_ut_test(test_data: UTTestCreate):
     # Execute the insert query
     new_test = db_handler.insert(data)
     test_id = new_test['test_id']
+
+    new_test['created_at'] = TimeUTC.datetime_to_timestamp(new_test['created_at'])
+    new_test['updated_at'] = TimeUTC.datetime_to_timestamp(new_test['updated_at'])
 
     # Insert tasks
     if test_data.tasks:
@@ -196,6 +201,9 @@ def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdate):
         return {"status": "error", "message": "No update was made"}
 
     result['tasks'] = check_tasks_update(db_handler, test_id, tasks)
+
+    result['created_at'] = TimeUTC.datetime_to_timestamp(result['created_at'])
+    result['updated_at'] = TimeUTC.datetime_to_timestamp(result['updated_at'])
 
     return {
         "data": dict_to_camel_case(result)

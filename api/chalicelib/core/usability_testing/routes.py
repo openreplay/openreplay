@@ -65,7 +65,7 @@ async def delete_ut_test(projectId: int, test_id: int):
 
 
 @app.put("/{projectId}/usability-tests/{test_id}", tags=tags)
-async def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdate):
+async def update_ut_test(projectId: int, test_id: int, test_update: UTTestUpdate):
     """
     Update a specific UT test by its ID.
 
@@ -74,7 +74,7 @@ async def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdat
     - **test_update**: The updated data for the UT test.
     """
 
-    return service.update_ut_test(project_id, test_id, test_update)
+    return service.update_ut_test(projectId, test_id, test_update)
 
 
 @app.get("/{projectId}/usability-tests/{test_id}/sessions", tags=tags)
