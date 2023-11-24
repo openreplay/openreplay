@@ -367,7 +367,7 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) getUXTaskInfo(w http.ResponseWriter, r *http.Request) {
+func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -389,7 +389,7 @@ func (e *Router) getUXTaskInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type TaskInfoResponse struct {
-		Task *uxtesting.UXTestInfo `json:"task"`
+		Task *uxtesting.UXTestInfo `json:"test"`
 	}
 	ResponseWithJSON(w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
 }

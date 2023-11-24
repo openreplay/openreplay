@@ -48,6 +48,7 @@ func (u *uxTestingImpl) GetInfo(testID string) (*UXTestInfo, error) {
 			json_agg(
 					json_build_object(
 							'task_id', ut_tests_tasks.task_id,
+					    	'title', ut_tests_tasks.title,
 							'description', ut_tests_tasks.description,
 							'allow_typing', ut_tests_tasks.allow_typing
 						)
