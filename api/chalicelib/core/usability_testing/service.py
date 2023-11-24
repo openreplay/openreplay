@@ -43,6 +43,9 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
         return {"data": {"total": 0, "list": []}}
 
     total = rows[0]["count"]
+    for row in rows:
+        del row["count"]
+
     return {
         "data": {
             "list": list_to_camel_case(rows),
@@ -108,6 +111,7 @@ def get_ut_test(project_id: int, test_id: int):
         "ut.status",
         "ut.created_at",
         "ut.updated_at",
+        "ut.starting_path",
         "json_build_object('id', u.user_id, 'name', u.name) AS created_by"
     ]
     db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
