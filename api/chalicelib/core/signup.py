@@ -11,10 +11,10 @@ from chalicelib.utils.TimeUTC import TimeUTC
 logger = logging.getLogger(__name__)
 
 
-async def create_tenant(data: schemas.UserSignupSchema):
+def create_tenant(data: schemas.UserSignupSchema):
     logger.info(f"==== Signup started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
-    if await tenants.tenants_exists():
+    if tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
     email = data.email

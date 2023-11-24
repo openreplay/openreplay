@@ -78,14 +78,7 @@ def edit_tenant(tenant_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def tenants_exists_sync(use_pool=True):
+def tenants_exists(use_pool=True):
     with pg_client.PostgresClient(use_pool=use_pool) as cur:
-        cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
         return cur.fetchone()["exists"]
-
-
-async def tenants_exists(use_pool=True):
-    async with application.get().database as cnx:
-        async with cnx.transaction() as txn:
-            row = await txn.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
-            return await row.fetchone()["exists"]
