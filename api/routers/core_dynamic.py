@@ -33,7 +33,7 @@ def get_all_signup():
 if not tenants.tenants_exists(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
-    def signup_handler(data: schemas.UserSignupSchema):
+    def signup_handler(data: schemas.UserSignupSchema = Body(...)):
         content = signup.create_tenant(data)
         if "errors" in content:
             return content
@@ -46,7 +46,7 @@ if not tenants.tenants_exists(use_pool=False):
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(response: JSONResponse, data: schemas.UserLoginSchema):
+def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -115,7 +115,7 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/account', tags=["account"])
-def edit_account(data: schemas.EditAccountSchema,
+def edit_account(data: schemas.EditAccountSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
 
@@ -133,7 +133,7 @@ def add_slack_integration(data: schemas.AddCollaborationSchema,
 
 
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
-def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema,
+def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
         old = Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)
@@ -150,7 +150,7 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
 
 
 @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema,
+def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
                                background_tasks=background_tasks)
@@ -174,7 +174,7 @@ def process_invitation_link(token: str):
 
 
 @public_app.post('/password/reset', tags=["users"])
-def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema):
+def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
     user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
@@ -233,7 +233,7 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema,
+def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
                                     platform=context.project.platform)
@@ -241,7 +241,7 @@ def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema,
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema,
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
                                     platform=context.project.platform)
@@ -392,7 +392,7 @@ def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
 
 
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
-def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema,
+def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
 
@@ -429,7 +429,7 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
 
 @app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 def comment_assignment(projectId: int, sessionId: int, issueId: str,
-                       data: schemas.CommentAssignmentSchema,
+                       data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
                                         session_id=sessionId, assignment_id=issueId,
@@ -442,7 +442,7 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
 
 
 @app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
-def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema,
+def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=sessionId):
         return {"errors": ["Session not found"]}
@@ -467,7 +467,7 @@ def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentCo
 
 
 @app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
-def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema,
+def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                note_id=noteId, data=data)
@@ -500,7 +500,7 @@ def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
 
 
 @app.post('/{projectId}/notes', tags=["sessions", "notes"])
-def get_all_notes(projectId: int, data: schemas.SearchNoteSchema,
+def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
                                                       user_id=context.user_id, data=data)
@@ -510,14 +510,14 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema,
 
 
 @app.post('/{projectId}/click_maps/search', tags=["click maps"])
-def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch,
+def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
 def search_feature_flags(project_id: int,
-                         data: schemas.SearchFlagsSchema,
+                         data: schemas.SearchFlagsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.search_feature_flags(project_id=project_id, user_id=context.user_id, data=data)
 
@@ -528,13 +528,13 @@ def get_feature_flag(project_id: int, feature_flag_id: int):
 
 
 @app.post('/{project_id}/feature-flags', tags=["feature flags"])
-def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema,
+def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
 
 
 @app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"])
-def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema,
+def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
                                              user_id=context.user_id, feature_flag=data)
@@ -547,6 +547,6 @@ def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
 
 @app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"])
 def update_feature_flag_status(project_id: int, feature_flag_id: int,
-                               data: schemas.FeatureFlagStatus):
+                               data: schemas.FeatureFlagStatus = Body(...)):
     return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
                                                              is_active=data.is_active)}
