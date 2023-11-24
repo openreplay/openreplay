@@ -18,6 +18,15 @@ from routers.subs import insights, metrics, v1_api, health
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
+from orpy import application
+from psycopg.rows import dict_row
+
+
+class ORPYAsyncConnection(AsyncConnection):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, row_factory=dict_row, **kwargs)
+
 
 
 @asynccontextmanager
@@ -38,10 +47,27 @@ async def lifespan(app: FastAPI):
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
+
+    database = {
+        "host": config("pg_host", default="localhost"),
+        "dbname": config("pg_dbname", default="orpy"),
+        "user": config("pg_user", default="orpy"),
+        "password": config("pg_password", default="orpy"),
+        "port": config("pg_port", cast=int, default=5432),
+        "application_name": config("APP_NAME", default="PY"),
+    }
+
+    database = " ".join("{}={}".format(k, v) for k, v in database.items())
+    database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
+    application.set(Application(
+        database,
+    )
+
     # App listening
     yield
 
     # Shutdown
+    database.close()
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
     await pg_client.terminate()
