@@ -89,7 +89,7 @@ def get_project(projectKey: str, context: schemas.CurrentContext = Depends(OR_co
 
 
 @app_apikey.post('/v1/projects', tags=["api"])
-def create_project(data: schemas.CreateProjectSchema = Body(...),
+def create_project(data: schemas.CreateProjectSchema,
                    context: schemas.CurrentContext = Depends(OR_context)):
     record = projects.create(
         tenant_id=context.tenant_id,
