@@ -64,6 +64,12 @@ def create_ut_test(test_data: UTTestCreate):
         'description': test_data.description,
         'created_by': test_data.created_by,
         'status': test_data.status,
+        'conclusion_message': test_data.conclusion_message,
+        'starting_path': test_data.starting_path,
+        'require_mic': test_data.require_mic,
+        'require_camera': test_data.require_camera,
+        'guidelines': test_data.guidelines,
+        'visibility': test_data.visibility,
     }
 
     # Execute the insert query
@@ -248,12 +254,15 @@ def get_test_tasks(db_handler, test_id):
     return db_handler.fetchall()
 
 
-def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, limit: int, live: bool = False):
+def ut_tests_sessions(project_id: int, test_id: int, page: int, limit: int, user_id: int = None, live: bool = False):
     handler = DatabaseRequestHandler("ut_tests_signals AS uts")
     handler.set_select_columns(["uts.session_id"])
     handler.add_constraint("uts.test_id = %(test_id)s", {'test_id': test_id})
     handler.add_constraint("uts.task_id is NULL")
     handler.set_pagination(page, limit)
+    if user_id:
+        handler.add_constraint("s.user_id = %(user_id)s", {'user_id': user_id})
+    handler.add_join("JOIN sessions s ON s.session_id = uts.session_id")
 
     if live:
         handler.add_constraint("uts.duration IS NULL")
@@ -262,13 +271,13 @@ def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, li
 
     session_ids = handler.fetchall()
     session_ids = [session['session_id'] for session in session_ids]
-    sessions_list = sessions.search_sessions_by_ids(project_id=project_id, session_ids=session_ids, user_id=user_id)
+    sessions_list = sessions.search_sessions_by_ids(project_id=project_id, session_ids=session_ids)
     sessions_list['page'] = page
 
     return sessions_list
 
 
-def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
+def get_responses(test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
     db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
     db_handler.set_select_columns([
         "COUNT(*) OVER() AS count",

@@ -8,7 +8,7 @@ from chalicelib.utils import sql_helper as sh
 
 logger = logging.getLogger(__name__)
 
-SESSION_PROJECTION_COLS = """s.project_id,
+SESSION_PROJECTION_BASE_COLS = """s.project_id,
 s.session_id::text AS session_id,
 s.user_uuid,
 s.user_id,
@@ -28,7 +28,9 @@ s.user_anonymous_id,
 s.platform,
 s.issue_score,
 s.timezone,
-to_jsonb(s.issue_types) AS issue_types,
+to_jsonb(s.issue_types) AS issue_types """
+
+SESSION_PROJECTION_COLS = SESSION_PROJECTION_BASE_COLS+"""
 favorite_sessions.session_id NOTNULL            AS favorite,
 COALESCE((SELECT TRUE
  FROM public.user_viewed_sessions AS fs
@@ -1262,22 +1264,19 @@ def check_recording_status(project_id: int) -> dict:
     }
 
 
-def search_sessions_by_ids(project_id: int, session_ids: list, user_id: int, sort_by: str = 'session_id',
+def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
     if session_ids is None or len(session_ids) == 0:
         return {"total": 0, "sessions": []}
     with pg_client.PostgresClient() as cur:
         meta_keys = metadata.get(project_id=project_id)
-        params = {"project_id": project_id, "session_ids": tuple(session_ids), "userId": user_id}
+        params = {"project_id": project_id, "session_ids": tuple(session_ids)}
         order_direction = 'ASC' if ascending else 'DESC'
-        main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_COLS}
+        main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_BASE_COLS}
                                             {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                      FROM public.sessions AS s
-                                        LEFT JOIN ( SELECT user_id, session_id
-                                                    FROM public.user_favorite_sessions
-                                                    WHERE user_id = %(userId)s) AS favorite_sessions USING (session_id)
-                                     WHERE project_id=%(project_id)s 
-                                        AND session_id IN %(session_ids)s
+                                        WHERE project_id=%(project_id)s 
+                                            AND session_id IN %(session_ids)s
                                      ORDER BY {sort_by} {order_direction};""", params)
 
         cur.execute(main_query)

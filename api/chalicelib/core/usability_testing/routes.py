@@ -11,9 +11,9 @@ public_app, app, app_apikey = get_routers()
 tags = ["usability-tests"]
 
 
-@app.post("/{project_id}/usability-tests/search", tags=tags)
+@app.post("/{projectId}/usability-tests/search", tags=tags)
 async def search_ui_tests(
-        project_id: int,
+        projectId: int,
         search: UTTestSearch = Body(...,
                                     description="The search parameters including the query, page, limit, sort_by, "
                                                 "and sort_order.")
@@ -21,50 +21,50 @@ async def search_ui_tests(
     """
     Search for UT tests within a given project with pagination and optional sorting.
 
-    - **project_id**: The unique identifier of the project to search within.
+    - **projectId**: The unique identifier of the project to search within.
     - **search**: The search parameters including the query, page, limit, sort_by, and sort_order.
     """
 
-    return service.search_ui_tests(project_id, search)
+    return service.search_ui_tests(projectId, search)
 
 
-@app.post("/{project_id}/usability-tests", tags=tags)
-async def create_ut_test(project_id: int, test_data: UTTestCreate,
+@app.post("/{projectId}/usability-tests", tags=tags)
+async def create_ut_test(projectId: int, test_data: UTTestCreate,
                          context: schemas.CurrentContext = Depends(OR_context)):
     """
     Create a new UT test in the specified project.
 
-    - **project_id**: The unique identifier of the project.
+    - **projectId**: The unique identifier of the project.
     - **test_data**: The data for the new UT test.
     """
-    test_data.project_id = project_id
+    test_data.project_id = projectId
     test_data.created_by = context.user_id
     return service.create_ut_test(test_data)
 
 
-@app.get("/{project_id}/usability-tests/{test_id}", tags=tags)
-async def get_ut_test(project_id: int, test_id: int):
+@app.get("/{projectId}/usability-tests/{test_id}", tags=tags)
+async def get_ut_test(projectId: int, test_id: int):
     """
     Retrieve a specific UT test by its ID.
 
-    - **project_id**: The unique identifier of the project.
+    - **projectId**: The unique identifier of the project.
     - **test_id**: The unique identifier of the UT test.
     """
-    return service.get_ut_test(project_id, test_id)
+    return service.get_ut_test(projectId, test_id)
 
 
-@app.delete("/{project_id}/usability-tests/{test_id}", tags=tags)
-async def delete_ut_test(project_id: int, test_id: int):
+@app.delete("/{projectId}/usability-tests/{test_id}", tags=tags)
+async def delete_ut_test(projectId: int, test_id: int):
     """
     Delete a specific UT test by its ID.
 
-    - **project_id**: The unique identifier of the project.
+    - **projectId**: The unique identifier of the project.
     - **test_id**: The unique identifier of the UT test to be deleted.
     """
-    return service.delete_ut_test(project_id, test_id)
+    return service.delete_ut_test(projectId, test_id)
 
 
-@app.put("/{project_id}/usability-tests/{test_id}", tags=tags)
+@app.put("/{projectId}/usability-tests/{test_id}", tags=tags)
 async def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdate):
     """
     Update a specific UT test by its ID.
@@ -77,50 +77,47 @@ async def update_ut_test(project_id: int, test_id: int, test_update: UTTestUpdat
     return service.update_ut_test(project_id, test_id, test_update)
 
 
-@app.get("/{project_id}/usability-tests/{test_id}/sessions", tags=tags)
-async def get_sessions(project_id: int, test_id: int, page: int = 1, limit: int = 10, live: bool = False,
-                       context: schemas.CurrentContext = Depends(OR_context)):
+@app.get("/{projectId}/usability-tests/{test_id}/sessions", tags=tags)
+async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int = 10,
+                       live: bool = False,
+                       user_id: str = None):
     """
     Get sessions related to a specific UT test.
 
-    - **project_id**: The unique identifier of the project.
+    - **projectId**: The unique identifier of the project.
     - **test_id**: The unique identifier of the UT test.
     """
 
-    user_id = context.user_id
-
-    return service.ut_tests_sessions(project_id, user_id, test_id, page, limit, live)
+    return service.ut_tests_sessions(projectId, test_id, page, limit, user_id, live)
 
 
-@app.get("/{project_id}/usability-tests/{test_id}/responses/{task_id}", tags=tags)
-async def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
+@app.get("/{projectId}/usability-tests/{test_id}/responses/{task_id}", tags=tags)
+async def get_responses(test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
     """
     Get responses related to a specific UT test.
 
     - **project_id**: The unique identifier of the project.
     - **test_id**: The unique identifier of the UT test.
     """
-    return service.get_responses(project_id, test_id, task_id, page, limit, query)
+    return service.get_responses(test_id, task_id, page, limit, query)
 
 
-@app.get("/{project_id}/usability-tests/{test_id}/statistics", tags=tags)
-async def get_statistics(project_id: int, test_id: int):
+@app.get("/{projectId}/usability-tests/{test_id}/statistics", tags=tags)
+async def get_statistics(test_id: int):
     """
     Get statistics related to a specific UT test.
 
-    :param project_id:
     :param test_id:
     :return:
     """
     return service.get_statistics(test_id=test_id)
 
 
-@app.get("/{project_id}/usability-tests/{test_id}/task-statistics", tags=tags)
-async def get_task_statistics(project_id: int, test_id: int):
+@app.get("/{projectId}/usability-tests/{test_id}/task-statistics", tags=tags)
+async def get_task_statistics(test_id: int):
     """
     Get statistics related to a specific UT test.
 
-    :param project_id:
     :param test_id:
     :return:
     """

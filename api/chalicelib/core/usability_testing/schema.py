@@ -26,7 +26,7 @@ class UTTestBase(BaseModel):
     project_id: Optional[int] = Field(None, description="The ID of the associated project")
     created_by: Optional[int] = Field(None, description="The ID of the user who created the test")
     starting_path: Optional[str] = Field(None, description="The starting path for the usability test")
-    status: Optional[StatusEnum] = Field(StatusEnum.preview, description="The current status of the usability test")
+    status: Optional[StatusEnum] = Field(StatusEnum.in_progress, description="The current status of the usability test")
     require_mic: bool = Field(False, description="Indicates if a microphone is required")
     require_camera: bool = Field(False, description="Indicates if a camera is required")
     description: Optional[str] = Field(None, description="A detailed description of the usability test")
