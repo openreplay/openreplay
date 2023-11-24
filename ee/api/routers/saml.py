@@ -1,9 +1,10 @@
+import logging
+
 from fastapi import HTTPException, Request, Response, status
 
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 from routers.base import get_routers
-import logging
 
 logger = logging.getLogger(__name__)
 
