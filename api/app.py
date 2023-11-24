@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
     database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
-    orpy.application.set(orpy.Application(
+    orpy.set(orpy.Application(
         database,
     ))
 

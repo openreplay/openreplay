@@ -1,6 +1,4 @@
 from collections import namedtuple
-from contextvars import ContextVar
-from typing import Optional
 
 Application = namedtuple(
     "Application",
@@ -8,4 +6,15 @@ Application = namedtuple(
         "database",
     ),
 )
-application: ContextVar[Optional[Application]] = ContextVar("application", default=None)
+
+
+APPLICATION = None
+
+
+def set(application):
+    global APPLICATION
+    APPLICATION = application
+
+
+def get():
+    return APPLICATION
