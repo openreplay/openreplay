@@ -112,7 +112,9 @@ def get_ut_test(project_id: int, test_id: int):
         "ut.created_at",
         "ut.updated_at",
         "ut.starting_path",
-        "json_build_object('id', u.user_id, 'name', u.name) AS created_by"
+        "json_build_object('id', u.user_id, 'name', u.name) AS created_by",
+        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.comment is NOT NULL), 0) AS responses_count",
+        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.duration IS NULL AND uts.task_id IS NULL), 0) AS live_count",
     ]
     db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
     db_handler.add_join("LEFT JOIN users u ON ut.created_by = u.user_id")
@@ -241,13 +243,17 @@ def get_test_tasks(db_handler, test_id):
     return db_handler.fetchall()
 
 
-def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, limit: int):
+def ut_tests_sessions(project_id: int, user_id: int, test_id: int, page: int, limit: int, live: bool = False):
     handler = DatabaseRequestHandler("ut_tests_signals AS uts")
     handler.set_select_columns(["uts.session_id"])
     handler.add_constraint("uts.test_id = %(test_id)s", {'test_id': test_id})
-    handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
     handler.add_constraint("uts.task_id is NULL")
     handler.set_pagination(page, limit)
+
+    if live:
+        handler.add_constraint("uts.duration IS NULL")
+    else:
+        handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
 
     session_ids = handler.fetchall()
     session_ids = [session['session_id'] for session in session_ids]
@@ -261,11 +267,12 @@ def get_responses(project_id: int, test_id: int, task_id: int, page: int = 1, li
     db_handler = DatabaseRequestHandler("ut_tests_signals AS uts")
     db_handler.set_select_columns(["uts.*"])
     db_handler.add_constraint("uts.comment IS NOT NULL")
-    db_handler.add_constraint("uts.type = %(type)s", {'type': 'task'})
     db_handler.add_constraint("uts.status IN %(status_list)s", {'status_list': ('done', 'skipped')})
-    # db_handler.add_constraint("project_id = %(project_id)s", {'project_id': project_id})
-    db_handler.add_constraint("uts.type_id = %(test_id)s", {'test_id': task_id})
+    db_handler.add_constraint("uts.test_id = %(test_id)s", {'test_id': test_id})
     db_handler.set_pagination(page, limit)
+
+    if query:
+        db_handler.add_constraint("uts.comment ILIKE %(query)s", {'query': f"%{query}%"})
 
     responses = db_handler.fetchall()
 
