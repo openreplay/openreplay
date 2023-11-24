@@ -84,6 +84,7 @@ const (
 	MsgResourceTiming              = 116
 	MsgTabChange                   = 117
 	MsgTabData                     = 118
+	MsgCanvasNode                  = 119
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2243,6 +2244,29 @@ func (msg *TabData) Decode() Message {
 
 func (msg *TabData) TypeID() int {
 	return 118
+}
+
+type CanvasNode struct {
+	message
+	NodeId    string
+	Timestamp uint64
+}
+
+func (msg *CanvasNode) Encode() []byte {
+	buf := make([]byte, 21+len(msg.NodeId))
+	buf[0] = 119
+	p := 1
+	p = WriteString(msg.NodeId, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *CanvasNode) Decode() Message {
+	return msg
+}
+
+func (msg *CanvasNode) TypeID() int {
+	return 119
 }
 
 type IssueEvent struct {

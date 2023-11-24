@@ -1,0 +1,10 @@
+ignore:
+  - "**/*/*.gen.ts"
+  - "**/*/coverage.xml"
+  - "**/*/coverage-final.json"
+  - "**/*/coverage/**"
+  - "**/*/node_modules/**"
+  - "**/*/dist/**"
+  - "**/*/build/**"
+  - "**/*/.test.*"
+  - "**/*/version.ts"

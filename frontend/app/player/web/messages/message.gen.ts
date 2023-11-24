@@ -61,6 +61,7 @@ import type {
   RawResourceTiming,
   RawTabChange,
   RawTabData,
+  RawCanvasNode,
   RawIosEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
@@ -189,6 +190,8 @@ export type ResourceTiming = RawResourceTiming & Timed
 export type TabChange = RawTabChange & Timed
 
 export type TabData = RawTabData & Timed
+
+export type CanvasNode = RawCanvasNode & Timed
 
 export type IosEvent = RawIosEvent & Timed
 

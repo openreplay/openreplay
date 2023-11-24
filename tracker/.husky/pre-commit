@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-if git diff --cached --name-only | grep --quiet '^tracker/tracker/'
+if git diff --cached --name-only | grep -v '\.gen\.ts$' | grep --quiet '^tracker/tracker/'
 then
   echo "tracker"
   pwd
@@ -12,7 +12,7 @@ then
   cd ../../
 fi
 
-if git diff --cached --name-only | grep --quiet '^tracker/tracker-assist/'
+if git diff --cached --name-only | grep -v '\.gen\.ts$' | grep --quiet '^tracker/tracker-assist/'
 then
   echo "tracker-assist"
   cd tracker/tracker-assist

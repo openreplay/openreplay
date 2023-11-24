@@ -32,7 +32,7 @@ export default class Call {
   private videoStreams: Record<string, MediaStreamTrack> = {};
 
   constructor(
-    private store: Store<State>,
+    private store: Store<State & { tabs: Set<string> }>,
     private socket: Socket,
     private config: RTCIceServer[] | null,
     private peerID: string,
@@ -253,7 +253,7 @@ export default class Call {
       this.getAssistVersion() === 1
         ? this.peerID
         : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
-    console.log(peerId, this.getAssistVersion());
+
     void this._peerConnection(peerId);
     this.emitData('_agent_name', appStore.getState().getIn(['user', 'account', 'name']));
   }

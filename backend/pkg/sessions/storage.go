@@ -48,8 +48,8 @@ func (s *storageImpl) Add(sess *Session) error {
 			NULLIF($10, ''), 
 			$11, $12,
 			$13,
-			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
-			NULLIF(LEFT($19, 8000), ''), NULLIF($20, ''), NULLIF($21, ''), $22
+			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, 0), NULLIF($17, 0::bigint),
+			NULLIF(LEFT($18, 8000), ''), NULLIF($19, ''), NULLIF($20, ''), $21
 		)`,
 		sess.SessionID, sess.ProjectID, sess.Timestamp,
 		sess.UserUUID, sess.UserDevice, sess.UserDeviceType, sess.UserCountry,
@@ -57,7 +57,7 @@ func (s *storageImpl) Add(sess *Session) error {
 		sess.RevID,
 		sess.TrackerVersion, sess.Timestamp/1000,
 		sess.Platform,
-		sess.UserAgent, sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
+		sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
 		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone,
 	)
 }
@@ -67,7 +67,7 @@ func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
 		INSERT INTO unstarted_sessions (
 			project_id, 
 			tracker_version, do_not_track, 
-			platform, user_agent, 
+			platform, 
 			user_os, user_os_version, 
 			user_browser, user_browser_version,
 			user_device, user_device_type, 
@@ -75,15 +75,15 @@ func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
 		) VALUES (
 			(SELECT project_id FROM projects WHERE project_key = $1), 
 			$2, $3,
-			$4, $5, 
-			$6, $7, 
-			$8, $9,
-			$10, $11,
-			$12, NULLIF($13, ''), NULLIF($14, '')
+			$4, 
+			$5, $6, 
+			$7, $8,
+			$9, $10,
+			$11, NULLIF($12, ''), NULLIF($13, '')
 		)`,
 		sess.ProjectKey,
 		sess.TrackerVersion, sess.DoNotTrack,
-		sess.Platform, sess.UserAgent,
+		sess.Platform,
 		sess.UserOS, sess.UserOSVersion,
 		sess.UserBrowser, sess.UserBrowserVersion,
 		sess.UserDevice, sess.UserDeviceType,
