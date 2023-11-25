@@ -82,7 +82,8 @@ jobs:
       if: steps.vcluster_exists.outputs.failed == 'true'
       id: lb-ip
       run: |
-        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        # LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        LB_IP=$(kubectl get ing global-ingress -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
         echo "::set-output name=ip::$LB_IP"
 
     - name: Create vCluster
@@ -112,7 +113,7 @@ jobs:
               "Action": "CREATE",
               "ResourceRecordSet": {
                 "Name": "$DOMAIN_NAME_1",
-                "Type": "A",
+                "Type": "CNAME",
                 "TTL": 300,
                 "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
               }
@@ -121,7 +122,7 @@ jobs:
               "Action": "CREATE",
               "ResourceRecordSet": {
                 "Name": "$DOMAIN_NAME_2",
-                "Type": "A",
+                "Type": "CNAME",
                 "TTL": 300,
                 "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
               }
