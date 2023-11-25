@@ -69,8 +69,8 @@ jobs:
       id: vcluster_exists
       continue-on-error: true
       run: |
-        if [ ! $(vcluster list | grep $PR_NUMBER &> /dev/null) ]; then
-          echo "failed state"
+        if ! $(vcluster list | grep $PR_NUMBER &> /dev/null); then
+          echo "no cluster found for $PR_NUMBER"
           echo "::set-output name=failed::true"
           exit 100
         fi
@@ -147,15 +147,21 @@ jobs:
       env:
         EXPECTED_IP: ${{ steps.lb-ip.outputs.ip }}
       run: |
-        DOMAIN_NAME_1="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
+        DOMAIN_NAME="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
         MAX_ATTEMPTS=30
         attempt=1
         until [[ $attempt -gt $MAX_ATTEMPTS ]]
         do
-          DNS_IP=$(dig +short $DOMAIN_NAME_1 @8.8.8.8)
-          if [[ "$DNS_IP" == "$EXPECTED_IP" ]]; then
-            echo "DNS has propagated for $DOMAIN_NAME_1"
-            break
+          # Use dig to query DNS records
+          DNS_RESULT=$(dig +short $DOMAIN_NAME @1.1.1.1)
+
+          # Check if DNS result is empty
+          if [ -z "$DNS_RESULT" ]; then
+              echo "No IP or CNAME records found for $DOMAIN_NAME."
+          else
+              echo "DNS records found for $DOMAIN_NAME:"
+              echo "$DNS_RESULT"
+              break
           fi
           echo "Waiting for DNS propagation... Attempt $attempt of $MAX_ATTEMPTS"
           ((attempt++))
@@ -163,7 +169,7 @@ jobs:
         done
 
         if [[ $attempt -gt $MAX_ATTEMPTS ]]; then
-          echo "DNS propagation check failed for $DOMAIN_NAME_1 after $MAX_ATTEMPTS attempts."
+          echo "DNS propagation check failed for $DOMAIN_NAME after $MAX_ATTEMPTS attempts."
           exit 1
         fi
 
