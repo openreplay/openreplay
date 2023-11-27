@@ -14,9 +14,14 @@ function TestEdit() {
   const [isConclusionEditing, setIsConclusionEditing] = React.useState(false);
   const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
   // @ts-ignore
-  const { siteId } = useParams();
+  const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
 
+  React.useEffect(() => {
+    if (testId) {
+      uxtestingStore.getTestData(testId);
+    }
+  }, [])
   if (!uxtestingStore.instance) {
     return <div>Loading...</div>;
   }
@@ -281,7 +286,7 @@ const SidePanel = observer(() => {
       <Button
         type={'primary'}
         onClick={() => {
-          uxtestingStore.createNewTest()
+          uxtestingStore.createNewTest(false)
         }}
       >
         Publish Test

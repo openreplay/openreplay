@@ -68,7 +68,7 @@ export default class UserTestManager {
     this.userRecorder = new Recorder(app)
   }
 
-  signalTask = (taskId: number, status: 'begin' | 'done' | 'skip', answer = '') => {
+  signalTask = (taskId: number, status: 'begin' | 'done' | 'skipped', answer?: string) => {
     if (!taskId) return console.error('OR: no task id')
     const taskStart = this.durations.tasks.find((t) => t.taskId === taskId)
     const timestamp = this.app.timestamp()
@@ -91,7 +91,7 @@ export default class UserTestManager {
     })
   }
 
-  signalTest = (status: 'begin' | 'done' | 'skip') => {
+  signalTest = (status: 'begin' | 'done' | 'skipped') => {
     const ingest = this.app.options.ingestPoint
     const timestamp = this.app.timestamp()
     const duration = timestamp - this.durations.testStart
@@ -180,6 +180,7 @@ export default class UserTestManager {
       title: string
       description: string
       task_id: number
+      allow_typing: boolean
     }[],
   ) {
     this.container.innerHTML = ''
@@ -209,7 +210,7 @@ export default class UserTestManager {
     this.stopButton = stopButton
     stopButton.onclick = () => {
       this.userRecorder.discard()
-      void this.signalTest('skip')
+      void this.signalTest('skipped')
       document.body.removeChild(this.bg)
     }
     this.hideTaskSection()
@@ -320,6 +321,7 @@ export default class UserTestManager {
       title: string
       description: string
       task_id: number
+      allow_typing: boolean
     }[],
   ) {
     let currentTaskIndex = 0
@@ -335,6 +337,13 @@ export default class UserTestManager {
     const taskText = createElement('div', 'taskText', styles.taskTextStyle)
     const taskDescription = createElement('div', 'taskDescription', styles.taskDescriptionStyle)
     const taskButtons = createElement('div', 'taskButtons', styles.taskButtonsRow)
+    const inputTitle = createElement('div', 'taskText', styles.taskTextStyle)
+    inputTitle.textContent = 'Your answer'
+    const inputArea = createElement('textarea', 'taskDescription', {
+      resize: 'vertical',
+    }) as HTMLTextAreaElement
+    const inputContainer = createElement('div', 'inputArea', styles.taskDescriptionCard)
+    inputContainer.append(inputTitle, inputArea)
     const closePanelButton = createElement(
       'div',
       'closePanelButton',
@@ -351,13 +360,18 @@ export default class UserTestManager {
     titleContainer.append(title, icon)
     taskCard.append(taskText, taskDescription)
     taskButtons.append(closePanelButton, nextButton)
-    content.append(pagination, taskCard, taskButtons)
+    content.append(pagination, taskCard, inputContainer, taskButtons)
     section.append(titleContainer, content)
 
     const updateTaskContent = () => {
       const task = tasks[currentTaskIndex]
       taskText.textContent = task.title
       taskDescription.textContent = task.description
+      if (task.allow_typing) {
+        inputContainer.style.display = 'flex'
+      } else {
+        inputContainer.style.display = 'none'
+      }
     }
 
     pagination.appendChild(leftArrow)
@@ -395,7 +409,9 @@ export default class UserTestManager {
     closePanelButton.onclick = this.collapseWidget
 
     nextButton.onclick = () => {
-      void this.signalTask(tasks[currentTaskIndex].task_id, 'done')
+      const textAnswer = tasks[currentTaskIndex].allow_typing ? inputArea.value : undefined
+      inputArea.value = ''
+      void this.signalTask(tasks[currentTaskIndex].task_id, 'done', textAnswer)
       if (currentTaskIndex < tasks.length - 1) {
         currentTaskIndex++
         updateTaskContent()

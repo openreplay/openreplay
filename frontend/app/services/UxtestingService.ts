@@ -16,6 +16,7 @@ export interface UxTask {
   title: string;
   description: Nullable<string>;
   allow_typing: boolean;
+  taskId?: number;
 }
 
 export interface UxTest {
@@ -28,10 +29,13 @@ export interface UxTest {
   conclusion_message: Nullable<string>;
   visibility: boolean;
   tasks: UxTask[];
+  status: string;
 }
+
 
 export interface UxTListEntry {
  createdAt: string;
+ status: 'preview' | 'in-progress' | 'paused' | 'completed';
   createdBy: {
     userId: number;
     name: string;
@@ -59,11 +63,9 @@ export default class UxtestingService extends BaseService {
     return j.data || [];
   }
 
-  deleteTest(id: number) {
-    return this.client
-      .delete(`${this.prefix}/${id}`)
-      .then((r) => r.json())
-      .then((j) => j.data || []);
+  async deleteTest(id: number) {
+    const r = await this.client.delete(`${this.prefix}/${id}`);
+    return await r.json();
   }
 
   updateTest(id: number, test: UxTest) {
@@ -79,17 +81,19 @@ export default class UxtestingService extends BaseService {
     return j.data || [];
   }
 
-  fetchTestSessions(id: string, page: number, limit: number) {
-    return this.client
-      .get(`${this.prefix}/${id}/sessions`, { page, limit })
-      .then((r) => r.json())
+  async fetchTestSessions(id: string, page: number, limit: number) {
+    const r = await this.client.get(`${this.prefix}/${id}/sessions`, { page, limit });
+    return await r.json();
   }
 
-  fetchTaskResponses(id: string, task: number, page: number, limit: number) {
-    return this.client
-      .get(`${this.prefix}/${id}/responses/${task}`, { page, limit })
-      .then((r) => r.json())
-      .then((j) => j.data || []);
+  async fetchTaskResponses(id: number, task: number, page: number, limit: number) {
+    const r = await this.client.get(`${this.prefix}/${id}/responses/${task}`, {
+      page,
+      limit,
+      // query: 'comment',
+    });
+    const j = await r.json();
+    return j.data || [];
   }
 
   async fetchTestStats(id: string) {

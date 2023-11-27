@@ -34,7 +34,7 @@ function TestsTable() {
 
   const onClose = (confirmed: boolean) => {
     if (confirmed) {
-      uxtestingStore.initNewTest(newTestTitle, newTestDescription);
+      uxtestingStore.initNewTest(newTestTitle, newTestDescription, false);
       setNewTestDescription('');
       setNewTestTitle('');
       redirect('new');
@@ -152,6 +152,13 @@ function TestsTable() {
   );
 }
 
+const statusMap = {
+  preview: "Preview",
+  'in-progress': "In progress",
+  paused: "Paused",
+  completed: "Completed",
+}
+
 function Row({ test }: { test: UxTListEntry }) {
   const link = usabilityTestingView(test.testId.toString())
   return (
@@ -172,7 +179,7 @@ function Row({ test }: { test: UxTListEntry }) {
       <Cell size={1}>{test.createdBy.name}</Cell>
       <Cell size={2}>{checkForRecent(getDateFromMill(+new Date(test.updatedAt))!, 'LLL dd, yyyy, hh:mm a')}</Cell>
       <Cell size={1}>
-        <Tag color="orange">Kinda progress</Tag>
+        <Tag color={test.status === 'in-progress' ? "orange" : ''}>{statusMap[test.status]}</Tag>
       </Cell>
     </div>
   );

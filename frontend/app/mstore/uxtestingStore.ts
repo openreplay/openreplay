@@ -1,5 +1,5 @@
 import { uxtestingService } from 'App/services';
-import { UxTest, UxTask, UxTSearchFilters, UxTListEntry } from "App/services/UxtestingService";
+import { UxTask, UxTSearchFilters, UxTListEntry, UxTest } from 'App/services/UxtestingService';
 import { makeAutoObservable } from 'mobx';
 import Session from 'Types/session';
 
@@ -19,6 +19,14 @@ interface TaskStats {
   skipped: number;
 }
 
+interface Response {
+  user_id: string | null;
+  status: string;
+  comment: string;
+  timestamp: number;
+  duration: number;
+}
+
 export default class UxtestingStore {
   client = uxtestingService;
   tests: UxTListEntry[] = [];
@@ -28,9 +36,10 @@ export default class UxtestingStore {
   pageSize: number = 10;
   searchQuery: string = '';
   testStats: Stats | null = null;
-  testSessions: any[] = [];
-  tastStats: TaskStats[] = [];
+  testSessions: Session[] = [];
+  taskStats: TaskStats[] = [];
   isLoading: boolean = false;
+  responses: Record<number, { list: Response[]; total: number }> = {};
 
   constructor() {
     makeAutoObservable(this);
@@ -52,11 +61,44 @@ export default class UxtestingStore {
     this.page = page;
   }
 
+  updateTestStatus = async (status: string) => {
+    if (!this.instance) return;
+    this.setLoading(true);
+    try {
+      const test: UxTest = {
+        ...this.instance!,
+        starting_path: this.instance!.startingPath!,
+        status,
+      };
+      console.log(test);
+      this.updateInstStatus(status);
+      await this.client.updateTest(this.instance.testId!, test);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  };
+
+  updateInstStatus = (status: string) => {
+    if (!this.instance) return;
+    this.instance.setProperty('status', status);
+  };
+
+  fetchResponses = async (testId: number, taskId: number, page) => {
+    this.setLoading(true);
+    try {
+      this.responses[taskId] = await this.client.fetchTaskResponses(testId, taskId, page, 10);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  };
+
   initNewTest(title: string, description: string) {
     const initialData = {
       title: title,
-      projectId: 0,
-      created_by: 0,
       starting_path: '',
       require_mic: false,
       require_camera: false,
@@ -66,8 +108,12 @@ export default class UxtestingStore {
       visibility: true,
       tasks: [],
     };
-   this.setInstance(new UxTestInst(initialData))
+    this.setInstance(new UxTestInst(initialData));
   }
+
+  deleteTest = async (testId: number) => {
+    return this.client.deleteTest(testId);
+  };
 
   setInstance(instance: UxTestInst) {
     this.instance = instance;
@@ -89,61 +135,74 @@ export default class UxtestingStore {
     } catch (e) {
       console.error(e);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
   };
 
-  createNewTest = async () => {
+  createNewTest = async (isPreview: boolean) => {
     this.setLoading(true);
     try {
-      await this.client.createTest(this.instance!);
+      // @ts-ignore
+      await this.client.createTest({ ...this.instance, visibility: !isPreview });
     } catch (e) {
       console.error(e);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
-  }
+  };
+
+  getTestData = async (testId: string) => {
+    this.setLoading(true);
+    try {
+      const test = await this.client.fetchTest(testId);
+      this.setInstance(new UxTestInst(test));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  };
 
   getTest = async (testId: string) => {
     this.setLoading(true);
     try {
       const testPr = this.client.fetchTest(testId);
-      const statsPr = this.client.fetchTestStats(testId)
-      const taskStatsPr = this.client.fetchTestTaskStats(testId)
-      const sessionsPr = this.client.fetchTestSessions(testId, 1, 10)
+      const statsPr = this.client.fetchTestStats(testId);
+      const taskStatsPr = this.client.fetchTestTaskStats(testId);
+      const sessionsPr = this.client.fetchTestSessions(testId, this.page, 10);
       Promise.allSettled([testPr, statsPr, taskStatsPr, sessionsPr]).then((results) => {
         if (results[0].status === 'fulfilled') {
           const test = results[0].value;
           if (test) {
-            this.setInstance(new UxTestInst(test))
+            this.setInstance(new UxTestInst(test));
           }
         }
         if (results[1].status === 'fulfilled') {
           const stats = results[1].value;
           if (stats) {
-            this.testStats = stats
+            this.testStats = stats;
           }
         }
         if (results[2].status === 'fulfilled') {
           const taskStats = results[2].value;
-          console.log(taskStats)
+          console.log(taskStats);
           if (taskStats) {
-            this.tastStats = taskStats
+            this.taskStats = taskStats;
           }
         }
         if (results[3].status === 'fulfilled') {
-          const { sessions } = results[3].value;
+          const { total, page, sessions } = results[3].value;
           if (sessions) {
-            this.testSessions = sessions.map((s: any) => new Session(({ ...s, metadata: {} })));
+            this.testSessions = sessions.map((s: any) => new Session({ ...s, metadata: {} }));
           }
         }
-      })
+      });
     } catch (e) {
       console.error(e);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
-  }
+  };
 }
 
 class UxTestInst {
@@ -156,8 +215,11 @@ class UxTestInst {
   conclusion_message: string = '';
   visibility: boolean = false;
   tasks: UxTask[] = [];
-  status?: string
-  id?: number
+  status?: string;
+  startingPath?: string;
+  testId?: number;
+  responsesCount?: number;
+  liveCount?: number;
 
   constructor(initialData: Partial<UxTestInst> = {}) {
     makeAutoObservable(this);
