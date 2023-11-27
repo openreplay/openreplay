@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/uxtesting"
@@ -224,6 +226,9 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		CompressionThreshold: e.getCompressionThreshold(),
 		StartTimestamp:       int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:                tokenData.Delay,
+		CanvasEnabled:        true, // keep it in project settings
+		CanvasImageQuality:   "medium",
+		CanvasFrameRate:      2,
 	}, startTime, r.URL.Path, bodySize)
 }
 
@@ -488,3 +493,71 @@ func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 	}
 	ResponseWithJSON(w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
 }
+
+type ScreenshotMessage struct {
+	Name string
+	Data []byte
+}
+
+func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil { // Should accept expired token?
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		return
+	}
+
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
+	defer r.Body.Close()
+
+	// Parse the multipart form
+	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Iterate over uploaded files
+	files := r.MultipartForm.File["upload[]"]
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Read the file content
+		fileBytes, err := ioutil.ReadAll(file)
+		if err != nil {
+			file.Close()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		file.Close()
+
+		fileName := util.SafeString(fileHeader.Filename)
+		log.Printf("fileName: %s, fileSize: %d", fileName, len(fileBytes))
+
+		// Create a message to send to Kafka
+		msg := ScreenshotMessage{
+			Name: fileName,
+			Data: fileBytes,
+		}
+		data, err := json.Marshal(&msg)
+		if err != nil {
+			log.Printf("can't marshal screenshot message, err: %s", err)
+			continue
+		}
+
+		// Send the message to queue
+		if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+			log.Printf("failed to produce canvas image message: %v", err)
+		}
+	}
+}
+
