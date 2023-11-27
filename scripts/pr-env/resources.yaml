@@ -6,7 +6,8 @@ minio:
 postgresql:
   persistence: *persistence
 redis:
-  persistence: *persistence
+  master:
+    persistence: *persistence
 kafka:
   persistence: *persistence
   zookeeper:
