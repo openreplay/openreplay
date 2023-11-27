@@ -38,7 +38,7 @@ async def get_all_signup():
 if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
-    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+    async def signup_handler(data: schemas.UserSignupSchema):
         content = await signup.create_tenant(data)
         if "errors" in content:
             return content
@@ -51,7 +51,7 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
+def login_user(response: JSONResponse, data: schemas.UserLoginSchema):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -182,7 +182,7 @@ async def process_invitation_link(token: str, request: Request):
 
 
 @public_app.post('/password/reset', tags=["users"])
-def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
+async def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
     user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
@@ -191,7 +191,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"],
+    return await users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"],
                                          tenant_id=user["tenantId"])
 
 
@@ -203,7 +203,7 @@ def edit_member(memberId: int, data: schemas.EditMemberSchema,
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
-def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
+async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
                                 context: schemas.CurrentContext = Depends(OR_context)):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
@@ -216,13 +216,13 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     if len(key) == 0:
         return {"errors": ["please provide a key for search"]}
     return {
-        "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
+        "data": await sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
 
 
 @app.get('/projects', tags=['projects'])
-def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True,
+async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": await projects.get_projects(tenant_id=context.tenant_id, gdpr=True,
                                           recorded=True, user_id=context.user_id)}
 
 
