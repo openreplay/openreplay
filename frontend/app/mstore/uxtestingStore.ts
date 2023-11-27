@@ -131,6 +131,10 @@ export default class UxtestingStore {
     this.instance = instance;
   }
 
+  setQuery(query: string) {
+    this.searchQuery = query;
+  }
+
   getList = async () => {
     this.setLoading(true);
     try {

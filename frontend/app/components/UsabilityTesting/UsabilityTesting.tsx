@@ -11,11 +11,13 @@ import { checkForRecent, getDateFromMill } from 'App/date';
 import { UnorderedListOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
 import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
-import { DateTime } from 'luxon';
+import { debounce } from 'App/utils';
 
 const { Search } = Input;
 
 const PER_PAGE = 10;
+
+let debouncedSearch: any = () => null
 
 function TestsTable() {
   const [newTestTitle, setNewTestTitle] = React.useState('');
@@ -23,9 +25,16 @@ function TestsTable() {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const { uxtestingStore } = useStore();
 
+  const onSearch = (value: string) => {
+    uxtestingStore.setQuery(value);
+    debouncedSearch()
+  }
+
   React.useEffect(() => {
     uxtestingStore.getList();
+    debouncedSearch = debounce(uxtestingStore.getList, 500)
   }, []);
+
   const onPageChange = (page: number) => {
     uxtestingStore.setPage(page);
     uxtestingStore.getList();
@@ -97,7 +106,8 @@ function TestsTable() {
             placeholder="Filter by title"
             allowClear
             classNames={{ input: '!border-0 focus:!border-0' }}
-            onSearch={() => null}
+            onChange={(v) => onSearch(v.target.value)}
+            onSearch={onSearch}
             style={{ width: 200 }}
           />
         </div>

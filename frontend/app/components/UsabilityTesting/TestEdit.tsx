@@ -1,15 +1,44 @@
-import { Button, Input, Typography, Switch, Space } from 'antd';
-import { UxTask } from 'App/services/UxtestingService';
+import {
+  Button,
+  Input,
+  Typography,
+  Dropdown,
+  Modal,
+} from 'antd';
 import React from 'react';
-import { withSiteId, usabilityTesting, usabilityTestingView, usabilityTestingEdit } from "App/routes";
+import {
+  withSiteId,
+  usabilityTesting,
+  usabilityTestingView,
+  usabilityTestingEdit,
+} from 'App/routes';
 import { useParams, useHistory } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { EditOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { confirm } from 'UI';
+import StepsModal from './StepsModal';
+import SidePanel from './SidePanel';
+
+const menuItems = [
+  {
+    key: '1',
+    label: 'Change title/description',
+    icon: <EditOutlined rev={undefined} />,
+  },
+  {
+    key: '2',
+    label: 'Delete',
+    icon: <DeleteOutlined rev={undefined} />,
+  },
+];
 
 function TestEdit() {
+  const [newTestTitle, setNewTestTitle] = React.useState('');
+  const [newTestDescription, setNewTestDescription] = React.useState('');
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
   const { uxtestingStore } = useStore();
   const [isConclusionEditing, setIsConclusionEditing] = React.useState(false);
   const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
@@ -22,7 +51,7 @@ function TestEdit() {
     if (testId && testId !== 'new') {
       uxtestingStore.getTestData(testId);
     }
-  }, [])
+  }, []);
   if (!uxtestingStore.instance) {
     return <div>Loading...</div>;
   }
@@ -31,19 +60,49 @@ function TestEdit() {
     if (testId && testId !== 'new') {
       uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
         history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
-      })
+      });
     } else {
       uxtestingStore.createNewTest(isPreview).then((test) => {
+        console.log(test);
         if (isPreview) {
           window.open(`${test.startingPath}?oruxt=${test.testId}`, '_blank', 'noopener,noreferrer');
           history.push(withSiteId(usabilityTestingEdit(test.testId), siteId));
-        }
-        else {
+        } else {
           history.push(withSiteId(usabilityTestingView(test.testId), siteId));
         }
-      })
+      });
     }
-  }
+  };
+
+  const onClose = (confirmed: boolean) => {
+    if (confirmed) {
+      uxtestingStore.instance!.setProperty('title', newTestTitle);
+      uxtestingStore.instance!.setProperty('description', newTestDescription);
+    }
+    setNewTestDescription('');
+    setNewTestTitle('');
+    setIsModalVisible(false);
+  };
+
+  const onMenuClick = async ({ key }: { key: string }) => {
+    if (key === '1') {
+      setNewTestTitle(uxtestingStore.instance!.title);
+      setNewTestDescription(uxtestingStore.instance!.description);
+      setIsModalVisible(true);
+    }
+    if (key === '2') {
+      if (
+        await confirm({
+          confirmation:
+            'Are you sure you want to delete this usability test? This action cannot be undone.',
+        })
+      ) {
+        uxtestingStore.deleteTest(testId).then(() => {
+          history.push(withSiteId(usabilityTesting(), siteId));
+        });
+      }
+    }
+  };
 
   return (
     <>
@@ -61,6 +120,31 @@ function TestEdit() {
           },
         ]}
       />
+      <Modal
+        title="Edit Test"
+        open={isModalVisible}
+        onOk={() => onClose(true)}
+        onCancel={() => onClose(false)}
+        footer={
+          <Button type={'primary'} onClick={() => onClose(true)}>
+            Save
+          </Button>
+        }
+      >
+        <Typography.Text strong>Title</Typography.Text>
+        <Input
+          placeholder="E.g. Checkout user journey evaluation"
+          style={{ marginBottom: '2em' }}
+          value={newTestTitle}
+          onChange={(e) => setNewTestTitle(e.target.value)}
+        />
+        <Typography.Text strong>Test Objective (optional)</Typography.Text>
+        <Input.TextArea
+          value={newTestDescription}
+          onChange={(e) => setNewTestDescription(e.target.value)}
+          placeholder="Share a brief statement about what you aim to discover through this study."
+        />
+      </Modal>
       <div className={'grid grid-cols-4 gap-2'}>
         <div className={'flex w-full flex-col gap-2 col-span-3'}>
           <div className={'flex items-start p-4 rounded bg-white border justify-between'}>
@@ -69,7 +153,9 @@ function TestEdit() {
               <Typography.Text>{uxtestingStore.instance.description}</Typography.Text>
             </div>
             <div>
-              <Button>Edit icon</Button>
+              <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
+                <Button icon={<MoreOutlined rev={undefined} />}></Button>
+              </Dropdown>
             </div>
           </div>
 
@@ -97,7 +183,7 @@ function TestEdit() {
               />
             ) : (
               <Typography.Text>
-                {uxtestingStore.instance.guidelines.length
+                {uxtestingStore.instance?.guidelines?.length
                   ? uxtestingStore.instance.guidelines
                   : 'Provide an overview of this user test to and input guidelines that can be of assistance to users at any point during the test.'}
               </Typography.Text>
@@ -212,107 +298,6 @@ function TestEdit() {
     </>
   );
 }
-
-function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: () => void }) {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(false);
-
-  const save = () => {
-    onAdd({
-      title: title,
-      description: description || '',
-      allow_typing: isAnswerEnabled,
-    });
-    onHide();
-  };
-  return (
-    <div className={'h-screen p-4 bg-white flex flex-col gap-4'}>
-      <Typography.Title style={{ marginBottom: 0 }} level={4}>
-        Add a task or question
-      </Typography.Title>
-      <div className={'flex flex-col gap-1 items-start'}>
-        <Typography.Title level={5} style={{ marginBottom: 4 }}>
-          Title/Question
-        </Typography.Title>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={'Task title'}
-        />
-        <Typography.Title level={5} style={{ marginBottom: 4 }}>
-          Instructions
-        </Typography.Title>
-        <Input.TextArea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder={'Task instructions'}
-        />
-        <Typography.Title level={5} style={{ marginBottom: 4 }}>
-          Allow participants to type an answer
-        </Typography.Title>
-        <Switch
-          checked={isAnswerEnabled}
-          onChange={(checked) => setIsAnswerEnabled(checked)}
-          checkedChildren="Yes"
-          unCheckedChildren="No"
-        />
-        <div className={'text-disabled-text'}>
-          Enabling this option will show a text field for participants to type their answer.
-        </div>
-      </div>
-      <div className={'flex gap-2'}>
-        <Button type={'primary'} onClick={save}>
-          Add
-        </Button>
-        <Button onClick={onHide}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
-
-const SidePanel = observer(({ onSave, onPreview }: any) => {
-  const { uxtestingStore } = useStore();
-  return (
-    <div className={'flex flex-col gap-2 col-span-1'}>
-      <div className={'p-4 bg-white rounded border flex flex-col gap-2'}>
-        <Typography.Text strong>Participant Requirements</Typography.Text>
-        <div className={'flex justify-between'}>
-          <Typography.Text>Mic</Typography.Text>
-          <Switch
-            checked={uxtestingStore.instance!.requireMic}
-            defaultChecked={uxtestingStore.instance!.requireMic}
-            onChange={(checked) => uxtestingStore.instance!.setProperty('requireMic', checked)}
-            checkedChildren="Yes"
-            unCheckedChildren="No"
-          />
-        </div>
-        <div className={'flex justify-between'}>
-          <Typography.Text>Camera</Typography.Text>
-          <Switch
-            checked={uxtestingStore.instance!.requireCamera}
-            defaultChecked={uxtestingStore.instance!.requireCamera}
-            onChange={(checked) => uxtestingStore.instance!.setProperty('requireCamera', checked)}
-            checkedChildren="Yes"
-            unCheckedChildren="No"
-          />
-        </div>
-      </div>
-
-      <Button onClick={onPreview}>
-        <Space align={'center'}>
-          Preview <ExportOutlined rev={undefined} />
-        </Space>
-      </Button>
-      <Button
-        type={'primary'}
-        onClick={onSave}
-      >
-        Publish Test
-      </Button>
-    </div>
-  );
-});
 
 export function Step({
   buttons,
