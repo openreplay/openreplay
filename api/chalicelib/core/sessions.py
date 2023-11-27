@@ -30,7 +30,7 @@ s.issue_score,
 s.timezone,
 to_jsonb(s.issue_types) AS issue_types """
 
-SESSION_PROJECTION_COLS = SESSION_PROJECTION_BASE_COLS+"""
+SESSION_PROJECTION_COLS = SESSION_PROJECTION_BASE_COLS + """,
 favorite_sessions.session_id NOTNULL            AS favorite,
 COALESCE((SELECT TRUE
  FROM public.user_viewed_sessions AS fs
