@@ -6,16 +6,16 @@ export interface UxTSearchFilters {
   query: Nullable<string>;
   page: Nullable<number>;
   limit: Nullable<number>;
-  sort_by: Nullable<string>;
-  sort_order: Nullable<"asc" | "desc">;
-  is_active: Nullable<boolean>;
-  user_id: Nullable<number>;
+  sortBy: Nullable<string>;
+  sortOrder: Nullable<"asc" | "desc">;
+  isActive: Nullable<boolean>;
+  userId: Nullable<number>;
 }
 
 export interface UxTask {
   title: string;
   description: Nullable<string>;
-  allow_typing: boolean;
+  allowTyping: boolean;
   taskId?: number;
 }
 

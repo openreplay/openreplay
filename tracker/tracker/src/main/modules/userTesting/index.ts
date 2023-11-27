@@ -166,7 +166,9 @@ export default class UserTestManager {
 
     buttonElement.onclick = () => {
       this.container.innerHTML = ''
-      void this.userRecorder.startRecording(30, Quality.Standard)
+      if (micRequired || cameraRequired) {
+        void this.userRecorder.startRecording(30, Quality.Standard, micRequired, cameraRequired)
+      }
       this.durations.testStart = this.app.timestamp()
       void this.signalTest('begin')
       this.showWidget(this.test?.description || '', this.test?.tasks || [])
@@ -464,7 +466,6 @@ export default class UserTestManager {
 
   showEndSection() {
     void this.signalTest('done')
-    void this.userRecorder.saveToFile()
     const section = createElement('div', 'end_section_or', styles.endSectionStyle)
     const title = createElement(
       'div',
@@ -473,7 +474,7 @@ export default class UserTestManager {
         fontSize: '1.25rem',
         fontWeight: '500',
       },
-      'Thank you! 👍',
+      this.test?.reqMic || this.test?.reqCamera ? 'Uploading test recording...' : 'Thank you! 👍',
     )
     const description = createElement(
       'div',
@@ -483,6 +484,11 @@ export default class UserTestManager {
         '\n' +
         'We appreciate your time and valuable input.',
     )
+    if (this.test?.reqMic || this.test?.reqCamera) {
+      this.userRecorder.sendToAPI().then(() => {
+        title.textContent = 'Thank you! 👍'
+      })
+    }
     const button = createElement('div', 'end_button_or', styles.buttonWidgetStyle, 'End Session')
 
     if (this.taskSection) {

@@ -13,14 +13,19 @@ export default class Recorder {
 
   constructor(private readonly app: App) {}
 
-  async startRecording(fps: number, quality: (typeof Quality)[keyof typeof Quality]) {
+  async startRecording(
+    fps: number,
+    quality: (typeof Quality)[keyof typeof Quality],
+    micReq: boolean,
+    camReq: boolean,
+  ) {
     this.recStartTs = this.app.timestamp()
 
     const videoConstraints: MediaTrackConstraints = quality
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { ...videoConstraints, frameRate: { ideal: fps } },
-        audio: true,
+        video: camReq ? { ...videoConstraints, frameRate: { ideal: fps } } : false,
+        audio: micReq,
       })
 
       this.mediaRecorder = new MediaRecorder(this.stream, {
@@ -62,13 +67,28 @@ export default class Recorder {
     formData.append('file', blob, 'record.webm')
     formData.append('start', this.recStartTs?.toString() ?? '')
 
-    fetch('https://testapi.com/save-file', {
-      method: 'POST',
-      body: formData,
+    return fetch(`${this.app.options.ingestPoint}/v1/web/uxt/upload-url`, {
+      headers: {
+        Authorization: `Bearer ${this.app.session.getSessionToken() as string}`,
+      },
     })
-      .then((response) => response.json())
-      .then((data) => console.log(data))
-      .catch((error) => console.error(error))
+      .then((r) => {
+        if (r.ok) {
+          return r.json()
+        } else {
+          throw new Error('Failed to get upload url')
+        }
+      })
+      .then(({ url }) => {
+        return fetch(url, {
+          method: 'POST',
+          body: formData,
+        })
+      })
+      .catch(console.error)
+      .finally(() => {
+        this.discard()
+      })
   }
 
   async saveToFile(fileName = 'recorded-video.webm') {

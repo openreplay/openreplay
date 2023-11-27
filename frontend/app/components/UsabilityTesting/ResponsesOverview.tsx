@@ -43,7 +43,7 @@ const ResponsesOverview = observer(() => {
         />
         {showAll
           ? uxtestingStore.instance?.tasks
-              .filter((t) => t.taskId !== taskId && t.allow_typing)
+              .filter((t) => t.taskId !== taskId && t.allowTyping)
               .map((task) => (
                 <div className="cursor-pointer" onClick={() => setTaskId(task.taskId)}>
                   <Step

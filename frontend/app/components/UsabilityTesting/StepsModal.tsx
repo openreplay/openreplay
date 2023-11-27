@@ -11,7 +11,7 @@ function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: 
     onAdd({
       title: title,
       description: description || '',
-      allow_typing: isAnswerEnabled,
+      allowTyping: isAnswerEnabled,
     });
     onHide();
   };

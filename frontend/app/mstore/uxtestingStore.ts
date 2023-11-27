@@ -142,8 +142,8 @@ export default class UxtestingStore {
         query: this.searchQuery,
         page: this.page,
         limit: this.pageSize,
-        sort_by: 'created_at',
-        sort_order: 'desc',
+        sortBy: 'created_at',
+        sortOrder: 'desc',
       };
       const { list, total } = await this.client.fetchTestsList(filters);
       this.setList(list);
