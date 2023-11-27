@@ -1,7 +1,8 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import Field
 from datetime import datetime
 from enum import Enum
+from schemas import BaseModel
 
 from pydantic.v1 import validator
 
