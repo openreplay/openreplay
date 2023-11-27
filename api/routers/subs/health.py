@@ -19,3 +19,4 @@ if not tenants.tenants_exists_sync(use_pool=False):
     async def get_public_health_status():
         if await tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
+        return {"data": health.get_health()}
