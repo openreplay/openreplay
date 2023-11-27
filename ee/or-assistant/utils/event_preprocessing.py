@@ -22,7 +22,7 @@ page_event_properties = [
         ]
 
 
-def split_events_selection(data):
+def split_events_selection(data: EventList):
     events = data.data['events']
     selection = data.eventTypes
     click_events = [k for k in events if k['type'] in selection]
@@ -33,26 +33,27 @@ def split_events_selection(data):
     # From click_events you can ask 'to explain what user was doing in the webpage'
     issues = [{s: k[s] for s in ['timestamp', 'payload', 'type']} for k in data.data['issues']]
     errors = data.data['errors']
+    click_events = sorted(click_events, key=lambda k: k['timestamp'])
+    for c_event in click_events:
+        c_event.pop('timestamp')
     # From errors you can ask based on the errors what could be the possible issue and what could be a solution
     return click_events, errors, issues
 
 
-def split_events_selection_filter(data, max_click_events=10, max_page_events=10):
+def split_events_selection_filter(data: EventList, max_click_events: int = 10, max_page_events: int = 10):
     click_events, page_event = preprocess_events(data, max_click_events=max_click_events, max_page_events=max_page_events)
     event_list = [{s: k[s] for s in click_event_properties} for k in click_events] \
                + [{s: k[s] for s in page_event_properties} for k in page_event]
     issues = [{s: k[s] for s in ['timestamp', 'payload', 'type']} for k in data.data['issues']]
-    ###### TEST
     event_list = sorted(event_list + issues, key=lambda k: k['timestamp'])
     for event in event_list:
         event.pop('timestamp')
-    ######
     errors = data.data['errors']
     # From errors you can ask based on the errors what could be the possible issue and what could be a solution
     return event_list, errors, issues
 
 
-def preprocess_events(event_list: EventList, max_click_events=10, max_page_events=10):
+def preprocess_events(event_list: EventList, max_click_events: int = 10, max_page_events: int = 10):
     ordered_click_events = [(i, ce) for (i,ce) in enumerate(event_list.data['events']) if ce['type']=="CLICK"]
     ordered_page_event = [(i, pe) for (i,pe) in enumerate(event_list.data['events']) if pe['type']=="LOCATION"]
     ordered_click_events = sorted(ordered_click_events, key=lambda k: k[1]['hesitation'], reverse=True)[:max_click_events]
@@ -63,9 +64,8 @@ def preprocess_events(event_list: EventList, max_click_events=10, max_page_event
         total_time += delta_time
     ordered_page_event[-1][1]['spentTime'] = None
     ordered_page_event[-1][1]['pageTimeShare'] = None
-    # TODO: Add variavle PageTimeShare (% of time spent in current page)
     for i in range(len(ordered_page_event)-1):
-        ordered_page_event[i][1]['pageTimeShare'] = f"{ordered_page_event[i][1]['spentTime'] / total_time:.1f}%"
+        ordered_page_event[i][1]['pageTimeShare'] = f"{100 * ordered_page_event[i][1]['spentTime'] / total_time:.1f}%"
     last_page = ordered_page_event[-1][1]
     ordered_page_event = sorted(ordered_page_event[:-1], key=lambda k: k[1]['spentTime'], reverse=True)[:max_page_events]
 

@@ -2,7 +2,7 @@ import re
 import json
 import requests
 from typing import List
-from utils.params import LLM_ENDPOINT, LLM_API_KEY, LLM_TEMPERATURE
+from utils.params import LLM_ENDPOINT, LLM_API_KEY, LLM_TEMPERATURE, FREQUENCY_PENALTY, MAX_TOKENS
 from utils.prompts import session_summary_base_prompt, \
         session_summary_base_prompt_long, summary_context
 import tiktoken
@@ -10,7 +10,7 @@ import openai
 # import anyscale
 
 
-def call_endpoint(url, **params):
+def call_endpoint(url: str, **params):
     if 'method' in params.keys():
         method = params.pop('method')
     else:
@@ -26,7 +26,7 @@ def call_endpoint(url, **params):
         raise ValueError('Method not implemented')
 
 
-def process_llm_response(response):
+def process_llm_response(response: str):
     numeration = re.compile('[0-9]+\..*')
     return '\n'.join(numeration.findall(response))
 
@@ -90,7 +90,7 @@ def process_llm_response(response):
 
 class Completion:
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
         self.temperature = LLM_TEMPERATURE
         self.llm_api_key = LLM_API_KEY
@@ -134,7 +134,11 @@ class Completion:
             })
 
 
-    def process_large_input(self, long_prompt: List[dict], filter_response=True, context='', raw=True):
+    def reset_message_history(self):
+        self.message_history = list()
+
+
+    def process_large_input(self, long_prompt: List[dict], filter_response: bool = True, context: str = '', raw: bool = True):
         splited_prompt = self.split_long_event_list(long_prompt)
         phrase = ''
         valid = False
@@ -155,6 +159,7 @@ class Completion:
                     phrase += word
                 else:
                     continue
+        self.reset_message_history()
 
     def send_stream_request(self, message: str, filter_response: bool = True, context: str = ''):
         self.update_message_history(message, raw=False)
@@ -163,7 +168,9 @@ class Completion:
                 api_key= LLM_API_KEY,
                 model = "codellama/CodeLlama-34b-Instruct-hf",
                 messages = [{'role': 'system', 'content': context if context else summary_context}] + self.message_history[-2:] if len(self.message_history) > 1 else self.message_history,
-                stream = True
+                stream = True,
+                frequency_penalty=FREQUENCY_PENALTY,
+                max_tokens=MAX_TOKENS
                 )
         self.message_history.pop()
         words = ''
@@ -183,7 +190,7 @@ class Completion:
             else: 
                 continue
 
-    def split_long_event_list(self, long_event_list):
+    def split_long_event_list(self, long_event_list: List[dict]):
         n_tokens = len(self.tokenizer.encode(str(long_event_list)))
         splited = list()
         number_of_splits = 4 * n_tokens // self.max_tokens
