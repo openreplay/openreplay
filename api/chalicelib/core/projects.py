@@ -68,15 +68,14 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                          AND sessions.start_ts <= %(now)s
                                        )) AS first_recorded"""
 
-        query = cnx.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
+        query = f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
                                        s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
                                        {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
-                                ORDER BY s.name {") AS raw" if recorded else ""};""",
-                            {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
-        rows = await cnx.execute(query)
+                                ORDER BY s.name {") AS raw" if recorded else ""};"""
+        rows = await cnx.execute(query, {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
         rows = await rows.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
