@@ -1,6 +1,5 @@
-# 11.0.0
+# 10.0.3
 
-- canvas support
 - some safety guards for iframe components
 
 # 10.0.2
