@@ -26,7 +26,10 @@ function TestsTable() {
   React.useEffect(() => {
     uxtestingStore.getList();
   }, []);
-  const onPageChange = () => null;
+  const onPageChange = (page: number) => {
+    uxtestingStore.setPage(page);
+    uxtestingStore.getList();
+  };
 
   // @ts-ignore
   const { siteId } = useParams();
@@ -34,7 +37,7 @@ function TestsTable() {
 
   const onClose = (confirmed: boolean) => {
     if (confirmed) {
-      uxtestingStore.initNewTest(newTestTitle, newTestDescription, false);
+      uxtestingStore.initNewTest(newTestTitle, newTestDescription);
       setNewTestDescription('');
       setNewTestTitle('');
       redirect('new');
@@ -139,7 +142,7 @@ function TestsTable() {
               </div>
               <Pagination
                 page={uxtestingStore.page}
-                totalPages={Math.ceil(100 / 10)}
+                totalPages={Math.ceil(uxtestingStore.total / 10)}
                 onPageChange={onPageChange}
                 limit={10}
                 debounceRequest={200}
@@ -177,7 +180,7 @@ function Row({ test }: { test: UxTListEntry }) {
         </div>
       </Cell>
       <Cell size={1}>{test.createdBy.name}</Cell>
-      <Cell size={2}>{checkForRecent(getDateFromMill(+new Date(test.updatedAt))!, 'LLL dd, yyyy, hh:mm a')}</Cell>
+      <Cell size={2}>{checkForRecent(getDateFromMill(test.updatedAt)!, 'LLL dd, yyyy, hh:mm a')}</Cell>
       <Cell size={1}>
         <Tag color={test.status === 'in-progress' ? "orange" : ''}>{statusMap[test.status]}</Tag>
       </Cell>

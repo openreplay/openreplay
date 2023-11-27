@@ -21,12 +21,12 @@ export interface UxTask {
 
 export interface UxTest {
   title: string;
-  starting_path: string;
-  require_mic: boolean;
-  require_camera: boolean;
+  startingPath: string;
+  requireMic: boolean;
+  requireCamera: boolean;
   description: Nullable<string>;
   guidelines: Nullable<string>;
-  conclusion_message: Nullable<string>;
+  conclusionMessage: Nullable<string>;
   visibility: boolean;
   tasks: UxTask[];
   status: string;

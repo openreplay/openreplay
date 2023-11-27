@@ -61,11 +61,18 @@ export default class UserTestManager {
   private token: string | null = null
   private readonly durations = {
     testStart: 0,
-    tasks: [] as unknown as { taskId: number; started: number }[],
+    tasks: [] as unknown as {
+      taskId: number
+      started: number
+    }[],
   }
 
   constructor(private readonly app: App) {
     this.userRecorder = new Recorder(app)
+    const taskIndex = this.app.sessionStorage.getItem('or_uxt_task_index')
+    if (taskIndex) {
+      this.currentTaskIndex = parseInt(taskIndex, 10)
+    }
   }
 
   signalTask = (taskId: number, status: 'begin' | 'done' | 'skipped', answer?: string) => {
@@ -218,14 +225,9 @@ export default class UserTestManager {
 
   createTitleSection() {
     const title = createElement('div', 'title', styles.titleWidgetStyle)
-    const leftIcon = createElement('div', 'left_icon', {}, '(icn)')
+    const leftIcon = generateGrid()
     const titleText = createElement('div', 'title_text', {}, this.test?.title)
-    const rightIcon = createElement(
-      'div',
-      'right_icon',
-      { marginLeft: 'auto', cursor: 'pointer' },
-      '(icn)',
-    )
+    const rightIcon = generateChevron()
 
     title.append(leftIcon, titleText, rightIcon)
 
@@ -264,7 +266,12 @@ export default class UserTestManager {
       return isVisible
     }
 
-    rightIcon.onclick = () => toggleWidget(!this.widgetVisible)
+    rightIcon.onclick = () => {
+      Object.assign(rightIcon.style, {
+        transform: this.widgetVisible ? 'rotate(0deg)' : 'rotate(180deg)',
+      })
+      toggleWidget(!this.widgetVisible)
+    }
     attachDND(this.bg, leftIcon)
 
     this.collapseWidget = () => toggleWidget(false)
@@ -311,10 +318,13 @@ export default class UserTestManager {
         void this.signalTask(this.test.tasks[0].task_id, 'begin')
       }
       this.showTaskSection()
+      content.removeChild(button)
     }
 
     return section
   }
+
+  currentTaskIndex = 0
 
   createTasksSection(
     tasks: {
@@ -324,7 +334,6 @@ export default class UserTestManager {
       allow_typing: boolean
     }[],
   ) {
-    let currentTaskIndex = 0
     const section = createElement('div', 'task_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_t_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Tasks')
@@ -364,7 +373,7 @@ export default class UserTestManager {
     section.append(titleContainer, content)
 
     const updateTaskContent = () => {
-      const task = tasks[currentTaskIndex]
+      const task = tasks[this.currentTaskIndex]
       taskText.textContent = task.title
       taskDescription.textContent = task.description
       if (task.allow_typing) {
@@ -409,26 +418,28 @@ export default class UserTestManager {
     closePanelButton.onclick = this.collapseWidget
 
     nextButton.onclick = () => {
-      const textAnswer = tasks[currentTaskIndex].allow_typing ? inputArea.value : undefined
+      const textAnswer = tasks[this.currentTaskIndex].allow_typing ? inputArea.value : undefined
       inputArea.value = ''
-      void this.signalTask(tasks[currentTaskIndex].task_id, 'done', textAnswer)
-      if (currentTaskIndex < tasks.length - 1) {
-        currentTaskIndex++
+      void this.signalTask(tasks[this.currentTaskIndex].task_id, 'done', textAnswer)
+      if (this.currentTaskIndex < tasks.length - 1) {
+        this.currentTaskIndex++
         updateTaskContent()
         if (
-          this.durations.tasks.findIndex((t) => t.taskId === tasks[currentTaskIndex].task_id) === -1
+          this.durations.tasks.findIndex(
+            (t) => t.taskId === tasks[this.currentTaskIndex].task_id,
+          ) === -1
         ) {
           this.durations.tasks.push({
-            taskId: tasks[currentTaskIndex].task_id,
+            taskId: tasks[this.currentTaskIndex].task_id,
             started: this.app.timestamp(),
           })
         }
-        void this.signalTask(tasks[currentTaskIndex].task_id, 'begin')
-        const activeTaskEl = document.getElementById(`or_task_${currentTaskIndex}`)
+        void this.signalTask(tasks[this.currentTaskIndex].task_id, 'begin')
+        const activeTaskEl = document.getElementById(`or_task_${this.currentTaskIndex}`)
         if (activeTaskEl) {
           Object.assign(activeTaskEl.style, styles.taskNumberActive)
         }
-        for (let i = 0; i < currentTaskIndex; i++) {
+        for (let i = 0; i < this.currentTaskIndex; i++) {
           const taskEl = document.getElementById(`or_task_${i}`)
           if (taskEl) {
             Object.assign(taskEl.style, styles.taskNumberDone)
@@ -437,6 +448,7 @@ export default class UserTestManager {
       } else {
         this.showEndSection()
       }
+      this.app.sessionStorage.setItem('or_uxt_task_index', this.currentTaskIndex.toString())
     }
 
     updateTaskContent()
@@ -490,4 +502,52 @@ export default class UserTestManager {
     this.endSection = section
     this.container.append(section)
   }
+}
+
+function generateGrid() {
+  const grid = document.createElement('div')
+  grid.className = 'grid'
+  for (let i = 0; i < 16; i++) {
+    const cell = document.createElement('div')
+    Object.assign(cell.style, {
+      width: '2px',
+      height: '2px',
+      borderRadius: '10px',
+      background: 'white',
+    })
+    cell.className = 'cell'
+    grid.appendChild(cell)
+  }
+  Object.assign(grid.style, {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateRows: 'repeat(4, 1fr)',
+    gap: '2px',
+    cursor: 'grab',
+  })
+  return grid
+}
+
+function generateChevron() {
+  const triangle = document.createElement('div')
+  Object.assign(triangle.style, {
+    width: '0',
+    height: '0',
+    borderLeft: '7px solid transparent',
+    borderRight: '7px solid transparent',
+    borderBottom: '7px solid white',
+  })
+  const container = document.createElement('div')
+  container.appendChild(triangle)
+  Object.assign(container.style, {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer',
+    marginLeft: 'auto',
+    transform: 'rotate(180deg)',
+  })
+  return container
 }

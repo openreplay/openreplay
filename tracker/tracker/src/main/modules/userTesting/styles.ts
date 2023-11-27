@@ -34,7 +34,7 @@ export const containerWidgetStyle = {
 }
 
 export const titleStyle = {
-  fontFamily: 'Roboto',
+  fontFamily: 'Verdana, sans-serif',
   fontSize: '1.25rem',
   fontStyle: 'normal',
   fontWeight: '500',
@@ -47,7 +47,7 @@ export const descriptionStyle = {
   borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
   padding: '1.25rem 0rem',
   color: 'rgba(0, 0, 0, 0.85)',
-  fontFamily: 'Roboto',
+  fontFamily: 'Verdana, sans-serif',
   fontSize: '1rem',
   fontStyle: 'normal',
   fontWeight: '400',
@@ -56,7 +56,7 @@ export const descriptionStyle = {
 
 export const noticeStyle = {
   color: 'rgba(0, 0, 0, 0.85)',
-  fontFamily: 'Roboto',
+  fontFamily: 'Verdana, sans-serif',
   fontSize: '0.875rem',
   fontStyle: 'normal',
   fontWeight: '400',
@@ -75,11 +75,12 @@ export const buttonStyle = {
   boxShadow: '0px 2px 0px 0px rgba(0, 0, 0, 0.04)',
   color: '#FFF',
   textAlign: 'center',
-  fontFamily: 'Roboto',
+  fontFamily: 'Verdana, sans-serif',
   fontSize: '1rem',
   fontStyle: 'normal',
   fontWeight: '500',
   lineHeight: '1.5rem',
+  cursor: 'pointer',
 }
 
 export const sectionTitleStyle = {
@@ -116,7 +117,6 @@ export const titleWidgetStyle = {
   borderRadius: '0.375rem',
   background: 'rgba(0, 0, 0, 0.60)',
   boxSizing: 'border-box',
-  cursor: 'grab',
 }
 
 export const descriptionWidgetStyle = {
@@ -177,7 +177,7 @@ export const stopWidgetStyle = {
   marginTop: '2rem',
   cursor: 'pointer',
   display: 'block',
-  fontWeight: '500',
+  fontWeight: '600',
 }
 
 export const paginationStyle = {
@@ -234,7 +234,7 @@ export const taskButtonStyle = {
   cursor: 'pointer',
   color: '#394EFF',
   textAlign: 'center',
-  fontFamily: 'Roboto',
+  fontFamily: 'Verdana, sans-serif',
   fontSize: '0.875rem',
   fontStyle: 'normal',
   fontWeight: '500',

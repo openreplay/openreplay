@@ -1,8 +1,8 @@
 import { Button, Input, Typography, Switch, Space } from 'antd';
 import { UxTask } from 'App/services/UxtestingService';
 import React from 'react';
-import { withSiteId, usabilityTesting } from 'App/routes';
-import { useParams } from 'react-router-dom';
+import { withSiteId, usabilityTesting, usabilityTestingView, usabilityTestingEdit } from "App/routes";
+import { useParams, useHistory } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { EditOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
@@ -16,14 +16,33 @@ function TestEdit() {
   // @ts-ignore
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
+  const history = useHistory();
 
   React.useEffect(() => {
-    if (testId) {
+    if (testId && testId !== 'new') {
       uxtestingStore.getTestData(testId);
     }
   }, [])
   if (!uxtestingStore.instance) {
     return <div>Loading...</div>;
+  }
+
+  const onSave = (isPreview?: boolean) => {
+    if (testId && testId !== 'new') {
+      uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
+        history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
+      })
+    } else {
+      uxtestingStore.createNewTest(isPreview).then((test) => {
+        if (isPreview) {
+          window.open(`${test.startingPath}?oruxt=${test.testId}`, '_blank', 'noopener,noreferrer');
+          history.push(withSiteId(usabilityTestingEdit(test.testId), siteId));
+        }
+        else {
+          history.push(withSiteId(usabilityTestingView(test.testId), siteId));
+        }
+      })
+    }
   }
 
   return (
@@ -57,11 +76,11 @@ function TestEdit() {
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
             <Typography.Text strong>Starting point</Typography.Text>
             <Input
-              addonBefore={'https://funnywebsite.com/'}
               style={{ width: 400 }}
-              placeholder={'/example-page'}
+              placeholder={'https://mywebsite.com/example-page'}
+              value={uxtestingStore.instance!.startingPath}
               onChange={(e) => {
-                uxtestingStore.instance!.setProperty('starting_path', e.target.value);
+                uxtestingStore.instance!.setProperty('startingPath', e.target.value);
               }}
             />
             <Typography.Text>Test will begin on this page</Typography.Text>
@@ -158,13 +177,13 @@ function TestEdit() {
               {isConclusionEditing ? (
                 <Input.TextArea
                   placeholder={'Thanks for participation!..'}
-                  value={uxtestingStore.instance!.conclusion_message}
+                  value={uxtestingStore.instance!.conclusionMessage}
                   onChange={(e) =>
-                    uxtestingStore.instance!.setProperty('conclusion_message', e.target.value)
+                    uxtestingStore.instance!.setProperty('conclusionMessage', e.target.value)
                   }
                 />
               ) : (
-                <Typography.Text>{uxtestingStore.instance!.conclusion_message}</Typography.Text>
+                <Typography.Text>{uxtestingStore.instance!.conclusionMessage}</Typography.Text>
               )}
             </div>
             <div className={'flex gap-2'}>
@@ -175,7 +194,7 @@ function TestEdit() {
                   </Button>
                   <Button
                     onClick={() => {
-                      uxtestingStore.instance!.setProperty('conclusion_message', '');
+                      uxtestingStore.instance!.setProperty('conclusionMessage', '');
                       setIsConclusionEditing(false);
                     }}
                   >
@@ -188,7 +207,7 @@ function TestEdit() {
             </div>
           </div>
         </div>
-        <SidePanel />
+        <SidePanel onSave={() => onSave(false)} onPreview={() => onSave(true)} />
       </div>
     </>
   );
@@ -201,8 +220,8 @@ function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: 
 
   const save = () => {
     onAdd({
-      title,
-      description,
+      title: title,
+      description: description || '',
       allow_typing: isAnswerEnabled,
     });
     onHide();
@@ -252,7 +271,7 @@ function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: 
   );
 }
 
-const SidePanel = observer(() => {
+const SidePanel = observer(({ onSave, onPreview }: any) => {
   const { uxtestingStore } = useStore();
   return (
     <div className={'flex flex-col gap-2 col-span-1'}>
@@ -261,8 +280,9 @@ const SidePanel = observer(() => {
         <div className={'flex justify-between'}>
           <Typography.Text>Mic</Typography.Text>
           <Switch
-            checked={uxtestingStore.instance!.require_mic}
-            onChange={(checked) => uxtestingStore.instance!.setProperty('require_mic', checked)}
+            checked={uxtestingStore.instance!.requireMic}
+            defaultChecked={uxtestingStore.instance!.requireMic}
+            onChange={(checked) => uxtestingStore.instance!.setProperty('requireMic', checked)}
             checkedChildren="Yes"
             unCheckedChildren="No"
           />
@@ -270,24 +290,23 @@ const SidePanel = observer(() => {
         <div className={'flex justify-between'}>
           <Typography.Text>Camera</Typography.Text>
           <Switch
-            checked={uxtestingStore.instance!.require_camera}
-            onChange={(checked) => uxtestingStore.instance!.setProperty('require_camera', checked)}
+            checked={uxtestingStore.instance!.requireCamera}
+            defaultChecked={uxtestingStore.instance!.requireCamera}
+            onChange={(checked) => uxtestingStore.instance!.setProperty('requireCamera', checked)}
             checkedChildren="Yes"
             unCheckedChildren="No"
           />
         </div>
       </div>
 
-      <Button>
+      <Button onClick={onPreview}>
         <Space align={'center'}>
           Preview <ExportOutlined rev={undefined} />
         </Space>
       </Button>
       <Button
         type={'primary'}
-        onClick={() => {
-          uxtestingStore.createNewTest(false)
-        }}
+        onClick={onSave}
       >
         Publish Test
       </Button>

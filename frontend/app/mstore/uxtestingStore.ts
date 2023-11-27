@@ -67,7 +67,6 @@ export default class UxtestingStore {
     try {
       const test: UxTest = {
         ...this.instance!,
-        starting_path: this.instance!.startingPath!,
         status,
       };
       console.log(test);
@@ -80,12 +79,25 @@ export default class UxtestingStore {
     }
   };
 
+  updateTest = async (test: UxTestInst) => {
+    if (!this.instance) return;
+    this.setLoading(true);
+    try {
+      await this.client.updateTest(this.instance.testId!, test);
+      return test.testId
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  }
+
   updateInstStatus = (status: string) => {
     if (!this.instance) return;
     this.instance.setProperty('status', status);
   };
 
-  fetchResponses = async (testId: number, taskId: number, page) => {
+  fetchResponses = async (testId: number, taskId: number, page: number) => {
     this.setLoading(true);
     try {
       this.responses[taskId] = await this.client.fetchTaskResponses(testId, taskId, page, 10);
@@ -99,12 +111,12 @@ export default class UxtestingStore {
   initNewTest(title: string, description: string) {
     const initialData = {
       title: title,
-      starting_path: '',
-      require_mic: false,
-      require_camera: false,
+      startingPath: '',
+      requireMic: false,
+      requireCamera: false,
       description: description,
       guidelines: '',
-      conclusion_message: '',
+      conclusionMessage: '',
       visibility: true,
       tasks: [],
     };
@@ -139,11 +151,11 @@ export default class UxtestingStore {
     }
   };
 
-  createNewTest = async (isPreview: boolean) => {
+  createNewTest = async (isPreview?: boolean) => {
     this.setLoading(true);
     try {
       // @ts-ignore
-      await this.client.createTest({ ...this.instance, visibility: !isPreview });
+      return await this.client.createTest({ ...this.instance, status: isPreview ? 'preview' : 'in-progress' });
     } catch (e) {
       console.error(e);
     } finally {
@@ -207,19 +219,18 @@ export default class UxtestingStore {
 
 class UxTestInst {
   title: string = '';
-  starting_path: string = '';
-  require_mic: boolean = false;
-  require_camera: boolean = false;
+  requireMic: boolean = false;
+  requireCamera: boolean = false;
   description: string = '';
   guidelines: string = '';
-  conclusion_message: string = '';
   visibility: boolean = false;
   tasks: UxTask[] = [];
-  status?: string;
-  startingPath?: string;
+  status: string;
+  startingPath: string;
   testId?: number;
   responsesCount?: number;
   liveCount?: number;
+  conclusionMessage: string;
 
   constructor(initialData: Partial<UxTestInst> = {}) {
     makeAutoObservable(this);

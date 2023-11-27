@@ -6,8 +6,8 @@ export default function attachDND(element, dragTarget) {
     const shiftX = event.clientX - clientRect.left
     const shiftY = event.clientY - clientRect.top
 
-    element.style.position = 'absolute'
-    element.style.zIndex = 1000
+    element.style.position = 'fixed'
+    element.style.zIndex = 99999999999999
 
     moveAt(event.pageX, event.pageY)
 
@@ -36,11 +36,11 @@ export default function attachDND(element, dragTarget) {
       document.removeEventListener('mousemove', onMouseMove)
       dragTarget.onmouseup = null
     }
-
-    dragTarget.onmouseleave = function () {
-      document.removeEventListener('mousemove', onMouseMove)
-      dragTarget.onmouseleave = null
-    }
+    //
+    // dragTarget.onmouseleave = function () {
+    //   document.removeEventListener('mousemove', onMouseMove)
+    //   dragTarget.onmouseleave = null
+    // }
   }
 
   dragTarget.ondragstart = function () {
