@@ -284,8 +284,8 @@ def get_keys_by_projects(project_ids):
 #     return {"data": get(project_id)}
 
 
-def get_remaining_metadata_with_count(tenant_id):
-    all_projects = projects.get_projects(tenant_id=tenant_id)
+async def get_remaining_metadata_with_count(tenant_id):
+    all_projects = await projects.get_projects(tenant_id=tenant_id)
     results = []
     used_metas = get_batch([p["projectId"] for p in all_projects])
     for p in all_projects:
