@@ -73,8 +73,8 @@ def cancel_job(projectKey: str, jobId: int, _=Body(None), context: schemas.Curre
 
 
 @app_apikey.get('/v1/projects', tags=["api"])
-def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    records = projects.get_projects(tenant_id=context.tenant_id)
+async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+    records = await projects.get_projects(tenant_id=context.tenant_id)
     for record in records:
         del record['projectId']
 

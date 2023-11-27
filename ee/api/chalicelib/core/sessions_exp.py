@@ -1497,12 +1497,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     return full_args, query_part
 
 
-def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
+async def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     if project_id is None:
-        all_projects = projects.get_projects(tenant_id=tenant_id)
+        all_projects = await projects.get_projects(tenant_id=tenant_id)
     else:
         all_projects = [
-            projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
+            await projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
                                  include_gdpr=False)]
 
     all_projects = {int(p["projectId"]): p["name"] for p in all_projects}
