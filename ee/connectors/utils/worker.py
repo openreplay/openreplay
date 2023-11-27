@@ -488,6 +488,12 @@ class WorkerPool:
                 except TimeoutError as e:
                     print('[WORKER-TimeoutError] Decoding of messages is taking longer than expected')
                     raise e
+                except Exception as e:
+                    print(f'[Exception] {e}')
+                    self.sessions_update_batch = dict()
+                    self.sessions_insert_batch = dict()
+                    self.events_batch = list()
+                    continue
             session_ids, messages = self._pool_response_handler(
                 pool_results=results)
             if current_loop_number == 0:
