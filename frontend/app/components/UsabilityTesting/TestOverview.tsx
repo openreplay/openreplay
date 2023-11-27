@@ -1,4 +1,5 @@
 import { durationFormatted } from "App/date";
+import { getPdf2 } from "Components/AssistStats/pdfGenerator";
 import { useModal } from "Components/Modal";
 import React from "react";
 import { Button, Typography, Select, Space, Popover, Dropdown } from "antd";
@@ -75,14 +76,21 @@ function TestOverview() {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
   }
 
+  const redirectToEdit = async () => {
+    if (await confirm({
+      confirmation: "This test already has responses, making edits at this stage may result in confusing outcomes.",
+      confirmButton: "Edit"
+    })) {
+      history.push(withSiteId(usabilityTestingEdit(testId), siteId));
+    }
+  }
+
   const onMenuClick = async ({ key }: any) => {
+    if (key === "1") {
+      void getPdf2()
+    }
     if (key === "2") {
-      if (await confirm({
-        confirmation: "This test already has responses, making edits at this stage may result in confusing outcomes.",
-        confirmButton: "Edit"
-      })) {
-        history.push(withSiteId(usabilityTestingEdit(testId), siteId));
-      }
+      await redirectToEdit()
     }
     if (key === "3") {
       if (
@@ -110,7 +118,7 @@ function TestOverview() {
           }
         ]}
       />
-      <div className={"rounded border bg-white"}>
+      <div className={"rounded border bg-white"} id={'pdf-anchor'}>
         <div className={"p-4 flex items-center gap-2 border-b"}>
           <div>
             <Typography.Title level={4}>{uxtestingStore.instance.title}</Typography.Title>
@@ -130,7 +138,7 @@ function TestOverview() {
               </Option>
             ))}
           </Select>
-          <Button type={"primary"}>
+          <Button type={"primary"} onClick={redirectToEdit}>
             <Space align={"center"}>
               {uxtestingStore.instance.tasks.length} Tasks <EditOutlined rev={undefined} />{" "}
             </Space>

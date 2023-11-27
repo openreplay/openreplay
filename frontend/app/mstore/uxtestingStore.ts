@@ -201,9 +201,8 @@ export default class UxtestingStore {
         }
         if (results[2].status === 'fulfilled') {
           const taskStats = results[2].value;
-          console.log(taskStats);
           if (taskStats) {
-            this.taskStats = taskStats;
+            this.taskStats = taskStats.sort((a: any, b: any) => a.taskId - b.taskId);
           }
         }
         if (results[3].status === 'fulfilled') {

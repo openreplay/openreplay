@@ -114,6 +114,7 @@ function TestEdit() {
           },
           {
             label: uxtestingStore.instance.title,
+            to: withSiteId(usabilityTestingView(testId), siteId),
           },
           {
             label: 'Edit',
