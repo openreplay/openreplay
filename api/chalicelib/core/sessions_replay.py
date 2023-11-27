@@ -1,6 +1,6 @@
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas
+    sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas, user_testing
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
@@ -167,6 +167,7 @@ def get_events(project_id, session_id):
                 data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                 data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
+                data['userTesting'] = []
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
@@ -180,6 +181,7 @@ def get_events(project_id, session_id):
                                                                       session_id=session_id)
                 data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                 start_ts=s_data["startTs"], duration=s_data["duration"])
+                data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
             data['issues'] = reduce_issues(data['issues'])

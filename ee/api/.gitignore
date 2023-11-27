@@ -269,3 +269,4 @@ Pipfile.lock
 /schemas/schemas.py
 /schemas/transformers_validators.py
 /test/
+/chalicelib/core/user_testing.py

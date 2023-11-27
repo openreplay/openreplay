@@ -1057,6 +1057,7 @@ $$
             );
 
             CREATE UNIQUE INDEX IF NOT EXISTS ut_tests_signals_unique_session_id_test_id_task_id_ts_idx ON public.ut_tests_signals (session_id, test_id, task_id, timestamp);
+            CREATE INDEX IF NOT EXISTS ut_tests_signals_session_id_idx ON public.ut_tests_signals (session_id);
 
             RAISE NOTICE 'Created missing public schema tables';
         END IF;
