@@ -28,6 +28,7 @@ def search_ui_tests(project_id: int, search: UTTestSearch):
     db_handler.set_select_columns([f"COUNT(*) OVER() AS count"] + select_columns)
     db_handler.add_join("LEFT JOIN users u ON ut.created_by = u.user_id")
     db_handler.add_constraint("ut.project_id = %(project_id)s", {'project_id': project_id})
+    db_handler.add_constraint("ut.deleted_at IS NULL")
     db_handler.set_sort_by(f"ut.{search.sort_by} {search.sort_order}")
     db_handler.set_pagination(page=search.page, page_size=search.limit)
 
