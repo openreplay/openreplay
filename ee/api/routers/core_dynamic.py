@@ -93,8 +93,8 @@ def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR
 
 
 @app.get('/refresh', tags=["login"])
-def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
-    r = users.refresh(user_id=context.user_id, tenant_id=context.tenant_id)
+async def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
+    r = await users.refresh(user_id=context.user_id, tenant_id=context.tenant_id)
     content = {"jwt": r.get("jwt")}
     response = JSONResponse(content=content)
     response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",

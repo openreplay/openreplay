@@ -571,18 +571,17 @@ def change_jwt_iat_jti(user_id):
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def refresh_jwt_iat_jti(user_id):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.users
+async def refresh_jwt_iat_jti(user_id):
+    async with orpy.get().database.connection() as cnx:
+        query = f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     jwt_refresh_jti = jwt_refresh_jti + 1 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
-                            {"user_id": user_id})
-        cur.execute(query)
-        row = cur.fetchone()
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;"""
+        row = await cnx.execute(query, {"user_id": user_id})
+        row = await row.fetchone()
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
@@ -635,8 +634,8 @@ def logout(user_id: int):
         cur.execute(query)
 
 
-def refresh(user_id: int, tenant_id: int = -1) -> dict:
-    jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
+async def refresh(user_id: int, tenant_id: int = -1) -> dict:
+    jwt_iat, jwt_r_jti, jwt_r_iat = await refresh_jwt_iat_jti(user_id=user_id)
     return {
         "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
                                         aud=f"front:{helper.get_stage_name()}"),
