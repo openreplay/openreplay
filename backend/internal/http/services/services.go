@@ -1,6 +1,7 @@
 package services
 
 import (
+	"log"
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
@@ -8,10 +9,13 @@ import (
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/flakeid"
+	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/token"
+	"openreplay/backend/pkg/uxtesting"
 )
 
 type ServicesBuilder struct {
@@ -23,10 +27,17 @@ type ServicesBuilder struct {
 	UaParser     *uaparser.UAParser
 	GeoIP        geoip.GeoParser
 	Tokenizer    *token.Tokenizer
+	ObjStorage   objectstorage.ObjectStorage
+	UXTesting    uxtesting.UXTesting
 }
 
 func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
 	projs := projects.New(pgconn, redis)
+	// ObjectStorage client to generate pre-signed upload urls
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
 	return &ServicesBuilder{
 		Projects:     projs,
 		Sessions:     sessions.New(pgconn, projs, redis),
@@ -36,5 +47,7 @@ func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *red
 		UaParser:     uaparser.NewUAParser(cfg.UAParserFile),
 		GeoIP:        geoip.New(cfg.MaxMinDBFile),
 		Flaker:       flakeid.NewFlaker(cfg.WorkerID),
+		ObjStorage:   objStore,
+		UXTesting:    uxtesting.New(pgconn),
 	}, nil
 }

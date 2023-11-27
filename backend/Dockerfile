@@ -1,24 +1,29 @@
-FROM openreplayalexander/golang_with_librdkafka:v1-release AS prepare
+#ARCH can be amd64 or arm64
+ARG ARCH=amd64
 
+FROM --platform=linux/$ARCH golang:1.21-alpine3.18 AS build
+RUN apk add --no-cache gcc g++ make libc-dev
 WORKDIR /root
 
+# Load code dependencies
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
 
-FROM prepare AS build
+# Copy code itself
 COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
 
+# Build service
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
-
-FROM openreplayalexander/alpine_with_librdkafka:v1-release AS entrypoint
+FROM --platform=linux/$ARCH alpine AS entrypoint
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
+RUN apk add --no-cache ca-certificates cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
 ARG SERVICE_NAME

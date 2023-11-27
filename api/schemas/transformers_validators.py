@@ -2,9 +2,15 @@ from .overrides import Enum
 
 from typing import Union, Any, Type
 
+NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#]*$"
+
 
 def transform_email(email: str) -> str:
     return email.lower().strip() if isinstance(email, str) else email
+
+
+def int_to_string(value: int) -> str:
+    return str(value) if isinstance(value, int) else int
 
 
 def remove_whitespace(value: str) -> str:

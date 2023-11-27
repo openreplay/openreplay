@@ -144,8 +144,14 @@ function FilterAutoComplete(props: Props) {
     }, [value])
 
     const loadOptions = (inputValue: string, callback: (options: []) => void) => {
+        // remove underscore from params
+        const _params = Object.keys(params).reduce((acc: any, key: string) => {
+            acc[key] = params[key].replace(/^_/, '');
+            return acc;
+        }, {});
+
         new APIClient()
-            [method?.toLocaleLowerCase()](endpoint, { ...params, q: inputValue })
+            [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
             .then((response: any) => {
                     return response.json();
             })

@@ -138,7 +138,14 @@ export function createEventListener(
   capture?: boolean,
 ) {
   const safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
-  target[safeAddEventListener](event, cb, capture)
+  try {
+    target[safeAddEventListener](event, cb, capture)
+  } catch (e) {
+    console.debug(
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      `Openreplay: ${e.messages}; if this error is caused by an IframeObserver, ignore it`,
+    )
+  }
 }
 
 export function deleteEventListener(
@@ -150,7 +157,14 @@ export function deleteEventListener(
   const safeRemoveEventListener = ngSafeBrowserMethod(
     'removeEventListener',
   ) as 'removeEventListener'
-  target[safeRemoveEventListener](event, cb, capture)
+  try {
+    target[safeRemoveEventListener](event, cb, capture)
+  } catch (e) {
+    console.debug(
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      `Openreplay: ${e.messages}; if this error is caused by an IframeObserver, ignore it`,
+    )
+  }
 }
 
 /**

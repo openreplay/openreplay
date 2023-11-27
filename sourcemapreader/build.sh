@@ -8,7 +8,7 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 set -e
 
-image_name="sourcemaps-reader"
+image_name="sourcemapreader"
 
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
@@ -50,18 +50,18 @@ function build_api(){
       echo "Removing previous build cache"
       rm -rf ../${destination}
     }
-    cp -R ../sourcemap-reader ../${destination}
+    cp -R ../sourcemapreader ../${destination}
     cd ../${destination}
     cp -R ../assist/utils .
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp -rf ../ee/sourcemap-reader/* ./ || true # We share same codebase for ee/foss
+        cp -rf ../ee/sourcemapreader/* ./ || true # We share same codebase for ee/foss
         envarg="default-ee"
         tag="ee-"
     }
     docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
-    cd ../sourcemap-reader
+    cd ../sourcemapreader
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/${image_name}:${image_tag}

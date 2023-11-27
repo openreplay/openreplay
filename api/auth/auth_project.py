@@ -33,5 +33,6 @@ class ProjectAuthorizer:
         else:
             current_project = schemas.CurrentProjectContext(projectId=current_project["projectId"],
                                                             projectKey=current_project["projectKey"],
-                                                            platform=current_project["platform"])
+                                                            platform=current_project["platform"],
+                                                            name=current_project["name"])
             request.state.currentContext.project = current_project

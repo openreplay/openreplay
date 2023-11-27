@@ -50,7 +50,6 @@ spec:
               value: "{{ .Values.global.s3.region }}"
             - name: QW_S3_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
-              {{- end}}
             - name: AWS_ACCESS_KEY_ID
               value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY

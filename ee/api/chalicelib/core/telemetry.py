@@ -58,8 +58,9 @@ def compute():
                     (SELECT email FROM public.users WHERE role = 'owner' AND users.tenant_id=tenants.tenant_id LIMIT 1);"""
         )
         data = cur.fetchall()
-        requests.post('https://api.openreplay.com/os/telemetry',
-                      json={"stats": [process_data(d) for d in data]})
+        if len(data) > 0:
+            requests.post('https://api.openreplay.com/os/telemetry',
+                          json={"stats": [process_data(d) for d in data]})
 
 
 def new_client(tenant_id):

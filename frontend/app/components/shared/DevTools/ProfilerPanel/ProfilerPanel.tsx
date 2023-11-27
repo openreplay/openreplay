@@ -13,7 +13,7 @@ import { useRegExListFilterMemo } from '../useListFilter'
 const renderDuration = (p: any) => `${p.duration}ms`;
 const renderName = (p: any) => <TextEllipsis text={p.name} />;
 
-function ProfilerPanel() {
+function ProfilerPanel({ panelHeight }: { panelHeight: number }) {
   const { store } = React.useContext(PlayerContext)
   const { tabStates, currentTab } = store.get()
   const profiles = tabStates[currentTab].profilesList || [] as any[] // TODO lest internal types
@@ -26,7 +26,7 @@ function ProfilerPanel() {
     showModal(<ProfilerModal profile={profile} />, { right: true, width: 500 });
   };
   return (
-    <BottomBlock>
+    <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Profiler</span>
@@ -41,7 +41,7 @@ function ProfilerPanel() {
         />
       </BottomBlock.Header>
       <BottomBlock.Content>
-        <TimeTable rows={filtered} onRowClick={onRowClick} hoverable>
+        <TimeTable tableHeight={panelHeight - 40} rows={filtered} onRowClick={onRowClick} hoverable>
           {[
             {
               label: 'Name',

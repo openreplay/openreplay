@@ -144,7 +144,7 @@ export class VElement extends VParent<Element> {
 	parentNode: VParent | null = null /** Should be modified only by he parent itself */
 	private newAttributes: Map<string, string | false> = new Map()
 
-	constructor(readonly tagName: string, readonly isSVG = false) { super() }
+	constructor(readonly tagName: string, readonly isSVG = false, public readonly index: number) { super() }
 	protected createNode() {
 		try {
 			return this.isSVG

@@ -236,6 +236,10 @@ export default class MessageManager {
     }
   }
 
+  public getNode(id: number) {
+    return this.tabs[this.activeTab]?.getNode(id);
+  }
+
   public changeTab(tabId: string) {
     this.activeTab = tabId;
     this.state.update({ currentTab: tabId });

@@ -127,6 +127,9 @@ minio:
     requests:
       cpu: 100m
       memory: 128Mi
+  persistence:
+    enabled: true
+    size: 5Gi
 
 kafka:
   image:

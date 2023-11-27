@@ -10,11 +10,13 @@ docker rmi alpine || true
 
 # Signing image
 # cosign sign --key awskms:///alias/openreplay-container-sign image_url:tag
+[[ -z $CI ]] && {
 export COSIGN_YES=true # Skip confirmation
 export SIGN_IMAGE=1
 export PUSH_IMAGE=1
 export AWS_DEFAULT_REGION="eu-central-1"
 export SIGN_KEY="awskms:///alias/openreplay-container-sign"
+}
 
 echo $DOCKER_REPO
 [[ -z $DOCKER_REPO ]] && {
@@ -32,7 +34,7 @@ echo $DOCKER_REPO
     bash build.sh $@
     cd ../frontend
     bash build.sh $@
-    cd ../sourcemap-reader
+    cd ../sourcemapreader
     bash build.sh $@
     cd ../api
     bash build.sh $@
