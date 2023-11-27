@@ -38,10 +38,12 @@ chalice:
   resources:
     requests:
       cpu: 50m
-  affinity:
-    podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      podAffinityTerm:
+        labelSelector:
           matchExpressions:
           - key: app.kubernetes.io/name
             operator: In
@@ -78,18 +80,21 @@ imagestorage:
       cpu: 50m
   affinity:
     podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app.kubernetes.io/name
-            operator: In
-            values:
-            - sink
-            - storage
-            - chalice
-            - imagestorage
-            - videostorage
-        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sink
+              - storage
+              - chalice
+              - imagestorage
+              - videostorage
+          topologyKey: kubernetes.io/hostname
+
 ingress-nginx:
   resources:
     requests:
@@ -112,18 +117,20 @@ sink:
       cpu: 50m
   affinity:
     podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app.kubernetes.io/name
-            operator: In
-            values:
-            - sink
-            - storage
-            - chalice
-            - imagestorage
-            - videostorage
-        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sink
+              - storage
+              - chalice
+              - imagestorage
+              - videostorage
+          topologyKey: kubernetes.io/hostname
 sourcemapreader:
   resources:
     requests:
@@ -134,18 +141,20 @@ storage:
       cpu: 50m
   affinity:
     podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app.kubernetes.io/name
-            operator: In
-            values:
-            - sink
-            - storage
-            - chalice
-            - imagestorage
-            - videostorage
-        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sink
+              - storage
+              - chalice
+              - imagestorage
+              - videostorage
+          topologyKey: kubernetes.io/hostname
 utilities:
   resources:
     requests:
@@ -156,15 +165,18 @@ videostorage:
       cpu: 50m
   affinity:
     podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app.kubernetes.io/name
-            operator: In
-            values:
-            - sink
-            - storage
-            - chalice
-            - imagestorage
-            - videostorage
-        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sink
+              - storage
+              - chalice
+              - imagestorage
+              - videostorage
+          topologyKey: kubernetes.io/hostname
+
