@@ -1,5 +1,5 @@
 # Keep this version to not have conflicts between requests and boto3
-urllib3==1.26.16
+urllib3==1.26.18
 requests==2.31.0
 boto3==1.29.0
 pyjwt==2.8.0
@@ -16,3 +16,4 @@ pydantic[email]==2.3.0
 apscheduler==3.10.4
 
 redis==5.0.1
+pydantic>=2.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
