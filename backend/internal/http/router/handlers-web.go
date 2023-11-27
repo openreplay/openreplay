@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/uxtesting"
 	"strconv"
 	"time"
 
@@ -363,4 +365,126 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		Flags: computedFlags,
 	}
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Get taskID
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	// Get task info
+	info, err := e.services.UXTesting.GetInfo(id)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	type TaskInfoResponse struct {
+		Task *uxtesting.UXTestInfo `json:"test"`
+	}
+	ResponseWithJSON(w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &uxtesting.TestSignal{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	req.SessionID = sessionData.ID
+
+	// Save test signal
+	if err := e.services.UXTesting.SetTestSignal(req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &uxtesting.TaskSignal{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	req.SessionID = sessionData.ID
+
+	// Save test signal
+	if err := e.services.UXTesting.SetTaskSignal(req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	key := fmt.Sprintf("%d/ux_webcam_record.mp4", sessionData.ID)
+	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	type UrlResponse struct {
+		URL string `json:"url"`
+	}
+	ResponseWithJSON(w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
 }

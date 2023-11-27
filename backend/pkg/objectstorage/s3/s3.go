@@ -194,6 +194,18 @@ func (s *storageImpl) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) 
 	return keyList, nil
 }
 
+func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
+	req, _ := s.svc.PutObjectRequest(&s3.PutObjectInput{
+		Bucket: aws.String(*s.bucket),
+		Key:    aws.String(key),
+	})
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return "", err
+	}
+	return urlStr, nil
+}
+
 func loadFileTag() string {
 	// Load file tag from env
 	key := "retention"
