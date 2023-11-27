@@ -83,7 +83,7 @@ jobs:
       id: lb-ip
       run: |
         # LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-        LB_IP=$(kubectl get ing global-ingress -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
         echo "::set-output name=ip::$LB_IP"
 
     - name: Create vCluster
