@@ -206,24 +206,21 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         env: ${{ github.event.inputs.env_flavour }}
       run: |
+        set -x
 
         app_name=${{github.event.inputs.build_service}}
         echo "building and deploying $app_name"
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
         export KUBECONFIG=/tmp/kubeconfig.yaml
 
-        # Creating folder app association for different app:folder combo
-        # echo "${folder_to_app[app_name]}"
-        declare -A folder_to_app
-        folder_to_app["api"]="chalice"
-
         function build_and_deploy {
-          case $1 in
+          apps_to_build=$1
+          case $apps_to_build in
             backend*)
               echo "Building backend build"
-              cd backend
+              cd $GITHUB_WORKSPACE/backend
               components=()
-              if [ $app_name == "all" ]; then
+              if [ $apps_to_build == "backend:all" ]; then
                 # Append all folder names from 'cmd/' directory to the array
                 for folder in cmd/*/; do
                   # Use basename to extract the folder name without path
@@ -231,8 +228,8 @@ jobs:
                   components+=("$folder_name")
                 done
               else
-                # "${app_name#*:}" :: Strip backend: and output app1,app2,app3 to read -ra
-                IFS=',' read -ra components <<< "${app_name#*:}"
+                # "${apps_to_build#*:}" :: Strip backend: and output app1,app2,app3 to read -ra
+                IFS=',' read -ra components <<< "${apps_to_build#*:}"
               fi
               echo "Building components: " ${components[@]}
               for component in "${components[@]}"; do
@@ -247,27 +244,27 @@ jobs:
               ;;
             chalice)
               echo "Chalice build"
-              component=$app_name
-              cd api || (Nothing to build: $app_name; exit 100)
+              component=$apps_to_build
+              cd $GITHUB_WORKSPACE/api || (Nothing to build: $apps_to_build; exit 100)
               if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
                 echo Image present upstream. Skipping build: $component
               else
                 echo "Building backend:$component"
                 PUSH_IMAGE=1 bash -x ./build.sh $env $component
               fi
-              kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
+              kubectl set image -n app deployment/$apps_to_build-openreplay $apps_to_build=${DOCKER_REPO}/$apps_to_build:${IMAGE_TAG}
               ;;
             *)
-              echo "$app_name build"
-              cd $app_name || (Nothing to build: $app_name; exit 100)
-              component=$app_name
+              echo "$apps_to_build build"
+              cd $GITHUB_WORKSPACE/$apps_to_build || (Nothing to build: $apps_to_build; exit 100)
+              component=$apps_to_build
               if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
                 echo Image present upstream. Skipping build: $component
               else
                 echo "Building backend:$component"
                 PUSH_IMAGE=1 bash -x ./build.sh $env $component
               fi
-              kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
+              kubectl set image -n app deployment/$apps_to_build-openreplay $apps_to_build=${DOCKER_REPO}/$apps_to_build:${IMAGE_TAG}
               ;;
           esac
         }
