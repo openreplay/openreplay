@@ -192,14 +192,24 @@ export function formatByteSize(bytes: number) {
   return `${bytes}B`
 }
 
-export const getURL = (urlString: string) => {
-  if (urlString.startsWith('//')) {
-    const baseUrl = new URL(window.location.href)
-    urlString = `${baseUrl.protocol}${urlString}`
+export getURL = (urlString: string | URL) => {
+
+  if (!urlString) {
+    urlString = ''
   }
+  
+  if (urlString instanceof URL) {
+    return urlString;
+  }
+
+  if (urlString.startsWith('//')) {
+    const baseUrl = new URL(window.location.href);
+    urlString = `${baseUrl.protocol}${urlString}`;
+  }
+
   if (urlString.startsWith('http')) {
-    return new URL(urlString)
+    return new URL(urlString);
   } else {
-    return new URL(urlString, window.location.href)
+    return new URL(urlString, window.location.href);
   }
 }
