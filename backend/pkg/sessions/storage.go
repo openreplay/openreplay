@@ -39,7 +39,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			rev_id, 
 			tracker_version, issue_score,
 			platform,
-			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
+			user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
 			user_id, user_state, user_city, timezone
 		) VALUES (
 			$1, $2, $3,
