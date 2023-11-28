@@ -193,7 +193,7 @@ def send_to_msteams_batch(notifications_list):
         webhookId_map[n.get("destination")]["batch"].append(
             {
                 "activityTitle": n["notification"]["title"],
-                "activitySubtitle": f"On Project *{n['projectName']}*",
+                "activitySubtitle": f"On Project *{n['notification']['projectName']}*",
                 "facts": [
                     {
                         "name": "Target:",
