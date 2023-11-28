@@ -1,6 +1,6 @@
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas
+    sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas, user_testing
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
@@ -140,6 +140,12 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     context=context, check_existence=False)
                     data['canvasURL'] = canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
+                    if user_testing.has_test_signals(session_id=session_id, project_id=project_id):
+                        data['utxVideo'] = user_testing.get_ux_webcam_signed_url(session_id=session_id,
+                                                                                 project_id=project_id,
+                                                                                 check_existence=False)
+                    else:
+                        data['utxVideo'] = []
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['live'] = live and assist.is_live(project_id=project_id, session_id=session_id,
