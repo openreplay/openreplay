@@ -1,0 +1,86 @@
+name: PR-Env-Delete
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_origin_url:
+        description: |
+          URL of the origin of the PR env to be deleted. Example: https://pr-1717-ee.openreplay.tools
+        required: true
+
+jobs:
+  create-vcluster-pr:
+    runs-on: ubuntu-latest
+    env:
+      build_service: ${{ github.event.inputs.build_service }}
+      env_flavour: ${{ github.event.inputs.env_flavour }}
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.OR_PR_AWS_DEFAULT_REGION}}
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+    - name: Install vCluster CLI
+      run: |
+        # Replace with the command to install vCluster CLI
+        curl -s -L "https://github.com/loft-sh/vcluster/releases/download/v0.16.4/vcluster-linux-amd64" -o /usr/local/bin/vcluster
+        chmod +x /usr/local/bin/vcluster
+    - name: Deleting vcluster
+      run: |
+        url=${{ github.event.inputs.env_origin_url }}
+        # Remove the protocol part of the URL
+        url_no_protocol=${url#*//}
+
+        # Extract the subdomain and domain
+        subdomain=$(echo $url_no_protocol | cut -d"." -f1)
+        domain=$(echo $url_no_protocol | cut -d"." -f2-)
+        echo "subdomain=$subdomain" >> $GITHUB_ENV
+        echo "domain=$domain" >> $GITHUB_ENV
+        vcluster delete -n $subdomain-vcluster $subdomain-vcluster
+        echo $subdomain $domain
+    - name: Get LoadBalancer IP
+      id: lb-ip
+      run: |
+        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        echo "::set-output name=ip::$LB_IP"
+    - name: Delete dns record
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.OR_PR_AWS_DEFAULT_REGION }}
+      run: |
+        DOMAIN_NAME_1=$subdomain.$domain
+        DOMAIN_NAME_2=$subdomain-vcluster.$domain
+
+        cat <<EOF > route53-changes.json
+        {
+          "Comment": "Create record set for VCluster",
+          "Changes": [
+            {
+              "Action": "DELETE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_1",
+                "Type": "CNAME",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            },
+            {
+              "Action": "DELETE",
+              "ResourceRecordSet": {
+                "Name": "$DOMAIN_NAME_2",
+                "Type": "CNAME",
+                "TTL": 300,
+                "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
+              }
+            }
+          ]
+        }
+        EOF
+        aws route53 change-resource-record-sets --hosted-zone-id ${{ secrets.OR_PR_HOSTED_ZONE_ID }} --change-batch file://route53-changes.json
