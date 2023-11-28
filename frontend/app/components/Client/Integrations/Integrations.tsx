@@ -181,7 +181,7 @@ const integrations = [
       },
       {
         title: 'MS Teams',
-        subtitle: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        subtitle: 'Integrate MS Teams to enable all users in your organization to share sessions directly to any MS Teams channel.',
         slug: 'msteams',
         category: 'Errors',
         icon: 'integrations/teams',
