@@ -6,13 +6,13 @@ on:
       build_service:
         description: |
           Name of a single service to build(in small letters), eg: api or frontend etc. backend:sevice-name to build service.  
-          Options: all/service-name/backend:{app1/app1,app2,app3/all}
-        required: true
-        default: 'frontend'
+          If what ever image is not built, it'll be deployed from latest release.
+          Options: none/all/service-name/backend:{app1/app1,app2,app3/all}
+        required: false
+        default: none
       env_flavour:
         description: 'Which env to build. Values: foss/ee'
         required: false
-        default: 'foss'
 
 jobs:
   create-vcluster-pr:
@@ -276,6 +276,9 @@ jobs:
             build_and_deploy "chalice"
             build_and_deploy "sourcemapreader"
             build_and_deploy "assist-stats"
+            ;;
+          none)
+            echo "Nothing to build"
             ;;
           *)
             build_and_deploy $app_name
