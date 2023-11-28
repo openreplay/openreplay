@@ -71,6 +71,8 @@ spec:
               {{- end }}
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
+            - name: AWS_ENDPOINT
+              value: '{{ .Values.global.s3.endpoint }}'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: KAFKA_SERVERS
