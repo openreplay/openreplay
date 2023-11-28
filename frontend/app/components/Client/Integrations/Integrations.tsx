@@ -285,7 +285,7 @@ const integrations = [
       },
       {
         title: 'MS Teams',
-        subtitle: 'Integrate MS Teams to enable all users in your organization to share sessions directly to any MS Teams channel.',
+        subtitle: 'Integrate MS Teams to empower every user in your org with the ability to send sessions to any MS Teams channel.',
         slug: 'msteams',
         category: 'Errors',
         icon: 'integrations/teams',
