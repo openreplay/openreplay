@@ -63,9 +63,9 @@ export default class Recorder {
 
   async sendToAPI() {
     const blob = await this.stopRecording()
-    const formData = new FormData()
-    formData.append('file', blob, 'record.webm')
-    formData.append('start', this.recStartTs?.toString() ?? '')
+    // const formData = new FormData()
+    // formData.append('file', blob, 'record.webm')
+    // formData.append('start', this.recStartTs?.toString() ?? '')
 
     return fetch(`${this.app.options.ingestPoint}/v1/web/uxt/upload-url`, {
       headers: {
@@ -81,8 +81,11 @@ export default class Recorder {
       })
       .then(({ url }) => {
         return fetch(url, {
-          method: 'POST',
-          body: formData,
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'video/webm',
+          },
+          body: blob,
         })
       })
       .catch(console.error)
