@@ -238,7 +238,7 @@ def generate_notification(alert, result):
         "alertId": alert["alertId"],
         "tenantId": alert["tenantId"],
         "title": alert["name"],
-        "description": f"has been triggered, {alert['seriesName']} = {left} ({alert['query']['operator']} {right}).",
+        "description": f"{alert['seriesName']} = {left} ({alert['query']['operator']} {right}).",
         "buttonText": "Check metrics for more details",
         "buttonUrl": f"/{alert['projectId']}/metrics",
         "imageUrl": None,
