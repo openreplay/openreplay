@@ -1,0 +1,40 @@
+name: PR-Env-Delete
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_origin_url:
+        description: |
+          URL of the origin of the PR env to be deleted. Example: https://pr-1717-ee.openreplay.tools
+        required: true
+
+jobs:
+  create-vcluster-pr:
+    runs-on: ubuntu-latest
+    env:
+      build_service: ${{ github.event.inputs.build_service }}
+      env_flavour: ${{ github.event.inputs.env_flavour }}
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.OR_PR_AWS_DEFAULT_REGION}}
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.PR_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+    - name: Install vCluster CLI
+      run: |
+        # Replace with the command to install vCluster CLI
+        curl -s -L "https://github.com/loft-sh/vcluster/releases/download/v0.16.4/vcluster-linux-amd64" -o /usr/local/bin/vcluster
+        chmod +x /usr/local/bin/vcluster
+    - name: Setting up env variables
+      run: |
+        url=${{ github.event.inputs.env_origin_url }}
+        subdomain=${url#*//}   # Remove protocol
+        subdomain=${subdomain%%.*}  # Get the subdomain part
+        vcluster delete -n $subdomain-vcluster $subdomain-vcluster
+        echo $subdomain
