@@ -39,7 +39,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			rev_id, 
 			tracker_version, issue_score,
 			platform,
-			user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
+			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
 			user_id, user_state, user_city, timezone
 		) VALUES (
 			$1, $2, $3,
@@ -48,8 +48,8 @@ func (s *storageImpl) Add(sess *Session) error {
 			NULLIF($10, ''), 
 			$11, $12,
 			$13,
-			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, 0), NULLIF($17, 0::bigint),
-			NULLIF(LEFT($18, 8000), ''), NULLIF($19, ''), NULLIF($20, ''), $21
+			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
+			NULLIF(LEFT($19, 8000), ''), NULLIF($20, ''), NULLIF($21, ''), $22
 		)`,
 		sess.SessionID, sess.ProjectID, sess.Timestamp,
 		sess.UserUUID, sess.UserDevice, sess.UserDeviceType, sess.UserCountry,
@@ -57,7 +57,7 @@ func (s *storageImpl) Add(sess *Session) error {
 		sess.RevID,
 		sess.TrackerVersion, sess.Timestamp/1000,
 		sess.Platform,
-		sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
+		sess.UserAgent, sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
 		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone,
 	)
 }

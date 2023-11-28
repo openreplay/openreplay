@@ -482,7 +482,7 @@ func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := fmt.Sprintf("%d/ux_webcam_record.mp4", sessionData.ID)
+	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
 	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -565,4 +565,3 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 	}
 	ResponseOK(w, startTime, r.URL.Path, 0)
 }
-
