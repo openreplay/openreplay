@@ -1,5 +1,6 @@
+import UtxEvent from "Components/Session_/EventsBlock/UtxEvent";
 import React from 'react';
-import cn from 'classnames';
+import { durationFromMsFormatted } from "App/date";
 import { connect } from 'react-redux';
 import { TextEllipsis, Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
@@ -61,25 +62,70 @@ class EventGroupWrapper extends React.Component {
       filterOutNote
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
+    const isUtxEvent = event.type === TYPES.UTX_EVENT;
 
     const whiteBg =
       (isLastInGroup && event.type !== TYPES.LOCATION) ||
       (!isLastEvent && event.type !== TYPES.LOCATION);
     const safeRef = String(event.referrer || '');
 
+    const returnEvt = () => {
+      if (isUtxEvent) {
+        return (
+          <UtxEvent event={event} />
+        )
+      }
+      if (isNote) {
+        return (
+          <NoteEvent
+            note={event}
+            filterOutNote={filterOutNote}
+            onEdit={this.props.setEditNoteTooltip}
+            noEdit={this.props.currentUserId !== event.userId}
+          />
+        )
+      }
+      if (isLocation) {
+        return (
+          <Event
+            extended={isFirst}
+            key={event.key}
+            event={event}
+            onClick={this.onEventClick}
+            selected={isSelected}
+            showLoadInfo={showLoadInfo}
+            toggleLoadInfo={this.toggleLoadInfo}
+            isCurrent={isCurrent}
+            presentInSearch={presentInSearch}
+            isLastInGroup={isLastInGroup}
+            whiteBg={true}
+          />
+        )
+      }
+      if (isTabChange) {
+        return (
+          <TabChange onClick={this.onEventClick} from={event.fromTab} to={event.toTab} activeUrl={event.activeUrl} />
+        )
+      }
+      return (
+        <Event
+          key={event.key}
+          event={event}
+          onClick={this.onEventClick}
+          onCheckboxClick={this.onCheckboxClick}
+          selected={isSelected}
+          isCurrent={isCurrent}
+          showSelection={showSelection}
+          overlayed={isEditing}
+          presentInSearch={presentInSearch}
+          isLastInGroup={isLastInGroup}
+          whiteBg={whiteBg}
+        />
+      )
+    }
     return (
       <>
-        <div
-          className={cn(
-            {
-              // [stl.last]: isLastInGroup,
-              // [stl.first]: event.type === TYPES.LOCATION,
-              // [stl.dashAfter]: isLastInGroup && !isLastEvent
-            },
-            // isLastInGroup && '!pb-2',
-            // event.type === TYPES.LOCATION && '!pb-2'
-          )}
-        >
+        <div>
           {isFirst && isLocation && event.referrer && (
             <TextEllipsis>
               <div className={stl.referrer}>
@@ -87,42 +133,7 @@ class EventGroupWrapper extends React.Component {
               </div>
             </TextEllipsis>
           )}
-          {isNote ? (
-            <NoteEvent
-              note={event}
-              filterOutNote={filterOutNote}
-              onEdit={this.props.setEditNoteTooltip}
-              noEdit={this.props.currentUserId !== event.userId}
-            />
-          ) : isLocation ? (
-            <Event
-              extended={isFirst}
-              key={event.key}
-              event={event}
-              onClick={this.onEventClick}
-              selected={isSelected}
-              showLoadInfo={showLoadInfo}
-              toggleLoadInfo={this.toggleLoadInfo}
-              isCurrent={isCurrent}
-              presentInSearch={presentInSearch}
-              isLastInGroup={isLastInGroup}
-              whiteBg={true}
-            />
-          ) : isTabChange ? (<TabChange onClick={this.onEventClick} from={event.fromTab} to={event.toTab} activeUrl={event.activeUrl} />) : (
-            <Event
-              key={event.key}
-              event={event}
-              onClick={this.onEventClick}
-              onCheckboxClick={this.onCheckboxClick}
-              selected={isSelected}
-              isCurrent={isCurrent}
-              showSelection={showSelection}
-              overlayed={isEditing}
-              presentInSearch={presentInSearch}
-              isLastInGroup={isLastInGroup}
-              whiteBg={whiteBg}
-            />
-          )}
+          {returnEvt()}
         </div>
         {(isLastInGroup && !isTabChange) && <div className='border-color-gray-light-shade' />}
       </>

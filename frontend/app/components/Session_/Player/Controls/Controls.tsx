@@ -1,3 +1,4 @@
+import { useStore } from "App/mstore";
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
@@ -61,7 +62,8 @@ function getStorageName(type: any) {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
-
+  const { uxtestingStore } = useStore();
+  
   const {
     playing,
     completed,
@@ -140,6 +142,9 @@ function Controls(props: any) {
 
   const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
 
+  const queryParams = new URLSearchParams(document.location.search);
+  const isUtx = queryParams.has('utx');
+
   return (
     <div className={styles.controls}>
       <Timeline />
@@ -170,12 +175,14 @@ function Controls(props: any) {
           </div>
 
           <div className="flex items-center h-full">
-            <DevtoolsButtons
-              showStorageRedux={showStorageRedux}
-              toggleBottomTools={toggleBottomTools}
-              bottomBlock={bottomBlock}
-              disabled={disabled}
-            />
+            {uxtestingStore.hideDevtools && isUtx ? null :
+              <DevtoolsButtons
+                showStorageRedux={showStorageRedux}
+                toggleBottomTools={toggleBottomTools}
+                bottomBlock={bottomBlock}
+                disabled={disabled}
+              />
+            }
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
                 size={16}

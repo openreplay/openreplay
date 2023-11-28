@@ -40,9 +40,14 @@ export default class UxtestingStore {
   taskStats: TaskStats[] = [];
   isLoading: boolean = false;
   responses: Record<number, { list: Response[]; total: number }> = {};
+  hideDevtools: boolean = localStorage.getItem('or_devtools_utx_toggle') === '1';
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setHideDevtools(hide: boolean) {
+    this.hideDevtools = hide;
   }
 
   setLoading(loading: boolean) {

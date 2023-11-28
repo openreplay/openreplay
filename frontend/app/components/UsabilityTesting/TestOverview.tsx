@@ -326,7 +326,7 @@ function TestOverview() {
             <NoContent show={uxtestingStore.testSessions.length == 0} title="No data">
               {uxtestingStore.testSessions.map((session) => (
                 // @ts-ignore
-                <SessionItem session={session} />
+                <SessionItem session={session} query={'?utx=true'} />
               ))}
             </NoContent>
           </Loader>

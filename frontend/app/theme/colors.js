@@ -46,6 +46,7 @@ module.exports = {
     'transparent': 'transparent',
   },
   transparent: 'transparent',
+  cyan: '#EBF4F5',
 
   // actual theme colors - use this for new components
   figmaColors: {
