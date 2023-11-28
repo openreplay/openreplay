@@ -97,7 +97,7 @@ class Completion:
         self.response_keys = ['id', 'object', 'created', 'model', 'choices', 'usage']
         self.max_tokens = 16384
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
-        self.message_history = list()
+        self.message_history_alive: dict[int, List] = dict()
         # 'id': {model}-{id}
         # 'object': method (text-completion)
         # 'created': timestamp
@@ -110,17 +110,20 @@ class Completion:
         #       finish_reason
         # 'usage'
 
-    def update_message_history(self, message: str, role: str = 'user', raw: bool = False):
+    def update_message_history(self, message: str, key_id: int, role: str = 'user', raw: bool = False):
+        if key_id not in self.message_history_alive.keys():
+            self.message_history_alive[key_id] = list()
+        message_history = self.message_history_alive[key_id]
         if raw:
-            self.message_history.append({
+            message_history.append({
                 'role': role,
                 'content': message
                 })
-        elif self.message_history:
+        elif message_history:
             formated = session_summary_base_prompt_long.format(
                 event_list_json=message
                 )
-            self.message_history.append({
+            message_history.append({
                 'role': role,
                 'content': formated
             })
@@ -128,22 +131,22 @@ class Completion:
             formated = session_summary_base_prompt.format(
                     event_list_json=message
                     )
-            self.message_history.append({
+            message_history.append({
                 'role': role,
                 'content': formated
             })
 
 
-    def reset_message_history(self):
-        self.message_history = list()
+    def reset_message_history(self, key_id: int):
+        del self.message_history_alive[key_id]
 
 
-    def process_large_input(self, long_prompt: List[dict], filter_response: bool = True, context: str = '', raw: bool = True):
+    def process_large_input(self, long_prompt: List[dict], key_id: int, filter_response: bool = True, context: str = '', raw: bool = True):
         splited_prompt = self.split_long_event_list(long_prompt)
         phrase = ''
         valid = False
         for sub_prompt in splited_prompt:
-            for word in self.send_stream_request(str(sub_prompt), filter_response=filter_response, context=context):
+            for word in self.send_stream_request(str(sub_prompt), key_id=key_id, filter_response=filter_response, context=context):
                 if raw:
                     yield word
                     continue
@@ -159,29 +162,30 @@ class Completion:
                     phrase += word
                 else:
                     continue
-        self.reset_message_history()
+        self.reset_message_history(key_id=key_id)
 
-    def send_stream_request(self, message: str, filter_response: bool = True, context: str = ''):
-        self.update_message_history(message, raw=False)
+    def send_stream_request(self, message: str, key_id: int, filter_response: bool = True, context: str = ''):
+        self.update_message_history(message, key_id=key_id, raw=False)
+        message_history = self.message_history_alive[key_id]
         response = openai.ChatCompletion.create(
                 api_base = LLM_ENDPOINT,
                 api_key= LLM_API_KEY,
                 model = "codellama/CodeLlama-34b-Instruct-hf",
-                messages = [{'role': 'system', 'content': context if context else summary_context}] + self.message_history[-2:] if len(self.message_history) > 1 else self.message_history,
+                messages = [{'role': 'system', 'content': context if context else summary_context}] + message_history[-2:] if len(message_history) > 1 else message_history,
                 stream = True,
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS
                 )
-        self.message_history.pop()
+        message_history.pop()
         words = ''
         for tok in response: 
             delta = tok.choices[0].delta
             if not delta: # End token 
                 if filter_response:
-                    self.message_history.append({'role': 'assistant',
+                    message_history.append({'role': 'assistant',
                                                  'content': process_llm_response(words)})
                 else:
-                                                self.message_history.append({'role': 'assistant',
+                                                message_history.append({'role': 'assistant',
                                                                              'content': words})
                 break
             elif 'content' in delta:

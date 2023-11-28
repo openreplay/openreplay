@@ -6,13 +6,14 @@ from utils.declarations import EventList
 LLM_Completion = Completion(LLM_URL)
 
 
-def summarize_stream(sessionId: int, projectId: int, event_list: EventList):
+def summarize_stream(sessionId: int, projectId: int, key_id: int, event_list: EventList):
     params = {}
     if event_list.limitEvents:
         click_events, _errors, _issues = split_events_selection_filter(event_list, max_click_events=event_list.maxClickEvents, max_page_events=event_list.maxPageEvents)
     else:
         click_events, _errors, _issues = split_events_selection(event_list)
     completion_stream = LLM_Completion.process_large_input(click_events,
+                                                           key_id=key_id,
                                                            filter_response=event_list.filter,
                                                            # context=event_list.context,
                                                            raw=event_list.raw)
