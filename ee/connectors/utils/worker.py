@@ -151,7 +151,7 @@ class ProjectFilter:
 def read_from_kafka(pipe: Connection, params: dict):
     global UPLOAD_RATE, max_kafka_read
     # try:
-    asyncio.run(pg_client.init())
+    # asyncio.run(pg_client.init())
     kafka_consumer = init_consumer()
     project_filter = params['project_filter']
     capture_messages = list()
@@ -207,7 +207,7 @@ def read_from_kafka(pipe: Connection, params: dict):
     print('[WORKER INFO] Closing consumer')
     close_consumer(kafka_consumer)
     print('[WORKER INFO] Closing pg connection')
-    asyncio.run(pg_client.terminate())
+    # asyncio.run(pg_client.terminate())
     print('[WORKER INFO] Successfully closed reader task')
     # except Exception as e:
     #     print('[WARN]', repr(e))
@@ -223,12 +223,12 @@ def into_batch(batch: list[Event | DetailedEvent], session_id: int, n: Session):
 
 def project_from_session(sessionId: int):
     """Search projectId of requested sessionId in PG table sessions"""
-    with pg_client.PostgresClient() as conn:
-        conn.execute(
+    with pg_client.PostgresClient().get_live_session() as conn:
+        cur = conn.execute(
             conn.mogrify("SELECT project_id FROM sessions WHERE session_id=%(sessionId)s LIMIT 1",
                          {'sessionId': sessionId})
         )
-        res = conn.fetchone()
+        res = cur.fetchone()
     if res is None:
         print(f'[WORKER WARN] sessionid {sessionId} not found in sessions table')
         return None
@@ -241,13 +241,13 @@ def project_from_sessions(sessionIds: list[int]):
     while sessionIds:
         sessIds = sessionIds[-1000:]
         try:
-            with pg_client.PostgresClient() as conn:
-                conn.execute(
+            with pg_client.PostgresClient().get_live_session() as conn:
+                cur = conn.execute(
                     "SELECT session_id, project_id FROM sessions WHERE session_id IN ({sessionIds})".format(
                                  sessionIds=','.join([str(sessId) for sessId in sessIds])
                     )
                 )
-                res = conn.fetchall()
+                res = cur.fetchall()
         except Exception as e:
             print('[WORKER project_from_sessions]', repr(e))
             raise e
@@ -320,16 +320,16 @@ def fix_missing_redshift():
         return
     # logging.info(f'[FILL INFO] {len(res)} length response')
     sessionids = list(map(lambda k: str(k), res['sessionid']))
-    asyncio.run(pg_client.init())
+    # asyncio.run(pg_client.init())
     try:
-        with pg_client.PostgresClient() as conn:
-            conn.execute('SELECT session_id, user_id FROM sessions WHERE session_id IN ({session_id_list})'.format(
+        with pg_client.PostgresClient().get_live_session() as conn:
+            cur = conn.execute('SELECT session_id, user_id FROM sessions WHERE session_id IN ({session_id_list})'.format(
                 session_id_list=','.join(sessionids))
             )
-            pg_res = conn.fetchall()
+            pg_res = cur.fetchall()
     except Exception as e:
         #logging.error(f'[ERROR] Error while selecting from pg: {repr(e)}')
-        asyncio.run(pg_client.terminate())
+        # asyncio.run(pg_client.terminate())
         return
     logging.info(f'response from pg, length {len(pg_res)}')
     df = pd.DataFrame(pg_res)
@@ -350,7 +350,7 @@ def fix_missing_redshift():
     if len(all_ids) == 0:
         logging.info('[FILL INFO] No ids obtained')
         database_api.close()
-        asyncio.run(pg_client.terminate())
+        # asyncio.run(pg_client.terminate())
         return
     # logging.info(f'[FILL INFO] {base_query}')
     try:
@@ -359,11 +359,11 @@ def fix_missing_redshift():
         logging.error(f'[ERROR] Error while executing query. {repr(e)}')
         logging.error(f'[ERROR INFO] query: {base_query}')
         database_api.close()
-        asyncio.run(pg_client.terminate())
+        # asyncio.run(pg_client.terminate())
         return
     logging.info(f'[FILL-INFO] {time() - t} - for {len(sessionids)} elements')
     database_api.close()
-    asyncio.run(pg_client.terminate())
+    # asyncio.run(pg_client.terminate())
     return
 
 
