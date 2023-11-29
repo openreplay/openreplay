@@ -1,7 +1,7 @@
 import json
 import secrets
 from typing import Optional
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import pytest
 from decouple import config
@@ -76,7 +76,7 @@ async def view_public_reset_password_link(*_):
     return 200, [(b"content-type", "application/javascript")], out
 
 
-async def _query_authentication_set_new_invitation(txn, user_id, invitation_token):
+async def _query_authentication_set_new_invitation(cnx, user_id, invitation_token):
     sql = """
     UPDATE public.basic_authentication
     SET invitation_token = %(invitation_token)s,
@@ -85,7 +85,7 @@ async def _query_authentication_set_new_invitation(txn, user_id, invitation_toke
         change_pwd_token = NULL
     WHERE user_id=%(user_id)s
     """
-    await txn.execute(query, user_id, invitation_token)
+    await cnx.execute(sql, dict(user_id=user_id, invitation_token=invitation_token))
 
 
 def _format_invitation_link(token):
@@ -94,29 +94,29 @@ def _format_invitation_link(token):
     )
 
 
-async def _query_user_by_email_exists(txn, email):
+async def _query_user_by_email_exists(cnx, email):
     sql = """
     SELECT users.user_id
     FROM public.users
     WHERE users.email = %(email)s AND users.deleted_at IS NULL
     """
-    rows = await txn.execute(sql, dict(email=email))
+    rows = await cnx.execute(sql, dict(email=email))
     row = await rows.fetchone()
-    return row[id] if row else None
+    return row["user_id"] if row else None
 
 
 async def _task_reset_password_link(email):
-    async with orpy.txn() as txn:
-        user_id = await _query_user_by_email_exists(txn, email)
+    async with orpy.cnx() as cnx:
+        user_id = await _query_user_by_email_exists(cnx, email)
         if user_id is None:
             # There is no user with the given email, bail out.
             return False
         # TODO: document magic number 64
         token = secrets.token_urlsafe(64)
-        await _query_authentication_set_new_invitation(txn, user_id, token)
+        await _query_authentication_set_new_invitation(cnx, user_id, token)
 
     invitation_link = _format_invitation_link(token)
-    body = await jinja(
+    body = await orpy.jinja(
         "account/reset-password.html",
         dict(invitation_link=invitation_link),
     )
@@ -133,25 +133,26 @@ async def test_task_reset_password_link_unknown_email():
 
 
 @pytest.mark.asyncio
-async def _test_task_reset_password_link_known(email_send):
+async def test_task_reset_password_link_known():
     await orpy.orpy({"type": "lifespan"}, None, None)
+
+    await orpy.__danger_supervisor_database_scratch()
+
     orpy.context.set(orpy.Context(orpy.application.get(), None, None, None))
-    # TODO: create database schema
-    email_send = patch("orpy.base.email_send")
 
-    async with orpy._app_txn() as txn:
-        sql = """
-        INSERT INTO users
-        VALUES ("mehdi@openreplay.com", "user", "Mehdi"
-        """
-        txn.execute(sql)
+    with patch("orpy.base.email_send", new=AsyncMock()) as email_send:
 
-    assert _task_reset_password_link("mehdi@openreplay.com")
-    breakpoint()
-    assert email_send.call_args
-    subject, email, body = email_send.call_args
-    assert subject == "Password recovery"
-    assert email == "mehdi@openreplay.com"
-    assert body is not None
+        async with orpy._test_cnx() as cnx:
+            sql = """
+            INSERT INTO users (email, role, name)
+            VALUES ('mehdi@openreplay.com', 'member', 'Mehdi')
+            """
+            await cnx.execute(sql)
+
+        assert await _task_reset_password_link("mehdi@openreplay.com")
+        assert email_send.await_count == 1
+        subject, email, body = email_send.await_args[0]
+        assert subject == 'Password recovery'
+        assert email == 'mehdi@openreplay.com'
 
     await orpy.context.get().application.database.close()

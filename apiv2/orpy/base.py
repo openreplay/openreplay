@@ -10,10 +10,13 @@ from mimetypes import guess_type
 from pathlib import Path
 from typing import Optional
 
+import orpy
 import httpx
 import psycopg
 import psycopg_pool
 import pytest
+from psycopg import AsyncConnection
+from psycopg.rows import dict_row
 from decouple import config
 from loguru import logger as log
 from pampy import _, match
@@ -149,6 +152,14 @@ async def runner_run():
             await task
 
 
+
+
+class ORPYAsyncConnection(AsyncConnection):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, row_factory=dict_row, **kwargs)
+
+
 async def make_application():
     log.debug("orpy:make_application()")
     # https://loguru.readthedocs.io/en/stable/resources/migration.html
@@ -168,7 +179,7 @@ async def make_application():
     }
 
     database = " ".join("{}={}".format(k, v) for k, v in database.items())
-    database = psycopg_pool.AsyncConnectionPool(database)
+    database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
 
     # setup app
     make_timestamp = make_timestamper()
@@ -215,8 +226,8 @@ def route(method, *components, Schema=None):
                     )
                     return (
                         400,
-                        [(b"content-type", b"application/javascript")],
-                        b'{"ok": False, "reason": "wrong header content-type"}',
+                        [(b"content-type", b"application/json")],
+                        b'{"ok": false, "reason": "wrong header content-type"}',
                     )
                 try:
                     body = context.get().body
@@ -232,8 +243,8 @@ def route(method, *components, Schema=None):
                     )
                     return (
                         400,
-                        [(b"content-type", b"application/javascript")],
-                        b'{"ok": False, "reason": "schema validation failed"}',
+                        [(b"content-type", b"application/json")],
+                        b'{"ok": false, "reason": "schema validation failed"}',
                     )
                 context.get().cache["payload"] = payload
                 out = await handler(*args)
@@ -267,7 +278,7 @@ import contextlib
 
 
 @contextlib.asynccontextmanager
-async def txn():
+async def cnx():
     # TODO: rename s/database/postgresql/g
     async with context.get().application.database.connection() as cnx:
         async with cnx.transaction():
@@ -275,7 +286,7 @@ async def txn():
 
 
 @contextlib.asynccontextmanager
-async def _app_txn():
+async def _test_cnx():
     async with application.get().database.connection() as cnx:
         async with cnx.transaction():
             yield cnx
@@ -294,8 +305,8 @@ async def view_get_health(*_):
     # there is a snake argument _*
     return (
         200,
-        [(b"content-type", b"application/javascript")],
-        jsonify({"status": "ok"}),
+        [(b"content-type", b"application/json")],
+        jsonify({}),
     )
 
 
@@ -490,8 +501,19 @@ def send_ok(called, status_code, headers, body):
 
 
 @pytest.mark.asyncio
-async def _test_health():
-    scope = {"type": "http", "path": "/health/", "method": "GET"}
+async def test_view_get_health():
+    scope = {
+        "type": "http",
+        "path": "/health/",
+        "method": "GET",
+        "headers": [(b'content-type', b'application/json')],
+    }
     ok = [False]
-    await orpy(scope, receive_empty, send_ok(ok, 200, [], {"status": "ok"}))
+    await orpy(scope, receive_body(b'{}'), send_ok(ok, 200, [], {}))
     assert ok[0]
+
+async def __danger_supervisor_database_scratch():
+    with (ORPY_ROOT / 'orpy/sql/danger-supervisor-database-scratch.sql').open() as f:
+        sql = f.read()
+    async with _test_cnx() as cnx:
+        await cnx.execute(sql)
