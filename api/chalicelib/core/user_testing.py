@@ -30,11 +30,12 @@ def has_test_signals(session_id, project_id):
 
 def get_ux_webcam_signed_url(session_id, project_id, check_existence: bool = True):
     results = []
+    bucket_name = "uxtesting-records" # config("sessions_bucket")
     k = f'{session_id}/ux_webcam_record.webm'
-    if check_existence and not StorageClient.exists(bucket=config("sessions_bucket"), key=k):
+    if check_existence and not StorageClient.exists(bucket=bucket_name, key=k):
         return []
     results.append(StorageClient.get_presigned_url_for_sharing(
-        bucket=config("sessions_bucket"),
+        bucket=bucket_name,
         expires_in=100000,
         key=k
     ))
