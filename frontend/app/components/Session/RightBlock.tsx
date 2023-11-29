@@ -8,7 +8,7 @@ import stl from './rightblock.module.css';
 function RightBlock(props: any) {
   const { activeTab } = props;
 
-  if (activeTab === props.tabs.EVENTS) {
+  if (activeTab === 'EVENTS') {
     return (
       <div className={cn("flex flex-col bg-white border-l", stl.panel)}>
         <EventsBlock
@@ -17,7 +17,7 @@ function RightBlock(props: any) {
       </div>
     )
   }
-  if (activeTab === props.tabs.HEATMAPS) {
+  if (activeTab === 'HEATMAPS') {
     return (
       <div className={cn("flex flex-col bg-white border-l", stl.panel)}>
         <PageInsightsPanel setActiveTab={props.setActiveTab} />

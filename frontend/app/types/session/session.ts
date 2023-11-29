@@ -82,6 +82,7 @@ export interface ISession {
   canvasURL: string[];
   domURL: string[];
   devtoolsURL: string[];
+  utxVideo: string[];
   /**
    * @deprecated
    */
@@ -238,6 +239,7 @@ export default class Session {
       crashes = [],
       notes = [],
       canvasURL = [],
+      utxVideo = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -332,6 +334,7 @@ export default class Session {
       canvasURL,
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
+      utxVideo: utxVideo[0],
     });
   }
 

@@ -25,6 +25,7 @@ interface IProps {
   notesWithEvents: Session['notesWithEvents'];
   filterOutNote: (id: string) => void;
   eventsIndex: number[];
+  utxVideo: string;
 }
 
 function EventsBlock(props: IProps) {
@@ -53,33 +54,36 @@ function EventsBlock(props: IProps) {
   const filteredLength = filteredEvents?.length || 0;
   const notesWithEvtsLength = notesWithEvents?.length || 0;
   const notesLength = notes.length;
-  const eventListNow: any[] = []
+  const eventListNow: any[] = [];
   if (tabStates !== undefined) {
-    eventListNow.concat(Object.values(tabStates)[0]?.eventListNow || [])
+    eventListNow.concat(Object.values(tabStates)[0]?.eventListNow || []);
   } else {
-    eventListNow.concat(store.get().eventListNow)
+    eventListNow.concat(store.get().eventListNow);
   }
 
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {
     if (tabStates !== undefined) {
-      tabChangeEvents.forEach(ev => {
+      tabChangeEvents.forEach((ev) => {
         const urlsList = tabStates[ev.tabId].urlsList;
         let found = false;
         let i = urlsList.length - 1;
         while (!found && i >= 0) {
-          const item = urlsList[i]
+          const item = urlsList[i];
           if (item.url && item.time <= ev.time) {
             found = true;
             ev.activeUrl = item.url.replace(/.*\/\/[^\/]*/, '');
           }
           i--;
         }
-      })
+      });
     }
     const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
-    return mergeEventLists(filteredLength > 0 ? filteredEvents : eventsWithMobxNotes, tabChangeEvents);
-  }, [filteredLength, notesWithEvtsLength, notesLength])
+    return mergeEventLists(
+      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
+      tabChangeEvents
+    );
+  }, [filteredLength, notesWithEvtsLength, notesLength]);
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
@@ -170,9 +174,19 @@ function EventsBlock(props: IProps) {
 
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
   const eventsText = `${query ? 'Filtered' : ''} ${usedEvents.length} Events`;
+
+  const queryParams = new URLSearchParams(document.location.search);
+  const isUtx = queryParams.has('utx');
+
   return (
     <>
       <div className={cn(styles.header, 'p-4')}>
+        {isUtx ? (
+          <div style={{ width: 240, height: 130 }} className={'relative'}>
+            <video className={'z-20 fixed'} autoPlay controls src={props.utxVideo} width={240} />
+            <div style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }} className={'absolute z-10'}>No video</div>
+          </div>
+        ) : null}
         <div className={cn(styles.hAndProgress, 'mt-3')}>
           <EventSearch onChange={write} setActiveTab={setActiveTab} value={query} />
         </div>
@@ -218,6 +232,7 @@ export default connect(
     session: state.getIn(['sessions', 'current']),
     notesWithEvents: state.getIn(['sessions', 'current']).notesWithEvents,
     events: state.getIn(['sessions', 'current']).events,
+    utxVideo: state.getIn(['sessions', 'current']).utxVideo,
     filteredEvents: state.getIn(['sessions', 'filteredEvents']),
     query: state.getIn(['sessions', 'eventsQuery']),
     eventsIndex: state.getIn(['sessions', 'eventsIndex']),

@@ -20,6 +20,9 @@ const TABS = {
   EVENTS: 'User Events',
   CLICKMAP: 'Click Map',
 };
+const UTXTABS = {
+  EVENTS: TABS.EVENTS
+}
 
 let playerInst: IPlayerContext['player'] | undefined;
 
@@ -128,13 +131,16 @@ function WebPlayer(props: any) {
       />
     );
 
+  const queryParams = new URLSearchParams(document.location.search);
+  const isUtx = queryParams.has('utx');
+
   return (
     <PlayerContext.Provider value={contextValue}>
       <PlayerBlockHeader
         // @ts-ignore TODO?
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        tabs={TABS}
+        tabs={isUtx ? UTXTABS : TABS}
         fullscreen={fullscreen}
       />
       {/* @ts-ignore  */}

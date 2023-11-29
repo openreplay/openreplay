@@ -36,11 +36,18 @@ export default function attachDND(element, dragTarget) {
       document.removeEventListener('mousemove', onMouseMove)
       dragTarget.onmouseup = null
     }
-    //
+
     // dragTarget.onmouseleave = function () {
     //   document.removeEventListener('mousemove', onMouseMove)
     //   dragTarget.onmouseleave = null
     // }
+
+    const onMouseOut = () => {
+      document.removeEventListener('mousemove', onMouseMove)
+      window?.removeEventListener('mouseout', onMouseOut)
+    }
+
+    window?.addEventListener('mouseout', onMouseOut)
   }
 
   dragTarget.ondragstart = function () {

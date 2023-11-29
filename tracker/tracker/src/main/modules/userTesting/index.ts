@@ -480,9 +480,10 @@ export default class UserTestManager {
       'div',
       'end_description_or',
       {},
-      'Thank you for participating in our user test. Your feedback has been captured and will be used to enhance our website. \n' +
-        '\n' +
-        'We appreciate your time and valuable input.',
+      this.test?.conclusion ??
+        'Thank you for participating in our user test. Your feedback has been captured and will be used to enhance our website. \n' +
+          '\n' +
+          'We appreciate your time and valuable input.',
     )
     if (this.test?.reqMic || this.test?.reqCamera) {
       this.userRecorder.sendToAPI().then(() => {
