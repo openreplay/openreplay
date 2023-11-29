@@ -24,20 +24,16 @@ if [ "$PYTHON" = "" ]; then
 fi;
 
 if test -d $VENV; then
-    if [[ -z "$MYVENV" ]]; then
+    if [ "$MYVENV" = "1" ]; then
+        echo "You are already in a virtual environment!"
+    else
         export MYVENV=1
-        source $VENV/bin/activate
-        if [[ -z "$@" ]]; then
-            if test -f $VENV/bin/rc.sh; then
-                bash --rcfile $VENV/bin/rc.sh
-            else
-                bash --norc --noprofile
-            fi
+        . $VENV/bin/activate
+        if [ "x$@" = "x" ]; then
+            $SHELL
         else
             exec "$@"
         fi
-    else
-        echo "You are already in a virtual environment!"
     fi
 else
     $PYTHON -m venv --upgrade-deps --prompt="$(basename $(pwd)) :" $VENV
