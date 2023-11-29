@@ -226,9 +226,9 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		CompressionThreshold: e.getCompressionThreshold(),
 		StartTimestamp:       int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:                tokenData.Delay,
-		CanvasEnabled:        true, // keep it in project settings
-		CanvasImageQuality:   "medium",
-		CanvasFrameRate:      2,
+		CanvasEnabled:        e.cfg.RecordCanvas,
+		CanvasImageQuality:   e.cfg.CanvasQuality,
+		CanvasFrameRate:      e.cfg.CanvasFps,
 	}, startTime, r.URL.Path, bodySize)
 }
 

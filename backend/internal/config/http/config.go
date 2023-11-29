@@ -31,6 +31,9 @@ type Config struct {
 	UseProfiler             bool          `env:"PROFILER_ENABLED,default=false"`
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	RecordCanvas            bool          `env:"RECORD_CANVAS,default=false"`
+	CanvasQuality           string        `env:"CANVAS_QUALITY,default=medium"`
+	CanvasFps               int           `env:"CANVAS_FPS,default=2"`
 	WorkerID                uint16
 }
 
