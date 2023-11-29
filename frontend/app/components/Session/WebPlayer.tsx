@@ -20,12 +20,15 @@ const TABS = {
   EVENTS: 'User Events',
   CLICKMAP: 'Click Map',
 };
+const UTXTABS = {
+  EVENTS: TABS.EVENTS
+}
 
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
   const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList, startedAt } = props;
-  const { notesStore, sessionStore } = useStore();
+  const { notesStore, sessionStore, uxtestingStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
@@ -134,7 +137,7 @@ function WebPlayer(props: any) {
         // @ts-ignore TODO?
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        tabs={TABS}
+        tabs={uxtestingStore.isUxt() ? UTXTABS : TABS}
         fullscreen={fullscreen}
       />
       {/* @ts-ignore  */}

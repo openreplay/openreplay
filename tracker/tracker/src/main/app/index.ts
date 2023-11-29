@@ -24,6 +24,7 @@ import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
+import UserTestManager from '../modules/userTesting/index.js'
 
 import type {
   Options as WebworkerOptions,
@@ -149,6 +150,7 @@ export default class App {
     canvasQuality: 'medium',
     canvasFPS: 1,
   }
+  private uxtManager: UserTestManager
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -308,6 +310,8 @@ export default class App {
         }
       }
     }
+
+    this.uxtManager = new UserTestManager(this)
   }
 
   private _debug(context: string, e: any) {
@@ -707,6 +711,15 @@ export default class App {
           this.options.onStart(onStartInfo)
         }
         this.restartAttempts = 0
+
+        if (location?.search) {
+          const query = new URLSearchParams(location.search)
+          if (query.has('oruxt')) {
+            const testId = query.get('oruxt')
+            if (testId) this.uxtManager.getTest(parseInt(testId, 10), token)
+          }
+        }
+
         return SuccessfulStart(onStartInfo)
       })
       .catch((reason) => {

@@ -194,8 +194,9 @@ const reducer = (state = initialState, action: IAction) => {
                 crashes,
                 resources,
                 stackEvents,
-                userEvents
-            } = action.data as { errors: any[], crashes: any[], events: any[], issues: any[], resources: any[], stackEvents: any[], userEvents: EventData[] };
+                userEvents,
+                userTesting
+            } = action.data as { errors: any[], crashes: any[], events: any[], issues: any[], resources: any[], stackEvents: any[], userEvents: EventData[], userTesting: any[] };
             const filterEvents = action.filter.events as Record<string, any>[];
             const session = state.get('current') as Session;
             const matching: number[] = [];
@@ -234,7 +235,8 @@ const reducer = (state = initialState, action: IAction) => {
               issues,
               resources,
               stackEvents,
-              userEvents
+              userEvents,
+              userTesting
             );
             
             const forceUpdate = state.set('current', {})

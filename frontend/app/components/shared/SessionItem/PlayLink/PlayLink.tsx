@@ -17,6 +17,7 @@ interface Props {
     onClick?: () => void;
     queryParams?: any;
     newTab?: boolean;
+    query?: string
 }
 export default function PlayLink(props: Props) {
     const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
@@ -30,10 +31,11 @@ export default function PlayLink(props: Props) {
         else setIconName(getDefaultIconName(viewed));
     }, [isHovered, viewed]);
 
+    const link = isAssist ? liveSessionRoute(sessionId, queryParams) : sessionRoute(sessionId);
     return (
         <Link
             onClick={onClick ? onClick : () => {}}
-            to={isAssist ? liveSessionRoute(sessionId, queryParams) : sessionRoute(sessionId)}
+            to={link + (props.query ? props.query : '')}
             onMouseEnter={() => toggleHover(true)}
             onMouseLeave={() => toggleHover(false)}
             target={props.newTab ? "_blank" : undefined} rel={props.newTab ? "noopener noreferrer" : undefined}

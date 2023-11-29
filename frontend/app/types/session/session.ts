@@ -82,6 +82,7 @@ export interface ISession {
   canvasURL: string[];
   domURL: string[];
   devtoolsURL: string[];
+  utxVideo: string[];
   /**
    * @deprecated
    */
@@ -238,6 +239,7 @@ export default class Session {
       crashes = [],
       notes = [],
       canvasURL = [],
+      utxVideo = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -332,6 +334,7 @@ export default class Session {
       canvasURL,
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
+      utxVideo: utxVideo[0],
     });
   }
 
@@ -342,7 +345,8 @@ export default class Session {
     issues: any[],
     resources: any[],
     userEvents: any[] = [],
-    stackEvents: any[] = []
+    stackEvents: any[] = [],
+    userTestingEvents: any[] = []
   ) {
     const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
     const issuesList =
@@ -358,10 +362,12 @@ export default class Session {
     }
 
     const events: InjectedEvent[] = [];
+    const utxDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UTX_EVENT', key: e.signal_id }))
     const rawEvents: (EventData & { key: number })[] = [];
 
     if (sessionEvents.length) {
-      sessionEvents.forEach((event, k) => {
+      const eventsWithUtx = mergeEventLists(sessionEvents, utxDoneEvents)
+      eventsWithUtx.forEach((event, k) => {
         const time = event.timestamp - this.startedAt;
         if (event.type !== TYPES.CONSOLE && time <= this.durationSeconds) {
           const EventClass = SessionEvent({ ...event, time, key: k });

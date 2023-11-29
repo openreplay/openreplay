@@ -1,5 +1,4 @@
 import React from 'react';
-import PreferencesMenu from 'Components/Client/PreferencesMenu';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -52,6 +51,7 @@ export const enum MENU {
   RESOURCE_MONITORING = 'resource-monitoring',
   ALERTS = 'alerts',
   FEATURE_FLAGS = 'feature-flags',
+  USABILITY_TESTS = 'usability-tests',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
   EXIT = 'exit',
@@ -96,10 +96,17 @@ export const categories: Category[] = [
     ]
   },
   {
+    title: 'Product Optimization',
+    key: 'product-optimization',
+    items: [
+      { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
+      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'columns-gap' },
+    ]
+  },
+  {
     title: '',
     key: 'other',
     items: [
-      { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
       { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right' },
       { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' }
     ]
