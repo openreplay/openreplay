@@ -142,9 +142,6 @@ function Controls(props: any) {
 
   const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
 
-  const queryParams = new URLSearchParams(document.location.search);
-  const isUtx = queryParams.has('utx');
-
   return (
     <div className={styles.controls}>
       <Timeline />
@@ -175,7 +172,7 @@ function Controls(props: any) {
           </div>
 
           <div className="flex items-center h-full">
-            {uxtestingStore.hideDevtools && isUtx ? null :
+            {uxtestingStore.hideDevtools && uxtestingStore.isUxt() ? null :
               <DevtoolsButtons
                 showStorageRedux={showStorageRedux}
                 toggleBottomTools={toggleBottomTools}

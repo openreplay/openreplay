@@ -29,7 +29,7 @@ interface IProps {
 }
 
 function EventsBlock(props: IProps) {
-  const { notesStore } = useStore();
+  const { notesStore, uxtestingStore } = useStore();
   const [mouseOver, setMouseOver] = React.useState(true);
   const scroller = React.useRef<List>(null);
   const cache = useCellMeasurerCache({
@@ -175,13 +175,10 @@ function EventsBlock(props: IProps) {
   const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
   const eventsText = `${query ? 'Filtered' : ''} ${usedEvents.length} Events`;
 
-  const queryParams = new URLSearchParams(document.location.search);
-  const isUtx = queryParams.has('utx');
-
   return (
     <>
       <div className={cn(styles.header, 'p-4')}>
-        {isUtx ? (
+        {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
             <video className={'z-20 fixed'} autoPlay controls src={props.utxVideo} width={240} />
             <div style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }} className={'absolute z-10'}>No video</div>

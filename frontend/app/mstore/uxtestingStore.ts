@@ -36,7 +36,7 @@ export default class UxtestingStore {
   pageSize: number = 10;
   searchQuery: string = '';
   testStats: Stats | null = null;
-  testSessions: Session[] = [];
+  testSessions: { list: Session[]; total: number; page: number } = { list: [], total: 0, page: 1 };
   taskStats: TaskStats[] = [];
   isLoading: boolean = false;
   responses: Record<number, { list: Response[]; total: number }> = {};
@@ -44,6 +44,11 @@ export default class UxtestingStore {
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  isUxt() {
+    const queryParams = new URLSearchParams(document.location.search);
+    return queryParams.has('utx');
   }
 
   setHideDevtools(hide: boolean) {
@@ -89,13 +94,13 @@ export default class UxtestingStore {
     this.setLoading(true);
     try {
       await this.client.updateTest(this.instance.testId!, test);
-      return test.testId
+      return test.testId;
     } catch (e) {
       console.error(e);
     } finally {
       this.setLoading(false);
     }
-  }
+  };
 
   updateInstStatus = (status: string) => {
     if (!this.instance) return;
@@ -164,7 +169,10 @@ export default class UxtestingStore {
     this.setLoading(true);
     try {
       // @ts-ignore
-      return await this.client.createTest({ ...this.instance, status: isPreview ? 'preview' : 'in-progress' });
+      return await this.client.createTest({
+        ...this.instance,
+        status: isPreview ? 'preview' : 'in-progress',
+      });
     } catch (e) {
       console.error(e);
     } finally {
@@ -184,13 +192,33 @@ export default class UxtestingStore {
     }
   };
 
+  setTestStats(stats: Stats) {
+    this.testStats = stats;
+  }
+
+  setTaskStats(stats: TaskStats[]) {
+    this.taskStats = stats;
+  }
+
+  setTestSessions(sessions: { list: Session[]; total: number; page: number }) {
+    this.testSessions = sessions;
+  }
+
+  setSessionsPage(page: number) {
+    this.testSessions.page = page;
+    this.client.fetchTestSessions(this.instance!.testId!.toString(), this.testSessions.page, 10)
+      .then((result) => {
+        this.setTestSessions(result)
+      })
+  }
+
   getTest = async (testId: string) => {
     this.setLoading(true);
     try {
       const testPr = this.client.fetchTest(testId);
       const statsPr = this.client.fetchTestStats(testId);
       const taskStatsPr = this.client.fetchTestTaskStats(testId);
-      const sessionsPr = this.client.fetchTestSessions(testId, this.page, 10);
+      const sessionsPr = this.client.fetchTestSessions(testId, this.testSessions.page, 10);
       Promise.allSettled([testPr, statsPr, taskStatsPr, sessionsPr]).then((results) => {
         if (results[0].status === 'fulfilled') {
           const test = results[0].value;
@@ -201,19 +229,24 @@ export default class UxtestingStore {
         if (results[1].status === 'fulfilled') {
           const stats = results[1].value;
           if (stats) {
-            this.testStats = stats;
+            this.setTestStats(stats);
           }
         }
         if (results[2].status === 'fulfilled') {
           const taskStats = results[2].value;
           if (taskStats) {
-            this.taskStats = taskStats.sort((a: any, b: any) => a.taskId - b.taskId);
+            this.setTaskStats(taskStats.sort((a: any, b: any) => a.taskId - b.taskId));
           }
         }
         if (results[3].status === 'fulfilled') {
           const { total, page, sessions } = results[3].value;
           if (sessions) {
-            this.testSessions = sessions.map((s: any) => new Session({ ...s, metadata: {} }));
+            const result = {
+              list: sessions.map((s: any) => new Session({ ...s, metadata: {} })),
+              total,
+              page,
+            };
+            this.setTestSessions(result);
           }
         }
       });

@@ -47,6 +47,7 @@ function SubHeader(props) {
       : currentLocation;
 
   const showReportModal = () => {
+    const { uxtestingStore } = useStore();
     const { tabStates, currentTab } = store.get();
     const resourceList = tabStates[currentTab]?.resourceList || [];
     const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
@@ -84,8 +85,6 @@ function SubHeader(props) {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
     uxtestingStore.setHideDevtools(!enabled);
   };
-  const queryParams = new URLSearchParams(document.location.search);
-  const isUtx = queryParams.has('utx');
 
   return (
     <>
@@ -153,7 +152,7 @@ function SubHeader(props) {
             ]}
           />
 
-          {isUtx ? (
+          {uxtestingStore.isUxt() ? (
             <Switch
               checkedChildren={'DevTools'}
               unCheckedChildren={'DevTools'}
