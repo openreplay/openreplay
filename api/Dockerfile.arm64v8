@@ -1,10 +1,10 @@
-FROM python:3.11-alpine
+FROM docker.io/arm64v8/python:3.11-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
-RUN apk add --no-cache build-base tini
+RUN apk update && apk upgrade && apk add --no-cache build-base tini
 ARG envarg
 # Add Tini
 # Startup daemon
@@ -27,4 +27,3 @@ USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ./entrypoint.sh
-
