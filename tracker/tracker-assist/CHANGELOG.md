@@ -1,3 +1,7 @@
+## 7.0.0
+
+- canvas suppoert
+
 ## 6.0.3
 
 - expose assist version to window as `__OR_ASSIST_VERSION`

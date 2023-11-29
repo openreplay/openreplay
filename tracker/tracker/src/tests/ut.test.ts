@@ -7,12 +7,25 @@ jest.mock('../main/modules/userTesting/recorder.js')
 jest.mock('../main/modules/userTesting/styles.js')
 jest.mock('../main/modules/userTesting/dnd.js')
 
+// @ts-ignore
+global.fetch = jest.fn().mockResolvedValue({
+  status: 200,
+  // @ts-ignore
+  json: jest.fn().mockResolvedValue(true),
+})
+
 describe('UserTestManager', () => {
   let userTestManager: UserTestManager
   let mockAppInstance
   beforeEach(() => {
     document.body.innerHTML = ''
-    mockAppInstance = jest.fn()
+    mockAppInstance = {
+      sessionStorage: { getItem: () => null },
+      timestamp: () => 0,
+      options: {
+        ingestPoint: 'https://localhost:3000/i',
+      },
+    }
     userTestManager = new UserTestManager(mockAppInstance as unknown as mockApp)
   })
 
@@ -24,7 +37,9 @@ describe('UserTestManager', () => {
 
   test('should show a widget with descriptions and tasks', () => {
     userTestManager.createGreeting('Hello', true, true)
-    userTestManager.showWidget(['Desc1'], [{ title: 'Task1', description: 'Task1 Description' }])
+    userTestManager.showWidget('Desc1', [
+      { task_id: 1, allow_typing: false, title: 'Task1', description: 'Task1 Description' },
+    ])
     expect(document.body.innerHTML).toContain('Desc1')
     expect(document.body.innerHTML).toContain('Task1')
   })
@@ -35,14 +50,14 @@ describe('UserTestManager', () => {
   })
 
   test('should create a description section', () => {
-    const descriptionSection = userTestManager.createDescriptionSection(['Desc1'])
+    const descriptionSection = userTestManager.createDescriptionSection('Desc1')
     expect(descriptionSection).toBeDefined()
     expect(descriptionSection.innerHTML).toContain('Desc1')
   })
 
   test('should create tasks section', () => {
     const tasksSection = userTestManager.createTasksSection([
-      { title: 'Task1', description: 'Desc1' },
+      { title: 'Task1', description: 'Desc1', task_id: 1, allow_typing: false },
     ])
     expect(tasksSection).toBeDefined()
     expect(tasksSection.innerHTML).toContain('Task1')
