@@ -64,8 +64,8 @@ def make_pool():
         except (Exception, psycopg2.DatabaseError) as error:
             logging.error("Error while closing all connexions to PostgreSQL", error)
     try:
-        postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=20),
-                                                   config("PG_MAXCONN", cast=int, default=80),
+        postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=4),
+                                                   config("PG_MAXCONN", cast=int, default=8),
                                                    **PG_CONFIG)
         if (postgreSQL_pool):
             logging.info("Connection pool created successfully")
