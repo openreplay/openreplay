@@ -13,7 +13,7 @@ git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-$git_sha}
 ee="false"
 # Possible values: amd64, arm64
-arch="amd64"
+arch="${ARCH:-"amd64"}"
 
 check_prereq() {
 	which docker || {
