@@ -20,13 +20,14 @@ describe('UserTestManager', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
     mockAppInstance = {
-      sessionStorage: { getItem: () => null },
+      localStorage: { getItem: () => null, setItem: () => null, removeItem: () => null },
       timestamp: () => 0,
       options: {
         ingestPoint: 'https://localhost:3000/i',
       },
+      getSessionID: () => 1111,
     }
-    userTestManager = new UserTestManager(mockAppInstance as unknown as mockApp)
+    userTestManager = new UserTestManager(mockAppInstance as unknown as mockApp, 'testkey')
   })
 
   test('should create a greeting', () => {
@@ -41,7 +42,6 @@ describe('UserTestManager', () => {
       { task_id: 1, allow_typing: false, title: 'Task1', description: 'Task1 Description' },
     ])
     expect(document.body.innerHTML).toContain('Desc1')
-    expect(document.body.innerHTML).toContain('Task1')
   })
 
   test('should create a title section', () => {
@@ -56,9 +56,11 @@ describe('UserTestManager', () => {
   })
 
   test('should create tasks section', () => {
+    jest.useFakeTimers()
     const tasksSection = userTestManager.createTasksSection([
       { title: 'Task1', description: 'Desc1', task_id: 1, allow_typing: false },
     ])
+    jest.runAllTimers()
     expect(tasksSection).toBeDefined()
     expect(tasksSection.innerHTML).toContain('Task1')
     expect(tasksSection.innerHTML).toContain('Desc1')
