@@ -47,7 +47,6 @@ function SubHeader(props) {
       : currentLocation;
 
   const showReportModal = () => {
-    const { uxtestingStore } = useStore();
     const { tabStates, currentTab } = store.get();
     const resourceList = tabStates[currentTab]?.resourceList || [];
     const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
