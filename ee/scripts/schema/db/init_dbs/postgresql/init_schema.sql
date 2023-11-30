@@ -1041,7 +1041,7 @@ $$
             IF NOT EXISTS(SELECT *
                           FROM pg_type typ
                           WHERE typ.typname = 'ut_signal_status') THEN
-                CREATE TYPE ui_tests_status AS ENUM ('begin', 'done', 'skipped');
+                CREATE TYPE ut_signal_status AS ENUM ('begin', 'done', 'skipped');
             END IF;
 
             CREATE TABLE IF NOT EXISTS public.ut_tests_signals
