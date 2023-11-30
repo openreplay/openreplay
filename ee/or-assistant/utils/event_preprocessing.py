@@ -45,7 +45,8 @@ def split_events_selection_filter(data: EventList, max_click_events: int = 10, m
     event_list = [{s: k[s] for s in click_event_properties} for k in click_events] \
                + [{s: k[s] for s in page_event_properties} for k in page_event]
     issues = [{s: k[s] for s in ['timestamp', 'payload', 'type']} for k in data.data['issues']]
-    event_list = sorted(event_list + issues, key=lambda k: k['timestamp'])
+    #event_list = sorted(event_list + issues, key=lambda k: k['timestamp'])
+    event_list = sorted(event_list, key=lambda k: k['timestamp'])
     for event in event_list:
         event.pop('timestamp')
     errors = data.data['errors']
