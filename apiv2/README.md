@@ -12,13 +12,14 @@ The API communicate with several services, including the database
 PostgreSQL; in the entreprise edition openreplay rely also on
 ClickHouse.
 
-```
+```mermaid
 ---
 title: openreplay big picture
 ---
 flowchart LR
     customer["Customer 😎"]
 	enduser["User 😇"]
+	frontend["frontend 📊"]
 	customer --> frontend
 	frontend --> API
 	API --> PostgreSQL
