@@ -1,3 +1,4 @@
+import orpy
 from chalicelib.core import license
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
@@ -81,11 +82,13 @@ def edit_tenant(tenant_id, changes):
 def tenants_exists_sync(use_pool=True):
     with pg_client.PostgresClient(use_pool=use_pool) as cur:
         cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
-        return cur.fetchone()["exists"]
+        out = cur.fetchone()["exists"]
+        return out
 
 
 async def tenants_exists(use_pool=True):
-    async with application.get().database as cnx:
+    async with orpy.get().database.connection() as cnx:
         async with cnx.transaction() as txn:
-            row = await txn.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
-            return await row.fetchone()["exists"]
+            row = await cnx.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
+            row = await row.fetchone()
+            return row["exists"]

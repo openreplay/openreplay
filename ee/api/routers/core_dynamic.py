@@ -35,7 +35,7 @@ async def get_all_signup():
                      "edition": license.EDITION}}
 
 
-if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists(use_pool=False):
+if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
     async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
