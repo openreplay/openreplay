@@ -57,7 +57,7 @@ async def view_public_reset_password_link(*_):
 
     if not captcha_is_valid(data.captcha):
         out = jsonify({"errors": ["Invalid capatcha"]})
-        return 400, [(b"content-type", "application/javascript")], out
+        return 400, [(b"content-type", "application/json")], out
 
     if not orpy.has_feature("smtp", False):
         log.warning("Trial to use SMTP, but it is not disabled")
@@ -68,12 +68,12 @@ async def view_public_reset_password_link(*_):
                 ]
             }
         )
-        return 400, [(b"content-type", "application/javascript")], out
+        return 400, [(b"content-type", "application/json")], out
 
     # TODO: move the following function to execute in background tasks runner
     orpy.runner_spawn(_task_reset_password_link(email))
 
-    return 200, [(b"content-type", "application/javascript")], out
+    return 200, [(b"content-type", "application/json")], out
 
 
 async def _query_authentication_set_new_invitation(cnx, user_id, invitation_token):
