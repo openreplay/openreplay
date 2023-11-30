@@ -67,11 +67,28 @@ export default class UserTestManager {
     }[],
   }
 
-  constructor(private readonly app: App) {
+  constructor(
+    private readonly app: App,
+    private readonly storageKey: string,
+  ) {
     this.userRecorder = new Recorder(app)
-    const taskIndex = this.app.sessionStorage.getItem('or_uxt_task_index')
+    const sessionId = this.app.getSessionID()
+    const savedSessionId = this.app.localStorage.getItem('or_uxt_session_id')
+    if (sessionId !== savedSessionId) {
+      this.app.localStorage.removeItem(this.storageKey)
+      this.app.localStorage.removeItem('or_uxt_session_id')
+      this.app.localStorage.removeItem('or_uxt_test_id')
+      this.app.localStorage.removeItem('or_uxt_task_index')
+      this.app.localStorage.removeItem('or_uxt_test_start')
+    }
+
+    const taskIndex = this.app.localStorage.getItem('or_uxt_task_index')
     if (taskIndex) {
       this.currentTaskIndex = parseInt(taskIndex, 10)
+      this.durations.testStart = parseInt(
+        this.app.localStorage.getItem('or_uxt_test_start') as string,
+        10,
+      )
     }
   }
 
@@ -99,9 +116,18 @@ export default class UserTestManager {
   }
 
   signalTest = (status: 'begin' | 'done' | 'skipped') => {
-    const ingest = this.app.options.ingestPoint
     const timestamp = this.app.timestamp()
-    const duration = timestamp - this.durations.testStart
+    if (status === 'begin' && this.testId) {
+      this.app.localStorage.setItem(this.storageKey, this.testId.toString())
+      this.app.localStorage.setItem('or_uxt_test_start', timestamp.toString())
+    } else {
+      this.app.localStorage.removeItem(this.storageKey)
+      this.app.localStorage.removeItem('or_uxt_task_index')
+      this.app.localStorage.removeItem('or_uxt_test_start')
+    }
+    const ingest = this.app.options.ingestPoint
+    const start = this.durations.testStart || timestamp
+    const duration = timestamp - start
 
     return fetch(`${ingest}/v1/web/uxt/signals/test`, {
       method: 'POST',
@@ -118,7 +144,7 @@ export default class UserTestManager {
     })
   }
 
-  getTest = (id: number, token: string) => {
+  getTest = (id: number, token: string, inProgress?: boolean) => {
     this.testId = id
     this.token = token
     const ingest = this.app.options.ingestPoint
@@ -131,6 +157,13 @@ export default class UserTestManager {
       .then(({ test }: { test: Test }) => {
         this.test = test
         this.createGreeting(test.title, test.reqMic, test.reqCamera)
+        if (inProgress) {
+          if (test.reqMic || test.reqCamera) {
+            void this.userRecorder.startRecording(30, Quality.Standard, test.reqMic, test.reqCamera)
+          }
+          this.showWidget(test.description, test.tasks, true)
+          this.showTaskSection()
+        }
       })
       .catch((err) => {
         console.log('OR: Error fetching test', err)
@@ -140,6 +173,7 @@ export default class UserTestManager {
   hideTaskSection = () => false
   showTaskSection = () => true
   collapseWidget = () => false
+  removeGreeting = () => false
 
   createGreeting(title: string, micRequired: boolean, cameraRequired: boolean) {
     const titleElement = createElement('div', 'title', styles.titleStyle, title)
@@ -164,18 +198,22 @@ export default class UserTestManager {
       'Read guidelines to begin',
     )
 
-    buttonElement.onclick = () => {
+    this.removeGreeting = () => {
       this.container.innerHTML = ''
       if (micRequired || cameraRequired) {
         void this.userRecorder.startRecording(30, Quality.Standard, micRequired, cameraRequired)
       }
-      this.durations.testStart = this.app.timestamp()
-      void this.signalTest('begin')
-      this.showWidget(this.test?.description || '', this.test?.tasks || [])
       this.container.removeChild(buttonElement)
       this.container.removeChild(noticeElement)
       this.container.removeChild(descriptionElement)
       this.container.removeChild(titleElement)
+      return false
+    }
+    buttonElement.onclick = () => {
+      this.removeGreeting()
+      this.durations.testStart = this.app.timestamp()
+      void this.signalTest('begin')
+      this.showWidget(this.test?.description || '', this.test?.tasks || [])
     }
 
     this.container.append(titleElement, descriptionElement, noticeElement, buttonElement)
@@ -191,6 +229,7 @@ export default class UserTestManager {
       task_id: number
       allow_typing: boolean
     }[],
+    inProgress?: boolean,
   ) {
     this.container.innerHTML = ''
     Object.assign(this.bg.style, {
@@ -222,7 +261,11 @@ export default class UserTestManager {
       void this.signalTest('skipped')
       document.body.removeChild(this.bg)
     }
-    this.hideTaskSection()
+    if (!inProgress) {
+      this.hideTaskSection()
+    } else {
+      this.toggleDescriptionVisibility()
+    }
   }
 
   createTitleSection() {
@@ -280,18 +323,24 @@ export default class UserTestManager {
     return title
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  toggleDescriptionVisibility = () => {}
+
   createDescriptionSection(description: string) {
     const section = createElement('div', 'description_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_s_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
     const icon = createElement('div', 'icon', styles.symbolIcon, '-')
     const content = createElement('div', 'content', styles.contentStyle)
-    const ul = document.createElement('ul')
-    ul.innerHTML = description
+    const descriptionC = createElement('div', 'text_description', {
+      maxHeight: '250px',
+      overflow: 'scroll',
+    })
+    descriptionC.innerHTML = description
     const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
 
     titleContainer.append(title, icon)
-    content.append(ul, button)
+    content.append(descriptionC, button)
     section.append(titleContainer, content)
 
     const toggleDescriptionVisibility = () => {
@@ -304,6 +353,15 @@ export default class UserTestManager {
     }
 
     titleContainer.onclick = toggleDescriptionVisibility
+    this.toggleDescriptionVisibility = () => {
+      this.widgetGuidelinesVisible = false
+      icon.textContent = this.widgetGuidelinesVisible ? '-' : '+'
+      Object.assign(
+        content.style,
+        this.widgetGuidelinesVisible ? styles.contentStyle : { display: 'none' },
+      )
+      content.removeChild(button)
+    }
     button.onclick = () => {
       toggleDescriptionVisibility()
       if (this.test) {
@@ -416,6 +474,19 @@ export default class UserTestManager {
       return true
     }
 
+    const highlightActive = () => {
+      const activeTaskEl = document.getElementById(`or_task_${this.currentTaskIndex}`)
+      if (activeTaskEl) {
+        Object.assign(activeTaskEl.style, styles.taskNumberActive)
+      }
+      for (let i = 0; i < this.currentTaskIndex; i++) {
+        const taskEl = document.getElementById(`or_task_${i}`)
+        if (taskEl) {
+          Object.assign(taskEl.style, styles.taskNumberDone)
+        }
+      }
+    }
+
     titleContainer.onclick = toggleTasksVisibility
     closePanelButton.onclick = this.collapseWidget
 
@@ -437,29 +508,20 @@ export default class UserTestManager {
           })
         }
         void this.signalTask(tasks[this.currentTaskIndex].task_id, 'begin')
-        const activeTaskEl = document.getElementById(`or_task_${this.currentTaskIndex}`)
-        if (activeTaskEl) {
-          Object.assign(activeTaskEl.style, styles.taskNumberActive)
-        }
-        for (let i = 0; i < this.currentTaskIndex; i++) {
-          const taskEl = document.getElementById(`or_task_${i}`)
-          if (taskEl) {
-            Object.assign(taskEl.style, styles.taskNumberDone)
-          }
-        }
+        highlightActive()
       } else {
         this.showEndSection()
       }
-      this.app.sessionStorage.setItem('or_uxt_task_index', this.currentTaskIndex.toString())
+      this.app.localStorage.setItem('or_uxt_task_index', this.currentTaskIndex.toString())
     }
 
-    updateTaskContent()
     setTimeout(() => {
       const firstTaskEl = document.getElementById('or_task_0')
-      console.log(firstTaskEl, styles.taskNumberActive)
       if (firstTaskEl) {
         Object.assign(firstTaskEl.style, styles.taskNumberActive)
       }
+      updateTaskContent()
+      highlightActive()
     }, 1)
     return section
   }

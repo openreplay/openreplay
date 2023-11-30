@@ -8,6 +8,7 @@ export const bgStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  zIndex: 999999,
 }
 
 export const containerStyle = {
