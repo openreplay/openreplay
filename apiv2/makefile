@@ -10,7 +10,6 @@ init: ## Prepare the host sytem for development
 postgresql-reset: ## Reset postgresql with defaults credentials, and schema
 	orpy-hard-database-reset.sh orpy/sql/postgresql-init.sql
 
-
 check-debug:
 	pytest -vvv --pdb --exitfirst --capture=no $(shell find orpy -name "*.py")
 
