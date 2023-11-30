@@ -2,7 +2,7 @@
 ARG ARCH=amd64
 
 FROM --platform=linux/$ARCH golang:1.21-alpine3.18 AS build
-RUN apk add --no-cache gcc g++ make libc-dev pkgconfig
+RUN apk add --no-cache gcc g++ make libc-dev
 WORKDIR /root
 
 # Load code dependencies
@@ -17,7 +17,7 @@ COPY internal internal
 
 # Build service
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
 
 FROM --platform=linux/$ARCH alpine AS entrypoint
 ARG GIT_SHA
