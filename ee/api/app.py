@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
         "user": config("pg_user", default="orpy"),
         "password": config("pg_password", default="orpy"),
         "port": config("pg_port", cast=int, default=5432),
-        "application_name": config("APP_NAME", default="PY"),
+        "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
 
     database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection)
