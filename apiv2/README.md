@@ -1,9 +1,9 @@
 # API v2 (uvicorn)
 
 The API service is responsible for handling request from the frontend
-where customers can see features of openreplay in a graphical way. The
-users of that frontend are managers, and developpers that is
-openreplay customers.
+where customers access features of openreplay in a graphical way. The
+users of that frontend are managers, and developpers, in other words
+that is openreplay customers.
 
 End-users' frontends, that is, customers of openreplay customers, send
 data to openreplay backend that is written in Go.
@@ -74,57 +74,70 @@ Another-Header-One: Another Header Value One
 
 ### uvicorn
 
-The API service is built on top of `uvicorn` HTTP server. We use `uvicorn`
-single entrypoint a function, that receive three ardiccguments:
+The API service is built on top of `uvicorn` HTTP server. We use
+`uvicorn` single entrypoint: a function that receive three arguments:
 
-- `scope`, a dictionary representing the HTTP made by the frontend;
-- `receive()`, a function that lazily read the body of an HTTP request;
-- `send(dict)`, a function to reply to the user. `dict` follow a precise
-  protocol documented in Python's ASGI standard specification. It is not
-  useful to know the details for most use-cases such as JSON over HTTP
-  response.
+- `scope`, a dictionary representing a part of what was sent by the
+  frontend: the HTTP request line, and headers;
+- `receive()`, a function that lazily read the body of an HTTP request
+  also known as a generator of the HTTP requests body;
+- `send(dict)`, a function to reply to the user. `dict` follow a
+  precise protocol documented in Python's ASGI standard
+  specification. As part of `orpy`, it is not useful to know the
+  details for most use-cases such as JSON over HTTP response.
 
-Ninety-nine percent of the time:
+That is somewhat a lil complex... BUT ninety-nine percent of the time:
 
-#. The client will send an HTTP request with a JSON body that is smaller
-   than one 1MB, that is smaller than memory.
+1. The client will send an HTTP request with a JSON body that is
+   smaller than one 1MB, in other words that is smaller than volatile
+   memory.
 
-#. The HTTP request is dispatched based on the path component of the HTTP
-   request, that from the above HTTP text request `/folder/object-type/...`.
+2. The HTTP request is dispatched based on the path component of the
+   HTTP request, that from the above HTTP text request
+   `/folder/object-type/unique-identifier/...`
 
-   Note: Path patterns should build a well formed and nice tree: the root
-   unfold into a couple of nodes, then each child unfold into more... taking
-   into account type casting such as integer.
+   Note: Path patterns should build a well formed and nice tree: the
+   root unfold into a couple of nodes, then each child unfold into a
+   couple more, that may take into account type casting such as
+   integer that may apply to unique identifiers.
 
-   Hence the core or uvicorn `scope` handler will match HTTP path using
-   placehoders as known as routes.
+   Hence the core of uvicorn `scope` handler that is the function
+   `orpy.base.orpy` will match HTTP path using placeholders, that is
+   known routes.
 
-#. A route is identified with a HTTP method, a path pattern, and optionally
+3. A route is identified with a HTTP method, a path pattern, and optionally
    a pydantic Schema;
 
-#. A route should explicitly do three types of validations:
+4. A route should explicitly do three types of validations:
 
-   #. Container validation e.g. the body is propery JSON, CSV, XML... This is
+   a. Container validation e.g. the body is propery JSON, CSV, XML... This is
       most of the time done using a parser: if the parser succeed, then it is
       the good container.
 
-   #. Schema validation e.g. using pydantic, or JSON Schema;
+   b. Schema validation e.g. using pydantic, or JSON Schema;
 
-   #. Shallow validation e.g. password, and confirmation match, password is strong
-      enough, the token is signed using the expected signature. Any validation
-      that does not involve network, or disk io falls into that category.
+   c. Shallow validation e.g. check that `password`, and
+	  `confirmation` are the same, check that `password` is strong
+	  enough, check that `token` is signed using the expected
+	  signature.
 
-   #. Deep validation e.g. while registring a new user, the e-mail must be unique.
+	  Any validation that does not involve network, or disk io falls
+	  into that category.
+
+   d. Deep validation e.g. while registring a new user, the e-mail must be unique.
 
       Note: sometime database transaction must span deep validation, and create,
       update, or delete.
 
-   In case of validation error, the expected error code is 400 aka. bad request.
+   In case of validation error, the expected error code is 400
+   aka. bad request.
 
-#. The Request processing per-se; that may include one or more disk, or network io.
-   Zero or more explicit database transactions may be necessary.
+5. The Request processing per-se; that may include one or more disk,
+   or network io.  Zero or more explicit database transactions may be
+   necessary. That is known as "business logic" or "product", or
+   "feature".
 
-#. Response generation
+6. Response generation
 
 ### orpy
 
@@ -136,8 +149,11 @@ A route in orpy looks like the following:
 
 ```
 @route("GET", "stats", "path", _, "review")
-def view_get_stats_path_review(method, stats, path, uid, review):
-    # method, stats, path, uid
+async def view_get_stats_path_review(uid):
+    # do something iwht method `uid`
+	out = await do_something(orpy.application.get(), uid)
+	return 200, [(b"content-type", "application/javascript")], out
+
 ```
 
 ### Tests
@@ -149,12 +165,35 @@ Here is a test for a health route, it should return 200, with a json
 saying ok:
 
 ```python
+from orpy.base import orpy
+
 @pytest.mark.asyncio
-async def test_health():
-    scope = {"type": "http", "path": "/health/", "method": "GET"}
+async def test_view_get_health():
+    scope = {
+        "type": "http",
+        "path": "/health/",
+        "method": "GET",
+        "headers": [(b'content-type', b'application/json')],
+    }
     ok = [False]
-    await orpy(scope, receive_empty, send_ok(ok, 200, [], {"status": "ok"}))
+    await orpy(scope, receive_body(b'{}'), send_ok(ok, 200, [], {}))
     assert ok[0]
+```
+
+Here is another test that that to exercise the router:
+
+```python
+from orpy import base as orpy
+
+
+@pytest.mark.asyncio
+async def test_task_reset_password_link_unknown_email():
+    # It is necessary to call orpy.opry to initialize the application.
+    await orpy.orpy({"type": "lifespan"}, None, None)
+    # The code does not call orpy.orpy, hence setup context manually
+    orpy.context.set(orpy.Context(orpy.application.get(), None, None, None))
+    assert not await _task_reset_password_link("example@example.example")
+    await orpy.context.get().application.database.close()
 ```
 
 Note:
