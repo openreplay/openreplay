@@ -12,11 +12,28 @@ The API communicate with several services, including the database
 PostgreSQL; in the entreprise edition openreplay rely also on
 ClickHouse.
 
+```
+---
+title: openreplay big picture
+---
+flowchart LR
+    customer["Customer 😎"]
+	enduser["User 😇"]
+	customer --> frontend
+	frontend --> API
+	API --> PostgreSQL
+	API --> ClickHouse
+	Backend --> PostgreSQL
+	Backend --> ClickHouse
+	API --> Backend
+	enduser --> Backend
+```
+
 ## Glossary
 
 - API service: the application of the code in this directory;
 - Frontend: the ReactJS application that communicate with API;
-- Client: most of the time a synonym of frontend; it may be another kind of 
+- Client: most of the time a synonym of frontend; it may be another kind of
   client authenticated with API service;
 - Customer: the users of the frontend;
 - End-users: the users of the frontend of openreplay customers;
@@ -61,24 +78,24 @@ single entrypoint a function, that receive three ardiccguments:
 
 - `scope`, a dictionary representing the HTTP made by the frontend;
 - `receive()`, a function that lazily read the body of an HTTP request;
-- `send(dict)`, a function to reply to the user. `dict` follow a precise 
-  protocol documented in Python's ASGI standard specification. It is not 
-  useful to know the details for most use-cases such as JSON over HTTP 
+- `send(dict)`, a function to reply to the user. `dict` follow a precise
+  protocol documented in Python's ASGI standard specification. It is not
+  useful to know the details for most use-cases such as JSON over HTTP
   response.
 
 Ninety-nine percent of the time:
 
-#. The client will send an HTTP request with a JSON body that is smaller 
+#. The client will send an HTTP request with a JSON body that is smaller
    than one 1MB, that is smaller than memory.
 
 #. The HTTP request is dispatched based on the path component of the HTTP
    request, that from the above HTTP text request `/folder/object-type/...`.
 
-   Note: Path patterns should build a well formed and nice tree: the root 
-   unfold into a couple of nodes, then each child unfold into more... taking 
+   Note: Path patterns should build a well formed and nice tree: the root
+   unfold into a couple of nodes, then each child unfold into more... taking
    into account type casting such as integer.
 
-   Hence the core or uvicorn `scope` handler will match HTTP path using 
+   Hence the core or uvicorn `scope` handler will match HTTP path using
    placehoders as known as routes.
 
 #. A route is identified with a HTTP method, a path pattern, and optionally
@@ -92,15 +109,15 @@ Ninety-nine percent of the time:
 
    #. Schema validation e.g. using pydantic, or JSON Schema;
 
-   #. Shallow validation e.g. password, and confirmation match, password is strong 
+   #. Shallow validation e.g. password, and confirmation match, password is strong
       enough, the token is signed using the expected signature. Any validation
       that does not involve network, or disk io falls into that category.
 
    #. Deep validation e.g. while registring a new user, the e-mail must be unique.
-    
-      Note: sometime database transaction must span deep validation, and create, 
+
+      Note: sometime database transaction must span deep validation, and create,
       update, or delete.
-   
+
    In case of validation error, the expected error code is 400 aka. bad request.
 
 #. The Request processing per-se; that may include one or more disk, or network io.
