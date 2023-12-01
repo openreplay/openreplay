@@ -176,7 +176,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Starting point</Typography.Text>
+            <Typography.Text strong>🏁 Starting point</Typography.Text>
             <Input
               style={{ width: 400 }}
               type={'url'}
@@ -191,7 +191,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Introduction and Guidelines for Participants</Typography.Text>
+            <Typography.Text strong>📖 Introduction and Guidelines for Participants</Typography.Text>
             <Typography.Text></Typography.Text>
             {isOverviewEditing ? (
               <Input.TextArea
@@ -241,7 +241,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Tasks</Typography.Text>
+            <Typography.Text strong>📋 Tasks</Typography.Text>
             {uxtestingStore.instance!.tasks.map((task, index) => (
               <Step
                 ind={index}
@@ -307,7 +307,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Conclusion Message</Typography.Text>
+            <Typography.Text strong>🎉 Conclusion Message</Typography.Text>
             <div>
               {isConclusionEditing ? (
                 <Input.TextArea
