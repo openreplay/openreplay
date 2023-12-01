@@ -1,5 +1,5 @@
-import { UxTest, UxTListEntry } from "App/services/UxtestingService";
 import React from 'react';
+import { UxTListEntry } from "App/services/UxtestingService";
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -21,6 +21,7 @@ const PER_PAGE = 10;
 let debouncedSearch: any = () => null
 const defaultDescription = `To evaluate the usability of [Feature Name], focusing on user interaction, efficiency, and satisfaction. The aim is to identify any usability issues that users may encounter, understand how they navigate [Feature Name], and gauge the intuitiveness of the workflow.`
 function TestsTable() {
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState(defaultDescription);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -57,6 +58,9 @@ function TestsTable() {
 
   const openModal = () => {
     setIsModalVisible(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
   };
 
   const redirect = (path: string) => {
@@ -82,6 +86,8 @@ function TestsTable() {
         <Typography.Text strong>Title</Typography.Text>
         <Input
           autoFocus
+          // @ts-ignore
+          ref={inputRef}
           placeholder="E.g. Checkout user journey evaluation"
           style={{ marginBottom: '2em' }}
           value={newTestTitle}

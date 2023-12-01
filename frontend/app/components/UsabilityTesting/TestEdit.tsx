@@ -54,6 +54,9 @@ function TestEdit() {
           setGuidelines(inst.guidelines || '');
         }
       });
+    } else {
+      setConclusion(uxtestingStore.instance!.conclusionMessage)
+      setGuidelines(uxtestingStore.instance!.guidelines)
     }
   }, []);
   if (!uxtestingStore.instance) {
