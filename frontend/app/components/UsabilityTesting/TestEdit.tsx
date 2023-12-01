@@ -166,6 +166,7 @@ function TestEdit() {
             <Typography.Text strong>Starting point</Typography.Text>
             <Input
               style={{ width: 400 }}
+              type={'url'}
               placeholder={'https://mywebsite.com/example-page'}
               value={uxtestingStore.instance!.startingPath}
               onChange={(e) => {

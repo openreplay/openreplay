@@ -40,7 +40,7 @@ const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
       <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>
         <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0}>
           <Space align={'center'}>
-            Preview <ExportOutlined rev={undefined} />
+            Save Draft & Preview <ExportOutlined rev={undefined} />
           </Space>
         </Button>
       </Tooltip>
