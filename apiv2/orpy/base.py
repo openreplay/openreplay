@@ -328,13 +328,11 @@ async def not_found(send):
 async def http(send):
     path = context.get().scope["path"]
 
-    if path.startswith("/static/"):
-        await serve_static(send, path)
-        return
-    elif path == "/favicon.ico":
+    if path == "/favicon.ico":
         await not_found(send)
         return
-    elif not path.endswith("/"):
+
+    if not path.endswith("/"):
         # XXX: All paths but static path must end with a slash.  That
         # is a dubious choice when considering files, possibly large
         # files that are served dynamically.
@@ -358,42 +356,42 @@ async def http(send):
                 "body": b"Moved permanently",
             }
         )
-    else:
-        method = context.get().scope["method"]
-        route = [method] + path.split("/")[1:-1]
+        return
 
-        log.debug("matching route: {}", route)
+    method = context.get().scope["method"]
+    route = [method] + path.split("/")[1:-1]
 
-        view = match(
-            route,
-            *ROUTE_REGISTRY,
-            _,
-            lambda x: None,
-        )
+    log.debug("matching route: {}", route)
 
-        if view is None:
-            await not_found(send)
-            return
+    view = match(
+        route,
+        *ROUTE_REGISTRY,
+        _, lambda x: None,
+    )
 
-        # XXX: the body must be bytes, TODO it will be
-        # wise to support a body that is a generator?
-        response = await view()
+    if view is None:
+        await not_found(send)
+        return
 
-        code, headers, body = response
+    # XXX: the body must be bytes, TODO it will be
+    # wise to support a body that is a generator?
+    response = await view()
 
-        await send(
-            {
-                "type": "http.response.start",
-                "status": code,
-                "headers": headers,
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": body,
-            }
-        )
+    code, headers, body = response
+
+    await send(
+        {
+            "type": "http.response.start",
+            "status": code,
+            "headers": headers,
+        }
+    )
+    await send(
+        {
+            "type": "http.response.body",
+            "body": body,
+        }
+    )
 
 
 async def orpy(scope, receive, send):
