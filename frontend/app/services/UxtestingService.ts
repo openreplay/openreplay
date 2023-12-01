@@ -81,8 +81,8 @@ export default class UxtestingService extends BaseService {
     return j.data || [];
   }
 
-  async fetchTestSessions(id: string, page: number, limit: number) {
-    const r = await this.client.get(`${this.prefix}/${id}/sessions`, { page, limit });
+  async fetchTestSessions(id: string, page: number, limit: number, isLive?: boolean, userId?: string) {
+    const r = await this.client.get(`${this.prefix}/${id}/sessions`, { page, limit, live: isLive, userId });
     return await r.json();
   }
 

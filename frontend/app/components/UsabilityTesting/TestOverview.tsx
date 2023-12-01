@@ -3,6 +3,7 @@ import usePageTitle from 'App/hooks/usePageTitle';
 import { numberWithCommas } from 'App/utils';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
+import LiveTestsModal from "Components/UsabilityTesting/LiveTestsModal";
 import React from 'react';
 import { Button, Typography, Select, Space, Popover, Dropdown } from 'antd';
 import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
@@ -36,7 +37,6 @@ import ResponsesOverview from './ResponsesOverview';
 const { Option } = Select;
 
 const statusItems = [
-  { value: 'preview', label: 'Draft', icon: <HourglassOutlined rev={undefined} /> },
   { value: 'in-progress', label: 'Ongoing', icon: <HourglassOutlined rev={undefined} /> },
   { value: 'paused', label: 'On Hold', icon: <PauseCircleOutlined rev={undefined} /> },
   { value: 'closed', label: 'Closed', icon: <StopOutlined rev={undefined} /> },
@@ -104,7 +104,9 @@ function TestOverview() {
               {uxtestingStore.instance.liveCount} participants are engaged in this usability test at
               the moment.
             </Typography.Text>
-            <Button>
+            <Button onClick={() => {
+              showModal(<LiveTestsModal testId={testId} />, { right: true, width: 600 })
+            }}>
               <Space align={'center'}>
                 Moderate Real-Time
                 <ArrowRightOutlined rev={undefined} />

@@ -45,8 +45,9 @@ Test Guidelines:
 4. Pace Yourself: Take your time, there's no rush to complete the tasks quickly.
 
 5. Technical Issues: If you encounter any issues, please describe what you were attempting to do when the issue occurred.
-`
-const defaultConclusion = 'Thank you for participating in our usability test. Your feedback is invaluable to us and will contribute significantly to improving our product.'
+`;
+const defaultConclusion =
+  'Thank you for participating in our usability test. Your feedback is invaluable to us and will contribute significantly to improving our product.';
 
 export default class UxtestingStore {
   client = uxtestingService;
@@ -58,6 +59,11 @@ export default class UxtestingStore {
   searchQuery: string = '';
   testStats: Stats | null = null;
   testSessions: { list: Session[]; total: number; page: number } = { list: [], total: 0, page: 1 };
+  testAssistSessions: { list: Session[]; total: number; page: number } = {
+    list: [],
+    total: 0,
+    page: 1,
+  };
   taskStats: TaskStats[] = [];
   isLoading: boolean = false;
   responses: Record<number, { list: Response[]; total: number }> = {};
@@ -206,7 +212,7 @@ export default class UxtestingStore {
     try {
       const test = await this.client.fetchTest(testId);
       this.setInstance(new UxTestInst(test));
-      return this.instance
+      return this.instance;
     } catch (e) {
       console.error(e);
     } finally {
@@ -228,11 +234,28 @@ export default class UxtestingStore {
 
   setSessionsPage(page: number) {
     this.testSessions.page = page;
-    this.client.fetchTestSessions(this.instance!.testId!.toString(), this.testSessions.page, 10)
+    this.client
+      .fetchTestSessions(this.instance!.testId!.toString(), this.testSessions.page, 10)
       .then((result) => {
-        this.setTestSessions(result)
-      })
+        this.setTestSessions(result);
+      });
   }
+
+  setAssistSessions = (sessions: { list: Session[]; total: number; page: number }) => {
+    this.testAssistSessions = sessions;
+  };
+
+  getAssistSessions = async (testId: string, page: number, userId?: string) => {
+    this.setLoading(true);
+    try {
+      const sessions = await this.client.fetchTestSessions(testId, page, 10, true, userId);
+      this.setAssistSessions(sessions);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  };
 
   getTest = async (testId: string) => {
     this.setLoading(true);
