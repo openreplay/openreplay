@@ -95,7 +95,11 @@ func (u *uxTestingImpl) SetTestSignal(signal *TestSignal) error {
 		INSERT INTO ut_tests_signals (
 			session_id, test_id, status, timestamp, duration
 		) VALUES (
-			$1, $2, $3, $4, $5
+			$1, $2, $3, $4, 
+		    CASE
+        		WHEN $5 <= 0 THEN NULL
+        		ELSE $5
+    		END
 		)`,
 		signal.SessionID, signal.TestID, signal.Status, signal.Timestamp, signal.Duration,
 	); err != nil {
@@ -119,7 +123,11 @@ func (u *uxTestingImpl) SetTaskSignal(signal *TaskSignal) error {
 		INSERT INTO ut_tests_signals (
 			session_id, test_id, task_id, status, comment, timestamp, duration
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7
+			$1, $2, $3, $4, $5, $6,
+		    CASE
+        		WHEN $7 <= 0 THEN NULL
+        		ELSE $7
+    		END
 		)`,
 		signal.SessionID, signal.TestID, signal.TaskID, signal.Status, signal.Answer, signal.Timestamp, signal.Duration,
 	); err != nil {
