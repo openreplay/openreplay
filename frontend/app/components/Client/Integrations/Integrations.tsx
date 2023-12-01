@@ -113,7 +113,18 @@ function Integrations(props: Props) {
       <div className='mb-4' />
 
       {filteredIntegrations.map((cat: any) => (
-        <div className={cn('grid grid-cols-3 gap-3 auto-cols-max', cat.integrations.length > 0 ? 'p-2' : '')}>
+        <div className={cn(`
+          grid 
+          gap-3 
+          auto-cols-max 
+          ${cat.integrations.length > 0 ? 'p-2' : ''}
+          grid-cols-1   // default to 1 column
+          sm:grid-cols-1 // 2 columns on small screens and up
+          md:grid-cols-2 // 3 columns on medium screens and up
+          lg:grid-cols-3 // and so on as per your design requirements
+          xl:grid-cols-3
+        `
+        )}>
           {cat.integrations.map((integration: any) => (
             <IntegrationItem
               integrated={integratedList.includes(integration.slug)}
