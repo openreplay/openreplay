@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import {hasTag,} from '@openreplay/tracker/lib/app/guards'
 import type { Socket, } from 'socket.io-client'
 import { connect, } from 'socket.io-client'
 import Peer, { MediaConnection, } from 'peerjs'
@@ -7,6 +6,7 @@ import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
 import RequestLocalStream, { LocalStream, } from './LocalStream.js'
+import {hasTag,} from './guards.js'
 import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
 import AnnotationCanvas from './AnnotationCanvas.js'
