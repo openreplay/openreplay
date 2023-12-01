@@ -6,7 +6,7 @@ import {
   usabilityTestingView,
   usabilityTestingEdit,
 } from 'App/routes';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useHistory, Prompt } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
@@ -20,7 +20,7 @@ import usePageTitle from 'App/hooks/usePageTitle';
 const menuItems = [
   {
     key: '1',
-    label: 'Change title/description',
+    label: 'Edit Title and Description',
     icon: <EditOutlined rev={undefined} />,
   },
   {
@@ -31,6 +31,7 @@ const menuItems = [
 ];
 
 function TestEdit() {
+  const [hasChanged, setHasChanged] = React.useState(false);
   const { uxtestingStore } = useStore();
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState('');
@@ -123,6 +124,12 @@ function TestEdit() {
           },
         ]}
       />
+      <Prompt
+        when={hasChanged}
+        message={() => {
+          return 'You have unsaved changes. Are you sure you want to leave?';
+        }}
+      />
       <Modal
         title="Edit Test"
         open={isModalVisible}
@@ -139,12 +146,18 @@ function TestEdit() {
           placeholder="E.g. Checkout user journey evaluation"
           style={{ marginBottom: '2em' }}
           value={newTestTitle}
-          onChange={(e) => setNewTestTitle(e.target.value)}
+          onChange={(e) => {
+            setHasChanged(true);
+            setNewTestTitle(e.target.value)
+          }}
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
         <Input.TextArea
           value={newTestDescription}
-          onChange={(e) => setNewTestDescription(e.target.value)}
+          onChange={(e) => {
+            setHasChanged(true);
+            setNewTestDescription(e.target.value)
+          }}
           placeholder="Share a brief statement about what you aim to discover through this study."
         />
       </Modal>
@@ -170,6 +183,7 @@ function TestEdit() {
               placeholder={'https://mywebsite.com/example-page'}
               value={uxtestingStore.instance!.startingPath}
               onChange={(e) => {
+                setHasChanged(true);
                 uxtestingStore.instance!.setProperty('startingPath', e.target.value);
               }}
             />
@@ -185,7 +199,10 @@ function TestEdit() {
                 rows={5}
                 placeholder={'Enter a brief introduction to the test and its goals here. Follow with clear, step-by-step guidelines for participants.'}
                 value={guidelines}
-                onChange={(e) => setGuidelines(e.target.value)}
+                onChange={(e) => {
+                  setHasChanged(true);
+                  setGuidelines(e.target.value)
+                }}
               />
             ) : (
               <div className={'whitespace-pre-wrap'}>
@@ -238,6 +255,7 @@ function TestEdit() {
                           editTask={task}
                           onHide={hideModal}
                           onAdd={(task) => {
+                            setHasChanged(true);
                             const tasks = [...uxtestingStore.instance!.tasks];
                             tasks[index] = task;
                             uxtestingStore.instance!.setProperty('tasks', tasks);
@@ -248,6 +266,7 @@ function TestEdit() {
                     }} />
                     <Button
                       onClick={() => {
+                        setHasChanged(true);
                         uxtestingStore.instance!.setProperty(
                           'tasks',
                           uxtestingStore.instance!.tasks.filter(
@@ -271,6 +290,7 @@ function TestEdit() {
                     <StepsModal
                       onHide={hideModal}
                       onAdd={(task) => {
+                        setHasChanged(true);
                         uxtestingStore.instance!.setProperty('tasks', [
                           ...uxtestingStore.instance!.tasks,
                           task,
@@ -293,7 +313,10 @@ function TestEdit() {
                 <Input.TextArea
                   placeholder={'Enter your closing remarks here, thanking participants for their time and contributions.'}
                   value={conclusion}
-                  onChange={(e) => setConclusion(e.target.value)}
+                  onChange={(e) => {
+                    setHasChanged(true);
+                    setConclusion(e.target.value)
+                  }}
                 />
               ) : (
                 <Typography.Text>{uxtestingStore.instance!.conclusionMessage}</Typography.Text>
