@@ -100,7 +100,7 @@ export const categories: Category[] = [
     key: 'product-optimization',
     items: [
       { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'columns-gap' },
+      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'clipboard-check' },
     ]
   },
   {
