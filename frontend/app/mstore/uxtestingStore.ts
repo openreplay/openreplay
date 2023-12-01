@@ -46,6 +46,7 @@ Test Guidelines:
 
 5. Technical Issues: If you encounter any issues, please describe what you were attempting to do when the issue occurred.
 `
+const defaultConclusion = 'Thank you for participating in our usability test. Your feedback is invaluable to us and will contribute significantly to improving our product.'
 
 export default class UxtestingStore {
   client = uxtestingService;
@@ -146,7 +147,7 @@ export default class UxtestingStore {
       requireCamera: false,
       description: description,
       guidelines: defaultGuidelines,
-      conclusionMessage: '',
+      conclusionMessage: defaultConclusion,
       visibility: true,
       tasks: [],
     };

@@ -1,8 +1,8 @@
-import { useStore } from "App/mstore";
-import React from 'react'
-import { observer } from 'mobx-react-lite'
-import { Typography, Switch, Button, Space } from "antd";
-import { ExportOutlined } from "@ant-design/icons";
+import { useStore } from 'App/mstore';
+import React from 'react';
+import { observer } from 'mobx-react-lite';
+import { Typography, Switch, Button, Space, Tooltip } from 'antd';
+import { ExportOutlined } from '@ant-design/icons';
 
 const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
   const { uxtestingStore } = useStore();
@@ -32,16 +32,20 @@ const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
         </div>
       </div>
 
-      <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0}>
-        <Space align={'center'}>
-          Preview <ExportOutlined rev={undefined} />
-        </Space>
-      </Button>
-      <Button type={'primary'} onClick={onSave} disabled={taskLen === 0}>
-        Publish Test
-      </Button>
+      <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>
+        <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0}>
+          <Space align={'center'}>
+            Preview <ExportOutlined rev={undefined} />
+          </Space>
+        </Button>
+      </Tooltip>
+      <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>
+        <Button type={'primary'} onClick={onSave} disabled={taskLen === 0}>
+          Publish Test
+        </Button>
+      </Tooltip>
     </div>
   );
 });
 
-export default SidePanel
+export default SidePanel;

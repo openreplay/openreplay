@@ -182,7 +182,7 @@ function TestEdit() {
               <Input.TextArea
                 autoFocus
                 rows={5}
-                placeholder={'Task overview'}
+                placeholder={'Enter a brief introduction to the test and its goals here. Follow with clear, step-by-step guidelines for participants.'}
                 value={guidelines}
                 onChange={(e) => setGuidelines(e.target.value)}
               />
@@ -223,7 +223,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Task List</Typography.Text>
+            <Typography.Text strong>Tasks</Typography.Text>
             {uxtestingStore.instance!.tasks.map((task, index) => (
               <Step
                 ind={index}
@@ -263,7 +263,7 @@ function TestEdit() {
                         ]);
                       }}
                     />,
-                    { right: true }
+                    { right: true, width: 600 }
                   )
                 }
               >
@@ -277,7 +277,7 @@ function TestEdit() {
             <div>
               {isConclusionEditing ? (
                 <Input.TextArea
-                  placeholder={'Thanks for participation!..'}
+                  placeholder={'Enter your closing remarks here, thanking participants for their time and contributions.'}
                   value={conclusion}
                   onChange={(e) => setConclusion(e.target.value)}
                 />
