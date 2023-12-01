@@ -110,6 +110,7 @@ function TestEdit() {
     }
   };
 
+  const isPublished = uxtestingStore.instance.status !== undefined && uxtestingStore.instance.status !== 'preview'
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
@@ -183,6 +184,7 @@ function TestEdit() {
             <Input
               style={{ width: 400 }}
               type={'url'}
+              disabled={isPublished}
               placeholder={'https://mywebsite.com/example-page'}
               value={uxtestingStore.instance!.startingPath}
               onChange={(e) => {
@@ -252,7 +254,7 @@ function TestEdit() {
                 description={task.description}
                 buttons={
                   <>
-                    <Button size={'small'} icon={<EditOutlined rev={undefined} />} onClick={() => {
+                    <Button size={'small'} disabled={isPublished} icon={<EditOutlined rev={undefined} />} onClick={() => {
                       showModal(
                         <StepsModal
                           editTask={task}
@@ -277,6 +279,7 @@ function TestEdit() {
                           )
                         );
                       }}
+                      disabled={isPublished}
                       size={'small'}
                       icon={<DeleteOutlined rev={undefined} />}
                     />
@@ -288,6 +291,7 @@ function TestEdit() {
               <Button
                 type={'primary'}
                 ghost
+                disabled={isPublished}
                 onClick={() =>
                   showModal(
                     <StepsModal

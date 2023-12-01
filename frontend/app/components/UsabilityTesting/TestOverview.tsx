@@ -186,22 +186,22 @@ const ParticipantOverview = observer(() => {
     <div className={'p-4 rounded border bg-white mt-2'}>
       <Typography.Title level={5}>Participant Overview</Typography.Title>
       {uxtestingStore.testStats ? (
-        <div className={'flex gap-2'}>
+        <div className={'flex gap-4'}>
           <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2'}>
+            <div className={'flex items-center gap-2 mb-2'}>
               <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
               <Typography.Text strong>Total Participants</Typography.Text>
             </div>
-            <Typography.Title level={5}>{uxtestingStore.testStats.tests_attempts}</Typography.Title>
+            <Typography.Title level={4}>{uxtestingStore.testStats.tests_attempts}</Typography.Title>
           </div>
           <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2'}>
+            <div className={'flex items-center gap-2 mb-2'}>
               <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
               <Typography.Text strong>Completed all tasks</Typography.Text>
             </div>
             <div className={'flex items-center gap-2'}>
               {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={5}>
+                <Typography.Title level={4}>
                   {Math.round(
                     (uxtestingStore.testStats.completed_all_tasks /
                       uxtestingStore.testStats.tests_attempts) *
@@ -214,13 +214,13 @@ const ParticipantOverview = observer(() => {
             </div>
           </div>
           <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2'}>
+            <div className={'flex items-center gap-2 mb-2'}>
               <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
               <Typography.Text strong>Skipped tasks</Typography.Text>
             </div>
             <div className={'flex items-center gap-2'}>
               {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={5}>
+                <Typography.Title level={4}>
                   {Math.round(
                     (uxtestingStore.testStats.tasks_skipped /
                       uxtestingStore.testStats.tests_attempts) *
@@ -233,13 +233,13 @@ const ParticipantOverview = observer(() => {
             </div>
           </div>
           <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2'}>
+            <div className={'flex items-center gap-2 mb-2'}>
               <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
               <Typography.Text strong>Aborted the test</Typography.Text>
             </div>
             <div className={'flex items-center gap-2'}>
               {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={5}>
+                <Typography.Title level={4}>
                   {Math.round(
                     (uxtestingStore.testStats.tests_skipped /
                       uxtestingStore.testStats.tests_attempts) *
@@ -251,7 +251,6 @@ const ParticipantOverview = observer(() => {
               <Typography.Text>{uxtestingStore.testStats.tests_skipped}</Typography.Text>
             </div>
           </div>
-          <div className={'flex-1'} />
         </div>
       ) : null}
     </div>
@@ -284,7 +283,7 @@ const TaskSummary = observer(() => {
       </div>
       {!uxtestingStore.taskStats.length ? <NoContent show title={'No data'} /> : null}
       {uxtestingStore.taskStats.map((tst, index) => (
-        <Stage stage={tst} uxt index={index + 1} />
+        <Stage stage={{ ...tst, isActive: true }} uxt index={index + 1} />
       ))}
     </div>
   );
@@ -388,7 +387,7 @@ const Title = observer(({ testId, siteId }: any) => {
           <Button icon={<MoreOutlined rev={undefined} />}></Button>
         </Dropdown>
       </div>
-      <div className={'text-disabled-text whitespace-pre-wrap'}>
+      <div className={'whitespace-pre-wrap'}>
         {uxtestingStore.instance!.description}
       </div>
     </div>
