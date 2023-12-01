@@ -2,10 +2,10 @@ import { UxTask } from "App/services/UxtestingService";
 import React from 'react'
 import { Button, Input, Switch, Typography } from 'antd'
 
-function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: () => void }) {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(false);
+function StepsModal({ onAdd, onHide, editTask }: { onAdd: (step: UxTask) => void; onHide: () => void, editTask?: UxTask }) {
+  const [title, setTitle] = React.useState(editTask?.title ?? '');
+  const [description, setDescription] = React.useState(editTask?.description ?? '');
+  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(editTask?.allowTyping ?? false);
 
   const save = () => {
     onAdd({
@@ -55,7 +55,7 @@ function StepsModal({ onAdd, onHide }: { onAdd: (step: UxTask) => void; onHide: 
       </div>
       <div className={'flex gap-2'}>
         <Button type={'primary'} onClick={save} disabled={title === ''}>
-          Add
+          {editTask ? 'Save' : 'Add'}
         </Button>
         <Button onClick={onHide}>Cancel</Button>
       </div>

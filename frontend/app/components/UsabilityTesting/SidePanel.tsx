@@ -30,6 +30,11 @@ const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
             unCheckedChildren="No"
           />
         </div>
+        <div className={'text-disabled-text text-sm'}>
+          If required, enable camera and mic access to observe participants' facial expressions and
+          verbal feedback in real-time, providing deeper insights into their user experience during
+          the test.
+        </div>
       </div>
 
       <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>

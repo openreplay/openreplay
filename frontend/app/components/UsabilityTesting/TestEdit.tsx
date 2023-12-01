@@ -231,7 +231,20 @@ function TestEdit() {
                 description={task.description}
                 buttons={
                   <>
-                    <Button size={'small'} icon={<EditOutlined rev={undefined} />} />
+                    <Button size={'small'} icon={<EditOutlined rev={undefined} />} onClick={() => {
+                      showModal(
+                        <StepsModal
+                          editTask={task}
+                          onHide={hideModal}
+                          onAdd={(task) => {
+                            const tasks = [...uxtestingStore.instance!.tasks];
+                            tasks[index] = task;
+                            uxtestingStore.instance!.setProperty('tasks', tasks);
+                          }}
+                        />,
+                        { right: true, width: 600 }
+                      )
+                    }} />
                     <Button
                       onClick={() => {
                         uxtestingStore.instance!.setProperty(
