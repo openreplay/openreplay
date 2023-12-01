@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite'
 import { Typography, Switch, Button, Space } from "antd";
 import { ExportOutlined } from "@ant-design/icons";
 
-const SidePanel = observer(({ onSave, onPreview }: any) => {
+const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
   const { uxtestingStore } = useStore();
   return (
     <div className={'flex flex-col gap-2 col-span-1'}>
@@ -32,12 +32,12 @@ const SidePanel = observer(({ onSave, onPreview }: any) => {
         </div>
       </div>
 
-      <Button onClick={onPreview}>
+      <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0}>
         <Space align={'center'}>
           Preview <ExportOutlined rev={undefined} />
         </Space>
       </Button>
-      <Button type={'primary'} onClick={onSave}>
+      <Button type={'primary'} onClick={onSave} disabled={taskLen === 0}>
         Publish Test
       </Button>
     </div>

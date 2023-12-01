@@ -1,4 +1,5 @@
 import { durationFormatted } from 'App/date';
+import usePageTitle from "App/hooks/usePageTitle";
 import { numberWithCommas } from 'App/utils';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
@@ -64,10 +65,12 @@ function TestOverview() {
   const { siteId, testId } = useParams();
   const { showModal } = useModal();
   const { uxtestingStore } = useStore();
+  usePageTitle(`Usability Tests | ${uxtestingStore.instance?.title || ''}`);
 
   React.useEffect(() => {
     uxtestingStore.getTest(testId);
   }, [testId]);
+
 
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
@@ -78,7 +81,7 @@ function TestOverview() {
   };
 
   return (
-    <>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px'}}>
       <Breadcrumb
         items={[
           {
@@ -172,7 +175,7 @@ function TestOverview() {
           </Loader>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -378,7 +381,7 @@ const Title = observer(({ testId, siteId }: any) => {
           </div>
         }
       >
-        <Button>
+        <Button type={'primary'} ghost>
           <Space align={'center'}>
             Distribute
             <ShareAltOutlined rev={undefined} />
@@ -386,7 +389,7 @@ const Title = observer(({ testId, siteId }: any) => {
         </Button>
       </Popover>
       <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
-        <Button icon={<MoreOutlined rev={undefined} />}></Button>
+        <Button ghost type={'primary'} icon={<MoreOutlined rev={undefined} />}></Button>
       </Dropdown>
     </div>
   )

@@ -12,16 +12,17 @@ import { UnorderedListOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
 import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
 import { debounce } from 'App/utils';
+import withPageTitle from 'HOCs/withPageTitle';
 
 const { Search } = Input;
 
 const PER_PAGE = 10;
 
 let debouncedSearch: any = () => null
-
+const defaultDescription = `To evaluate the usability of [Feature Name], focusing on user interaction, efficiency, and satisfaction. The aim is to identify any usability issues that users may encounter, understand how they navigate [Feature Name], and gauge the intuitiveness of the workflow.`
 function TestsTable() {
   const [newTestTitle, setNewTestTitle] = React.useState('');
-  const [newTestDescription, setNewTestDescription] = React.useState('');
+  const [newTestDescription, setNewTestDescription] = React.useState(defaultDescription);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const { uxtestingStore } = useStore();
 
@@ -63,7 +64,7 @@ function TestsTable() {
   };
 
   return (
-    <>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px'}}>
       <Modal
         title="Create Usability Test"
         open={isModalVisible}
@@ -78,8 +79,9 @@ function TestsTable() {
           </Button>
         }
       >
-        <Typography.Text strong>Name this user test</Typography.Text>
+        <Typography.Text strong>Title</Typography.Text>
         <Input
+          autoFocus
           placeholder="E.g. Checkout user journey evaluation"
           style={{ marginBottom: '2em' }}
           value={newTestTitle}
@@ -87,6 +89,7 @@ function TestsTable() {
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
         <Input.TextArea
+          rows={5}
           value={newTestDescription}
           onChange={(e) => setNewTestDescription(e.target.value)}
           placeholder="Share a brief statement about what you aim to discover through this study."
@@ -126,7 +129,7 @@ function TestsTable() {
                   <AnimatedSVG name={ICONS.NO_FFLAGS} size={285} />
                   <div className="text-center text-gray-600 mt-4">
                     {uxtestingStore.searchQuery === ''
-                      ? "You haven't created any user tests yet"
+                      ? "You haven't created any usability tests yet"
                       : 'No matching results'}
                   </div>
                 </div>
@@ -161,7 +164,7 @@ function TestsTable() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -202,4 +205,4 @@ function Cell({ size, children }: { size: number; children?: React.ReactNode }) 
   return <div className={`col-span-${size}`}>{children}</div>;
 }
 
-export default observer(TestsTable);
+export default withPageTitle('Usability Tests')(observer(TestsTable))

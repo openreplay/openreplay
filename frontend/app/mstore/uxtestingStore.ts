@@ -27,6 +27,27 @@ interface Response {
   duration: number;
 }
 
+const defaultGuidelines = `
+Introduction:localStorage
+Thank you for participating in this important stage of our [Website/App] development. Your insights will help us enhance the [Desktop/Mobile] experience for all users.localStoragelocalStorage
+
+Before You Begin:localStorage
+• Device: Ensure you're using a [Desktop/Mobile] for this test.localStoragelocalStorage
+
+• Environment: Choose a quiet location where you can focus without interruptions.localStoragelocalStorage
+
+Test Guidelines:localStorage
+1. Task Flow: You will perform a series of tasks as you normally would when using a [Website/App].localStoragelocalStorage
+
+2. Think Aloud: Please verbalize your thoughts. If something is confusing, interesting, or pleasing, let us know.localStoragelocalStorage
+
+3. No Right or Wrong: There are no correct answers here, just your honest experience.localStoragelocalStorage
+
+4. Pace Yourself: Take your time, there's no rush to complete the tasks quickly.localStoragelocalStorage
+
+5. Technical Issues: If you encounter any issues, please describe what you were attempting to do when the issue occurred.localStorage
+`
+
 export default class UxtestingStore {
   client = uxtestingService;
   tests: UxTListEntry[] = [];
@@ -125,7 +146,7 @@ export default class UxtestingStore {
       requireMic: false,
       requireCamera: false,
       description: description,
-      guidelines: '',
+      guidelines: defaultGuidelines,
       conclusionMessage: '',
       visibility: true,
       tasks: [],
@@ -185,6 +206,7 @@ export default class UxtestingStore {
     try {
       const test = await this.client.fetchTest(testId);
       this.setInstance(new UxTestInst(test));
+      return this.instance
     } catch (e) {
       console.error(e);
     } finally {

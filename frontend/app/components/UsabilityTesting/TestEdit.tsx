@@ -1,10 +1,4 @@
-import {
-  Button,
-  Input,
-  Typography,
-  Dropdown,
-  Modal,
-} from 'antd';
+import { Button, Input, Typography, Dropdown, Modal } from 'antd';
 import React from 'react';
 import {
   withSiteId,
@@ -21,6 +15,7 @@ import { useStore } from 'App/mstore';
 import { confirm } from 'UI';
 import StepsModal from './StepsModal';
 import SidePanel from './SidePanel';
+import usePageTitle from 'App/hooks/usePageTitle';
 
 const menuItems = [
   {
@@ -36,20 +31,28 @@ const menuItems = [
 ];
 
 function TestEdit() {
+  const { uxtestingStore } = useStore();
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState('');
+  const [conclusion, setConclusion] = React.useState('');
+  const [guidelines, setGuidelines] = React.useState('');
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-  const { uxtestingStore } = useStore();
   const [isConclusionEditing, setIsConclusionEditing] = React.useState(false);
   const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
   // @ts-ignore
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
   const history = useHistory();
+  usePageTitle(`Usability Tests | ${uxtestingStore.instance ? 'Edit' : 'Create'}`);
 
   React.useEffect(() => {
     if (testId && testId !== 'new') {
-      uxtestingStore.getTestData(testId);
+      uxtestingStore.getTestData(testId).then((inst) => {
+        if (inst) {
+          setConclusion(inst.conclusionMessage || '');
+          setGuidelines(inst.guidelines || '');
+        }
+      });
     }
   }, []);
   if (!uxtestingStore.instance) {
@@ -105,7 +108,7 @@ function TestEdit() {
   };
 
   return (
-    <>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
           {
@@ -170,42 +173,52 @@ function TestEdit() {
                 uxtestingStore.instance!.setProperty('startingPath', e.target.value);
               }}
             />
-            <Typography.Text>Test will begin on this page</Typography.Text>
+            <Typography.Text>Test will begin on this page.</Typography.Text>
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>Introduction & Guidelines</Typography.Text>
+            <Typography.Text strong>Introduction and Guidelines for Participants</Typography.Text>
             <Typography.Text></Typography.Text>
             {isOverviewEditing ? (
               <Input.TextArea
+                autoFocus
+                rows={5}
                 placeholder={'Task overview'}
-                value={uxtestingStore.instance.guidelines}
-                onChange={(e) => uxtestingStore.instance!.setProperty('guidelines', e.target.value)}
+                value={guidelines}
+                onChange={(e) => setGuidelines(e.target.value)}
               />
             ) : (
-              <Typography.Text>
+              <div className={'whitespace-pre-wrap'}>
                 {uxtestingStore.instance?.guidelines?.length
                   ? uxtestingStore.instance.guidelines
-                  : 'Provide an overview of this user test to and input guidelines that can be of assistance to users at any point during the test.'}
-              </Typography.Text>
+                  : 'Provide an overview of this usability test to and input guidelines that can be of assistance to users at any point during the test.'}
+              </div>
             )}
             <div className={'flex gap-2'}>
               {isOverviewEditing ? (
                 <>
-                  <Button type={'primary'} onClick={() => setIsOverviewEditing(false)}>
+                  <Button
+                    type={'primary'}
+                    onClick={() => {
+                      uxtestingStore.instance!.setProperty('guidelines', guidelines);
+                      setIsOverviewEditing(false);
+                    }}
+                  >
                     Save
                   </Button>
                   <Button
                     onClick={() => {
-                      uxtestingStore.instance!.setProperty('guidelines', '');
                       setIsOverviewEditing(false);
+                      setGuidelines(uxtestingStore.instance?.guidelines || '');
                     }}
                   >
-                    Remove
+                    Cancel
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsOverviewEditing(true)}>Add</Button>
+                <Button type={'primary'} ghost onClick={() => setIsOverviewEditing(true)}>
+                  {uxtestingStore.instance?.guidelines?.length ? 'Edit' : 'Add'}
+                </Button>
               )}
             </div>
           </div>
@@ -238,6 +251,8 @@ function TestEdit() {
             ))}
             <div>
               <Button
+                type={'primary'}
+                ghost
                 onClick={() =>
                   showModal(
                     <StepsModal
@@ -264,10 +279,8 @@ function TestEdit() {
               {isConclusionEditing ? (
                 <Input.TextArea
                   placeholder={'Thanks for participation!..'}
-                  value={uxtestingStore.instance!.conclusionMessage}
-                  onChange={(e) =>
-                    uxtestingStore.instance!.setProperty('conclusionMessage', e.target.value)
-                  }
+                  value={conclusion}
+                  onChange={(e) => setConclusion(e.target.value)}
                 />
               ) : (
                 <Typography.Text>{uxtestingStore.instance!.conclusionMessage}</Typography.Text>
@@ -276,27 +289,39 @@ function TestEdit() {
             <div className={'flex gap-2'}>
               {isConclusionEditing ? (
                 <>
-                  <Button type={'primary'} onClick={() => setIsConclusionEditing(false)}>
+                  <Button
+                    type={'primary'}
+                    onClick={() => {
+                      uxtestingStore.instance!.setProperty('conclusionMessage', conclusion);
+                      setIsConclusionEditing(false);
+                    }}
+                  >
                     Save
                   </Button>
                   <Button
                     onClick={() => {
-                      uxtestingStore.instance!.setProperty('conclusionMessage', '');
                       setIsConclusionEditing(false);
+                      setConclusion(uxtestingStore.instance?.conclusionMessage || '');
                     }}
                   >
-                    Remove
+                    Cancel
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsConclusionEditing(true)}>Edit</Button>
+                <Button type={'primary'} ghost onClick={() => setIsConclusionEditing(true)}>
+                  Edit
+                </Button>
               )}
             </div>
           </div>
         </div>
-        <SidePanel onSave={() => onSave(false)} onPreview={() => onSave(true)} />
+        <SidePanel
+          taskLen={uxtestingStore.instance.tasks.length}
+          onSave={() => onSave(false)}
+          onPreview={() => onSave(true)}
+        />
       </div>
-    </>
+    </div>
   );
 }
 

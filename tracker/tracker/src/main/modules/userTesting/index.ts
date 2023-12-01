@@ -199,7 +199,7 @@ export default class UserTestManager {
     )
 
     this.removeGreeting = () => {
-      this.container.innerHTML = ''
+      // this.container.innerHTML = ''
       if (micRequired || cameraRequired) {
         void this.userRecorder.startRecording(30, Quality.Standard, micRequired, cameraRequired)
       }
@@ -213,7 +213,7 @@ export default class UserTestManager {
       this.removeGreeting()
       this.durations.testStart = this.app.timestamp()
       void this.signalTest('begin')
-      this.showWidget(this.test?.description || '', this.test?.tasks || [])
+      this.showWidget(this.test?.guidelines || '', this.test?.tasks || [])
     }
 
     this.container.append(titleElement, descriptionElement, noticeElement, buttonElement)
@@ -222,7 +222,7 @@ export default class UserTestManager {
   }
 
   showWidget(
-    description: string,
+    guidelines: string,
     tasks: {
       title: string
       description: string
@@ -248,7 +248,7 @@ export default class UserTestManager {
     // Create title section
     const titleSection = this.createTitleSection()
     Object.assign(this.container.style, styles.containerWidgetStyle)
-    const descriptionSection = this.createDescriptionSection(description)
+    const descriptionSection = this.createDescriptionSection(guidelines)
     const tasksSection = this.createTasksSection(tasks)
     const stopButton = createElement('div', 'stop_bn_or', styles.stopWidgetStyle, 'Abort Session')
 
@@ -326,7 +326,7 @@ export default class UserTestManager {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   toggleDescriptionVisibility = () => {}
 
-  createDescriptionSection(description: string) {
+  createDescriptionSection(guidelines: string) {
     const section = createElement('div', 'description_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_s_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
@@ -334,9 +334,10 @@ export default class UserTestManager {
     const content = createElement('div', 'content', styles.contentStyle)
     const descriptionC = createElement('div', 'text_description', {
       maxHeight: '250px',
-      overflow: 'scroll',
+      overflowY: 'auto',
+      whiteSpace: 'pre-wrap',
     })
-    descriptionC.innerHTML = description
+    descriptionC.innerHTML = guidelines
     const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
 
     titleContainer.append(title, icon)
@@ -543,7 +544,7 @@ export default class UserTestManager {
       'end_description_or',
       {},
       this.test?.conclusion ??
-        'Thank you for participating in our user test. Your feedback has been captured and will be used to enhance our website. \n' +
+        'Thank you for participating in our usability test. Your feedback has been captured and will be used to enhance our website. \n' +
           '\n' +
           'We appreciate your time and valuable input.',
     )
