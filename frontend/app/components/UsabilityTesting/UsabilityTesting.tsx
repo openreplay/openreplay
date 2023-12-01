@@ -136,7 +136,7 @@ function TestsTable() {
               }
             >
               {uxtestingStore.tests.map((test) => (
-                <Row test={test} />
+                <Row test={test} siteId={siteId} />
               ))}
             </NoContent>
           </Loader>
@@ -175,11 +175,16 @@ const statusMap = {
   closed: "Completed",
 }
 
-function Row({ test }: { test: UxTListEntry }) {
+function Row({ test, siteId }: { test: UxTListEntry, siteId: string }) {
   const link = usabilityTestingView(test.testId.toString())
   const editLink = usabilityTestingEdit(test.testId.toString())
+  const history = useHistory()
+
+  const redirect = () => {
+    history.push(withSiteId(test.status === 'preview' ? editLink : link, siteId))
+  }
   return (
-    <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
+    <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue cursor-pointer'} onClick={redirect}>
       <Cell size={4}>
         <div className={'flex items-center gap-2'}>
           <Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />
