@@ -325,41 +325,6 @@ async def not_found(send):
     )
 
 
-async def serve_static(send, path):
-    # XXX: Secure the /static/* route, and avoid people poking at
-    # files that are not in the local ./static/
-    # directory. Security can be as simple as that.
-    if ".." in path:
-        await not_found(send)
-    else:
-        components = path.split("/")
-        filename = components[-1]
-        filepath = ORPY_ROOT / "/".join(components[1:])
-        mimetype = guess_type(filename)[0] or "application/octet-stream"
-
-        if not filepath.exists():
-            await not_found(send)
-            return
-
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [
-                    [b"content-type", mimetype.encode("utf8")],
-                ],
-            }
-        )
-
-        with filepath.open("rb") as f:
-            await send(
-                {
-                    "type": "http.response.body",
-                    "body": f.read(),
-                }
-            )
-
-
 async def http(send):
     path = context.get().scope["path"]
 
