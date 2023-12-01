@@ -35,7 +35,7 @@ export interface UxTest {
 
 export interface UxTListEntry {
  createdAt: string;
- status: 'preview' | 'in-progress' | 'paused' | 'completed';
+ status: 'preview' | 'in-progress' | 'paused' | 'closed';
   createdBy: {
     userId: number;
     name: string;

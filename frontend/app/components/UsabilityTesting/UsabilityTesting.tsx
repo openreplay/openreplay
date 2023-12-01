@@ -172,21 +172,22 @@ const statusMap = {
   preview: "Preview",
   'in-progress': "In progress",
   paused: "Paused",
-  completed: "Completed",
+  closed: "Completed",
 }
 
 function Row({ test }: { test: UxTListEntry }) {
   const link = usabilityTestingView(test.testId.toString())
+  const editLink = usabilityTestingEdit(test.testId.toString())
   return (
     <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
       <Cell size={4}>
         <div className={'flex items-center gap-2'}>
           <Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />
-          <div>
-            <Link className='link' to={link}>
+          <div style={{ maxWidth: 550 }}>
+            <Link className='link' to={test.status === 'preview' ? editLink : link}>
               {test.title}
             </Link>
-            <div className={'text-disabled-text'}>
+            <div className={'text-disabled-text whitespace-nowrap text-ellipsis overflow-hidden'}>
               {test.description}
             </div>
           </div>
@@ -195,11 +196,18 @@ function Row({ test }: { test: UxTListEntry }) {
       <Cell size={1}>{test.createdBy.name}</Cell>
       <Cell size={2}>{checkForRecent(getDateFromMill(test.updatedAt)!, 'LLL dd, yyyy, hh:mm a')}</Cell>
       <Cell size={1}>
-        <Tag color={test.status === 'in-progress' ? "orange" : ''}>{statusMap[test.status]}</Tag>
+        <Tag color={colors[test.status]}>{statusMap[test.status]}</Tag>
       </Cell>
     </div>
   );
 }
+
+const colors = {
+  'in-progress': 'green',
+  closed: 'geekblue',
+  paused: 'grey',
+  preview: 'orange',
+} as const
 
 function Cell({ size, children }: { size: number; children?: React.ReactNode }) {
   return <div className={`col-span-${size}`}>{children}</div>;

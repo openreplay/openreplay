@@ -66,7 +66,6 @@ function TestEdit() {
       });
     } else {
       uxtestingStore.createNewTest(isPreview).then((test) => {
-        console.log(test);
         if (isPreview) {
           window.open(`${test.startingPath}?oruxt=${test.testId}`, '_blank', 'noopener,noreferrer');
           history.push(withSiteId(usabilityTestingEdit(test.testId), siteId));

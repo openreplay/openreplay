@@ -1,5 +1,5 @@
 import { durationFormatted } from 'App/date';
-import usePageTitle from "App/hooks/usePageTitle";
+import usePageTitle from 'App/hooks/usePageTitle';
 import { numberWithCommas } from 'App/utils';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
@@ -36,10 +36,10 @@ import ResponsesOverview from './ResponsesOverview';
 const { Option } = Select;
 
 const statusItems = [
-  { value: 'preview', label: 'Preview', icon: <HourglassOutlined rev={undefined} /> },
-  { value: 'in-progress', label: 'In Progress', icon: <HourglassOutlined rev={undefined} /> },
-  { value: 'paused', label: 'Pause', icon: <PauseCircleOutlined rev={undefined} /> },
-  { value: 'closed', label: 'End Testing', icon: <StopOutlined rev={undefined} /> },
+  { value: 'preview', label: 'Draft', icon: <HourglassOutlined rev={undefined} /> },
+  { value: 'in-progress', label: 'Ongoing', icon: <HourglassOutlined rev={undefined} /> },
+  { value: 'paused', label: 'On Hold', icon: <PauseCircleOutlined rev={undefined} /> },
+  { value: 'closed', label: 'Closed', icon: <StopOutlined rev={undefined} /> },
 ];
 
 const menuItems = [
@@ -71,7 +71,6 @@ function TestOverview() {
     uxtestingStore.getTest(testId);
   }, [testId]);
 
-
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
   }
@@ -81,7 +80,7 @@ function TestOverview() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px'}}>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
           {
@@ -116,7 +115,6 @@ function TestOverview() {
       </div>
       <ParticipantOverview />
       <TaskSummary />
-
 
       <div className={'mt-2 rounded border p-4 bg-white flex gap-2 items-center'}>
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
@@ -192,9 +190,7 @@ const ParticipantOverview = observer(() => {
               <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
               <Typography.Text strong>Total Participants</Typography.Text>
             </div>
-            <Typography.Title level={5}>
-              {uxtestingStore.testStats.tests_attempts}
-            </Typography.Title>
+            <Typography.Title level={5}>{uxtestingStore.testStats.tests_attempts}</Typography.Title>
           </div>
           <div className={'rounded border p-2 flex-1'}>
             <div className={'flex items-center gap-2'}>
@@ -207,7 +203,7 @@ const ParticipantOverview = observer(() => {
                   {Math.round(
                     (uxtestingStore.testStats.completed_all_tasks /
                       uxtestingStore.testStats.tests_attempts) *
-                    100
+                      100
                   )}
                   %
                 </Typography.Title>
@@ -226,7 +222,7 @@ const ParticipantOverview = observer(() => {
                   {Math.round(
                     (uxtestingStore.testStats.tasks_skipped /
                       uxtestingStore.testStats.tests_attempts) *
-                    100
+                      100
                   )}
                   %
                 </Typography.Title>
@@ -245,7 +241,7 @@ const ParticipantOverview = observer(() => {
                   {Math.round(
                     (uxtestingStore.testStats.tests_skipped /
                       uxtestingStore.testStats.tests_attempts) *
-                    100
+                      100
                   )}
                   %
                 </Typography.Title>
@@ -257,8 +253,8 @@ const ParticipantOverview = observer(() => {
         </div>
       ) : null}
     </div>
-  )
-})
+  );
+});
 
 const TaskSummary = observer(() => {
   const { uxtestingStore } = useStore();
@@ -273,11 +269,11 @@ const TaskSummary = observer(() => {
             <Typography.Text strong>
               {uxtestingStore.taskStats
                 ? durationFormatted(
-                  uxtestingStore.taskStats.reduce(
-                    (stats, task) => stats + task.avgCompletionTime,
-                    0
-                  ) / uxtestingStore.taskStats.length
-                )
+                    uxtestingStore.taskStats.reduce(
+                      (stats, task) => stats + task.avgCompletionTime,
+                      0
+                    ) / uxtestingStore.taskStats.length
+                  )
                 : null}
             </Typography.Text>
             <ClockCircleOutlined rev={undefined} />
@@ -289,8 +285,8 @@ const TaskSummary = observer(() => {
         <Stage stage={tst} uxt index={index + 1} />
       ))}
     </div>
-  )
-})
+  );
+});
 
 const Title = observer(({ testId, siteId }: any) => {
   const { uxtestingStore } = useStore();
@@ -333,65 +329,67 @@ const Title = observer(({ testId, siteId }: any) => {
   };
 
   return (
-    <div className={'p-4 flex items-center gap-2 border-b'}>
-      <div>
+    <div className={'p-4 border-b'}>
+      <div className={'flex items-center gap-2'}>
         <Typography.Title level={4}>{uxtestingStore.instance!.title}</Typography.Title>
-        <div className={'text-disabled-text'}>{uxtestingStore.instance!.description}</div>
-      </div>
-      <div className={'ml-auto'} />
-      <Select
-        value={uxtestingStore.instance!.status}
-        style={{ width: 150 }}
-        onChange={handleChange}
-      >
-        {statusItems.map((item) => (
-          <Option key={item.value} value={item.value} label={item.label}>
-            <Space align={'center'}>
-              {item.icon} {item.label}
-            </Space>
-          </Option>
-        ))}
-      </Select>
-      <Button type={'primary'} onClick={redirectToEdit}>
-        <Space align={'center'}>
-          {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
-        </Space>
-      </Button>
-      <Popover
-        trigger={'click'}
-        title={'Participants Link'}
-        content={
-          <div style={{ width: '220px' }}>
-            <div className={'p-2 bg-white rounded border break-all mb-2'}>
-              {`${uxtestingStore.instance!.startingPath}?oruxt=${
-                uxtestingStore.instance!.testId
-              }`}
-            </div>
-            <Button
-              onClick={() => {
-                copy(
-                  `${uxtestingStore.instance!.startingPath}?oruxt=${
-                    uxtestingStore.instance!.testId
-                  }`
-                );
-              }}
-            >
-              Copy
-            </Button>
-          </div>
-        }
-      >
-        <Button type={'primary'} ghost>
+        <div className={'ml-auto'} />
+        <Select
+          value={uxtestingStore.instance!.status}
+          style={{ width: 150 }}
+          onChange={handleChange}
+        >
+          {statusItems.map((item) => (
+            <Option key={item.value} value={item.value} label={item.label}>
+              <Space align={'center'}>
+                {item.icon} {item.label}
+              </Space>
+            </Option>
+          ))}
+        </Select>
+        <Button type={'primary'} onClick={redirectToEdit}>
           <Space align={'center'}>
-            Distribute
-            <ShareAltOutlined rev={undefined} />
+            {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
         </Button>
-      </Popover>
-      <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
-        <Button icon={<MoreOutlined rev={undefined} />}></Button>
-      </Dropdown>
+        <Popover
+          trigger={'click'}
+          title={'Participants Link'}
+          content={
+            <div style={{ width: '220px' }}>
+              <div className={'p-2 bg-white rounded border break-all mb-2'}>
+                {`${uxtestingStore.instance!.startingPath}?oruxt=${
+                  uxtestingStore.instance!.testId
+                }`}
+              </div>
+              <Button
+                onClick={() => {
+                  copy(
+                    `${uxtestingStore.instance!.startingPath}?oruxt=${
+                      uxtestingStore.instance!.testId
+                    }`
+                  );
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          }
+        >
+          <Button type={'primary'} ghost>
+            <Space align={'center'}>
+              Distribute
+              <ShareAltOutlined rev={undefined} />
+            </Space>
+          </Button>
+        </Popover>
+        <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
+          <Button icon={<MoreOutlined rev={undefined} />}></Button>
+        </Dropdown>
+      </div>
+      <div className={'text-disabled-text whitespace-pre-wrap'}>
+        {uxtestingStore.instance!.description}
+      </div>
     </div>
-  )
-})
+  );
+});
 export default observer(TestOverview);
