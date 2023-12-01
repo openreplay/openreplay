@@ -128,5 +128,5 @@ class JIRAIntegration(integration_base.BaseIntegration):
             return self.add(
                 username=data.username,
                 token=data.token,
-                url=data.url
+                url=str(data.url)
             )
