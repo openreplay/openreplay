@@ -389,7 +389,7 @@ const Title = observer(({ testId, siteId }: any) => {
         </Button>
       </Popover>
       <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
-        <Button ghost type={'primary'} icon={<MoreOutlined rev={undefined} />}></Button>
+        <Button icon={<MoreOutlined rev={undefined} />}></Button>
       </Dropdown>
     </div>
   )
