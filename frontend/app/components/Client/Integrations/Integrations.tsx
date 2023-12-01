@@ -102,6 +102,9 @@ function Integrations(props: Props) {
   }));
 
 
+  const allIntegrations = filteredIntegrations.flatMap(cat => cat.integrations);
+
+
   return (
     <>
       <div className='mb-4 p-5 bg-white rounded-lg border'>
@@ -112,36 +115,34 @@ function Integrations(props: Props) {
 
       <div className='mb-4' />
 
-      {filteredIntegrations.map((cat: any) => (
-        <div className={cn(`
-          grid 
-          gap-3 
-          auto-cols-max 
-          ${cat.integrations.length > 0 ? 'p-2' : ''}
-          grid-cols-1   // default to 1 column
-          sm:grid-cols-1 // 2 columns on small screens and up
-          md:grid-cols-2 // 3 columns on medium screens and up
-          lg:grid-cols-3 // and so on as per your design requirements
-          xl:grid-cols-3
-        `
-        )}>
-          {cat.integrations.map((integration: any) => (
-            <IntegrationItem
-              integrated={integratedList.includes(integration.slug)}
-              integration={integration}
-              onClick={() =>
-                onClick(integration, cat.title === 'Plugins' ? 500 : 350)
-              }
-              hide={
-                (integration.slug === 'github' &&
-                  integratedList.includes('jira')) ||
-                (integration.slug === 'jira' &&
-                  integratedList.includes('github'))
-              }
-            />
-          ))}
-        </div>
-      ))}
+      <div className={cn(`
+    grid 
+    gap-3 
+    auto-cols-max 
+    ${allIntegrations.length > 0 ? 'p-2' : ''}
+    grid-cols-1    // default to 1 column
+    sm:grid-cols-1 // 1 column on small screens and up
+    md:grid-cols-2 // 2 columns on medium screens and up
+    lg:grid-cols-3 // 3 columns on large screens and up
+    xl:grid-cols-3 // 3 columns on extra-large screens
+`)}>
+        {allIntegrations.map((integration: any) => (
+          <IntegrationItem
+            integrated={integratedList.includes(integration.slug)}
+            integration={integration}
+            onClick={() =>
+              onClick(integration, filteredIntegrations.find(cat => cat.integrations.includes(integration)).title === 'Plugins' ? 500 : 350)
+            }
+            hide={
+              (integration.slug === 'github' &&
+                integratedList.includes('jira')) ||
+              (integration.slug === 'jira' &&
+                integratedList.includes('github'))
+            }
+          />
+        ))}
+      </div>
+
     </>
   );
 }
@@ -180,24 +181,6 @@ const integrations = [
         category: 'Errors',
         icon: 'integrations/github',
         component: <GithubForm />
-      },
-      {
-        title: 'Slack',
-        subtitle: 'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
-        slug: 'slack',
-        category: 'Errors',
-        icon: 'integrations/slack',
-        component: <SlackForm />,
-        shared: true
-      },
-      {
-        title: 'MS Teams',
-        subtitle: 'Integrate MS Teams to enable all users in your organization to share sessions directly to any MS Teams channel.',
-        slug: 'msteams',
-        category: 'Errors',
-        icon: 'integrations/teams',
-        component: <MSTeams />,
-        shared: true
       }
     ]
   },
@@ -290,16 +273,35 @@ const integrations = [
     isProject: false,
     icon: 'file-code',
     description: 'Share your sessions with your team and collaborate on issues.',
-    integrations: []
+    integrations: [
+      {
+        title: 'Slack',
+        subtitle: 'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
+        slug: 'slack',
+        category: 'Errors',
+        icon: 'integrations/slack',
+        component: <SlackForm />,
+        shared: true
+      },
+      {
+        title: 'MS Teams',
+        subtitle: 'Integrate MS Teams to enable all users in your organization to share sessions directly to any MS Teams channel.',
+        slug: 'msteams',
+        category: 'Errors',
+        icon: 'integrations/teams',
+        component: <MSTeams />,
+        shared: true
+      }
+    ]
   },
-  {
-    title: 'State Management',
-    key: 'state-management',
-    isProject: true,
-    icon: 'layers-half',
-    description: 'Sync your Redux or VueX store with sessions replays and see what happened front-to-back.',
-    integrations: []
-  },
+  // {
+  //   title: 'State Management',
+  //   key: 'state-management',
+  //   isProject: true,
+  //   icon: 'layers-half',
+  //   description: 'Sync your Redux or VueX store with sessions replays and see what happened front-to-back.',
+  //   integrations: []
+  // },
   {
     title: 'Plugins',
     key: 'plugins',
