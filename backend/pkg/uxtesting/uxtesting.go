@@ -21,6 +21,7 @@ func New(db pool.Pool) UXTesting {
 }
 
 type UXTestInfo struct {
+	ProjectID    uint32        `json:"-"`
 	Title        string        `json:"title"`
 	Description  string        `json:"description"`
 	StartingPath string        `json:"startingPath"`
@@ -37,6 +38,7 @@ func (u *uxTestingImpl) GetInfo(testID string) (*UXTestInfo, error) {
 	var description, startingPath, guidelines, conclusion *string
 	err := u.db.QueryRow(`
 		SELECT
+		    ut_tests.project_id,
 			ut_tests.title,
 			ut_tests.description,
 			ut_tests.starting_path,
@@ -60,7 +62,7 @@ func (u *uxTestingImpl) GetInfo(testID string) (*UXTestInfo, error) {
 		WHERE ut_tests.test_id = $1
 		GROUP BY
 			ut_tests.test_id;
-	`, testID).Scan(&info.Title, &description, &startingPath, &info.Status, &info.ReqMic, &info.ReqCamera,
+	`, testID).Scan(&info.ProjectID, &info.Title, &description, &startingPath, &info.Status, &info.ReqMic, &info.ReqCamera,
 		&guidelines, &conclusion, &info.Tasks)
 	if err != nil {
 		return nil, err
