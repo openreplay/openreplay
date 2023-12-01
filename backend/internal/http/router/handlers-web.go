@@ -377,7 +377,7 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// Check authorization
-	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessInfo, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
@@ -391,6 +391,15 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := e.services.UXTesting.GetInfo(id)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	sess, err := e.services.Sessions.Get(sessInfo.ID)
+	if err != nil {
+		ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	if sess.ProjectID != info.ProjectID {
+		ResponseWithError(w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	type TaskInfoResponse struct {
