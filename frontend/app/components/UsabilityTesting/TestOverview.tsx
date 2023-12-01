@@ -105,7 +105,7 @@ function TestOverview() {
               the moment.
             </Typography.Text>
             <Button onClick={() => {
-              showModal(<LiveTestsModal testId={testId} />, { right: true, width: 600 })
+              showModal(<LiveTestsModal testId={testId} />, { right: true, width: 900 })
             }}>
               <Space align={'center'}>
                 Moderate Real-Time

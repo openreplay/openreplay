@@ -241,8 +241,12 @@ export default class UxtestingStore {
       });
   }
 
-  setAssistSessions = (sessions: { list: Session[]; total: number; page: number }) => {
-    this.testAssistSessions = sessions;
+  setAssistSessions = (data: { sessions: Session[]; total: number; page: number }) => {
+    this.testAssistSessions = {
+      list: data.sessions.map((s: any) => new Session({ ...s, metadata: {} })),
+      total: data.total,
+      page: data.page,
+    };
   };
 
   getAssistSessions = async (testId: string, page: number, userId?: string) => {

@@ -22,8 +22,8 @@ function LiveTestsModal({ testId }: { testId: string }) {
 
   return (
     <div className={'h-screen p-4 bg-white'}>
-      <div className={'border-b flex items-center justify-between'}>
-        <div>Live Participants</div>
+      <div className={'border-b flex items-center justify-between mb-4 py-2'}>
+        <div className={'w-3/4 font-semibold text-xl'}>Live Participants</div>
         <Input.Search
           allowClear
           placeholder="Search by participant ID or name"
