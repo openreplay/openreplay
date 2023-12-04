@@ -337,9 +337,6 @@ async def http(send):
         # is a dubious choice when considering files, possibly large
         # files that are served dynamically.
 
-        # XXX: Also at this time it is not used, since all HTTP path
-        # serve the ./index.html stuff which always connect via
-        # websockets (and there is no check on the websocket path).
         path += "/"
         await send(
             {
