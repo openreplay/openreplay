@@ -33,9 +33,6 @@ class DatabaseRequestHandler:
     def add_param(self, key, value):
         self.params[key] = value
 
-    def set_order_by(self, order_by):
-        self.order_clause = order_by
-
     def set_sort_by(self, sort_by):
         self.sort_clause = sort_by
 

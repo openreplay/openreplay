@@ -400,6 +400,7 @@ def get_task_statistics(test_id: int):
     db_handler.add_join("JOIN ut_tests_signals uts ON utt.task_id = uts.task_id")
     db_handler.add_constraint("utt.test_id = %(test_id)s", {'test_id': test_id})
     db_handler.set_group_by("utt.task_id, utt.title")
+    db_handler.set_sort_by("utt.task_id ASC")
 
     rows = db_handler.fetchall()
 
