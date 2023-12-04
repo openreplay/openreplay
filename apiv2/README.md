@@ -2,11 +2,11 @@
 
 The API service is responsible for handling request from the frontend
 where customers access features of openreplay in a graphical way. The
-users of that frontend are managers, and developpers, in other words
-that is openreplay customers.
+users of that frontend are managers, and developpers, in other words: 
+openreplay customers.
 
-End-users' frontends, that is, customers of openreplay customers, send
-data to openreplay backend that is written in Go.
+End-users' frontends, that is, customers of customers of openreplay,
+send data to openreplay backend that is written in Go.
 
 The API communicate with several services, including the database
 PostgreSQL; in the entreprise edition openreplay rely also on
@@ -161,8 +161,8 @@ async def view_get_stats_path_review(uid):
 Of primary importance, and as a matter of facts a good productivty
 kicker to get into the flow: tests.
 
-Here is a test for a health route, it should return 200, with a json
-saying ok:
+Here is a test for a health route. The is expected return 200 and as
+payload a JSON object that is empty:
 
 ```python
 from orpy.base import orpy
@@ -180,7 +180,7 @@ async def test_view_get_health():
     assert ok[0]
 ```
 
-Here is another test that that to exercise the router:
+Here is another that also test the router:
 
 ```python
 from orpy import base as orpy
@@ -188,11 +188,16 @@ from orpy import base as orpy
 
 @pytest.mark.asyncio
 async def test_task_reset_password_link_unknown_email():
-    # It is necessary to call orpy.opry to initialize the application.
+    # Setup, jump to definition to know more about why 
     await orpy.orpy({"type": "lifespan"}, None, None)
-    # The code does not call orpy.orpy, hence setup context manually
     orpy.context.set(orpy.Context(orpy.application.get(), None, None, None))
-    assert not await _task_reset_password_link("example@example.example")
+    # Given
+    email = "example@example.example"
+    # When
+    out = await _task_reset_password_link(email)
+    # Then
+    assert not out
+    # Clean up
     await orpy.context.get().application.database.close()
 ```
 
