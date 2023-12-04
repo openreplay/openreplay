@@ -123,7 +123,7 @@ func (u *uxTestingImpl) SetTaskSignal(signal *TaskSignal) error {
 		INSERT INTO ut_tests_signals (
 			session_id, test_id, task_id, status, comment, timestamp, duration
 		) VALUES (
-			$1, $2, $3, $4, $5, $6,
+			$1, $2, $3, $4, NULLIF($5, ''), $6,
 		    CASE
         		WHEN $7 <= 0 THEN NULL
         		ELSE $7
