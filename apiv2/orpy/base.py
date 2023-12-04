@@ -441,6 +441,8 @@ async def receive_empty():
 
 
 def make_receive_body(bytes):
+    """Return a ASGI function that produce a body with BYTES"""
+
     async def receive():
         return {"body": bytes}
 
