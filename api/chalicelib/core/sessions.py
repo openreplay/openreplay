@@ -872,9 +872,12 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                             event.value, value_key=e_k))
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
-
+                try:
+                    operator = event.sourceOperator.value
+                except AttributeError:
+                    operator = event.sourceOperator
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
+                                   sh.multi_conditions(f"{tname}.{colname} {operator} %({e_k})s",
                                                        event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
