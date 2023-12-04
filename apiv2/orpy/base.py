@@ -405,7 +405,7 @@ async def orpy(scope, receive, send):
         Context(
             application.get(),
             scope,
-            await read_body(receive),
+            await receive_body(receive),
             dict(),
         )
     )
@@ -414,7 +414,7 @@ async def orpy(scope, receive, send):
         await http(send)
 
 
-async def read_body(receive):
+async def receive_body(receive):
     """
     Read and return the entire body from an incoming ASGI message.
     """
