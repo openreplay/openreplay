@@ -63,7 +63,7 @@ const menuItems = [
 function TestOverview() {
   // @ts-ignore
   const { siteId, testId } = useParams();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const { uxtestingStore } = useStore();
   usePageTitle(`Usability Tests | ${uxtestingStore.instance?.title || ''}`);
 
@@ -105,7 +105,7 @@ function TestOverview() {
               the moment.
             </Typography.Text>
             <Button onClick={() => {
-              showModal(<LiveTestsModal testId={testId} />, { right: true, width: 900 })
+              showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, { right: true, width: 900 })
             }}>
               <Space align={'center'}>
                 Moderate Real-Time
@@ -290,6 +290,7 @@ const TaskSummary = observer(() => {
 });
 
 const Title = observer(({ testId, siteId }: any) => {
+  const [truncate, setTruncate] = React.useState(true);
   const { uxtestingStore } = useStore();
   const history = useHistory();
 
@@ -317,6 +318,12 @@ const Title = observer(({ testId, siteId }: any) => {
       }
     }
   };
+
+  if (!uxtestingStore.instance) {
+    return null;
+  }
+
+  const truncatedDescr = uxtestingStore.instance.description.length > 250 && truncate ? uxtestingStore.instance?.description.substring(0, 250) + '...' : uxtestingStore.instance?.description;
   const redirectToEdit = async () => {
     if (
       await confirm({
@@ -388,8 +395,9 @@ const Title = observer(({ testId, siteId }: any) => {
         </Dropdown>
       </div>
       <div className={'whitespace-pre-wrap'}>
-        {uxtestingStore.instance!.description}
+        {truncatedDescr}
       </div>
+      {uxtestingStore.instance.description.length > 250 ? (<div className={'link'} onClick={() => setTruncate(!truncate)}>{truncate ? 'Show more' : 'Show less'}</div>) : null}
     </div>
   );
 });

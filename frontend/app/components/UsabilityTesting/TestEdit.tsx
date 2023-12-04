@@ -121,7 +121,7 @@ function TestEdit() {
           },
           {
             label: uxtestingStore.instance.title,
-            to: withSiteId(usabilityTestingView(testId), siteId),
+            to: isPublished ? withSiteId(usabilityTestingView(testId), siteId) : undefined,
           },
           {
             label: 'Edit',

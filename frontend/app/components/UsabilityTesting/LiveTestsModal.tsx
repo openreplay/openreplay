@@ -6,7 +6,7 @@ import SessionItem from 'Shared/SessionItem';
 import { Pagination } from 'UI';
 import { observer } from 'mobx-react-lite';
 
-function LiveTestsModal({ testId }: { testId: string }) {
+function LiveTestsModal({ testId, closeModal }: { testId: string, closeModal: () => void }) {
   const [page, setPage] = React.useState(1);
   const [userId, setUserId] = React.useState('');
   const { uxtestingStore } = useStore();
@@ -32,7 +32,7 @@ function LiveTestsModal({ testId }: { testId: string }) {
         />
       </div>
       {uxtestingStore.testAssistSessions.list.map((s: any) => (
-        <SessionItem key={s.sessionId} session={s} live />
+        <SessionItem onClick={closeModal} key={s.sessionId} session={s} live />
       ))}
       <div className={'flex items-center justify-between'}>
         <div>
