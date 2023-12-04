@@ -302,7 +302,7 @@ class SchemaHealth(schema.BaseModel):
 async def view_get_health(*_):
     # XXX: For some reason pampy.match will pass all the matched
     # value when there is no variable / placeholder, that is why
-    # there is a snake argument _*
+    # there is a snake argument *_
     return (
         200,
         [(b"content-type", b"application/json")],
