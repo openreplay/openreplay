@@ -259,6 +259,7 @@ const ParticipantOverview = observer(() => {
 
 const TaskSummary = observer(() => {
   const { uxtestingStore } = useStore();
+  const totalAttempts = uxtestingStore.testStats?.tests_attempts ?? 0
   return (
     <div className={'mt-2 rounded border p-4 bg-white'}>
       <div className={'flex justify-between items-center'}>
@@ -283,7 +284,7 @@ const TaskSummary = observer(() => {
       </div>
       {!uxtestingStore.taskStats.length ? <NoContent show title={'No data'} /> : null}
       {uxtestingStore.taskStats.map((tst, index) => (
-        <Stage stage={{ ...tst, isActive: true }} uxt index={index + 1} />
+        <Stage stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed  }} uxt index={index + 1} />
       ))}
     </div>
   );
