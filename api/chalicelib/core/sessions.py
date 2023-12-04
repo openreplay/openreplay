@@ -388,12 +388,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
                                                                             schemas.EventType.graphql] \
-                or event.type in [schemas.PerformanceEventType.location_dom_complete,
-                                  schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                                  schemas.PerformanceEventType.location_ttfb,
-                                  schemas.PerformanceEventType.location_avg_cpu_load,
-                                  schemas.PerformanceEventType.location_avg_memory_usage
-                                  ] and (event.source is None or len(event.source) == 0) \
+                and (event.source is None or len(event.source) == 0) \
                 or event.type in [schemas.EventType.request_details, schemas.EventType.graphql] and (
                         event.filters is None or len(event.filters) == 0))
 
