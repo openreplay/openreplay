@@ -52,3 +52,6 @@ chalice:
   env:
     CH_COMPRESSION: "false"
 
+# ee only
+assist-stats:
+  enabled: false

@@ -33,3 +33,6 @@ dependencies:
     version: "0.3.1"
     repository: "file://charts/quickwit"
     condition: quickwit.enabled
+  - name: assist-stats
+    repository: "file://charts/assist-stats"
+    condition: assist-stats.enabled
