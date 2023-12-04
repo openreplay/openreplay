@@ -176,9 +176,20 @@ async def test_view_get_health():
         "headers": [(b'content-type', b'application/json')],
     }
     ok = [False]
-    await orpy(scope, receive_body(b'{}'), send_ok(ok, 200, [], {}))
+    await orpy(scope, orpy.receive_body(b'{}'), orpy.send_ok(ok, 200, [], {}))
     assert ok[0]
 ```
+
+Notes:
+
+- The variable `orpy` is `orpy.base.orpy`;
+- The test construct a `scope` with just the necessary keys;
+- The use or `receive_empty` to yield an empty body in `context.body`;
+- Then `send_ok` will assert that the code is the one that is
+  expected, that all required headers are present, and response's body
+  is the same;
+- Do not forget to assert `ok[0]` is truthy to make sure that
+  something actually happened;
 
 Here is another that also test the router:
 
@@ -200,17 +211,6 @@ async def test_task_reset_password_link_unknown_email():
     # Clean up
     await orpy.context.get().application.database.close()
 ```
-
-Note:
-
-- The variable `orpy` is `orpy.base.orpy`;
-- The test construct a `scope` with just the necessary keys;
-- The use or `receive_empty` to yield an empty body in `context.body`;
-- Then `send_ok` will assert that the code is the one that is
-  expected, that all required headers are present, and response's body
-  is the same;
-- Do not forget to assert `ok[0]` is truthy to make sure that
-  something actually happened;
 
 ## Link to documentation
 
