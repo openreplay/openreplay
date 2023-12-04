@@ -528,6 +528,7 @@ export default class UserTestManager {
   }
 
   showEndSection() {
+    let isLoading = true
     void this.signalTest('done')
     const section = createElement('div', 'end_section_or', styles.endSectionStyle)
     const title = createElement(
@@ -548,12 +549,20 @@ export default class UserTestManager {
           '\n' +
           'We appreciate your time and valuable input.',
     )
+    const button = createElement(
+      'div',
+      'end_button_or',
+      styles.buttonWidgetStyle,
+      'Uploading session...',
+    )
+
     if (this.test?.reqMic || this.test?.reqCamera) {
-      this.userRecorder.sendToAPI().then(() => {
+      void this.userRecorder.sendToAPI().then(() => {
         title.textContent = 'Thank you! 👍'
+        button.textContent = 'End Session'
+        isLoading = false
       })
     }
-    const button = createElement('div', 'end_button_or', styles.buttonWidgetStyle, 'End Session')
 
     if (this.taskSection) {
       this.container.removeChild(this.taskSection)
@@ -566,6 +575,8 @@ export default class UserTestManager {
     }
 
     button.onclick = () => {
+      if (isLoading) return
+      window.close()
       document.body.removeChild(this.bg)
     }
     section.append(title, description, button)
