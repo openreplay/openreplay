@@ -138,15 +138,41 @@ def email_send(subject, recipients, body, bcc=None):
 
 
 def runner_spawn(coroutine):
+    """Schedule a coroutine as a task. Returns None.
+
+    The advantage of `await runner_spawn(coroutine)` compared to
+    `await coroutine()` is that the former will not consume client
+    latency time. It is advisable to use it, for doing small fire and
+    forget things that do not influence the response returned to the
+    client.
+
+    The advantage of `runner_spawn` compared to `asyncio.create_task`
+    is that there is only one task that can running at any time. That
+    will reduce throughput, but also keep the load under control.
+
+    This is advisable to avoid to freeze an application server under
+    the load of background tasks running in the same POSIX processus,
+    and POSIX thread.
+
+    For coroutines that are CPU heavy, or span for more than 100
+    milliseconds, use a dedicated service, and/or pipeline via a
+    queue.
+
+    If you do not known what you are doing, use `runner_spawn`.
+
+    """
     context.get().tasks.add(coroutine)
     context.get().application.on_task.set()
 
 
 async def runner_run():
+    """Wait for task, run them"""
     while application.get() is None:
         await asyncio.sleep(0.1)
     while asyncio.get_event_loop().is_running():
         await application.get().on_task
+        # TODO: Do something clever to increase concurrency, hence
+        # throughput.
         while application.get() and application.get().tasks:
             task = application.get().tasks.pop()
             await task
