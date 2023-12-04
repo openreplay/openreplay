@@ -395,6 +395,25 @@ async def http(send):
 
 
 async def orpy(scope, receive, send):
+    """ASGI entry point
+
+    If the scope is the lifespan scope, then initialize the context
+    variable: `application`. The context variable `application` is
+    used as singleton that reference other variable that are also by
+    construction singletons e.g. database connection pool.
+
+    Note: context variables travel with the flow of execution taking
+    into account asyncio event loop async execution workflow.  See:
+    https://docs.python.org/3/library/contextvars.html;
+
+    Otherwise, at this time, scope can only be an http request scope,
+    then the incoming scope, and body is matched on the pairing of the
+    HTTP method, and path, called route, to a function, called a route
+    handler that was registred in `ROUTE_REGISTRY` global to the
+    application with the function decorator called `@route` at import
+    time.
+    """
+
     log.debug("ASGI scope: {}", scope)
 
     if scope["type"] == "lifespan" and application.get() is None:
