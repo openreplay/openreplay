@@ -117,6 +117,7 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 		key:         msg.EncryptionKey,
 		compression: s.setTaskCompression(),
 	}
+	log.Printf("sessionID: %s, cfg.Algo: %s, compression: %d", sessionID, s.cfg.CompressionAlgo, newTask.compression)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
