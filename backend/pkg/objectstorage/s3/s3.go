@@ -73,11 +73,13 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	var contentEncoding *string
 	switch compression {
 	case objectstorage.Gzip:
-		gzipStr := "gzip"
-		contentEncoding = &gzipStr
+		encodeStr := "gzip"
+		contentEncoding = &encodeStr
 	case objectstorage.Brotli:
-		gzipStr := "br"
-		contentEncoding = &gzipStr
+		encodeStr := "br"
+		contentEncoding = &encodeStr
+	case objectstorage.Zstd:
+		// Have to ignore contentEncoding for Zstd (otherwise will be an error in browser)
 	}
 
 	_, err := s.uploader.Upload(&s3manager.UploadInput{

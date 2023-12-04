@@ -11,6 +11,7 @@ const (
 	NoCompression CompressionType = iota
 	Gzip
 	Brotli
+	Zstd
 )
 
 type ObjectStorage interface {
