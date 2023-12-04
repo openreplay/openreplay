@@ -234,6 +234,17 @@ export default class API {
     return this.app.active()
   }
 
+  /**
+   * Creates a named hook that expects event name, data string and msg direction (up/down),
+   * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
+   * */
+  trackWs(channelName: string) {
+    if (this.app === null) {
+      return
+    }
+    return this.app.trackWs(channelName)
+  }
+
   start(startOpts?: Partial<StartOptions>): Promise<StartPromiseReturn> {
     if (!IN_BROWSER) {
       console.error(
