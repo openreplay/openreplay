@@ -440,7 +440,7 @@ async def receive_empty():
     return {"body": b""}
 
 
-def receive_body(bytes):
+def make_receive_body(bytes):
     async def receive():
         return {"body": bytes}
 
@@ -472,7 +472,7 @@ async def test_view_get_health():
         "headers": [(b'content-type', b'application/json')],
     }
     ok = [False]
-    await orpy(scope, receive_body(b'{}'), send_ok(ok, 200, [], {}))
+    await orpy(scope, make_receive_body(b'{}'), send_ok(ok, 200, [], {}))
     assert ok[0]
 
 async def __danger_supervisor_database_scratch():
