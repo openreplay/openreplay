@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
 	gzip "github.com/klauspost/pgzip"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/messages"
@@ -114,7 +115,7 @@ func (s *Storage) Process(msg *messages.SessionEnd) (err error) {
 	newTask := &Task{
 		id:          sessionID,
 		key:         msg.EncryptionKey,
-		compression: objectstorage.NoCompression,
+		compression: s.setTaskCompression(),
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -197,21 +198,31 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	return nil
 }
 
-func (s *Storage) packSession(task *Task, tp FileType) {
-	// If encryption key is empty, pack session using better algorithm
-	if task.key == "" && s.cfg.UseBrotli {
-		s.packSessionBetter(task, tp)
-		return
+func (s *Storage) setTaskCompression() objectstorage.CompressionType {
+	switch s.cfg.CompressionAlgo {
+	case "none":
+		return objectstorage.NoCompression
+	case "gzip":
+		return objectstorage.Gzip
+	case "brotli":
+		return objectstorage.Brotli
+	case "zstd":
+		return objectstorage.Zstd
+	default:
+		log.Printf("unknown compression algorithm: %s", s.cfg.CompressionAlgo)
+		return objectstorage.NoCompression
 	}
+}
 
+func (s *Storage) packSession(task *Task, tp FileType) {
 	// Prepare mob file
 	mob := task.Mob(tp)
-	task.compression = objectstorage.Gzip
 
+	// For devtools of small dom file
 	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
 		// Compression
 		start := time.Now()
-		data := s.compressSession(mob)
+		data := s.compress(mob, task.compression)
 		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
 		// Encryption
@@ -221,13 +232,15 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 
 		if tp == DOM {
 			task.doms = bytes.NewBuffer(result)
+			task.domsRawSize = float64(len(mob))
 		} else {
 			task.dev = bytes.NewBuffer(result)
+			task.devRawSize = float64(len(mob))
 		}
 		return
 	}
 
-	// Prepare two workers
+	// Prepare two workers for two parts (start and end) of dom file
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	var firstPart, secondPart, firstEncrypt, secondEncrypt int64
@@ -236,7 +249,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compressSession(mob[:s.cfg.FileSplitSize])
+		data := s.compress(mob[:s.cfg.FileSplitSize], task.compression)
 		firstPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -244,14 +257,18 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		task.doms = bytes.NewBuffer(s.encryptSession(data.Bytes(), task.key))
 		firstEncrypt = time.Since(start).Milliseconds()
 
+		// Record dom start raw size
+		task.domsRawSize = float64(s.cfg.FileSplitSize)
+
 		// Finish task
 		wg.Done()
 	}()
+
 	// DomEnd part
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compressSession(mob[s.cfg.FileSplitSize:])
+		data := s.compress(mob[s.cfg.FileSplitSize:], task.compression)
 		secondPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -259,64 +276,9 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		task.dome = bytes.NewBuffer(s.encryptSession(data.Bytes(), task.key))
 		secondEncrypt = time.Since(start).Milliseconds()
 
-		// Finish task
-		wg.Done()
-	}()
-	wg.Wait()
-
-	// Record metrics
-	metrics.RecordSessionEncryptionDuration(float64(firstEncrypt+secondEncrypt), tp.String())
-	metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
-}
-
-// packSessionBetter is a new version of packSession that uses brotli compression (only if we are not using encryption)
-func (s *Storage) packSessionBetter(task *Task, tp FileType) {
-	// Prepare mob file
-	mob := task.Mob(tp)
-	task.compression = objectstorage.Brotli
-
-	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
-		// Compression
-		start := time.Now()
-		result := s.compressSessionBetter(mob)
-		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
-
-		if tp == DOM {
-			task.doms = result
-			// Record full dom (start) raw size
-			task.domsRawSize = float64(len(mob))
-		} else {
-			task.dev = result
-			// Record dev raw size
-			task.devRawSize = float64(len(mob))
-		}
-		return
-	}
-
-	// Prepare two workers
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-	var firstPart, secondPart, firstEncrypt, secondEncrypt int64
-
-	// DomStart part
-	go func() {
-		// Compression
-		start := time.Now()
-		task.doms = s.compressSessionBetter(mob[:s.cfg.FileSplitSize])
-		firstPart = time.Since(start).Milliseconds()
-		// Record dom start raw size
-		task.domsRawSize = float64(s.cfg.FileSplitSize)
-		// Finish task
-		wg.Done()
-	}()
-	// DomEnd part
-	go func() {
-		// Compression
-		start := time.Now()
-		task.dome = s.compressSessionBetter(mob[s.cfg.FileSplitSize:])
-		secondPart = time.Since(start).Milliseconds()
 		// Record dom end raw size
 		task.domeRawSize = float64(len(mob) - s.cfg.FileSplitSize)
+
 		// Finish task
 		wg.Done()
 	}()
@@ -328,21 +290,33 @@ func (s *Storage) packSessionBetter(task *Task, tp FileType) {
 }
 
 func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
-	var encryptedData []byte
-	var err error
-	if encryptionKey != "" {
-		encryptedData, err = EncryptData(data, []byte(encryptionKey))
-		if err != nil {
-			log.Printf("can't encrypt data: %s", err)
-			encryptedData = data
-		}
-	} else {
+	if encryptionKey == "" {
+		// no encryption, just return the same data
+		return data
+	}
+	encryptedData, err := EncryptData(data, []byte(encryptionKey))
+	if err != nil {
+		log.Printf("can't encrypt data: %s", err)
 		encryptedData = data
 	}
 	return encryptedData
 }
 
-func (s *Storage) compressSession(data []byte) *bytes.Buffer {
+func (s *Storage) compress(data []byte, compressionType objectstorage.CompressionType) *bytes.Buffer {
+	switch compressionType {
+	case objectstorage.Gzip:
+		return s.compressGzip(data)
+	case objectstorage.Brotli:
+		return s.compressBrotli(data)
+	case objectstorage.Zstd:
+		return s.compressZstd(data)
+	default:
+		// no compression, just return the same data
+		return bytes.NewBuffer(data)
+	}
+}
+
+func (s *Storage) compressGzip(data []byte) *bytes.Buffer {
 	zippedMob := new(bytes.Buffer)
 	z, _ := gzip.NewWriterLevel(zippedMob, gzip.DefaultCompression)
 	if _, err := z.Write(data); err != nil {
@@ -354,7 +328,7 @@ func (s *Storage) compressSession(data []byte) *bytes.Buffer {
 	return zippedMob
 }
 
-func (s *Storage) compressSessionBetter(data []byte) *bytes.Buffer {
+func (s *Storage) compressBrotli(data []byte) *bytes.Buffer {
 	out := bytes.Buffer{}
 	writer := brotli.NewWriterOptions(&out, brotli.WriterOptions{Quality: brotli.DefaultCompression})
 	in := bytes.NewReader(data)
@@ -368,6 +342,18 @@ func (s *Storage) compressSessionBetter(data []byte) *bytes.Buffer {
 	}
 
 	if err := writer.Close(); err != nil {
+		log.Printf("can't close compressor: %s", err)
+	}
+	return &out
+}
+
+func (s *Storage) compressZstd(data []byte) *bytes.Buffer {
+	var out bytes.Buffer
+	w, _ := zstd.NewWriter(&out)
+	if _, err := w.Write(data); err != nil {
+		log.Printf("can't write session data to compressor: %s", err)
+	}
+	if err := w.Close(); err != nil {
 		log.Printf("can't close compressor: %s", err)
 	}
 	return &out
