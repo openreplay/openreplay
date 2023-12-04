@@ -78,9 +78,9 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	case objectstorage.Brotli:
 		encodeStr := "br"
 		contentEncoding = &encodeStr
-	case objectstorage.Zstd:
-		encodeStr := "zstd"
-		contentEncoding = &encodeStr
+		//case objectstorage.Zstd:
+		//encodeStr := "zstd"
+		//contentEncoding = &encodeStr
 	}
 	log.Printf("contentEncoding: %s, compression: %d", *contentEncoding, compression)
 
