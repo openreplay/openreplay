@@ -64,6 +64,7 @@ function TestEdit() {
   }
 
   const onSave = (isPreview?: boolean) => {
+    setHasChanged(false);
     if (testId && testId !== 'new') {
       uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
         history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
