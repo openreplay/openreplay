@@ -58,13 +58,13 @@ async function requestEFSMobFile(filename: string) {
 }
 
 const processAPIStreamResponse = (response: Response, skippable: boolean) => {
-  return new Promise<ArrayBuffer>((res, rej) => {
+  return new Promise<Blob>((res, rej) => {
     if (response.status === 404 && skippable) {
       return rej(ALLOWED_404)
     }
     if (response.status >= 400) {
       return rej(`Bad file status code ${response.status}. Url: ${response.url}`)
     }
-    res(response.arrayBuffer())
-  }).then(buffer => new Uint8Array(buffer))
+    res(response.blob())
+  }).then(async blob => new Uint8Array(await blob.arrayBuffer()))
 }
