@@ -82,7 +82,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		//encodeStr := "zstd"
 		//contentEncoding = &encodeStr
 	}
-	log.Printf("contentEncoding: %s, compression: %d", *contentEncoding, compression)
+	//log.Printf("contentEncoding: %s, compression: %d", *contentEncoding, compression)
 
 	_, err := s.uploader.Upload(&s3manager.UploadInput{
 		Body:            reader,
