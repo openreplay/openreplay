@@ -129,7 +129,7 @@ async def test_task_reset_password_link_unknown_email():
     await orpy.orpy({"type": "lifespan"}, None, None)
     orpy.context.set(orpy.Context(orpy.application.get(), None, None, None))
     assert not await _task_reset_password_link("example@example.example")
-    await orpy.context.get().application.database.close()
+    await orpy.context.get().application.postgresql.close()
 
 
 @pytest.mark.asyncio
@@ -155,4 +155,4 @@ async def test_task_reset_password_link_known():
         assert subject == 'Password recovery'
         assert email == 'mehdi@openreplay.com'
 
-    await orpy.context.get().application.database.close()
+    await orpy.context.get().application.postgresql.close()

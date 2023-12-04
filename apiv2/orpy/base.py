@@ -72,7 +72,7 @@ def has_feature(name, default):
 Application = namedtuple(
     "Application",
     (
-        "database",
+        "postgresql",
         "http",
         "make_timestamp",
         "cache",
@@ -279,15 +279,14 @@ import contextlib
 
 @contextlib.asynccontextmanager
 async def cnx():
-    # TODO: rename s/database/postgresql/g
-    async with context.get().application.database.connection() as cnx:
+    async with context.get().application.postgresql.connection() as cnx:
         async with cnx.transaction():
             yield cnx
 
 
 @contextlib.asynccontextmanager
 async def _test_cnx():
-    async with application.get().database.connection() as cnx:
+    async with application.get().postgresql.connection() as cnx:
         async with cnx.transaction():
             yield cnx
 
