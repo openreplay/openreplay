@@ -1,5 +1,13 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
+import {
+  Timestamp,
+  Metadata,
+  UserID,
+  Type as MType,
+  TabChange,
+  TabData,
+  WSChannel,
+} from './messages.gen.js'
 import {
   now,
   adjustTimeOrigin,
@@ -810,6 +818,25 @@ export default class App {
 
   getTabId() {
     return this.session.getTabId()
+  }
+
+  /**
+   * Creates a named hook that expects event name, data string and msg direction (up/down),
+   * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
+   * */
+  trackWs(channelName: string) {
+    const channel = channelName
+    return (msgType: string, data: string, dir: 'up' | 'down' = 'down') => {
+      if (
+        typeof msgType !== 'string' ||
+        typeof data !== 'string' ||
+        data.length > 5 * 1024 * 1024 ||
+        msgType.length > 255
+      ) {
+        return
+      }
+      this.send(WSChannel('websocket', channel, data, this.timestamp(), dir, msgType))
+    }
   }
 
   stop(stopWorker = true): void {

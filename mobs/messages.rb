@@ -458,6 +458,15 @@ message 83, 'NetworkRequest', :replayer => :devtools do
   uint 'TransferredBodySize'
 end
 
+message 84, 'WSChannel', :replayer => :devtools do
+    string 'Type'
+    string 'ChannelName'
+    string 'Data'
+    uint 'Timestamp'
+    string 'Dir'
+    string 'MessageType'
+end
+
 # 90-111 reserved iOS
 
 message 112, 'InputChange', :replayer => false do

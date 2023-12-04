@@ -817,6 +817,25 @@ export function NetworkRequest(
   ]
 }
 
+export function WSChannel(
+  type: string,
+  channelName: string,
+  data: string,
+  timestamp: number,
+  dir: string,
+  messageType: string,
+): Messages.WSChannel {
+  return [
+    Messages.Type.WSChannel,
+    type,
+    channelName,
+    data,
+    timestamp,
+    dir,
+    messageType,
+  ]
+}
+
 export function InputChange(
   id: number,
   value: string,

@@ -56,6 +56,7 @@ import type {
   RawAdoptedSsRemoveOwner,
   RawZustand,
   RawNetworkRequest,
+  RawWsChannel,
   RawSelectionChange,
   RawMouseThrashing,
   RawResourceTiming,
@@ -180,6 +181,8 @@ export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 export type Zustand = RawZustand & Timed
 
 export type NetworkRequest = RawNetworkRequest & Timed
+
+export type WsChannel = RawWsChannel & Timed
 
 export type SelectionChange = RawSelectionChange & Timed
 

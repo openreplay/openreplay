@@ -7,7 +7,7 @@ import { Duration } from 'luxon';
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { ResourceType, Timed } from 'Player';
 import { formatBytes } from 'App/utils';
-import { formatMs } from 'App/date';
+import { formatMs, durationFromMs } from 'App/date';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
@@ -18,6 +18,7 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import WSModal from './WSModal'
 
 const INDEX_KEY = 'network';
 
@@ -28,6 +29,7 @@ const CSS = 'css';
 const IMG = 'img';
 const MEDIA = 'media';
 const OTHER = 'other';
+const WS = 'websocket';
 
 const TYPE_TO_TAB = {
   [ResourceType.XHR]: XHR,
@@ -36,10 +38,11 @@ const TYPE_TO_TAB = {
   [ResourceType.CSS]: CSS,
   [ResourceType.IMG]: IMG,
   [ResourceType.MEDIA]: MEDIA,
+  [ResourceType.WS]: WS,
   [ResourceType.OTHER]: OTHER,
 };
 
-const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER] as const;
+const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS] as const;
 const TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
@@ -156,6 +159,8 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
     resourceList = [],
     fetchListNow = [],
     resourceListNow = [],
+    websocketList = [],
+    websocketListNow = [],
   } = tabStates[currentTab];
 
   return (
@@ -170,11 +175,21 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
+      // @ts-ignore
+      websocketList={websocketList}
+      // @ts-ignore
+      websocketListNow={websocketListNow}
     />
   );
 }
 
-function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number, panelHeight: number }) {
+function MobileNetworkPanelCont({
+  startedAt,
+  panelHeight,
+}: {
+  startedAt: number;
+  panelHeight: number;
+}) {
   const { player, store } = React.useContext(MobilePlayerContext);
 
   const domContentLoadedTime = undefined;
@@ -185,6 +200,8 @@ function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number,
     resourceList = [],
     fetchListNow = [],
     resourceListNow = [],
+    websocketList = [],
+    websocketListNow = [],
   } = store.get();
 
   return (
@@ -200,6 +217,10 @@ function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number,
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
+      // @ts-ignore
+      websocketList={websocketList}
+      // @ts-ignore
+      websocketListNow={websocketListNow}
     />
   );
 }
@@ -218,6 +239,24 @@ interface Props {
   resourceList: Timed[];
   fetchListNow: Timed[];
   resourceListNow: Timed[];
+  websocketList: Array<
+    Timed & {
+      channelName: string;
+      data: string;
+      timestamp: number;
+      dir: 'up' | 'down';
+      messageType: string;
+    }
+  >;
+  websocketListNow: Array<
+    Timed & {
+      channelName: string;
+      data: string;
+      timestamp: number;
+      dir: 'up' | 'down';
+      messageType: string;
+    }
+  >;
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
@@ -237,19 +276,32 @@ const NetworkPanelComp = observer(
     startedAt,
     isMobile,
     panelHeight,
+    websocketList,
+    websocketListNow,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
+    const [openSocket, setOpenSocket] = useState<string | null>(null);
     const [sortAscending, setSortAscending] = useState(true);
     const [showOnlyErrors, setShowOnlyErrors] = useState(false);
 
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
     const {
       sessionStore: { devTools },
+      settingsStore,
     } = useStore();
+    const { timezone } = settingsStore.sessionSettings;
     const filter = devTools[INDEX_KEY].filter;
     const activeTab = devTools[INDEX_KEY].activeTab;
     const activeIndex = devTools[INDEX_KEY].index;
+
+    const socketList = useMemo(
+      () =>
+        websocketList.filter(
+          (ws, i, arr) => arr.findIndex((it) => it.channelName === ws.channelName) === i
+        ),
+      []
+    );
 
     const list = useMemo(
       () =>
@@ -283,9 +335,27 @@ const NetworkPanelComp = observer(
               })
           )
           .concat(fetchList)
+          .concat(
+            socketList.map((ws) => ({
+              ...ws,
+              type: 'websocket',
+              method: 'ws',
+              url: ws.channelName,
+              name: ws.channelName,
+              status: '101',
+              duration: 0,
+              transferredBodySize: 0,
+            }))
+          )
           .sort((a, b) => a.time - b.time),
-      [resourceList.length, fetchList.length]
+      [resourceList.length, fetchList.length, socketList]
     );
+
+    const socketMsgList = useMemo(() => {
+      if (openSocket) {
+        return websocketList.filter((ws) => ws.channelName === openSocket);
+      } else return [];
+    }, [websocketList.length, openSocket]);
 
     let filteredList = useMemo(() => {
       if (!showOnlyErrors) {
@@ -354,6 +424,10 @@ const NetworkPanelComp = observer(
     }, [domContentLoadedTime, loadTime]);
 
     const showDetailsModal = (item: any) => {
+      if (item.type === 'websocket') {
+        setOpenSocket(item.channelName);
+        return;
+      }
       setIsDetailsModalActive(true);
       showModal(
         <FetchDetailsModal
@@ -375,6 +449,7 @@ const NetworkPanelComp = observer(
       stopAutoscroll();
     };
 
+    console.log(socketMsgList, websocketList);
     return (
       <React.Fragment>
         <BottomBlock
@@ -458,6 +533,13 @@ const NetworkPanelComp = observer(
               size="small"
               show={filteredList.length === 0}
             >
+              {openSocket ? (
+                <WSModal
+                  setOpenSocket={setOpenSocket}
+                  panelHeight={panelHeight}
+                  socketMsgList={socketMsgList}
+                />
+              ) : null}
               {/*@ts-ignore*/}
               <TimeTable
                 rows={filteredList}
