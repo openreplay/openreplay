@@ -10,7 +10,7 @@ ACTIONS = {
     "REPORT": core_dynamic_crons.weekly_report,
     "PROJECTS_STATS": core_dynamic_crons.health_cron,
     "FIX_PROJECTS_STATS": core_dynamic_crons.weekly_health_cron,
-    "ASSISTSTATS": ee_crons.assist_events_aggregates_cron,
+    "ASSIST_STATS": ee_crons.assist_events_aggregates_cron,
 }
 
 
