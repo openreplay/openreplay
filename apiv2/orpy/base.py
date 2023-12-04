@@ -410,11 +410,13 @@ async def orpy(scope, receive, send):
         )
     )
 
-    if scope["type"] == "http":
-        await http(send)
+    assert scope["type"] == "http"
+
+    await http(send)
 
 
 async def receive_body(receive):
+
     """
     Read and return the entire body from an incoming ASGI message.
     """
