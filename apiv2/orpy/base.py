@@ -178,8 +178,7 @@ async def make_application():
         "application_name": config("ORPY_APP_NAME", default="orpy-apiv2"),
     }
 
-    database = " ".join("{}={}".format(k, v) for k, v in database.items())
-    database = psycopg_pool.AsyncConnectionPool(database, connection_class=ORPYAsyncConnection)
+    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection)
 
     # setup app
     make_timestamp = make_timestamper()
