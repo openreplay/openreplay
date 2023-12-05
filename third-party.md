@@ -121,3 +121,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | eget | MIT | Infrastructure |
 | @medv/finder | MIT | JavaScript |
 | fflate | MIT | JavaScript |
+| fzstd | MIT | JavaScript |

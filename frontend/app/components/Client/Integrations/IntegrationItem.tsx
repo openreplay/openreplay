@@ -17,7 +17,7 @@ const IntegrationItem = (props: Props) => {
     <div
       className={cn('flex flex-col border rounded-lg p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue')}
       onClick={(e) => props.onClick(e)}
-      style={{ height: '126px' }}
+      style={{ height: '136px' }}
     >
       <div className='flex gap-3'>
         {/*{integration.icon.length ?*/}

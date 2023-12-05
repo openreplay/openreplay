@@ -4,13 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       build_service:
-        description: 'Name of a single service to build(in small letters), eg: chalice or frontend etc. backend:sevice-name to build service'
-        required: true
-        default: 'frontend'
+        description: |
+          Name of a single service to build(in small letters), eg: api or frontend etc. backend:sevice-name to build service.  
+          If what ever image is not built, it'll be deployed from latest release.
+          Options: none/all/service-name/backend:{app1/app1,app2,app3/all}
+        required: false
+        default: none
       env_flavour:
         description: 'Which env to build. Values: foss/ee'
         required: false
-        default: 'foss'
 
 jobs:
   create-vcluster-pr:
@@ -21,6 +23,12 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v2
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.OR_PR_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.OR_PR_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.OR_PR_AWS_DEFAULT_REGION}}
     - name: Setting up env variables
       run: |
         # Fetching details open/draft PR for current branch
@@ -61,8 +69,8 @@ jobs:
       id: vcluster_exists
       continue-on-error: true
       run: |
-        if [ ! $(vcluster list | grep $PR_NUMBER) ]; then
-          echo "failed state"
+        if ! $(vcluster list | grep $PR_NUMBER &> /dev/null); then
+          echo "no cluster found for $PR_NUMBER"
           echo "::set-output name=failed::true"
           exit 100
         fi
@@ -74,7 +82,8 @@ jobs:
       if: steps.vcluster_exists.outputs.failed == 'true'
       id: lb-ip
       run: |
-        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        # LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        LB_IP=$(kubectl get svc ingress-ingress-nginx-controller -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
         echo "::set-output name=ip::$LB_IP"
 
     - name: Create vCluster
@@ -104,7 +113,7 @@ jobs:
               "Action": "CREATE",
               "ResourceRecordSet": {
                 "Name": "$DOMAIN_NAME_1",
-                "Type": "A",
+                "Type": "CNAME",
                 "TTL": 300,
                 "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
               }
@@ -113,7 +122,7 @@ jobs:
               "Action": "CREATE",
               "ResourceRecordSet": {
                 "Name": "$DOMAIN_NAME_2",
-                "Type": "A",
+                "Type": "CNAME",
                 "TTL": 300,
                 "ResourceRecords": [{ "Value": "${{ steps.lb-ip.outputs.ip }}" }]
               }
@@ -138,15 +147,21 @@ jobs:
       env:
         EXPECTED_IP: ${{ steps.lb-ip.outputs.ip }}
       run: |
-        DOMAIN_NAME_1="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
+        DOMAIN_NAME="$PR_NUMBER-vcluster.${{ secrets.OR_PR_DOMAIN_NAME }}"
         MAX_ATTEMPTS=30
         attempt=1
         until [[ $attempt -gt $MAX_ATTEMPTS ]]
         do
-          DNS_IP=$(dig +short $DOMAIN_NAME_1 @8.8.8.8)
-          if [[ "$DNS_IP" == "$EXPECTED_IP" ]]; then
-            echo "DNS has propagated for $DOMAIN_NAME_1"
-            break
+          # Use dig to query DNS records
+          DNS_RESULT=$(dig +short $DOMAIN_NAME @1.1.1.1)
+
+          # Check if DNS result is empty
+          if [ -z "$DNS_RESULT" ]; then
+              echo "No IP or CNAME records found for $DOMAIN_NAME."
+          else
+              echo "DNS records found for $DOMAIN_NAME:"
+              echo "$DNS_RESULT"
+              break
           fi
           echo "Waiting for DNS propagation... Attempt $attempt of $MAX_ATTEMPTS"
           ((attempt++))
@@ -154,7 +169,7 @@ jobs:
         done
 
         if [[ $attempt -gt $MAX_ATTEMPTS ]]; then
-          echo "DNS propagation check failed for $DOMAIN_NAME_1 after $MAX_ATTEMPTS attempts."
+          echo "DNS propagation check failed for $DOMAIN_NAME after $MAX_ATTEMPTS attempts."
           exit 1
         fi
 
@@ -191,27 +206,85 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         env: ${{ github.event.inputs.env_flavour }}
       run: |
+        set -x
 
         app_name=${{github.event.inputs.build_service}}
         echo "building and deploying $app_name"
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
         export KUBECONFIG=/tmp/kubeconfig.yaml
 
+        function build_and_deploy {
+          apps_to_build=$1
+          case $apps_to_build in
+            backend*)
+              echo "Building backend build"
+              cd $GITHUB_WORKSPACE/backend
+              components=()
+              if [ $apps_to_build == "backend:all" ]; then
+                # Append all folder names from 'cmd/' directory to the array
+                for folder in cmd/*/; do
+                  # Use basename to extract the folder name without path
+                  folder_name=$(basename "$folder")
+                  components+=("$folder_name")
+                done
+              else
+                # "${apps_to_build#*:}" :: Strip backend: and output app1,app2,app3 to read -ra
+                IFS=',' read -ra components <<< "${apps_to_build#*:}"
+              fi
+              echo "Building components: " ${components[@]}
+              for component in "${components[@]}"; do
+                if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
+                  echo Image present upstream. Skipping build: $component
+                else
+                  echo "Building backend:$component"
+                  PUSH_IMAGE=1 bash -x ./build.sh $env $component
+                fi
+                kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+              done
+              ;;
+            chalice)
+              echo "Chalice build"
+              component=$apps_to_build
+              cd $GITHUB_WORKSPACE/api || (Nothing to build: $apps_to_build; exit 100)
+              if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
+                echo Image present upstream. Skipping build: $component
+              else
+                echo "Building backend:$component"
+                PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              fi
+              kubectl set image -n app deployment/$apps_to_build-openreplay $apps_to_build=${DOCKER_REPO}/$apps_to_build:${IMAGE_TAG}
+              ;;
+            *)
+              echo "$apps_to_build build"
+              cd $GITHUB_WORKSPACE/$apps_to_build || (Nothing to build: $apps_to_build; exit 100)
+              component=$apps_to_build
+              if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
+                echo Image present upstream. Skipping build: $component
+              else
+                echo "Building backend:$component"
+                PUSH_IMAGE=1 bash -x ./build.sh $env $component
+              fi
+              kubectl set image -n app deployment/$apps_to_build-openreplay $apps_to_build=${DOCKER_REPO}/$apps_to_build:${IMAGE_TAG}
+              ;;
+          esac
+        }
+
         case $app_name in
-          backend*)
-            echo "In backend build"
-            cd backend
-            component=`echo $app_name | cut -d ':' -f 2`
-            PUSH_IMAGE=1 bash -x ./build.sh $env $component
-            kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
+          all)
+            build_and_deploy "backend:all"
+            build_and_deploy "frontend"
+            build_and_deploy "chalice"
+            build_and_deploy "sourcemapreader"
+            build_and_deploy "assist-stats"
+            ;;
+          none)
+            echo "Nothing to build"
             ;;
           *)
-            set -x
-            cd $app_name || (Nothing to build: $app_name; exit 100)
-            PUSH_IMAGE=1 bash -x ./build.sh $env
-            kubectl set image -n app deployment/$app_name-openreplay $app_name=${DOCKER_REPO}/$app_name:${IMAGE_TAG}
+            build_and_deploy $app_name
             ;;
         esac
+
     - name: Sent results to slack
       if: steps.vcluster_exists.outputs.failed == 'true'
       env:
@@ -256,10 +329,10 @@ jobs:
     #   run: |
     #     # Add any cleanup commands if necessary
 
-    # - name: Debug Job
-    #   if: failure()
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}
-    #     ENVIRONMENT: staging
+    - name: Debug Job
+      if: failure()
+      uses: mxschmitt/action-tmate@v3
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging

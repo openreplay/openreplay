@@ -1,5 +1,3 @@
-import { audioContextManager } from 'App/utils/screenRecorder';
-
 declare global {
   interface HTMLCanvasElement {
     captureStream(frameRate?: number): MediaStream;

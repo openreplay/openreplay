@@ -7,6 +7,7 @@ import type {
   Message,
 } from './messages';
 import logger from 'App/logger';
+import * as fzstd from 'fzstd';
 
 
 interface State {
@@ -37,31 +38,44 @@ export default class MessageLoader {
       ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
       : (b: Uint8Array) => Promise.resolve(b)
     // Each time called - new fileReader created
-    const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt)
-    return (b: Uint8Array) => decrypt(b).then(b => {
-      toggleStatus?.(true);
-      fileReader.append(b)
-      fileReader.checkForIndexes()
-      const msgs: Array<Message & { _index?: number }> = []
-      for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-        msgs.push(msg)
+    const unarchived = (b: Uint8Array) => {
+      const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd
+      // zstd magical numbers 40 181 47 253
+      console.log(isZstd, b[0], b[1], b[2], b[3])
+      if (isZstd) {
+       return fzstd.decompress(b)
+      } else {
+        return b
       }
-      const sorted = msgs.sort((m1, m2) => {
-        return m1.time - m2.time
-      })
+    }
+    const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt)
+    return (b: Uint8Array) => {
+      decrypt(b).then(b => {
+        const data = unarchived(b)
+        toggleStatus?.(true);
+        fileReader.append(data)
+        fileReader.checkForIndexes()
+        const msgs: Array<Message & { _index?: number }> = []
+        for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
+          msgs.push(msg)
+        }
+        const sorted = msgs.sort((m1, m2) => {
+          return m1.time - m2.time
+        })
 
-      sorted.forEach(msg => {
-        this.messageManager.distributeMessage(msg)
-      })
-      logger.info("Messages count: ", msgs.length, sorted, file)
+        sorted.forEach(msg => {
+          this.messageManager.distributeMessage(msg)
+        })
+        logger.info("Messages count: ", msgs.length, sorted, file)
 
-      this.messageManager._sortMessagesHack(sorted)
-      toggleStatus?.(false);
-      this.messageManager.setMessagesLoading(false)
-    }).catch(e => {
-      console.error(e)
-      this.uiErrorHandler?.error('Error parsing file: ' + e.message)
-    })
+        this.messageManager._sortMessagesHack(sorted)
+        toggleStatus?.(false);
+        this.messageManager.setMessagesLoading(false)
+      }).catch(e => {
+        console.error(e)
+        this.uiErrorHandler?.error('Error parsing file: ' + e.message)
+      })
+    }
   }
 
   loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {

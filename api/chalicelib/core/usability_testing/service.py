@@ -116,6 +116,18 @@ def get_ut_test(project_id: int, test_id: int):
         WHERE utt.test_id = %(test_id)s
     """
 
+    live_count_sql = """
+        WITH RankedSessions AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY timestamp DESC) as rn
+            FROM ut_tests_signals
+            WHERE test_id = %(test_id)s AND task_id IS NULL
+        )
+        SELECT COUNT(DISTINCT session_id) AS live_count
+        FROM RankedSessions
+        WHERE rn = 1 AND status = 'begin'
+    """
+
     select_columns = [
         "ut.test_id",
         "ut.title",
@@ -131,7 +143,7 @@ def get_ut_test(project_id: int, test_id: int):
         "ut.visibility",
         "json_build_object('id', u.user_id, 'name', u.name) AS created_by",
         "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.status in %(response_statuses)s AND uts.comment is NOT NULL), 0) AS responses_count",
-        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.duration IS NULL AND uts.task_id IS NULL), 0) AS live_count",
+        f"({live_count_sql}) AS live_count",
     ]
     db_handler.add_param("response_statuses", ('done', 'skipped'))
     db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
@@ -388,6 +400,7 @@ def get_task_statistics(test_id: int):
     db_handler.add_join("JOIN ut_tests_signals uts ON utt.task_id = uts.task_id")
     db_handler.add_constraint("utt.test_id = %(test_id)s", {'test_id': test_id})
     db_handler.set_group_by("utt.task_id, utt.title")
+    db_handler.set_sort_by("utt.task_id ASC")
 
     rows = db_handler.fetchall()
 

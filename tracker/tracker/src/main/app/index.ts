@@ -24,6 +24,7 @@ import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
+import UserTestManager from '../modules/userTesting/index.js'
 
 import type {
   Options as WebworkerOptions,
@@ -50,6 +51,7 @@ interface OnStartInfo {
 }
 
 const CANCELED = 'canceled' as const
+const uxtStorageKey = 'or_uxt_active'
 const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & { success: true }
 type UnsuccessfulStart = {
@@ -144,11 +146,7 @@ export default class App {
   private readonly contextId
   public attributeSender: AttributeSender
   private canvasRecorder: CanvasRecorder | null = null
-  private canvasOptions = {
-    canvasEnabled: false,
-    canvasQuality: 'medium',
-    canvasFPS: 1,
-  }
+  private uxtManager: UserTestManager
 
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
@@ -308,6 +306,8 @@ export default class App {
         }
       }
     }
+
+    this.uxtManager = new UserTestManager(this, uxtStorageKey)
   }
 
   private _debug(context: string, e: any) {
@@ -707,6 +707,21 @@ export default class App {
           this.options.onStart(onStartInfo)
         }
         this.restartAttempts = 0
+
+        let uxtId: number | undefined
+        const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
+        if (savedUxtTag) {
+          uxtId = parseInt(savedUxtTag, 10)
+        }
+        if (location?.search) {
+          const query = new URLSearchParams(location.search)
+          if (query.has('oruxt')) {
+            const qId = query.get('oruxt')
+            uxtId = qId ? parseInt(qId, 10) : undefined
+          }
+        }
+        if (uxtId) this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag))
+
         return SuccessfulStart(onStartInfo)
       })
       .catch((reason) => {

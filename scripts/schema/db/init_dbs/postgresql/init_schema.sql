@@ -1116,7 +1116,11 @@ $$
             CREATE INDEX swipes_timestamp_idx ON events_ios.swipes (timestamp);
             CREATE INDEX swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
 
-            CREATE TYPE ui_tests_status AS ENUM ('preview', 'in-progress', 'paused', 'closed');
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'ui_tests_status') THEN
+                CREATE TYPE ui_tests_status AS ENUM ('preview', 'in-progress', 'paused', 'closed');
+            END IF;
 
             CREATE TABLE public.ut_tests
             (
@@ -1147,7 +1151,11 @@ $$
                 allow_typing BOOLEAN DEFAULT FALSE
             );
 
-            CREATE TYPE ut_signal_status AS ENUM ('begin', 'done', 'skipped');
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'ut_signal_status') THEN
+                CREATE TYPE ut_signal_status AS ENUM ('begin', 'done', 'skipped');
+            END IF;
 
             CREATE TABLE public.ut_tests_signals
             (

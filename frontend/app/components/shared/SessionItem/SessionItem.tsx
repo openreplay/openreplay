@@ -69,6 +69,7 @@ interface Props {
   ignoreAssist?: boolean;
   bookmarked?: boolean;
   toggleFavorite?: (sessionId: string) => void;
+  query?: string
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -85,7 +86,8 @@ function SessionItem(props: RouteComponentProps & Props) {
     onClick = null,
     compact = false,
     ignoreAssist = false,
-    bookmarked = false
+    bookmarked = false,
+    query,
   } = props;
 
   const {
@@ -121,7 +123,8 @@ function SessionItem(props: RouteComponentProps & Props) {
     !ignoreAssist &&
     (isRoute(ASSIST_ROUTE, location.pathname) ||
       isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-      location.pathname.includes('multiview'));
+      location.pathname.includes('multiview'))
+      || location.pathname.includes('usability-testing');
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
@@ -340,6 +343,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                     viewed={viewed}
                     onClick={onClick}
                     queryParams={queryParams}
+                    query={query}
                   />
                   {bookmarked && (
                     <div className='ml-2 cursor-pointer'>

@@ -73,11 +73,13 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	var contentEncoding *string
 	switch compression {
 	case objectstorage.Gzip:
-		gzipStr := "gzip"
-		contentEncoding = &gzipStr
+		encodeStr := "gzip"
+		contentEncoding = &encodeStr
 	case objectstorage.Brotli:
-		gzipStr := "br"
-		contentEncoding = &gzipStr
+		encodeStr := "br"
+		contentEncoding = &encodeStr
+	case objectstorage.Zstd:
+		// Have to ignore contentEncoding for Zstd (otherwise will be an error in browser)
 	}
 
 	_, err := s.uploader.Upload(&s3manager.UploadInput{
@@ -192,6 +194,18 @@ func (s *storageImpl) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) 
 		keyList = append(keyList, (*obj.Key)[st:])
 	}
 	return keyList, nil
+}
+
+func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
+	req, _ := s.svc.PutObjectRequest(&s3.PutObjectInput{
+		Bucket: aws.String(*s.bucket),
+		Key:    aws.String(key),
+	})
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return "", err
+	}
+	return urlStr, nil
 }
 
 func loadFileTag() string {

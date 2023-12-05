@@ -136,6 +136,11 @@ export const alerts = (): string => '/alerts';
 export const alertCreate = (): string => '/alert/create';
 export const alertEdit = (id = ':alertId', hash?: string | number): string => hashed(`/alert/${id}`, hash);
 
+export const usabilityTesting = () => '/usability-testing';
+export const usabilityTestingCreate = () => usabilityTesting() + '/create';
+export const usabilityTestingEdit = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/edit/${id}`, hash);
+export const usabilityTestingView = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/view/${id}`, hash);
+
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
@@ -172,7 +177,12 @@ const REQUIRED_SITE_ID_ROUTES = [
   funnels(),
   funnelsCreate(),
   funnel(''),
-  funnelIssue()
+  funnelIssue(),
+
+  usabilityTesting(),
+  usabilityTestingCreate(),
+  usabilityTestingEdit(''),
+  usabilityTestingView(''),
 ];
 const routeNeedsSiteId = (path: string): boolean => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId'): string => {
@@ -211,7 +221,8 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   metrics(),
   alerts(),
   errors(),
-  onboarding('')
+  onboarding(''),
+  usabilityTesting(),
 ];
 
 export const siteChangeAvailable = (path: string): boolean =>

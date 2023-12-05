@@ -26,3 +26,5 @@ python-multipart==0.0.6
 redis==5.0.1
 #confluent-kafka==2.1.0
 azure-storage-blob==12.19.0
+
+psycopg[pool,binary]==3.1.12

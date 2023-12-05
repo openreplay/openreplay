@@ -27,19 +27,19 @@ public_app, app, app_apikey = get_routers()
 
 
 @public_app.get('/signup', tags=['signup'])
-def get_all_signup():
-    return {"data": {"tenants": tenants.tenants_exists(),
+async def get_all_signup():
+    return {"data": {"tenants": await tenants.tenants_exists(),
                      "sso": SAML2_helper.is_saml2_available(),
                      "ssoProvider": SAML2_helper.get_saml2_provider(),
                      "enforceSSO": config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available(),
                      "edition": license.EDITION}}
 
 
-if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists(use_pool=False):
+if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
-    def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-        content = signup.create_tenant(data)
+    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+        content = await signup.create_tenant(data)
         if "errors" in content:
             return content
         refresh_token = content.pop("refreshToken")

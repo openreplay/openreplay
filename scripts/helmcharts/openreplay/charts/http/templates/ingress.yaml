@@ -57,7 +57,7 @@ spec:
                 name: minio
                 port:
                   number: 9000
-            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records)/
+            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records|uxtesting-records)/
   tls:
     - hosts:
       - {{ .Values.global.domainName }}

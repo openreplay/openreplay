@@ -25,6 +25,18 @@ telemetry:
     tag: ""
   env:
     ACTION: "TELEMETRY"
+
+assiststats:
+  # https://crontab.guru/#5_12_*_*_*
+  # Midnight 12.05
+  cron: "0 * * * *"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "ASSIST_STATS"
 report:
   # https://crontab.guru/#0_5_*_*_1
   # Monday morning 5am

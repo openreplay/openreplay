@@ -5,7 +5,7 @@ export function validateIP(value) {
 
 export function validateURL(value) {
   if (typeof value !== 'string') return false;
-  return /^[(ftp|http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z0-9]{1,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/i.test(value);
+  return /^(http|https):\/\/(?:www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(\/\S*)?$/i.test(value);
 }
 
 function escapeRegexp(s) {

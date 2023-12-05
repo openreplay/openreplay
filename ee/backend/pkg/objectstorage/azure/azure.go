@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"io"
 	"log"
 	"os"
@@ -20,7 +22,9 @@ import (
 
 type storageImpl struct {
 	client    *azblob.Client
+	cred      *azblob.SharedKeyCredential
 	container string
+	account   string
 	tags      map[string]string
 }
 
@@ -39,7 +43,9 @@ func NewStorage(cfg *config.ObjectsConfig) (objectstorage.ObjectStorage, error) 
 	}
 	return &storageImpl{
 		client:    client,
+		cred:      cred,
 		container: cfg.BucketName,
+		account:   cfg.AzureAccountName,
 		tags:      loadFileTag(),
 	}, nil
 }
@@ -114,6 +120,24 @@ func (s *storageImpl) GetCreationTime(key string) *time.Time {
 		log.Println(err)
 	}
 	return get.LastModified
+}
+
+func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
+	// Set the desired SAS permissions and options for uploading
+	sasQueryParams, err := sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS,
+		StartTime:     time.Now().UTC(),
+		ExpiryTime:    time.Now().UTC().Add(time.Hour),
+		Permissions:   to.Ptr(sas.BlobPermissions{Read: true, Create: true, Write: true, Tag: true}).String(),
+		ContainerName: s.container,
+		BlobName:      key,
+	}.SignWithSharedKey(s.cred)
+	if err != nil {
+		return "", err
+	}
+
+	sasURL := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", s.account, sasQueryParams.Encode())
+	return sasURL, nil
 }
 
 func loadFileTag() map[string]string {

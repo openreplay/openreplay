@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Widget from 'App/mstore/types/widget';
-import Funnelbar from './FunnelBar';
+import Funnelbar, { UxTFunnelBar } from "./FunnelBar";
 import cn from 'classnames';
 import stl from './FunnelWidget.module.css';
 import { useObserver } from 'mobx-react-lite';
@@ -97,19 +97,23 @@ function EmptyStage({ total }: any) {
     ))
 }
 
-function Stage({ stage, index, isWidget }: any) {
-    return useObserver(() => stage ? (
-        <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
-            <IndexNumber index={index } />
-            <Funnelbar filter={stage} isFirst={index === 1}/>
-            {!isWidget && (
-                <BarActions bar={stage} />
-            )}
+export function Stage({ stage, index, isWidget, uxt }: any) {
+    return useObserver(() =>
+      stage ? (
+        <div
+          className={cn('flex items-start', stl.step, { [stl['step-disabled']]: !stage.isActive })}
+        >
+          <IndexNumber index={index} />
+          {!uxt ? <Funnelbar filter={stage} /> : <UxTFunnelBar filter={stage} />}
+          {!isWidget && !uxt && <BarActions bar={stage} />}
         </div>
-    ) : <></>)
+      ) : (
+        <></>
+      )
+    );
 }
 
-function IndexNumber({ index }: any) {
+export function IndexNumber({ index }: any) {
     return (
         <div className="z-10 w-6 h-6 border shrink-0 mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
             {index === 0 ? <Icon size="14" color="gray-dark" name="list" /> : index}

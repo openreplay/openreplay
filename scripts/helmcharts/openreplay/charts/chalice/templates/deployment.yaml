@@ -55,7 +55,7 @@ spec:
             - name: ch_port
               value: "{{ .Values.global.clickhouse.service.webPort }}"
             - name: sourcemaps_reader
-              value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/sourcemaps/%s/sourcemaps"
+              value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/%s/sourcemaps"
             - name: ASSIST_URL
               value: "http://assist-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9001/assist/%s"
             - name: ASSIST_JWT_SECRET

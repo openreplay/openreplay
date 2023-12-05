@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import {hasTag,} from '@openreplay/tracker/lib/app/guards'
 import type { Socket, } from 'socket.io-client'
 import { connect, } from 'socket.io-client'
 import Peer, { MediaConnection, } from 'peerjs'
@@ -7,6 +6,7 @@ import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
 import RequestLocalStream, { LocalStream, } from './LocalStream.js'
+import {hasTag,} from './guards.js'
 import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
 import AnnotationCanvas from './AnnotationCanvas.js'
@@ -92,6 +92,8 @@ export default class Assist {
     options?: Partial<Options>,
     private readonly noSecureMode: boolean = false,
   ) {
+    // @ts-ignore
+    window.__OR_ASSIST_VERSION = this.version
     this.options = Object.assign({
         session_calling_peer_key: '__openreplay_calling_peer',
         session_control_peer_key: '__openreplay_control_peer',
@@ -545,7 +547,6 @@ export default class Assist {
         })
 
         call.answer(lStreams[call.peer].stream)
-
         document.addEventListener('visibilitychange', () => {
           initiateCallEnd()
         })

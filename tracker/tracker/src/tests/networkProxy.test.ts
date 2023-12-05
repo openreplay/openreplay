@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, test, expect, beforeEach, jest } from '@jest/globals'
 import setProxy from '../main/modules/Network/index.js'
 import FetchProxy from '../main/modules/Network/fetchProxy.js'
 import XHRProxy from '../main/modules/Network/xhrProxy.js'
@@ -32,7 +32,7 @@ describe('Network Proxy', () => {
     XHRProxy.create.mockReturnValue(jest.fn())
     BeaconProxy.create.mockReturnValue(jest.fn())
   })
-  it('should not replace fetch if not present', () => {
+  test('should not replace fetch if not present', () => {
     context = {
       XMLHttpRequest: jest.fn(),
       navigator: {
@@ -53,7 +53,7 @@ describe('Network Proxy', () => {
     expect(XHRProxy.create).toHaveBeenCalled()
     expect(BeaconProxy.create).toHaveBeenCalled()
   })
-  it('should replace XMLHttpRequest if present', () => {
+  test('should replace XMLHttpRequest if present', () => {
     setProxy(
       context,
       ignoredHeaders,
@@ -67,7 +67,7 @@ describe('Network Proxy', () => {
     expect(XHRProxy.create).toHaveBeenCalled()
   })
 
-  it('should replace fetch if present', () => {
+  test('should replace fetch if present', () => {
     setProxy(
       context,
       ignoredHeaders,
@@ -81,7 +81,7 @@ describe('Network Proxy', () => {
     expect(FetchProxy.create).toHaveBeenCalled()
   })
 
-  it('should replace navigator.sendBeacon if present', () => {
+  test('should replace navigator.sendBeacon if present', () => {
     setProxy(
       context,
       ignoredHeaders,

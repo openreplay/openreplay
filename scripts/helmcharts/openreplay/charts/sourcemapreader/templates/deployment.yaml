@@ -51,9 +51,11 @@ spec:
             - name: {{ $key }}
               value: '{{ $val }}'
             {{- end }}
-            - name: AWS_ACCESS_KEY_ID
+            - name: S3_HOST
+              value: {{ .Values.global.s3.endpoint }}
+            - name: S3_KEY
               value: {{ .Values.global.s3.accessKey }}
-            - name: AWS_SECRET_ACCESS_KEY
+            - name: S3_SECRET
               value: {{ .Values.global.s3.secretKey }}
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'

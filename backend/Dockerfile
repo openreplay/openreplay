@@ -17,7 +17,7 @@ COPY internal internal
 
 # Build service
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
 
 FROM --platform=linux/$ARCH alpine AS entrypoint
 ARG GIT_SHA
@@ -56,6 +56,7 @@ ENV TZ=UTC \
     TOPIC_ANALYTICS=analytics \
     TOPIC_TRIGGER=trigger \
     TOPIC_MOBILE_TRIGGER=mobile-trigger \
+    TOPIC_CANVAS_IMAGES=canvas-images \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \

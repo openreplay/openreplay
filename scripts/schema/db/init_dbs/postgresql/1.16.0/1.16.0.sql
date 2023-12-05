@@ -1,5 +1,5 @@
-\set previous_version 'v1.15.0-ee'
-\set next_version 'v1.16.0-ee'
+\set previous_version 'v1.15.0'
+\set next_version 'v1.16.0'
 SELECT openreplay_version()                       AS current_version,
        openreplay_version() = :'previous_version' AS valid_previous,
        openreplay_version() = :'next_version'     AS is_next

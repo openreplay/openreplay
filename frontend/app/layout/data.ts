@@ -1,5 +1,4 @@
 import React from 'react';
-import PreferencesMenu from 'Components/Client/PreferencesMenu';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -52,6 +51,7 @@ export const enum MENU {
   RESOURCE_MONITORING = 'resource-monitoring',
   ALERTS = 'alerts',
   FEATURE_FLAGS = 'feature-flags',
+  USABILITY_TESTS = 'usability-tests',
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
   EXIT = 'exit',
@@ -96,10 +96,17 @@ export const categories: Category[] = [
     ]
   },
   {
+    title: 'Product Optimization',
+    key: 'product-optimization',
+    items: [
+      { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
+      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'clipboard-check' },
+    ]
+  },
+  {
     title: '',
     key: 'other',
     items: [
-      { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
       { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right' },
       { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' }
     ]
@@ -134,7 +141,7 @@ export const preferences: Category[] = [
       },
       { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true },
       { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
-      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper' },
+      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper', hidden: true },
       { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true }
     ]
   }

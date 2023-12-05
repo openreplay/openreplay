@@ -21,6 +21,7 @@ function Controls(props: any) {
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
   const [noControls, setNoControls] = React.useState(false);
+  const [noGrid, setNoGrid] = React.useState(false);
   const { search } = useLocation();
 
   const { jumpToLive } = player;
@@ -66,6 +67,12 @@ function Controls(props: any) {
     ) {
       setNoControls(true);
     }
+
+    if (
+      (queryParams.has('noGrid') && queryParams.get('noGrid') === 'true')
+    ) {
+      setNoGrid(true);
+    }
     return () => {
       document.removeEventListener('keydown', onKeyDown.bind(this));
     };
@@ -89,7 +96,7 @@ function Controls(props: any) {
     <div className={styles.controls}>
       <Timeline />
       {!noControls ?
-        <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live>
+        <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live style={{ height: noGrid ? '40px' : ''}}>
           <div className="flex items-center">
             {!closedLive && (
               <div className={styles.buttonsLeft}>
@@ -101,7 +108,7 @@ function Controls(props: any) {
             )}
           </div>
 
-          {totalAssistSessions > 1 ? (
+          {totalAssistSessions > 1 && !noGrid ? (
             <div>
               <AssistSessionsTabs session={session} />
             </div>

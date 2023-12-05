@@ -2,6 +2,7 @@
 
 - canvas support
 - some safety guards for iframe components
+- user testing module
 
 # 10.0.2
 

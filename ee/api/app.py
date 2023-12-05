@@ -3,11 +3,13 @@ import queue
 import time
 from contextlib import asynccontextmanager
 
+import psycopg_pool
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from psycopg import AsyncConnection
 from starlette import status
 from starlette.responses import StreamingResponse, JSONResponse
 
@@ -27,6 +29,15 @@ from routers.subs import v1_api, health
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
+import orpy
+from psycopg.rows import dict_row
+
+
+class ORPYAsyncConnection(AsyncConnection):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, row_factory=dict_row, **kwargs)
+
 
 
 @asynccontextmanager
@@ -49,10 +60,26 @@ async def lifespan(app: FastAPI):
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
+
+    database = {
+        "host": config("pg_host", default="localhost"),
+        "dbname": config("pg_dbname", default="orpy"),
+        "user": config("pg_user", default="orpy"),
+        "password": config("pg_password", default="orpy"),
+        "port": config("pg_port", cast=int, default=5432),
+        "application_name": "AIO" + config("APP_NAME", default="PY"),
+    }
+
+    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection)
+    orpy.set(orpy.Application(
+        database,
+    ))
+
     # App listening
     yield
 
     # Shutdown
+    await database.close()
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=True)
     await traces.process_traces_queue()

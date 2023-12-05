@@ -85,6 +85,8 @@ affinity: {}
 
 ## Child charts
 redis:
+  image:
+    tag: 7.2
   enabled: true
   fullnameOverride: redis
   usePassword: false
@@ -104,7 +106,7 @@ postgresql:
   fullnameOverride: postgresql
   postgresqlSharedPreloadLibraries: "pgaudit,pg_stat_statements"
   image:
-    tag: 14.5.0
+    tag: 15.5.0
   resources:
     limits:
       cpu: 1
@@ -118,6 +120,8 @@ minio:
   #  minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
+  image:
+    tag: 2023.11.20
   fullnameOverride: minio
   enabled: true
   resources:
@@ -133,7 +137,7 @@ minio:
 
 kafka:
   image:
-    tag: 3.3.1-debian-11-r34
+    tag: 3.3
   fullnameOverride: kafka
   enabled: false
   replicaCount: 2

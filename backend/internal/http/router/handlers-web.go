@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/uxtesting"
 	"strconv"
 	"time"
 
@@ -222,6 +226,9 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		CompressionThreshold: e.getCompressionThreshold(),
 		StartTimestamp:       int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:                tokenData.Delay,
+		CanvasEnabled:        e.cfg.RecordCanvas,
+		CanvasImageQuality:   e.cfg.CanvasQuality,
+		CanvasFrameRate:      e.cfg.CanvasFps,
 	}, startTime, r.URL.Path, bodySize)
 }
 
@@ -363,4 +370,207 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		Flags: computedFlags,
 	}
 	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessInfo, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Get taskID
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	// Get task info
+	info, err := e.services.UXTesting.GetInfo(id)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	sess, err := e.services.Sessions.Get(sessInfo.ID)
+	if err != nil {
+		ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	if sess.ProjectID != info.ProjectID {
+		ResponseWithError(w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
+		return
+	}
+	type TaskInfoResponse struct {
+		Task *uxtesting.UXTestInfo `json:"test"`
+	}
+	ResponseWithJSON(w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &uxtesting.TestSignal{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	req.SessionID = sessionData.ID
+
+	// Save test signal
+	if err := e.services.UXTesting.SetTestSignal(req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	// Parse request body
+	req := &uxtesting.TaskSignal{}
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	req.SessionID = sessionData.ID
+
+	// Save test signal
+	if err := e.services.UXTesting.SetTaskSignal(req); err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
+	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	type UrlResponse struct {
+		URL string `json:"url"`
+	}
+	ResponseWithJSON(w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
+}
+
+type ScreenshotMessage struct {
+	Name string
+	Data []byte
+}
+
+func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil { // Should accept expired token?
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		return
+	}
+
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
+	defer r.Body.Close()
+
+	// Parse the multipart form
+	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
+	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
+		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		return
+	} else if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
+		return
+	}
+
+	// Iterate over uploaded files
+	for _, fileHeaderList := range r.MultipartForm.File {
+		for _, fileHeader := range fileHeaderList {
+			file, err := fileHeader.Open()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Read the file content
+			fileBytes, err := ioutil.ReadAll(file)
+			if err != nil {
+				file.Close()
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			file.Close()
+
+			fileName := util.SafeString(fileHeader.Filename)
+			log.Printf("fileName: %s, fileSize: %d", fileName, len(fileBytes))
+
+			// Create a message to send to Kafka
+			msg := ScreenshotMessage{
+				Name: fileName,
+				Data: fileBytes,
+			}
+			data, err := json.Marshal(&msg)
+			if err != nil {
+				log.Printf("can't marshal screenshot message, err: %s", err)
+				continue
+			}
+
+			// Send the message to queue
+			if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+				log.Printf("failed to produce canvas image message: %v", err)
+			}
+		}
+	}
+	ResponseOK(w, startTime, r.URL.Path, 0)
 }

@@ -43,6 +43,20 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
+	canvasConsumer := queue.NewConsumer(
+		cfg.GroupImageStorage,
+		[]string{
+			cfg.TopicCanvasImages,
+		},
+		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			if err := srv.ProcessCanvas(sessID, data); err != nil {
+				log.Printf("can't process canvas image: %s", err)
+			}
+		}, nil, true),
+		false,
+		cfg.MessageSizeLimit,
+	)
+
 	log.Printf("Image storage service started\n")
 
 	sigchan := make(chan os.Signal, 1)
@@ -61,10 +75,17 @@ func main() {
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+			if err := canvasConsumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
 			err := consumer.ConsumeNext()
+			if err != nil {
+				log.Fatalf("Error on images consumption: %v", err)
+			}
+			err = canvasConsumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on images consumption: %v", err)
 			}
