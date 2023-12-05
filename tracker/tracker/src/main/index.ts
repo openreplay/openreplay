@@ -51,7 +51,6 @@ export type Options = Partial<
   projectKey: string
   sessionToken?: string
   respectDoNotTrack?: boolean
-  assistSocketHost?: string
   autoResetOnWindowOpen?: boolean
   resetTabOnWindowOpen?: boolean
   network?: Partial<NetworkOptions>

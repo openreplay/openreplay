@@ -97,6 +97,7 @@ type AppOptions = {
   sessionStorage: Storage | null
   forceSingleTab?: boolean
   disableStringDict?: boolean
+  assistSocketHost?: string
 
   // @deprecated
   onStart?: StartCallback
