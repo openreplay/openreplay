@@ -111,6 +111,10 @@ export default class Assist {
       options,
     )
 
+    if (this.app.options.assistSocketHost) {
+      this.options.socketHost = this.app.options.assistSocketHost
+    }
+
     if (document.hidden !== undefined) {
       const sendActivityState = (): void => this.emit('UPDATE_SESSION', { active: !document.hidden, })
       app.attachEventListener(

@@ -173,6 +173,7 @@ export default class App {
         sessionStorage: null,
         disableStringDict: false,
         forceSingleTab: false,
+        assistSocketHost: '',
       },
       options,
     )
