@@ -1,6 +1,7 @@
 ## 7.0.0
 
-- canvas suppoert
+- `socketHost` to support electron
+- canvas support
 
 ## 6.0.3
 

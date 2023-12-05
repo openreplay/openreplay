@@ -44,6 +44,7 @@ export interface Options {
   callConfirm: ConfirmOptions;
   controlConfirm: ConfirmOptions;
   recordingConfirm: ConfirmOptions;
+  socketHost?: string;
 
   // @deprecated
   confirmText?: string;
@@ -105,6 +106,7 @@ export default class Assist {
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
+        socketHost: '',
       },
       options,
     )
@@ -155,6 +157,9 @@ export default class Assist {
     this.callingState = newState
   }
   private getHost():string{
+    if (this.options.socketHost) {
+      return this.options.socketHost
+    }
     if (this.options.serverURL){
       return new URL(this.options.serverURL).host
     }
