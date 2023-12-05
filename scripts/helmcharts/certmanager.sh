@@ -28,7 +28,7 @@ else
 	fatal "Email address $EMAIL_ADDRESS is invalid."
 fi
 
-sed -i "s/email: .*/email: \"${EMAIL_ADDRESS}\"/g" clusterIssuer.yaml
+sudo sed -i "s/email: .*/email: \"${EMAIL_ADDRESS}\"/g" clusterIssuer.yaml
 info "Installing cert-manager for auto letsencrypt certificate"
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.crds.yaml
 helm repo add jetstack https://charts.jetstack.io
