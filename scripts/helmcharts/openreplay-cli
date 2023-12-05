@@ -140,7 +140,7 @@ log info "
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
-                    [ -c | --cleanup N(in days) ]
+                    [ -c | --cleanup N(in days) (optional --force to skip the confirmation)]
                     [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
@@ -250,11 +250,18 @@ function cleanup() {
   # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
   delete_from_number_days=$1
   delete_from_date=$(date +%Y-%m-%d -d "$delete_from_number_days day ago")
-  log debug "Do you want to delete the data captured on and before ${BWHITE}$delete_from_date${YELLOW}?"
-  read -p "Are you sure[y/n]? " -n 1 -r
-  echo    # (optional) move to a new line
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    log err "Cancelling data deletion"
+
+  # Check if --force flag is present
+  if [[ $2 == --force ]]; then
+    log info "Deleting data without confirmation..."
+  else
+    log debug "Do you want to delete the data captured on and before ${BWHITE}$delete_from_date${YELLOW}?"
+    read -p "Are you sure[y/n]? " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      log err "Cancelling data deletion"
+      return 1 # Exit with an error code to indicate cancellation
+    fi
   fi
 
   # Run pg cleanup
@@ -358,7 +365,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup:,force -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -407,7 +414,7 @@ do
     ;;
     -c | --cleanup)
       log title "Cleaning up data older than $2 days"
-      cleanup "$2"
+      cleanup "$2" "$3"
       clean_tmp_dir
       exit 0
     ;;
