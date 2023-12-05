@@ -1,3 +1,4 @@
+{{- if .Values.global.enterpriseEditionLicense }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,3 +17,4 @@ spec:
     {{- end}}
   selector:
     {{- include "assist-stats.selectorLabels" . | nindent 4 }}
+{{- end}}
