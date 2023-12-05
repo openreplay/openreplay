@@ -24,6 +24,9 @@ const customTheme: ThemeConfig = {
       headerBg: colors['gray-lightest'],
       siderBg: colors['gray-lightest']
     },
+    Segmented: {
+      itemSelectedBg: '#FFFFFF',
+    },
     Menu: {
       colorPrimary: colors.teal,
       colorBgContainer: colors['gray-lightest'],
