@@ -140,7 +140,7 @@ log info "
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
-                    [ -c | --cleanup N(in days) ]
+                    [ -c | --cleanup N(in days) (optional --force to skip the confirmation)]
                     [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
