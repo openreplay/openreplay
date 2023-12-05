@@ -65,18 +65,7 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-            {{- if contains "minio" .Values.global.s3.endpoint }}
-              # Local minio Installation
-              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}/{{.Values.global.s3.assetsBucket}}'
-            {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
-              # AWS S3
-              # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
-              # We need https://bucketname.s3endpoint
-              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
-            {{- else }}
-              # S3 compatible storage
-              value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
-            {{- end }}
+              value: "{{ include "openreplay.s3Endpoint" . }}/{{.Values.global.s3.assetsBucket}}"
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
