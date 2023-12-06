@@ -47,9 +47,9 @@ function Layout(props: Props) {
           <Sider
             style={{
               position: 'sticky',
-              top: 60, // Height of the Header
+              top: 70, // Height of the Header
               // backgroundColor: '#f6f6f6',
-              height: 'calc(100vh - 60px)', // Adjust the height to accommodate the Header
+              height: 'calc(100vh - 70px)', // Adjust the height to accommodate the Header
               overflow: 'auto' // Enable scrolling for the Sider content if needed
             }}
             collapsed={settingsStore.menuCollapsed}

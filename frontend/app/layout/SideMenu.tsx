@@ -170,12 +170,7 @@ function SideMenu(props: Props) {
             {!category.hidden && (
               <>
                 {index > 0 && <Divider style={{ margin: '6px 0' }} />}
-                <Menu.ItemGroup
-                  key={category.key}
-                  title={category.title}
-                  // title={<div style={{ paddingLeft: isCollapsed ? '' : '6px' }}
-                  //             className={cn({ 'text-center': isCollapsed })}>{category.title}</div>}
-                >
+
                   {category.items.filter((item: any) => !item.hidden).map((item: any) => {
                     const isActive = isMenuItemActive(item.key);
 
@@ -215,7 +210,7 @@ function SideMenu(props: Props) {
                       </Menu.Item>
                     );
                   })}
-                </Menu.ItemGroup>
+
               </>
             )}
           </React.Fragment>
