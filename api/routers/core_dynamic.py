@@ -175,7 +175,7 @@ def process_invitation_link(token: str):
 
 
 @public_app.post('/password/reset', tags=["users"])
-async def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
+def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
     user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
@@ -184,7 +184,7 @@ async def change_password_by_invitation(data: schemas.EditPasswordByInvitationSc
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return await users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
+    return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
 
 
 @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
@@ -195,7 +195,7 @@ def edit_member(memberId: int, data: schemas.EditMemberSchema,
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
-async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
+def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
                                 context: schemas.CurrentContext = Depends(OR_context)):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
@@ -204,13 +204,13 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
     if len(key) == 0:
         return {"errors": ["please provide a key for search"]}
     return {
-        "data": await sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
+        "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
 
 
 @app.get('/projects', tags=['projects'])
-async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": await projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
+def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
 # for backward compatibility

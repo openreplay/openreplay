@@ -7,7 +7,7 @@ import schemas
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import orpy
+
 
 def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
@@ -52,9 +52,8 @@ def __create(tenant_id, data):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
-
-    async def _get_projects(cnx):
+def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
+    with pg_client.PostgresClient() as cur:
         extra_projection = ""
         if gdpr:
             extra_projection += ',s.gdpr'
@@ -68,15 +67,16 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                          AND sessions.start_ts <= %(now)s
                                        )) AS first_recorded"""
 
-        query = f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
+        query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
                                        s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
                                        {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
-                                ORDER BY s.name {") AS raw" if recorded else ""};"""
-        rows = await cnx.execute(query, {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
-        rows = await rows.fetchall()
+                                ORDER BY s.name {") AS raw" if recorded else ""};""",
+                            {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
+        cur.execute(query)
+        rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
             u_values = []
@@ -94,10 +94,11 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                 r.pop("first_recorded")
                 r.pop("sessions_last_check_at")
             if len(u_values) > 0:
-                await cnx.execute(f"""UPDATE public.projects
+                query = cur.mogrify(f"""UPDATE public.projects 
                                         SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
                                         FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
                                         WHERE projects.project_id=u.project_id;""", params)
+                cur.execute(query)
         else:
             for r in rows:
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
@@ -105,18 +106,13 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
 
         return helper.list_to_camel_case(rows)
 
-    async with orpy.get().database.connection() as cnx:
-        with cnx.transaction():
-            out = await _get_projects(cnx)
-            return out
-
 
 def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
     with pg_client.PostgresClient() as cur:
         extra_select = ""
         if include_last_session:
-            extra_select += """,(SELECT max(ss.start_ts)
-                                 FROM public.sessions AS ss
+            extra_select += """,(SELECT max(ss.start_ts) 
+                                 FROM public.sessions AS ss 
                                  WHERE ss.project_id = %(project_id)s) AS last_recorded_session_at"""
         if include_gdpr:
             extra_select += ",s.gdpr"
