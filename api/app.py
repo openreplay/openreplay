@@ -14,8 +14,8 @@ from starlette.responses import StreamingResponse
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from crons import core_crons, core_dynamic_crons
-from routers import core, core_dynamic, additional_routes
-from routers.subs import insights, metrics, v1_api, health
+from routers import core, core_dynamic
+from routers.subs import insights, metrics, v1_api, health, usability_tests
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -28,7 +28,6 @@ class ORPYAsyncConnection(AsyncConnection):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, row_factory=dict_row, **kwargs)
-
 
 
 @asynccontextmanager
@@ -48,7 +47,6 @@ async def lifespan(app: FastAPI):
     ap_logger.info(">Scheduled jobs:")
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
-
 
     database = {
         "host": config("pg_host", default="localhost"),
@@ -122,9 +120,9 @@ app.include_router(health.public_app)
 app.include_router(health.app)
 app.include_router(health.app_apikey)
 
-app.include_router(additional_routes.public_app)
-app.include_router(additional_routes.app)
-app.include_router(additional_routes.app_apikey)
+app.include_router(usability_tests.public_app)
+app.include_router(usability_tests.app)
+app.include_router(usability_tests.app_apikey)
 
 # @app.get('/private/shutdown', tags=["private"])
 # async def stop_server():

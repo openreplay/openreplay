@@ -1,8 +1,7 @@
 from fastapi import Body, Depends
 
-from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestRead, UTTestUpdate, UTTestDelete, SearchResult, \
-    UTTestSearch, UTTestSessionsSearch, UTTestResponsesSearch, StatusEnum, UTTestStatusUpdate
 from chalicelib.core.usability_testing import service
+from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestUpdate, UTTestSearch
 from or_dependencies import OR_context
 from routers.base import get_routers
 from schemas import schemas
@@ -11,7 +10,7 @@ public_app, app, app_apikey = get_routers()
 tags = ["usability-tests"]
 
 
-@app.post("/{projectId}/usability-tests/search", tags=tags)
+@app.post('/{projectId}/usability-tests/search', tags=tags)
 async def search_ui_tests(
         projectId: int,
         search: UTTestSearch = Body(...,
@@ -28,7 +27,7 @@ async def search_ui_tests(
     return service.search_ui_tests(projectId, search)
 
 
-@app.post("/{projectId}/usability-tests", tags=tags)
+@app.post('/{projectId}/usability-tests', tags=tags)
 async def create_ut_test(projectId: int, test_data: UTTestCreate,
                          context: schemas.CurrentContext = Depends(OR_context)):
     """
@@ -42,7 +41,7 @@ async def create_ut_test(projectId: int, test_data: UTTestCreate,
     return service.create_ut_test(test_data)
 
 
-@app.get("/{projectId}/usability-tests/{test_id}", tags=tags)
+@app.get('/{projectId}/usability-tests/{test_id}', tags=tags)
 async def get_ut_test(projectId: int, test_id: int):
     """
     Retrieve a specific UT test by its ID.
@@ -53,7 +52,7 @@ async def get_ut_test(projectId: int, test_id: int):
     return service.get_ut_test(projectId, test_id)
 
 
-@app.delete("/{projectId}/usability-tests/{test_id}", tags=tags)
+@app.delete('/{projectId}/usability-tests/{test_id}', tags=tags)
 async def delete_ut_test(projectId: int, test_id: int):
     """
     Delete a specific UT test by its ID.
@@ -64,7 +63,7 @@ async def delete_ut_test(projectId: int, test_id: int):
     return service.delete_ut_test(projectId, test_id)
 
 
-@app.put("/{projectId}/usability-tests/{test_id}", tags=tags)
+@app.put('/{projectId}/usability-tests/{test_id}', tags=tags)
 async def update_ut_test(projectId: int, test_id: int, test_update: UTTestUpdate):
     """
     Update a specific UT test by its ID.
@@ -77,7 +76,7 @@ async def update_ut_test(projectId: int, test_id: int, test_update: UTTestUpdate
     return service.update_ut_test(projectId, test_id, test_update)
 
 
-@app.get("/{projectId}/usability-tests/{test_id}/sessions", tags=tags)
+@app.get('/{projectId}/usability-tests/{test_id}/sessions', tags=tags)
 async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int = 10,
                        live: bool = False,
                        user_id: str = None):
@@ -91,8 +90,8 @@ async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int =
     return service.ut_tests_sessions(projectId, test_id, page, limit, user_id, live)
 
 
-@app.get("/{projectId}/usability-tests/{test_id}/responses/{task_id}", tags=tags)
-async def get_responses(test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
+@app.get('/{projectId}/usability-tests/{test_id}/responses/{task_id}', tags=tags)
+async def get_responses(projectId: int, test_id: int, task_id: int, page: int = 1, limit: int = 10, query: str = None):
     """
     Get responses related to a specific UT test.
 
@@ -102,8 +101,8 @@ async def get_responses(test_id: int, task_id: int, page: int = 1, limit: int = 
     return service.get_responses(test_id, task_id, page, limit, query)
 
 
-@app.get("/{projectId}/usability-tests/{test_id}/statistics", tags=tags)
-async def get_statistics(test_id: int):
+@app.get('/{projectId}/usability-tests/{test_id}/statistics', tags=tags)
+async def get_statistics(projectId: int, test_id: int):
     """
     Get statistics related to a specific UT test.
 
@@ -113,8 +112,8 @@ async def get_statistics(test_id: int):
     return service.get_statistics(test_id=test_id)
 
 
-@app.get("/{projectId}/usability-tests/{test_id}/task-statistics", tags=tags)
-async def get_task_statistics(test_id: int):
+@app.get('/{projectId}/usability-tests/{test_id}/task-statistics', tags=tags)
+async def get_task_statistics(projectId: int, test_id: int):
     """
     Get statistics related to a specific UT test.
 
