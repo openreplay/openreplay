@@ -825,8 +825,8 @@ class _ProductAnalyticsFilter(BaseModel):
     is_event: Literal[False] = False
     type: FilterType
     operator: Union[SearchEventOperator, ClickEventExtraOperator, MathOperator] = Field(...)
-    # TODO: support session metadata filters
     value: List[Union[IssueType, PlatformType, int, str]] = Field(...)
+    source: Optional[str] = Field(default=None)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
