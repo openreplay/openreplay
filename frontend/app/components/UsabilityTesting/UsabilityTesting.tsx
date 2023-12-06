@@ -193,7 +193,9 @@ function Row({ test, siteId }: { test: UxTListEntry, siteId: string }) {
     <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue cursor-pointer'} onClick={redirect}>
       <Cell size={4}>
         <div className={'flex items-center gap-2'}>
+          <div style={{ minWidth: 40 }}>
           <Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />
+          </div>
           <div style={{ maxWidth: 550 }}>
             <Link className='link' to={test.status === 'preview' ? editLink : link}>
               {test.title}

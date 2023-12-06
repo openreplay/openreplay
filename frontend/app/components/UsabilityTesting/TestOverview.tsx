@@ -3,7 +3,7 @@ import usePageTitle from 'App/hooks/usePageTitle';
 import { numberWithCommas } from 'App/utils';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
-import LiveTestsModal from "Components/UsabilityTesting/LiveTestsModal";
+import LiveTestsModal from 'Components/UsabilityTesting/LiveTestsModal';
 import React from 'react';
 import { Button, Typography, Select, Space, Popover, Dropdown } from 'antd';
 import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
@@ -33,6 +33,7 @@ import copy from 'copy-to-clipboard';
 import { Stage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
 import { confirm } from 'UI';
 import ResponsesOverview from './ResponsesOverview';
+import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
 
 const { Option } = Select;
 
@@ -65,14 +66,15 @@ function TestOverview() {
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
   const { uxtestingStore } = useStore();
-  usePageTitle(`Usability Tests | ${uxtestingStore.instance?.title || ''}`);
 
   React.useEffect(() => {
-    uxtestingStore.getTest(testId);
+    uxtestingStore.getTest(testId)
   }, [testId]);
 
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
+  } else {
+    document.title = `Usability Tests | ${uxtestingStore.instance.title}`
   }
 
   const onPageChange = (page: number) => {
@@ -97,16 +99,23 @@ function TestOverview() {
         {uxtestingStore.instance.liveCount ? (
           <div className={'p-4 flex items-center gap-2'}>
             <div className={'relative h-4 w-4'}>
-              <div className={'absolute w-4 h-4 animate-ping bg-red rounded-full opacity-75'} />
-              <div className={'absolute w-4 h-4 bg-red rounded-full'} />
+              <div className={'absolute w-4 h-4 animate-ping bg-tealx rounded-full opacity-75'} />
+              <div className={'absolute w-4 h-4 bg-tealx rounded-full'} />
             </div>
             <Typography.Text>
               {uxtestingStore.instance.liveCount} participants are engaged in this usability test at
               the moment.
             </Typography.Text>
-            <Button onClick={() => {
-              showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, { right: true, width: 900 })
-            }}>
+            <Button
+              type={'primary'}
+              ghost
+              onClick={() => {
+                showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, {
+                  right: true,
+                  width: 900,
+                });
+              }}
+            >
               <Space align={'center'}>
                 Moderate Real-Time
                 <ArrowRightOutlined rev={undefined} />
@@ -123,7 +132,7 @@ function TestOverview() {
           Open-ended task responses
         </Typography.Title>
         {uxtestingStore.instance.responsesCount ? (
-          <Button onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}>
+          <Button type={'primary'} ghost onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}>
             <Space align={'center'}>
               Review All {uxtestingStore.instance.responsesCount} Responses
               <ArrowRightOutlined rev={undefined} />
@@ -187,70 +196,69 @@ const ParticipantOverview = observer(() => {
       <Typography.Title level={5}>Participant Overview</Typography.Title>
       {uxtestingStore.testStats ? (
         <div className={'flex gap-4'}>
-          <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2 mb-2'}>
-              <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
-              <Typography.Text strong>Total Participants</Typography.Text>
-            </div>
-            <Typography.Title level={4}>{uxtestingStore.testStats.tests_attempts}</Typography.Title>
-          </div>
-          <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2 mb-2'}>
-              <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
-              <Typography.Text strong>Completed all tasks</Typography.Text>
-            </div>
-            <div className={'flex items-center gap-2'}>
-              {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={4}>
-                  {Math.round(
+          <ParticipantOverviewItem
+            titleRow={
+              <>
+                <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
+                <Typography.Text strong>Total Participants</Typography.Text>
+              </>
+            }
+            firstNum={uxtestingStore.testStats.tests_attempts?.toString()}
+          />
+          <ParticipantOverviewItem
+            titleRow={
+              <>
+                <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
+                <Typography.Text strong>Completed all tasks</Typography.Text>
+              </>
+            }
+            firstNum={
+              uxtestingStore.testStats.tests_attempts > 0
+                ? `${Math.round(
                     (uxtestingStore.testStats.completed_all_tasks /
                       uxtestingStore.testStats.tests_attempts) *
                       100
-                  )}
-                  %
-                </Typography.Title>
-              ) : null}
-              <Typography.Text>{uxtestingStore.testStats.completed_all_tasks}</Typography.Text>
-            </div>
-          </div>
-          <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2 mb-2'}>
-              <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
-              <Typography.Text strong>Skipped tasks</Typography.Text>
-            </div>
-            <div className={'flex items-center gap-2'}>
-              {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={4}>
-                  {Math.round(
+                  )}%`
+                : undefined
+            }
+            addedNum={uxtestingStore.testStats.completed_all_tasks.toString()}
+          />
+          <ParticipantOverviewItem
+            titleRow={
+              <>
+                <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
+                <Typography.Text strong>Skipped tasks</Typography.Text>
+              </>
+            }
+            firstNum={
+              uxtestingStore.testStats.tests_attempts > 0
+                ? `${Math.round(
                     (uxtestingStore.testStats.tasks_skipped /
                       uxtestingStore.testStats.tests_attempts) *
                       100
-                  )}
-                  %
-                </Typography.Title>
-              ) : null}
-              <Typography.Text>{uxtestingStore.testStats.tasks_skipped}</Typography.Text>
-            </div>
-          </div>
-          <div className={'rounded border p-2 flex-1'}>
-            <div className={'flex items-center gap-2 mb-2'}>
-              <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
-              <Typography.Text strong>Aborted the test</Typography.Text>
-            </div>
-            <div className={'flex items-center gap-2'}>
-              {uxtestingStore.testStats.tests_attempts > 0 ? (
-                <Typography.Title level={4}>
-                  {Math.round(
+                  )}%`
+                : undefined
+            }
+            addedNum={uxtestingStore.testStats.tasks_skipped.toString()}
+          />
+          <ParticipantOverviewItem
+            titleRow={
+              <>
+                <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
+                <Typography.Text strong>Aborted the test</Typography.Text>
+              </>
+            }
+            firstNum={
+              uxtestingStore.testStats.tests_attempts > 0
+                ? `${Math.round(
                     (uxtestingStore.testStats.tests_skipped /
                       uxtestingStore.testStats.tests_attempts) *
                       100
-                  )}
-                  %
-                </Typography.Title>
-              ) : null}
-              <Typography.Text>{uxtestingStore.testStats.tests_skipped}</Typography.Text>
-            </div>
-          </div>
+                  )}%`
+                : undefined
+            }
+            addedNum={uxtestingStore.testStats.tests_skipped.toString()}
+          />
         </div>
       ) : null}
     </div>
@@ -259,7 +267,11 @@ const ParticipantOverview = observer(() => {
 
 const TaskSummary = observer(() => {
   const { uxtestingStore } = useStore();
-  const totalAttempts = uxtestingStore.testStats?.tests_attempts ?? 0
+  const [showAll, setShowAll] = React.useState(false);
+  const totalAttempts = uxtestingStore.testStats?.tests_attempts ?? 0;
+  const shouldHide = uxtestingStore.taskStats.length > 5
+  const shownTasks = shouldHide ? showAll ? uxtestingStore.taskStats : uxtestingStore.taskStats.slice(0, 5) : uxtestingStore.taskStats;
+  
   return (
     <div className={'mt-2 rounded border p-4 bg-white'}>
       <div className={'flex justify-between items-center'}>
@@ -283,9 +295,14 @@ const TaskSummary = observer(() => {
         ) : null}
       </div>
       {!uxtestingStore.taskStats.length ? <NoContent show title={'No data'} /> : null}
-      {uxtestingStore.taskStats.map((tst, index) => (
-        <Stage stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed  }} uxt index={index + 1} />
+      {shownTasks.map((tst, index) => (
+        <Stage
+          stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed }}
+          uxt
+          index={index + 1}
+        />
       ))}
+      {shouldHide ? <div onClick={() => setShowAll(!showAll)} className={'link mt-4'}>{showAll ? 'Hide' : 'Show All'}</div> : null}
     </div>
   );
 });
@@ -324,7 +341,10 @@ const Title = observer(({ testId, siteId }: any) => {
     return null;
   }
 
-  const truncatedDescr = uxtestingStore.instance.description.length > 250 && truncate ? uxtestingStore.instance?.description.substring(0, 250) + '...' : uxtestingStore.instance?.description;
+  const truncatedDescr =
+    uxtestingStore.instance.description.length > 250 && truncate
+      ? uxtestingStore.instance?.description.substring(0, 250) + '...'
+      : uxtestingStore.instance?.description;
   const redirectToEdit = async () => {
     if (
       await confirm({
@@ -395,10 +415,12 @@ const Title = observer(({ testId, siteId }: any) => {
           <Button icon={<MoreOutlined rev={undefined} />}></Button>
         </Dropdown>
       </div>
-      <div className={'whitespace-pre-wrap'}>
-        {truncatedDescr}
-      </div>
-      {uxtestingStore.instance.description.length > 250 ? (<div className={'link'} onClick={() => setTruncate(!truncate)}>{truncate ? 'Show more' : 'Show less'}</div>) : null}
+      <div className={'whitespace-pre-wrap'}>{truncatedDescr}</div>
+      {uxtestingStore.instance.description.length > 250 ? (
+        <div className={'link'} onClick={() => setTruncate(!truncate)}>
+          {truncate ? 'Show more' : 'Show less'}
+        </div>
+      ) : null}
     </div>
   );
 });

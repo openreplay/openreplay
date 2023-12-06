@@ -87,7 +87,7 @@ export function UxTFunnelBar(props: Props) {
           }}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
-            {(filter.completed/(filter.completed+filter.skipped))*100}%
+            {((filter.completed/(filter.completed+filter.skipped))*100).toFixed(1)}%
           </div>
         </div>
       </div>
@@ -96,19 +96,22 @@ export function UxTFunnelBar(props: Props) {
         <div className={'flex items-center gap-2'}>
           <div className="flex items-center">
             <Icon name="arrow-right-short" size="20" color="green" />
-            <span className="mx-1 font-medium">{filter.completed} completed this step</span>
+            <span className="mx-1 font-medium">{filter.completed}</span><span>completed this step</span>
           </div>
           <div className={'flex items-center'}>
-            <Icon name="clock" size="20" color="green" />
+            <Icon name="clock" size="20" />
             <span className="mx-1 font-medium">
-              {durationFormatted(filter.avgCompletionTime)} Avg. completion time
+              {durationFormatted(filter.avgCompletionTime)}
+            </span>
+            <span>
+              Avg. completion time
             </span>
           </div>
         </div>
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="caret-down-fill" color="red" size={16} />
-          <span className="font-medium mx-1 color-red">{filter.skipped} skipped</span>
+          <span className="font-medium mx-1">{filter.skipped}</span><span> skipped</span>
         </div>
       </div>
     </div>

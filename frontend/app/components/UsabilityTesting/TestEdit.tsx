@@ -55,8 +55,12 @@ function TestEdit() {
         }
       });
     } else {
-      setConclusion(uxtestingStore.instance!.conclusionMessage)
-      setGuidelines(uxtestingStore.instance!.guidelines)
+      if (!uxtestingStore.instance) {
+        history.push(withSiteId(usabilityTesting(), siteId));
+      } else {
+        setConclusion(uxtestingStore.instance!.conclusionMessage);
+        setGuidelines(uxtestingStore.instance!.guidelines);
+      }
     }
   }, []);
   if (!uxtestingStore.instance) {
@@ -111,7 +115,8 @@ function TestEdit() {
     }
   };
 
-  const isPublished = uxtestingStore.instance.status !== undefined && uxtestingStore.instance.status !== 'preview'
+  const isPublished =
+    uxtestingStore.instance.status !== undefined && uxtestingStore.instance.status !== 'preview';
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
@@ -125,7 +130,7 @@ function TestEdit() {
             to: isPublished ? withSiteId(usabilityTestingView(testId), siteId) : undefined,
           },
           {
-            label: 'Edit',
+            label: isPublished ? 'Create' : 'Edit',
           },
         ]}
       />
@@ -153,7 +158,7 @@ function TestEdit() {
           value={newTestTitle}
           onChange={(e) => {
             setHasChanged(true);
-            setNewTestTitle(e.target.value)
+            setNewTestTitle(e.target.value);
           }}
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
@@ -161,7 +166,7 @@ function TestEdit() {
           value={newTestDescription}
           onChange={(e) => {
             setHasChanged(true);
-            setNewTestDescription(e.target.value)
+            setNewTestDescription(e.target.value);
           }}
           placeholder="Share a brief statement about what you aim to discover through this study."
         />
@@ -181,7 +186,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>🏁 Starting point</Typography.Text>
+            <Typography.Title level={5}>🏁 Starting point</Typography.Title>
             <Input
               style={{ width: 400 }}
               type={'url'}
@@ -197,17 +202,21 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>📖 Introduction and Guidelines for Participants</Typography.Text>
+            <Typography.Title level={5}>
+              📖 Introduction and Guidelines for Participants
+            </Typography.Title>
             <Typography.Text></Typography.Text>
             {isOverviewEditing ? (
               <Input.TextArea
                 autoFocus
                 rows={5}
-                placeholder={'Enter a brief introduction to the test and its goals here. Follow with clear, step-by-step guidelines for participants.'}
+                placeholder={
+                  'Enter a brief introduction to the test and its goals here. Follow with clear, step-by-step guidelines for participants.'
+                }
                 value={guidelines}
                 onChange={(e) => {
                   setHasChanged(true);
-                  setGuidelines(e.target.value)
+                  setGuidelines(e.target.value);
                 }}
               />
             ) : (
@@ -247,7 +256,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>📋 Tasks</Typography.Text>
+            <Typography.Title level={5}>📋 Tasks</Typography.Title>
             {uxtestingStore.instance!.tasks.map((task, index) => (
               <Step
                 ind={index}
@@ -255,21 +264,26 @@ function TestEdit() {
                 description={task.description}
                 buttons={
                   <>
-                    <Button size={'small'} disabled={isPublished} icon={<EditOutlined rev={undefined} />} onClick={() => {
-                      showModal(
-                        <StepsModal
-                          editTask={task}
-                          onHide={hideModal}
-                          onAdd={(task) => {
-                            setHasChanged(true);
-                            const tasks = [...uxtestingStore.instance!.tasks];
-                            tasks[index] = task;
-                            uxtestingStore.instance!.setProperty('tasks', tasks);
-                          }}
-                        />,
-                        { right: true, width: 600 }
-                      )
-                    }} />
+                    <Button
+                      size={'small'}
+                      disabled={isPublished}
+                      icon={<EditOutlined rev={undefined} />}
+                      onClick={() => {
+                        showModal(
+                          <StepsModal
+                            editTask={task}
+                            onHide={hideModal}
+                            onAdd={(task) => {
+                              setHasChanged(true);
+                              const tasks = [...uxtestingStore.instance!.tasks];
+                              tasks[index] = task;
+                              uxtestingStore.instance!.setProperty('tasks', tasks);
+                            }}
+                          />,
+                          { right: true, width: 600 }
+                        );
+                      }}
+                    />
                     <Button
                       onClick={() => {
                         setHasChanged(true);
@@ -315,15 +329,17 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Text strong>🎉 Conclusion Message</Typography.Text>
+            <Typography.Title level={5}>🎉 Conclusion Message</Typography.Title>
             <div>
               {isConclusionEditing ? (
                 <Input.TextArea
-                  placeholder={'Enter your closing remarks here, thanking participants for their time and contributions.'}
+                  placeholder={
+                    'Enter your closing remarks here, thanking participants for their time and contributions.'
+                  }
                   value={conclusion}
                   onChange={(e) => {
                     setHasChanged(true);
-                    setConclusion(e.target.value)
+                    setConclusion(e.target.value);
                   }}
                 />
               ) : (
@@ -374,14 +390,16 @@ export function Step({
   ind,
   title,
   description,
+  hover,
 }: {
   buttons?: React.ReactNode;
   ind: number;
   title: string;
   description: string | null;
+  hover?: boolean;
 }) {
   return (
-    <div className={'p-4 rounded border bg-active-blue flex items-start gap-2'}>
+    <div className={`p-4 rounded border ${hover ? 'bg-white hover:' : ''}bg-active-blue flex items-start gap-2`}>
       <div className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
         {ind + 1}
       </div>

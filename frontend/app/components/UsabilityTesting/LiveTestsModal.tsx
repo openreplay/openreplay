@@ -2,6 +2,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Input } from 'antd';
+import ReloadButton from "Shared/ReloadButton";
 import SessionItem from 'Shared/SessionItem';
 import { Pagination } from 'UI';
 import { observer } from 'mobx-react-lite';
@@ -23,6 +24,7 @@ function LiveTestsModal({ testId, closeModal }: { testId: string, closeModal: ()
   return (
     <div className={'h-screen p-4 bg-white'}>
       <div className={'border-b flex items-center justify-between mb-4 py-2'}>
+        <ReloadButton onClick={() => refreshData(page)} />
         <div className={'w-3/4 font-semibold text-xl'}>Live Participants</div>
         <Input.Search
           allowClear
