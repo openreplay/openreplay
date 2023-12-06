@@ -28,7 +28,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import SessionItem from 'Shared/SessionItem';
-import { Loader, NoContent, Pagination } from 'UI';
+import { CopyButton, Loader, NoContent, Pagination } from 'UI';
 import copy from 'copy-to-clipboard';
 import { Stage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
 import { confirm } from 'UI';
@@ -68,13 +68,13 @@ function TestOverview() {
   const { uxtestingStore } = useStore();
 
   React.useEffect(() => {
-    uxtestingStore.getTest(testId)
+    uxtestingStore.getTest(testId);
   }, [testId]);
 
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
   } else {
-    document.title = `Usability Tests | ${uxtestingStore.instance.title}`
+    document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
   }
 
   const onPageChange = (page: number) => {
@@ -132,7 +132,11 @@ function TestOverview() {
           Open-ended task responses
         </Typography.Title>
         {uxtestingStore.instance.responsesCount ? (
-          <Button type={'primary'} ghost onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}>
+          <Button
+            type={'primary'}
+            ghost
+            onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}
+          >
             <Space align={'center'}>
               Review All {uxtestingStore.instance.responsesCount} Responses
               <ArrowRightOutlined rev={undefined} />
@@ -269,9 +273,13 @@ const TaskSummary = observer(() => {
   const { uxtestingStore } = useStore();
   const [showAll, setShowAll] = React.useState(false);
   const totalAttempts = uxtestingStore.testStats?.tests_attempts ?? 0;
-  const shouldHide = uxtestingStore.taskStats.length > 5
-  const shownTasks = shouldHide ? showAll ? uxtestingStore.taskStats : uxtestingStore.taskStats.slice(0, 5) : uxtestingStore.taskStats;
-  
+  const shouldHide = uxtestingStore.taskStats.length > 5;
+  const shownTasks = shouldHide
+    ? showAll
+      ? uxtestingStore.taskStats
+      : uxtestingStore.taskStats.slice(0, 5)
+    : uxtestingStore.taskStats;
+
   return (
     <div className={'mt-2 rounded border p-4 bg-white'}>
       <div className={'flex justify-between items-center'}>
@@ -302,7 +310,11 @@ const TaskSummary = observer(() => {
           index={index + 1}
         />
       ))}
-      {shouldHide ? <div onClick={() => setShowAll(!showAll)} className={'link mt-4'}>{showAll ? 'Hide' : 'Show All'}</div> : null}
+      {shouldHide ? (
+        <div onClick={() => setShowAll(!showAll)} className={'link mt-4'}>
+          {showAll ? 'Hide' : 'Show All'}
+        </div>
+      ) : null}
     </div>
   );
 });
@@ -390,17 +402,12 @@ const Title = observer(({ testId, siteId }: any) => {
                   uxtestingStore.instance!.testId
                 }`}
               </div>
-              <Button
-                onClick={() => {
-                  copy(
-                    `${uxtestingStore.instance!.startingPath}?oruxt=${
-                      uxtestingStore.instance!.testId
-                    }`
-                  );
-                }}
-              >
-                Copy
-              </Button>
+              <CopyButton
+                variant={'outline'}
+                content={`${uxtestingStore.instance!.startingPath}?oruxt=${
+                  uxtestingStore.instance!.testId
+                }`}
+              />
             </div>
           }
         >
