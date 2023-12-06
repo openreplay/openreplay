@@ -80,7 +80,7 @@ function WidgetView(props: Props) {
                 }}
             />
 
-            <div className="relative pb-10">
+            <div style={{ maxWidth: '1360px', margin: 'auto'}}>
                 <Breadcrumb
                     items={[
                         {

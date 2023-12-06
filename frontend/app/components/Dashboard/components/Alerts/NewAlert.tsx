@@ -184,7 +184,7 @@ const NewAlert = (props: IProps) => {
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <>
+    <div style={{ maxWidth: '1360px', margin: 'auto'}}>
       <Breadcrumb
         items={[
           {
@@ -292,7 +292,7 @@ const NewAlert = (props: IProps) => {
             webhooks={webhooks} />
         )}
       </div>
-    </>
+    </div>
   );
 };
 
