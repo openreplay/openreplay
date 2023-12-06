@@ -21,6 +21,12 @@ $fn_def$, :'next_version')
 
 DROP TABLE IF EXISTS events.canvas_recordings;
 
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS user_agent text DEFAULT NULL,
+    ADD CONSTRAINT web_user_agent_constraint CHECK (
+            (sessions.platform = 'web' AND sessions.user_agent NOTNULL) OR
+            (sessions.platform != 'web' AND sessions.user_agent ISNULL));
+
 COMMIT;
 
 \elif :is_next
