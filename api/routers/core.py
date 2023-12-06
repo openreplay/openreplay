@@ -1,7 +1,7 @@
-from typing import Union, Optional
+from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body, Query
+from fastapi import Depends, Body
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -14,7 +14,6 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
-from chalicelib.core.usability_testing.routes import app as usability_testing_routes
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -704,14 +703,14 @@ def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.slack)}
 
 
-@app.get('/integrations/slack/{webhookId}', tags=["integrations"])
-def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": Slack.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)}
+@app.get('/integrations/slack/{integrationId}', tags=["integrations"])
+def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)}
 
 
-@app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
-def delete_slack_integration(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
+@app.delete('/integrations/slack/{integrationId}', tags=["integrations"])
+def delete_slack_integration(integrationId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+    return webhook.delete(tenant_id=context.tenant_id, webhook_id=integrationId)
 
 
 @app.put('/webhooks', tags=["webhooks"])
@@ -861,6 +860,3 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
-
-
-app.include_router(usability_testing_routes)
