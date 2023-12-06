@@ -111,6 +111,12 @@ SET default_config='{
 }'::jsonb
 WHERE metric_type = 'pathAnalysis';
 
+ALTER TABLE IF EXISTS public.sessions
+    DROP CONSTRAINT IF EXISTS web_user_agent_constraint,
+    DROP COLUMN IF EXISTS user_agent;
+
+ALTER INDEX IF EXISTS public.crashes_ios_project_id_crash_ios_id_idx RENAME TO crashes_ios_project_id_crash_id_idx;
+
 COMMIT;
 
 \elif :is_next
