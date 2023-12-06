@@ -444,7 +444,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     }
 
 
-async def set_password_invitation(user_id, new_password):
+def set_password_invitation(user_id, new_password):
     changes = {"password": new_password,
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
@@ -455,11 +455,11 @@ async def set_password_invitation(user_id, new_password):
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
-        "metadata": await metadata.get_remaining_metadata_with_count(tenant_id)}
+        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
 
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = await projects.get_projects(tenant_id=tenant_id, recorded=True)
+    c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True)
     c["smtp"] = smtp.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     return {
