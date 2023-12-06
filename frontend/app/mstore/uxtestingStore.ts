@@ -148,7 +148,7 @@ export default class UxtestingStore {
   initNewTest(title: string, description: string) {
     const initialData = {
       title: title,
-      startingPath: '',
+      startingPath: 'https://',
       requireMic: false,
       requireCamera: false,
       description: description,

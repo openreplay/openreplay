@@ -77,7 +77,7 @@ function TestEdit() {
       uxtestingStore.createNewTest(isPreview).then((test) => {
         if (isPreview) {
           window.open(`${test.startingPath}?oruxt=${test.testId}`, '_blank', 'noopener,noreferrer');
-          history.push(withSiteId(usabilityTestingEdit(test.testId), siteId));
+          history.replace(withSiteId(usabilityTestingEdit(test.testId), siteId));
         } else {
           history.push(withSiteId(usabilityTestingView(test.testId), siteId));
         }
@@ -195,6 +195,9 @@ function TestEdit() {
               value={uxtestingStore.instance!.startingPath}
               onChange={(e) => {
                 setHasChanged(true);
+                if (!e.target.value.startsWith('https://')) {
+                  e.target.value = 'https://' + e.target.value;
+                }
                 uxtestingStore.instance!.setProperty('startingPath', e.target.value);
               }}
             />
