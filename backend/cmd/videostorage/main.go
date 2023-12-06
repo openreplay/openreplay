@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -65,9 +66,10 @@ func main() {
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				log.Printf("recieved session end: %d, let's check canvas", sesEnd.SessionID())
 				if err := srv.Process(sesEnd.SessionID(), workDir+"/canvas/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", true); err != nil {
-					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+					if !strings.Contains(err.Error(), "no such file or directory") {
+						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+					}
 				}
 			},
 			[]int{messages.MsgSessionEnd},
