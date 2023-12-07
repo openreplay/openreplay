@@ -91,7 +91,5 @@ sudo -E docker-compose pull --no-parallel
 sudo -E docker-compose up -d
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
-cp -rf ../docker-compose ~/docker-compose
-rm -rf "$(git rev-parse --show-toplevel)"
 info "Installation complete!! open https://${DOMAIN_NAME} 🐳"
-info "${HOME}/docker-compose have the docker-compose file. you can use docker-compose stop/start"
+info "${PWD} have the docker-compose file. you can use docker-compose stop/start"
