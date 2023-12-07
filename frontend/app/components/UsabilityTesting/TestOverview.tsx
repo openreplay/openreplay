@@ -129,6 +129,7 @@ function TestOverview() {
           <Button
             type={'primary'}
             ghost
+            disabled={uxtestingStore.instance.responsesCount === 0}
             onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}
           >
             <Space align={'center'}>
@@ -402,7 +403,12 @@ const Title = observer(({ testId, siteId }: any) => {
           optionRender={(item) => (
             <Space align={'center'}>
               <div
-                style={{ background: getColor(item.value), width: 12, height: 12, borderRadius: 32 }}
+                style={{
+                  background: getColor(item.value),
+                  width: 12,
+                  height: 12,
+                  borderRadius: 32,
+                }}
               />
               {item.data.icon} {item.label}
             </Space>
@@ -422,8 +428,10 @@ const Title = observer(({ testId, siteId }: any) => {
           title={'Participants Link'}
           content={
             <div style={{ width: '220px' }}>
-              Distribute following link via email or other methods to share the survey with test
-              participants.
+              <div className={'text-disabled-text text-sm'}>
+                Distribute following link via email or other methods to share the survey with test
+                participants.
+              </div>
               <div
                 style={{ background: '#E4F6F6' }}
                 className={'p-2 rounded border shadow break-all my-2'}

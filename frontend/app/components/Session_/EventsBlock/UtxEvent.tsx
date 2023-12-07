@@ -13,7 +13,7 @@ function UtxEvent({ event }: any) {
           </Tooltip>
           <div className={'color-gray-medium ml-auto'}>{durationFromMsFormatted(event.duration)}</div>
         </div>
-        <div className="font-semibold">{event.title}</div>
+        <div className="font-semibold pt-1">{event.title}</div>
       </div>
       {event.comment ? (
         <div className={'border border-gray-light rounded bg-cyan py-2 px-4 mx-4 mb-4 shadow'}>
