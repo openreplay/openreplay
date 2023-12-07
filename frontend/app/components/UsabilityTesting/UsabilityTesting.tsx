@@ -3,10 +3,10 @@ import { UxTListEntry } from "App/services/UxtestingService";
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Button, Input, Typography, Tag, Avatar, Modal, Space } from 'antd';
+import { Button, Input, Typography, Tag, Modal, Space } from 'antd';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { Loader, NoContent, Pagination, Link } from 'UI';
+import { Loader, NoContent, Pagination, Link, Icon } from "UI";
 import { checkForRecent, getDateFromMill } from 'App/date';
 import { UnorderedListOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
@@ -104,7 +104,7 @@ function TestsTable() {
 
       <div className={'rounded bg-white border'}>
         <div className={'flex items-center p-4 gap-2'}>
-          <Typography.Title level={5} style={{ marginBottom: 0 }}>
+          <Typography.Title level={4} style={{ marginBottom: 0 }}>
             Usability Tests
           </Typography.Title>
           <div className={'ml-auto'} />
@@ -194,7 +194,10 @@ function Row({ test, siteId }: { test: UxTListEntry, siteId: string }) {
       <Cell size={4}>
         <div className={'flex items-center gap-2'}>
           <div style={{ minWidth: 40 }}>
-          <Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />
+            <div className={'rounded-full bg-tealx-light flex items-center justify-center'} style={{ width: 40, height: 40 }}>
+              <Icon name={'list-ul'} color={'tealx'} size={20} />
+            </div>
+          {/*<Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />*/}
           </div>
           <div style={{ maxWidth: 550 }}>
             <Link className='link' to={test.status === 'preview' ? editLink : link}>
