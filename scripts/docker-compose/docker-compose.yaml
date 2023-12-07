@@ -37,6 +37,8 @@ services:
   fs-permission:
     image: debian:stable-slim
     container_name: fs-permission
+    profiles:
+      - "migration"
     volumes:
       - shared-volume:/mnt/efs
       - miniodata:/mnt/minio
@@ -50,6 +52,8 @@ services:
   minio-migration:
     image: bitnami/minio:2020.10.9-debian-10-r6
     container_name: minio-migration
+    profiles:
+      - "migration"
     depends_on:
       - minio
       - fs-permission
@@ -77,6 +81,8 @@ services:
   db-migration:
     image: bitnami/postgresql:14.5.0 
     container_name: db-migration
+    profiles:
+      - "migration"
     depends_on:
       - postgresql
       - minio-migration
@@ -102,183 +108,153 @@ services:
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
   frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/frontend:v1.16.0
     container_name: frontend
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
-    restart: on-failure
+    restart: unless-stopped
 
   alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/alerts:v1.16.0
     container_name: alerts
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - alerts.env
-    restart: on-failure
+    restart: unless-stopped
 
   assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/assets:v1.16.0
     container_name: assets
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - assets.env
-    restart: on-failure
+    restart: unless-stopped
 
   assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/assist:v1.16.0
     container_name: assist
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - assist.env
-    restart: on-failure
+    restart: unless-stopped
 
   db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/db:v1.16.0
     container_name: db
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - db.env
-    restart: on-failure
+    restart: unless-stopped
 
   ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/ender:v1.16.0
     container_name: ender
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - ender.env
-    restart: on-failure
+    restart: unless-stopped
 
   heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/heuristics:v1.16.0
     domainname: app.svc.cluster.local
     container_name: heuristics
-    depends_on:
-      - db-migration
     networks:
       opereplay-net:
         aliases:
           - heuristics-openreplay.app.svc.cluster.local
     env_file:
       - heuristics.env
-    restart: on-failure
+    restart: unless-stopped
 
-  # imagestorage-openreplay:
-  #   image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
-  #   depends_on:
-  #     - db-migration
-  #   networks:
-  #     - opereplay-net
-  #   restart: on-failure
+  imagestorage-openreplay:
+    image: public.ecr.aws/p1t3u8a3/imagestorage:v1.16.0
+    env_file:
+      - imagestorage.env
+    networks:
+      - opereplay-net
+    restart: unless-stopped
 
   integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/integrations:v1.16.0
     container_name: integrations
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - integrations.env
-    restart: on-failure
+    restart: unless-stopped
 
   peers-openreplay:
-    image: public.ecr.aws/p1t3u8a3/peers:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/peers:v1.16.0
     container_name: peers
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - peers.env
-    restart: on-failure
+    restart: unless-stopped
 
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:v1.16.0
     container_name: sourcemapreader
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - sourcemapreader.env
-    restart: on-failure
+    restart: unless-stopped
 
-  # videostorage-openreplay:
-  #   image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
-  #   depends_on:
-  #     - db-migration
-  #   networks:
-  #     - opereplay-net
-  #   env_file:
-  #     - common.env
-  #   restart: on-failure
+  videostorage-openreplay:
+    image: public.ecr.aws/p1t3u8a3/videostorage:v1.16.0
+    networks:
+      - opereplay-net
+    env_file:
+      - videostorage.env
+    restart: unless-stopped
 
   http-openreplay:
-    image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/http:v1.16.0
     container_name: http
-    depends_on:
-      - db-migration
     networks:
       - opereplay-net
     env_file:
       - http.env
-    restart: on-failure
+    restart: unless-stopped
 
   chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/chalice:v1.16.0
     container_name: chalice
-    depends_on:
-      - db-migration
     volumes:
       - shared-volume:/mnt/efs
     networks:
       - opereplay-net
     env_file:
       - chalice.env
-    restart: on-failure
+    restart: unless-stopped
 
   sink-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/sink:v1.16.0
     container_name: sink
-    depends_on:
-      - db-migration
     volumes:
       - shared-volume:/mnt/efs
     networks:
       - opereplay-net
     env_file:
       - sink.env
-    restart: on-failure
+    restart: unless-stopped
 
   storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
+    image: public.ecr.aws/p1t3u8a3/storage:v1.16.0
     container_name: storage
-    depends_on:
-      - db-migration
     volumes:
       - shared-volume:/mnt/efs
     networks:
       - opereplay-net
     env_file:
       - storage.env
-    restart: on-failure
+    restart: unless-stopped
 
   nginx-openreplay:
     image: nginx:latest
@@ -287,7 +263,7 @@ services:
       - opereplay-net
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    restart: on-failure
+    restart: unless-stopped
 
 
   caddy:
@@ -304,8 +280,8 @@ services:
       - opereplay-net
     environment:
       - ACME_AGREE=true # Agree to Let's Encrypt Subscriber Agreement
-      - CADDY_DOMAIN=${COMMON_DOMAIN_NAME}
-    restart: on-failure
+      - CADDY_DOMAIN=or-foss.rjsh.me
+    restart: unless-stopped
 
 
 volumes:
