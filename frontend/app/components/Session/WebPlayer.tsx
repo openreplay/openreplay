@@ -113,7 +113,9 @@ function WebPlayer(props: any) {
   );
 
   useEffect(() => {
-    setActiveTab('EVENTS')
+    if (uxtestingStore.isUxt()) {
+      setActiveTab('EVENTS')
+    }
   }, [uxtestingStore.isUxt()])
 
   const onNoteClose = () => {

@@ -17,7 +17,7 @@ function RightBlock(props: any) {
       </div>
     )
   }
-  if (activeTab === 'HEATMAPS') {
+  if (activeTab === 'CLICKMAP') {
     return (
       <div className={cn("flex flex-col bg-white border-l", stl.panel)}>
         <PageInsightsPanel setActiveTab={props.setActiveTab} />
