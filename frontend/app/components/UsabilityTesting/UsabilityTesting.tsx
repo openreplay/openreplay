@@ -95,7 +95,7 @@ function TestsTable() {
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
         <Input.TextArea
-          rows={9}
+          rows={6}
           value={newTestDescription}
           onChange={(e) => setNewTestDescription(e.target.value)}
           placeholder="Share a brief statement about what you aim to discover through this study."
@@ -220,9 +220,9 @@ function Row({ test, siteId }: { test: UxTListEntry, siteId: string }) {
 
 const colors = {
   'in-progress': 'green',
-  closed: 'geekblue',
-  paused: 'grey',
-  preview: 'orange',
+  closed: 'grey',
+  paused: 'orange',
+  preview: 'geekblue',
 } as const
 
 function Cell({ size, children }: { size: number; children?: React.ReactNode }) {

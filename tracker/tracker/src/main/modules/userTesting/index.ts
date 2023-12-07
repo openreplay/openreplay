@@ -1,4 +1,5 @@
 import App from '../../app/index.js'
+import { containerStyle } from './styles.js'
 import * as styles from './styles.js'
 import Recorder, { Quality } from './recorder.js'
 import attachDND from './dnd.js'
@@ -181,15 +182,9 @@ export default class UserTestManager {
       'div',
       'description',
       styles.descriptionStyle,
-      'Welcome, this session will be recorded. You have complete control, and can stop the session at any time.',
-    )
-    const noticeElement = createElement(
-      'div',
-      'notice',
-      styles.noticeStyle,
-      `Please note that your ${micRequired ? 'audio,' : ''} ${cameraRequired ? 'video,' : ''} ${
-        micRequired || cameraRequired ? 'and' : ''
-      } screen will be recorded for research purposes during this test.`,
+      `Welcome, you're here to help us improve, not to be judged. Your insights matter!\n
+📹 We're recording this browser tab to learn from your experience.
+🎤 Please enable mic and camera if asked, to give us a complete picture.`,
     )
     const buttonElement = createElement(
       'div',
@@ -204,7 +199,6 @@ export default class UserTestManager {
         void this.userRecorder.startRecording(30, Quality.Standard, micRequired, cameraRequired)
       }
       this.container.removeChild(buttonElement)
-      this.container.removeChild(noticeElement)
       this.container.removeChild(descriptionElement)
       this.container.removeChild(titleElement)
       return false
@@ -213,10 +207,11 @@ export default class UserTestManager {
       this.removeGreeting()
       this.durations.testStart = this.app.timestamp()
       void this.signalTest('begin')
+      this.container.style.gap = '8px'
       this.showWidget(this.test?.guidelines || '', this.test?.tasks || [])
     }
 
-    this.container.append(titleElement, descriptionElement, noticeElement, buttonElement)
+    this.container.append(titleElement, descriptionElement, buttonElement)
     this.bg.appendChild(this.container)
     document.body.appendChild(this.bg)
   }
@@ -247,7 +242,7 @@ export default class UserTestManager {
     })
     // Create title section
     const titleSection = this.createTitleSection()
-    Object.assign(this.container.style, styles.containerWidgetStyle)
+    Object.assign(this.container.style, styles.containerStyle)
     const descriptionSection = this.createDescriptionSection(guidelines)
     const tasksSection = this.createTasksSection(tasks)
     const stopButton = createElement('div', 'stop_bn_or', styles.stopWidgetStyle, 'Abort Session')

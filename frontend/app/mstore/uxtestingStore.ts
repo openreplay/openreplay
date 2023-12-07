@@ -135,13 +135,10 @@ export default class UxtestingStore {
   };
 
   fetchResponses = async (testId: number, taskId: number, page: number, query?: string) => {
-    this.setLoading(true);
     try {
       this.responses[taskId] = await this.client.fetchTaskResponses(testId, taskId, page, 10, query);
     } catch (e) {
       console.error(e);
-    } finally {
-      this.setLoading(false);
     }
   };
 

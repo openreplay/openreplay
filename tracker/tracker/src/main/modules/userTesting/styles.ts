@@ -25,7 +25,7 @@ export const containerStyle = {
 export const containerWidgetStyle = {
   display: 'flex',
   'flex-direction': 'column',
-  gap: '8px',
+  gap: '1.5rem',
   'align-items': 'center',
   padding: '1rem',
   'border-radius': '0.375rem',
@@ -53,6 +53,7 @@ export const descriptionStyle = {
   fontStyle: 'normal',
   fontWeight: '400',
   lineHeight: '1.5rem',
+  whiteSpace: 'pre-wrap',
 }
 
 export const noticeStyle = {

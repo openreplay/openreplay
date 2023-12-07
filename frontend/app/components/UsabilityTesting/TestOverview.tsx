@@ -1,5 +1,4 @@
 import { durationFormatted } from 'App/date';
-import usePageTitle from 'App/hooks/usePageTitle';
 import { numberWithCommas } from 'App/utils';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
@@ -20,10 +19,7 @@ import {
   UserDeleteOutlined,
   CheckCircleOutlined,
   FastForwardOutlined,
-  PauseCircleOutlined,
-  StopOutlined,
-  HourglassOutlined,
-  FilePdfOutlined,
+  // FilePdfOutlined,
   DeleteOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
@@ -33,22 +29,20 @@ import { Stage, EmptyStage } from 'Components/Funnels/FunnelWidget/FunnelWidget'
 import { confirm } from 'UI';
 import ResponsesOverview from './ResponsesOverview';
 import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
-import { toast } from 'react-toastify'
-
-const { Option } = Select;
+import { toast } from 'react-toastify';
 
 const statusItems = [
-  { value: 'in-progress', label: 'Ongoing', icon: <HourglassOutlined rev={undefined} /> },
-  { value: 'paused', label: 'Hold', icon: <PauseCircleOutlined rev={undefined} /> },
-  { value: 'closed', label: 'Close', icon: <StopOutlined rev={undefined} /> },
+  { value: 'in-progress', label: 'Ongoing' },
+  { value: 'paused', label: 'Hold' },
+  { value: 'closed', label: 'Close' },
 ];
 
 const menuItems = [
-  {
-    key: '1',
-    label: 'Download Results',
-    icon: <FilePdfOutlined rev={undefined} />,
-  },
+  // {
+  //   key: '1',
+  //   label: 'Download Results',
+  //   icon: <FilePdfOutlined rev={undefined} />,
+  // },
   {
     key: '2',
     label: 'Edit',
@@ -82,7 +76,7 @@ function TestOverview() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }} id={'pdf-anchor'}>
       <Breadcrumb
         items={[
           {
@@ -94,13 +88,13 @@ function TestOverview() {
           },
         ]}
       />
-      <div className={'rounded border bg-white'} id={'pdf-anchor'}>
+      <div className={'rounded border bg-white'}>
         <Title testId={testId} siteId={siteId} />
         {uxtestingStore.instance.liveCount ? (
           <div className={'p-4 flex items-center gap-2'}>
             <div className={'relative h-4 w-4'}>
-              <div className={'absolute w-4 h-4 animate-ping bg-tealx rounded-full opacity-75'} />
-              <div className={'absolute w-4 h-4 bg-tealx rounded-full'} />
+              <div className={'absolute w-4 h-4 animate-ping bg-green rounded-full opacity-75'} />
+              <div className={'absolute w-4 h-4 bg-green rounded-full'} />
             </div>
             <Typography.Text>
               {uxtestingStore.instance.liveCount} participants are engaged in this usability test at
@@ -312,7 +306,7 @@ const TaskSummary = observer(() => {
       ))}
       {shouldHide && !showAll ? (
         <div className={'cursor-pointer'} onClick={() => setShowAll(true)}>
-          <EmptyStage total={uxtestingStore.taskStats.length - 5}/>
+          <EmptyStage total={uxtestingStore.taskStats.length - 5} />
         </div>
       ) : null}
     </div>
@@ -331,10 +325,14 @@ const Title = observer(({ testId, siteId }: any) => {
         toast.success('The usability test is now live and accessible to participants.');
         break;
       case 'paused':
-        toast.success('Usability test is on \'Hold\'—participant activity paused. Switch it to “ongoing” to resume activity.');
+        toast.success(
+          "Usability test is on 'Hold'—participant activity paused. Switch it to “ongoing” to resume activity."
+        );
         break;
       case 'closed':
-        toast.success('The usability test has been marked as completed. All participant interactions are now finalized.');
+        toast.success(
+          'The usability test has been marked as completed. All participant interactions are now finalized.'
+        );
         break;
     }
   };
@@ -369,16 +367,27 @@ const Title = observer(({ testId, siteId }: any) => {
       ? uxtestingStore.instance?.description.substring(0, 250) + '...'
       : uxtestingStore.instance?.description;
   const redirectToEdit = async () => {
+    const confirmationTitle =
+      uxtestingStore.instance!.status === 'in-progress'
+        ? 'Editing Active Usability Test'
+        : 'Editing Test on Hold';
+    const confirmationStr =
+      uxtestingStore.instance!.status === 'in-progress'
+        ? "You're editing a test that's currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧"
+        : 'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.';
     if (
       await confirm({
-        confirmation:
-          'This test already has responses, making edits at this stage may result in confusing outcomes.',
+        header: confirmationTitle,
+        confirmation: confirmationStr,
         confirmButton: 'Edit',
       })
     ) {
       history.push(withSiteId(usabilityTestingEdit(testId), siteId));
     }
   };
+
+  // @ts-ignore
+  const getColor = (status) => colors[status];
 
   return (
     <div className={'p-4 border-b'}>
@@ -389,16 +398,21 @@ const Title = observer(({ testId, siteId }: any) => {
           value={uxtestingStore.instance!.status}
           style={{ width: 150 }}
           onChange={handleChange}
+          options={statusItems}
+          optionRender={(item) => (
+            <Space align={'center'}>
+              <div
+                style={{ background: getColor(item.value), width: 12, height: 12, borderRadius: 32 }}
+              />
+              {item.data.icon} {item.label}
+            </Space>
+          )}
+        />
+        <Button
+          disabled={uxtestingStore.instance!.status === 'closed'}
+          type={'primary'}
+          onClick={redirectToEdit}
         >
-          {statusItems.map((item) => (
-            <Option key={item.value} value={item.value} label={item.label}>
-              <Space align={'center'}>
-                {item.icon} {item.label}
-              </Space>
-            </Option>
-          ))}
-        </Select>
-        <Button type={'primary'} onClick={redirectToEdit}>
           <Space align={'center'}>
             {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
@@ -408,8 +422,12 @@ const Title = observer(({ testId, siteId }: any) => {
           title={'Participants Link'}
           content={
             <div style={{ width: '220px' }}>
-              Distribute following link via email or other methods to share the survey with test participants.
-              <div style={{ background: '#E4F6F6'}} className={'p-2 rounded border shadow break-all my-2'}>
+              Distribute following link via email or other methods to share the survey with test
+              participants.
+              <div
+                style={{ background: '#E4F6F6' }}
+                className={'p-2 rounded border shadow break-all my-2'}
+              >
                 {`${uxtestingStore.instance!.startingPath}?oruxt=${
                   uxtestingStore.instance!.testId
                 }`}
@@ -430,7 +448,15 @@ const Title = observer(({ testId, siteId }: any) => {
             </Space>
           </Button>
         </Popover>
-        <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
+        <Dropdown
+          menu={{
+            items:
+              uxtestingStore.instance!.status === 'closed'
+                ? menuItems.filter((i) => i.label !== 'Edit')
+                : menuItems,
+            onClick: onMenuClick,
+          }}
+        >
           <Button icon={<MoreOutlined rev={undefined} />}></Button>
         </Dropdown>
       </div>
@@ -443,4 +469,12 @@ const Title = observer(({ testId, siteId }: any) => {
     </div>
   );
 });
+
+const colors = {
+  'in-progress': '#52c41a',
+  closed: '#bfbfbf',
+  paused: '#fa8c16',
+  preview: '#2f54eb',
+};
+
 export default observer(TestOverview);

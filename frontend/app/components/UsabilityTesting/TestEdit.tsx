@@ -170,6 +170,7 @@ function TestEdit() {
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
         <Input.TextArea
           value={newTestDescription}
+          rows={6}
           onChange={(e) => {
             setHasChanged(true);
             setNewTestDescription(e.target.value);
@@ -222,7 +223,7 @@ function TestEdit() {
             {isOverviewEditing ? (
               <Input.TextArea
                 autoFocus
-                rows={5}
+                rows={6}
                 placeholder={
                   'Enter a brief introduction to the test and its goals here. Follow with clear, step-by-step guidelines for participants.'
                 }
