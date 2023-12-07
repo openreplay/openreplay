@@ -28,7 +28,7 @@ function Breadcrumb(props: Props) {
         }
         return (
           <div key={index} className="color-gray-darkest hover:text-teal group flex items-center">
-            <Link to={item.to} className="flex items-center">
+            <Link to={item.to} className="flex items-center default-hover">
               {index === 0 && (
                 <Icon name="chevron-left" size={16} className="mr-1 group-hover:fill-teal" />
               )}
