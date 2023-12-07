@@ -89,6 +89,7 @@ set +a
 find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 sudo -E docker-compose pull --no-parallel
 sudo -E docker-compose up -d
+cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
 info "Installation complete!! open https://${DOMAIN_NAME} 🐳"
