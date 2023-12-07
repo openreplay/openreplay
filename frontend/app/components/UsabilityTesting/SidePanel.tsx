@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { Typography, Switch, Button, Space, Tooltip } from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
 
-const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
+const SidePanel = observer(({ onSave, onPreview, taskLen, isStartingPointValid }: any) => {
   const { uxtestingStore } = useStore();
   return (
     <div className={'flex flex-col gap-2 col-span-1'}>
@@ -38,14 +38,14 @@ const SidePanel = observer(({ onSave, onPreview, taskLen }: any) => {
       </div>
 
       <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>
-        <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0}>
+        <Button type={'primary'} ghost onClick={onPreview} disabled={taskLen === 0 || !isStartingPointValid}>
           <Space align={'center'}>
             Save Draft & Preview <ExportOutlined rev={undefined} />
           </Space>
         </Button>
       </Tooltip>
       <Tooltip title={taskLen === 0 ? 'Define the starting point and the tasks to proceed.' : ''}>
-        <Button type={'primary'} onClick={onSave} disabled={taskLen === 0}>
+        <Button type={'primary'} onClick={onSave} disabled={taskLen === 0 || !isStartingPointValid}>
           Publish Test
         </Button>
       </Tooltip>

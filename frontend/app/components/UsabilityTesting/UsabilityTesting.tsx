@@ -95,7 +95,7 @@ function TestsTable() {
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>
         <Input.TextArea
-          rows={5}
+          rows={9}
           value={newTestDescription}
           onChange={(e) => setNewTestDescription(e.target.value)}
           placeholder="Share a brief statement about what you aim to discover through this study."
@@ -175,10 +175,10 @@ function TestsTable() {
 }
 
 const statusMap = {
-  preview: "Preview",
-  'in-progress': "In progress",
-  paused: "Paused",
-  closed: "Completed",
+  preview: "Draft",
+  'in-progress': "Ongoing",
+  paused: "On Hold",
+  closed: "Closed",
 }
 
 function Row({ test, siteId }: { test: UxTListEntry, siteId: string }) {

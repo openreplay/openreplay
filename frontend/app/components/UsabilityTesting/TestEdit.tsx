@@ -1,4 +1,5 @@
 import { Button, Input, Typography, Dropdown, Modal } from 'antd';
+import { isValidUrl } from 'App/utils';
 import React from 'react';
 import {
   withSiteId,
@@ -16,7 +17,7 @@ import { confirm } from 'UI';
 import StepsModal from './StepsModal';
 import SidePanel from './SidePanel';
 import usePageTitle from 'App/hooks/usePageTitle';
-import { toast } from 'react-toastify'
+import { toast } from 'react-toastify';
 
 const menuItems = [
   {
@@ -119,6 +120,8 @@ function TestEdit() {
 
   const isPublished =
     uxtestingStore.instance.status !== undefined && uxtestingStore.instance.status !== 'preview';
+  const isStartingPointValid = isValidUrl(uxtestingStore.instance.startingPath);
+
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
@@ -198,12 +201,16 @@ function TestEdit() {
               onChange={(e) => {
                 setHasChanged(true);
                 if (!e.target.value.startsWith('https://')) {
-                  e.target.value = 'https://' + e.target.value;
+                  e.target.value = 'https://';
                 }
                 uxtestingStore.instance!.setProperty('startingPath', e.target.value);
               }}
             />
-            <Typography.Text>Test will begin on this page.</Typography.Text>
+            {uxtestingStore.instance!.startingPath === 'https://' || isStartingPointValid ? (
+              <Typography.Text>Test will begin on this page.</Typography.Text>
+            ) : (
+              <Typography.Text color={'red'}>Starting point URL is invalid.</Typography.Text>
+            )}
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
@@ -381,6 +388,7 @@ function TestEdit() {
           </div>
         </div>
         <SidePanel
+          isStartingPointValid={isStartingPointValid}
           taskLen={uxtestingStore.instance.tasks.length}
           onSave={() => onSave(false)}
           onPreview={() => onSave(true)}
@@ -404,7 +412,11 @@ export function Step({
   hover?: boolean;
 }) {
   return (
-    <div className={`p-4 rounded border ${hover ? 'bg-white hover:' : ''}bg-active-blue flex items-start gap-2`}>
+    <div
+      className={`p-4 rounded border ${
+        hover ? 'bg-white hover:' : ''
+      }bg-active-blue flex items-start gap-2`}
+    >
       <div className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
         {ind + 1}
       </div>
