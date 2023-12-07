@@ -1,4 +1,5 @@
 
+import { useStore } from "App/mstore";
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -25,7 +26,7 @@ const SESSIONS_ROUTE = sessionsRoute();
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-
+  const { uxtestingStore } = useStore()
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
   const { width = 0, height = 0, showEvents = false } = playerState
 
@@ -92,7 +93,7 @@ function PlayerBlockHeader(props: any) {
         <UserCard className="" width={width} height={height} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
-          {live && !hideBack && (
+          {live && !hideBack && !uxtestingStore.isUxt() && (
             <>
               <div className={cn(stl.liveSwitchButton, 'pr-4')}>
                 <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>

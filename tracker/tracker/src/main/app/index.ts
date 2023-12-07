@@ -721,7 +721,9 @@ export default class App {
             uxtId = qId ? parseInt(qId, 10) : undefined
           }
         }
-        if (uxtId) this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag))
+        if (uxtId && !this.uxtManager.isActive) {
+          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag))
+        }
 
         return SuccessfulStart(onStartInfo)
       })

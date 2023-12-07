@@ -53,6 +53,7 @@ export default class UserTestManager {
   private widgetGuidelinesVisible = true
   private widgetTasksVisible = false
   private widgetVisible = true
+  public isActive = false
   private descriptionSection: HTMLElement | null = null
   private taskSection: HTMLElement | null = null
   private endSection: HTMLElement | null = null
@@ -159,6 +160,7 @@ export default class UserTestManager {
     })
       .then((res) => res.json())
       .then(({ test }: { test: Test }) => {
+        this.isActive = true
         this.test = test
         this.createGreeting(test.title, test.reqMic, test.reqCamera)
         if (inProgress) {
@@ -552,7 +554,7 @@ export default class UserTestManager {
         fontSize: '1.25rem',
         fontWeight: '500',
       },
-      this.test?.reqMic || this.test?.reqCamera ? 'Uploading test recording...' : 'Thank you! 👍',
+      'Thank you! 👍',
     )
     const description = createElement(
       'div',
@@ -569,13 +571,27 @@ export default class UserTestManager {
       styles.buttonWidgetStyle,
       'Submitting Feedback',
     )
+    const spinner = createSpinner()
+    button.appendChild(spinner)
 
     if (this.test?.reqMic || this.test?.reqCamera) {
-      void this.userRecorder.sendToAPI().then(() => {
-        title.textContent = 'Thank you! 👍'
-        button.textContent = 'End Session'
-        isLoading = false
-      })
+      void this.userRecorder
+        .sendToAPI()
+        .then(() => {
+          button.removeChild(spinner)
+          button.textContent = 'End Session'
+          isLoading = false
+        })
+        .catch((err) => {
+          console.error(err)
+          button.removeChild(spinner)
+          button.textContent = 'End Session'
+          isLoading = false
+        })
+    } else {
+      button.removeChild(spinner)
+      button.textContent = 'End Session'
+      isLoading = false
     }
 
     if (this.taskSection) {
@@ -645,4 +661,33 @@ function generateChevron() {
     transform: 'rotate(180deg)',
   })
   return container
+}
+
+const spinnerStyles = {
+  border: '4px solid rgba(255, 255, 255, 0.4)',
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  borderLeftColor: '#fff',
+  animation: 'spin 0.5s linear infinite',
+}
+
+function addKeyframes() {
+  const styleSheet = document.createElement('style')
+  styleSheet.type = 'text/css'
+  styleSheet.innerText = `@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }`
+  document.head.appendChild(styleSheet)
+}
+
+function createSpinner() {
+  addKeyframes()
+  const spinner = document.createElement('div')
+  spinner.classList.add('spinner')
+
+  Object.assign(spinner.style, spinnerStyles)
+
+  return spinner
 }
