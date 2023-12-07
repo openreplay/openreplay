@@ -252,7 +252,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                     <Icon name='circle-fill' size={3} className='mx-4' />
                   </>
                 )}
-                <div>{live ? <Counter startTime={startedAt} /> : formattedDuration}</div>
+                <div>{live || props.live ? <Counter startTime={startedAt} /> : formattedDuration}</div>
               </div>
             </div>
             <div style={{ width: '30%' }} className='px-2 flex flex-col justify-between'>

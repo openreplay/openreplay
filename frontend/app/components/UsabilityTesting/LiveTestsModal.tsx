@@ -2,13 +2,14 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Input } from 'antd';
-import ReloadButton from "Shared/ReloadButton";
+import ReloadButton from 'Shared/ReloadButton';
 import SessionItem from 'Shared/SessionItem';
 import { Pagination } from 'UI';
 import { observer } from 'mobx-react-lite';
 
-function LiveTestsModal({ testId, closeModal }: { testId: string, closeModal: () => void }) {
+function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: () => void }) {
   const [page, setPage] = React.useState(1);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [userId, setUserId] = React.useState('');
   const { uxtestingStore } = useStore();
 
@@ -17,8 +18,12 @@ function LiveTestsModal({ testId, closeModal }: { testId: string, closeModal: ()
   }, []);
 
   const refreshData = (page: number) => {
+    setIsLoading(true);
     setPage(page);
-    uxtestingStore.getAssistSessions(testId, page, userId);
+    uxtestingStore
+      .getAssistSessions(testId, page, userId)
+      .then(() => setIsLoading(false))
+      .catch(() => setIsLoading(false));
   };
 
   return (

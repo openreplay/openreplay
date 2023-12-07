@@ -708,7 +708,9 @@ export default class App {
         }
         this.restartAttempts = 0
 
-        this.uxtManager = new UserTestManager(this, uxtStorageKey)
+        this.uxtManager = this.uxtManager
+          ? this.uxtManager
+          : new UserTestManager(this, uxtStorageKey)
         let uxtId: number | undefined
         const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
         if (savedUxtTag) {
@@ -721,6 +723,7 @@ export default class App {
             uxtId = qId ? parseInt(qId, 10) : undefined
           }
         }
+
         if (uxtId && !this.uxtManager.isActive) {
           this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag))
         }

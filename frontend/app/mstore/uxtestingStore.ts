@@ -247,14 +247,11 @@ export default class UxtestingStore {
   };
 
   getAssistSessions = async (testId: string, page: number, userId?: string) => {
-    this.setLoading(true);
     try {
       const sessions = await this.client.fetchTestSessions(testId, page, 10, true, userId);
       this.setAssistSessions(sessions);
     } catch (e) {
       console.error(e);
-    } finally {
-      this.setLoading(false);
     }
   };
 
