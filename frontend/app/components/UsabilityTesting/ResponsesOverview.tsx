@@ -2,29 +2,49 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Step } from 'Components/UsabilityTesting/TestEdit';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Loader, NoContent, Pagination } from 'UI';
 import { Button, Typography, Input } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { DownOutlined } from '@ant-design/icons';
+import { debounce } from 'App/utils'
+
+let debounceUpdate: any = () => {}
 
 const ResponsesOverview = observer(() => {
   const { uxtestingStore } = useStore();
   const [search, setSearch] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [showAll, setShowAll] = React.useState(false);
-  const [taskId, setTaskId] = React.useState(uxtestingStore.instance?.tasks[0].taskId);
+  const [taskId, setTaskId] = React.useState<number | undefined>(undefined);
 
   React.useEffect(() => {
-    void refreshData();
+    setTaskId(uxtestingStore.instance?.tasks.filter((t) => t.allowTyping)[0].taskId);
+  }, [uxtestingStore.instance?.tasks]);
+
+  React.useEffect(() => {
+    if (taskId) {
+      void refreshData();
+    }
   }, [page, taskId]);
 
-  const refreshData = () =>
+  debounceUpdate = debounce((text: string) => {
+    void refreshData(text);
+  }, 200)
+
+  const refreshDataQuery = (text: string) => {
+    setSearch(text)
+    debounceUpdate(text)
+  }
+
+  const refreshData = (searchText?: string) =>
     taskId
-      ? uxtestingStore.fetchResponses(uxtestingStore.instance!.testId!, taskId, page, search)
+      ? uxtestingStore.fetchResponses(uxtestingStore.instance!.testId!, taskId, page, searchText || search)
       : null;
 
   const selectedIndex = uxtestingStore.instance?.tasks.findIndex((task) => task.taskId === taskId)!;
   const task = uxtestingStore.instance?.tasks.find((task) => task.taskId === taskId);
+
   return (
     <div style={{ width: 900 }} className={'h-screen p-4 bg-white flex flex-col gap-4'}>
       <Typography.Title style={{ marginBottom: 0 }} level={4}>
@@ -32,26 +52,28 @@ const ResponsesOverview = observer(() => {
       </Typography.Title>
       <div className={'flex flex-col gap-1 relative'}>
         <Typography.Text strong>Select Task / Question</Typography.Text>
-        <Step
-          ind={selectedIndex}
-          title={task!.title}
-          description={task!.description}
-          buttons={
-            <div className={'self-center'}>
-              <Button
-                onClick={() => setShowAll(!showAll)}
-                icon={<DownOutlined rotate={showAll ? 180 : 0} rev={undefined} />}
-                size={'small'}
-              />
-            </div>
-          }
-        />
+        <OutsideClickDetectingDiv onClickOutside={() => setShowAll(false)}>
+          <div className={'cursor-pointer'} onClick={() => setShowAll(!showAll)}>
+            <Step
+              ind={selectedIndex ?? 0}
+              title={task?.title ?? 'Title'}
+              description={task?.description ?? 'Description'}
+              buttons={
+                <div className={'self-center'}>
+                  <Button
+                    onClick={() => setShowAll(!showAll)}
+                    icon={<DownOutlined rotate={showAll ? 180 : 0} rev={undefined} />}
+                    size={'small'}
+                  />
+                </div>
+              }
+            />
+          </div>
+        </OutsideClickDetectingDiv>
         {showAll ? (
           <div
-            className={
-              'flex flex-col overflow-auto absolute bottom-0 w-full gap-1 z-20 rounded bg-gray-lightest border shadow'
-            }
-            style={{ maxHeight: 300, transform: 'translateY(110%)' }}
+            className={'flex flex-col overflow-auto absolute bottom-0 w-full z-20'}
+            style={{ maxHeight: 300, transform: 'translateY(100%)' }}
           >
             {uxtestingStore.instance?.tasks
               .filter((t) => t.taskId !== taskId && t.allowTyping)
@@ -87,8 +109,8 @@ const ResponsesOverview = observer(() => {
           </div>
           <Input.Search
             allowClear
-            placeholder={'Filter by keyboard or participant'}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder={'Filter by keyword or participant'}
+            onChange={(e) => refreshDataQuery(e.target.value)}
             classNames={{ input: '!border-0 focus:!border-0' }}
             onSearch={() => refreshData()}
           />

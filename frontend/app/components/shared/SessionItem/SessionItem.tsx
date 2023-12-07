@@ -123,8 +123,9 @@ function SessionItem(props: RouteComponentProps & Props) {
     !ignoreAssist &&
     (isRoute(ASSIST_ROUTE, location.pathname) ||
       isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-      location.pathname.includes('multiview'))
-      || location.pathname.includes('usability-testing');
+      location.pathname.includes('multiview')) ||
+      props.live
+
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)

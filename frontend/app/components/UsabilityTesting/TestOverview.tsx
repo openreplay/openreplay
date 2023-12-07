@@ -29,18 +29,18 @@ import {
 } from '@ant-design/icons';
 import SessionItem from 'Shared/SessionItem';
 import { CopyButton, Loader, NoContent, Pagination } from 'UI';
-import copy from 'copy-to-clipboard';
-import { Stage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
+import { Stage, EmptyStage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
 import { confirm } from 'UI';
 import ResponsesOverview from './ResponsesOverview';
 import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
+import { toast } from 'react-toastify'
 
 const { Option } = Select;
 
 const statusItems = [
   { value: 'in-progress', label: 'Ongoing', icon: <HourglassOutlined rev={undefined} /> },
-  { value: 'paused', label: 'On Hold', icon: <PauseCircleOutlined rev={undefined} /> },
-  { value: 'closed', label: 'Closed', icon: <StopOutlined rev={undefined} /> },
+  { value: 'paused', label: 'Hold', icon: <PauseCircleOutlined rev={undefined} /> },
+  { value: 'closed', label: 'Close', icon: <StopOutlined rev={undefined} /> },
 ];
 
 const menuItems = [
@@ -310,9 +310,9 @@ const TaskSummary = observer(() => {
           index={index + 1}
         />
       ))}
-      {shouldHide ? (
-        <div onClick={() => setShowAll(!showAll)} className={'link mt-4'}>
-          {showAll ? 'Hide' : 'Show All'}
+      {shouldHide && !showAll ? (
+        <div className={'cursor-pointer'} onClick={() => setShowAll(true)}>
+          <EmptyStage total={uxtestingStore.taskStats.length - 5}/>
         </div>
       ) : null}
     </div>
@@ -326,6 +326,17 @@ const Title = observer(({ testId, siteId }: any) => {
 
   const handleChange = (value: string) => {
     uxtestingStore.updateTestStatus(value);
+    switch (value) {
+      case 'in-progress':
+        toast.success('The usability test is now live and accessible to participants.');
+        break;
+      case 'paused':
+        toast.success('Usability test is on \'Hold\'—participant activity paused. Resume at your convenience.');
+        break;
+      case 'closed':
+        toast.success('he usability test has been marked as completed. All participant interactions are now finalized.');
+        break;
+    }
   };
 
   const onMenuClick = async ({ key }: any) => {
@@ -397,7 +408,8 @@ const Title = observer(({ testId, siteId }: any) => {
           title={'Participants Link'}
           content={
             <div style={{ width: '220px' }}>
-              <div className={'p-2 bg-white rounded border break-all mb-2'}>
+              Distribute following link via email or other methods to share the survey with test participants.
+              <div style={{ background: '#E4F6F6'}} className={'p-2 rounded border shadow break-all my-2'}>
                 {`${uxtestingStore.instance!.startingPath}?oruxt=${
                   uxtestingStore.instance!.testId
                 }`}

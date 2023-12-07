@@ -85,7 +85,7 @@ function FunnelWidget(props: Props) {
     ));
 }
 
-function EmptyStage({ total }: any) {
+export function EmptyStage({ total }: any) {
     return useObserver( () => (
         <div className={cn("flex items-center mb-4 pb-3", stl.step)}>
             <IndexNumber index={0} />

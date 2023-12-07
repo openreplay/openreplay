@@ -16,6 +16,7 @@ import { confirm } from 'UI';
 import StepsModal from './StepsModal';
 import SidePanel from './SidePanel';
 import usePageTitle from 'App/hooks/usePageTitle';
+import { toast } from 'react-toastify'
 
 const menuItems = [
   {
@@ -71,6 +72,7 @@ function TestEdit() {
     setHasChanged(false);
     if (testId && testId !== 'new') {
       uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
+        toast.success('The usability test is now live and accessible to participants.');
         history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
       });
     } else {
