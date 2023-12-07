@@ -331,10 +331,10 @@ const Title = observer(({ testId, siteId }: any) => {
         toast.success('The usability test is now live and accessible to participants.');
         break;
       case 'paused':
-        toast.success('Usability test is on \'Hold\'—participant activity paused. Resume at your convenience.');
+        toast.success('Usability test is on \'Hold\'—participant activity paused. Switch it to “ongoing” to resume activity.');
         break;
       case 'closed':
-        toast.success('he usability test has been marked as completed. All participant interactions are now finalized.');
+        toast.success('The usability test has been marked as completed. All participant interactions are now finalized.');
         break;
     }
   };

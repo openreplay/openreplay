@@ -33,7 +33,9 @@ const menuItems = [
 ];
 
 function TestEdit() {
-  const [hasChanged, setHasChanged] = React.useState(false);
+  // @ts-ignore
+  const { siteId, testId } = useParams();
+  const [hasChanged, setHasChanged] = React.useState(testId === 'new');
   const { uxtestingStore } = useStore();
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState('');
@@ -42,8 +44,7 @@ function TestEdit() {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [isConclusionEditing, setIsConclusionEditing] = React.useState(false);
   const [isOverviewEditing, setIsOverviewEditing] = React.useState(false);
-  // @ts-ignore
-  const { siteId, testId } = useParams();
+
   const { showModal, hideModal } = useModal();
   const history = useHistory();
   usePageTitle(`Usability Tests | ${uxtestingStore.instance ? 'Edit' : 'Create'}`);
