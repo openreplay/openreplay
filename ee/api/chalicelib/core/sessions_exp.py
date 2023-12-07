@@ -1110,7 +1110,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
                 event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
                                                         event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
@@ -1162,7 +1162,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             #     #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
             #     #                          event.source, value_key=e_k))
             #     # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
-            #     events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator.value}%({e_k})s",
+            #     events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator}%({e_k})s",
             #                                                          event.source, value_key=e_k)
             #     event_index += 1
             # TODO: no isNot for RequestDetails
