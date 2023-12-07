@@ -90,7 +90,7 @@ JOURNEY_TYPES = {
 def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_conditions = []
-    start_point_conditions = []
+    step_0_conditions = []
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.location)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"],
@@ -107,7 +107,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             ','.join([f"event_type='{s['eventType']}',{s['column']}" for s in sub_events[:-1]]),
             sub_events[-1]["column"])
     extra_values = {}
-    initial_event_cte = ""
     reverse = data.start_type == "end"
     for i, sf in enumerate(data.start_point):
         f_k = f"start_point_{i}"
@@ -119,13 +118,20 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         extra_values = {**extra_values, **sh.multi_values(sf.value, value_key=f_k),
                         f"start_event_type_{i}": event_type}
         start_points_conditions.append(f"(event_type=%(start_event_type_{i})s AND " +
-                                       sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
+                                       sh.multi_conditions(f'{event_column} {op} %({f_k})s', sf.value, is_not=is_not,
                                                            value_key=f_k)
                                        + ")")
-        start_point_conditions.append(f"(event_type=%(start_event_type_{i})s AND " +
-                                      sh.multi_conditions(f'{event_column} {op} %({f_k})s', sf.value, is_not=is_not,
-                                                          value_key=f_k)
-                                      + ")")
+        step_0_conditions.append(f"(event_type=%(start_event_type_{i})s AND " +
+                                 sh.multi_conditions(f'e_value {op} %({f_k})s', sf.value, is_not=is_not,
+                                                     value_key=f_k)
+                                 + ")")
+    if len(start_points_conditions) > 0:
+        start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")",
+                                   "events.project_id = toUInt16(%(project_id)s)",
+                                   "events.datetime >= toDateTime(%(startTimestamp)s / 1000)",
+                                   "events.datetime < toDateTime(%(endTimestamp)s / 1000)"]
+        step_0_conditions = ["(" + " OR ".join(step_0_conditions) + ")",
+                             "pre_ranked_events.event_number_in_session = 1"]
 
     exclusions = {}
     for i, ef in enumerate(data.excludes):
@@ -318,34 +324,22 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     selected_event_type_sub_query = " OR ".join(selected_event_type_sub_query)
     ch_sub_query.append(f"({selected_event_type_sub_query})")
 
-    if len(start_points_conditions) > 0:
-        start_points_conditions = ["(" + " OR ".join(start_points_conditions) + ")",
-                                   "event_number_in_session = 1"]
-        start_point_conditions = ["(" + " OR ".join(start_point_conditions) + ")",
-                                  "events.project_id = toUInt16(%(project_id)s)",
-                                  "events.datetime >= toDateTime(%(startTimestamp)s / 1000)",
-                                  "events.datetime < toDateTime(%(endTimestamp)s / 1000)"]
-
-    main_table = exp_ch_helper.get_main_events_table(data.startTimestamp)
+    main_events_table = exp_ch_helper.get_main_events_table(data.startTimestamp)
     if len(sessions_conditions) > 0:
         sessions_conditions.append(f"sessions.project_id = toUInt16(%(project_id)s)")
         sessions_conditions.append(f"sessions.datetime >= toDateTime(%(startTimestamp)s / 1000)")
         sessions_conditions.append(f"sessions.datetime < toDateTime(%(endTimestamp)s / 1000)")
         sessions_conditions.append("sessions.events_count>1")
         sessions_conditions.append("sessions.duration>0")
-        initial_event_main_table = f"""(SELECT DISTINCT session_id
+
+        initial_sessions_cte = f"""sub_sessions AS (SELECT DISTINCT session_id
                         FROM {exp_ch_helper.get_main_sessions_table(data.startTimestamp)}
-                        WHERE {" AND ".join(sessions_conditions)}) AS sub_sessions 
-                            INNER JOIN (SELECT session_id, event_type, datetime, message_id, {main_column}
-                                        FROM {main_table}
-                                        WHERE {" AND ".join(start_point_conditions)}
-                                        ) AS sub_events ON (sub_sessions.session_id = sub_events.session_id)"""
+                        WHERE {" AND ".join(sessions_conditions)}),"""
     else:
-        initial_event_main_table = f"""{main_table}
-                                        WHERE {" AND ".join(start_point_conditions)}"""
+        initial_sessions_cte = ""
 
     if len(start_points_conditions) == 0:
-        start_points_subquery = """SELECT DISTINCT session_id
+        step_0_subquery = """SELECT DISTINCT session_id
                                    FROM (SELECT event_type, e_value
                                          FROM pre_ranked_events
                                          WHERE event_number_in_session = 1
@@ -356,17 +350,19 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                                        ON (top_start_events.event_type = pre_ranked_events.event_type AND
                                                            top_start_events.e_value = pre_ranked_events.e_value)
                                    WHERE pre_ranked_events.event_number_in_session = 1"""
+        initial_event_cte = ""
     else:
-        start_points_subquery = f"""SELECT DISTINCT session_id
+        step_0_subquery = f"""SELECT DISTINCT session_id
                                     FROM pre_ranked_events
-                                    WHERE {" AND ".join(start_points_conditions)}"""
+                                    WHERE {" AND ".join(step_0_conditions)}"""
         initial_event_cte = f"""\
-            initial_event AS (SELECT session_id, MIN(datetime) AS start_event_timestamp
-                       FROM {initial_event_main_table}
-                       GROUP BY session_id),"""
+            initial_event AS (SELECT events.session_id, MIN(datetime) AS start_event_timestamp
+                       FROM {main_events_table} AS events {"INNER JOIN sub_sessions USING (session_id)" if len(sessions_conditions) > 0 else ""}
+                       WHERE {" AND ".join(start_points_conditions)}
+                       GROUP BY 1),"""
         ch_sub_query.append("events.datetime>=initial_event.start_event_timestamp")
-        main_table += " INNER JOIN initial_event ON (events.session_id = initial_event.session_id)"
-    del start_points_conditions
+        main_events_table += " INNER JOIN initial_event ON (events.session_id = initial_event.session_id)"
+        sessions_conditions = []
 
     steps_query = ["""n1 AS (SELECT event_number_in_session,
                                     event_type,
@@ -423,7 +419,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
 
         ch_query1 = f"""\
 CREATE TEMPORARY TABLE pre_ranked_events_{time_key} AS
-WITH {initial_event_cte}
+WITH {initial_sessions_cte}
+     {initial_event_cte}
      pre_ranked_events AS (SELECT *
                            FROM (SELECT session_id,
                                         event_type,
@@ -432,7 +429,7 @@ WITH {initial_event_cte}
                                         row_number() OVER (PARTITION BY session_id 
                                                            ORDER BY datetime {path_direction},
                                                                     message_id {path_direction} ) AS event_number_in_session
-                                 FROM {main_table}
+                                 FROM {main_events_table} {"INNER JOIN sub_sessions ON (sub_sessions.session_id = events.session_id)" if len(sessions_conditions) > 0 else ""}
                                  WHERE {" AND ".join(ch_sub_query)}
                                  ) AS full_ranked_events
                            WHERE event_number_in_session <= %(density)s)
@@ -448,19 +445,19 @@ FROM pre_ranked_events;"""
 
         ch_query2 = f"""\
 CREATE TEMPORARY TABLE ranked_events_{time_key} AS
-WITH pre_ranked_events AS (SELECT * 
+WITH pre_ranked_events AS (SELECT *
                        FROM pre_ranked_events_{time_key}),
-     start_points AS ({start_points_subquery}),
+     start_points AS ({step_0_subquery}),
      ranked_events AS (SELECT pre_ranked_events.*,
                               leadInFrame(e_value)
                                           OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
                               leadInFrame(toNullable(event_type))
-                                          OVER (PARTITION BY session_id ORDER BY datetime {path_direction} 
+                                          OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type,
                               abs(lagInFrame(toNullable(datetime))
-                                              OVER (PARTITION BY session_id ORDER BY datetime {path_direction} 
-                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) 
+                                              OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
+                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
                                                 - pre_ranked_events.datetime) AS time_from_previous
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
@@ -474,8 +471,8 @@ FROM ranked_events;"""
         _now = time()
 
         ch_query3 = f"""\
-WITH ranked_events AS (SELECT * 
-                       FROM ranked_events_{time_key}), 
+WITH ranked_events AS (SELECT *
+                       FROM ranked_events_{time_key}),
     {",".join(steps_query)}
 SELECT *
 FROM ({" UNION ALL ".join(projection_query)}) AS chart_steps
