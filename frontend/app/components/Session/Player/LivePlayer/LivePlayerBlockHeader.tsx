@@ -31,12 +31,11 @@ function LivePlayerBlockHeader(props: any) {
     metaList,
     closedLive = false,
     siteId,
-    location,
     isMultiview,
   } = props;
 
   React.useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
+    const queryParams = new URLSearchParams(document.location.search);
     setHideBack(queryParams.has('iframe') && queryParams.get('iframe') === 'true');
   }, []);
 
