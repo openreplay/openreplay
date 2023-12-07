@@ -14,13 +14,13 @@ export const bgStyle = {
 export const containerStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
+  gap: '0.5rem',
   alignItems: 'center',
   padding: '1.5rem',
   borderRadius: '0.375rem',
   border: '1px solid #D9D9D9',
   background: '#FFF',
-  width: '29rem',
+  width: '22rem',
 }
 export const containerWidgetStyle = {
   display: 'flex',
@@ -31,7 +31,7 @@ export const containerWidgetStyle = {
   'border-radius': '0.375rem',
   border: '1px solid #D9D9D9',
   background: '#FFF',
-  width: '29rem',
+  width: '22rem',
 }
 
 export const titleStyle = {
@@ -176,7 +176,7 @@ export const buttonWidgetStyle = {
 }
 
 export const stopWidgetStyle = {
-  marginTop: '2rem',
+  marginTop: '1rem',
   cursor: 'pointer',
   display: 'block',
   fontWeight: '600',
@@ -228,7 +228,8 @@ export const taskTextStyle = {
 }
 
 export const taskDescriptionStyle = {
-  color: '#8C8C8C',
+  color: '#454545',
+  fontSize: 13,
 }
 
 export const taskButtonStyle = {

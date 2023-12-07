@@ -112,6 +112,10 @@ function WebPlayer(props: any) {
     [params.sessionId]
   );
 
+  useEffect(() => {
+    setActiveTab('EVENTS')
+  }, [uxtestingStore.isUxt()])
+
   const onNoteClose = () => {
     setNoteItem(undefined);
     contextValue.player.play();

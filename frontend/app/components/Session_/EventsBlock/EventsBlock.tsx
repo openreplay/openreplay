@@ -65,7 +65,7 @@ function EventsBlock(props: IProps) {
   const usedEvents = React.useMemo(() => {
     if (tabStates !== undefined) {
       tabChangeEvents.forEach((ev) => {
-        const urlsList = tabStates[ev.tabId].urlsList;
+        const urlsList = tabStates[ev.tabId]?.urlsList || [];
         let found = false;
         let i = urlsList.length - 1;
         while (!found && i >= 0) {
@@ -180,7 +180,7 @@ function EventsBlock(props: IProps) {
       <div className={cn(styles.header, 'p-4')}>
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
-            <video className={'z-20 fixed'} autoPlay controls src={props.utxVideo} width={240} />
+            <video className={'z-20 fixed'} muted autoPlay controls src={props.utxVideo} width={240} />
             <div style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }} className={'absolute z-10'}>No video</div>
           </div>
         ) : null}

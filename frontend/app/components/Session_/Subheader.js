@@ -87,7 +87,10 @@ function SubHeader(props) {
 
   return (
     <>
-      <div className="w-full px-4 flex items-center border-b relative">
+      <div
+        className="w-full px-4 flex items-center border-b relative"
+        style={{ background: uxtestingStore.isUxt() ? props.live ? '#F6FFED' : '#EBF4F5' : undefined }}
+      >
         {showWarning ? (
           <div
             className="px-3 py-1 border border-gray-light drop-shadow-md rounded bg-active-blue flex items-center justify-between"

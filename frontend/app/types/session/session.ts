@@ -365,16 +365,22 @@ export default class Session {
     const utxDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UTX_EVENT', key: e.signal_id }))
     const rawEvents: (EventData & { key: number })[] = [];
 
+    let utxIndexNum = 0;
     if (sessionEvents.length) {
       const eventsWithUtx = mergeEventLists(sessionEvents, utxDoneEvents)
       eventsWithUtx.forEach((event, k) => {
+        const isRawUtx = 'allow_typing' in event
+        if (isRawUtx) {
+          utxIndexNum += 1;
+          event.indexNum = utxIndexNum;
+        }
         const time = event.timestamp - this.startedAt;
         if (event.type !== TYPES.CONSOLE && time <= this.durationSeconds) {
           const EventClass = SessionEvent({ ...event, time, key: k });
           if (EventClass) {
             events.push(EventClass);
           }
-          rawEvents.push({ ...event, time, key: k });
+          rawEvents.push({ ...event, time, key: k,  });
         }
       });
     }

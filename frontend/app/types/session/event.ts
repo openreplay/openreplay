@@ -241,6 +241,7 @@ export class UtxEvent {
   taskId: number;
   timestamp: number;
   title: string;
+  indexNum: number;
 
   constructor(event: Record<string, any>) {
     Object.assign(this, {
@@ -254,6 +255,7 @@ export class UtxEvent {
       taskId: event.taskId,
       timestamp: event.timestamp,
       title: event.title,
+      indexNum: event.indexNum,
     });
   }
 }

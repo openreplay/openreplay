@@ -18,7 +18,7 @@ function LivePlayerBlock(props: IProps) {
   return (
     <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')} style={{ zIndex: undefined, minWidth: isMultiview ? '100%' : undefined }}>
       {shouldShowSubHeader ? (
-        <SubHeader  />
+        <SubHeader live />
       ) : null}
       <Player
         fullView={fullView}

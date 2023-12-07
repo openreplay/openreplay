@@ -59,7 +59,7 @@ class EventGroupWrapper extends React.Component {
       presentInSearch,
       isNote,
       isTabChange,
-      filterOutNote
+      filterOutNote,
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
     const isUtxEvent = event.type === TYPES.UTX_EVENT;

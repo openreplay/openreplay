@@ -75,6 +75,7 @@ export default class UserTestManager {
     this.userRecorder = new Recorder(app)
     const sessionId = this.app.getSessionID()
     const savedSessionId = this.app.localStorage.getItem('or_uxt_session_id')
+    console.log(sessionId, savedSessionId)
     if (sessionId !== savedSessionId) {
       this.app.localStorage.removeItem(this.storageKey)
       this.app.localStorage.removeItem('or_uxt_session_id')
@@ -119,6 +120,8 @@ export default class UserTestManager {
   signalTest = (status: 'begin' | 'done' | 'skipped') => {
     const timestamp = this.app.timestamp()
     if (status === 'begin' && this.testId) {
+      const sessionId = this.app.getSessionID()
+      this.app.localStorage.setItem('or_uxt_session_id', sessionId as unknown as string)
       this.app.localStorage.setItem(this.storageKey, this.testId.toString())
       this.app.localStorage.setItem('or_uxt_test_start', timestamp.toString())
     } else {
@@ -266,7 +269,18 @@ export default class UserTestManager {
   createTitleSection() {
     const title = createElement('div', 'title', styles.titleWidgetStyle)
     const leftIcon = generateGrid()
-    const titleText = createElement('div', 'title_text', {}, this.test?.title)
+    const titleText = createElement(
+      'div',
+      'title_text',
+      {
+        maxWidth: '19rem',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        width: '100%',
+        cursor: 'pointer',
+      },
+      this.test?.title,
+    )
     const rightIcon = generateChevron()
 
     title.append(leftIcon, titleText, rightIcon)
@@ -306,12 +320,14 @@ export default class UserTestManager {
       return isVisible
     }
 
-    rightIcon.onclick = () => {
+    const collapseWidget = () => {
       Object.assign(rightIcon.style, {
         transform: this.widgetVisible ? 'rotate(0deg)' : 'rotate(180deg)',
       })
       toggleWidget(!this.widgetVisible)
     }
+    titleText.onclick = collapseWidget
+    rightIcon.onclick = collapseWidget
     attachDND(this.bg, leftIcon)
 
     this.collapseWidget = () => toggleWidget(false)
@@ -331,6 +347,8 @@ export default class UserTestManager {
       maxHeight: '250px',
       overflowY: 'auto',
       whiteSpace: 'pre-wrap',
+      fontSize: 13,
+      color: '#454545',
     })
     descriptionC.innerHTML = guidelines
     const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
@@ -390,14 +408,15 @@ export default class UserTestManager {
       allow_typing: boolean
     }[],
   ) {
+    Object.assign(this.container.style, styles.containerStyle)
     const section = createElement('div', 'task_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_t_title_or', styles.sectionTitleStyle)
     const title = createElement('div', 'title', {}, 'Tasks')
     const icon = createElement('div', 'icon', styles.symbolIcon, '-')
     const content = createElement('div', 'content', styles.contentStyle)
     const pagination = createElement('div', 'pagination', styles.paginationStyle)
-    const leftArrow = createElement('span', 'leftArrow', {}, '<')
-    const rightArrow = createElement('span', 'rightArrow', {}, '>')
+    // const leftArrow = createElement('span', 'leftArrow', {}, '<')
+    // const rightArrow = createElement('span', 'rightArrow', {}, '>')
     const taskCard = createElement('div', 'taskCard', styles.taskDescriptionCard)
     const taskText = createElement('div', 'taskText', styles.taskTextStyle)
     const taskDescription = createElement('div', 'taskDescription', styles.taskDescriptionStyle)
@@ -413,13 +432,13 @@ export default class UserTestManager {
       'div',
       'closePanelButton',
       styles.taskButtonStyle,
-      'Collapse panel',
+      'Collapse Panel',
     )
     const nextButton = createElement(
       'div',
       'nextButton',
       styles.taskButtonBorderedStyle,
-      'Done, next',
+      'Done, Next',
     )
 
     titleContainer.append(title, icon)
@@ -439,13 +458,13 @@ export default class UserTestManager {
       }
     }
 
-    pagination.appendChild(leftArrow)
+    // pagination.appendChild(leftArrow)
     tasks.forEach((_, index) => {
       const pageNumber = createElement('span', `or_task_${index}`, {}, (index + 1).toString())
       pageNumber.id = `or_task_${index}`
       pagination.append(pageNumber)
     })
-    pagination.appendChild(rightArrow)
+    // pagination.appendChild(rightArrow)
 
     const toggleTasksVisibility = () => {
       this.widgetTasksVisible = !this.widgetTasksVisible
@@ -548,7 +567,7 @@ export default class UserTestManager {
       'div',
       'end_button_or',
       styles.buttonWidgetStyle,
-      'Uploading session...',
+      'Submitting Feedback',
     )
 
     if (this.test?.reqMic || this.test?.reqCamera) {

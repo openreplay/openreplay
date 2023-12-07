@@ -308,8 +308,6 @@ export default class App {
         }
       }
     }
-
-    this.uxtManager = new UserTestManager(this, uxtStorageKey)
   }
 
   private _debug(context: string, e: any) {
@@ -710,6 +708,7 @@ export default class App {
         }
         this.restartAttempts = 0
 
+        this.uxtManager = new UserTestManager(this, uxtStorageKey)
         let uxtId: number | undefined
         const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
         if (savedUxtTag) {
