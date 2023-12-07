@@ -74,8 +74,12 @@ function TestEdit() {
     setHasChanged(false);
     if (testId && testId !== 'new') {
       uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
-        toast.success('The usability test is now live and accessible to participants.');
-        history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
+        if (isPreview) {
+          window.open(`${uxtestingStore.instance!.startingPath}?oruxt=${testId}`, '_blank', 'noopener,noreferrer');
+        } else {
+          toast.success('The usability test is now live and accessible to participants.');
+          history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
+        }
       });
     } else {
       uxtestingStore.createNewTest(isPreview).then((test) => {

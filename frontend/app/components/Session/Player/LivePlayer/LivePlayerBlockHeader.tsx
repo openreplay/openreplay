@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import {
   assist as assistRoute,
   withSiteId,
@@ -23,7 +23,7 @@ function LivePlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
   const { assistMultiviewStore } = useStore();
-
+  const history = useHistory();
   const { width, height } = store.get();
 
   const {
@@ -32,7 +32,6 @@ function LivePlayerBlockHeader(props: any) {
     closedLive = false,
     siteId,
     location,
-    history,
     isMultiview,
   } = props;
 
@@ -42,7 +41,8 @@ function LivePlayerBlockHeader(props: any) {
   }, []);
 
   const backHandler = () => {
-    history.push(withSiteId(ASSIST_ROUTE, siteId));
+    history.goBack();
+    // history.push(withSiteId(ASSIST_ROUTE, siteId));
   };
 
   const { userId, metadata, isCallActive, agentIds } = session;
@@ -117,4 +117,4 @@ const PlayerHeaderCont = connect(
   }
 )(observer(LivePlayerBlockHeader));
 
-export default withRouter(PlayerHeaderCont);
+export default PlayerHeaderCont;
