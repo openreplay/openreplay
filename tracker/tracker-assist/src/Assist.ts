@@ -199,8 +199,8 @@ export default class Assist {
         'peerId': peerID,
         'identity': 'session',
         'tabId': this.app.getTabId(),
-        'uxtId': this.app.getUxtId() ?? undefined,
         'sessionInfo': JSON.stringify({
+          'uxtId': this.app.getUxtId() ?? undefined,
           pageTitle: document.title,
           active: true,
           ...this.app.getSessionInfo(),
