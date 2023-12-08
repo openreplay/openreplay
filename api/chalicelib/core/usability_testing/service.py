@@ -157,7 +157,16 @@ def get_ut_test(project_id: int, test_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
 
     try:
-        live_sessions = assist.get_live_sessions_ws_test_id(project_id, test_id)
+        body = {
+            "filter": {
+                "uxtId": {
+                    "values": [test_id],
+                    "operator": "is"
+                },
+            },
+        }
+
+        live_sessions = assist.__get_live_sessions_ws(project_id, body)
         row['live_count'] = live_sessions['total']
     except Exception as e:
         logging.error(f"Failed to get live sessions count: {e}")
