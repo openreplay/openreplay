@@ -3,6 +3,7 @@ package integrations
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	config "openreplay/backend/internal/config/integrations"
@@ -73,7 +74,9 @@ func (l *Listener) worker() {
 		default:
 			newNotification, err := l.storage.CheckNew()
 			if err != nil {
-				// TODO: check error type for "no new notifications" case
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					continue
+				}
 				l.Errors <- fmt.Errorf("Integration storage error: %v", err)
 				continue
 			}
