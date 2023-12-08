@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Union
 from enum import Enum
 
 
@@ -31,4 +31,7 @@ class EventList(BaseModel):
     limitEvents: Optional[bool] = False
     maxClickEvents: Optional[int] = 10
     maxPageEvents: Optional[int] = 10
+#    space
+    sessionStartTimestamp: Optional[Union[int, None]] = None
+    sessionDuration: Optional[Union[int, None]] = None
 
