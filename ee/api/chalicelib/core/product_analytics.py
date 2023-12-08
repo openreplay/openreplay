@@ -207,7 +207,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(utm_source)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f'utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                    sh.multi_conditions(f'utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.utm_medium]:
@@ -217,7 +217,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(utm_medium)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f'utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                    sh.multi_conditions(f'utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.utm_campaign]:
@@ -227,7 +227,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(utm_campaign)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f'utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
+                    sh.multi_conditions(f'utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type == schemas.FilterType.duration:
@@ -258,7 +258,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 else:
                     sessions_conditions.append(
                         sh.multi_conditions(
-                            f"{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                            f"{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                             f.value, is_not=is_not, value_key=f_k))
 
         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
@@ -268,7 +268,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(user_id)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                    sh.multi_conditions(f"user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.user_anonymous_id,
@@ -279,7 +279,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(user_anonymous_id)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f"user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                    sh.multi_conditions(f"user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
@@ -289,7 +289,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('isNull(rev_id)')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f"rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+                    sh.multi_conditions(f"rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not, value_key=f_k))
 
         elif f.type == schemas.FilterType.platform:
             # op = __ sh.get_sql_operator(f.operator)

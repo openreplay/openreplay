@@ -256,7 +256,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append('user_id IS NULL')
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                    sh.multi_conditions(f"user_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.user_anonymous_id,
