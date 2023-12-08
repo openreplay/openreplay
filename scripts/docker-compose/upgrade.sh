@@ -101,10 +101,10 @@ function migrate() {
     # Loop through versions and prepare Docker run commands
     for ver in "${joined_migration_versions[@]}"; do
         echo "$ver"
-        echo "docker run --rm --network openreplay-net \
-      --name pgmigrate -e 'PGHOST=postgres' -e 'PGPORT=5432' \
-      -e 'PGDATABASE=postgres' -e 'PGUSER=postgres' -e 'PGPASSWORD=$pgpassword' \
-      -v /opt/data/:$SCHEMA_DIR postgres psql -f /opt/data/schema/db/init_dbs/postgresql/$ver/$ver.sql"
+        "docker run --rm --network openreplay-net \
+        --name pgmigrate -e 'PGHOST=postgres' -e 'PGPORT=5432' \
+        -e 'PGDATABASE=postgres' -e 'PGUSER=postgres' -e 'PGPASSWORD=$pgpassword' \
+        -v /opt/data/:$SCHEMA_DIR postgres psql -f /opt/data/schema/db/init_dbs/postgresql/$ver/$ver.sql"
     done
 }
 
