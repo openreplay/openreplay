@@ -284,6 +284,13 @@ export default class API {
     return this.app.getTabId()
   }
 
+  getUxId() {
+    if (this.app === null) {
+      return null
+    }
+    return this.app.getUxtId()
+  }
+
   sessionID(): string | null | undefined {
     deprecationWarn("'sessionID' method", "'getSessionID' method", '/')
     return this.getSessionID()

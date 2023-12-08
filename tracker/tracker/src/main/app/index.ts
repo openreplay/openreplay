@@ -743,6 +743,10 @@ export default class App {
       })
   }
 
+  getUxtId(): number | null {
+    return this.uxtManager?.getTestId()
+  }
+
   /**
    * basically we ask other tabs during constructor
    * and here we just apply 10ms delay just in case

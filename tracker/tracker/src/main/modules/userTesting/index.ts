@@ -95,6 +95,10 @@ export default class UserTestManager {
     }
   }
 
+  public getTestId() {
+    return this.testId
+  }
+
   signalTask = (taskId: number, status: 'begin' | 'done' | 'skipped', answer?: string) => {
     if (!taskId) return console.error('OR: no task id')
     const taskStart = this.durations.tasks.find((t) => t.taskId === taskId)
