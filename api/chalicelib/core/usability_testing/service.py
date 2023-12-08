@@ -284,16 +284,14 @@ def get_test_tasks(db_handler, test_id):
 
 def ut_tests_sessions_live(project_id: int, test_id: int, page: int, limit: int):
     body = {
-        "filter": [
-            {
+        "filter": {
+            "uxtId": {
                 "values": [
                     test_id
                 ],
-                "type": "uxtId",
-                "operator": "is",
-                "filters": []
-            }
-        ],
+                "operator": "is"
+            },
+        },
         "pagination": {"limit": limit, "page": page},
     }
 
