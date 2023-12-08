@@ -138,6 +138,13 @@ const config: Configuration = {
     hot: true,
     compress: true,
     allowedHosts: "all",
+      client: {
+        overlay: {
+          errors: true,
+          warnings: false,
+          runtimeErrors: false,
+        }
+      },
   },
 };
 

@@ -18,7 +18,11 @@ function Notifications() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      void notificationStore.fetchNotificationsCount();
+      try {
+        void notificationStore.fetchNotificationsCount();
+      } catch (e) {
+        console.error(e);
+      }
     }, AUTOREFRESH_INTERVAL);
 
     return () => clearInterval(interval);
