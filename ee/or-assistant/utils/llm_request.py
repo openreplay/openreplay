@@ -97,7 +97,7 @@ class Completion:
         self.response_keys = ['id', 'object', 'created', 'model', 'choices', 'usage']
         self.max_tokens = 16384
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
-        self.message_history_alive: dict[int, List] = dict()
+        self.message_history_alive: dict[str, List] = dict()
         # 'id': {model}-{id}
         # 'object': method (text-completion)
         # 'created': timestamp
@@ -110,7 +110,7 @@ class Completion:
         #       finish_reason
         # 'usage'
 
-    def update_message_history(self, message: str, key_id: int, role: str = 'user', raw: bool = False):
+    def update_message_history(self, message: str, key_id: str, role: str = 'user', raw: bool = False):
         if key_id not in self.message_history_alive.keys():
             self.message_history_alive[key_id] = list()
         message_history = self.message_history_alive[key_id]
@@ -137,11 +137,11 @@ class Completion:
             })
 
 
-    def reset_message_history(self, key_id: int):
+    def reset_message_history(self, key_id: str):
         del self.message_history_alive[key_id]
 
 
-    def process_large_input(self, long_prompt: List[dict], key_id: int, filter_response: bool = True, context: str = '', raw: bool = True):
+    def process_large_input(self, long_prompt: List[dict], key_id: str, filter_response: bool = True, context: str = '', raw: bool = True):
         splited_prompt = self.split_long_event_list(long_prompt)
         phrase = ''
         valid = False
@@ -164,7 +164,7 @@ class Completion:
                     continue
         self.reset_message_history(key_id=key_id)
 
-    def send_stream_request(self, message: str, key_id: int, filter_response: bool = True, context: str = ''):
+    def send_stream_request(self, message: str, key_id: str, filter_response: bool = True, context: str = ''):
         self.update_message_history(message, key_id=key_id, raw=False)
         message_history = self.message_history_alive[key_id]
         response = openai.ChatCompletion.create(
