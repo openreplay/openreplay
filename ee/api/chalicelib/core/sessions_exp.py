@@ -1345,10 +1345,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if _p not in _value_conditions_not:
                         _value_conditions_not.append(_p)
                         value_conditions_not.append(p)
-                value_conditions_not = [f"sub.{c}" for c in __events_where_basic] + value_conditions_not
+
                 sub_join = f"""LEFT ANTI JOIN ( SELECT DISTINCT sub.session_id
                                     FROM {MAIN_EVENTS_TABLE} AS sub
-                                    WHERE {' AND '.join([c for c in value_conditions_not])}) AS sub USING(session_id)"""
+                                    WHERE {' AND '.join(__events_where_basic)}
+                                        AND ({' OR '.join([c for c in value_conditions_not])})) AS sub USING(session_id)"""
                 del _value_conditions_not
                 del value_conditions_not
 
@@ -1384,21 +1385,21 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 _value_conditions_not = []
                 value_conditions_not = []
                 for c in events_conditions_not:
-                    p = f"{c['type']} AND not({c['condition']})".replace("sub.", "main.")
+                    p = f"{c['type']} AND {c['condition']}".replace("sub.", "main.")
                     _p = p % full_args
                     if _p not in _value_conditions_not:
                         _value_conditions_not.append(_p)
                         value_conditions_not.append(p)
                 del _value_conditions_not
                 sequence_conditions += value_conditions_not
-
-            if has_values:
-                events_conditions = [c for c in list(set(sequence_conditions))]
-                # events_conditions_where.append(f"({' OR '.join(events_conditions)})")
                 events_extra_join += f"""LEFT ANTI JOIN ( SELECT DISTINCT session_id
                                         FROM {MAIN_EVENTS_TABLE} AS main
                                         WHERE {' AND '.join(__events_where_basic)}
-                                            AND ({' OR '.join(events_conditions)})) AS sub USING(session_id)"""
+                                            AND ({' OR '.join(value_conditions_not)})) AS sub USING(session_id)"""
+
+            if has_values:
+                events_conditions = [c for c in list(set(sequence_conditions))]
+                events_conditions_where.append(f"({' OR '.join(events_conditions)})")
 
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
