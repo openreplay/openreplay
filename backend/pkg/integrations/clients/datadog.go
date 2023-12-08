@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"bytes"
@@ -71,7 +71,7 @@ func (d *datadog) makeRequest(nextLogId *string, fromTs uint64, toTs uint64) (*h
 }
 
 func (d *datadog) Request(c *client) error {
-	fromTs := c.getLastMessageTimestamp() + 1 // From next millisecond
+	fromTs := c.requestData.GetLastMessageTimestamp() + 1 // From next millisecond
 	toTs := uint64(time.Now().UnixMilli())
 	var nextLogId *string
 	for {
@@ -111,7 +111,7 @@ func (d *datadog) Request(c *client) error {
 				continue
 			}
 			timestamp := uint64(parsedTime.UnixMilli())
-			c.setLastMessageTimestamp(timestamp)
+			c.requestData.SetLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				Token: token,

@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"bytes"
@@ -34,8 +34,6 @@ func (es *elasticsearch) Request(c *client) error {
 		Addresses: []string{
 			address,
 		},
-		//Username: es.ApiKeyId,
-		//Password: es.ApiKey,
 		APIKey: apiKey,
 	}
 	esC, err := elasticlib.NewClient(cfg)
@@ -46,7 +44,7 @@ func (es *elasticsearch) Request(c *client) error {
 		return err
 	}
 
-	gteTs := c.getLastMessageTimestamp() + 1000 // Sec or millisec to add ?
+	gteTs := c.requestData.GetLastMessageTimestamp() + 1000
 	log.Printf("gteTs: %v ", gteTs)
 	var buf bytes.Buffer
 	query := map[string]interface{}{
@@ -164,7 +162,7 @@ func (es *elasticsearch) Request(c *client) error {
 				continue
 			}
 			timestamp := uint64(esLog.Time.UnixMilli())
-			c.setLastMessageTimestamp(timestamp)
+			c.requestData.SetLastMessageTimestamp(timestamp)
 
 			var sessionID uint64
 			sessionID, err = strconv.ParseUint(token, 10, 64)

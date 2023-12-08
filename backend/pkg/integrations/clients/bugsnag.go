@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"encoding/json"
@@ -34,8 +34,9 @@ type bugsnagEvent struct {
 	}
 }
 
+// need result chan and lastMessageTs
 func (b *bugsnag) Request(c *client) error {
-	sinceTs := c.getLastMessageTimestamp() + 1000 // From next second
+	sinceTs := c.requestData.GetLastMessageTimestamp() + 1000 // From next second
 	sinceFormatted := time.UnixMilli(int64(sinceTs)).Format(time.RFC3339)
 	requestURL := fmt.Sprintf("https://api.bugsnag.com/projects/%v/events", b.BugsnagProjectId)
 	req, err := http.NewRequest("GET", requestURL, nil)
@@ -93,7 +94,7 @@ func (b *bugsnag) Request(c *client) error {
 				continue
 			}
 			timestamp := uint64(parsedTime.UnixMilli())
-			c.setLastMessageTimestamp(timestamp)
+			c.requestData.SetLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
 				SessionID: sessionID,
 				Token:     token,
