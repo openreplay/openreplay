@@ -77,8 +77,8 @@ const isValidSession = function (sessionInfo, filters) {
                         }
                     } else if (skey.toLowerCase() === key.toLowerCase()) {
                         for (let v of body["values"]) {
-                            if (body.operator === "is" && String(svalue).toLowerCase() === v.toLowerCase()
-                                || body.operator !== "is" && String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                            if (body.operator === "is" && v && String(svalue).toLowerCase() === String(v).toLowerCase()
+                                || body.operator !== "is" && String(svalue).toLowerCase().indexOf(String(v).toLowerCase()) >= 0) {
                                 found = true;
                                 break;
                             }
