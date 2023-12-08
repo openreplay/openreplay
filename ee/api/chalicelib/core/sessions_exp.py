@@ -1397,9 +1397,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                         WHERE {' AND '.join(__events_where_basic)}
                                             AND ({' OR '.join(value_conditions_not)})) AS sub USING(session_id)"""
 
-            if has_values:
-                events_conditions = [c for c in list(set(sequence_conditions))]
-                events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+            # if has_values:
+            #     events_conditions = [c for c in list(set(sequence_conditions))]
+            #     events_conditions_where.append(f"({' OR '.join(events_conditions)})")
 
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
