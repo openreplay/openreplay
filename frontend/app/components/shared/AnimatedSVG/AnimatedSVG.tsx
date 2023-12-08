@@ -27,6 +27,7 @@ export enum ICONS {
     NO_PROJECTS = 'ca-no-projects',
     NO_FFLAGS = 'no-fflags',
     PROCESSING = 'ca-processing',
+    NO_UXT = 'ca-no-uxt',
 }
 
 const ICONS_SVGS = {
@@ -56,6 +57,7 @@ const ICONS_SVGS = {
     [ICONS.NO_PROJECTS]: require('../../../svg/ca-no-projects.svg').default,
     [ICONS.NO_FFLAGS]: require('../../../svg/no-fflags.svg').default,
     [ICONS.PROCESSING]: require('../../../svg/ca-processing.svg').default,
+    [ICONS.NO_UXT]: require('../../../svg/empty-uxt-list.svg').default,
 };
 
 interface Props {
