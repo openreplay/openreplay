@@ -2,7 +2,7 @@ version: '3'
 
 services:
   postgresql:
-    image: bitnami/postgresql:14.5.0
+    image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -12,7 +12,7 @@ services:
       POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
 
   redis:
-    image: bitnami/redis:6.0.12-debian-10-r33
+    image: bitnami/redis:${REDIS_VERSION}
     container_name: redis
     volumes:
       - redisdata:/var/lib/postgresql/data
@@ -22,7 +22,7 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
 
   minio:
-    image: bitnami/minio:2023.2.10-debian-11-r1
+    image: bitnami/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
       - miniodata:/bitnami/minio/data
