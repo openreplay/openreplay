@@ -15,31 +15,27 @@ temp_env_file=$(mktemp)
 
 # Function to merge environment variables from original to new env file
 function merge_envs() {
-    local content=""
     while IFS='=' read -r key value; do
+        # Skip the line if the key is COMMON_VERSION
         case "$key" in
         COMMON_VERSION)
-            # Capture the original version for later use
             original_version=$(echo "$value" | xargs)
+            continue
             ;;
         COMMON_PG_PASSWORD)
-            # Store PostgreSQL password for later use
             pgpassword=$value
             ;;
         POSTGRES_VERSION | REDIS_VERSION | MINIO_VERSION)
-            # Ignore certain variables
-            ;;
-        *)
-            # Add other variables to content
-            content+="${key}=${value}\n"
+            # Don't update db versions automatically.
+            continue
             ;;
         esac
-    done <"$original_env_file"
 
-    # Remove existing entries from new env file and add updated content
-    grep -vFf <(printf "%s" "$content" | cut -d'=' -f1) "$new_env_file" >"$temp_env_file"
-    printf "%b" "$content" >>"$temp_env_file"
-    mv "$temp_env_file" "$new_env_file"
+        # Remove any existing entry from the new env file and add the new value
+        grep -v "^$key=" "$new_env_file" >"$temp_env_file"
+        mv "$temp_env_file" "$new_env_file"
+        echo "$key=$value" >>"$new_env_file"
+    done <"$original_env_file"
 }
 
 # Function to normalize version numbers for comparison
