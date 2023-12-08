@@ -9,7 +9,6 @@ from chalicelib.utils.helper import dict_to_camel_case, list_to_camel_case
 
 from chalicelib.core import sessions, assist
 
-
 table_name = "ut_tests"
 
 
@@ -285,9 +284,16 @@ def get_test_tasks(db_handler, test_id):
 
 def ut_tests_sessions_live(project_id: int, test_id: int, page: int, limit: int):
     body = {
-        "filter": {
-            "uxtId": test_id,
-        },
+        "filters": [
+            {
+                "value": [
+                    test_id
+                ],
+                "type": "uxtId",
+                "operator": "is",
+                "filters": []
+            }
+        ],
         "pagination": {"limit": limit, "page": page},
     }
 
