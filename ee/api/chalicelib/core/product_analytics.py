@@ -139,9 +139,12 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             continue
         if ef.type in data.metric_value:
             f_k = f"exclude_{i}"
+            ef.value = helper.values_for_operator(value=ef.value, op=ef.operator)
+            op = sh.get_sql_operator(ef.operator)
+            op = sh.reverse_sql_operator(op)
             extra_values = {**extra_values, **sh.multi_values(ef.value, value_key=f_k)}
             exclusions[ef.type] = [
-                sh.multi_conditions(f'{JOURNEY_TYPES[ef.type]["column"]} != %({f_k})s', ef.value, is_not=True,
+                sh.multi_conditions(f'{JOURNEY_TYPES[ef.type]["column"]} {op} %({f_k})s', ef.value, is_not=True,
                                     value_key=f_k)]
 
     sessions_conditions = []
