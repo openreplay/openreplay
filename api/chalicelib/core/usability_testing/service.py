@@ -3,12 +3,12 @@ import logging
 from fastapi import HTTPException, status
 
 from chalicelib.core.db_request_handler import DatabaseRequestHandler
-from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate, UTTestStatusUpdate
-from chalicelib.utils import pg_client
+from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import dict_to_camel_case, list_to_camel_case
 
-from chalicelib.core import sessions, metadata
+from chalicelib.core import sessions, assist
+
 
 table_name = "ut_tests"
 
@@ -142,8 +142,8 @@ def get_ut_test(project_id: int, test_id: int):
         "ut.guidelines",
         "ut.visibility",
         "json_build_object('id', u.user_id, 'name', u.name) AS created_by",
-        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.status in %(response_statuses)s AND uts.comment is NOT NULL), 0) AS responses_count",
-        f"({live_count_sql}) AS live_count",
+        "COALESCE((SELECT COUNT(*) FROM ut_tests_signals uts WHERE uts.test_id = ut.test_id AND uts.task_id IS NOT NULL AND uts.status in %(response_statuses)s AND uts.comment is NOT NULL), 0) AS responses_count"
+        # f"({live_count_sql}) AS live_count",
     ]
     db_handler.add_param("response_statuses", ('done', 'skipped'))
     db_handler.set_select_columns(select_columns + [f"({tasks_sql}) AS tasks"])
@@ -156,6 +156,13 @@ def get_ut_test(project_id: int, test_id: int):
 
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
+
+    try:
+        live_sessions = assist.get_live_sessions_ws_test_id(project_id, test_id)
+        row['live_count'] = live_sessions['total']
+    except Exception as e:
+        logging.error(f"Failed to get live sessions count: {e}")
+        row['live_count'] = 0
 
     row['created_at'] = TimeUTC.datetime_to_timestamp(row['created_at'])
     row['updated_at'] = TimeUTC.datetime_to_timestamp(row['updated_at'])
@@ -274,6 +281,17 @@ def get_test_tasks(db_handler, test_id):
     db_handler.add_constraint("test_id = %(test_id)s", {'test_id': test_id})
 
     return db_handler.fetchall()
+
+
+def ut_tests_sessions_live(project_id: int, test_id: int, page: int, limit: int):
+    body = {
+        "filter": {
+            "uxtId": test_id,
+        },
+        "pagination": {"limit": limit, "page": page},
+    }
+
+    return assist.__get_live_sessions_ws(project_id, body)
 
 
 def ut_tests_sessions(project_id: int, test_id: int, page: int, limit: int, user_id: int = None, live: bool = False):

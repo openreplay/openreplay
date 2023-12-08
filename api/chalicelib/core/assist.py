@@ -35,6 +35,15 @@ def get_live_sessions_ws_user_id(project_id, user_id):
     return __get_live_sessions_ws(project_id=project_id, data=data)
 
 
+def get_live_sessions_ws_test_id(project_id, test_id):
+    data = {
+        "filter":  {
+            'testId': test_id,
+        }
+    }
+    return __get_live_sessions_ws(project_id=project_id, data=data)
+
+
 def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
     data = {
         "filter": {},

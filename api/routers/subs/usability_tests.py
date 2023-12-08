@@ -87,7 +87,10 @@ async def get_sessions(projectId: int, test_id: int, page: int = 1, limit: int =
     - **test_id**: The unique identifier of the UT test.
     """
 
-    return service.ut_tests_sessions(projectId, test_id, page, limit, user_id, live)
+    if live:
+        return service.ut_tests_sessions_live(projectId, test_id, page, limit)
+    else:
+        return service.ut_tests_sessions(projectId, test_id, page, limit, user_id, live)
 
 
 @app.get('/{projectId}/usability-tests/{test_id}/responses/{task_id}', tags=tags)
