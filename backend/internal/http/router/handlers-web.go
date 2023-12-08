@@ -71,7 +71,10 @@ func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint
 		return
 	}
 	if c.Check(v) {
-		return uint64(startTimeMili)
+		ts = uint64(startTimeMili)
+		if req.BufferDiff > 0 && req.BufferDiff < 3*60*1000 {
+			ts -= req.BufferDiff
+		}
 	}
 	return
 }
@@ -156,55 +159,57 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			ExpTime: expTime.UnixMilli(),
 		}
 
-		sessionStart := &SessionStart{
-			Timestamp:            getSessionTimestamp(req, startTimeMili),
-			ProjectID:            uint64(p.ProjectID),
-			TrackerVersion:       req.TrackerVersion,
-			RevID:                req.RevID,
-			UserUUID:             userUUID,
-			UserAgent:            r.Header.Get("User-Agent"),
-			UserOS:               ua.OS,
-			UserOSVersion:        ua.OSVersion,
-			UserBrowser:          ua.Browser,
-			UserBrowserVersion:   ua.BrowserVersion,
-			UserDevice:           ua.Device,
-			UserDeviceType:       ua.DeviceType,
-			UserCountry:          geoInfo.Pack(),
-			UserDeviceMemorySize: req.DeviceMemory,
-			UserDeviceHeapSize:   req.JsHeapSizeLimit,
-			UserID:               req.UserID,
-		}
+		if !req.DoNotRecord {
+			sessionStart := &SessionStart{
+				Timestamp:            getSessionTimestamp(req, startTimeMili),
+				ProjectID:            uint64(p.ProjectID),
+				TrackerVersion:       req.TrackerVersion,
+				RevID:                req.RevID,
+				UserUUID:             userUUID,
+				UserAgent:            r.Header.Get("User-Agent"),
+				UserOS:               ua.OS,
+				UserOSVersion:        ua.OSVersion,
+				UserBrowser:          ua.Browser,
+				UserBrowserVersion:   ua.BrowserVersion,
+				UserDevice:           ua.Device,
+				UserDeviceType:       ua.DeviceType,
+				UserCountry:          geoInfo.Pack(),
+				UserDeviceMemorySize: req.DeviceMemory,
+				UserDeviceHeapSize:   req.JsHeapSizeLimit,
+				UserID:               req.UserID,
+			}
 
-		// Save sessionStart to db
-		if err := e.services.Sessions.Add(&sessions.Session{
-			SessionID:            sessionID,
-			Platform:             "web",
-			Timestamp:            sessionStart.Timestamp,
-			Timezone:             req.Timezone,
-			ProjectID:            uint32(sessionStart.ProjectID),
-			TrackerVersion:       sessionStart.TrackerVersion,
-			RevID:                sessionStart.RevID,
-			UserUUID:             sessionStart.UserUUID,
-			UserOS:               sessionStart.UserOS,
-			UserOSVersion:        sessionStart.UserOSVersion,
-			UserDevice:           sessionStart.UserDevice,
-			UserCountry:          geoInfo.Country,
-			UserState:            geoInfo.State,
-			UserCity:             geoInfo.City,
-			UserAgent:            sessionStart.UserAgent,
-			UserBrowser:          sessionStart.UserBrowser,
-			UserBrowserVersion:   sessionStart.UserBrowserVersion,
-			UserDeviceType:       sessionStart.UserDeviceType,
-			UserDeviceMemorySize: sessionStart.UserDeviceMemorySize,
-			UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
-			UserID:               &sessionStart.UserID,
-		}); err != nil {
-			log.Printf("can't insert session start: %s", err)
-		}
+			// Save sessionStart to db
+			if err := e.services.Sessions.Add(&sessions.Session{
+				SessionID:            sessionID,
+				Platform:             "web",
+				Timestamp:            sessionStart.Timestamp,
+				Timezone:             req.Timezone,
+				ProjectID:            uint32(sessionStart.ProjectID),
+				TrackerVersion:       sessionStart.TrackerVersion,
+				RevID:                sessionStart.RevID,
+				UserUUID:             sessionStart.UserUUID,
+				UserOS:               sessionStart.UserOS,
+				UserOSVersion:        sessionStart.UserOSVersion,
+				UserDevice:           sessionStart.UserDevice,
+				UserCountry:          geoInfo.Country,
+				UserState:            geoInfo.State,
+				UserCity:             geoInfo.City,
+				UserAgent:            sessionStart.UserAgent,
+				UserBrowser:          sessionStart.UserBrowser,
+				UserBrowserVersion:   sessionStart.UserBrowserVersion,
+				UserDeviceType:       sessionStart.UserDeviceType,
+				UserDeviceMemorySize: sessionStart.UserDeviceMemorySize,
+				UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
+				UserID:               &sessionStart.UserID,
+			}); err != nil {
+				log.Printf("can't insert session start: %s", err)
+			}
 
-		// Send sessionStart message to kafka
-		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
-			log.Printf("can't send session start: %s", err)
+			// Send sessionStart message to kafka
+			if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
+				log.Printf("can't send session start: %s", err)
+			}
 		}
 	}
 
