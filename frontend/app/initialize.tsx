@@ -20,7 +20,6 @@ const customTheme: ThemeConfig = {
   // algorithm: theme.compactAlgorithm,
   components: {
     Layout: {
-      bodyBg: colors['gray-lightest'],
       headerBg: colors['gray-lightest'],
       siderBg: colors['gray-lightest']
     },
@@ -51,7 +50,6 @@ const customTheme: ThemeConfig = {
     }
   },
   token: {
-    colorBgBase: colors['gray-lightest'],
     colorPrimary: colors.teal,
     colorPrimaryActive: '#394EFF',
     colorBgLayout: colors['gray-lightest'],
