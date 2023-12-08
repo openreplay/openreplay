@@ -1333,8 +1333,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             if len(events_conditions) > 0:
                 events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
             del type_conditions
-            if len(value_conditions) > 0:
-                events_conditions_where.append(f"({' OR '.join([c for c in value_conditions])})")
+            # if len(value_conditions) > 0:
+            #     events_conditions_where.append(f"({' OR '.join([c for c in value_conditions])})")
             del value_conditions
             if len(events_conditions_not) > 0:
                 _value_conditions_not = []
