@@ -173,6 +173,7 @@ services:
 
   imagestorage-openreplay:
     image: public.ecr.aws/p1t3u8a3/imagestorage:v1.16.0
+    container_name: imagestorage
     env_file:
       - imagestorage.env
     networks:
@@ -208,6 +209,7 @@ services:
 
   videostorage-openreplay:
     image: public.ecr.aws/p1t3u8a3/videostorage:v1.16.0
+    container_name: videostorage
     networks:
       - opereplay-net
     env_file:
