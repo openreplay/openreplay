@@ -36,6 +36,7 @@ export default class QueueSender {
   }
 
   push(batch: Uint8Array): void {
+    console.log('sender push batch')
     if (this.busy || !this.token) {
       this.queue.push(batch)
     } else {

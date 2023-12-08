@@ -118,85 +118,119 @@ export default class API {
       (navigator.doNotTrack == '1' ||
         // @ts-ignore
         window.doNotTrack == '1')
-    const app = (this.app =
-      doNotTrack ||
-      !('Map' in window) ||
-      !('Set' in window) ||
-      !('MutationObserver' in window) ||
-      !('performance' in window) ||
-      !('timing' in performance) ||
-      !('startsWith' in String.prototype) ||
-      !('Blob' in window) ||
-      !('Worker' in window)
-        ? null
-        : new App(options.projectKey, options.sessionToken, options))
-    if (app !== null) {
-      Viewport(app)
-      CSSRules(app)
-      ConstructedStyleSheets(app)
-      Connection(app)
-      Console(app, options)
-      Exception(app, options)
-      Img(app)
-      Input(app, options)
-      Mouse(app, options.mouse)
-      Timing(app, options)
-      Performance(app, options)
-      Scroll(app)
-      Focus(app)
-      Fonts(app)
-      Network(app, options.network)
-      Selection(app)
-      Tabs(app)
-      this.featureFlags = new FeatureFlags(app)
-      ;(window as any).__OPENREPLAY__ = this
+    const failReason: string[] = []
+    const conditions: string[] = [
+      'Map',
+      'Set',
+      'MutationObserver',
+      'performance',
+      'timing',
+      'startsWith',
+      'Blob',
+      'Worker',
+    ]
 
-      app.attachStartCallback(() => {
-        if (options.flags?.onFlagsLoad) {
-          this.onFlagsLoad(options.flags.onFlagsLoad)
-        }
-        void this.featureFlags.reloadFlags()
-      })
-      const wOpen = window.open
-      if (options.autoResetOnWindowOpen || options.resetTabOnWindowOpen) {
-        app.attachStartCallback(() => {
-          const tabId = app.getTabId()
-          const sessStorage = app.sessionStorage ?? window.sessionStorage
-          // @ts-ignore ?
-          window.open = function (...args) {
-            if (options.autoResetOnWindowOpen) {
-              app.resetNextPageSession(true)
-            }
-            if (options.resetTabOnWindowOpen) {
-              sessStorage.removeItem(options.session_tabid_key || '__openreplay_tabid')
-            }
-            wOpen.call(window, ...args)
-            app.resetNextPageSession(false)
-            sessStorage.setItem(options.session_tabid_key || '__openreplay_tabid', tabId)
-          }
-        })
-        app.attachStopCallback(() => {
-          window.open = wOpen
-        })
-      }
+    if (doNotTrack) {
+      failReason.push('doNotTrack')
     } else {
-      console.log(
-        "OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.",
-      )
-      const req = new XMLHttpRequest()
-      const orig = options.ingestPoint || DEFAULT_INGEST_POINT
-      req.open('POST', orig + '/v1/web/not-started')
-      // no-cors issue only with text/plain or not-set Content-Type
-      // req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-      req.send(
-        JSON.stringify({
-          trackerVersion: 'TRACKER_VERSION',
-          projectKey: options.projectKey,
-          doNotTrack,
-          // TODO: add precise reason (an exact API missing)
-        }),
-      )
+      for (const condition of conditions) {
+        if (condition === 'timing') {
+          if ('performance' in window && !(condition in performance)) {
+            failReason.push(condition)
+            break
+          }
+        } else if (condition === 'startsWith') {
+          if (!(condition in String.prototype)) {
+            failReason.push(condition)
+            break
+          }
+        } else {
+          if (!(condition in window)) {
+            failReason.push(condition)
+            break
+          }
+        }
+      }
     }
+    if (failReason.length > 0) {
+      const missingApi = failReason.join(',')
+      console.log(
+        `OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1. Reason: ${missingApi}`,
+      )
+      this.signalStartIssue('missing_api', failReason)
+      return
+    }
+
+    const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
+    this.app = app
+    Viewport(app)
+    CSSRules(app)
+    ConstructedStyleSheets(app)
+    Connection(app)
+    Console(app, options)
+    Exception(app, options)
+    Img(app)
+    Input(app, options)
+    Mouse(app, options.mouse)
+    Timing(app, options)
+    Performance(app, options)
+    Scroll(app)
+    Focus(app)
+    Fonts(app)
+    Network(app, options.network)
+    Selection(app)
+    Tabs(app)
+    this.featureFlags = new FeatureFlags(app)
+    ;(window as any).__OPENREPLAY__ = this
+
+    app.attachStartCallback(() => {
+      if (options.flags?.onFlagsLoad) {
+        this.onFlagsLoad(options.flags.onFlagsLoad)
+      }
+      void this.featureFlags.reloadFlags()
+    })
+    const wOpen = window.open
+    if (options.autoResetOnWindowOpen || options.resetTabOnWindowOpen) {
+      app.attachStartCallback(() => {
+        const tabId = app.getTabId()
+        const sessStorage = app.sessionStorage ?? window.sessionStorage
+        // @ts-ignore ?
+        window.open = function (...args) {
+          if (options.autoResetOnWindowOpen) {
+            app.resetNextPageSession(true)
+          }
+          if (options.resetTabOnWindowOpen) {
+            sessStorage.removeItem(options.session_tabid_key || '__openreplay_tabid')
+          }
+          wOpen.call(window, ...args)
+          app.resetNextPageSession(false)
+          sessStorage.setItem(options.session_tabid_key || '__openreplay_tabid', tabId)
+        }
+      })
+      app.attachStopCallback(() => {
+        window.open = wOpen
+      })
+    }
+  }
+
+  signalStartIssue(reason: string, missingApi: string[]) {
+    const doNotTrack =
+      this.options.respectDoNotTrack &&
+      (navigator.doNotTrack == '1' ||
+        // @ts-ignore
+        window.doNotTrack == '1')
+    const req = new XMLHttpRequest()
+    const orig = this.options.ingestPoint || DEFAULT_INGEST_POINT
+    req.open('POST', orig + '/v1/web/not-started')
+    req.send(
+      JSON.stringify({
+        trackerVersion: 'TRACKER_VERSION',
+        projectKey: this.options.projectKey,
+        doNotTrack,
+        reason,
+        missingApi,
+      }),
+    )
   }
 
   isFlagEnabled(flagName: string): boolean {
@@ -244,8 +278,20 @@ export default class API {
     if (this.app === null) {
       return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
     }
-    // TODO: check argument type
     return this.app.start(startOpts)
+  }
+
+  coldStart(startOpts?: Partial<StartOptions>) {
+    if (!IN_BROWSER) {
+      console.error(
+        `OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
+      )
+      return
+    }
+    if (this.app === null) {
+      return
+    }
+    this.app.coldStart(startOpts)
   }
 
   stop(): string | undefined {

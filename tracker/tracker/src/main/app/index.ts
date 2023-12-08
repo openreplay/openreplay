@@ -89,6 +89,7 @@ enum ActivityState {
   NotActive,
   Starting,
   Active,
+  ColdStart,
 }
 
 type AppOptions = {
@@ -142,6 +143,8 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
+  private readonly hamburger: Array<Message> = []
+  private readonly cheeseburger: Array<Message> = []
   /* private */
   readonly observer: Observer // non-privat for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
@@ -162,7 +165,12 @@ export default class App {
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
 
-  constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
+  constructor(
+    projectKey: string,
+    sessionToken: string | undefined,
+    options: Partial<Options>,
+    private readonly signalError: (error: string, apis: string[]) => void,
+  ) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
@@ -354,9 +362,15 @@ export default class App {
     if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
       return
     }
-    // ====================================================
 
-    this.messages.push(message)
+    // ====================================================
+    if (this.activityState === ActivityState.ColdStart) {
+      this.hamburger.push(message)
+      this.cheeseburger.push(message)
+      return
+    } else {
+      this.messages.push(message)
+    }
     // TODO: commit on start if there were `urgent` sends;
     // Clarify where urgent can be used for;
     // Clarify workflow for each type of message in case it was sent before start
@@ -368,16 +382,32 @@ export default class App {
   }
 
   private commit(): void {
-    if (this.worker !== undefined && this.messages.length) {
-      requestIdleCb(() => {
-        this.messages.unshift(TabData(this.session.getTabId()))
-        this.messages.unshift(Timestamp(this.timestamp()))
-        // why I need to add opt chaining?
-        this.worker?.postMessage(this.messages)
-        this.commitCallbacks.forEach((cb) => cb(this.messages))
-        this.messages.length = 0
-      })
+    if (this.activityState === ActivityState.ColdStart) {
+      this.hamburger.push(Timestamp(this.timestamp()))
+      this.hamburger.push(TabData(this.session.getTabId()))
+      this.cheeseburger.push(Timestamp(this.timestamp()))
+      this.cheeseburger.push(TabData(this.session.getTabId()))
+    } else {
+      console.log('commit', this.messages.length, this.worker !== undefined) // pass 3
+      if (this.worker !== undefined && this.messages.length) {
+        requestIdleCb(() => {
+          this.messages.unshift(TabData(this.session.getTabId()))
+          this.messages.unshift(Timestamp(this.timestamp()))
+          console.log('posted', this.messages.length) // pass 4
+          // why I need to add opt chaining?
+          this.worker?.postMessage(this.messages)
+          this.commitCallbacks.forEach((cb) => cb(this.messages))
+          this.messages.length = 0
+        })
+      }
     }
+  }
+
+  private postToWorker(messages: Array<Message>) {
+    console.log('posted to worker', messages.length) // pass 4
+    this.worker?.postMessage(messages)
+    this.commitCallbacks.forEach((cb) => cb(messages))
+    messages.length = 0
   }
 
   private delay = 0
@@ -551,19 +581,94 @@ export default class App {
     }
   }
 
-  private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
-    if (!this.worker) {
-      return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
-    }
-    if (this.activityState !== ActivityState.NotActive) {
-      return Promise.resolve(
-        UnsuccessfulStart(
-          'OpenReplay: trying to call `start()` on the instance that has been started already.',
-        ),
+  coldInterval: ReturnType<typeof setInterval> | null = null
+  orderNumber = 0
+  coldStartTs = 0
+
+  public coldStart(startOpts: StartOptions = {}) {
+    const second = 1000
+    const cycle = () => {
+      this.orderNumber += 1
+      this.coldStartTs = now()
+      if (this.orderNumber % 2 === 0) {
+        this.hamburger.length = 0
+        this.hamburger.push
+        this.hamburger.push(Timestamp(this.timestamp()))
+        this.hamburger.push(TabData(this.session.getTabId()))
+      } else {
+        this.cheeseburger.length = 0
+        this.cheeseburger.push(Timestamp(this.timestamp()))
+        this.cheeseburger.push(TabData(this.session.getTabId()))
+      }
+      console.log(
+        'tick cold start',
+        this.orderNumber,
+        this.hamburger.length,
+        this.cheeseburger.length,
       )
+      this.stop(false)
+      this.activityState = ActivityState.ColdStart
+      adjustTimeOrigin()
+      if (startOpts.sessionHash) {
+        this.session.applySessionHash(startOpts.sessionHash)
+      }
+      if (startOpts.forceNew) {
+        // Reset session metadata only if requested directly
+        this.session.reset()
+      }
+      this.session.assign({
+        // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+        userID: startOpts.userID,
+        metadata: startOpts.metadata,
+      })
+      const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
+      const needNewSessionID = startOpts.forceNew || lsReset
+      const sessionToken = this.session.getSessionToken()
+      const isNewSession = needNewSessionID || !sessionToken
+      if (!isNewSession) {
+        console.log('continuing session on new tab', this.session.getTabId())
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        this.send(TabChange(this.session.getTabId()))
+      }
+      this.observer.observe()
+      this.ticker.start()
+    }
+    this.coldInterval = setInterval(() => {
+      cycle()
+    }, 30 * second)
+    cycle()
+  }
+
+  private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
+    const isColdStart = this.activityState === ActivityState.ColdStart
+    console.log(
+      'start',
+      isColdStart,
+      this.activityState,
+      this.cheeseburger.length,
+      this.hamburger.length,
+    ) // pass 1
+    if (isColdStart && this.coldInterval) {
+      clearInterval(this.coldInterval)
+    }
+    if (!this.worker) {
+      const reason = 'No worker found: perhaps, CSP is not set.'
+      this.signalError(reason, [])
+      return Promise.resolve(UnsuccessfulStart(reason))
+    }
+    if (
+      this.activityState === ActivityState.Active ||
+      this.activityState === ActivityState.Starting
+    ) {
+      const reason =
+        'OpenReplay: trying to call `start()` on the instance that has been started already.'
+      this.signalError(reason, [])
+      return Promise.resolve(UnsuccessfulStart(reason))
     }
     this.activityState = ActivityState.Starting
-    adjustTimeOrigin()
+    if (!isColdStart) {
+      adjustTimeOrigin()
+    }
 
     if (startOpts.sessionHash) {
       this.session.applySessionHash(startOpts.sessionHash)
@@ -611,6 +716,8 @@ export default class App {
         body: JSON.stringify({
           ...this.getTrackerInfo(),
           timestamp,
+          doNotRecord: false,
+          bufferDiff: timestamp - this.coldStartTs,
           userID: this.session.getInfo().userID,
           token: isNewSession ? undefined : sessionToken,
           deviceMemory,
@@ -633,10 +740,14 @@ export default class App {
       })
       .then((r) => {
         if (!this.worker) {
-          return Promise.reject('no worker found after start request (this might not happen)')
+          const reason = 'no worker found after start request (this might not happen)'
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         if (this.activityState === ActivityState.NotActive) {
-          return Promise.reject('Tracker stopped during authorization')
+          const reason = 'Tracker stopped during authorization'
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         const {
           token,
@@ -665,7 +776,9 @@ export default class App {
           typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
-          return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
+          const reason = `Incorrect server response: ${JSON.stringify(r)}`
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         this.delay = delay
         this.session.setSessionToken(token)
@@ -702,10 +815,36 @@ export default class App {
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
+        const flushBuffer = (buffer: Message[]) => {
+          let ended = false
+          const messagesBatch: Message[] = [buffer.shift() as unknown as Message]
+          while (!ended) {
+            const nextMsg = buffer[0]
+            if (!nextMsg || nextMsg[0] === MType.Timestamp) {
+              ended = true
+            } else {
+              messagesBatch.push(buffer.shift() as unknown as Message)
+            }
+          }
+          this.postToWorker(messagesBatch)
+        }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-        this.observer.observe()
-        this.ticker.start()
+        this.activityState = ActivityState.Active
+        if (isColdStart) {
+          const biggestBurger =
+            this.hamburger.length > this.cheeseburger.length ? this.hamburger : this.cheeseburger
+          while (biggestBurger.length > 0) {
+            flushBuffer(biggestBurger)
+          }
+          this.hamburger.length = 0
+          this.cheeseburger.length = 0
+          console.log('committing cold start stuff') // pass 2
+          this.commit()
+        } else {
+          this.observer.observe()
+          this.ticker.start()
+        }
 
         if (canvasEnabled) {
           this.canvasRecorder =
@@ -713,7 +852,6 @@ export default class App {
             new CanvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
           this.canvasRecorder.startTracking()
         }
-        this.activityState = ActivityState.Active
 
         this.notify.log('OpenReplay tracking started.')
         // get rid of onStart ?
@@ -758,11 +896,13 @@ export default class App {
         this.stop()
         this.session.reset()
         if (reason === CANCELED) {
+          this.signalError(CANCELED, [])
           return UnsuccessfulStart(CANCELED)
         }
 
         this.notify.log('OpenReplay was unable to start. ', reason)
         this._debug('session_start', reason)
+        this.signalError(START_ERROR, [])
         return UnsuccessfulStart(START_ERROR)
       })
   }
@@ -810,6 +950,11 @@ export default class App {
 
   getTabId() {
     return this.session.getTabId()
+  }
+
+  clearBurgers() {
+    this.hamburger.length = 0
+    this.cheeseburger.length = 0
   }
 
   stop(stopWorker = true): void {
