@@ -284,7 +284,7 @@ def get_test_tasks(db_handler, test_id):
 
 def ut_tests_sessions_live(project_id: int, test_id: int, page: int, limit: int):
     body = {
-        "filters": [
+        "filter": [
             {
                 "value": [
                     test_id
