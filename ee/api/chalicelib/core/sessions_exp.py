@@ -808,7 +808,6 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         events_conditions_not = []
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder._or
-        # events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
         for i, event in enumerate(data.events):
             event_type = event.type
             is_any = _isAny_opreator(event.operator)
@@ -839,11 +838,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             #         event_where.append(f"event_{event_index - 1}.datetime <= main.datetime")
             e_k = f"e_value{i}"
             s_k = e_k + "_source"
-            if True or event.type != schemas.PerformanceEventType.time_between_events:
-                event.value = helper.values_for_operator(value=event.value, op=event.operator)
-                full_args = {**full_args,
-                             **_multiple_values(event.value, value_key=e_k),
-                             **_multiple_values(event.source, value_key=s_k)}
+
+            event.value = helper.values_for_operator(value=event.value, op=event.operator)
+            full_args = {**full_args,
+                         **_multiple_values(event.value, value_key=e_k),
+                         **_multiple_values(event.source, value_key=s_k)}
 
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -1374,11 +1373,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             for c in events_conditions:
                 if c['type'] not in type_conditions:
                     type_conditions.append(c['type'])
-
-                sequence_conditions.append(c['type'])
                 if c.get('condition'):
                     has_values = True
-                    sequence_conditions[-1] += " AND " + c["condition"]
+                    sequence_conditions.append(c['type'] + " AND " + c["condition"])
+
             if len(events_conditions) > 0:
                 events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
 
@@ -1398,6 +1396,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             if has_values:
                 events_conditions = [c for c in list(set(sequence_conditions))]
                 events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
                                         MAX(main.datetime) AS last_event_ts
