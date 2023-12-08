@@ -286,7 +286,7 @@ def ut_tests_sessions_live(project_id: int, test_id: int, page: int, limit: int)
     body = {
         "filter": [
             {
-                "value": [
+                "values": [
                     test_id
                 ],
                 "type": "uxtId",
