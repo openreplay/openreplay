@@ -19,7 +19,7 @@ apscheduler==3.10.4
 uvicorn==0.23.2
 
 # Observability modules
-traceloop-sdk==0.0.37
+traceloop-sdk==0.5.1
 
 # Test
 pytest==7.4.2
