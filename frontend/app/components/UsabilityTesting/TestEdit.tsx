@@ -417,6 +417,8 @@ export function Step({
   description: string | null;
   hover?: boolean;
 }) {
+  const safeTitle = title.length > 120 ? title.slice(0, 120) + '...' : title;
+  const safeDescription = description && description?.length > 300 ? description.slice(0, 300) + '...' : description;
   return (
     <div
       className={`p-4 rounded border ${
@@ -428,8 +430,8 @@ export function Step({
       </div>
 
       <div>
-        <Typography.Text>{title}</Typography.Text>
-        <div className={'text-disabled-text'}>{description}</div>
+        <Typography.Text>{safeTitle}</Typography.Text>
+        <div className={'text-disabled-text'}>{safeDescription}</div>
       </div>
 
       <div className={'ml-auto'} />
