@@ -1296,7 +1296,6 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # limit THEN-events to 7 in CH because sequenceMatch cannot take more arguments
             if event_index == 7 and data.events_order == schemas.SearchEventOrder._then:
                 break
-
         if event_index < 2:
             data.events_order = schemas.SearchEventOrder._or
         if len(events_extra_join) > 0:
@@ -1395,7 +1394,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
             if has_values:
                 events_conditions = [c for c in list(set(sequence_conditions))]
-                events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+                # events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+                events_extra_join += f"""LEFT ANTI JOIN ( SELECT DISTINCT session_id
+                                        FROM {MAIN_EVENTS_TABLE} AS main
+                                        WHERE {' AND '.join(__events_where_basic)}
+                                            AND ({' OR '.join(events_conditions)})) AS sub USING(session_id)"""
 
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
