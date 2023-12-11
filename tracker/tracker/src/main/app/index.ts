@@ -737,13 +737,18 @@ export default class App {
           }
         }
 
-        if (uxtId && !this.uxtManager.isActive) {
-          // eslint-disable-next-line
-          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
-            if (id) {
-              this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
-            }
-          })
+        if (uxtId) {
+          if (!this.uxtManager.isActive) {
+            // eslint-disable-next-line
+            this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
+              if (id) {
+                this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
+              }
+            })
+          } else {
+            // @ts-ignore
+            this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
+          }
         }
 
         return SuccessfulStart(onStartInfo)

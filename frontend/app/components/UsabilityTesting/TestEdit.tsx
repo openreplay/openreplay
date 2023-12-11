@@ -51,7 +51,7 @@ function TestEdit() {
   usePageTitle(`Usability Tests | ${uxtestingStore.instance ? 'Edit' : 'Create'}`);
 
   React.useEffect(() => {
-    if (siteId !== uxtestingStore.instanceCreationSiteId) {
+    if (uxtestingStore.instanceCreationSiteId && siteId !== uxtestingStore.instanceCreationSiteId) {
       history.push(withSiteId(usabilityTesting(), siteId));
     }
   }, [siteId]);
