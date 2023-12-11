@@ -59,7 +59,7 @@ func (u *uxTestingImpl) GetInfo(testID string) (*UXTestInfo, error) {
 			ut_tests
 				JOIN
 			ut_tests_tasks ON ut_tests.test_id = ut_tests_tasks.test_id
-		WHERE ut_tests.test_id = $1
+		WHERE ut_tests.test_id = $1 AND ut_tests.status IN ('preview', 'in-progress')
 		GROUP BY
 			ut_tests.test_id;
 	`, testID).Scan(&info.ProjectID, &info.Title, &description, &startingPath, &info.Status, &info.ReqMic, &info.ReqCamera,
