@@ -116,10 +116,13 @@ export default class UxtestingStore {
     }
   };
 
-  updateTest = async (test: UxTestInst) => {
+  updateTest = async (test: UxTestInst, isPreview?: boolean) => {
     if (!this.instance) return;
     this.setLoading(true);
     try {
+      if (!isPreview) {
+        this.instance.setProperty('status', 'in-progress');
+      }
       await this.client.updateTest(this.instance.testId!, test);
       return test.testId;
     } catch (e) {

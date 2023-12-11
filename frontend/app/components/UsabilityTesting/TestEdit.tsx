@@ -74,7 +74,7 @@ function TestEdit() {
   const onSave = (isPreview?: boolean) => {
     setHasChanged(false);
     if (testId && testId !== 'new') {
-      uxtestingStore.updateTest(uxtestingStore.instance!).then((testId) => {
+      uxtestingStore.updateTest(uxtestingStore.instance!, isPreview).then((testId) => {
         if (isPreview) {
           window.open(`${uxtestingStore.instance!.startingPath}?oruxt=${testId}`, '_blank', 'noopener,noreferrer');
         } else {
@@ -428,17 +428,19 @@ export function Step({
         hover ? 'bg-white hover:' : ''
       }bg-active-blue flex items-start gap-2`}
     >
-      <div className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
+      <div style={{ minWidth: '1.5rem' }} className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
         {ind + 1}
       </div>
 
-      <div>
+      <div className={'overflow-hidden overflow-ellipsis'}>
         <Typography.Text>{safeTitle}</Typography.Text>
         <div className={'text-disabled-text'}>{safeDescription}</div>
       </div>
 
       <div className={'ml-auto'} />
+      <div className={'flex items-center gap-2'} style={{ minWidth: '4rem' }}>
       {buttons}
+      </div>
     </div>
   );
 }

@@ -21,7 +21,7 @@ function StepsModal({
     onAdd({
       title: title,
       description: description || '',
-      allowTyping: isAnswerEnabled,
+      allowTyping: Boolean(isAnswerEnabled),
     });
     onHide();
   };
