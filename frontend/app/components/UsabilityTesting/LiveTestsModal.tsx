@@ -4,7 +4,7 @@ import { numberWithCommas } from 'App/utils';
 import { Input } from 'antd';
 import ReloadButton from 'Shared/ReloadButton';
 import SessionItem from 'Shared/SessionItem';
-import { Pagination } from 'UI';
+import { Loader, Pagination } from 'UI';
 import { observer } from 'mobx-react-lite';
 
 function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: () => void }) {
@@ -38,28 +38,31 @@ function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: ()
           onSearch={() => refreshData(page)}
         />
       </div>
-      {uxtestingStore.testAssistSessions.list.map((s: any) => (
-        <SessionItem onClick={closeModal} key={s.sessionId} session={s} live />
-      ))}
-      <div className={'flex items-center justify-between'}>
-        <div>
-          Showing{' '}
-          <span className="font-medium">{(uxtestingStore.testSessions.page - 1) * 10 + 1}</span> to{' '}
-          <span className="font-medium">
-            {(uxtestingStore.page - 1) * 10 + uxtestingStore.testSessions.list.length}
-          </span>{' '}
-          of{' '}
-          <span className="font-medium">{numberWithCommas(uxtestingStore.testSessions.total)}</span>{' '}
-          ongoing tests.
+      <Loader loading={isLoading}>
+        {uxtestingStore.testAssistSessions.list.map((s: any) => (
+          <SessionItem onClick={closeModal} key={s.sessionId} session={s} live />
+        ))}
+        <div className={'flex items-center justify-between'}>
+          <div>
+            Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to{' '}
+            <span className="font-medium">
+              {(page - 1) * 10 + uxtestingStore.testAssistSessions.list.length}
+            </span>{' '}
+            of{' '}
+            <span className="font-medium">
+              {numberWithCommas(uxtestingStore.testAssistSessions.total)}
+            </span>{' '}
+            ongoing tests.
+          </div>
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(uxtestingStore.testAssistSessions.total / 10)}
+            onPageChange={refreshData}
+            limit={10}
+            debounceRequest={200}
+          />
         </div>
-        <Pagination
-          page={uxtestingStore.testAssistSessions.page}
-          totalPages={Math.ceil(uxtestingStore.testAssistSessions.total / 10)}
-          onPageChange={refreshData}
-          limit={10}
-          debounceRequest={200}
-        />
-      </div>
+      </Loader>
     </div>
   );
 }
