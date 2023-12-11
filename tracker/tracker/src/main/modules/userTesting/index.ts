@@ -1,5 +1,4 @@
 import App from '../../app/index.js'
-import { containerStyle } from './styles.js'
 import * as styles from './styles.js'
 import Recorder, { Quality } from './recorder.js'
 import attachDND from './dnd.js'
@@ -157,7 +156,7 @@ export default class UserTestManager {
     this.testId = id
     this.token = token
     const ingest = this.app.options.ingestPoint
-    fetch(`${ingest}/v1/web/uxt/test/${id}`, {
+    return fetch(`${ingest}/v1/web/uxt/test/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -175,6 +174,7 @@ export default class UserTestManager {
           this.showTaskSection()
         }
       })
+      .then(() => id)
       .catch((err) => {
         console.log('OR: Error fetching test', err)
       })
@@ -216,7 +216,7 @@ export default class UserTestManager {
       this.removeGreeting()
       this.durations.testStart = this.app.timestamp()
       void this.signalTest('begin')
-      this.container.style.gap = '8px'
+      Object.assign(this.container.style, styles.containerWidgetStyle)
       this.showWidget(this.test?.guidelines || '', this.test?.tasks || [])
     }
 
@@ -251,7 +251,7 @@ export default class UserTestManager {
     })
     // Create title section
     const titleSection = this.createTitleSection()
-    Object.assign(this.container.style, styles.containerStyle)
+    Object.assign(this.container.style, styles.containerWidgetStyle)
     const descriptionSection = this.createDescriptionSection(guidelines)
     const tasksSection = this.createTasksSection(tasks)
     const stopButton = createElement('div', 'stop_bn_or', styles.stopWidgetStyle, 'Abort Session')
@@ -283,6 +283,8 @@ export default class UserTestManager {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         width: '100%',
+        fontSize: 16,
+        lineHeight: 'auto',
         cursor: 'pointer',
       },
       this.test?.title,
@@ -346,7 +348,16 @@ export default class UserTestManager {
   createDescriptionSection(guidelines: string) {
     const section = createElement('div', 'description_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_s_title_or', styles.sectionTitleStyle)
-    const title = createElement('div', 'title', {}, 'Introduction & Guidelines')
+    const title = createElement(
+      'div',
+      'title',
+      {
+        fontSize: 13,
+        fontWeight: 500,
+        lineHeight: 'auto',
+      },
+      'Introduction & Guidelines',
+    )
     const icon = createElement('div', 'icon', styles.symbolIcon, '-')
     const content = createElement('div', 'content', styles.contentStyle)
     const descriptionC = createElement('div', 'text_description', {
@@ -355,6 +366,7 @@ export default class UserTestManager {
       whiteSpace: 'pre-wrap',
       fontSize: 13,
       color: '#454545',
+      lineHeight: 'auto',
     })
     descriptionC.innerHTML = guidelines
     const button = createElement('div', 'button_begin_or', styles.buttonWidgetStyle, 'Begin Test')
@@ -414,10 +426,19 @@ export default class UserTestManager {
       allow_typing: boolean
     }[],
   ) {
-    Object.assign(this.container.style, styles.containerStyle)
+    Object.assign(this.container.style, styles.containerWidgetStyle)
     const section = createElement('div', 'task_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_t_title_or', styles.sectionTitleStyle)
-    const title = createElement('div', 'title', {}, 'Tasks')
+    const title = createElement(
+      'div',
+      'title',
+      {
+        fontSize: '14px',
+        fontWeight: '500',
+        lineHeight: 'auto',
+      },
+      'Tasks',
+    )
     const icon = createElement('div', 'icon', styles.symbolIcon, '-')
     const content = createElement('div', 'content', styles.contentStyle)
     const pagination = createElement('div', 'pagination', styles.paginationStyle)
@@ -466,7 +487,22 @@ export default class UserTestManager {
 
     // pagination.appendChild(leftArrow)
     tasks.forEach((_, index) => {
-      const pageNumber = createElement('span', `or_task_${index}`, {}, (index + 1).toString())
+      const pageNumber = createElement(
+        'span',
+        `or_task_${index}`,
+        {
+          outline: '1px solid #efefef',
+          fontSize: '13px',
+          height: '24px',
+          width: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '6.25em',
+        },
+        (index + 1).toString(),
+      )
       pageNumber.id = `or_task_${index}`
       pagination.append(pageNumber)
     })

@@ -53,16 +53,29 @@ interface OnStartInfo {
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const START_ERROR = ':(' as const
-type SuccessfulStart = OnStartInfo & { success: true }
+type SuccessfulStart = OnStartInfo & {
+  success: true
+}
 type UnsuccessfulStart = {
   reason: typeof CANCELED | string
   success: false
 }
 
-type RickRoll = { source: string; context: string } & (
-  | { line: 'never-gonna-give-you-up' }
-  | { line: 'never-gonna-let-you-down'; token: string }
-  | { line: 'never-gonna-run-around-and-desert-you'; token: string }
+type RickRoll = {
+  source: string
+  context: string
+} & (
+  | {
+      line: 'never-gonna-give-you-up'
+    }
+  | {
+      line: 'never-gonna-let-you-down'
+      token: string
+    }
+  | {
+      line: 'never-gonna-run-around-and-desert-you'
+      token: string
+    }
 )
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
@@ -725,7 +738,12 @@ export default class App {
         }
 
         if (uxtId && !this.uxtManager.isActive) {
-          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag))
+          // eslint-disable-next-line
+          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
+            if (id) {
+              this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
+            }
+          })
         }
 
         return SuccessfulStart(onStartInfo)
@@ -741,6 +759,13 @@ export default class App {
         this._debug('session_start', reason)
         return UnsuccessfulStart(START_ERROR)
       })
+  }
+
+  onUxtCb = []
+
+  addOnUxtCb(cb: (id: number) => void) {
+    // @ts-ignore
+    this.onUxtCb.push(cb)
   }
 
   getUxtId(): number | null {

@@ -129,6 +129,9 @@ export default class Assist {
     const observer = titleNode && new MutationObserver(() => {
       this.emit('UPDATE_SESSION', { pageTitle: document.title, })
     })
+    app.addOnUxtCb((uxtId: number) => {
+      this.emit('UPDATE_SESSION', { uxtId, })
+    })
     app.attachStartCallback(() => {
       if (this.assistDemandedRestart) { return }
       this.onStart()

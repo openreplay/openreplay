@@ -14,10 +14,10 @@ export const bgStyle = {
 export const containerStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.5rem',
+  gap: '2rem',
   alignItems: 'center',
   padding: '1.5rem',
-  borderRadius: '0.375rem',
+  borderRadius: '2px',
   border: '1px solid #D9D9D9',
   background: '#FFF',
   width: '22rem',
@@ -25,12 +25,12 @@ export const containerStyle = {
 export const containerWidgetStyle = {
   display: 'flex',
   'flex-direction': 'column',
-  gap: '1.5rem',
+  gap: 'unset',
   'align-items': 'center',
-  padding: '1rem',
-  'border-radius': '0.375rem',
+  padding: 'unset',
+  'border-radius': '2px',
   border: '1px solid #D9D9D9',
-  background: '#FFF',
+  background: 'rgba(255, 255, 255, 0.75)',
   width: '22rem',
 }
 
@@ -49,10 +49,10 @@ export const descriptionStyle = {
   padding: '1.25rem 0rem',
   color: 'rgba(0, 0, 0, 0.85)',
   fontFamily: 'Verdana, sans-serif',
-  fontSize: '1rem',
+  fontSize: '13px',
   fontStyle: 'normal',
   fontWeight: '400',
-  lineHeight: '1.5rem',
+  lineHeight: 'auto',
   whiteSpace: 'pre-wrap',
 }
 
@@ -87,9 +87,9 @@ export const buttonStyle = {
 
 export const sectionTitleStyle = {
   fontFamily: 'Verdana, sans-serif',
-  fontSize: '0.875rem',
+  fontSize: '13px',
   fontWeight: '500',
-  lineHeight: '1.375rem',
+  lineHeight: 'auto',
   display: 'flex',
   justifyContent: 'space-between',
   width: '100%',
@@ -101,6 +101,8 @@ export const contentStyle = {
   flexDirection: 'column',
   alignItems: 'flex-start',
   gap: '0.625rem',
+  fontSize: '13px',
+  lineHeight: 'auto',
 }
 
 // New widget styles
@@ -108,16 +110,16 @@ export const titleWidgetStyle = {
   padding: '0.5rem',
   gap: '0.5rem',
   fontFamily: 'Verdana, sans-serif',
-  fontSize: '1.25rem',
+  fontSize: '16px',
   fontStyle: 'normal',
   fontWeight: '500',
-  lineHeight: '1.75rem',
+  lineHeight: 'auto',
   color: 'white',
   display: 'flex',
   alignItems: 'center',
   width: '100%',
-  borderRadius: '0.375rem',
-  background: 'rgba(0, 0, 0, 0.60)',
+  borderRadius: '2px',
+  background: 'rgba(0, 0, 0, 0.75)',
   boxSizing: 'border-box',
 }
 
@@ -125,17 +127,16 @@ export const descriptionWidgetStyle = {
   boxSizing: 'border-box',
   display: 'block',
   width: '100%',
-  borderRadius: '0.375rem',
-  border: '1px solid #D9D9D9',
+  borderBottom: '1px solid #D9D9D9',
   background: '#FFF',
-  padding: '0.625rem 1rem',
+  padding: '0.65rem',
   alignSelf: 'stretch',
   color: '#000',
   fontFamily: 'Verdana, sans-serif',
-  fontSize: '0.875rem',
+  // fontSize: '0.875rem',
   fontStyle: 'normal',
   fontWeight: '400',
-  lineHeight: '1.375rem',
+  // lineHeight: '1.375rem',
 }
 
 export const endSectionStyle = {
@@ -177,9 +178,12 @@ export const buttonWidgetStyle = {
 
 export const stopWidgetStyle = {
   marginTop: '1rem',
+  marginBottom: '1rem',
   cursor: 'pointer',
   display: 'block',
-  fontWeight: '600',
+  fontWeight: '500',
+  fontSize: 13,
+  lineHeight: 'auto',
 }
 
 export const paginationStyle = {
@@ -194,21 +198,27 @@ export const paginationStyle = {
 
 export const taskNumberActive = {
   display: 'flex',
-  padding: '0.0625rem 0.5rem',
   flexDirection: 'column',
   alignItems: 'center',
+  justifyContent: 'center',
   borderRadius: '6.25em',
   outline: '1px solid #394EFF',
+  fontSize: '13px',
+  height: '24px',
+  width: '24px',
 }
 export const taskNumberDone = {
   display: 'flex',
-  padding: '0.0625rem 0.5rem',
   flexDirection: 'column',
   alignItems: 'center',
+  justifyContent: 'center',
   borderRadius: '6.25em',
   outline: '1px solid #D2DFFF',
   boxShadow: '0px 2px 0px 0px rgba(0, 0, 0, 0.04)',
   background: '#D2DFFF',
+  fontSize: '13px',
+  height: '24px',
+  width: '24px',
 }
 
 export const taskDescriptionCard = {
@@ -228,8 +238,8 @@ export const taskTextStyle = {
 }
 
 export const taskDescriptionStyle = {
-  color: '#454545',
-  fontSize: 13,
+  fontSize: '13px',
+  lineHeight: 'auto',
 }
 
 export const taskButtonStyle = {
@@ -238,10 +248,10 @@ export const taskButtonStyle = {
   color: '#394EFF',
   textAlign: 'center',
   fontFamily: 'Verdana, sans-serif',
-  fontSize: '0.875rem',
+  fontSize: '13px',
   fontStyle: 'normal',
   fontWeight: '500',
-  lineHeight: '1.375rem',
+  lineHeight: 'auto',
 }
 export const taskButtonBorderedStyle = {
   ...taskButtonStyle,
