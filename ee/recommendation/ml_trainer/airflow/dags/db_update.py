@@ -30,9 +30,10 @@ dbname = config('pg_dbname_ml')
 password = config('pg_password_ml')
 tracking_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
 
-
+# 1702296756
 def get_today_feedback():
-    query = "SELECT project_id, session_id, user_id as viewer_id, payload FROM recommendation_feedback"
+    current_datetime = int((datetime.now()-timedelta(seconds=execute_interval)).timestamp())
+    query = f"SELECT project_id, session_id, user_id as viewer_id, payload FROM recommendation_feedback WHERE insertion_time >= {current_datetime}"
 
     connection_handler = ConnectionHandler(tracking_uri)  # Connection to mlflow's database
 
