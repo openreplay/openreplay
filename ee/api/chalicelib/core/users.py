@@ -6,7 +6,6 @@ from fastapi import BackgroundTasks, HTTPException
 from starlette import status
 
 import schemas
-from app import app
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants, assist
 from chalicelib.utils import email_helper, smtp
@@ -661,6 +660,8 @@ def change_jwt_iat_jti(user_id):
 
 
 async def refresh_jwt_iat_jti(user_id):
+    from app import app
+
     async with app.state.postgresql.connection() as cnx
         query = f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
