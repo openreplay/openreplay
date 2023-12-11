@@ -54,7 +54,7 @@ def __create(tenant_id, data):
 
 async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
 
-    async def _get_projects(cnx):
+    async def _get_projects(cursor):
         extra_projection = ""
         if gdpr:
             extra_projection += ',s.gdpr'
@@ -68,7 +68,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                          AND sessions.start_ts <= %(now)s
                                        )) AS first_recorded"""
 
-        query = cnx.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
+        query = cursor.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
                                        s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
                                        {extra_projection}
@@ -76,7 +76,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                 WHERE s.deleted_at IS NULL
                                 ORDER BY s.name {") AS raw" if recorded else ""};""",
                             {"now": TimeUTC.now(), "check_delta": TimeUTC.MS_HOUR * 4})
-        rows = await cnx.execute(query)
+        rows = await cursor.execute(query)
         rows = await rows.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
@@ -95,7 +95,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                 r.pop("first_recorded")
                 r.pop("sessions_last_check_at")
             if len(u_values) > 0:
-                await cnx.execute(f"""UPDATE public.projects
+                await cursor.execute(f"""UPDATE public.projects
                                         SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
                                         FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
                                         WHERE projects.project_id=u.project_id;""", params)
@@ -108,8 +108,9 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
 
     async with app.state.postgresql.connection() as cnx:
         async with cnx.transaction():
-            out = await _get_projects(cursor)
-            return out
+            async with cnx.cursor() as cursor:
+                out = await _get_projects(cursor)
+                return out
 
 
 def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
