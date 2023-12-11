@@ -6,7 +6,7 @@ For the record, the expected psycopg3's async api looks like the
 following pseudo code:
 
 ```python
-    async with orpy.get().database.connection() as cnx:
+    async with app.state.postgresql.connection() as cnx:
          async with cnx.transaction():
              row = await cnx.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
              row = await row.fetchone()
@@ -15,7 +15,7 @@ following pseudo code:
 
 Minding the following:
 
-- Where `orpy.get().database` is the postgresql connection pooler.
+- Where `app.state.postgresql` is the postgresql connection pooler.
 - Wrap explicit transaction with `async with cnx.transaction():
   foobar()`
 - Most of the time the transaction object is not used;

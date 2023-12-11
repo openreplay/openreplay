@@ -20,7 +20,6 @@ from routers.subs import insights, metrics, v1_api, health, usability_tests
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-import orpy
 from psycopg.rows import dict_row
 
 
@@ -58,9 +57,7 @@ async def lifespan(app: FastAPI):
     }
 
     database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection)
-    orpy.set(orpy.Application(
-        database,
-    ))
+    app.state.postgresql = database
 
     # App listening
     yield
