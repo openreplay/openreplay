@@ -4,10 +4,10 @@ from typing import Optional
 from fastapi import HTTPException, status
 
 import schemas
+from app import app
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import orpy
 
 def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
@@ -105,7 +105,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
 
         return helper.list_to_camel_case(rows)
 
-    async with orpy.get().database.connection() as cnx:
+    async with app.state.postgresql.connection() as cnx:
         with cnx.transaction():
             out = await _get_projects(cnx)
             return out
