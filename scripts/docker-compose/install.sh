@@ -88,10 +88,9 @@ set +a
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
 find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 sudo -E docker-compose pull --no-parallel
-sudo -E docker-compose up -d
+sudo -E docker compose --profile migration up -d
+cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
-cp -rf ../docker-compose ~/docker-compose
-rm -rf "$(git rev-parse --show-toplevel)"
 info "Installation complete!! open https://${DOMAIN_NAME} 🐳"
-info "${HOME}/docker-compose have the docker-compose file. you can use docker-compose stop/start"
+info "${PWD} have the docker-compose file. you can use docker-compose stop/start"
