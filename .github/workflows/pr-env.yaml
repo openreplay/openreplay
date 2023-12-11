@@ -242,17 +242,17 @@ jobs:
                 kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
               done
               ;;
-            chalice)
+            chalice|api)
               echo "Chalice build"
-              component=$apps_to_build
-              cd $GITHUB_WORKSPACE/api || (Nothing to build: $apps_to_build; exit 100)
+              component=chalice
+              cd $GITHUB_WORKSPACE/api || (Nothing to build: $component; exit 100)
               if [ $(docker manifest inspect ${DOCKER_REPO}/$component:${IMAGE_TAG} > /dev/null) ]; then
                 echo Image present upstream. Skipping build: $component
               else
                 echo "Building backend:$component"
                 PUSH_IMAGE=1 bash -x ./build.sh $env $component
               fi
-              kubectl set image -n app deployment/$apps_to_build-openreplay $apps_to_build=${DOCKER_REPO}/$apps_to_build:${IMAGE_TAG}
+              kubectl set image -n app deployment/$component-openreplay $component=${DOCKER_REPO}/$component:${IMAGE_TAG}
               ;;
             *)
               echo "$apps_to_build build"
