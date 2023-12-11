@@ -15,6 +15,7 @@ import (
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/uxtesting"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -66,7 +67,12 @@ func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint
 	if err != nil {
 		return
 	}
-	v, err := semver.NewVersion(req.TrackerVersion)
+	ver := req.TrackerVersion
+	parts := strings.Split(ver, "-")
+	if len(parts) > 1 {
+		ver = parts[0]
+	}
+	v, err := semver.NewVersion(ver)
 	if err != nil {
 		return
 	}
