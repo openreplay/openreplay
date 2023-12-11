@@ -51,6 +51,11 @@ function TestEdit() {
   usePageTitle(`Usability Tests | ${uxtestingStore.instance ? 'Edit' : 'Create'}`);
 
   React.useEffect(() => {
+    if (siteId !== uxtestingStore.instanceCreationSiteId) {
+      history.push(withSiteId(usabilityTesting(), siteId));
+    }
+  }, [siteId]);
+  React.useEffect(() => {
     if (testId && testId !== 'new') {
       uxtestingStore.getTestData(testId).then((inst) => {
         if (inst) {
@@ -76,7 +81,11 @@ function TestEdit() {
     if (testId && testId !== 'new') {
       uxtestingStore.updateTest(uxtestingStore.instance!, isPreview).then((testId) => {
         if (isPreview) {
-          window.open(`${uxtestingStore.instance!.startingPath}?oruxt=${testId}`, '_blank', 'noopener,noreferrer');
+          window.open(
+            `${uxtestingStore.instance!.startingPath}?oruxt=${testId}`,
+            '_blank',
+            'noopener,noreferrer'
+          );
         } else {
           toast.success('The usability test is now live and accessible to participants.');
           history.push(withSiteId(usabilityTestingView(testId!.toString()), siteId));
@@ -421,14 +430,18 @@ export function Step({
   hover?: boolean;
 }) {
   const safeTitle = title.length > 120 ? title.slice(0, 120) + '...' : title;
-  const safeDescription = description && description?.length > 300 ? description.slice(0, 300) + '...' : description;
+  const safeDescription =
+    description && description?.length > 300 ? description.slice(0, 300) + '...' : description;
   return (
     <div
       className={`p-4 rounded border ${
         hover ? 'bg-white hover:' : ''
       }bg-active-blue flex items-start gap-2`}
     >
-      <div style={{ minWidth: '1.5rem' }} className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}>
+      <div
+        style={{ minWidth: '1.5rem' }}
+        className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}
+      >
         {ind + 1}
       </div>
 
@@ -439,7 +452,7 @@ export function Step({
 
       <div className={'ml-auto'} />
       <div className={'flex items-center gap-2'} style={{ minWidth: '4rem' }}>
-      {buttons}
+        {buttons}
       </div>
     </div>
   );

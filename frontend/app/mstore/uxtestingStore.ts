@@ -53,6 +53,7 @@ export default class UxtestingStore {
   client = uxtestingService;
   tests: UxTListEntry[] = [];
   instance: UxTestInst | null = null;
+  instanceCreationSiteId = '';
   page: number = 1;
   total: number = 0;
   pageSize: number = 10;
@@ -145,7 +146,8 @@ export default class UxtestingStore {
     }
   };
 
-  initNewTest(title: string, description: string) {
+  initNewTest(title: string, description: string, siteId: string) {
+    this.instanceCreationSiteId = siteId;
     const initialData = {
       title: title,
       startingPath: 'https://',
@@ -265,12 +267,14 @@ export default class UxtestingStore {
       const statsPr = this.client.fetchTestStats(testId);
       const taskStatsPr = this.client.fetchTestTaskStats(testId);
       const sessionsPr = this.client.fetchTestSessions(testId, this.testSessions.page, 10);
-      Promise.allSettled([testPr, statsPr, taskStatsPr, sessionsPr]).then((results) => {
+      return Promise.allSettled([testPr, statsPr, taskStatsPr, sessionsPr]).then((results) => {
         if (results[0].status === 'fulfilled') {
           const test = results[0].value;
           if (test) {
             this.setInstance(new UxTestInst(test));
           }
+        } else {
+          throw 'Test not found'
         }
         if (results[1].status === 'fulfilled') {
           const stats = results[1].value;
@@ -295,9 +299,10 @@ export default class UxtestingStore {
             this.setTestSessions(result);
           }
         }
-      });
+      }).then(() => true)
     } catch (e) {
       console.error(e);
+      return false;
     } finally {
       this.setLoading(false);
     }

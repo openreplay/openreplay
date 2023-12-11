@@ -264,6 +264,7 @@ export default class UserTestManager {
       this.userRecorder.discard()
       void this.signalTest('skipped')
       document.body.removeChild(this.bg)
+      window.close()
     }
     if (!inProgress) {
       this.hideTaskSection()

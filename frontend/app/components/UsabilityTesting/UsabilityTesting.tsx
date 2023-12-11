@@ -8,7 +8,7 @@ import AnimatedSVG from 'Shared/AnimatedSVG';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Loader, NoContent, Pagination, Link, Icon } from 'UI';
 import { checkForRecent, getDateFromMill } from 'App/date';
-import { UnorderedListOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
 import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
 import { debounce } from 'App/utils';
@@ -49,7 +49,7 @@ function TestsTable() {
 
   const onClose = (confirmed: boolean) => {
     if (confirmed) {
-      uxtestingStore.initNewTest(newTestTitle, newTestDescription);
+      uxtestingStore.initNewTest(newTestTitle, newTestDescription, siteId);
       setNewTestDescription('');
       setNewTestTitle('');
       redirect('new');
@@ -212,7 +212,6 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
             >
               <Icon name={'list-ul'} color={'tealx'} size={20} />
             </div>
-            {/*<Avatar size={'large'} icon={<UnorderedListOutlined rev={undefined} />} />*/}
           </div>
           <div style={{ maxWidth: 550 }}>
             <Link className="link" to={test.status === 'preview' ? editLink : link}>

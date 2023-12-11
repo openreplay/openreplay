@@ -59,11 +59,20 @@ function TestOverview() {
   // @ts-ignore
   const { siteId, testId } = useParams();
   const { showModal, hideModal } = useModal();
+  const history = useHistory();
   const { uxtestingStore } = useStore();
 
   React.useEffect(() => {
-    uxtestingStore.getTest(testId);
-  }, [testId]);
+    const getData = async () => {
+      try {
+        await uxtestingStore.getTest(testId);
+      } catch {
+        history.push(withSiteId(usabilityTesting(), siteId));
+      }
+    }
+
+    void getData();
+  }, [testId, siteId]);
 
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
@@ -390,6 +399,7 @@ const Title = observer(({ testId, siteId }: any) => {
   // @ts-ignore
   const getColor = (status) => colors[status];
 
+  const isActive = ['in-progress', 'preview'].includes(uxtestingStore.instance!.status);
   return (
     <div className={'p-4 border-b'}>
       <div className={'flex items-center gap-2'}>
@@ -423,39 +433,41 @@ const Title = observer(({ testId, siteId }: any) => {
             {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
         </Button>
-        <Popover
-          trigger={'click'}
-          title={'Participants Link'}
-          content={
-            <div style={{ width: '220px' }}>
-              <div className={'text-disabled-text text-sm'}>
-                Distribute following link via email or other methods to share the survey with test
-                participants.
+        {isActive ?
+          <Popover
+            trigger={'click'}
+            title={'Participants Link'}
+            content={
+              <div style={{ width: '220px' }}>
+                <div className={'text-disabled-text text-sm'}>
+                  Distribute following link via email or other methods to share the survey with test
+                  participants.
+                </div>
+                <div
+                  style={{ background: '#E4F6F6' }}
+                  className={'p-2 rounded border shadow break-all my-2'}
+                >
+                  {`${uxtestingStore.instance!.startingPath}?oruxt=${
+                    uxtestingStore.instance!.testId
+                  }`}
+                </div>
+                <CopyButton
+                  variant={'outline'}
+                  content={`${uxtestingStore.instance!.startingPath}?oruxt=${
+                    uxtestingStore.instance!.testId
+                  }`}
+                />
               </div>
-              <div
-                style={{ background: '#E4F6F6' }}
-                className={'p-2 rounded border shadow break-all my-2'}
-              >
-                {`${uxtestingStore.instance!.startingPath}?oruxt=${
-                  uxtestingStore.instance!.testId
-                }`}
-              </div>
-              <CopyButton
-                variant={'outline'}
-                content={`${uxtestingStore.instance!.startingPath}?oruxt=${
-                  uxtestingStore.instance!.testId
-                }`}
-              />
-            </div>
-          }
-        >
-          <Button type={'primary'} ghost>
-            <Space align={'center'}>
-              Distribute
-              <ShareAltOutlined rev={undefined} />
-            </Space>
-          </Button>
-        </Popover>
+            }
+          >
+            <Button type={'primary'} ghost>
+              <Space align={'center'}>
+                Distribute
+                <ShareAltOutlined rev={undefined} />
+              </Space>
+            </Button>
+          </Popover>
+        : null}
         <Dropdown
           menu={{
             items:
