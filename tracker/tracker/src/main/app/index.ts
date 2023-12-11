@@ -586,13 +586,12 @@ export default class App {
   coldStartTs = 0
 
   public coldStart(startOpts: StartOptions = {}) {
+    // TODO: add /start request to get auth token to check conditional triggers
     const second = 1000
     const cycle = () => {
       this.orderNumber += 1
-      this.coldStartTs = now()
       if (this.orderNumber % 2 === 0) {
         this.hamburger.length = 0
-        this.hamburger.push
         this.hamburger.push(Timestamp(this.timestamp()))
         this.hamburger.push(TabData(this.session.getTabId()))
       } else {
@@ -609,6 +608,7 @@ export default class App {
       this.stop(false)
       this.activityState = ActivityState.ColdStart
       adjustTimeOrigin()
+      this.coldStartTs = now()
       if (startOpts.sessionHash) {
         this.session.applySessionHash(startOpts.sessionHash)
       }
