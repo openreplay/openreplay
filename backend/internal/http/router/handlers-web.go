@@ -160,8 +160,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if !req.DoNotRecord {
+			startTs := getSessionTimestamp(req, startTimeMili)
+			log.Printf("Session startTS: %v, withoutBuffer: %d", startTs, startTimeMili)
 			sessionStart := &SessionStart{
-				Timestamp:            getSessionTimestamp(req, startTimeMili),
+				Timestamp:            startTs,
 				ProjectID:            uint64(p.ProjectID),
 				TrackerVersion:       req.TrackerVersion,
 				RevID:                req.RevID,
@@ -205,6 +207,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			}); err != nil {
 				log.Printf("can't insert session start: %s", err)
 			}
+			log.Printf("Session startTS: %v", sessionStart.Timestamp)
 
 			// Send sessionStart message to kafka
 			if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
