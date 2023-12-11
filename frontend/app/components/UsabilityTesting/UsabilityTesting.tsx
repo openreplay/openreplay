@@ -236,7 +236,7 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
 
 const colors = {
   'in-progress': 'green',
-  closed: 'grey',
+  closed: '',
   paused: 'orange',
   preview: 'geekblue',
 } as const;

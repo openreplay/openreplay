@@ -32,10 +32,17 @@ import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOver
 import { toast } from 'react-toastify';
 
 const statusItems = [
-  { value: 'in-progress', label: 'Ongoing' },
-  { value: 'paused', label: 'Hold' },
-  { value: 'closed', label: 'Close' },
+  { value: 'in-progress', label: '🟢 Ongoing' },
+  { value: 'paused', label: '🟠 Hold' },
+  { value: 'closed', label: '⚪ Close' },
 ];
+
+const colors = {
+  'in-progress': '#52c41a',
+  closed: '#bfbfbf',
+  paused: '#fa8c16',
+  preview: '#2f54eb',
+};
 
 const menuItems = [
   // {
@@ -412,15 +419,7 @@ const Title = observer(({ testId, siteId }: any) => {
           options={statusItems}
           optionRender={(item) => (
             <Space align={'center'}>
-              <div
-                style={{
-                  background: getColor(item.value),
-                  width: 12,
-                  height: 12,
-                  borderRadius: 32,
-                }}
-              />
-              {item.data.icon} {item.label}
+              {item.label}
             </Space>
           )}
         />
@@ -489,12 +488,5 @@ const Title = observer(({ testId, siteId }: any) => {
     </div>
   );
 });
-
-const colors = {
-  'in-progress': '#52c41a',
-  closed: '#bfbfbf',
-  paused: '#fa8c16',
-  preview: '#2f54eb',
-};
 
 export default observer(TestOverview);

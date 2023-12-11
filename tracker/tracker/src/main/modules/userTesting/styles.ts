@@ -9,6 +9,7 @@ export const bgStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: 999999,
+  fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";`,
 }
 
 export const containerStyle = {
