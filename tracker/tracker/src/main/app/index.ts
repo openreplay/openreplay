@@ -704,6 +704,7 @@ export default class App {
         metadata: startOpts.metadata,
       })
       if (!isNewSession) {
+        this.debug.log('continuing session on new tab', this.session.getTabId())
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.send(TabChange(this.session.getTabId()))
       }
@@ -959,15 +960,16 @@ export default class App {
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         void this.featureFlags.reloadFlags()
+
         /** --------------- COLD START BUFFER ------------------*/
         this.activityState = ActivityState.Active
         if (isColdStart) {
-          const biggestBurger =
+          const biggestBuffer =
             this.bufferedMessages1.length > this.bufferedMessages2.length
               ? this.bufferedMessages1
               : this.bufferedMessages2
-          while (biggestBurger.length > 0) {
-            flushBuffer(biggestBurger)
+          while (biggestBuffer.length > 0) {
+            flushBuffer(biggestBuffer)
           }
           this.clearBuffers()
           this.commit()
