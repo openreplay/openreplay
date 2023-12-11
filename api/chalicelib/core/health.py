@@ -101,7 +101,7 @@ def __check_be_service(service_name):
             try:
                 print(results.text)
                 # fail_response["details"]["errors"].append(results.text)
-            except:
+            except Exception:
                 print("couldn't get response")
                 # fail_response["details"]["errors"].append(str(e))
             return fail_response
