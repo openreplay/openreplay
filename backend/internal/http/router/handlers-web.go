@@ -72,6 +72,7 @@ func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint
 	}
 	if c.Check(v) {
 		ts = uint64(startTimeMili)
+		log.Printf("bufferDiff: %d", req.BufferDiff)
 		if req.BufferDiff > 0 && req.BufferDiff < 3*60*1000 {
 			ts -= req.BufferDiff
 		}
