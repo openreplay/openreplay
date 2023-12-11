@@ -17,10 +17,10 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.4)
   - hermes-engine/Pre-built (0.72.4)
   - libevent (2.1.12)
-  - Openreplay (1.0.5):
+  - Openreplay (1.0.7):
     - DeviceKit
     - SWCompression
-  - openreplay-reactnative (0.1.0):
+  - openreplay-reactnative (0.1.1):
     - Openreplay
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -486,7 +486,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
-  - Openreplay (~> 1.0.5)
+  - Openreplay (~> 1.0.7)
   - openreplay-reactnative (from `../..`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
@@ -627,8 +627,8 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 81191603c4eaa01f5e4ae5737a9efcf64756c7b2
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  Openreplay: c64e4470df13efac242c569c29f213b0e57867b3
-  openreplay-reactnative: b7bae2bd88cecc6f0698ac0ffaacd3d385cd2767
+  Openreplay: 1361c805302bfa181a98a73b7f5536740126d06d
+  openreplay-reactnative: 4d76871d1cffc6227f265d34c0fc67a3d61ebbf3
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: c0569ecc035894e4a68baecb30fe6a7ea6e399f9
   RCTTypeSafety: e90354072c21236e0bcf1699011e39acd25fea2f
@@ -665,6 +665,6 @@ SPEC CHECKSUMS:
   SWCompression: 15e38b06c37077399a1b60bfecc1c2cd71f0ee99
   Yoga: 3efc43e0d48686ce2e8c60f99d4e6bd349aff981
 
-PODFILE CHECKSUM: 5192af7c5d6cfe07b41230fe84a1c01ac433efc5
+PODFILE CHECKSUM: 09dc44ceb84074d4583819c2f2c91bbb3ecea54c
 
 COCOAPODS: 1.12.1
