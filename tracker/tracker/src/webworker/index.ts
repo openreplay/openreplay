@@ -93,7 +93,6 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
 
   if (Array.isArray(data)) {
-    console.log('worker data', data.length, writer !== null) // pass 5
     if (writer) {
       const w = writer
       data.forEach((message) => {
@@ -140,14 +139,12 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
         initiateRestart()
       },
       (reason) => {
-        console.log('fail', reason)
         // onFailure
         initiateFailure(reason)
       },
       data.connAttemptCount,
       data.connAttemptGap,
       (batch) => {
-        console.log('onCompression', batch)
         postMessage({ type: 'compress', batch }, [batch.buffer])
       },
     )
@@ -156,7 +153,6 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       data.timestamp,
       data.url,
       (batch) => {
-        console.log('from writer', sender, batch)
         sender && sender.push(batch)
       },
       data.tabId,

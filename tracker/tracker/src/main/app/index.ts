@@ -143,10 +143,14 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
-  private readonly hamburger: Array<Message> = []
-  private readonly cheeseburger: Array<Message> = []
+  /**
+   * we need 2 buffers so we don't lose anything
+   * @read coldStart implementation
+   * */
+  private readonly bufferedMessages1: Array<Message> = []
+  private readonly bufferedMessages2: Array<Message> = []
   /* private */
-  readonly observer: Observer // non-privat for attachContextCallback
+  readonly observer: Observer // non-private for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -365,8 +369,8 @@ export default class App {
 
     // ====================================================
     if (this.activityState === ActivityState.ColdStart) {
-      this.hamburger.push(message)
-      this.cheeseburger.push(message)
+      this.bufferedMessages1.push(message)
+      this.bufferedMessages2.push(message)
       return
     } else {
       this.messages.push(message)
@@ -381,30 +385,51 @@ export default class App {
     }
   }
 
+  /**
+   * Normal workflow: add timestamp and tab data to batch, then commit it
+   * every ~30ms
+   * */
+  private _nCommit(): void {
+    if (this.worker !== undefined && this.messages.length) {
+      requestIdleCb(() => {
+        this.messages.unshift(TabData(this.session.getTabId()))
+        this.messages.unshift(Timestamp(this.timestamp()))
+        // why I need to add opt chaining?
+        this.worker?.postMessage(this.messages)
+        this.commitCallbacks.forEach((cb) => cb(this.messages))
+        this.messages.length = 0
+      })
+    }
+  }
+
+  coldStartCommitN = 0
+
+  /**
+   * Cold start: add timestamp and tab data to both batches
+   * every 2nd tick, ~60ms
+   * this will make batches a bit larger and replay will work with bigger jumps every frame
+   * but in turn we don't overload batch writer on session start with 1000 batches
+   * */
+  private _cStartCommit(): void {
+    this.coldStartCommitN += 1
+    if (this.coldStartCommitN === 2) {
+      this.bufferedMessages1.push(Timestamp(this.timestamp()))
+      this.bufferedMessages1.push(TabData(this.session.getTabId()))
+      this.bufferedMessages2.push(Timestamp(this.timestamp()))
+      this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      this.coldStartCommitN = 0
+    }
+  }
+
   private commit(): void {
     if (this.activityState === ActivityState.ColdStart) {
-      this.hamburger.push(Timestamp(this.timestamp()))
-      this.hamburger.push(TabData(this.session.getTabId()))
-      this.cheeseburger.push(Timestamp(this.timestamp()))
-      this.cheeseburger.push(TabData(this.session.getTabId()))
+      this._cStartCommit()
     } else {
-      console.log('commit', this.messages.length, this.worker !== undefined) // pass 3
-      if (this.worker !== undefined && this.messages.length) {
-        requestIdleCb(() => {
-          this.messages.unshift(TabData(this.session.getTabId()))
-          this.messages.unshift(Timestamp(this.timestamp()))
-          console.log('posted', this.messages.length) // pass 4
-          // why I need to add opt chaining?
-          this.worker?.postMessage(this.messages)
-          this.commitCallbacks.forEach((cb) => cb(this.messages))
-          this.messages.length = 0
-        })
-      }
+      this._nCommit()
     }
   }
 
   private postToWorker(messages: Array<Message>) {
-    console.log('posted to worker', messages.length) // pass 4
     this.worker?.postMessage(messages)
     this.commitCallbacks.forEach((cb) => cb(messages))
     messages.length = 0
@@ -585,30 +610,29 @@ export default class App {
   orderNumber = 0
   coldStartTs = 0
 
+  /**
+   * start buffering messages without starting the actual session, which gives
+   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
+   * and we will then send buffered batch, so it won't get lost
+   * */
   public coldStart(startOpts: StartOptions = {}) {
     // TODO: add /start request to get auth token to check conditional triggers
     const second = 1000
     const cycle = () => {
       this.orderNumber += 1
-      if (this.orderNumber % 2 === 0) {
-        this.hamburger.length = 0
-        this.hamburger.push(Timestamp(this.timestamp()))
-        this.hamburger.push(TabData(this.session.getTabId()))
-      } else {
-        this.cheeseburger.length = 0
-        this.cheeseburger.push(Timestamp(this.timestamp()))
-        this.cheeseburger.push(TabData(this.session.getTabId()))
-      }
-      console.log(
-        'tick cold start',
-        this.orderNumber,
-        this.hamburger.length,
-        this.cheeseburger.length,
-      )
-      this.stop(false)
-      this.activityState = ActivityState.ColdStart
       adjustTimeOrigin()
       this.coldStartTs = now()
+      if (this.orderNumber % 2 === 0) {
+        this.bufferedMessages1.length = 0
+        this.bufferedMessages1.push(Timestamp(this.timestamp()))
+        this.bufferedMessages1.push(TabData(this.session.getTabId()))
+      } else {
+        this.bufferedMessages2.length = 0
+        this.bufferedMessages2.push(Timestamp(this.timestamp()))
+        this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      }
+      this.stop(false)
+      this.activityState = ActivityState.ColdStart
       if (startOpts.sessionHash) {
         this.session.applySessionHash(startOpts.sessionHash)
       }
@@ -626,7 +650,7 @@ export default class App {
       const sessionToken = this.session.getSessionToken()
       const isNewSession = needNewSessionID || !sessionToken
       if (!isNewSession) {
-        console.log('continuing session on new tab', this.session.getTabId())
+        this.debug.log('continuing session on new tab', this.session.getTabId())
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.send(TabChange(this.session.getTabId()))
       }
@@ -641,13 +665,6 @@ export default class App {
 
   private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
     const isColdStart = this.activityState === ActivityState.ColdStart
-    console.log(
-      'start',
-      isColdStart,
-      this.activityState,
-      this.cheeseburger.length,
-      this.hamburger.length,
-    ) // pass 1
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
     }
@@ -830,17 +847,21 @@ export default class App {
         }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
+
+        /** --------------- COLD START BUFFER ------------------*/
         this.activityState = ActivityState.Active
         if (isColdStart) {
           const biggestBurger =
-            this.hamburger.length > this.cheeseburger.length ? this.hamburger : this.cheeseburger
+            this.bufferedMessages1.length > this.bufferedMessages2.length
+              ? this.bufferedMessages1
+              : this.bufferedMessages2
           while (biggestBurger.length > 0) {
             flushBuffer(biggestBurger)
           }
-          this.hamburger.length = 0
-          this.cheeseburger.length = 0
-          console.log('committing cold start stuff') // pass 2
+          this.bufferedMessages1.length = 0
+          this.bufferedMessages2.length = 0
           this.commit()
+          /** --------------- COLD START BUFFER ------------------*/
         } else {
           this.observer.observe()
           this.ticker.start()
@@ -953,8 +974,8 @@ export default class App {
   }
 
   clearBurgers() {
-    this.hamburger.length = 0
-    this.cheeseburger.length = 0
+    this.bufferedMessages1.length = 0
+    this.bufferedMessages2.length = 0
   }
 
   stop(stopWorker = true): void {
