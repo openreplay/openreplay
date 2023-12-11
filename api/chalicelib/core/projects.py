@@ -106,8 +106,8 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
         return helper.list_to_camel_case(rows)
 
     async with app.state.postgresql.connection() as cnx:
-        with cnx.transaction():
-            out = await _get_projects(cnx)
+        async with cnx.transaction():
+            out = await _get_projects(cursor)
             return out
 
 

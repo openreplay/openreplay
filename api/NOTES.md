@@ -1,7 +1,5 @@
 #### psycopg3 API
 
-I mis-remember the psycopg v2 vs. v3 API.
-
 For the record, the expected psycopg3's async api looks like the
 following pseudo code:
 
