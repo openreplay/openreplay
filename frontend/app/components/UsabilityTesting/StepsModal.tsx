@@ -1,11 +1,21 @@
-import { UxTask } from "App/services/UxtestingService";
-import React from 'react'
-import { Button, Input, Switch, Typography } from 'antd'
+import { UxTask } from 'App/services/UxtestingService';
+import React from 'react';
+import { Button, Input, Switch, Typography } from 'antd';
 
-function StepsModal({ onAdd, onHide, editTask }: { onAdd: (step: UxTask) => void; onHide: () => void, editTask?: UxTask }) {
+function StepsModal({
+  onAdd,
+  onHide,
+  editTask,
+  typingEnabled,
+}: {
+  onAdd: (step: UxTask) => void;
+  onHide: () => void;
+  editTask?: UxTask;
+  typingEnabled?: boolean;
+}) {
   const [title, setTitle] = React.useState(editTask?.title ?? '');
   const [description, setDescription] = React.useState(editTask?.description ?? '');
-  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(editTask?.allowTyping ?? false);
+  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(editTask?.allowTyping ?? typingEnabled);
 
   const save = () => {
     onAdd({
@@ -15,6 +25,7 @@ function StepsModal({ onAdd, onHide, editTask }: { onAdd: (step: UxTask) => void
     });
     onHide();
   };
+
   return (
     <div className={'h-screen p-4 bg-white flex flex-col gap-4'}>
       <Typography.Title style={{ marginBottom: 0 }} level={4}>

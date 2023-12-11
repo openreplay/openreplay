@@ -36,6 +36,7 @@ function TestEdit() {
   // @ts-ignore
   const { siteId, testId } = useParams();
   const [hasChanged, setHasChanged] = React.useState(testId === 'new');
+  const [typingEnabled, setTypingEnabled] = React.useState(false);
   const { uxtestingStore } = useStore();
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState('');
@@ -328,9 +329,11 @@ function TestEdit() {
                 onClick={() =>
                   showModal(
                     <StepsModal
+                      typingEnabled={typingEnabled}
                       onHide={hideModal}
                       onAdd={(task) => {
                         setHasChanged(true);
+                        setTypingEnabled(task.allowTyping);
                         uxtestingStore.instance!.setProperty('tasks', [
                           ...uxtestingStore.instance!.tasks,
                           task,
