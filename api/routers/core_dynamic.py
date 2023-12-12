@@ -210,6 +210,7 @@ async def search_sessions_by_metadata(key: str, value: str, projectId: Optional[
 
 @app.get('/projects', tags=['projects'])
 async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+    """Return projects that had records last couple of hours, includes gdpr flag"""
     return {"data": await projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
