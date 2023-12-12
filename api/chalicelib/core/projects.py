@@ -4,7 +4,6 @@ from typing import Optional
 from fastapi import HTTPException, status
 
 import schemas
-from app import app
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -31,8 +30,8 @@ def __update(tenant_id, project_id, changes):
     for key in changes.keys():
         sub_query.append(f"{helper.key_to_snake_case(key)} = %({key})s")
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.projects 
-                                SET {" ,".join(sub_query)} 
+        query = cur.mogrify(f"""UPDATE public.projects
+                                SET {" ,".join(sub_query)}
                                 WHERE project_id = %(project_id)s
                                     AND deleted_at ISNULL
                                 RETURNING project_id,name,gdpr;""",
@@ -63,14 +62,14 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
-                                         AND sessions.start_ts >= (EXTRACT(EPOCH 
+                                         AND sessions.start_ts >= (EXTRACT(EPOCH
                                                         FROM COALESCE(s.sessions_last_check_at, s.created_at)) * 1000-%(check_delta)s)
                                          AND sessions.start_ts <= %(now)s
                                        )) AS first_recorded"""
 
         query = cursor.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform
                                        {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
@@ -105,6 +104,8 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
                 r.pop("sessions_last_check_at")
 
         return helper.list_to_camel_case(rows)
+
+    from app import app
 
     async with app.state.postgresql.connection() as cnx:
         async with cnx.transaction():
@@ -164,7 +165,7 @@ def delete(tenant_id, user_id, project_id):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""UPDATE public.projects 
+        query = cur.mogrify("""UPDATE public.projects
                                SET deleted_at = timezone('utc'::text, now()),
                                    active = FALSE
                                WHERE project_id = %(project_id)s;""",
@@ -188,9 +189,9 @@ def get_gdpr(project_id):
 
 def edit_gdpr(project_id, gdpr: schemas.GdprSchema):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""UPDATE public.projects 
+        query = cur.mogrify("""UPDATE public.projects
                                SET gdpr = gdpr|| %(gdpr)s::jsonb
-                               WHERE project_id = %(project_id)s 
+                               WHERE project_id = %(project_id)s
                                     AND deleted_at ISNULL
                                RETURNING gdpr;""",
                             {"project_id": project_id, "gdpr": json.dumps(gdpr.model_dump())})
@@ -210,7 +211,7 @@ def get_by_project_key(project_key):
                                       platform,
                                       name
                                FROM public.projects
-                               WHERE project_key =%(project_key)s 
+                               WHERE project_key =%(project_key)s
                                     AND deleted_at ISNULL;""",
                             {"project_key": project_key})
         cur.execute(query=query)
@@ -234,7 +235,7 @@ def get_capture_status(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all
                                FROM public.projects
-                               WHERE project_id =%(project_id)s 
+                               WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id})
         cur.execute(query=query)
