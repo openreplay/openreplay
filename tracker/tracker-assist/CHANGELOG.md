@@ -1,3 +1,7 @@
+## 7.0.1
+
+- mark live sessions with ux test active
+
 ## 7.0.0
 
 - `socketHost` to support electron

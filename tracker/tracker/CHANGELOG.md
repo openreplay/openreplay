@@ -1,3 +1,7 @@
+# 11.0.1
+
+- minor fixes and refactoring
+
 # 11.0.0
 
 - canvas support
