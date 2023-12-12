@@ -31,21 +31,33 @@ import ResponsesOverview from './ResponsesOverview';
 import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
 import { toast } from 'react-toastify';
 
+
+const StatusItem = ({ iconName, color, text, size = "16" }: {
+  iconName: string;
+  color: string;
+  size: string;
+  text: string;
+}) => (
+  <div className='flex items-center'>
+    <Icon name={iconName} color={color} size={size} />
+    <Typography.Text className='ml-2'>
+      {text}
+    </Typography.Text>
+  </div>
+);
+
 const statusItems = [
   {
     value: 'in-progress',
-    label: <div className='flex items-center'><Icon name='record-circle-fill' color='green' size='16' /> <span
-      className='ml-2'>On Going</span></div>
+    label: <StatusItem iconName='record-circle-fill' color='green' text='On Going' />
   },
   {
     value: 'paused',
-    label: <div className='flex items-center'><Icon name='pause-circle-fill' color='orange-dark' size='16' /> <span
-      className='ml-2'>Hold</span></div>
+    label: <StatusItem iconName='pause-circle-fill' color='orange-dark' text='Hold' />
   },
   {
     value: 'closed',
-    label: <div className='flex items-center'><Icon name='check-circle-fill' color='gray-medium' size='16' /> <span
-      className='ml-2'>Close</span></div>
+    label: <StatusItem iconName='check-circle-fill' color='gray-medium' text='Close' />
   }
 ];
 
