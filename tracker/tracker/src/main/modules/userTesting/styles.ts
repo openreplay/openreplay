@@ -273,3 +273,12 @@ export const taskButtonsRow = {
   width: '100%',
   boxSizing: 'border-box',
 }
+
+export const spinnerStyles = {
+  border: '4px solid rgba(255, 255, 255, 0.4)',
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  borderLeftColor: '#fff',
+  animation: 'spin 0.5s linear infinite',
+}
