@@ -1,6 +1,7 @@
 from chalicelib.utils import pg_client
 import requests
 from chalicelib.core import license
+from decouple import config
 
 
 def process_data(data):
@@ -20,6 +21,8 @@ def process_data(data):
 
 
 def compute():
+    if config("SKIP_TELEMETRY", cast=bool):
+        return
     with pg_client.PostgresClient(long_query=True) as cur:
         cur.execute(
             f"""UPDATE public.tenants
@@ -42,6 +45,8 @@ def compute():
 
 
 def new_client():
+    if config("SKIP_TELEMETRY", cast=bool):
+        return
     with pg_client.PostgresClient() as cur:
         cur.execute(
             f"""SELECT *, openreplay_version() AS version_number,
