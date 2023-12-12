@@ -21,10 +21,10 @@ import {
   FastForwardOutlined,
   // FilePdfOutlined,
   DeleteOutlined,
-  ClockCircleOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import SessionItem from 'Shared/SessionItem';
-import { CopyButton, Loader, NoContent, Pagination } from 'UI';
+import { CopyButton, Icon, Loader, NoContent, Pagination } from 'UI';
 import { Stage, EmptyStage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
 import { confirm } from 'UI';
 import ResponsesOverview from './ResponsesOverview';
@@ -32,16 +32,28 @@ import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOver
 import { toast } from 'react-toastify';
 
 const statusItems = [
-  { value: 'in-progress', label: '🟢 Ongoing' },
-  { value: 'paused', label: '🟠 Hold' },
-  { value: 'closed', label: '⚪ Close' },
+  {
+    value: 'in-progress',
+    label: <div className='flex items-center'><Icon name='record-circle-fill' color='green' size='16' /> <span
+      className='ml-2'>On Going</span></div>
+  },
+  {
+    value: 'paused',
+    label: <div className='flex items-center'><Icon name='pause-circle-fill' color='orange-dark' size='16' /> <span
+      className='ml-2'>Hold</span></div>
+  },
+  {
+    value: 'closed',
+    label: <div className='flex items-center'><Icon name='check-circle-fill' color='gray-medium' size='16' /> <span
+      className='ml-2'>Close</span></div>
+  }
 ];
 
 const colors = {
   'in-progress': '#52c41a',
   closed: '#bfbfbf',
   paused: '#fa8c16',
-  preview: '#2f54eb',
+  preview: '#2f54eb'
 };
 
 const menuItems = [
@@ -53,13 +65,13 @@ const menuItems = [
   {
     key: '2',
     label: 'Edit',
-    icon: <EditOutlined rev={undefined} />,
+    icon: <EditOutlined rev={undefined} />
   },
   {
     key: '3',
     label: 'Delete',
-    icon: <DeleteOutlined rev={undefined} />,
-  },
+    icon: <DeleteOutlined rev={undefined} />
+  }
 ];
 
 function TestOverview() {
@@ -76,7 +88,7 @@ function TestOverview() {
       } catch {
         history.push(withSiteId(usabilityTesting(), siteId));
       }
-    }
+    };
 
     void getData();
   }, [testId, siteId]);
@@ -92,16 +104,16 @@ function TestOverview() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }} id={'pdf-anchor'}>
+    <div className='w-full mx-auto' style={{ maxWidth: '1360px' }} id={'pdf-anchor'}>
       <Breadcrumb
         items={[
           {
             label: 'Usability Testing',
-            to: withSiteId(usabilityTesting(), siteId),
+            to: withSiteId(usabilityTesting(), siteId)
           },
           {
-            label: uxtestingStore.instance.title,
-          },
+            label: uxtestingStore.instance.title
+          }
         ]}
       />
       <div className={'rounded border bg-white'}>
@@ -122,7 +134,7 @@ function TestOverview() {
               onClick={() => {
                 showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, {
                   right: true,
-                  width: 900,
+                  width: 900
                 });
               }}
             >
@@ -166,7 +178,7 @@ function TestOverview() {
         {/*<div className={'flex gap-1 link'}>clear selection</div>*/}
         <div className={'flex flex-col w-full'}>
           <Loader loading={uxtestingStore.isLoading}>
-            <NoContent show={uxtestingStore.testSessions.list.length == 0} title="No data">
+            <NoContent show={uxtestingStore.testSessions.list.length == 0} title='No data'>
               {uxtestingStore.testSessions.list.map((session) => (
                 // @ts-ignore
                 <SessionItem session={session} query={'?utx=true'} />
@@ -174,15 +186,15 @@ function TestOverview() {
               <div className={'flex items-center justify-between'}>
                 <div>
                   Showing{' '}
-                  <span className="font-medium">
+                  <span className='font-medium'>
                     {(uxtestingStore.testSessions.page - 1) * 10 + 1}
                   </span>{' '}
                   to{' '}
-                  <span className="font-medium">
+                  <span className='font-medium'>
                     {(uxtestingStore.page - 1) * 10 + uxtestingStore.testSessions.list.length}
                   </span>{' '}
                   of{' '}
-                  <span className="font-medium">
+                  <span className='font-medium'>
                     {numberWithCommas(uxtestingStore.testSessions.total)}
                   </span>{' '}
                   tests.
@@ -215,7 +227,7 @@ const ParticipantOverview = observer(() => {
             titleRow={
               <>
                 <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
-                <Typography.Text strong>Total Participants</Typography.Text>
+                <Typography.Text className='font-medium'>Total Participants</Typography.Text>
               </>
             }
             firstNum={uxtestingStore.testStats.tests_attempts?.toString()}
@@ -224,16 +236,16 @@ const ParticipantOverview = observer(() => {
             titleRow={
               <>
                 <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
-                <Typography.Text strong>Completed all tasks</Typography.Text>
+                <Typography.Text className='font-medium'>Completed all tasks</Typography.Text>
               </>
             }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                    (uxtestingStore.testStats.completed_all_tasks /
-                      uxtestingStore.testStats.tests_attempts) *
-                      100
-                  )}%`
+                  (uxtestingStore.testStats.completed_all_tasks /
+                    uxtestingStore.testStats.tests_attempts) *
+                  100
+                )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.completed_all_tasks.toString()}
@@ -242,16 +254,16 @@ const ParticipantOverview = observer(() => {
             titleRow={
               <>
                 <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
-                <Typography.Text strong>Skipped tasks</Typography.Text>
+                <Typography.Text className='font-medium'>Skipped tasks</Typography.Text>
               </>
             }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                    (uxtestingStore.testStats.tasks_skipped /
-                      uxtestingStore.testStats.tests_attempts) *
-                      100
-                  )}%`
+                  (uxtestingStore.testStats.tasks_skipped /
+                    uxtestingStore.testStats.tests_attempts) *
+                  100
+                )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.tasks_skipped.toString()}
@@ -260,16 +272,16 @@ const ParticipantOverview = observer(() => {
             titleRow={
               <>
                 <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
-                <Typography.Text strong>Aborted the test</Typography.Text>
+                <Typography.Text className='font-medium'>Aborted the test</Typography.Text>
               </>
             }
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                    (uxtestingStore.testStats.tests_skipped /
-                      uxtestingStore.testStats.tests_attempts) *
-                      100
-                  )}%`
+                  (uxtestingStore.testStats.tests_skipped /
+                    uxtestingStore.testStats.tests_attempts) *
+                  100
+                )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.tests_skipped.toString()}
@@ -293,20 +305,20 @@ const TaskSummary = observer(() => {
 
   return (
     <div className={'mt-2 rounded border p-4 bg-white'}>
-      <div className={'flex justify-between items-center'}>
+      <div className={'flex justify-between items-center mb-2'}>
         <Typography.Title level={5}>Task Summary</Typography.Title>
 
         {uxtestingStore.taskStats.length ? (
           <div className={'p-2 rounded bg-teal-light flex items-center gap-1'}>
-            <Typography.Text>Average completion time for all tasks:</Typography.Text>
+            <Typography.Text>Average completion time of all tasks:</Typography.Text>
             <Typography.Text strong>
               {uxtestingStore.taskStats
                 ? durationFormatted(
-                    uxtestingStore.taskStats.reduce(
-                      (stats, task) => stats + task.avgCompletionTime,
-                      0
-                    ) / uxtestingStore.taskStats.length
-                  )
+                  uxtestingStore.taskStats.reduce(
+                    (stats, task) => stats + task.avgCompletionTime,
+                    0
+                  ) / uxtestingStore.taskStats.length
+                )
                 : null}
             </Typography.Text>
             <ClockCircleOutlined rev={undefined} />
@@ -343,7 +355,7 @@ const Title = observer(({ testId, siteId }: any) => {
         break;
       case 'paused':
         toast.success(
-          "Usability test is on 'Hold'—participant activity paused. Switch it to “ongoing” to resume activity."
+          'Usability test is on \'Hold\'—participant activity paused. Switch it to “ongoing” to resume activity.'
         );
         break;
       case 'closed':
@@ -365,7 +377,7 @@ const Title = observer(({ testId, siteId }: any) => {
       if (
         await confirm({
           confirmation:
-            'Are you sure you want to delete this usability test? This action cannot be undone.',
+            'Are you sure you want to delete this usability test? This action cannot be undone.'
         })
       ) {
         uxtestingStore.deleteTest(testId).then(() => {
@@ -390,13 +402,13 @@ const Title = observer(({ testId, siteId }: any) => {
         : 'Editing Test on Hold';
     const confirmationStr =
       uxtestingStore.instance!.status === 'in-progress'
-        ? "You're editing a test that's currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧"
+        ? 'You\'re editing a test that\'s currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧'
         : 'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.';
     if (
       await confirm({
         header: confirmationTitle,
         confirmation: confirmationStr,
-        confirmButton: 'Edit',
+        confirmButton: 'Edit'
       })
     ) {
       history.push(withSiteId(usabilityTestingEdit(testId), siteId));
@@ -466,20 +478,20 @@ const Title = observer(({ testId, siteId }: any) => {
               </Space>
             </Button>
           </Popover>
-        : null}
+          : null}
         <Dropdown
           menu={{
             items:
               uxtestingStore.instance!.status === 'closed'
                 ? menuItems.filter((i) => i.label !== 'Edit')
                 : menuItems,
-            onClick: onMenuClick,
+            onClick: onMenuClick
           }}
         >
           <Button icon={<MoreOutlined rev={undefined} />}></Button>
         </Dropdown>
       </div>
-      <div className={'whitespace-pre-wrap'}>{truncatedDescr}</div>
+      <div className={'whitespace-pre-wrap mt-2'}>{truncatedDescr}</div>
       {uxtestingStore.instance.description.length > 250 ? (
         <div className={'link'} onClick={() => setTruncate(!truncate)}>
           {truncate ? 'Show more' : 'Show less'}

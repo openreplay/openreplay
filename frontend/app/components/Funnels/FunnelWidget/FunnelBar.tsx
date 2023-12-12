@@ -64,7 +64,7 @@ export function UxTFunnelBar(props: Props) {
 
   return (
     <div className="w-full mb-4">
-      <div className={'font-semibold'}>{filter.title}</div>
+      <div className={'font-medium'}>{filter.title}</div>
       <div
         style={{
           height: '25px',
@@ -93,13 +93,13 @@ export function UxTFunnelBar(props: Props) {
       </div>
       <div className="flex justify-between py-2">
         {/* @ts-ignore */}
-        <div className={'flex items-center gap-2'}>
+        <div className={'flex items-center gap-4'}>
           <div className="flex items-center">
             <Icon name="arrow-right-short" size="20" color="green" />
             <span className="mx-1 font-medium">{filter.completed}</span><span>completed this step</span>
           </div>
           <div className={'flex items-center'}>
-            <Icon name="clock" size="20" />
+            <Icon name="clock" size="16" />
             <span className="mx-1 font-medium">
               {durationFormatted(filter.avgCompletionTime)}
             </span>
