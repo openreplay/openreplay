@@ -216,6 +216,7 @@ export default class UserTestManager {
       this.removeGreeting()
       this.durations.testStart = this.app.timestamp()
       void this.signalTest('begin')
+      this.container.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
       Object.assign(this.container.style, styles.containerWidgetStyle)
       this.showWidget(this.test?.guidelines || '', this.test?.tasks || [])
     }
@@ -251,12 +252,16 @@ export default class UserTestManager {
     })
     // Create title section
     const titleSection = this.createTitleSection()
+    this.container.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
     Object.assign(this.container.style, styles.containerWidgetStyle)
     const descriptionSection = this.createDescriptionSection(guidelines)
     const tasksSection = this.createTasksSection(tasks)
     const stopButton = createElement('div', 'stop_bn_or', styles.stopWidgetStyle, 'Abort Session')
+    const stopContainer = createElement('div', 'stop_ct_or', { fontSize: '13px!important' })
+    stopContainer.style.fontSize = '13px'
+    stopContainer.append(stopButton)
 
-    this.container.append(titleSection, descriptionSection, tasksSection, stopButton)
+    this.container.append(titleSection, descriptionSection, tasksSection, stopContainer)
     this.taskSection = tasksSection
     this.descriptionSection = descriptionSection
     this.stopButton = stopButton
@@ -296,6 +301,7 @@ export default class UserTestManager {
 
     const toggleWidget = (isVisible: boolean) => {
       this.widgetVisible = isVisible
+      this.container.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
       Object.assign(
         this.container.style,
         this.widgetVisible
@@ -427,6 +433,7 @@ export default class UserTestManager {
       allow_typing: boolean
     }[],
   ) {
+    this.container.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
     Object.assign(this.container.style, styles.containerWidgetStyle)
     const section = createElement('div', 'task_section_or', styles.descriptionWidgetStyle)
     const titleContainer = createElement('div', 'description_t_title_or', styles.sectionTitleStyle)
@@ -434,7 +441,7 @@ export default class UserTestManager {
       'div',
       'title',
       {
-        fontSize: '14px',
+        fontSize: '13px',
         fontWeight: '500',
         lineHeight: 'auto',
       },

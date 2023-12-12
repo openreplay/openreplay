@@ -9,7 +9,7 @@ export const bgStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: 999999,
-  fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";`,
+  fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
 }
 
 export const containerStyle = {
@@ -29,6 +29,7 @@ export const containerWidgetStyle = {
   gap: 'unset',
   'align-items': 'center',
   padding: 'unset',
+  fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
   'border-radius': '2px',
   border: '1px solid #D9D9D9',
   background: 'rgba(255, 255, 255, 0.75)',
@@ -183,7 +184,7 @@ export const stopWidgetStyle = {
   cursor: 'pointer',
   display: 'block',
   fontWeight: '500',
-  fontSize: 13,
+  fontSize: '13px!important',
   lineHeight: 'auto',
 }
 
