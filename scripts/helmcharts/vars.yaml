@@ -127,10 +127,10 @@ global:
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
-    assistRecordsBucket: "records"
-    vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
+    assistRecordsBucket: "records"
+    vaultBucket: "vault-data"
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
