@@ -29,7 +29,7 @@ export default class ConditionsManager {
         Authorization: `Bearer ${token}`,
       },
     })
-    const conditions = (await r.json()) as Condition[]
+    this.conditions = (await r.json()) as Condition[]
   }
 
   trigger() {
