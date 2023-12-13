@@ -33,7 +33,9 @@ describe('UserTestManager', () => {
   test('should create a greeting', () => {
     userTestManager.createGreeting('Hello', true, true)
     expect(document.body.innerHTML).toContain('Hello')
-    expect(document.body.innerHTML).toContain('Welcome, this session will be recorded.')
+    expect(document.body.innerHTML).toContain(
+      "We're recording this browser tab to learn from your experience.",
+    )
   })
 
   test('should show a widget with descriptions and tasks', () => {

@@ -61,7 +61,6 @@ export default class UserTestManager {
     this.userRecorder = new Recorder(app)
     const sessionId = this.app.getSessionID()
     const savedSessionId = this.app.localStorage.getItem(SESSION_ID)
-    console.log(sessionId, savedSessionId)
     if (sessionId !== savedSessionId) {
       this.app.localStorage.removeItem(this.storageKey)
       this.app.localStorage.removeItem(SESSION_ID)

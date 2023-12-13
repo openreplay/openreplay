@@ -1,1 +1,1 @@
-export const pkgVersion = '7.0.1-4'
+export const pkgVersion = '7.0.1'
