@@ -17,6 +17,10 @@ export default class ConditionsManager {
     private readonly startParams: StartOptions,
   ) {}
 
+  setConditions(conditions: Condition[]) {
+    this.conditions = conditions
+  }
+
   trigger() {
     try {
       void this.app.start(this.startParams)
@@ -51,12 +55,13 @@ export default class ConditionsManager {
   }
 
   processFlag(flag: string) {
-    if (this.conditions.some((c) => c.type === 'feature_flag' && c.value === flag)) {
+    if (this.conditions.some((c) => c.type === 'feature_flag' && c.value.includes(flag))) {
       this.trigger()
     }
   }
 
-  durationInt = null
+  durationInt: ReturnType<typeof setInterval> | null = null
+
   processDuration(durationSeconds: number) {
     this.durationInt = setInterval(() => {
       const sessionLength = performance.now()
@@ -145,21 +150,21 @@ export default class ConditionsManager {
 type CommonCondition = {
   type: 'visited_url' | 'request_url' | 'click_label' | 'click_selector' | 'custom_event'
   operator: keyof typeof operators
-  value: string
+  value: string[]
 }
 type ExceptionCondition = {
   type: 'exception'
   operator: 'contains' | 'startsWith' | 'endsWith'
-  value: string
+  value: string[]
 }
 type FeatureFlagCondition = {
   type: 'feature_flag'
   operator: 'is'
-  value: string
+  value: string[]
 }
 type SessionDurationCondition = {
   type: 'session_duration'
-  value: number
+  value: number[]
 }
 type Condition =
   | CommonCondition
@@ -168,10 +173,20 @@ type Condition =
   | SessionDurationCondition
 
 const operators = {
-  is: (val: string, target: string) => val === target,
-  isNot: (val: string, target: string) => val !== target,
-  contains: (val: string, target: string) => val.includes(target),
-  notContains: (val: string, target: string) => !val.includes(target),
-  startsWith: (val: string, target: string) => val.startsWith(target),
-  endsWith: (val: string, target: string) => val.endsWith(target),
+  is: (val: string, target: string[]) => target.includes(val),
+  isNot: (val: string, target: string[]) => !target.includes(val),
+  contains: (val: string, target: string[]) => target.some((t) => val.includes(t)),
+  notContains: (val: string, target: string[]) => !target.some((t) => val.includes(t)),
+  startsWith: (val: string, target: string[]) => target.some((t) => val.startsWith(t)),
+  endsWith: (val: string, target: string[]) => target.some((t) => val.endsWith(t)),
 }
+
+// in case of single target value
+// const operators = {
+//   is: (val: string, target: string) => val === target,
+//   isNot: (val: string, target: string) => val !== target,
+//   contains: (val: string, target: string) => val.includes(target),
+//   notContains: (val: string, target: string) => !val.includes(target),
+//   startsWith: (val: string, target: string) => val.startsWith(target),
+//   endsWith: (val: string, target: string) => val.endsWith(target),
+// }

@@ -1,3 +1,4 @@
+import ConditionsManager from '../modules/conditionsManager.js'
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
 import {
@@ -168,6 +169,7 @@ export default class App {
   public attributeSender: AttributeSender
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
+  private conditionsManager: ConditionsManager | null = null
 
   constructor(
     projectKey: string,
@@ -371,7 +373,7 @@ export default class App {
     if (this.activityState === ActivityState.ColdStart) {
       this.bufferedMessages1.push(message)
       this.bufferedMessages2.push(message)
-      return
+      this.conditionsManager?.processMessage(message)
     } else {
       this.messages.push(message)
     }
@@ -615,9 +617,12 @@ export default class App {
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
    * and we will then send buffered batch, so it won't get lost
    * */
-  public coldStart(startOpts: StartOptions = {}) {
+  public coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
     // TODO: add /start request to get auth token to check conditional triggers
     const second = 1000
+    if (conditional) {
+      this.conditionsManager = new ConditionsManager(this, startOpts)
+    }
     const cycle = () => {
       this.orderNumber += 1
       adjustTimeOrigin()
