@@ -37,7 +37,7 @@ export default class FeatureFlags {
     this.onFlagsCb = cb
   }
 
-  async reloadFlags() {
+  async reloadFlags(token?: string) {
     const persistFlagsStr = this.app.sessionStorage.getItem(this.storageKey)
     const persistFlags: Record<string, FetchPersistFlagsData> = {}
     if (persistFlagsStr) {
@@ -63,11 +63,12 @@ export default class FeatureFlags {
       persistFlags: persistFlags,
     }
 
+    const authToken = token ?? (this.app.session.getSessionToken() as string)
     const resp = await fetch(this.app.options.ingestPoint + '/v1/web/feature-flags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.app.session.getSessionToken() as string}`,
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(requestObject),
     })

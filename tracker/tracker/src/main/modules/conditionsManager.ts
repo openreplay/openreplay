@@ -7,6 +7,7 @@ import Message, {
   Type,
 } from '../../common/messages.gen.js'
 import App, { StartOptions } from '../app/index.js'
+import { IFeatureFlag } from './featureFlags.js'
 
 export default class ConditionsManager {
   conditions: Condition[] = []
@@ -21,10 +22,21 @@ export default class ConditionsManager {
     this.conditions = conditions
   }
 
+  async fetchConditions(token: string) {
+    const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    const conditions = (await r.json()) as Condition[]
+  }
+
   trigger() {
+    if (this.hasStarted) return
     try {
-      void this.app.start(this.startParams)
       this.hasStarted = true
+      void this.app.start(this.startParams)
     } catch (e) {
       this.app.debug.error(e)
     }
@@ -54,9 +66,15 @@ export default class ConditionsManager {
     }
   }
 
-  processFlag(flag: string) {
-    if (this.conditions.some((c) => c.type === 'feature_flag' && c.value.includes(flag))) {
-      this.trigger()
+  processFlags(flag: IFeatureFlag[]) {
+    const flagCond = this.conditions.find((c) => c.type === 'feature_flag') as
+      | FeatureFlagCondition
+      | undefined
+    if (flagCond) {
+      const operator = operators[flagCond.operator]
+      if (operator && flag.some((f) => operator(f.key, flagCond.value))) {
+        this.trigger()
+      }
     }
   }
 

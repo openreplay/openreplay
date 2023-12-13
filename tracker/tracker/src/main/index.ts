@@ -113,11 +113,7 @@ export default class API {
       )
       return
     }
-    const doNotTrack =
-      options.respectDoNotTrack &&
-      (navigator.doNotTrack == '1' ||
-        // @ts-ignore
-        window.doNotTrack == '1')
+    const doNotTrack = this.checkDoNotTrack()
     const failReason: string[] = []
     const conditions: string[] = [
       'Map',
@@ -180,15 +176,11 @@ export default class API {
     Network(app, options.network)
     Selection(app)
     Tabs(app)
-    this.featureFlags = new FeatureFlags(app)
     ;(window as any).__OPENREPLAY__ = this
 
-    app.attachStartCallback(() => {
-      if (options.flags?.onFlagsLoad) {
-        this.onFlagsLoad(options.flags.onFlagsLoad)
-      }
-      void this.featureFlags.reloadFlags()
-    })
+    if (options.flags?.onFlagsLoad) {
+      this.onFlagsLoad(options.flags.onFlagsLoad)
+    }
     const wOpen = window.open
     if (options.autoResetOnWindowOpen || options.resetTabOnWindowOpen) {
       app.attachStartCallback(() => {
@@ -213,12 +205,17 @@ export default class API {
     }
   }
 
-  signalStartIssue(reason: string, missingApi: string[]) {
-    const doNotTrack =
+  checkDoNotTrack() {
+    return (
       this.options.respectDoNotTrack &&
       (navigator.doNotTrack == '1' ||
         // @ts-ignore
         window.doNotTrack == '1')
+    )
+  }
+
+  signalStartIssue(reason: string, missingApi: string[]) {
+    const doNotTrack = this.checkDoNotTrack()
     const req = new XMLHttpRequest()
     const orig = this.options.ingestPoint || DEFAULT_INGEST_POINT
     req.open('POST', orig + '/v1/web/not-started')
@@ -238,23 +235,23 @@ export default class API {
   }
 
   onFlagsLoad(callback: (flags: IFeatureFlag[]) => void): void {
-    this.featureFlags.onFlagsLoad(callback)
+    this.app?.featureFlags.onFlagsLoad(callback)
   }
 
   clearPersistFlags() {
-    this.featureFlags.clearPersistFlags()
+    this.app?.featureFlags.clearPersistFlags()
   }
 
   reloadFlags() {
-    return this.featureFlags.reloadFlags()
+    return this.app?.featureFlags.reloadFlags()
   }
 
   getFeatureFlag(flagName: string): IFeatureFlag | undefined {
-    return this.featureFlags.getFeatureFlag(flagName)
+    return this.app?.featureFlags.getFeatureFlag(flagName)
   }
 
   getAllFeatureFlags() {
-    return this.featureFlags.flags
+    return this.app?.featureFlags.flags
   }
 
   use<T>(fn: (app: App | null, options?: Options) => T): T {
@@ -291,7 +288,7 @@ export default class API {
     if (this.app === null) {
       return
     }
-    this.app.coldStart(startOpts)
+    void this.app.coldStart(startOpts)
   }
 
   stop(): string | undefined {

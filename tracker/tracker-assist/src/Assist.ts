@@ -318,7 +318,7 @@ export default class Assist {
       if (this.app.active()) {
         this.assistDemandedRestart = true
         this.app.stop()
-        this.app.clearBurgers()
+        this.app.clearBuffers()
         setTimeout(() => {
           this.app.start().then(() => { this.assistDemandedRestart = false })
             .then(() => {

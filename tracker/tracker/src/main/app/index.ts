@@ -1,4 +1,5 @@
 import ConditionsManager from '../modules/conditionsManager.js'
+import FeatureFlags from '../modules/featureFlags.js'
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
 import {
@@ -170,6 +171,7 @@ export default class App {
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
+  public featureFlags: FeatureFlags
 
   constructor(
     projectKey: string,
@@ -177,9 +179,6 @@ export default class App {
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
   ) {
-    // if (options.onStart !== undefined) {
-    //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
-    // } ?? maybe onStart is good
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
     this.networkOptions = options.network
@@ -211,6 +210,7 @@ export default class App {
       this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
     }
 
+    this.featureFlags = new FeatureFlags(this)
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
@@ -617,11 +617,41 @@ export default class App {
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
    * and we will then send buffered batch, so it won't get lost
    * */
-  public coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+  public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
     // TODO: add /start request to get auth token to check conditional triggers
     const second = 1000
     if (conditional) {
       this.conditionsManager = new ConditionsManager(this, startOpts)
+    }
+    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
+    const needNewSessionID = startOpts.forceNew || lsReset
+    const sessionToken = this.session.getSessionToken()
+    const isNewSession = needNewSessionID || !sessionToken
+
+    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...this.getTrackerInfo(),
+        timestamp: now(),
+        doNotRecord: true,
+        bufferDiff: 0,
+        userID: this.session.getInfo().userID,
+        token: undefined,
+        deviceMemory,
+        jsHeapSizeLimit,
+        timezone: getTimezone(),
+      }),
+    })
+    // this token is needed to fetch conditions and flags,
+    // but it can't be used to record a session
+    const { token } = await r.json()
+    if (conditional) {
+      await this.conditionsManager?.fetchConditions(token as string)
+      await this.featureFlags.reloadFlags(token as string)
+      this.conditionsManager?.processFlags(this.featureFlags.flags)
     }
     const cycle = () => {
       this.orderNumber += 1
@@ -650,12 +680,7 @@ export default class App {
         userID: startOpts.userID,
         metadata: startOpts.metadata,
       })
-      const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
-      const needNewSessionID = startOpts.forceNew || lsReset
-      const sessionToken = this.session.getSessionToken()
-      const isNewSession = needNewSessionID || !sessionToken
       if (!isNewSession) {
-        this.debug.log('continuing session on new tab', this.session.getTabId())
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.send(TabChange(this.session.getTabId()))
       }
@@ -852,7 +877,7 @@ export default class App {
         }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-
+        void this.featureFlags.reloadFlags()
         /** --------------- COLD START BUFFER ------------------*/
         this.activityState = ActivityState.Active
         if (isColdStart) {
@@ -978,7 +1003,7 @@ export default class App {
     return this.session.getTabId()
   }
 
-  clearBurgers() {
+  clearBuffers() {
     this.bufferedMessages1.length = 0
     this.bufferedMessages2.length = 0
   }
