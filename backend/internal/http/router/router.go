@@ -117,6 +117,7 @@ func (e *Router) init() {
 		"/v1/web/uxt/test/{id}":  e.getUXTestInfo,
 		"/v1/web/uxt/upload-url": e.getUXUploadUrl,
 		"/v1/web/tags":           e.getTags,
+		"/v1/web/conditions":     e.getConditions,
 	}
 	prefix := "/ingest"
 
