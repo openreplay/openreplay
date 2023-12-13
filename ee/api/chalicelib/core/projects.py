@@ -120,6 +120,7 @@ async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = Fals
 
     async with orpy.get().database.connection() as cnx:
         async with cnx.transaction():
+            # TODO: cursor
             out = await _get_projects(cnx)
             return out
 
