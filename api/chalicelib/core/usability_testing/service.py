@@ -2,7 +2,7 @@ import logging
 
 from fastapi import HTTPException, status
 
-from chalicelib.core.db_request_handler import DatabaseRequestHandler
+from chalicelib.utils.db_request_handler import DatabaseRequestHandler
 from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import dict_to_camel_case, list_to_camel_case
