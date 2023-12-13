@@ -1,10 +1,10 @@
 import ast
+import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, performance_event, metrics
+from chalicelib.core import events, metadata, projects, performance_event, metrics, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-import logging
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -1665,3 +1665,29 @@ def check_recording_status(project_id: int) -> dict:
         "recordingStatus": row["recording_status"],
         "sessionsCount": row["sessions_count"]
     }
+
+
+# TODO: rewrite this function to use ClickHouse
+def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
+                           ascending: bool = False) -> dict:
+    if session_ids is None or len(session_ids) == 0:
+        return {"total": 0, "sessions": []}
+    with pg_client.PostgresClient() as cur:
+        meta_keys = metadata.get(project_id=project_id)
+        params = {"project_id": project_id, "session_ids": tuple(session_ids)}
+        order_direction = 'ASC' if ascending else 'DESC'
+        main_query = cur.mogrify(f"""SELECT {sessions_legacy.SESSION_PROJECTION_BASE_COLS}
+                                            {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                     FROM public.sessions AS s
+                                        WHERE project_id=%(project_id)s 
+                                            AND session_id IN %(session_ids)s
+                                     ORDER BY {sort_by} {order_direction};""", params)
+
+        cur.execute(main_query)
+        rows = cur.fetchall()
+        if len(meta_keys) > 0:
+            for s in rows:
+                s["metadata"] = {}
+                for m in meta_keys:
+                    s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows)}
