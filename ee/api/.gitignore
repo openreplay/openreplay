@@ -274,3 +274,4 @@ Pipfile.lock
 /orpy.py
 /chalicelib/core/usability_testing/
 /NOTES.md
+/chalicelib/utils/db_request_handler.py
