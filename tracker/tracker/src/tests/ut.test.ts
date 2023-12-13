@@ -34,7 +34,7 @@ describe('UserTestManager', () => {
     userTestManager.createGreeting('Hello', true, true)
     expect(document.body.innerHTML).toContain('Hello')
     expect(document.body.innerHTML).toContain(
-      "We're recording this browser tab to learn from your experience.",
+      `Welcome, you're here to help us improve, not to be judged.`,
     )
   })
 
