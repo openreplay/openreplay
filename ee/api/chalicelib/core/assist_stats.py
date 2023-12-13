@@ -1,11 +1,12 @@
 import logging
-from datetime import datetime
 
 from fastapi import HTTPException
 
 from chalicelib.utils import pg_client, helper
+from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import AssistStatsSessionsRequest, AssistStatsSessionsResponse, AssistStatsTopMembersResponse
 
+logger = logging.getLogger(__name__)
 event_type_mapping = {
     "sessionsAssisted": "assist",
     "assistDuration": "assist",
@@ -17,12 +18,12 @@ event_type_mapping = {
 def insert_aggregated_data():
     try:
         logging.info("Assist Stats: Inserting aggregated data")
-        end_timestamp = int(datetime.timestamp(datetime.now())) * 1000
+        end_timestamp = TimeUTC.now()
         start_timestamp = __last_run_end_timestamp_from_aggregates()
 
         if start_timestamp is None:  # first run
             logging.info("Assist Stats: First run, inserting data for last 7 days")
-            start_timestamp = end_timestamp - (7 * 24 * 60 * 60 * 1000)
+            start_timestamp = end_timestamp - TimeUTC.MS_WEEK
 
         offset = 0
         chunk_size = 1000
@@ -103,9 +104,8 @@ def __last_run_end_timestamp_from_aggregates():
         result = cur.fetchone()
         last_run_time = result['last_run_time'] if result else None
 
-    if last_run_time is None:  # first run handle all data
-        sql = "SELECT MIN(timestamp) as last_timestamp FROM assist_events;"
-        with pg_client.PostgresClient() as cur:
+        if last_run_time is None:  # first run handle all data
+            sql = "SELECT MIN(timestamp) as last_timestamp FROM assist_events;"
             cur.execute(sql)
             result = cur.fetchone()
             last_run_time = result['last_timestamp'] if result else None

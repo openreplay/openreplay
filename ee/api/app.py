@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     await events_queue.init()
     app.schedule.start()
 
-    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs + traces.cron_jobs + ee_crons.ee_cron_jobs:
+    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs + traces.cron_jobs + ee_crons.cron_jobs:
         app.schedule.add_job(id=job["func"].__name__, **job)
 
     ap_logger.info(">Scheduled jobs:")
