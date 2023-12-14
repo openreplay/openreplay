@@ -647,8 +647,17 @@ export default class App {
       })
       // this token is needed to fetch conditions and flags,
       // but it can't be used to record a session
-      const { token, userBrowser, userCity, userCountry, userDevice, userOS, userState } =
-        await r.json()
+      const {
+        token,
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
+        projectID,
+      } = await r.json()
+      this.session.assign({ projectID })
       this.session.setUserInfo({
         userBrowser,
         userCity,
