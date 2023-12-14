@@ -1,10 +1,10 @@
 import ast
+import logging
 from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-import logging
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -434,7 +434,6 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         full_args["issues_limit"] = data.limit
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
-        print(full_args)
         main_query = cur.format(f"""SELECT issues.type                             AS name,
                                                  issues.context_string                   AS value,
                                                  COUNT(DISTINCT raw_sessions.session_id) AS session_count,
@@ -1391,15 +1390,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         _value_conditions_not.append(_p)
                         value_conditions_not.append(p)
                 del _value_conditions_not
-                sequence_conditions += value_conditions_not
+                # sequence_conditions += value_conditions_not
                 events_extra_join += f"""LEFT ANTI JOIN ( SELECT DISTINCT session_id
                                         FROM {MAIN_EVENTS_TABLE} AS main
                                         WHERE {' AND '.join(__events_where_basic)}
                                             AND ({' OR '.join(value_conditions_not)})) AS sub USING(session_id)"""
 
-            # if has_values:
-            #     events_conditions = [c for c in list(set(sequence_conditions))]
-            #     events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+            if has_values and len(sequence_conditions) > 0:
+                events_conditions = [c for c in list(set(sequence_conditions))]
+                events_conditions_where.append(f"({' OR '.join(events_conditions)})")
 
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
