@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.16.0'
+SELECT 'v1.17.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
