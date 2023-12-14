@@ -1,100 +1,94 @@
 package integrations
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
+	"time"
 
-	"github.com/jackc/pgx/v4"
-
-	"openreplay/backend/pkg/db/postgres/pool"
+	config "openreplay/backend/internal/config/integrations"
+	"openreplay/backend/pkg/intervals"
+	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/token"
 )
 
 type Listener struct {
-	conn         *pgx.Conn
-	db           pool.Pool
-	Integrations chan *Integration
-	Errors       chan error
+	cfg       *config.Config
+	storage   Storage
+	producer  types.Producer
+	manager   *Manager
+	tokenizer *token.Tokenizer
+	Errors    chan error
 }
 
-type Integration struct {
-	ProjectID   uint32          `json:"project_id"`
-	Provider    string          `json:"provider"`
-	RequestData json.RawMessage `json:"request_data"`
-	Options     json.RawMessage `json:"options"`
-}
-
-func New(db pool.Pool, url string) (*Listener, error) {
-	conn, err := pgx.Connect(context.Background(), url)
+func New(cfg *config.Config, storage Storage, producer types.Producer, manager *Manager, tokenizer *token.Tokenizer) (*Listener, error) {
+	listener := &Listener{
+		cfg:       cfg,
+		storage:   storage,
+		Errors:    make(chan error),
+		producer:  producer,
+		manager:   manager,
+		tokenizer: tokenizer,
+	}
+	ints, err := storage.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	listener := &Listener{
-		conn:   conn,
-		db:     db,
-		Errors: make(chan error),
+	for _, i := range ints {
+		// Add new integration to manager
+		if err = manager.Update(i); err != nil {
+			log.Printf("Integration parse error: %v | Integration: %v\n", err, *i)
+		}
 	}
-	listener.Integrations = make(chan *Integration, 50)
-	if _, err := conn.Exec(context.Background(), "LISTEN integration"); err != nil {
-		return nil, err
-	}
-	go listener.listen()
+	manager.RequestAll()
+	go listener.worker()
 	return listener, nil
 }
 
-func (listener *Listener) listen() {
+func (l *Listener) worker() {
+	clientsCheckTick := time.Tick(intervals.INTEGRATIONS_REQUEST_INTERVAL * time.Millisecond)
+
 	for {
-		notification, err := listener.conn.WaitForNotification(context.Background())
-		if err != nil {
-			listener.Errors <- err
-			continue
-		}
-		switch notification.Channel {
-		case "integration":
-			integrationP := new(Integration)
-			if err := json.Unmarshal([]byte(notification.Payload), integrationP); err != nil {
-				listener.Errors <- fmt.Errorf("%v | Payload: %v", err, notification.Payload)
-			} else {
-				listener.Integrations <- integrationP
+		select {
+		case <-clientsCheckTick:
+			l.manager.RequestAll()
+		case event := <-l.manager.Events:
+			log.Printf("New integration event: %+v\n", *event.IntegrationEvent)
+			sessionID := event.SessionID
+			if sessionID == 0 {
+				sessData, err := l.tokenizer.Parse(event.Token)
+				if err != nil && err != token.EXPIRED {
+					log.Printf("Error on token parsing: %v; Token: %v", err, event.Token)
+					continue
+				}
+				sessionID = sessData.ID
+			}
+			// Why do we produce integration events to analytics topic
+			l.producer.Produce(l.cfg.TopicAnalytics, sessionID, event.IntegrationEvent.Encode())
+		case err := <-l.manager.Errors:
+			log.Printf("Integration error: %v\n", err)
+		case i := <-l.manager.RequestDataUpdates:
+			if err := l.storage.Update(&i); err != nil {
+				log.Printf("Postgres Update request_data error: %v\n", err)
+			}
+		default:
+			newNotification, err := l.storage.CheckNew()
+			if err != nil {
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					continue
+				}
+				l.Errors <- fmt.Errorf("Integration storage error: %v", err)
+				continue
+			}
+			log.Printf("Integration update: %v\n", *newNotification)
+			err = l.manager.Update(newNotification)
+			if err != nil {
+				log.Printf("Integration parse error: %v | Integration: %v\n", err, *newNotification)
 			}
 		}
 	}
 }
 
-func (listener *Listener) Close() error {
-	return listener.conn.Close(context.Background())
-}
-
-func (listener *Listener) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
-	rows, err := listener.db.Query(`
-		SELECT project_id, provider, options, request_data
-		FROM integrations
-	`)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		i := new(Integration)
-		if err := rows.Scan(&i.ProjectID, &i.Provider, &i.Options, &i.RequestData); err != nil {
-			iter(nil, err)
-			continue
-		}
-		iter(i, nil)
-	}
-
-	if err = rows.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (listener *Listener) UpdateIntegrationRequestData(i *Integration) error {
-	return listener.db.Exec(`
-		UPDATE integrations 
-		SET request_data = $1 
-		WHERE project_id=$2 AND provider=$3`,
-		i.RequestData, i.ProjectID, i.Provider,
-	)
+func (l *Listener) Close() error {
+	return l.storage.UnListen()
 }

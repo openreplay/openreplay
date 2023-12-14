@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"encoding/json"
@@ -46,7 +46,7 @@ func (sn *sentry) Request(c *client) error {
 	req.Header.Add("Authorization", authHeader)
 
 	// by link ?
-	lastEventId := c.getLastMessageId()
+	lastEventId := c.requestData.GetLastMessageId()
 	firstEvent := true
 
 PageLoop:
@@ -88,7 +88,7 @@ PageLoop:
 			timestamp := uint64(parsedTime.UnixMilli())
 			// TODO: not to receive all the messages (use default integration timestamp)
 			if firstEvent { // TODO: reverse range?
-				c.setLastMessageId(timestamp, e.EventID)
+				c.requestData.SetLastMessageId(timestamp, e.EventID)
 				firstEvent = false
 			}
 

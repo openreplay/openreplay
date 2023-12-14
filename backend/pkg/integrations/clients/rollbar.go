@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"encoding/json"
@@ -60,12 +60,12 @@ type rollbarJobStatusResponce struct {
 type rollbarEvent map[string]string
 
 /*
-  It is possible to use /api/1/instances (20 per page)
-	Jobs for the identical requests are hashed
+	  It is possible to use /api/1/instances (20 per page)
+		Jobs for the identical requests are hashed
 */
 func (rb *rollbar) Request(c *client) error {
-	fromTs := c.getLastMessageTimestamp() + 1000 // From next second
-	c.setLastMessageTimestamp(fromTs)            // anti-job-hashing
+	fromTs := c.requestData.GetLastMessageTimestamp() + 1000 // From next second
+	c.requestData.SetLastMessageTimestamp(fromTs)            // anti-job-hashing
 	fromTsSec := fromTs / 1e3
 	query := fmt.Sprintf(RB_QUERY, fromTsSec)
 	jsonBody := fmt.Sprintf(`{
@@ -153,7 +153,7 @@ func (rb *rollbar) Request(c *client) error {
 					continue
 				}
 				timestamp := timestampSec * 1000
-				c.setLastMessageTimestamp(timestamp)
+				c.requestData.SetLastMessageTimestamp(timestamp)
 				c.evChan <- &SessionErrorEvent{
 					Token: e["body.message.openReplaySessionToken"],
 					IntegrationEvent: &messages.IntegrationEvent{

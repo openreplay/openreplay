@@ -1,10 +1,9 @@
-package integration
+package clients
 
 import (
 	"cloud.google.com/go/logging/logadmin"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-
 	//"strconv"
 	"context"
 	"encoding/json"
@@ -33,7 +32,7 @@ type saCreds struct {
 }
 
 func (sd *stackdriver) Request(c *client) error {
-	fromTs := c.getLastMessageTimestamp() + 1 // Timestamp is RFC3339Nano, so we take the next millisecond
+	fromTs := c.requestData.GetLastMessageTimestamp() + 1 // Timestamp is RFC3339Nano, so we take the next millisecond
 	fromFormatted := time.UnixMilli(int64(fromTs)).Format(time.RFC3339Nano)
 	ctx := context.Background()
 
@@ -85,7 +84,7 @@ func (sd *stackdriver) Request(c *client) error {
 			continue
 		}
 		timestamp := uint64(e.Timestamp.UnixMilli())
-		c.setLastMessageTimestamp(timestamp)
+		c.requestData.SetLastMessageTimestamp(timestamp)
 		c.evChan <- &SessionErrorEvent{
 			//SessionID: sessionID,
 			Token: token,

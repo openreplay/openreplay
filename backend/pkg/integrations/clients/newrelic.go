@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"encoding/json"
@@ -27,18 +27,16 @@ type newrelicResponce struct {
 	Results []struct {
 		Events []json.RawMessage
 	}
-	// Metadata
 }
 
 type newrelicEvent struct {
-	//AsayerSessionID uint64 `json:"asayer_session_id,string"`  //  string/int decoder?
 	OpenReplaySessionToken string `json:"openReplaySessionToken"`
 	ErrorClass             string `json:"error.class"`
 	Timestamp              uint64 `json:"timestamp"`
 }
 
 func (nr *newrelic) Request(c *client) error {
-	sinceTs := c.getLastMessageTimestamp() + 1000 // From next second
+	sinceTs := c.requestData.GetLastMessageTimestamp() + 1000 // From next second
 	// In docs - format "yyyy-mm-dd HH:MM:ss", but time.RFC3339 works fine too
 	sinceFormatted := time.UnixMilli(int64(sinceTs)).Format(time.RFC3339)
 	// US/EU endpoint ??
@@ -86,7 +84,7 @@ func (nr *newrelic) Request(c *client) error {
 				continue
 			}
 
-			c.setLastMessageTimestamp(e.Timestamp)
+			c.requestData.SetLastMessageTimestamp(e.Timestamp)
 			c.evChan <- &SessionErrorEvent{
 				Token: e.OpenReplaySessionToken,
 				IntegrationEvent: &messages.IntegrationEvent{

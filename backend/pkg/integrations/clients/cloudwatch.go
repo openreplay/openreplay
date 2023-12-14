@@ -1,11 +1,10 @@
-package integration
+package clients
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-
 	"openreplay/backend/pkg/messages"
 	"regexp"
 	"strings"
@@ -21,7 +20,7 @@ type cloudwatch struct {
 }
 
 func (cw *cloudwatch) Request(c *client) error {
-	startTs := int64(c.getLastMessageTimestamp() + 1) // From next millisecond
+	startTs := int64(c.requestData.GetLastMessageTimestamp() + 1) // From next millisecond
 	//endTs := utils.CurrentTimestamp()
 	sess, err := session.NewSession(aws.NewConfig().
 		WithRegion(cw.Region).
@@ -40,7 +39,7 @@ func (cw *cloudwatch) Request(c *client) error {
 		// SetLimit(10000). // Default 10000
 		SetLogGroupName(cw.LogGroupName).
 		SetFilterPattern("openReplaySessionToken")
-		//SetFilterPattern("asayer_session_id")
+	//SetFilterPattern("asayer_session_id")
 
 	for {
 		output, err := svc.FilterLogEvents(filterOptions)
@@ -64,7 +63,7 @@ func (cw *cloudwatch) Request(c *client) error {
 				name = *e.LogStreamName
 			}
 			timestamp := uint64(*e.Timestamp)
-			c.setLastMessageTimestamp(timestamp)
+			c.requestData.SetLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				Token: token,

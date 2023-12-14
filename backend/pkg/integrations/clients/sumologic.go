@@ -1,4 +1,4 @@
-package integration
+package clients
 
 import (
 	"encoding/json"
@@ -13,10 +13,10 @@ import (
 )
 
 /*
-	The maximum value for limit is 10,000 messages or 100 MB in total message size,
-	which means the query may return less than 10,000 messages if you exceed the size limit.
+The maximum value for limit is 10,000 messages or 100 MB in total message size,
+which means the query may return less than 10,000 messages if you exceed the size limit.
 
-	API Documentation: https://help.sumologic.com/APIs/Search-Job-API/About-the-Search-Job-API
+API Documentation: https://help.sumologic.com/APIs/Search-Job-API/About-the-Search-Job-API
 */
 const SL_LIMIT = 10000
 
@@ -67,7 +67,7 @@ func (sl *sumologic) deleteJob(jobId string, errChan chan<- error) {
 }
 
 func (sl *sumologic) Request(c *client) error {
-	fromTs := c.getLastMessageTimestamp() + 1 // From next millisecond
+	fromTs := c.requestData.GetLastMessageTimestamp() + 1 // From next millisecond
 	toTs := time.Now().UnixMilli()
 	requestURL := fmt.Sprintf("https://api.%vsumologic.com/api/v1/search/jobs", "eu.") // deployment server??
 	jsonBody := fmt.Sprintf(`{
@@ -189,7 +189,7 @@ func (sl *sumologic) Request(c *client) error {
 					if len(name) > 20 {
 						name = name[:20] // not sure about that
 					}
-					c.setLastMessageTimestamp(e.Timestamp)
+					c.requestData.SetLastMessageTimestamp(e.Timestamp)
 					c.evChan <- &SessionErrorEvent{
 						//SessionID: sessionID,
 						Token: token,
