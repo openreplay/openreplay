@@ -19,7 +19,15 @@ $fn_def$, :'next_version')
 
 --
 
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS has_ut_test boolean DEFAULT FALSE;
 
+-- !!! The following query takes a lot of time
+CREATE INDEX IF NOT EXISTS sessions_session_id_has_ut_test_idx ON public.sessions (session_id, has_ut_test);
+
+UPDATE public.sessions
+SET has_ut_test= TRUE
+WHERE session_id IN (SELECT session_id FROM public.ut_tests_signals);
 
 COMMIT;
 
