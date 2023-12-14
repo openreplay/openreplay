@@ -58,6 +58,7 @@ interface Props extends RouteComponentProps {
   checkForLatestSessions: () => void;
   toggleFavorite: (sessionId: string) => Promise<void>;
   sites: object[];
+  isLoggedIn: boolean;
   siteId: string;
 }
 
