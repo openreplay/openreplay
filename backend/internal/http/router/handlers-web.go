@@ -628,14 +628,14 @@ func (e *Router) getConditions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, err := e.services.Sessions.Get(sessInfo.ID)
-	if err != nil {
-		ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
-		return
-	}
+	//sess, err := e.services.Sessions.Get(sessInfo.ID)
+	//if err != nil {
+	//	ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+	//	return
+	//}
 
 	// Get task info
-	info, err := e.services.Conditions.Get(sess.ProjectID)
+	info, err := e.services.Conditions.Get(uint32(sessInfo.ID)) //sess.ProjectID)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
