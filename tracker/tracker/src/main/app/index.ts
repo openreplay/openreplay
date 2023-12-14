@@ -208,6 +208,7 @@ export default class App {
       this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
     }
 
+    this.featureFlags = new FeatureFlags(this)
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
