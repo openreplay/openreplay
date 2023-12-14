@@ -23,13 +23,18 @@ export default class ConditionsManager {
   }
 
   async fetchConditions(token: string) {
-    const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    this.conditions = (await r.json()) as Condition[]
+    try {
+      const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const { conditions } = await r.json()
+      this.conditions = conditions as Condition[]
+    } catch (e) {
+      this.app.debug.error('Critical: cannot fetch start conditions')
+    }
   }
 
   trigger() {

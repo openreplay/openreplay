@@ -266,29 +266,35 @@ export default class API {
   }
 
   start(startOpts?: Partial<StartOptions>): Promise<StartPromiseReturn> {
-    if (!IN_BROWSER) {
-      console.error(
-        `OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
-      )
+    if (this.browserEnvCheck()) {
+      if (this.app === null) {
+        return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
+      }
+      return this.app.start(startOpts)
+    } else {
       return Promise.reject('Trying to start not in browser.')
     }
-    if (this.app === null) {
-      return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
-    }
-    return this.app.start(startOpts)
   }
 
-  coldStart(startOpts?: Partial<StartOptions>) {
+  browserEnvCheck() {
     if (!IN_BROWSER) {
       console.error(
         `OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
       )
-      return
+      return false
     }
-    if (this.app === null) {
-      return
+    return true
+  }
+
+  coldStart(startOpts?: Partial<StartOptions>, conditional?: boolean) {
+    if (this.browserEnvCheck()) {
+      if (this.app === null) {
+        return Promise.reject('Tracker not initialized')
+      }
+      void this.app.coldStart(startOpts, conditional)
+    } else {
+      return Promise.reject('Trying to start not in browser.')
     }
-    void this.app.coldStart(startOpts)
   }
 
   stop(): string | undefined {

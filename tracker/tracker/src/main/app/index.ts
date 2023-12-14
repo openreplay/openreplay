@@ -210,7 +210,6 @@ export default class App {
       this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
     }
 
-    this.featureFlags = new FeatureFlags(this)
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
@@ -223,6 +222,7 @@ export default class App {
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
     this.session = new Session(this, this.options)
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
+    this.featureFlags = new FeatureFlags(this)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -627,28 +627,36 @@ export default class App {
     const needNewSessionID = startOpts.forceNew || lsReset
     const sessionToken = this.session.getSessionToken()
     const isNewSession = needNewSessionID || !sessionToken
-
-    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...this.getTrackerInfo(),
-        timestamp: now(),
-        doNotRecord: true,
-        bufferDiff: 0,
-        userID: this.session.getInfo().userID,
-        token: undefined,
-        deviceMemory,
-        jsHeapSizeLimit,
-        timezone: getTimezone(),
-      }),
-    })
-    // this token is needed to fetch conditions and flags,
-    // but it can't be used to record a session
-    const { token } = await r.json()
     if (conditional) {
+      const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...this.getTrackerInfo(),
+          timestamp: now(),
+          doNotRecord: true,
+          bufferDiff: 0,
+          userID: this.session.getInfo().userID,
+          token: undefined,
+          deviceMemory,
+          jsHeapSizeLimit,
+          timezone: getTimezone(),
+        }),
+      })
+      // this token is needed to fetch conditions and flags,
+      // but it can't be used to record a session
+      const { token, userBrowser, userCity, userCountry, userDevice, userOS, userState } =
+        await r.json()
+      this.session.setUserInfo({
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
+      })
       await this.conditionsManager?.fetchConditions(token as string)
       await this.featureFlags.reloadFlags(token as string)
       this.conditionsManager?.processFlags(this.featureFlags.flags)
