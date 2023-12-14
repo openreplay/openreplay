@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.16.0-ee'
+SELECT 'v1.17.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -460,6 +460,7 @@ $$
                 referrer                text         NULL     DEFAULT NULL,
                 base_referrer           text         NULL     DEFAULT NULL,
                 file_key                bytea                 DEFAULT NULL,
+                has_ut_test             boolean               DEFAULT FALSE,
                 metadata_1              text                  DEFAULT NULL,
                 metadata_2              text                  DEFAULT NULL,
                 metadata_3              text                  DEFAULT NULL,
@@ -515,12 +516,13 @@ $$
             CREATE INDEX sessions_utm_medium_gin_idx ON public.sessions USING GIN (utm_medium gin_trgm_ops);
             CREATE INDEX sessions_utm_campaign_gin_idx ON public.sessions USING GIN (utm_campaign gin_trgm_ops);
             CREATE INDEX sessions_base_referrer_gin_idx ON public.sessions USING GIN (base_referrer gin_trgm_ops);
+            CREATE INDEX sessions_session_id_has_ut_test_idx ON public.sessions (session_id, has_ut_test);
 
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_browser_constraint CHECK (
-                        (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
-                        (sessions.platform != 'web' AND sessions.user_browser ISNULL));
+                    (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
+                    (sessions.platform != 'web' AND sessions.user_browser ISNULL));
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_user_browser_version_constraint CHECK ( sessions.platform = 'web' OR sessions.user_browser_version ISNULL);
