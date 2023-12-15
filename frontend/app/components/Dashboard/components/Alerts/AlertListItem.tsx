@@ -79,7 +79,7 @@ interface Props extends RouteComponentProps {
   init: (alert: Alert) => void;
   demo?: boolean;
   webhooks: Array<any>;
-  triggerOptions: Record<string, any>;
+  triggerOptions?: Record<string, any>;
 }
 
 function AlertListItem(props: Props) {

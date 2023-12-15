@@ -38,16 +38,20 @@ export default class AlertsStore {
     }
   };
 
-  save = async (inst: Alert) => {
-    this.loading = true;
-    try {
-      await alertsService.save(inst ? inst : this.instance);
-      this.instance.isExists = true;
-    } catch (e) {
-      console.error(e);
-    } finally {
-      this.loading = false;
-    }
+  save = (inst: Alert): Promise<void> => {
+    return new Promise<void>(async (resolve, reject) => {
+      this.loading = true;
+      try {
+        await alertsService.save(inst ? inst : this.instance);
+        this.instance.isExists = true;
+        resolve();
+      } catch (e) {
+        console.error(e);
+        reject(e);
+      } finally {
+        this.loading = false;
+      }
+    });
   };
 
   remove = async (id: string) => {
