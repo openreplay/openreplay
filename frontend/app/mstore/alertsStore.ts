@@ -54,15 +54,19 @@ export default class AlertsStore {
     });
   };
 
-  remove = async (id: string) => {
-    this.loading = true;
-    try {
-      await alertsService.remove(id);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      this.loading = false;
-    }
+  remove = (id: string): Promise<void> => {
+    return new Promise<void>(async (resolve, reject) => {
+      this.loading = true;
+      try {
+        await alertsService.remove(id);
+        resolve();
+      } catch (e) {
+        console.error(e);
+        reject(e);
+      } finally {
+        this.loading = false;
+      }
+    });
   };
 
   fetchTriggerOptions = async () => {
