@@ -642,7 +642,8 @@ export const addElementToLiveFiltersMap = (
   icon = 'filters/metadata'
 ) => {
   liveFiltersMap[key] = {
-    key, type, category, label: capitalize(key),
+    key, type, category,
+    label: key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2),
     operator: operator,
     operatorOptions,
     icon,
