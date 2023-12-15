@@ -10,7 +10,7 @@ def transform_email(email: str) -> str:
 
 
 def int_to_string(value: int) -> str:
-    return str(value) if isinstance(value, int) else int
+    return str(value) if isinstance(value, int) else value
 
 
 def remove_whitespace(value: str) -> str:
