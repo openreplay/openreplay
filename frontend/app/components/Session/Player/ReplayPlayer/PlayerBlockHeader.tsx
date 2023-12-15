@@ -54,7 +54,7 @@ function PlayerBlockHeader(props: any) {
   const backHandler = () => {
     if (
       sessionPath.pathname === history.location.pathname ||
-      sessionPath.pathname.includes('/session/')
+      sessionPath.pathname.includes('/session/') || sessionPath.pathname.includes('/assist/')
     ) {
       history.push(withSiteId(SESSIONS_ROUTE, siteId));
     } else {
