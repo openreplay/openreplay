@@ -54,6 +54,7 @@ interface OnStartInfo {
 
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
+const bufferStorageKey = 'or_buffer_1'
 const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & {
   success: true
@@ -149,8 +150,8 @@ export default class App {
    * we need 2 buffers so we don't lose anything
    * @read coldStart implementation
    * */
-  private readonly bufferedMessages1: Array<Message> = []
-  private readonly bufferedMessages2: Array<Message> = []
+  private bufferedMessages1: Array<Message> = []
+  private bufferedMessages2: Array<Message> = []
   /* private */
   readonly observer: Observer // non-private for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
@@ -372,7 +373,9 @@ export default class App {
     // ====================================================
     if (this.activityState === ActivityState.ColdStart) {
       this.bufferedMessages1.push(message)
-      this.bufferedMessages2.push(message)
+      if (!this.singleBuffer) {
+        this.bufferedMessages2.push(message)
+      }
       this.conditionsManager?.processMessage(message)
     } else {
       this.messages.push(message)
@@ -611,22 +614,27 @@ export default class App {
   coldInterval: ReturnType<typeof setInterval> | null = null
   orderNumber = 0
   coldStartTs = 0
+  singleBuffer = false
 
+  private checkSessionToken(forceNew?: boolean) {
+    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
+    const needNewSessionID = forceNew || lsReset
+    const sessionToken = this.session.getSessionToken()
+
+    return needNewSessionID || !sessionToken
+  }
   /**
    * start buffering messages without starting the actual session, which gives
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
-    // TODO: add /start request to get auth token to check conditional triggers
+    this.singleBuffer = false
     const second = 1000
     if (conditional) {
       this.conditionsManager = new ConditionsManager(this, startOpts)
     }
-    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
-    const needNewSessionID = startOpts.forceNew || lsReset
-    const sessionToken = this.session.getSessionToken()
-    const isNewSession = needNewSessionID || !sessionToken
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
     if (conditional) {
       const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
@@ -710,6 +718,62 @@ export default class App {
     cycle()
   }
 
+  public offlineRecording(startOpts: StartOptions = {}) {
+    this.singleBuffer = true
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    adjustTimeOrigin()
+    this.coldStartTs = now()
+    this.bufferedMessages1.length = 0
+    const saverBuffer = this.localStorage.getItem(bufferStorageKey)
+    if (saverBuffer) {
+      const data = JSON.parse(saverBuffer)
+      this.bufferedMessages1 = Array.isArray(data) ? data : []
+      this.localStorage.removeItem(bufferStorageKey)
+    }
+    this.bufferedMessages1.push(Timestamp(this.timestamp()))
+    this.bufferedMessages1.push(TabData(this.session.getTabId()))
+    this.activityState = ActivityState.ColdStart
+    if (startOpts.sessionHash) {
+      this.session.applySessionHash(startOpts.sessionHash)
+    }
+    if (startOpts.forceNew) {
+      // Reset session metadata only if requested directly
+      this.session.reset()
+    }
+    this.session.assign({
+      // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+      userID: startOpts.userID,
+      metadata: startOpts.metadata,
+    })
+    if (!isNewSession) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      this.send(TabChange(this.session.getTabId()))
+    }
+    this.observer.observe()
+    this.ticker.start()
+  }
+
+  /**
+   * Saves the captured messages in localStorage (or whatever is used in its place)
+   *
+   * Then when this.offlineRecording is called, it will preload this messages and clear the storage item
+   *
+   * Keeping the size of local storage reasonable is up to the end users of this library
+   * */
+  public saveBuffer() {
+    this.localStorage.setItem(bufferStorageKey, JSON.stringify(this.bufferedMessages1))
+  }
+
+  /**
+   * Uploads the stored buffer to create session
+   * */
+  public uploadOfflineRecording() {
+    const buffer = this.bufferedMessages1
+    this.stop(false)
+    // then fetch it
+    this.clearBuffers()
+  }
+
   private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
     const isColdStart = this.activityState === ActivityState.ColdStart
     if (isColdStart && this.coldInterval) {
@@ -759,15 +823,13 @@ export default class App {
       tabId: this.session.getTabId(),
     })
 
-    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
-    this.sessionStorage.removeItem(this.options.session_reset_key)
-    const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
     const sessionToken = this.session.getSessionToken()
-    const isNewSession = needNewSessionID || !sessionToken
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    this.sessionStorage.removeItem(this.options.session_reset_key)
 
     this.debug.log(
       'OpenReplay: starting session; need new session id?',
-      needNewSessionID,
+      isNewSession,
       'session token: ',
       sessionToken,
     )
@@ -905,8 +967,7 @@ export default class App {
           while (biggestBurger.length > 0) {
             flushBuffer(biggestBurger)
           }
-          this.bufferedMessages1.length = 0
-          this.bufferedMessages2.length = 0
+          this.clearBuffers()
           this.commit()
           /** --------------- COLD START BUFFER ------------------*/
         } else {

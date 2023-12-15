@@ -100,8 +100,18 @@ export default class ConditionsManager {
       | CommonCondition
       | undefined
     if (urlCond) {
-      const operator = operators[urlCond.operator]
+      const operator = operators[urlCond.operator] as (a: string, b: string[]) => boolean
       if (operator && operator(message[3], urlCond.value)) {
+        this.trigger()
+      }
+    }
+    const statusCond = this.conditions.find((c) => c.type === 'network_request') as
+      | NetworkRequestCondition
+      | undefined
+    if (statusCond) {
+      const operator = operators[statusCond.operator]
+      const value = statusCond.operator === 'isSlow' ? message[8] : message[6]
+      if (operator && operator(value)) {
         this.trigger()
       }
     }
@@ -113,7 +123,7 @@ export default class ConditionsManager {
       | CommonCondition
       | undefined
     if (evCond) {
-      const operator = operators[evCond.operator]
+      const operator = operators[evCond.operator] as (a: string, b: string[]) => boolean
       if (operator && operator(message[1], evCond.value)) {
         this.trigger()
       }
@@ -126,7 +136,7 @@ export default class ConditionsManager {
       | CommonCondition
       | undefined
     if (selectorCond) {
-      const operator = operators[selectorCond.operator]
+      const operator = operators[selectorCond.operator] as (a: string, b: string[]) => boolean
       if (operator && operator(message[4], selectorCond.value)) {
         this.trigger()
       }
@@ -135,7 +145,7 @@ export default class ConditionsManager {
       | CommonCondition
       | undefined
     if (labelCond) {
-      const operator = operators[labelCond.operator]
+      const operator = operators[labelCond.operator] as (a: string, b: string[]) => boolean
       if (operator && operator(message[3], labelCond.value)) {
         this.trigger()
       }
@@ -148,7 +158,7 @@ export default class ConditionsManager {
       | CommonCondition
       | undefined
     if (urlCond) {
-      const operator = operators[urlCond.operator]
+      const operator = operators[urlCond.operator] as (a: string, b: string[]) => boolean
       if (operator && operator(message[1], urlCond.value)) {
         this.trigger()
       }
@@ -175,6 +185,10 @@ type CommonCondition = {
   operator: keyof typeof operators
   value: string[]
 }
+type NetworkRequestCondition = {
+  type: 'network_request'
+  operator: 'isSlow' | 'isFailed'
+}
 type ExceptionCondition = {
   type: 'exception'
   operator: 'contains' | 'startsWith' | 'endsWith'
@@ -194,6 +208,7 @@ type Condition =
   | ExceptionCondition
   | FeatureFlagCondition
   | SessionDurationCondition
+  | NetworkRequestCondition
 
 const operators = {
   is: (val: string, target: string[]) => target.includes(val),
@@ -202,14 +217,6 @@ const operators = {
   notContains: (val: string, target: string[]) => !target.some((t) => val.includes(t)),
   startsWith: (val: string, target: string[]) => target.some((t) => val.startsWith(t)),
   endsWith: (val: string, target: string[]) => target.some((t) => val.endsWith(t)),
+  isSlow: (val: number) => val > 3000,
+  isFailed: (val: number) => val >= 400,
 }
-
-// in case of single target value
-// const operators = {
-//   is: (val: string, target: string) => val === target,
-//   isNot: (val: string, target: string) => val !== target,
-//   contains: (val: string, target: string) => val.includes(target),
-//   notContains: (val: string, target: string) => !val.includes(target),
-//   startsWith: (val: string, target: string) => val.startsWith(target),
-//   endsWith: (val: string, target: string) => val.endsWith(target),
-// }
