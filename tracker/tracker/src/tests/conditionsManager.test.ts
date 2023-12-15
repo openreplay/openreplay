@@ -25,7 +25,9 @@ describe('ConditionsManager', () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () =>
-          Promise.resolve([{ type: 'visited_url', operator: 'is', value: ['example.com'] }]),
+          Promise.resolve({
+            conditions: [{ type: 'visited_url', operator: 'is', value: ['example.com'] }],
+          }),
       }),
     )
   })
@@ -80,7 +82,7 @@ describe('ConditionsManager', () => {
       'Metadata',
     ]
     manager.processMessage(jsExceptionMessage)
-    expect(manager.hasStarted).toBeTruthy() // assuming this should trigger the start
+    expect(manager.hasStarted).toBeTruthy()
   })
 
   test('processMessage correctly processes a CustomEvent message', () => {
@@ -88,7 +90,7 @@ describe('ConditionsManager', () => {
     manager.setConditions([{ type: 'custom_event', operator: 'is', value: ['eventName'] }])
     const customEventMessage = [Type.CustomEvent, 'eventName', 'Payload']
     manager.processMessage(customEventMessage)
-    expect(manager.hasStarted).toBeTruthy() // assuming this should trigger the start
+    expect(manager.hasStarted).toBeTruthy()
   })
 
   test('processMessage correctly processes a MouseClick message', () => {
@@ -96,7 +98,7 @@ describe('ConditionsManager', () => {
     manager.setConditions([{ type: 'click_label', operator: 'is', value: ['clickLabel'] }])
     const mouseClickMessage = [Type.MouseClick, 123, 200, 'clickLabel', 'selector']
     manager.processMessage(mouseClickMessage)
-    expect(manager.hasStarted).toBeTruthy() // assuming this should trigger the start
+    expect(manager.hasStarted).toBeTruthy()
   })
 
   test('processMessage correctly processes a SetPageLocation message', () => {
@@ -109,13 +111,14 @@ describe('ConditionsManager', () => {
       Date.now(),
     ]
     manager.processMessage(setPageLocationMessage)
-    expect(manager.hasStarted).toBeTruthy() // assuming this should trigger the start
+    expect(manager.hasStarted).toBeTruthy()
   })
 
   test('processMessage correctly processes a NetworkRequest message', () => {
     const manager = new ConditionsManager(appMock, startOptionsMock)
     manager.setConditions([
       { type: 'request_url', operator: 'is', value: ['https://api.example.com'] },
+      { type: 'network_request', operator: 'isFailed' },
     ])
     const networkRequestMessage = [
       Type.NetworkRequest,
@@ -126,11 +129,26 @@ describe('ConditionsManager', () => {
       'Response',
       200,
       Date.now(),
-      500,
+      4000,
+      1024,
+    ]
+    const failedNetworkRequetsMessage = [
+      Type.NetworkRequest,
+      'XHR',
+      'GET',
+      'https://asdasd.test.eu',
+      'Request',
+      'Response',
+      400,
+      Date.now(),
+      4000,
       1024,
     ]
     manager.processMessage(networkRequestMessage)
-    expect(manager.hasStarted).toBeTruthy() // assuming this should trigger the start
+    expect(manager.hasStarted).toBeTruthy()
+    manager.hasStarted = false
+    manager.processMessage(failedNetworkRequetsMessage)
+    expect(manager.hasStarted).toBeTruthy()
   })
 
   test('processDuration triggers after specified duration', () => {
