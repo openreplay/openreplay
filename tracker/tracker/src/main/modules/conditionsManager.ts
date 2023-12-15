@@ -187,7 +187,9 @@ type CommonCondition = {
 }
 type NetworkRequestCondition = {
   type: 'network_request'
-  operator: 'isSlow' | 'isFailed'
+  key: 'url' | 'status' | 'method' | 'duration'
+  operator: keyof typeof operators
+  value: string[]
 }
 type ExceptionCondition = {
   type: 'exception'
@@ -219,4 +221,6 @@ const operators = {
   endsWith: (val: string, target: string[]) => target.some((t) => val.endsWith(t)),
   isSlow: (val: number) => val > 3000,
   isFailed: (val: number) => val >= 400,
+  greaterThan: (val: number, target: number[]) => val > target[0],
+  lessThan: (val: number, target: number[]) => val < target[0],
 }
