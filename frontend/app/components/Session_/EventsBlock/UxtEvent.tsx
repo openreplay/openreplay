@@ -2,7 +2,7 @@ import React from 'react'
 import { durationFromMsFormatted } from "App/date";
 import { Tooltip } from 'antd'
 
-function UtxEvent({ event }: any) {
+function UxtEvent({ event }: any) {
   return (
     <div className={'flex flex-col'}>
       <div className={'border border-gray-light rounded bg-teal-light pt-2 pb-1 px-4 m-4 shadow'}>
@@ -27,4 +27,4 @@ function UtxEvent({ event }: any) {
   );
 }
 
-export default UtxEvent
+export default UxtEvent

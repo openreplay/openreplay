@@ -25,7 +25,7 @@ interface IProps {
   notesWithEvents: Session['notesWithEvents'];
   filterOutNote: (id: string) => void;
   eventsIndex: number[];
-  utxVideo: string;
+  uxtVideo: string;
 }
 
 function EventsBlock(props: IProps) {
@@ -180,7 +180,7 @@ function EventsBlock(props: IProps) {
       <div className={cn(styles.header, 'p-4')}>
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
-            <video className={'z-20 fixed'} muted autoPlay controls src={props.utxVideo} width={240} />
+            <video className={'z-20 fixed'} muted autoPlay controls src={props.uxtVideo} width={240} />
             <div style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }} className={'absolute z-10'}>No video</div>
           </div>
         ) : null}
@@ -229,7 +229,7 @@ export default connect(
     session: state.getIn(['sessions', 'current']),
     notesWithEvents: state.getIn(['sessions', 'current']).notesWithEvents,
     events: state.getIn(['sessions', 'current']).events,
-    utxVideo: state.getIn(['sessions', 'current']).utxVideo,
+    uxtVideo: state.getIn(['sessions', 'current']).uxtVideo,
     filteredEvents: state.getIn(['sessions', 'filteredEvents']),
     query: state.getIn(['sessions', 'eventsQuery']),
     eventsIndex: state.getIn(['sessions', 'eventsIndex']),

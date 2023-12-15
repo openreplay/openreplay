@@ -193,7 +193,7 @@ function TestOverview() {
             <NoContent show={uxtestingStore.testSessions.list.length == 0} title='No data'>
               {uxtestingStore.testSessions.list.map((session) => (
                 // @ts-ignore
-                <SessionItem session={session} query={'?utx=true'} />
+                <SessionItem session={session} query={'?uxt=true'} />
               ))}
               <div className={'flex items-center justify-between'}>
                 <div>

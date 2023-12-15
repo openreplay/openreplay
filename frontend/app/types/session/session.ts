@@ -82,7 +82,7 @@ export interface ISession {
   canvasURL: string[];
   domURL: string[];
   devtoolsURL: string[];
-  utxVideo: string[];
+  uxtVideo: string[];
   /**
    * @deprecated
    */
@@ -239,7 +239,7 @@ export default class Session {
       crashes = [],
       notes = [],
       canvasURL = [],
-      utxVideo = [],
+      uxtVideo = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -334,7 +334,7 @@ export default class Session {
       canvasURL,
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
-      utxVideo: utxVideo[0],
+      uxtVideo: uxtVideo[0],
     });
   }
 
@@ -362,17 +362,17 @@ export default class Session {
     }
 
     const events: InjectedEvent[] = [];
-    const utxDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UTX_EVENT', key: e.signal_id }))
+    const uxtDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }))
     const rawEvents: (EventData & { key: number })[] = [];
 
-    let utxIndexNum = 0;
+    let uxtIndexNum = 0;
     if (sessionEvents.length) {
-      const eventsWithUtx = mergeEventLists(sessionEvents, utxDoneEvents)
-      eventsWithUtx.forEach((event, k) => {
-        const isRawUtx = 'allow_typing' in event
-        if (isRawUtx) {
-          utxIndexNum += 1;
-          event.indexNum = utxIndexNum;
+      const eventsWithUxt = mergeEventLists(sessionEvents, uxtDoneEvents)
+      eventsWithUxt.forEach((event, k) => {
+        const isRawUxt = 'allow_typing' in event
+        if (isRawUxt) {
+          uxtIndexNum += 1;
+          event.indexNum = uxtIndexNum;
         }
         const time = event.timestamp - this.startedAt;
         if (event.type !== TYPES.CONSOLE && time <= this.durationSeconds) {

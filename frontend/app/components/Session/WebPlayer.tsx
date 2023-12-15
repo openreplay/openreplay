@@ -20,7 +20,7 @@ const TABS = {
   EVENTS: 'User Events',
   CLICKMAP: 'Click Map',
 };
-const UTXTABS = {
+const UXTTABS = {
   EVENTS: TABS.EVENTS
 }
 
@@ -143,7 +143,7 @@ function WebPlayer(props: any) {
         // @ts-ignore TODO?
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        tabs={uxtestingStore.isUxt() ? UTXTABS : TABS}
+        tabs={uxtestingStore.isUxt() ? UXTTABS : TABS}
         fullscreen={fullscreen}
       />
       {/* @ts-ignore  */}

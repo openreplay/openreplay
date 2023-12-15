@@ -68,7 +68,7 @@ export default class UxtestingStore {
   taskStats: TaskStats[] = [];
   isLoading: boolean = false;
   responses: Record<number, { list: Response[]; total: number }> = {};
-  hideDevtools: boolean = localStorage.getItem('or_devtools_utx_toggle') === '1';
+  hideDevtools: boolean = localStorage.getItem('or_devtools_uxt_toggle') === '1';
 
   constructor() {
     makeAutoObservable(this);
@@ -76,7 +76,7 @@ export default class UxtestingStore {
 
   isUxt() {
     const queryParams = new URLSearchParams(document.location.search);
-    return queryParams.has('utx');
+    return queryParams.has('uxt');
   }
 
   setHideDevtools(hide: boolean) {

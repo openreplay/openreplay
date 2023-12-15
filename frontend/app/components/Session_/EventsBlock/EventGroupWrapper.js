@@ -1,4 +1,4 @@
-import UtxEvent from "Components/Session_/EventsBlock/UtxEvent";
+import UxtEvent from "Components/Session_/EventsBlock/UxtEvent";
 import React from 'react';
 import { durationFromMsFormatted } from "App/date";
 import { connect } from 'react-redux';
@@ -62,7 +62,7 @@ class EventGroupWrapper extends React.Component {
       filterOutNote,
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
-    const isUtxEvent = event.type === TYPES.UTX_EVENT;
+    const isUxtEvent = event.type === TYPES.UXT_EVENT;
 
     const whiteBg =
       (isLastInGroup && event.type !== TYPES.LOCATION) ||
@@ -70,9 +70,9 @@ class EventGroupWrapper extends React.Component {
     const safeRef = String(event.referrer || '');
 
     const returnEvt = () => {
-      if (isUtxEvent) {
+      if (isUxtEvent) {
         return (
-          <UtxEvent event={event} />
+          <UxtEvent event={event} />
         )
       }
       if (isNote) {

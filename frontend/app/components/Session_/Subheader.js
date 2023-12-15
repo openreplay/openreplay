@@ -19,7 +19,7 @@ import cn from 'classnames';
 import { Switch } from 'antd';
 
 const localhostWarn = (project) => project + '_localhost_warn';
-const disableDevtools = 'or_devtools_utx_toggle';
+const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
   const localhostWarnKey = localhostWarn(props.siteId);

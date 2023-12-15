@@ -6,11 +6,11 @@ const CUSTOM = 'CUSTOM';
 const CLICKRAGE = 'CLICKRAGE';
 const TAPRAGE = 'tap_rage'
 const IOS_VIEW = 'VIEW';
-const UTX_EVENT = 'UTX_EVENT';
+const UXT_EVENT = 'UXT_EVENT';
 const TOUCH = 'TAP';
 const SWIPE = 'SWIPE';
 
-export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE, TAPRAGE, UTX_EVENT };
+export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW, TOUCH, SWIPE, TAPRAGE, UXT_EVENT };
 
 export type EventType =
   | typeof CONSOLE
@@ -201,11 +201,11 @@ export class Location extends Event {
   }
 }
 
-export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe | UtxEvent;
+export type InjectedEvent = Console | Click | Input | Location | Touch | Swipe | UxtEvent;
 
 export default function (event: EventData) {
   if ('allow_typing' in event) {
-    return new UtxEvent(event);
+    return new UxtEvent(event);
   }
   if (!event.type) {
     return console.error('Unknown event type: ', event)
@@ -230,9 +230,9 @@ export default function (event: EventData) {
   }
 }
 
-export class UtxEvent {
-  readonly name = 'UtxEvent'
-  readonly type = UTX_EVENT;
+export class UxtEvent {
+  readonly name = 'UxtEvent'
+  readonly type = UXT_EVENT;
   allowTyping: boolean;
   comment: string;
   description: string;
@@ -245,8 +245,8 @@ export class UtxEvent {
 
   constructor(event: Record<string, any>) {
     Object.assign(this, {
-      type: UTX_EVENT,
-      name: 'UtxEvent',
+      type: UXT_EVENT,
+      name: 'UxtEvent',
       allowTyping: event.allow_typing,
       comment: event.comment,
       description: event.description,
