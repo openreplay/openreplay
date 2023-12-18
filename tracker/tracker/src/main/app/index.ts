@@ -620,6 +620,7 @@ export default class App {
 
     return needNewSessionID || !sessionToken
   }
+
   /**
    * start buffering messages without starting the actual session, which gives
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
@@ -723,11 +724,10 @@ export default class App {
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
     adjustTimeOrigin()
     this.coldStartTs = now()
-    this.bufferedMessages1.length = 0
     const saverBuffer = this.localStorage.getItem(bufferStorageKey)
     if (saverBuffer) {
       const data = JSON.parse(saverBuffer)
-      this.bufferedMessages1 = Array.isArray(data) ? data : []
+      this.bufferedMessages1 = Array.isArray(data) ? data : this.bufferedMessages1
       this.localStorage.removeItem(bufferStorageKey)
     }
     this.bufferedMessages1.push(Timestamp(this.timestamp()))
@@ -765,12 +765,34 @@ export default class App {
   }
 
   /**
-   * Uploads the stored buffer to create session
+   * @returns buffer with stored messages for offline recording
+   * */
+  public getBuffer() {
+    return this.bufferedMessages1
+  }
+
+  /**
+   * Used to set a buffer with messages array
+   * */
+  public setBuffer(buffer: Message[]) {
+    this.bufferedMessages1 = buffer
+  }
+
+  /**
+   * Uploads the stored session buffer to backend
+   * @returns promise that resolves once messages are loaded, it has to be awaited
+   * so the session can be uploaded properly
+   * @resolve {boolean} - if messages were loaded successfully
+   * @reject {string} - error message
    * */
   public uploadOfflineRecording() {
-    this.stop(false)
-    // then fetch it
-    this.clearBuffers()
+    return new Promise((res, rej) => {
+      const buffer = this.bufferedMessages1
+      this.stop(false)
+      // then fetch it
+      this.clearBuffers()
+      res(true)
+    })
   }
 
   private _start(
