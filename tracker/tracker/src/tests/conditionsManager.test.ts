@@ -103,7 +103,7 @@ describe('ConditionsManager', () => {
 
   test('processMessage correctly processes a SetPageLocation message', () => {
     const manager = new ConditionsManager(appMock, startOptionsMock)
-    manager.setConditions([{ type: 'request_url', operator: 'is', value: ['https://example.com'] }])
+    manager.setConditions([{ type: 'visited_url', operator: 'is', value: ['https://example.com'] }])
     const setPageLocationMessage = [
       Type.SetPageLocation,
       'https://example.com',
@@ -117,8 +117,8 @@ describe('ConditionsManager', () => {
   test('processMessage correctly processes a NetworkRequest message', () => {
     const manager = new ConditionsManager(appMock, startOptionsMock)
     manager.setConditions([
-      { type: 'request_url', operator: 'is', value: ['https://api.example.com'] },
-      { type: 'network_request', operator: 'isFailed' },
+      { type: 'network_request', key: 'url', operator: 'is', value: ['https://api.example.com'] },
+      { type: 'network_request', key: 'status', operator: 'greaterThan', value: 200 },
     ])
     const networkRequestMessage = [
       Type.NetworkRequest,
@@ -132,7 +132,7 @@ describe('ConditionsManager', () => {
       4000,
       1024,
     ]
-    const failedNetworkRequetsMessage = [
+    const failedNetworkRequestMessage = [
       Type.NetworkRequest,
       'XHR',
       'GET',
@@ -147,7 +147,7 @@ describe('ConditionsManager', () => {
     manager.processMessage(networkRequestMessage)
     expect(manager.hasStarted).toBeTruthy()
     manager.hasStarted = false
-    manager.processMessage(failedNetworkRequetsMessage)
+    manager.processMessage(failedNetworkRequestMessage)
     expect(manager.hasStarted).toBeTruthy()
   })
 
