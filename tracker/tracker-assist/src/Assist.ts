@@ -211,6 +211,11 @@ export default class Assist {
       },
       transports: ['websocket',],
       withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 30,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 25000,
+      randomizationFactor: 0.5,
     })
     socket.onAny((...args) => {
       if (args[0] === 'messages' || args[0] === 'UPDATE_SESSION') {
@@ -423,10 +428,17 @@ export default class Assist {
 
     const peer = new safeCastedPeer(peerID, peerOptions) as Peer
     this.peer = peer
-
+    let peerReconnectAttempts = 0
     // @ts-ignore (peerjs typing)
     peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
-    peer.on('disconnected', () => peer.reconnect())
+    peer.on('disconnected', () => {
+      if (peerReconnectAttempts < 30) {
+        setTimeout(() => {
+          peer.reconnect()
+        }, Math.min(peerReconnectAttempts, 8) * 2 * 1000)
+        peerReconnectAttempts += 1
+      }
+    })
 
     function updateCallerNames() {
       callUI?.setAssistentName(callingAgents)
