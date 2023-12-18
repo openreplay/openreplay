@@ -39,38 +39,6 @@ const respond = function (req, res, data) {
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
-const socketsList = async function (req, res) {
-    res.handlerName = 'socketsList';
-    let io = getServer();
-    debug_log && console.log("[WS]looking for all available sessions");
-    let filters = await extractPayloadFromRequest(req, res);
-    let withFilters = hasFilters(filters);
-    let liveSessionsPerProject = {};
-    let rooms = await getAvailableRooms(io);
-    for (let roomId of rooms.keys()) {
-        let {projectKey, sessionId} = extractPeerId(roomId);
-        if (projectKey !== undefined) {
-            liveSessionsPerProject[projectKey] = liveSessionsPerProject[projectKey] || new Set();
-            if (withFilters) {
-                const connected_sockets = await io.in(roomId).fetchSockets();
-                for (let item of connected_sockets) {
-                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
-                        && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
-                        liveSessionsPerProject[projectKey].add(sessionId);
-                    }
-                }
-            } else {
-                liveSessionsPerProject[projectKey].add(sessionId);
-            }
-        }
-    }
-    let liveSessions = {};
-    liveSessionsPerProject.forEach((sessions, projectId) => {
-        liveSessions[projectId] = Array.from(sessions);
-    });
-    respond(req, res, liveSessions);
-}
-
 const socketsListByProject = async function (req, res) {
     res.handlerName = 'socketsListByProject';
     let io = getServer();
@@ -206,7 +174,6 @@ const autocomplete = async function (req, res) {
 
 module.exports = {
     respond,
-    socketsList,
     socketsListByProject,
     socketsLiveByProject,
     socketsLiveBySession,

@@ -214,19 +214,17 @@ const sortPaginate = function (list, filters) {
     }
 
     const total = list.length;
-    list.sort((a, b) => {
-        const tA = getValue(a, "timestamp");
-        const tB = getValue(b, "timestamp");
-        return tA < tB ? 1 : tA > tB ? -1 : 0; // b - a
-    });
-    if (filters.sort.order) {
-        list.reverse();
-    }
     if ((filters.sort.key || "timestamp") !== "timestamp") {
         list.sort((a, b) => {
             const vA = getValue(a, filters.sort.key);
             const vB = getValue(b, filters.sort.key);
             return vA > vB ? 1 : vA < vB ? -1 : 0;
+        });
+    } else {
+        list.sort((a, b) => {
+            const tA = getValue(a, "timestamp");
+            const tB = getValue(b, "timestamp");
+            return tA < tB ? 1 : tA > tB ? -1 : 0; // b - a
         });
     }
     if (filters.sort.order) {
