@@ -125,6 +125,8 @@ def update(tenant_id, user_id, changes, output=True):
             if key == "password":
                 sub_query_bauth.append("password = crypt(%(password)s, gen_salt('bf', 12))")
                 sub_query_bauth.append("changed_at = timezone('utc'::text, now())")
+                sub_query_bauth.append("change_pwd_expire_at = NULL")
+                sub_query_bauth.append("change_pwd_token = NULL")
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
         else:
