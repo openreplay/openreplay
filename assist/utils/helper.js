@@ -206,6 +206,9 @@ const getValue = function (obj, key) {
 }
 
 const sortPaginate = function (list, filters) {
+    list.forEach((item) => {
+        console.log(typeof item);
+    })
     if (typeof (list) === "object" && !Array.isArray(list)) {
         for (const [key, value] of Object.entries(list)) {
             list[key] = sortPaginate(value, filters);

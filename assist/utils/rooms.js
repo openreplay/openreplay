@@ -19,7 +19,7 @@ function AddRoom(projKey, sessID, sessInfo) {
 }
 
 function UpdateRoom(sessID, sessInfo) {
-    console.log("UpdateRoom: ", sessID, sessInfo)
+    console.log("UpdateRoom: ", sessID, sessInfo, typeof sessInfo)
     roomsInfo.set(sessID, sessInfo);
 }
 
