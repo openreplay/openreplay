@@ -78,7 +78,6 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
 
 function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[] }) {
   const { store } = React.useContext(PlayerContext);
-  const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
     'FRUSTRATIONS',
@@ -93,7 +92,7 @@ function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[
   } = store.get();
 
   const stackEventList = tabStates[currentTab]?.stackList || []
-  const eventsList = tabStates[currentTab]?.eventList || []
+  // const eventsList = tabStates[currentTab]?.eventList || []
   const frustrationsList = tabStates[currentTab]?.frustrationsList || []
   const exceptionsList = tabStates[currentTab]?.exceptionsList || []
   const resourceListUnmap = tabStates[currentTab]?.resourceList || []
@@ -116,24 +115,7 @@ function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[
       PERFORMANCE: performanceChartData,
       FRUSTRATIONS: frustrationsList,
     };
-  }, [dataLoaded, currentTab]);
-
-  useEffect(() => {
-    if (dataLoaded) {
-      return;
-    }
-
-    if (
-      resourceList.length > 0 ||
-      exceptionsList.length > 0 ||
-      eventsList.length > 0 ||
-      stackEventList.length > 0 ||
-      issuesList.length > 0 ||
-      performanceChartData.length > 0
-    ) {
-      setDataLoaded(true);
-    }
-  }, [resourceList, issuesList, exceptionsList, eventsList, stackEventList, performanceChartData, currentTab]);
+  }, [tabStates, currentTab]);
 
   return <PanelComponent resources={resources} endTime={endTime} selectedFeatures={selectedFeatures} fetchPresented={fetchPresented} setSelectedFeatures={setSelectedFeatures} />
 }
