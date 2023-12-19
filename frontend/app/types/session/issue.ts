@@ -8,6 +8,7 @@ export const types = {
   CLICK_RAGE: 'click_rage',
   MOUSE_THRASHING: 'mouse_thrashing',
   TAP_RAGE: 'tap_rage',
+  DEAD_CLICK: 'dead_click',
 } as const
 
 type TypeKeys = keyof typeof types

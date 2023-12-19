@@ -77,6 +77,7 @@ const TimelinePointer = React.memo((props: Props) => {
     if (item.type === TYPES.CLICK) Object.assign(elData, { name: `User hesitated to click for ${Math.round(item.hesitation/1000)}s`, icon: 'click-hesitation' })
     if (item.type === TYPES.INPUT) Object.assign(elData, { name: `User hesitated to enter a value for ${Math.round(item.hesitation/1000)}s`, icon: 'input-hesitation' })
     if (item.type === TYPES.CLICKRAGE || item.type === TYPES.TAPRAGE) Object.assign(elData, { name: 'Click Rage', icon: 'click-rage' })
+    if (item.type === TYPES.DEAD_LICK) Object.assign(elData, { name: 'Dead Click', icon: 'emoji-dizzy' })
     if (item.type === issueTypes.MOUSE_THRASHING) Object.assign(elData, { name: 'Mouse Thrashing', icon: 'cursor-trash' })
     if (item.type === 'ios_perf_event') Object.assign(elData, { name: item.name, icon: item.icon })
 

@@ -394,7 +394,7 @@ export default class Session {
       }
     )
 
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE)
+    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE || i.type === issueTypes.DEAD_CLICK)
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
