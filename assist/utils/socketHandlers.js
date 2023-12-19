@@ -105,7 +105,8 @@ async function onConnect(socket) {
             // New session creates new room
             IncreaseTotalRooms();
             IncreaseOnlineRooms();
-            AddRoom(socket.projectKey, socket.sessId, JSON.parse(socket.handshake.query.sessionInfo));
+            //AddRoom(socket.projectKey, socket.sessId, JSON.parse(socket.handshake.query.sessionInfo));
+            AddRoom(socket.projectKey, socket.sessId, socket.handshake.query.sessionInfo);
         }
         extractSessionInfo(socket);
         // Inform all connected agents about reconnected session
