@@ -135,28 +135,3 @@ default:
 SVG.displayName = 'SVG';
 export default SVG;
 `);
-// })
-// .catch(console.error);
-
-
-// old
-// ${icons.map(icon => {
-//   const svg = fs.readFileSync(`${ICONS_DIRNAME}/${icon}`, 'utf-8');
-//   const canOptimize = !icon.includes('integrations');
-//   const { data } = optimize(svg, plugins(canOptimize));
-//   return `    case '${icon.slice(0, -4).replaceAll('-', '_')}': return ${data.replaceAll(/xlink\:href/g, 'xlinkHref')
-//     .replaceAll(/xmlns\:xlink/g, 'xmlnsXlink')
-//     .replaceAll(/clip\-path/g, 'clipPath')
-//     .replaceAll(/clip\-rule/g, 'clipRule')
-//     // hack to keep fill rule for some icons like stop recording square
-//     .replaceAll(/clipRule="evenoddCustomFill"/g, 'clipRule="evenodd" fillRule="evenodd"')
-//     .replaceAll(/fill-rule/g, 'fillRule')
-//     .replaceAll(/fill-opacity/g, 'fillOpacity')
-//     .replaceAll(/stop-color/g, 'stopColor')
-//     .replaceAll(/stroke-width/g, 'strokeWidth')
-//     .replaceAll(/stroke-linecap/g, 'strokeLinecap')
-//     .replaceAll(/stroke-linejoin/g, 'strokeLinejoin')
-//     .replaceAll(/stroke-miterlimit/g, 'strokeMiterlimit')
-//     .replaceAll(/xml:space="preserve"/g, '')};`;
-// })
-//   .join('\n')}
