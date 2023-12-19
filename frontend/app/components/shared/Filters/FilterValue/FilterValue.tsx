@@ -13,6 +13,7 @@ const ASSIST_ROUTE = assistRoute();
 interface Props {
     filter: any;
     onUpdate: (filter: any) => void;
+    isConditional?: boolean;
 }
 function FilterValue(props: Props) {
     const { filter } = props;
@@ -124,6 +125,7 @@ function FilterValue(props: Props) {
                         onBlur={handleBlur}
                         minDuration={durationValues.minDuration}
                         maxDuration={durationValues.maxDuration}
+                        isConditional={props.isConditional}
                     />
                 );
             case FilterType.NUMBER_MULTIPLE:

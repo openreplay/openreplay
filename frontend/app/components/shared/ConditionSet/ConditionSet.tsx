@@ -2,51 +2,42 @@ import React from 'react';
 import { Icon, Input, Button } from 'UI';
 import cn from 'classnames';
 import FilterList from 'Shared/Filters/FilterList';
-import { nonFlagFilters } from 'Types/filter/newFilter';
 import { observer } from 'mobx-react-lite';
-import { Conditions } from "App/mstore/types/FeatureFlag";
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { toast } from 'react-toastify';
 
 interface Props {
   set: number;
-  conditions: Conditions;
   removeCondition: (ind: number) => void;
-  index: number
+  index: number;
   readonly?: boolean;
+  onAddFilter: (filter: Record<string, any>) => void;
+  conditions: any;
+  bottomLine1: string;
+  bottomLine2: string;
+  onPercentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  excludeFilterKeys?: string[];
+  onUpdateFilter: (filterIndex: number, filter: any) => void;
+  onRemoveFilter: (filterIndex: number) => void;
+  onChangeEventsOrder: (_: any, { name, value }: any) => void;
+  isConditional?: boolean;
 }
 
-function RolloutCondition({ set, conditions, removeCondition, index, readonly }: Props) {
-  const [forceRender, forceRerender] = React.useState(false);
-  const onAddFilter = (filter: Record<string, any> = {}) => {
-    if (conditions.filter.filters.findIndex(f => f.key === filter.key) !== -1) {
-      return toast.error('Filter already exists')
-    }
-    conditions.filter.addFilter(filter);
-    forceRerender(!forceRender);
-  };
-  const onUpdateFilter = (filterIndex: number, filter: any) => {
-    conditions.filter.updateFilter(filterIndex, filter);
-    forceRerender(!forceRender);
-  };
-
-  const onChangeEventsOrder = (_: any, { name, value }: any) => {
-    conditions.filter.updateKey(name, value);
-    forceRerender(!forceRender);
-  };
-
-  const onRemoveFilter = (filterIndex: number) => {
-    conditions.filter.removeFilter(filterIndex);
-    forceRerender(!forceRender);
-  };
-
-  const onPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value || '0';
-    if (value.length > 3) return;
-    if (parseInt(value, 10) > 100) return conditions.setRollout(100);
-    conditions.setRollout(parseInt(value, 10));
-  };
-
+function ConditionSetComponent({
+  removeCondition,
+  index,
+  set,
+  readonly,
+  onAddFilter,
+  bottomLine1,
+  bottomLine2,
+  onPercentChange,
+  excludeFilterKeys,
+  conditions,
+  onUpdateFilter,
+  onRemoveFilter,
+  onChangeEventsOrder,
+  isConditional,
+}: Props) {
   return (
     <div className={'border bg-white rounded'}>
       <div className={'flex items-center border-b px-4 py-2 gap-2'}>
@@ -69,8 +60,9 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
             onRemoveFilter={onRemoveFilter}
             onChangeEventsOrder={onChangeEventsOrder}
             hideEventsOrder
-            excludeFilterKeys={nonFlagFilters}
+            excludeFilterKeys={excludeFilterKeys}
             readonly={readonly}
+            isConditional={isConditional}
           />
           {readonly && !conditions.filter?.filters?.length ? (
             <div className={'p-2'}>No conditions</div>
@@ -78,20 +70,21 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
         </div>
         {readonly ? null : (
           <div className={'px-2'}>
-          <FilterSelection
-            filter={undefined}
-            onFilterClick={onAddFilter}
-            excludeFilterKeys={nonFlagFilters}
-          >
-            <Button variant="text-primary" icon="plus">
-              Add Condition
-            </Button>
-          </FilterSelection>
+            <FilterSelection
+              isConditional={isConditional}
+              filter={undefined}
+              onFilterClick={onAddFilter}
+              excludeFilterKeys={excludeFilterKeys}
+            >
+              <Button variant="text-primary" icon="plus">
+                Add Condition
+              </Button>
+            </FilterSelection>
           </div>
         )}
       </div>
       <div className={'px-4 py-2 flex items-center gap-2 border-t'}>
-        <span>Rollout to</span>
+        <span>{bottomLine1}</span>
         {readonly ? (
           <div className={'font-semibold'}>{conditions.rolloutPercentage}%</div>
         ) : (
@@ -104,10 +97,10 @@ function RolloutCondition({ set, conditions, removeCondition, index, readonly }:
           />
         )}
 
-        <span>of sessions</span>
+        <span>{bottomLine2}</span>
       </div>
     </div>
   );
 }
 
-export default observer(RolloutCondition);
+export default observer(ConditionSetComponent);

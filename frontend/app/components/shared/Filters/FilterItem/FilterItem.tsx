@@ -21,6 +21,7 @@ interface Props {
   readonly?: boolean;
   hideIndex?: boolean;
   hideDelete?: boolean;
+  isConditional?: boolean;
 }
 
 function FilterItem(props: Props) {
@@ -32,8 +33,10 @@ function FilterItem(props: Props) {
     disableDelete = false,
     hideDelete = false,
     allowedFilterKeys = [],
-    excludeFilterKeys = []
- , hideIndex = false } = props;
+    excludeFilterKeys = [],
+    isConditional,
+    hideIndex = false,
+  } = props;
   const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
   const isSubFilter = filter.type === FilterType.SUB_FILTERS;
   const replaceFilter = (filter: any) => {
@@ -118,7 +121,7 @@ function FilterItem(props: Props) {
                     }).join(', ')}
                   </div>
                 ) : (
-                  <FilterValue filter={filter} onUpdate={props.onUpdate}/>
+                  <FilterValue isConditional={isConditional} filter={filter} onUpdate={props.onUpdate}/>
                 )}
               </>
             )}

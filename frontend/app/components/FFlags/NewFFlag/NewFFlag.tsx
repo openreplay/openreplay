@@ -9,10 +9,11 @@ import {Prompt, useHistory} from 'react-router';
 import {withSiteId, fflags, fflagRead} from 'App/routes';
 import Description from './Description';
 import Header from './Header';
-import RolloutCondition from './Conditions';
+import RolloutCondition from 'Shared/ConditionSet';
 import Multivariant from './Multivariant';
 import { Payload } from './Helpers'
 import { toast } from 'react-toastify';
+import { nonFlagFilters } from 'Types/filter/newFilter';
 
 function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const { featureFlagsStore } = useStore();
@@ -221,7 +222,10 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                     set={index + 1}
                     index={index}
                     conditions={condition}
+                    bottomLine1={'Rollout to'}
+                    bottomLine2={'of sessions'}
                     removeCondition={current.removeCondition}
+                    excludeFilterKeys={nonFlagFilters}
                   />
                   <div className={'my-2 w-full text-center'}>OR</div>
                 </React.Fragment>

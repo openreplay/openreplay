@@ -301,4 +301,5 @@ export enum FilterKey {
   SLOWEST_RESOURCES = 'slowestResources',
 
   CLICKMAP_URL = 'clickMapUrl',
+  FEATURE_FLAG = 'featureFlag',
 }

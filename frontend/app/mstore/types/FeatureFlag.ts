@@ -6,11 +6,11 @@ export class Conditions {
   rolloutPercentage = 100;
   filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
 
-  constructor(data?: Record<string, any>) {
+  constructor(data?: Record<string, any>, isConditional?: boolean) {
     makeAutoObservable(this)
     if (data) {
       this.rolloutPercentage = data.rolloutPercentage
-      this.filter = new Filter().fromJson(data)
+      this.filter = new Filter(isConditional).fromJson(data)
     }
   }
 

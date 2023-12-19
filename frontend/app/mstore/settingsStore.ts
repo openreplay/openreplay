@@ -29,7 +29,7 @@ export default class SettingsStore {
     localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
   };
 
-  saveCaptureRate(projectId: number, data: any) {
+  saveCaptureRate = (projectId: number, data: any)=>  {
     return sessionService
       .saveCaptureRate(projectId, data)
       .then((data) => data.json())
@@ -45,7 +45,7 @@ export default class SettingsStore {
       });
   }
 
-  fetchCaptureRate(projectId: number): Promise<any> {
+  fetchCaptureRate = (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
     return sessionService
       .fetchCaptureRate(projectId)

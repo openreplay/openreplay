@@ -7,7 +7,7 @@ import { useHistory } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
 import Multivariant from "Components/FFlags/NewFFlag/Multivariant";
 import { toast } from 'react-toastify';
-import RolloutCondition from "Components/FFlags/NewFFlag/Conditions";
+import RolloutCondition from "Shared/ConditionSet";
 
 function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();

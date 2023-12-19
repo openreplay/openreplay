@@ -3,7 +3,7 @@ import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.module.css';
-import { filtersMap } from 'Types/filter/newFilter';
+import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function filterJson(
@@ -53,6 +53,7 @@ export const getMatchingEntries = (searchQuery: string, filters: Record<string, 
 
 interface Props {
   filters: any;
+  conditionalFilters: any;
   onFilterClick?: (filter: any) => void;
   filterSearchList: any;
   // metaOptions: any,
@@ -61,18 +62,21 @@ interface Props {
   searchQuery?: string;
   excludeFilterKeys?: Array<string>;
   allowedFilterKeys?: Array<string>;
+  isConditional?: boolean;
 }
 
 function FilterModal(props: Props) {
   const {
     filters,
+    conditionalFilters,
     onFilterClick = () => null,
     filterSearchList,
     isMainSearch = false,
     fetchingFilterSearchList,
     searchQuery = '',
     excludeFilterKeys = [],
-    allowedFilterKeys = []
+    allowedFilterKeys = [],
+    isConditional,
   } = props;
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
@@ -84,7 +88,7 @@ function FilterModal(props: Props) {
 
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(filters, excludeFilterKeys, allowedFilterKeys)
+    filterJson(isConditional ? conditionalFilters : filters, excludeFilterKeys, allowedFilterKeys)
   );
 
   const isResultEmpty =
@@ -176,6 +180,7 @@ export default connect((state: any, props: any) => {
     filters: props.isLive
       ? state.getIn(['search', 'filterListLive'])
       : state.getIn(['search', 'filterList']),
+    conditionalFilters: state.getIn(['search', 'filterListConditional']),
     filterSearchList: props.isLive
       ? state.getIn(['liveSearch', 'filterSearchList'])
       : state.getIn(['search', 'filterSearchList']),

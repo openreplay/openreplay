@@ -44,7 +44,7 @@ function Tooltip(props: Props) {
       <TooltipAnchor className={anchorClassName} state={state}>{props.children}</TooltipAnchor>
       <FloatingTooltip
         state={state}
-        className={cn('bg-gray-darkest color-white rounded py-1 px-2 animate-fade', className)}
+        className={cn('bg-gray-darkest color-white rounded py-1 px-2 animate-fade whitespace-pre-wrap', className)}
       >
         {title}
         {/* <FloatingArrow state={state} className="" /> */}
