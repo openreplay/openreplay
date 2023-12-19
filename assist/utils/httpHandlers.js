@@ -31,6 +31,7 @@ const {
 const debug_log = process.env.debug === "1";
 
 const respond = function (req, res, data) {
+    console.log("responding with data: ", data)
     let result = {data}
     if (process.env.uws !== "true") {
         res.statusCode = 200;
@@ -131,6 +132,8 @@ const socketsLiveByProject = async function (req, res) {
             sessions.push(sessInfo);
         }
     }
+    console.log("sessions: ", sessions);
+    console.log("filters: ", filters);
 
     // send response
     respond(req, res, sortPaginate(sessions, filters));
