@@ -23,6 +23,12 @@ const {
     IncreaseOnlineRooms,
     DecreaseOnlineRooms,
 } = require('../utils/metrics');
+const {
+    AddRoom,
+    UpdateRoom,
+    DeleteRoom,
+    DeleteSession,
+} = require('../utils/rooms');
 
 const debug_log = process.env.debug === "1";
 const error_log = process.env.ERROR === "1";
@@ -99,6 +105,7 @@ async function onConnect(socket) {
             // New session creates new room
             IncreaseTotalRooms();
             IncreaseOnlineRooms();
+            AddRoom(socket.projectKey, socket.sessId, socket.handshake.query.sessionInfo);
         }
         extractSessionInfo(socket);
         // Inform all connected agents about reconnected session
@@ -161,11 +168,14 @@ async function onDisconnect(socket) {
     if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();
         debug_log && console.log(`room not found: ${socket.roomId}`);
+        DeleteSession(socket.projectKey, socket.sessId);
+        DeleteRoom(socket.projectKey, socket.sessId);
         return;
     }
     if (tabsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no SESSIONS`);
         socket.to(socket.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
+        DeleteSession(socket.projectKey, socket.sessId);
     }
     if (agentsCount === 0) {
         debug_log && console.log(`notifying everyone in ${socket.roomId} about no AGENTS`);
@@ -182,6 +192,7 @@ async function onUpdateEvent(socket, ...args) {
 
     args[0] = updateSessionData(socket, args[0])
     Object.assign(socket.handshake.query.sessionInfo, args[0].data, {tabId: args[0]?.meta?.tabId});
+    UpdateRoom(socket.sessId, socket.handshake.query.sessionInfo);
 
     // Update sessionInfo for all agents in the room
     const io = getServer();

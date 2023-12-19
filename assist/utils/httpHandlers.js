@@ -22,6 +22,11 @@ const {
     RecordRequestDuration,
     IncreaseTotalRequests
 } = require('../utils/metrics');
+const {
+    GetRoomInfo,
+    GetRooms,
+    GetSessions,
+} = require('../utils/rooms');
 
 const debug_log = process.env.debug === "1";
 
@@ -39,77 +44,99 @@ const respond = function (req, res, data) {
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
+// Sort by projectKey
 const socketsListByProject = async function (req, res) {
-    res.handlerName = 'socketsListByProject';
-    let io = getServer();
     debug_log && console.log("[WS]looking for available sessions");
+    res.handlerName = 'socketsListByProject';
+
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
-    let liveSessions = new Set();
-    let rooms = await getAvailableRooms(io);
-    for (let roomId of rooms.keys()) {
-        let {projectKey, sessionId} = extractPeerId(roomId);
-        if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
-            if (withFilters) {
-                const connected_sockets = await io.in(roomId).fetchSockets();
-                for (let item of connected_sockets) {
-                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
-                        && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
-                        liveSessions.add(sessionId);
-                    }
-                }
-            } else {
-                liveSessions.add(sessionId);
-            }
+
+    // find a particular session
+    if (_sessionId) {
+        let sessInfo = GetRoomInfo(_sessionId);
+        if (!sessInfo) {
+            return respond(req, res, null);
+        }
+        if (!withFilters) {
+            return respond(req, res, sessInfo);
+        }
+        if (isValidSession(sessInfo, filters.filter)) {
+            return respond(req, res, sessInfo);
+        }
+        return respond(req, res, null);
+    }
+
+    // find all sessions for a project
+    let sessions = [];
+    let allRooms = GetRooms(_projectKey);
+    for (let sessionId of allRooms) {
+        let sessInfo = GetRoomInfo(sessionId);
+        if (!sessInfo) {
+            continue;
+        }
+        if (!withFilters) {
+            sessions.push(sessInfo);
+            continue;
+        }
+        if (isValidSession(sessInfo, filters.filter)) {
+            sessions.push(sessInfo);
         }
     }
-    let sessions = Array.from(liveSessions);
-    respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters)
-        : sessions.length > 0 ? sessions[0]
-            : null);
+
+    // send response
+    respond(req, res, sortPaginate(sessions, filters));
 }
 
+// Sort by projectKey
 const socketsLiveByProject = async function (req, res) {
-    res.handlerName = 'socketsLiveByProject';
-    let io = getServer();
     debug_log && console.log("[WS]looking for available LIVE sessions");
+    res.handlerName = 'socketsLiveByProject';
+
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
-    let liveSessions = new Set();
-    const sessIDs = new Set();
-    let rooms = await getAvailableRooms(io);
-    for (let roomId of rooms.keys()) {
-        let {projectKey, sessionId} = extractPeerId(roomId);
-        if (projectKey === _projectKey && (_sessionId === undefined || _sessionId === sessionId)) {
-            let connected_sockets = await io.in(roomId).fetchSockets();
-            for (let item of connected_sockets) {
-                if (item.handshake.query.identity === IDENTITIES.session) {
-                    if (withFilters) {
-                        if (item.handshake.query.sessionInfo &&
-                            isValidSession(item.handshake.query.sessionInfo, filters.filter) &&
-                            !sessIDs.has(item.handshake.query.sessionInfo.sessionID)
-                        ) {
-                            liveSessions.add(item.handshake.query.sessionInfo);
-                            sessIDs.add(item.handshake.query.sessionInfo.sessionID);
-                        }
-                    } else {
-                        if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
-                            liveSessions.add(item.handshake.query.sessionInfo);
-                            sessIDs.add(item.handshake.query.sessionInfo.sessionID);
-                        }
-                    }
-                }
-            }
+
+    // find a particular session
+    if (_sessionId) {
+        let sessInfo = GetRoomInfo(_sessionId);
+        if (!sessInfo) {
+            return respond(req, res, null);
+        }
+        if (!withFilters) {
+            return respond(req, res, sessInfo);
+        }
+        if (isValidSession(sessInfo, filters.filter)) {
+            return respond(req, res, sessInfo);
+        }
+        return respond(req, res, null);
+    }
+
+    // find all sessions for a project
+    let sessions = [];
+    let allSessions = GetSessions(_projectKey);
+    for (let sessionId of allSessions) {
+        let sessInfo = GetRoomInfo(sessionId);
+        if (!sessInfo) {
+            continue;
+        }
+        if (!withFilters) {
+            sessions.push(sessInfo);
+            continue;
+        }
+        if (isValidSession(sessInfo, filters.filter)) {
+            sessions.push(sessInfo);
         }
     }
-    let sessions = Array.from(liveSessions);
-    respond(req, res, _sessionId === undefined ? sortPaginate(sessions, filters) : sessions.length > 0 ? sessions[0] : null);
+
+    // send response
+    respond(req, res, sortPaginate(sessions, filters));
 }
 
+// Sort by roomID (projectKey+sessionId)
 const socketsLiveBySession = async function (req, res) {
     res.handlerName = 'socketsLiveBySession';
     let io = getServer();
@@ -148,6 +175,7 @@ const socketsLiveBySession = async function (req, res) {
     respond(req, res, sessions.length > 0 ? sessions[0] : null);
 }
 
+// Sort by projectKey
 const autocomplete = async function (req, res) {
     res.handlerName = 'autocomplete';
     let io = getServer();
