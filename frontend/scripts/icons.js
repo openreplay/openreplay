@@ -98,12 +98,19 @@ export default ${titleCase(fileName)};
 `)
 })
 
+fs.writeFileSync(`${UI_DIRNAME}/Icons/index.ts`, `
+/* Auto-generated, do not edit */
+${iconPaths.map((icon) => `export { default as ${titleCase(icon.fileName)} } from './${icon.fileName}';`).join('\n')}
+`);
 
 // MAIN FILE
 fs.writeFileSync(`${UI_DIRNAME}/SVG.tsx`, `
+/* Auto-generated, do not edit */
 import React from 'react';
+import {
+${iconPaths.map(icon => `  ${titleCase(icon.fileName)}`).join(',\n')}
+} from './Icons'
 
-${iconPaths.map((icon) => `import ${titleCase(icon.fileName)} from '${icon.path}';`).join('\n')}
 
 // export type IconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4).replaceAll('-', '_') + '\'').join(' | ')};
 export type OldIconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4) + '\'').join(' | ')};

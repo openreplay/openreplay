@@ -1,473 +1,476 @@
 
+/* Auto-generated, do not edit */
 import React from 'react';
+import {
+  Activity,
+Alarm_clock,
+Alarm_plus,
+All_sessions,
+Analytics,
+Anchor,
+Arrow_alt_square_right,
+Arrow_bar_left,
+Arrow_clockwise,
+Arrow_counterclockwise,
+Arrow_down_short,
+Arrow_down_up,
+Arrow_down,
+Arrow_repeat,
+Arrow_right_short,
+Arrow_square_left,
+Arrow_square_right,
+Arrow_up_short,
+Arrow_up,
+Arrows_angle_extend,
+Avatar_icn_avatar1,
+Avatar_icn_avatar10,
+Avatar_icn_avatar11,
+Avatar_icn_avatar12,
+Avatar_icn_avatar13,
+Avatar_icn_avatar14,
+Avatar_icn_avatar15,
+Avatar_icn_avatar16,
+Avatar_icn_avatar17,
+Avatar_icn_avatar18,
+Avatar_icn_avatar19,
+Avatar_icn_avatar2,
+Avatar_icn_avatar20,
+Avatar_icn_avatar21,
+Avatar_icn_avatar22,
+Avatar_icn_avatar23,
+Avatar_icn_avatar3,
+Avatar_icn_avatar4,
+Avatar_icn_avatar5,
+Avatar_icn_avatar6,
+Avatar_icn_avatar7,
+Avatar_icn_avatar8,
+Avatar_icn_avatar9,
+Ban,
+Bar_chart_line,
+Bar_pencil,
+Battery_charging,
+Battery,
+Bell_fill,
+Bell_plus,
+Bell_slash,
+Bell,
+Binoculars,
+Book_doc,
+Book,
+Bookmark,
+Broadcast,
+Browser_browser,
+Browser_chrome,
+Browser_edge,
+Browser_electron,
+Browser_facebook,
+Browser_firefox,
+Browser_ie,
+Browser_opera,
+Browser_safari,
+Buildings,
+Bullhorn,
+Business_time,
+Calendar_alt,
+Calendar_check,
+Calendar_day,
+Calendar,
+Call,
+Camera_alt,
+Camera_video_off,
+Camera_video,
+Camera,
+Card_checklist,
+Card_list,
+Card_text,
+Caret_down_fill,
+Caret_left_fill,
+Caret_right_fill,
+Caret_up_fill,
+Chat_dots,
+Chat_left_text,
+Chat_right_text,
+Chat_square_quote,
+Check_circle_fill,
+Check_circle,
+Check,
+Chevron_double_left,
+Chevron_double_right,
+Chevron_down,
+Chevron_left,
+Chevron_right,
+Chevron_up,
+Circle_fill,
+Circle,
+Click_hesitation,
+Click_rage,
+Clipboard_check,
+Clipboard_list_check,
+Clock_history,
+Clock,
+Close,
+Cloud_fog2_fill,
+Code,
+Cog,
+Cogs,
+Collection_play,
+Collection,
+Columns_gap_filled,
+Columns_gap,
+Console_error,
+Console_exception,
+Console_info,
+Console_warning,
+Console,
+Controller,
+Cookies,
+Copy,
+Credit_card_2_back,
+Credit_card_front,
+Cross,
+Cubes,
+Cursor_trash,
+Dash,
+Dashboard_icn,
+Db_icons_icn_card_clickmap,
+Db_icons_icn_card_errors,
+Db_icons_icn_card_funnel,
+Db_icons_icn_card_funnels,
+Db_icons_icn_card_insights,
+Db_icons_icn_card_library,
+Db_icons_icn_card_mapchart,
+Db_icons_icn_card_pathanalysis,
+Db_icons_icn_card_performance,
+Db_icons_icn_card_resources,
+Db_icons_icn_card_table,
+Db_icons_icn_card_timeseries,
+Db_icons_icn_card_webvitals,
+Desktop,
+Device,
+Diagram_3,
+Dice_3,
+Dizzy,
+Door_closed,
+Doublecheck,
+Download,
+Drag,
+Edit,
+Ellipsis_v,
+Emoji_dizzy,
+Enter,
+Envelope_check,
+Envelope_paper,
+Envelope_x,
+Envelope,
+Errors_icon,
+Event_click,
+Event_click_hesitation,
+Event_clickrage,
+Event_code,
+Event_i_cursor,
+Event_input,
+Event_input_hesitation,
+Event_link,
+Event_location,
+Event_mouse_thrashing,
+Event_resize,
+Event_view,
+Exclamation_circle_fill,
+Exclamation_circle,
+Exclamation_triangle,
+Expand_wide,
+Explosion,
+External_link_alt,
+Eye_slash_fill,
+Eye_slash,
+Eye,
+Fetch,
+Fflag_multi,
+Fflag_single,
+File_bar_graph,
+File_code,
+File_medical_alt,
+File_pdf,
+File,
+Files,
+Filetype_js,
+Filetype_pdf,
+Filter,
+Filters_arrow_return_right,
+Filters_browser,
+Filters_click,
+Filters_clickrage,
+Filters_code,
+Filters_console,
+Filters_country,
+Filters_cpu_load,
+Filters_custom,
+Filters_device,
+Filters_dom_complete,
+Filters_duration,
+Filters_error,
+Filters_fetch_failed,
+Filters_fetch,
+Filters_file_code,
+Filters_graphql,
+Filters_i_cursor,
+Filters_input,
+Filters_lcpt,
+Filters_link,
+Filters_location,
+Filters_memory_load,
+Filters_metadata,
+Filters_os,
+Filters_perfromance_network_request,
+Filters_platform,
+Filters_referrer,
+Filters_resize,
+Filters_rev_id,
+Filters_state_action,
+Filters_ttfb,
+Filters_user_alt,
+Filters_userid,
+Filters_view,
+Flag_na,
+Folder_plus,
+Folder2,
+Fullscreen,
+Funnel_cpu_fill,
+Funnel_cpu,
+Funnel_dizzy,
+Funnel_emoji_angry_fill,
+Funnel_emoji_angry,
+Funnel_emoji_dizzy_fill,
+Funnel_exclamation_circle_fill,
+Funnel_exclamation_circle,
+Funnel_file_earmark_break_fill,
+Funnel_file_earmark_break,
+Funnel_file_earmark_minus_fill,
+Funnel_file_earmark_minus,
+Funnel_file_medical_alt,
+Funnel_file_x,
+Funnel_hdd_fill,
+Funnel_hourglass_top,
+Funnel_image_fill,
+Funnel_image,
+Funnel_microchip,
+Funnel_mouse,
+Funnel_patch_exclamation_fill,
+Funnel_sd_card,
+Funnel_fill,
+Funnel_new,
+Funnel,
+Gear_fill,
+Gear,
+Geo_alt_fill_custom,
+Github,
+Graph_up_arrow,
+Graph_up,
+Grid_1x2,
+Grid_3x3,
+Grid_check,
+Grid_horizontal,
+Grid,
+Grip_horizontal,
+Hash,
+Hdd_stack,
+Headset,
+Heart_rate,
+High_engagement,
+History,
+Hourglass_start,
+Ic_errors,
+Ic_network,
+Ic_rage,
+Ic_resources,
+Id_card,
+Image,
+Info_circle_fill,
+Info_circle,
+Info_square,
+Info,
+Input_hesitation,
+Inspect,
+Integrations_assist,
+Integrations_bugsnag_text,
+Integrations_bugsnag,
+Integrations_cloudwatch_text,
+Integrations_cloudwatch,
+Integrations_datadog,
+Integrations_elasticsearch_text,
+Integrations_elasticsearch,
+Integrations_github,
+Integrations_graphql,
+Integrations_jira_text,
+Integrations_jira,
+Integrations_mobx,
+Integrations_newrelic_text,
+Integrations_newrelic,
+Integrations_ngrx,
+Integrations_openreplay_text,
+Integrations_openreplay,
+Integrations_redux,
+Integrations_rollbar_text,
+Integrations_rollbar,
+Integrations_segment,
+Integrations_sentry_text,
+Integrations_sentry,
+Integrations_slack_bw,
+Integrations_slack,
+Integrations_stackdriver,
+Integrations_sumologic_text,
+Integrations_sumologic,
+Integrations_teams_white,
+Integrations_teams,
+Integrations_vuejs,
+Integrations_zustand,
+Journal_code,
+Key,
+Layer_group,
+Layers_half,
+Lightbulb_on,
+Lightbulb,
+Link_45deg,
+List_alt,
+List_arrow,
+List_ul,
+List,
+Lock_alt,
+Low_disc_space,
+Magic,
+Map_marker_alt,
+Memory_ios,
+Memory,
+Mic_mute,
+Mic,
+Minus,
+Mobile,
+Mouse_alt,
+Network,
+Next1,
+No_dashboard,
+No_metrics_chart,
+No_metrics,
+No_recordings,
+Os_android,
+Os_chrome_os,
+Os_fedora,
+Os_ios,
+Os_linux,
+Os_mac_os_x,
+Os_other,
+Os_ubuntu,
+Os_windows,
+Os,
+Pause_circle_fill,
+Pause_fill,
+Pause,
+Pdf_download,
+Pencil_stop,
+Pencil,
+People,
+Percent,
+Performance_icon,
+Person_border,
+Person_fill,
+Person,
+Pie_chart_fill,
+Pin_fill,
+Play_circle_bold,
+Play_circle_light,
+Play_circle,
+Play_fill_new,
+Play_fill,
+Play_hover,
+Play,
+Plug,
+Plus_circle,
+Plus_lg,
+Plus,
+Pointer_sessions_search,
+Prev1,
+Pulse,
+Puzzle_piece,
+Puzzle,
+Question_circle,
+Question_lg,
+Quote_left,
+Quote_right,
+Quotes,
+Record_btn,
+Record_circle_fill,
+Record_circle,
+Record2,
+Redo_back,
+Redo,
+Redux,
+Remote_control,
+Replay_10,
+Resources_icon,
+Safe_fill,
+Safe,
+Sandglass,
+Search,
+Search_notification,
+Server,
+Share_alt,
+Shield_lock,
+Side_menu_closed,
+Side_menu_open,
+Signpost_split,
+Signup,
+Skip_forward_fill,
+Skip_forward,
+Slack,
+Slash_circle,
+Sleep,
+Sliders,
+Social_slack,
+Social_trello,
+Speedometer2,
+Spinner,
+Star_solid,
+Star,
+Step_forward,
+Stickies,
+Stop_record_circle,
+Stopwatch,
+Store,
+Sync_alt,
+Table_new,
+Table,
+Tablet_android,
+Tachometer_slow,
+Tachometer_slowest,
+Tags,
+Team_funnel,
+Telephone_fill,
+Telephone,
+Terminal,
+Text_paragraph,
+Thermometer_sun,
+Toggles,
+Tools,
+Trash,
+Turtle,
+User_alt,
+User_circle,
+User_friends,
+Users,
+Vendors_graphql,
+Vendors_mobx,
+Vendors_ngrx,
+Vendors_redux,
+Vendors_vuex,
+Web_vitals,
+Wifi,
+Window_alt,
+Window_restore,
+Window_x,
+Window,
+Zoom_in
+} from './Icons'
 
-import Activity from './Icons/activity';
-import Alarm_clock from './Icons/alarm_clock';
-import Alarm_plus from './Icons/alarm_plus';
-import All_sessions from './Icons/all_sessions';
-import Analytics from './Icons/analytics';
-import Anchor from './Icons/anchor';
-import Arrow_alt_square_right from './Icons/arrow_alt_square_right';
-import Arrow_bar_left from './Icons/arrow_bar_left';
-import Arrow_clockwise from './Icons/arrow_clockwise';
-import Arrow_counterclockwise from './Icons/arrow_counterclockwise';
-import Arrow_down_short from './Icons/arrow_down_short';
-import Arrow_down_up from './Icons/arrow_down_up';
-import Arrow_down from './Icons/arrow_down';
-import Arrow_repeat from './Icons/arrow_repeat';
-import Arrow_right_short from './Icons/arrow_right_short';
-import Arrow_square_left from './Icons/arrow_square_left';
-import Arrow_square_right from './Icons/arrow_square_right';
-import Arrow_up_short from './Icons/arrow_up_short';
-import Arrow_up from './Icons/arrow_up';
-import Arrows_angle_extend from './Icons/arrows_angle_extend';
-import Avatar_icn_avatar1 from './Icons/avatar_icn_avatar1';
-import Avatar_icn_avatar10 from './Icons/avatar_icn_avatar10';
-import Avatar_icn_avatar11 from './Icons/avatar_icn_avatar11';
-import Avatar_icn_avatar12 from './Icons/avatar_icn_avatar12';
-import Avatar_icn_avatar13 from './Icons/avatar_icn_avatar13';
-import Avatar_icn_avatar14 from './Icons/avatar_icn_avatar14';
-import Avatar_icn_avatar15 from './Icons/avatar_icn_avatar15';
-import Avatar_icn_avatar16 from './Icons/avatar_icn_avatar16';
-import Avatar_icn_avatar17 from './Icons/avatar_icn_avatar17';
-import Avatar_icn_avatar18 from './Icons/avatar_icn_avatar18';
-import Avatar_icn_avatar19 from './Icons/avatar_icn_avatar19';
-import Avatar_icn_avatar2 from './Icons/avatar_icn_avatar2';
-import Avatar_icn_avatar20 from './Icons/avatar_icn_avatar20';
-import Avatar_icn_avatar21 from './Icons/avatar_icn_avatar21';
-import Avatar_icn_avatar22 from './Icons/avatar_icn_avatar22';
-import Avatar_icn_avatar23 from './Icons/avatar_icn_avatar23';
-import Avatar_icn_avatar3 from './Icons/avatar_icn_avatar3';
-import Avatar_icn_avatar4 from './Icons/avatar_icn_avatar4';
-import Avatar_icn_avatar5 from './Icons/avatar_icn_avatar5';
-import Avatar_icn_avatar6 from './Icons/avatar_icn_avatar6';
-import Avatar_icn_avatar7 from './Icons/avatar_icn_avatar7';
-import Avatar_icn_avatar8 from './Icons/avatar_icn_avatar8';
-import Avatar_icn_avatar9 from './Icons/avatar_icn_avatar9';
-import Ban from './Icons/ban';
-import Bar_chart_line from './Icons/bar_chart_line';
-import Bar_pencil from './Icons/bar_pencil';
-import Battery_charging from './Icons/battery_charging';
-import Battery from './Icons/battery';
-import Bell_fill from './Icons/bell_fill';
-import Bell_plus from './Icons/bell_plus';
-import Bell_slash from './Icons/bell_slash';
-import Bell from './Icons/bell';
-import Binoculars from './Icons/binoculars';
-import Book_doc from './Icons/book_doc';
-import Book from './Icons/book';
-import Bookmark from './Icons/bookmark';
-import Broadcast from './Icons/broadcast';
-import Browser_browser from './Icons/browser_browser';
-import Browser_chrome from './Icons/browser_chrome';
-import Browser_edge from './Icons/browser_edge';
-import Browser_electron from './Icons/browser_electron';
-import Browser_facebook from './Icons/browser_facebook';
-import Browser_firefox from './Icons/browser_firefox';
-import Browser_ie from './Icons/browser_ie';
-import Browser_opera from './Icons/browser_opera';
-import Browser_safari from './Icons/browser_safari';
-import Buildings from './Icons/buildings';
-import Bullhorn from './Icons/bullhorn';
-import Business_time from './Icons/business_time';
-import Calendar_alt from './Icons/calendar_alt';
-import Calendar_check from './Icons/calendar_check';
-import Calendar_day from './Icons/calendar_day';
-import Calendar from './Icons/calendar';
-import Call from './Icons/call';
-import Camera_alt from './Icons/camera_alt';
-import Camera_video_off from './Icons/camera_video_off';
-import Camera_video from './Icons/camera_video';
-import Camera from './Icons/camera';
-import Card_checklist from './Icons/card_checklist';
-import Card_list from './Icons/card_list';
-import Card_text from './Icons/card_text';
-import Caret_down_fill from './Icons/caret_down_fill';
-import Caret_left_fill from './Icons/caret_left_fill';
-import Caret_right_fill from './Icons/caret_right_fill';
-import Caret_up_fill from './Icons/caret_up_fill';
-import Chat_dots from './Icons/chat_dots';
-import Chat_left_text from './Icons/chat_left_text';
-import Chat_right_text from './Icons/chat_right_text';
-import Chat_square_quote from './Icons/chat_square_quote';
-import Check_circle_fill from './Icons/check_circle_fill';
-import Check_circle from './Icons/check_circle';
-import Check from './Icons/check';
-import Chevron_double_left from './Icons/chevron_double_left';
-import Chevron_double_right from './Icons/chevron_double_right';
-import Chevron_down from './Icons/chevron_down';
-import Chevron_left from './Icons/chevron_left';
-import Chevron_right from './Icons/chevron_right';
-import Chevron_up from './Icons/chevron_up';
-import Circle_fill from './Icons/circle_fill';
-import Circle from './Icons/circle';
-import Click_hesitation from './Icons/click_hesitation';
-import Click_rage from './Icons/click_rage';
-import Clipboard_check from './Icons/clipboard_check';
-import Clipboard_list_check from './Icons/clipboard_list_check';
-import Clock_history from './Icons/clock_history';
-import Clock from './Icons/clock';
-import Close from './Icons/close';
-import Cloud_fog2_fill from './Icons/cloud_fog2_fill';
-import Code from './Icons/code';
-import Cog from './Icons/cog';
-import Cogs from './Icons/cogs';
-import Collection_play from './Icons/collection_play';
-import Collection from './Icons/collection';
-import Columns_gap_filled from './Icons/columns_gap_filled';
-import Columns_gap from './Icons/columns_gap';
-import Console_error from './Icons/console_error';
-import Console_exception from './Icons/console_exception';
-import Console_info from './Icons/console_info';
-import Console_warning from './Icons/console_warning';
-import Console from './Icons/console';
-import Controller from './Icons/controller';
-import Cookies from './Icons/cookies';
-import Copy from './Icons/copy';
-import Credit_card_2_back from './Icons/credit_card_2_back';
-import Credit_card_front from './Icons/credit_card_front';
-import Cross from './Icons/cross';
-import Cubes from './Icons/cubes';
-import Cursor_trash from './Icons/cursor_trash';
-import Dash from './Icons/dash';
-import Dashboard_icn from './Icons/dashboard_icn';
-import Db_icons_icn_card_clickmap from './Icons/db_icons_icn_card_clickMap';
-import Db_icons_icn_card_errors from './Icons/db_icons_icn_card_errors';
-import Db_icons_icn_card_funnel from './Icons/db_icons_icn_card_funnel';
-import Db_icons_icn_card_funnels from './Icons/db_icons_icn_card_funnels';
-import Db_icons_icn_card_insights from './Icons/db_icons_icn_card_insights';
-import Db_icons_icn_card_library from './Icons/db_icons_icn_card_library';
-import Db_icons_icn_card_mapchart from './Icons/db_icons_icn_card_mapchart';
-import Db_icons_icn_card_pathanalysis from './Icons/db_icons_icn_card_pathAnalysis';
-import Db_icons_icn_card_performance from './Icons/db_icons_icn_card_performance';
-import Db_icons_icn_card_resources from './Icons/db_icons_icn_card_resources';
-import Db_icons_icn_card_table from './Icons/db_icons_icn_card_table';
-import Db_icons_icn_card_timeseries from './Icons/db_icons_icn_card_timeseries';
-import Db_icons_icn_card_webvitals from './Icons/db_icons_icn_card_webVitals';
-import Desktop from './Icons/desktop';
-import Device from './Icons/device';
-import Diagram_3 from './Icons/diagram_3';
-import Dice_3 from './Icons/dice_3';
-import Dizzy from './Icons/dizzy';
-import Door_closed from './Icons/door_closed';
-import Doublecheck from './Icons/doublecheck';
-import Download from './Icons/download';
-import Drag from './Icons/drag';
-import Edit from './Icons/edit';
-import Ellipsis_v from './Icons/ellipsis_v';
-import Emoji_dizzy from './Icons/emoji_dizzy';
-import Enter from './Icons/enter';
-import Envelope_check from './Icons/envelope_check';
-import Envelope_paper from './Icons/envelope_paper';
-import Envelope_x from './Icons/envelope_x';
-import Envelope from './Icons/envelope';
-import Errors_icon from './Icons/errors_icon';
-import Event_click from './Icons/event_click';
-import Event_click_hesitation from './Icons/event_click_hesitation';
-import Event_clickrage from './Icons/event_clickrage';
-import Event_code from './Icons/event_code';
-import Event_i_cursor from './Icons/event_i_cursor';
-import Event_input from './Icons/event_input';
-import Event_input_hesitation from './Icons/event_input_hesitation';
-import Event_link from './Icons/event_link';
-import Event_location from './Icons/event_location';
-import Event_mouse_thrashing from './Icons/event_mouse_thrashing';
-import Event_resize from './Icons/event_resize';
-import Event_view from './Icons/event_view';
-import Exclamation_circle_fill from './Icons/exclamation_circle_fill';
-import Exclamation_circle from './Icons/exclamation_circle';
-import Exclamation_triangle from './Icons/exclamation_triangle';
-import Expand_wide from './Icons/expand_wide';
-import Explosion from './Icons/explosion';
-import External_link_alt from './Icons/external_link_alt';
-import Eye_slash_fill from './Icons/eye_slash_fill';
-import Eye_slash from './Icons/eye_slash';
-import Eye from './Icons/eye';
-import Fetch from './Icons/fetch';
-import Fflag_multi from './Icons/fflag_multi';
-import Fflag_single from './Icons/fflag_single';
-import File_bar_graph from './Icons/file_bar_graph';
-import File_code from './Icons/file_code';
-import File_medical_alt from './Icons/file_medical_alt';
-import File_pdf from './Icons/file_pdf';
-import File from './Icons/file';
-import Files from './Icons/files';
-import Filetype_js from './Icons/filetype_js';
-import Filetype_pdf from './Icons/filetype_pdf';
-import Filter from './Icons/filter';
-import Filters_arrow_return_right from './Icons/filters_arrow_return_right';
-import Filters_browser from './Icons/filters_browser';
-import Filters_click from './Icons/filters_click';
-import Filters_clickrage from './Icons/filters_clickrage';
-import Filters_code from './Icons/filters_code';
-import Filters_console from './Icons/filters_console';
-import Filters_country from './Icons/filters_country';
-import Filters_cpu_load from './Icons/filters_cpu_load';
-import Filters_custom from './Icons/filters_custom';
-import Filters_device from './Icons/filters_device';
-import Filters_dom_complete from './Icons/filters_dom_complete';
-import Filters_duration from './Icons/filters_duration';
-import Filters_error from './Icons/filters_error';
-import Filters_fetch_failed from './Icons/filters_fetch_failed';
-import Filters_fetch from './Icons/filters_fetch';
-import Filters_file_code from './Icons/filters_file_code';
-import Filters_graphql from './Icons/filters_graphql';
-import Filters_i_cursor from './Icons/filters_i_cursor';
-import Filters_input from './Icons/filters_input';
-import Filters_lcpt from './Icons/filters_lcpt';
-import Filters_link from './Icons/filters_link';
-import Filters_location from './Icons/filters_location';
-import Filters_memory_load from './Icons/filters_memory_load';
-import Filters_metadata from './Icons/filters_metadata';
-import Filters_os from './Icons/filters_os';
-import Filters_perfromance_network_request from './Icons/filters_perfromance_network_request';
-import Filters_platform from './Icons/filters_platform';
-import Filters_referrer from './Icons/filters_referrer';
-import Filters_resize from './Icons/filters_resize';
-import Filters_rev_id from './Icons/filters_rev_id';
-import Filters_state_action from './Icons/filters_state_action';
-import Filters_ttfb from './Icons/filters_ttfb';
-import Filters_user_alt from './Icons/filters_user_alt';
-import Filters_userid from './Icons/filters_userid';
-import Filters_view from './Icons/filters_view';
-import Flag_na from './Icons/flag_na';
-import Folder_plus from './Icons/folder_plus';
-import Folder2 from './Icons/folder2';
-import Fullscreen from './Icons/fullscreen';
-import Funnel_cpu_fill from './Icons/funnel_cpu_fill';
-import Funnel_cpu from './Icons/funnel_cpu';
-import Funnel_dizzy from './Icons/funnel_dizzy';
-import Funnel_emoji_angry_fill from './Icons/funnel_emoji_angry_fill';
-import Funnel_emoji_angry from './Icons/funnel_emoji_angry';
-import Funnel_emoji_dizzy_fill from './Icons/funnel_emoji_dizzy_fill';
-import Funnel_exclamation_circle_fill from './Icons/funnel_exclamation_circle_fill';
-import Funnel_exclamation_circle from './Icons/funnel_exclamation_circle';
-import Funnel_file_earmark_break_fill from './Icons/funnel_file_earmark_break_fill';
-import Funnel_file_earmark_break from './Icons/funnel_file_earmark_break';
-import Funnel_file_earmark_minus_fill from './Icons/funnel_file_earmark_minus_fill';
-import Funnel_file_earmark_minus from './Icons/funnel_file_earmark_minus';
-import Funnel_file_medical_alt from './Icons/funnel_file_medical_alt';
-import Funnel_file_x from './Icons/funnel_file_x';
-import Funnel_hdd_fill from './Icons/funnel_hdd_fill';
-import Funnel_hourglass_top from './Icons/funnel_hourglass_top';
-import Funnel_image_fill from './Icons/funnel_image_fill';
-import Funnel_image from './Icons/funnel_image';
-import Funnel_microchip from './Icons/funnel_microchip';
-import Funnel_mouse from './Icons/funnel_mouse';
-import Funnel_patch_exclamation_fill from './Icons/funnel_patch_exclamation_fill';
-import Funnel_sd_card from './Icons/funnel_sd_card';
-import Funnel_fill from './Icons/funnel_fill';
-import Funnel_new from './Icons/funnel_new';
-import Funnel from './Icons/funnel';
-import Gear_fill from './Icons/gear_fill';
-import Gear from './Icons/gear';
-import Geo_alt_fill_custom from './Icons/geo_alt_fill_custom';
-import Github from './Icons/github';
-import Graph_up_arrow from './Icons/graph_up_arrow';
-import Graph_up from './Icons/graph_up';
-import Grid_1x2 from './Icons/grid_1x2';
-import Grid_3x3 from './Icons/grid_3x3';
-import Grid_check from './Icons/grid_check';
-import Grid_horizontal from './Icons/grid_horizontal';
-import Grid from './Icons/grid';
-import Grip_horizontal from './Icons/grip_horizontal';
-import Hash from './Icons/hash';
-import Hdd_stack from './Icons/hdd_stack';
-import Headset from './Icons/headset';
-import Heart_rate from './Icons/heart_rate';
-import High_engagement from './Icons/high_engagement';
-import History from './Icons/history';
-import Hourglass_start from './Icons/hourglass_start';
-import Ic_errors from './Icons/ic_errors';
-import Ic_network from './Icons/ic_network';
-import Ic_rage from './Icons/ic_rage';
-import Ic_resources from './Icons/ic_resources';
-import Id_card from './Icons/id_card';
-import Image from './Icons/image';
-import Info_circle_fill from './Icons/info_circle_fill';
-import Info_circle from './Icons/info_circle';
-import Info_square from './Icons/info_square';
-import Info from './Icons/info';
-import Input_hesitation from './Icons/input_hesitation';
-import Inspect from './Icons/inspect';
-import Integrations_assist from './Icons/integrations_assist';
-import Integrations_bugsnag_text from './Icons/integrations_bugsnag_text';
-import Integrations_bugsnag from './Icons/integrations_bugsnag';
-import Integrations_cloudwatch_text from './Icons/integrations_cloudwatch_text';
-import Integrations_cloudwatch from './Icons/integrations_cloudwatch';
-import Integrations_datadog from './Icons/integrations_datadog';
-import Integrations_elasticsearch_text from './Icons/integrations_elasticsearch_text';
-import Integrations_elasticsearch from './Icons/integrations_elasticsearch';
-import Integrations_github from './Icons/integrations_github';
-import Integrations_graphql from './Icons/integrations_graphql';
-import Integrations_jira_text from './Icons/integrations_jira_text';
-import Integrations_jira from './Icons/integrations_jira';
-import Integrations_mobx from './Icons/integrations_mobx';
-import Integrations_newrelic_text from './Icons/integrations_newrelic_text';
-import Integrations_newrelic from './Icons/integrations_newrelic';
-import Integrations_ngrx from './Icons/integrations_ngrx';
-import Integrations_openreplay_text from './Icons/integrations_openreplay_text';
-import Integrations_openreplay from './Icons/integrations_openreplay';
-import Integrations_redux from './Icons/integrations_redux';
-import Integrations_rollbar_text from './Icons/integrations_rollbar_text';
-import Integrations_rollbar from './Icons/integrations_rollbar';
-import Integrations_segment from './Icons/integrations_segment';
-import Integrations_sentry_text from './Icons/integrations_sentry_text';
-import Integrations_sentry from './Icons/integrations_sentry';
-import Integrations_slack_bw from './Icons/integrations_slack_bw';
-import Integrations_slack from './Icons/integrations_slack';
-import Integrations_stackdriver from './Icons/integrations_stackdriver';
-import Integrations_sumologic_text from './Icons/integrations_sumologic_text';
-import Integrations_sumologic from './Icons/integrations_sumologic';
-import Integrations_teams_white from './Icons/integrations_teams_white';
-import Integrations_teams from './Icons/integrations_teams';
-import Integrations_vuejs from './Icons/integrations_vuejs';
-import Integrations_zustand from './Icons/integrations_zustand';
-import Journal_code from './Icons/journal_code';
-import Key from './Icons/key';
-import Layer_group from './Icons/layer_group';
-import Layers_half from './Icons/layers_half';
-import Lightbulb_on from './Icons/lightbulb_on';
-import Lightbulb from './Icons/lightbulb';
-import Link_45deg from './Icons/link_45deg';
-import List_alt from './Icons/list_alt';
-import List_arrow from './Icons/list_arrow';
-import List_ul from './Icons/list_ul';
-import List from './Icons/list';
-import Lock_alt from './Icons/lock_alt';
-import Low_disc_space from './Icons/low_disc_space';
-import Magic from './Icons/magic';
-import Map_marker_alt from './Icons/map_marker_alt';
-import Memory_ios from './Icons/memory_ios';
-import Memory from './Icons/memory';
-import Mic_mute from './Icons/mic_mute';
-import Mic from './Icons/mic';
-import Minus from './Icons/minus';
-import Mobile from './Icons/mobile';
-import Mouse_alt from './Icons/mouse_alt';
-import Network from './Icons/network';
-import Next1 from './Icons/next1';
-import No_dashboard from './Icons/no_dashboard';
-import No_metrics_chart from './Icons/no_metrics_chart';
-import No_metrics from './Icons/no_metrics';
-import No_recordings from './Icons/no_recordings';
-import Os_android from './Icons/os_android';
-import Os_chrome_os from './Icons/os_chrome_os';
-import Os_fedora from './Icons/os_fedora';
-import Os_ios from './Icons/os_ios';
-import Os_linux from './Icons/os_linux';
-import Os_mac_os_x from './Icons/os_mac_os_x';
-import Os_other from './Icons/os_other';
-import Os_ubuntu from './Icons/os_ubuntu';
-import Os_windows from './Icons/os_windows';
-import Os from './Icons/os';
-import Pause_circle_fill from './Icons/pause_circle_fill';
-import Pause_fill from './Icons/pause_fill';
-import Pause from './Icons/pause';
-import Pdf_download from './Icons/pdf_download';
-import Pencil_stop from './Icons/pencil_stop';
-import Pencil from './Icons/pencil';
-import People from './Icons/people';
-import Percent from './Icons/percent';
-import Performance_icon from './Icons/performance_icon';
-import Person_border from './Icons/person_border';
-import Person_fill from './Icons/person_fill';
-import Person from './Icons/person';
-import Pie_chart_fill from './Icons/pie_chart_fill';
-import Pin_fill from './Icons/pin_fill';
-import Play_circle_bold from './Icons/play_circle_bold';
-import Play_circle_light from './Icons/play_circle_light';
-import Play_circle from './Icons/play_circle';
-import Play_fill_new from './Icons/play_fill_new';
-import Play_fill from './Icons/play_fill';
-import Play_hover from './Icons/play_hover';
-import Play from './Icons/play';
-import Plug from './Icons/plug';
-import Plus_circle from './Icons/plus_circle';
-import Plus_lg from './Icons/plus_lg';
-import Plus from './Icons/plus';
-import Pointer_sessions_search from './Icons/pointer_sessions_search';
-import Prev1 from './Icons/prev1';
-import Pulse from './Icons/pulse';
-import Puzzle_piece from './Icons/puzzle_piece';
-import Puzzle from './Icons/puzzle';
-import Question_circle from './Icons/question_circle';
-import Question_lg from './Icons/question_lg';
-import Quote_left from './Icons/quote_left';
-import Quote_right from './Icons/quote_right';
-import Quotes from './Icons/quotes';
-import Record_btn from './Icons/record_btn';
-import Record_circle_fill from './Icons/record_circle_fill';
-import Record_circle from './Icons/record_circle';
-import Record2 from './Icons/record2';
-import Redo_back from './Icons/redo_back';
-import Redo from './Icons/redo';
-import Redux from './Icons/redux';
-import Remote_control from './Icons/remote_control';
-import Replay_10 from './Icons/replay_10';
-import Resources_icon from './Icons/resources_icon';
-import Safe_fill from './Icons/safe_fill';
-import Safe from './Icons/safe';
-import Sandglass from './Icons/sandglass';
-import Search from './Icons/search';
-import Search_notification from './Icons/search_notification';
-import Server from './Icons/server';
-import Share_alt from './Icons/share_alt';
-import Shield_lock from './Icons/shield_lock';
-import Side_menu_closed from './Icons/side_menu_closed';
-import Side_menu_open from './Icons/side_menu_open';
-import Signpost_split from './Icons/signpost_split';
-import Signup from './Icons/signup';
-import Skip_forward_fill from './Icons/skip_forward_fill';
-import Skip_forward from './Icons/skip_forward';
-import Slack from './Icons/slack';
-import Slash_circle from './Icons/slash_circle';
-import Sleep from './Icons/sleep';
-import Sliders from './Icons/sliders';
-import Social_slack from './Icons/social_slack';
-import Social_trello from './Icons/social_trello';
-import Speedometer2 from './Icons/speedometer2';
-import Spinner from './Icons/spinner';
-import Star_solid from './Icons/star_solid';
-import Star from './Icons/star';
-import Step_forward from './Icons/step_forward';
-import Stickies from './Icons/stickies';
-import Stop_record_circle from './Icons/stop_record_circle';
-import Stopwatch from './Icons/stopwatch';
-import Store from './Icons/store';
-import Sync_alt from './Icons/sync_alt';
-import Table_new from './Icons/table_new';
-import Table from './Icons/table';
-import Tablet_android from './Icons/tablet_android';
-import Tachometer_slow from './Icons/tachometer_slow';
-import Tachometer_slowest from './Icons/tachometer_slowest';
-import Tags from './Icons/tags';
-import Team_funnel from './Icons/team_funnel';
-import Telephone_fill from './Icons/telephone_fill';
-import Telephone from './Icons/telephone';
-import Terminal from './Icons/terminal';
-import Text_paragraph from './Icons/text_paragraph';
-import Thermometer_sun from './Icons/thermometer_sun';
-import Toggles from './Icons/toggles';
-import Tools from './Icons/tools';
-import Trash from './Icons/trash';
-import Turtle from './Icons/turtle';
-import User_alt from './Icons/user_alt';
-import User_circle from './Icons/user_circle';
-import User_friends from './Icons/user_friends';
-import Users from './Icons/users';
-import Vendors_graphql from './Icons/vendors_graphql';
-import Vendors_mobx from './Icons/vendors_mobx';
-import Vendors_ngrx from './Icons/vendors_ngrx';
-import Vendors_redux from './Icons/vendors_redux';
-import Vendors_vuex from './Icons/vendors_vuex';
-import Web_vitals from './Icons/web_vitals';
-import Wifi from './Icons/wifi';
-import Window_alt from './Icons/window_alt';
-import Window_restore from './Icons/window_restore';
-import Window_x from './Icons/window_x';
-import Window from './Icons/window';
-import Zoom_in from './Icons/zoom_in';
 
 // export type IconNames = 'activity' | 'alarm_clock' | 'alarm_plus' | 'all_sessions' | 'analytics' | 'anchor' | 'arrow_alt_square_right' | 'arrow_bar_left' | 'arrow_clockwise' | 'arrow_counterclockwise' | 'arrow_down_short' | 'arrow_down_up' | 'arrow_down' | 'arrow_repeat' | 'arrow_right_short' | 'arrow_square_left' | 'arrow_square_right' | 'arrow_up_short' | 'arrow_up' | 'arrows_angle_extend' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar_chart_line' | 'bar_pencil' | 'battery_charging' | 'battery' | 'bell_fill' | 'bell_plus' | 'bell_slash' | 'bell' | 'binoculars' | 'book_doc' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'business_time' | 'calendar_alt' | 'calendar_check' | 'calendar_day' | 'calendar' | 'call' | 'camera_alt' | 'camera_video_off' | 'camera_video' | 'camera' | 'card_checklist' | 'card_list' | 'card_text' | 'caret_down_fill' | 'caret_left_fill' | 'caret_right_fill' | 'caret_up_fill' | 'chat_dots' | 'chat_left_text' | 'chat_right_text' | 'chat_square_quote' | 'check_circle_fill' | 'check_circle' | 'check' | 'chevron_double_left' | 'chevron_double_right' | 'chevron_down' | 'chevron_left' | 'chevron_right' | 'chevron_up' | 'circle_fill' | 'circle' | 'click_hesitation' | 'click_rage' | 'clipboard_check' | 'clipboard_list_check' | 'clock_history' | 'clock' | 'close' | 'cloud_fog2_fill' | 'code' | 'cog' | 'cogs' | 'collection_play' | 'collection' | 'columns_gap_filled' | 'columns_gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit_card_2_back' | 'credit_card_front' | 'cross' | 'cubes' | 'cursor_trash' | 'dash' | 'dashboard_icn' | 'db_icons/icn_card_clickMap' | 'db_icons/icn_card_errors' | 'db_icons/icn_card_funnel' | 'db_icons/icn_card_funnels' | 'db_icons/icn_card_insights' | 'db_icons/icn_card_library' | 'db_icons/icn_card_mapchart' | 'db_icons/icn_card_pathAnalysis' | 'db_icons/icn_card_performance' | 'db_icons/icn_card_resources' | 'db_icons/icn_card_table' | 'db_icons/icn_card_timeseries' | 'db_icons/icn_card_webVitals' | 'desktop' | 'device' | 'diagram_3' | 'dice_3' | 'dizzy' | 'door_closed' | 'doublecheck' | 'download' | 'drag' | 'edit' | 'ellipsis_v' | 'emoji_dizzy' | 'enter' | 'envelope_check' | 'envelope_paper' | 'envelope_x' | 'envelope' | 'errors_icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i_cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation_circle_fill' | 'exclamation_circle' | 'exclamation_triangle' | 'expand_wide' | 'explosion' | 'external_link_alt' | 'eye_slash_fill' | 'eye_slash' | 'eye' | 'fetch' | 'fflag_multi' | 'fflag_single' | 'file_bar_graph' | 'file_code' | 'file_medical_alt' | 'file_pdf' | 'file' | 'files' | 'filetype_js' | 'filetype_pdf' | 'filter' | 'filters/arrow_return_right' | 'filters/browser' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu_load' | 'filters/custom' | 'filters/device' | 'filters/dom_complete' | 'filters/duration' | 'filters/error' | 'filters/fetch_failed' | 'filters/fetch' | 'filters/file_code' | 'filters/graphql' | 'filters/i_cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory_load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance_network_request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev_id' | 'filters/state_action' | 'filters/ttfb' | 'filters/user_alt' | 'filters/userid' | 'filters/view' | 'flag_na' | 'folder_plus' | 'folder2' | 'fullscreen' | 'funnel/cpu_fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji_angry_fill' | 'funnel/emoji_angry' | 'funnel/emoji_dizzy_fill' | 'funnel/exclamation_circle_fill' | 'funnel/exclamation_circle' | 'funnel/file_earmark_break_fill' | 'funnel/file_earmark_break' | 'funnel/file_earmark_minus_fill' | 'funnel/file_earmark_minus' | 'funnel/file_medical_alt' | 'funnel/file_x' | 'funnel/hdd_fill' | 'funnel/hourglass_top' | 'funnel/image_fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch_exclamation_fill' | 'funnel/sd_card' | 'funnel_fill' | 'funnel_new' | 'funnel' | 'gear_fill' | 'gear' | 'geo_alt_fill_custom' | 'github' | 'graph_up_arrow' | 'graph_up' | 'grid_1x2' | 'grid_3x3' | 'grid_check' | 'grid_horizontal' | 'grid' | 'grip_horizontal' | 'hash' | 'hdd_stack' | 'headset' | 'heart_rate' | 'high_engagement' | 'history' | 'hourglass_start' | 'ic_errors' | 'ic_network' | 'ic_rage' | 'ic_resources' | 'id_card' | 'image' | 'info_circle_fill' | 'info_circle' | 'info_square' | 'info' | 'input_hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag_text' | 'integrations/bugsnag' | 'integrations/cloudwatch_text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch_text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira_text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic_text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay_text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar_text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry_text' | 'integrations/sentry' | 'integrations/slack_bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic_text' | 'integrations/sumologic' | 'integrations/teams_white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal_code' | 'key' | 'layer_group' | 'layers_half' | 'lightbulb_on' | 'lightbulb' | 'link_45deg' | 'list_alt' | 'list_arrow' | 'list_ul' | 'list' | 'lock_alt' | 'low_disc_space' | 'magic' | 'map_marker_alt' | 'memory_ios' | 'memory' | 'mic_mute' | 'mic' | 'minus' | 'mobile' | 'mouse_alt' | 'network' | 'next1' | 'no_dashboard' | 'no_metrics_chart' | 'no_metrics' | 'no_recordings' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause_circle_fill' | 'pause_fill' | 'pause' | 'pdf_download' | 'pencil_stop' | 'pencil' | 'people' | 'percent' | 'performance_icon' | 'person_border' | 'person_fill' | 'person' | 'pie_chart_fill' | 'pin_fill' | 'play_circle_bold' | 'play_circle_light' | 'play_circle' | 'play_fill_new' | 'play_fill' | 'play_hover' | 'play' | 'plug' | 'plus_circle' | 'plus_lg' | 'plus' | 'pointer_sessions_search' | 'prev1' | 'pulse' | 'puzzle_piece' | 'puzzle' | 'question_circle' | 'question_lg' | 'quote_left' | 'quote_right' | 'quotes' | 'record_btn' | 'record_circle_fill' | 'record_circle' | 'record2' | 'redo_back' | 'redo' | 'redux' | 'remote_control' | 'replay_10' | 'resources_icon' | 'safe_fill' | 'safe' | 'sandglass' | 'search' | 'search_notification' | 'server' | 'share_alt' | 'shield_lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost_split' | 'signup' | 'skip_forward_fill' | 'skip_forward' | 'slack' | 'slash_circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'speedometer2' | 'spinner' | 'star_solid' | 'star' | 'step_forward' | 'stickies' | 'stop_record_circle' | 'stopwatch' | 'store' | 'sync_alt' | 'table_new' | 'table' | 'tablet_android' | 'tachometer_slow' | 'tachometer_slowest' | 'tags' | 'team_funnel' | 'telephone_fill' | 'telephone' | 'terminal' | 'text_paragraph' | 'thermometer_sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user_alt' | 'user_circle' | 'user_friends' | 'users' | 'vendors/graphql' | 'vendors/mobx' | 'vendors/ngrx' | 'vendors/redux' | 'vendors/vuex' | 'web_vitals' | 'wifi' | 'window_alt' | 'window_restore' | 'window_x' | 'window' | 'zoom_in';
 export type OldIconNames = 'activity' | 'alarm-clock' | 'alarm-plus' | 'all-sessions' | 'analytics' | 'anchor' | 'arrow-alt-square-right' | 'arrow-bar-left' | 'arrow-clockwise' | 'arrow-counterclockwise' | 'arrow-down-short' | 'arrow-down-up' | 'arrow-down' | 'arrow-repeat' | 'arrow-right-short' | 'arrow-square-left' | 'arrow-square-right' | 'arrow-up-short' | 'arrow-up' | 'arrows-angle-extend' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar-chart-line' | 'bar-pencil' | 'battery-charging' | 'battery' | 'bell-fill' | 'bell-plus' | 'bell-slash' | 'bell' | 'binoculars' | 'book-doc' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'business-time' | 'calendar-alt' | 'calendar-check' | 'calendar-day' | 'calendar' | 'call' | 'camera-alt' | 'camera-video-off' | 'camera-video' | 'camera' | 'card-checklist' | 'card-list' | 'card-text' | 'caret-down-fill' | 'caret-left-fill' | 'caret-right-fill' | 'caret-up-fill' | 'chat-dots' | 'chat-left-text' | 'chat-right-text' | 'chat-square-quote' | 'check-circle-fill' | 'check-circle' | 'check' | 'chevron-double-left' | 'chevron-double-right' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'circle-fill' | 'circle' | 'click-hesitation' | 'click-rage' | 'clipboard-check' | 'clipboard-list-check' | 'clock-history' | 'clock' | 'close' | 'cloud-fog2-fill' | 'code' | 'cog' | 'cogs' | 'collection-play' | 'collection' | 'columns-gap-filled' | 'columns-gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit-card-2-back' | 'credit-card-front' | 'cross' | 'cubes' | 'cursor-trash' | 'dash' | 'dashboard-icn' | 'db-icons/icn-card-clickMap' | 'db-icons/icn-card-errors' | 'db-icons/icn-card-funnel' | 'db-icons/icn-card-funnels' | 'db-icons/icn-card-insights' | 'db-icons/icn-card-library' | 'db-icons/icn-card-mapchart' | 'db-icons/icn-card-pathAnalysis' | 'db-icons/icn-card-performance' | 'db-icons/icn-card-resources' | 'db-icons/icn-card-table' | 'db-icons/icn-card-timeseries' | 'db-icons/icn-card-webVitals' | 'desktop' | 'device' | 'diagram-3' | 'dice-3' | 'dizzy' | 'door-closed' | 'doublecheck' | 'download' | 'drag' | 'edit' | 'ellipsis-v' | 'emoji-dizzy' | 'enter' | 'envelope-check' | 'envelope-paper' | 'envelope-x' | 'envelope' | 'errors-icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i-cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation-circle-fill' | 'exclamation-circle' | 'exclamation-triangle' | 'expand-wide' | 'explosion' | 'external-link-alt' | 'eye-slash-fill' | 'eye-slash' | 'eye' | 'fetch' | 'fflag-multi' | 'fflag-single' | 'file-bar-graph' | 'file-code' | 'file-medical-alt' | 'file-pdf' | 'file' | 'files' | 'filetype-js' | 'filetype-pdf' | 'filter' | 'filters/arrow-return-right' | 'filters/browser' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu-load' | 'filters/custom' | 'filters/device' | 'filters/dom-complete' | 'filters/duration' | 'filters/error' | 'filters/fetch-failed' | 'filters/fetch' | 'filters/file-code' | 'filters/graphql' | 'filters/i-cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory-load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance-network-request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev-id' | 'filters/state-action' | 'filters/ttfb' | 'filters/user-alt' | 'filters/userid' | 'filters/view' | 'flag-na' | 'folder-plus' | 'folder2' | 'fullscreen' | 'funnel/cpu-fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji-angry-fill' | 'funnel/emoji-angry' | 'funnel/emoji-dizzy-fill' | 'funnel/exclamation-circle-fill' | 'funnel/exclamation-circle' | 'funnel/file-earmark-break-fill' | 'funnel/file-earmark-break' | 'funnel/file-earmark-minus-fill' | 'funnel/file-earmark-minus' | 'funnel/file-medical-alt' | 'funnel/file-x' | 'funnel/hdd-fill' | 'funnel/hourglass-top' | 'funnel/image-fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch-exclamation-fill' | 'funnel/sd-card' | 'funnel-fill' | 'funnel-new' | 'funnel' | 'gear-fill' | 'gear' | 'geo-alt-fill-custom' | 'github' | 'graph-up-arrow' | 'graph-up' | 'grid-1x2' | 'grid-3x3' | 'grid-check' | 'grid-horizontal' | 'grid' | 'grip-horizontal' | 'hash' | 'hdd-stack' | 'headset' | 'heart-rate' | 'high-engagement' | 'history' | 'hourglass-start' | 'ic-errors' | 'ic-network' | 'ic-rage' | 'ic-resources' | 'id-card' | 'image' | 'info-circle-fill' | 'info-circle' | 'info-square' | 'info' | 'input-hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag-text' | 'integrations/bugsnag' | 'integrations/cloudwatch-text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch-text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira-text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic-text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay-text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar-text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry-text' | 'integrations/sentry' | 'integrations/slack-bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic-text' | 'integrations/sumologic' | 'integrations/teams-white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal-code' | 'key' | 'layer-group' | 'layers-half' | 'lightbulb-on' | 'lightbulb' | 'link-45deg' | 'list-alt' | 'list-arrow' | 'list-ul' | 'list' | 'lock-alt' | 'low-disc-space' | 'magic' | 'map-marker-alt' | 'memory-ios' | 'memory' | 'mic-mute' | 'mic' | 'minus' | 'mobile' | 'mouse-alt' | 'network' | 'next1' | 'no-dashboard' | 'no-metrics-chart' | 'no-metrics' | 'no-recordings' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause-circle-fill' | 'pause-fill' | 'pause' | 'pdf-download' | 'pencil-stop' | 'pencil' | 'people' | 'percent' | 'performance-icon' | 'person-border' | 'person-fill' | 'person' | 'pie-chart-fill' | 'pin-fill' | 'play-circle-bold' | 'play-circle-light' | 'play-circle' | 'play-fill-new' | 'play-fill' | 'play-hover' | 'play' | 'plug' | 'plus-circle' | 'plus-lg' | 'plus' | 'pointer-sessions-search' | 'prev1' | 'pulse' | 'puzzle-piece' | 'puzzle' | 'question-circle' | 'question-lg' | 'quote-left' | 'quote-right' | 'quotes' | 'record-btn' | 'record-circle-fill' | 'record-circle' | 'record2' | 'redo-back' | 'redo' | 'redux' | 'remote-control' | 'replay-10' | 'resources-icon' | 'safe-fill' | 'safe' | 'sandglass' | 'search' | 'search_notification' | 'server' | 'share-alt' | 'shield-lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost-split' | 'signup' | 'skip-forward-fill' | 'skip-forward' | 'slack' | 'slash-circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'speedometer2' | 'spinner' | 'star-solid' | 'star' | 'step-forward' | 'stickies' | 'stop-record-circle' | 'stopwatch' | 'store' | 'sync-alt' | 'table-new' | 'table' | 'tablet-android' | 'tachometer-slow' | 'tachometer-slowest' | 'tags' | 'team-funnel' | 'telephone-fill' | 'telephone' | 'terminal' | 'text-paragraph' | 'thermometer-sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user-alt' | 'user-circle' | 'user-friends' | 'users' | 'vendors/graphql' | 'vendors/mobx' | 'vendors/ngrx' | 'vendors/redux' | 'vendors/vuex' | 'web-vitals' | 'wifi' | 'window-alt' | 'window-restore' | 'window-x' | 'window' | 'zoom-in';
