@@ -399,7 +399,7 @@ export default class Session {
 
     const mixedEventsWithIssues = mergeEventLists(
       rawEvents,
-      frustrationIssues
+      frustrationIssues.filter(i => i.type !== issueTypes.DEAD_CLICK)
     )
 
     this.events = events;
