@@ -141,41 +141,27 @@ const socketsLiveByProject = async function (req, res) {
 
 // Sort by roomID (projectKey+sessionId)
 const socketsLiveBySession = async function (req, res) {
-    res.handlerName = 'socketsLiveBySession';
-    let io = getServer();
     debug_log && console.log("[WS]looking for LIVE session");
-    let _projectKey = extractProjectKeyFromRequest(req);
+    res.handlerName = 'socketsLiveBySession';
+
     let _sessionId = extractSessionIdFromRequest(req);
-    if (_sessionId === undefined) {
-        return respond(req, res, null);
-    }
     let filters = await extractPayloadFromRequest(req, res);
     let withFilters = hasFilters(filters);
-    let liveSessions = new Set();
-    const sessIDs = new Set();
 
-    let connected_sockets = await io.in(_projectKey + '-' + _sessionId).fetchSockets();
-    for (let item of connected_sockets) {
-        if (item.handshake.query.identity === IDENTITIES.session) {
-            if (withFilters) {
-                if (item.handshake.query.sessionInfo &&
-                    isValidSession(item.handshake.query.sessionInfo, filters.filter) &&
-                    !sessIDs.has(item.handshake.query.sessionInfo.sessionID)
-                ) {
-                    liveSessions.add(item.handshake.query.sessionInfo);
-                    sessIDs.add(item.handshake.query.sessionInfo.sessionID);
-                }
-            } else {
-                if (!sessIDs.has(item.handshake.query.sessionInfo.sessionID)) {
-                    liveSessions.add(item.handshake.query.sessionInfo);
-                    sessIDs.add(item.handshake.query.sessionInfo.sessionID);
-                }
-            }
+    // find a particular session
+    if (_sessionId) {
+        let sessInfo = GetRoomInfo(_sessionId);
+        if (!sessInfo) {
+            return respond(req, res, null);
         }
-
+        if (!withFilters) {
+            return respond(req, res, sessInfo);
+        }
+        if (isValidSession(sessInfo, filters.filter)) {
+            return respond(req, res, sessInfo);
+        }
     }
-    let sessions = Array.from(liveSessions);
-    respond(req, res, sessions.length > 0 ? sessions[0] : null);
+    return respond(req, res, null);
 }
 
 // Sort by projectKey
