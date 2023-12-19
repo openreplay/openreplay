@@ -21,17 +21,14 @@ class Issues(str, Enum):
     custom = 'custom'
     mouse_thrashing = 'mouse_thrashing'
 
+class Errors(str, Enum):
+    js_exception = 'js_exception'
+
 class EventList(BaseModel):
     data: dict
     eventTypes: Optional[List[Events]] = [Events.click, Events.location]
     issueTypes: Optional[List[Issues]] = [Issues.click_rage, Issues.bad_request]
-    filter: Optional[bool] = True
-#    context: Optional[str] = ''
-    raw: Optional[bool] = True
-    limitEvents: Optional[bool] = False
-    maxClickEvents: Optional[int] = 10
-    maxPageEvents: Optional[int] = 10
-#    space
+    errorTypes: Optional[List[Errors]] = [Errors.js_exception]
     sessionStartTimestamp: Optional[Union[int, None]] = None
     sessionDuration: Optional[Union[int, None]] = None
 
