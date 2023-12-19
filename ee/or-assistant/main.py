@@ -37,8 +37,9 @@ app.add_middleware(
          dependencies=[Depends(api_key_auth)],
          response_model=str,
          responses={503: {"detail": "OpenAI server is busy, try again later"}})
+
 async def session_summary_stream(projectId: int, sessionId: int, eventList: declarations.EventList):
-    key_id = sessionId
+    key_id = str(sessionId)
     return StreamingResponse(summarize_stream(sessionId, projectId, key_id, eventList), media_type="text/event-stream")
 
 @app.get('/')
