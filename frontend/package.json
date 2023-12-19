@@ -10,7 +10,7 @@
     "lint": "eslint --fix app; exit 0",
     "tsc": "tsc --noEmit --w --incremental false",
     "gen:constants": "node ./scripts/constants.js",
-    "gen:icons": "node ./scripts/icons.ts",
+    "gen:icons": "node ./scripts/icons.js",
     "gen:colors": "node ./scripts/colors.js",
     "storybook": "start-storybook -p 6006",
     "flow": "flow",
