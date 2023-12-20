@@ -63,6 +63,9 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 
 func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint64) {
 	ts = uint64(req.Timestamp)
+	if req.IsOffline {
+		return
+	}
 	c, err := semver.NewConstraint(">=4.1.6")
 	if err != nil {
 		return
@@ -78,7 +81,7 @@ func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint
 	}
 	if c.Check(v) {
 		ts = uint64(startTimeMili)
-		if req.BufferDiff > 0 && req.BufferDiff < 3*60*1000 {
+		if req.BufferDiff > 0 && req.BufferDiff < 5*60*1000 {
 			ts -= req.BufferDiff
 		}
 	}
