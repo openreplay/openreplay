@@ -622,20 +622,23 @@ func (e *Router) getConditions(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// Check authorization
-	sessInfo, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	//sess, err := e.services.Sessions.Get(sessInfo.ID)
-	//if err != nil {
-	//	ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
-	//	return
-	//}
+	// Get taskID
+	vars := mux.Vars(r)
+	projID := vars["project"]
+	projectID, err := strconv.Atoi(projID)
+	if err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	// Get task info
-	info, err := e.services.Conditions.Get(uint32(sessInfo.ID)) //sess.ProjectID)
+	info, err := e.services.Conditions.Get(uint32(projectID))
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

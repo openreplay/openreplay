@@ -47,47 +47,19 @@ type Condition struct {
 }
 
 type Response struct {
-	Conditions []Condition `json:"conditions"`
+	Conditions interface{} `json:"conditions"`
 }
 
 func (c *conditionsImpl) Get(projectID uint32) (*Response, error) {
-	conditions := &Response{}
-	//err := c.db.QueryRow(`
-	//	SELECT
-	//		json_agg(
-	//			json_build_object(
-	//				'condition_id', condition_id,
-	//				'condition_type', condition_type,
-	//				'operator', operator,
-	//				'value', value
-	//			)
-	//		) AS conditions
-	//	FROM
-	//		conditions
-	//	WHERE
-	//		project_id = $1
-	//`, projectID).Scan(&conditions.Conditions)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	// Mock response
-	conditions.Conditions = []Condition{
-		{
-			Type:     CustomEvent,
-			Operator: Contains,
-			Values:   []string{"record"},
-		},
-		{
-			Type:     VisitedURL,
-			Operator: StartsWith,
-			Values:   []string{"https://en.wikipedia.org/wiki/Public_holidays_in_France"},
-		},
-		{
-			Type:     FeatureFlag,
-			Operator: Is,
-			Values:   []string{"test-buffering-flag"},
-		},
+	var conditions interface{}
+	err := c.db.QueryRow(`
+		SELECT conditions
+		FROM projects
+		WHERE project_id = $1
+	`, projectID).Scan(&conditions)
+	if err != nil {
+		return nil, err
 	}
-	return conditions, nil
+
+	return &Response{Conditions: conditions}, nil
 }
