@@ -151,7 +151,7 @@ export default class App {
    * @read coldStart implementation
    * */
   private bufferedMessages1: Array<Message> = []
-  private bufferedMessages2: Array<Message> = []
+  private readonly bufferedMessages2: Array<Message> = []
   /* private */
   readonly observer: Observer // non-private for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
@@ -347,7 +347,7 @@ export default class App {
         body: JSON.stringify({
           context,
           // @ts-ignore
-          error: `${e}`,
+          error: `${e as unknown as string}`,
         }),
       })
     }
@@ -674,6 +674,8 @@ export default class App {
         userOS,
         userState,
       })
+      const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
+      this.startCallbacks.forEach((cb) => cb(onStartInfo))
       await this.conditionsManager?.fetchConditions(token as string)
       await this.featureFlags.reloadFlags(token as string)
       this.conditionsManager?.processFlags(this.featureFlags.flags)
@@ -768,7 +770,6 @@ export default class App {
    * Uploads the stored buffer to create session
    * */
   public uploadOfflineRecording() {
-    const buffer = this.bufferedMessages1
     this.stop(false)
     // then fetch it
     this.clearBuffers()
