@@ -261,7 +261,11 @@ def get_conditions(project_id):
         cur.execute(query=query)
         row = cur.fetchone()
         row = helper.dict_to_camel_case(row)
-        row["conditions"] = [schemas.ProjectConditions(**c) for c in row["conditions"]]
+        if row["conditions"] is None:
+            row["conditions"] = []
+        else:
+            row["conditions"] = [schemas.ProjectConditions(**c) for c in row["conditions"]]
+
         return row
 
 
