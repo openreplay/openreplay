@@ -1,6 +1,6 @@
 const {
     hasFilters,
-    extractPeerId,
+    hasQuery,
     isValidSession,
     sortPaginate,
     getValidAttributes,
@@ -10,14 +10,10 @@ const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
-    getAvailableRooms
 } = require("./extractors");
 const {
     IDENTITIES
 } = require("./assistHelper");
-const {
-    getServer
-} = require('../utils/wsServer');
 const {
     RecordRequestDuration,
     IncreaseTotalRequests
@@ -166,25 +162,22 @@ const socketsLiveBySession = async function (req, res) {
 
 // Sort by projectKey
 const autocomplete = async function (req, res) {
-    res.handlerName = 'autocomplete';
-    let io = getServer();
     debug_log && console.log("[WS]autocomplete");
+    res.handlerName = 'autocomplete';
+
     let _projectKey = extractProjectKeyFromRequest(req);
     let filters = await extractPayloadFromRequest(req);
     let results = [];
-    if (filters.query && Object.keys(filters.query).length > 0) {
-        let rooms = await getAvailableRooms(io);
-        for (let roomId of rooms.keys()) {
-            let {projectKey} = extractPeerId(roomId);
-            if (projectKey === _projectKey) {
-                let connected_sockets = await io.in(roomId).fetchSockets();
-                for (let item of connected_sockets) {
-                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
-                        results = [...results, ...getValidAttributes(item.handshake.query.sessionInfo, filters.query)];
-                    }
-                }
-            }
+    if (!hasQuery(filters)) {
+        return respond(req, res, results);
+    }
+    let allSessions = GetSessions(_projectKey);
+    for (let sessionId of allSessions) {
+        let sessInfo = GetRoomInfo(sessionId);
+        if (!sessInfo) {
+            continue;
         }
+        results = [...results, ...getValidAttributes(sessInfo, filters.query)];
     }
     respond(req, res, uniqueAutocomplete(results));
 }

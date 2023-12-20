@@ -120,6 +120,10 @@ const hasFilters = function (filters) {
     return filters && filters.filter && Object.keys(filters.filter).length > 0;
 }
 
+const hasQuery = function (filters) {
+    return filters && filters.query && Object.keys(filters.query).length > 0;
+}
+
 const objectToObjectOfArrays = function (obj) {
     let _obj = {}
     if (obj) {
@@ -289,6 +293,7 @@ module.exports = {
     extractSessionIdFromRequest,
     isValidSession,
     hasFilters,
+    hasQuery,
     objectToObjectOfArrays,
     extractPayloadFromRequest,
     sortPaginate,
