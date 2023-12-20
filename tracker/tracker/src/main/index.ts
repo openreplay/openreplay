@@ -302,7 +302,9 @@ export default class API {
   }
 
   /**
-   * Starts offline session recording
+   * Starts offline session recording. Keep in mind that only user device time will be used for timestamps.
+   * (no backend delay sync)
+   *
    * @param {Object} startOpts - options for session start, same as .start()
    * @param {Function} onSessionSent - callback that will be called once session is fully sent
    * @returns methods to manipulate buffer:

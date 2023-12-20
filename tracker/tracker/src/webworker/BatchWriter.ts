@@ -91,9 +91,10 @@ export default class BatchWriter {
   }
 
   writeMessage(message: Message) {
+    // @ts-ignore
     if (message[0] === 'q_end') {
       this.finaliseBatch()
-      this.onOfflineEnd()
+      return this.onOfflineEnd()
     }
     if (message[0] === Messages.Type.Timestamp) {
       this.timestamp = message[1] // .timestamp

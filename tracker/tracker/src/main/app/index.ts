@@ -208,7 +208,6 @@ export default class App {
       this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
     }
 
-    this.featureFlags = new FeatureFlags(this)
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
@@ -757,6 +756,8 @@ export default class App {
       userID: startOpts.userID,
       metadata: startOpts.metadata,
     })
+    const onStartInfo = { sessionToken: '', userUUID: '', sessionID: '' }
+    this.startCallbacks.forEach((cb) => cb(onStartInfo))
     if (!isNewSession) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.send(TabChange(this.session.getTabId()))
@@ -806,6 +807,16 @@ export default class App {
   public async uploadOfflineRecording() {
     this.stop(false)
     const timestamp = now()
+    this.worker?.postMessage({
+      type: 'start',
+      pageNo: this.session.incPageNo(),
+      ingestPoint: this.options.ingestPoint,
+      timestamp: this.coldStartTs,
+      url: document.URL,
+      connAttemptCount: this.options.connAttemptCount,
+      connAttemptGap: this.options.connAttemptGap,
+      tabId: this.session.getTabId(),
+    })
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
       headers: {
@@ -813,7 +824,7 @@ export default class App {
       },
       body: JSON.stringify({
         ...this.getTrackerInfo(),
-        timestamp: now(),
+        timestamp: timestamp,
         doNotRecord: false,
         bufferDiff: timestamp - this.coldStartTs,
         userID: this.session.getInfo().userID,
@@ -901,7 +912,7 @@ export default class App {
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
-      timestamp,
+      timestamp: isColdStart ? this.coldStartTs : timestamp,
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
