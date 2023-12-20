@@ -18,6 +18,7 @@ export default class BatchWriter {
     private url: string,
     private readonly onBatch: (batch: Uint8Array) => void,
     private tabId: string,
+    private readonly onOfflineEnd: () => void,
   ) {
     this.prepare()
   }
@@ -90,6 +91,10 @@ export default class BatchWriter {
   }
 
   writeMessage(message: Message) {
+    if (message[0] === 'q_end') {
+      this.finaliseBatch()
+      this.onOfflineEnd()
+    }
     if (message[0] === Messages.Type.Timestamp) {
       this.timestamp = message[1] // .timestamp
     }

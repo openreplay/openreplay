@@ -27,6 +27,10 @@ export default class QueueSender {
     }
   }
 
+  public getQueueStatus() {
+    return this.queue.length === 0 && !this.busy
+  }
+
   authorise(token: string): void {
     this.token = token
     if (!this.busy) {

@@ -156,6 +156,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
         sender && sender.push(batch)
       },
       data.tabId,
+      () => postMessage({ type: 'queue_empty' }),
     )
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)

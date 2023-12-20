@@ -144,7 +144,7 @@ export default class App {
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
   /**
-   * we need 2 buffers so we don't lose anything
+   * we need 2 buffers, so we don't lose anything
    * @read coldStart implementation
    * */
   private bufferedMessages1: Array<Message> = []
@@ -272,6 +272,8 @@ export default class App {
           } else {
             this.worker?.postMessage({ type: 'uncompressed', batch: batch })
           }
+        } else if (data.type === 'queue_empty') {
+          this.onSessionSent()
         }
       }
       const alertWorker = () => {
@@ -381,7 +383,7 @@ export default class App {
     // Clarify where urgent can be used for;
     // Clarify workflow for each type of message in case it was sent before start
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
-    // Careful: `this.delay` is equal to zero before start hense all Timestamp-s will have to be updated on start
+    // Careful: `this.delay` is equal to zero before start so all Timestamp-s will have to be updated on start
     if (this.activityState === ActivityState.Active && urgent) {
       this.commit()
     }
@@ -623,7 +625,7 @@ export default class App {
 
   /**
    * start buffering messages without starting the actual session, which gives
-   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
+   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger,
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
@@ -719,7 +721,17 @@ export default class App {
     cycle()
   }
 
-  public offlineRecording(startOpts: StartOptions = {}) {
+  onSessionSent = () => {
+    return
+  }
+
+  /**
+   * Starts offline session recording
+   * @param {Object} startOpts - options for session start, same as .start()
+   * @param {Function} onSessionSent - callback that will be called once session is fully sent
+   * */
+  public offlineRecording(startOpts: StartOptions = {}, onSessionSent: () => void) {
+    this.onSessionSent = onSessionSent
     this.singleBuffer = true
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
     adjustTimeOrigin()
@@ -751,12 +763,18 @@ export default class App {
     }
     this.observer.observe()
     this.ticker.start()
+
+    return {
+      saveBuffer: this.saveBuffer,
+      getBuffer: this.getBuffer,
+      setBuffer: this.setBuffer,
+    }
   }
 
   /**
    * Saves the captured messages in localStorage (or whatever is used in its place)
    *
-   * Then when this.offlineRecording is called, it will preload this messages and clear the storage item
+   * Then, when this.offlineRecording is called, it will preload this messages and clear the storage item
    *
    * Keeping the size of local storage reasonable is up to the end users of this library
    * */
@@ -785,14 +803,56 @@ export default class App {
    * @resolve {boolean} - if messages were loaded successfully
    * @reject {string} - error message
    * */
-  public uploadOfflineRecording() {
-    return new Promise((res, rej) => {
-      const buffer = this.bufferedMessages1
-      this.stop(false)
-      // then fetch it
-      this.clearBuffers()
-      res(true)
+  public async uploadOfflineRecording() {
+    this.stop(false)
+    const timestamp = now()
+    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...this.getTrackerInfo(),
+        timestamp: now(),
+        doNotRecord: false,
+        bufferDiff: timestamp - this.coldStartTs,
+        userID: this.session.getInfo().userID,
+        token: undefined,
+        deviceMemory,
+        jsHeapSizeLimit,
+        timezone: getTimezone(),
+      }),
     })
+    const {
+      token,
+      userBrowser,
+      userCity,
+      userCountry,
+      userDevice,
+      userOS,
+      userState,
+      beaconSizeLimit,
+      projectID,
+    } = await r.json()
+    this.worker?.postMessage({
+      type: 'auth',
+      token,
+      beaconSizeLimit,
+    })
+    this.session.assign({ projectID })
+    this.session.setUserInfo({
+      userBrowser,
+      userCity,
+      userCountry,
+      userDevice,
+      userOS,
+      userState,
+    })
+    while (this.bufferedMessages1.length > 0) {
+      await this.flushBuffer(this.bufferedMessages1)
+    }
+    this.postToWorker([['q_end']] as unknown as Message[])
+    this.clearBuffers()
   }
 
   private _start(
@@ -890,7 +950,7 @@ export default class App {
             )
         }
       })
-      .then((r) => {
+      .then(async (r) => {
         if (!this.worker) {
           const reason = 'no worker found after start request (this might not happen)'
           this.signalError(reason, [])
@@ -966,20 +1026,6 @@ export default class App {
 
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
-
-        const flushBuffer = (buffer: Message[]) => {
-          let ended = false
-          const messagesBatch: Message[] = [buffer.shift() as unknown as Message]
-          while (!ended) {
-            const nextMsg = buffer[0]
-            if (!nextMsg || nextMsg[0] === MType.Timestamp) {
-              ended = true
-            } else {
-              messagesBatch.push(buffer.shift() as unknown as Message)
-            }
-          }
-          this.postToWorker(messagesBatch)
-        }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         void this.featureFlags.reloadFlags()
@@ -992,7 +1038,7 @@ export default class App {
               ? this.bufferedMessages1
               : this.bufferedMessages2
           while (biggestBuffer.length > 0) {
-            flushBuffer(biggestBuffer)
+            await this.flushBuffer(biggestBuffer)
           }
           this.clearBuffers()
           this.commit()
@@ -1059,6 +1105,23 @@ export default class App {
         this.signalError(START_ERROR, [])
         return UnsuccessfulStart(START_ERROR)
       })
+  }
+
+  flushBuffer = async (buffer: Message[]) => {
+    return new Promise((res) => {
+      let ended = false
+      const messagesBatch: Message[] = [buffer.shift() as unknown as Message]
+      while (!ended) {
+        const nextMsg = buffer[0]
+        if (!nextMsg || nextMsg[0] === MType.Timestamp) {
+          ended = true
+        } else {
+          messagesBatch.push(buffer.shift() as unknown as Message)
+        }
+      }
+      this.postToWorker(messagesBatch)
+      res(null)
+    })
   }
 
   onUxtCb = []
