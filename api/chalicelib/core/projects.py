@@ -120,7 +120,8 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
                                        s.project_key,
                                        s.name,
                                        s.save_request_payloads,
-                                       s.platform
+                                       s.platform,
+                                       (SELECT count(*) FROM jsonb_array_elements_text(s.conditions)) AS conditions_count
                                        {extra_select}
                                 FROM public.projects AS s
                                 WHERE s.project_id =%(project_id)s
@@ -245,6 +246,46 @@ def update_capture_status(project_id, changes: schemas.SampleRateSchema):
                                WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id, "sample_rate": sample_rate})
+        cur.execute(query=query)
+
+    return changes
+
+
+def get_conditions(project_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all, conditions
+                               FROM public.projects
+                               WHERE project_id =%(project_id)s 
+                                    AND deleted_at ISNULL;""",
+                            {"project_id": project_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+        row = helper.dict_to_camel_case(row)
+        row["conditions"] = [schemas.ProjectConditions(**c) for c in row["conditions"]]
+        return row
+
+
+def update_conditions(project_id, changes: schemas.ProjectSettings):
+    sample_rate = changes.rate
+    if changes.capture_all:
+        sample_rate = 100
+
+    conditions = []
+    for condition in changes.conditions:
+        conditions.append(condition.model_dump())
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""UPDATE public.projects
+                               SET
+                                    sample_rate= %(sample_rate)s,
+                                    conditions = %(conditions)s::jsonb
+                               WHERE project_id =%(project_id)s
+                                    AND deleted_at ISNULL;""",
+                            {
+                                "project_id": project_id,
+                                "sample_rate": sample_rate,
+                                "conditions": json.dumps(conditions)
+                            })
         cur.execute(query=query)
 
     return changes

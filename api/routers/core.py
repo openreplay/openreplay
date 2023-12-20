@@ -511,6 +511,17 @@ def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(
     return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
+@app.post('/{projectId}/conditions', tags=["projects"])
+def update_conditions(projectId: int, data: schemas.ProjectSettings = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.update_conditions(project_id=projectId, changes=data)}
+
+
+@app.get('/{projectId}/conditions', tags=["projects"])
+def get_conditions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.get_conditions(project_id=projectId)}
+
+
 @app.get('/announcements', tags=["announcements"])
 def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.get_all(user_id=context.user_id)}
@@ -604,7 +615,7 @@ def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema 
 @app.post('/{projectId}/mobile/{sessionId}/urls', tags=['mobile'])
 def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
+    return {"data": mobile.sign_keysx(project_id=projectId, session_id=sessionId, keys=data.keys)}
 
 
 @app.post('/projects', tags=['projects'], dependencies=[OR_role("owner", "admin")])

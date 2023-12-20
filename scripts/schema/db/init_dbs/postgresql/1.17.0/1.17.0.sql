@@ -29,6 +29,9 @@ UPDATE public.sessions
 SET has_ut_test= TRUE
 WHERE session_id IN (SELECT session_id FROM public.ut_tests_signals);
 
+ALTER TABLE IF EXISTS public.projects
+    ADD COLUMN IF NOT EXISTS conditions jsonb DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next

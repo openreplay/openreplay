@@ -1321,6 +1321,18 @@ class SavedSearchSchema(BaseModel):
     filter: SessionsSearchPayloadSchema = Field([])
 
 
+class ProjectConditions(BaseModel):
+    name: str = Field(...)
+    capture_rate: int = Field(..., ge=0, le=100)
+    filters: List[GroupedFilterType] = Field(default=[])
+
+
+class ProjectSettings(BaseModel):
+    rate: int = Field(..., ge=0, le=100)
+    capture_all: bool = Field(default=False)
+    conditions: List[ProjectConditions] = Field(default=[])
+
+
 class CreateDashboardSchema(BaseModel):
     name: str = Field(..., min_length=1)
     description: Optional[str] = Field(default='')
