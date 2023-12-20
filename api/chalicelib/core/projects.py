@@ -69,7 +69,8 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform,
+                                       (SELECT count(*) FROM jsonb_array_elements_text(s.conditions)) AS conditions_count 
                                        {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
@@ -120,8 +121,7 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
                                        s.project_key,
                                        s.name,
                                        s.save_request_payloads,
-                                       s.platform,
-                                       (SELECT count(*) FROM jsonb_array_elements_text(s.conditions)) AS conditions_count
+                                       s.platform
                                        {extra_select}
                                 FROM public.projects AS s
                                 WHERE s.project_id =%(project_id)s
