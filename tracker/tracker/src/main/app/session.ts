@@ -77,7 +77,7 @@ export default class Session {
 
   setMetadata(key: string, value: string) {
     this.metadata[key] = value
-    this.handleUpdate({ metadata: { [key]: value } })
+    this.handleUpdate({ metadata: { ...this.metadata } })
   }
 
   setUserID(userID: string) {
