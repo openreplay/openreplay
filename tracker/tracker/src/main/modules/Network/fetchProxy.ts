@@ -131,8 +131,13 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
   public apply(target: T, _: typeof window, argsList: [RequestInfo | URL, RequestInit]) {
     const input = argsList[0]
     const init = argsList[1]
-    // @ts-ignore
-    if (!input?.url && !input) return <ReturnType<T>>target.apply(window, argsList)
+    if (
+      !input ||
+      // @ts-ignore
+      (typeof input !== 'string' && !input?.url)
+    ) {
+      return <ReturnType<T>>target.apply(window, argsList)
+    }
 
     const isORUrl =
       input instanceof URL || typeof input === 'string'
