@@ -528,9 +528,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
 
 
 def set_password_invitation(tenant_id, user_id, new_password):
-    changes = {"password": new_password,
-               "invitationToken": None, "invitedAt": None,
-               "changePwdExpireAt": None, "changePwdToken": None}
+    changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
 
