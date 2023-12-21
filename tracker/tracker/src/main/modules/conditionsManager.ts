@@ -9,6 +9,22 @@ import Message, {
 import App, { StartOptions } from '../app/index.js'
 import { IFeatureFlag } from './featureFlags.js'
 
+interface ApiResponse {
+  capture_rate: number
+  filters: {
+    filters: {
+      operator: string
+      value: string[]
+      type: string
+      source?: string
+    }[]
+    operator: string
+    value: string[]
+    type: string
+    source?: string
+  }
+}
+
 export default class ConditionsManager {
   conditions: Condition[] = []
   hasStarted = false
@@ -30,9 +46,22 @@ export default class ConditionsManager {
           Authorization: `Bearer ${token}`,
         },
       })
-      const { conditions } = await r.json()
-      console.log(conditions)
-      this.conditions = conditions as Condition[]
+      const { conditions } = (await r.json()) as { conditions: ApiResponse[] }
+      const mappedConditions: Condition[] = []
+      conditions.forEach((c) => {
+        let filters: any = c.filters
+        if (filters.type === 'fetch') {
+          filters = filters.filters
+        }
+        if (filters.value.length) {
+          const resultCondition = mapCondition(filters as ApiResponse['filters'])
+          if (resultCondition.type) {
+            mappedConditions.push(resultCondition)
+          }
+        }
+      })
+      console.log(mappedConditions)
+      this.conditions = mappedConditions
     } catch (e) {
       this.app.debug.error('Critical: cannot fetch start conditions')
     }
@@ -145,22 +174,11 @@ export default class ConditionsManager {
 
   clickEvent(message: MouseClick) {
     // label - 3, selector - 4
-    const selectorConds = this.conditions.filter(
-      (c) => c.type === 'click_selector',
-    ) as CommonCondition[]
-    if (selectorConds) {
-      selectorConds.forEach((selectorCond) => {
-        const operator = operators[selectorCond.operator] as (a: string, b: string[]) => boolean
-        if (operator && operator(message[4], selectorCond.value)) {
-          this.trigger()
-        }
-      })
-    }
-    const labelConds = this.conditions.filter((c) => c.type === 'click_label') as CommonCondition[]
-    if (labelConds) {
-      labelConds.forEach((labelCond) => {
-        const operator = operators[labelCond.operator] as (a: string, b: string[]) => boolean
-        if (operator && operator(message[3], labelCond.value)) {
+    const clickCond = this.conditions.filter((c) => c.type === 'click') as CommonCondition[]
+    if (clickCond.length) {
+      clickCond.forEach((click) => {
+        const operator = operators[click.operator] as (a: string, b: string[]) => boolean
+        if (operator && (operator(message[3], click.value) || operator(message[4], click.value))) {
           this.trigger()
         }
       })
@@ -198,16 +216,11 @@ export default class ConditionsManager {
 }
 // duration,
 type CommonCondition = {
-  type: 'visited_url' | 'click_label' | 'click_selector' | 'custom_event'
+  type: 'visited_url' | 'click' | 'custom_event'
   operator: keyof typeof operators
   value: string[]
 }
-type NetworkRequestCondition = {
-  type: 'network_request'
-  key: 'url' | 'status' | 'method' | 'duration'
-  operator: keyof typeof operators
-  value: string[]
-}
+
 type ExceptionCondition = {
   type: 'exception'
   operator: 'contains' | 'startsWith' | 'endsWith'
@@ -221,6 +234,12 @@ type FeatureFlagCondition = {
 type SessionDurationCondition = {
   type: 'session_duration'
   value: number[]
+}
+type NetworkRequestCondition = {
+  type: 'network_request'
+  key: 'url' | 'status' | 'method' | 'duration'
+  operator: keyof typeof operators
+  value: string[]
 }
 type Condition =
   | CommonCondition
@@ -237,5 +256,121 @@ const operators = {
   startsWith: (val: string, target: string[]) => target.some((t) => val.startsWith(t)),
   endsWith: (val: string, target: string[]) => target.some((t) => val.endsWith(t)),
   greaterThan: (val: number, target: number) => val > target,
+  greaterOrEqual: (val: number, target: number) => val >= target,
+  lessOrEqual: (val: number, target: number) => val <= target,
   lessThan: (val: number, target: number) => val < target,
+}
+
+const mapCondition = (condition: ApiResponse['filters']): Condition => {
+  const opMap = {
+    on: 'is',
+    notOn: 'isNot',
+    '\u003e': 'greaterThan',
+    '\u003c': 'lessThan',
+    '\u003d': 'is',
+    '\u003c=': 'lessOrEqual',
+    '\u003e=': 'greaterOrEqual',
+  }
+
+  const mapOperator = (operator: string) => {
+    const keys = Object.keys(opMap)
+    // @ts-ignore
+    if (keys.includes(operator)) return opMap[operator]
+  }
+
+  let con = {
+    type: '',
+    operator: '',
+    value: condition.value,
+    key: '',
+  }
+  switch (condition.type) {
+    case 'click':
+      con = {
+        type: 'click',
+        operator: mapOperator(condition.operator),
+        value: condition.value,
+        key: '',
+      }
+      break
+    case 'location':
+      con = {
+        type: 'visited_url',
+        // @ts-ignore
+        operator: condition.operator,
+        value: condition.value,
+        key: '',
+      }
+      break
+    case 'custom':
+      con = {
+        type: 'custom_event',
+        // @ts-ignore
+        operator: condition.operator,
+        value: condition.value,
+        key: '',
+      }
+      break
+    case 'metadata':
+      con = {
+        // @ts-ignore
+        type: condition.source === 'featureFlag' ? 'feature_flag' : condition.type,
+        // @ts-ignore
+        operator: condition.operator,
+        value: condition.value,
+        key: '',
+      }
+      break
+    case 'error':
+      con = {
+        type: 'exception',
+        // @ts-ignore
+        operator: condition.operator,
+        value: condition.value,
+        key: '',
+      }
+      break
+    case 'duration':
+      con = {
+        type: 'session_duration',
+        // @ts-ignore
+        value: condition.value[0],
+        key: '',
+      }
+      break
+    case 'fetchUrl':
+      con = {
+        type: 'network_request',
+        key: 'url',
+        operator: condition.operator,
+        value: condition.value,
+      }
+      break
+    case 'fetchStatusCode':
+      con = {
+        type: 'network_request',
+        key: 'status',
+        operator: mapOperator(condition.operator),
+        value: condition.value,
+      }
+      break
+    case 'fetchMethod':
+      con = {
+        type: 'network_request',
+        key: 'method',
+        operator: mapOperator(condition.operator),
+        value: condition.value,
+      }
+      break
+    case 'fetchDuration':
+      con = {
+        type: 'network_request',
+        key: 'duration',
+        operator: mapOperator(condition.operator),
+        value: condition.value,
+      }
+      break
+  }
+  // @ts-ignore
+  return con
 }

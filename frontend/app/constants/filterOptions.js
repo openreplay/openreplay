@@ -49,6 +49,9 @@ export const stringOperatorsLimited = options.filter(({ key }) => stringFilterKe
 export const stringOperators = options.filter(({ key }) => stringFilterKeys.includes(key));
 export const stringOperatorsPerformance = options.filter(({ key }) => stringFilterKeysPerformance.includes(key));
 export const targetOperators = options.filter(({ key }) => targetFilterKeys.includes(key));
+export const targetConditional = options.filter(({ key }) => ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key));
+export const stringConditional = options.filter(({ key }) => ['is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key));
+
 export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
   { key: 'false', label: 'false', value: 'false' }
@@ -155,5 +158,7 @@ export default {
   issueOptions,
   issueCategories,
   methodOptions,
-  pageUrlOperators
+  pageUrlOperators,
+  targetConditional,
+  stringConditional
 };

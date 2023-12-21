@@ -1,3 +1,4 @@
+import { stringConditional, targetConditional } from "App/constants/filterOptions";
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -516,7 +517,7 @@ export const conditionalFilters = [
     category: FilterCategory.INTERACTIONS,
     label: 'Click',
     operator: 'on',
-    operatorOptions: filterOptions.targetOperators,
+    operatorOptions: filterOptions.targetConditional,
     icon: 'filters/click',
     isEvent: true
   },
@@ -527,7 +528,7 @@ export const conditionalFilters = [
     label: 'Visited URL',
     placeholder: 'Enter path',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
+    operatorOptions: filterOptions.stringConditional,
     icon: 'filters/location',
     isEvent: true
   },
@@ -538,7 +539,7 @@ export const conditionalFilters = [
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
+    operatorOptions: filterOptions.stringConditional,
     icon: 'filters/custom',
     isEvent: true
   },
@@ -556,7 +557,7 @@ export const conditionalFilters = [
         label: 'with URL',
         placeholder: 'Enter path or URL',
         operator: 'is',
-        operatorOptions: filterOptions.stringOperators,
+        operatorOptions: filterOptions.stringConditional,
         icon: "filters/fetch"
       },
       {
@@ -601,7 +602,7 @@ export const conditionalFilters = [
     label: 'Error Message',
     placeholder: 'E.g. Uncaught SyntaxError',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
+    operatorOptions: filterOptions.stringConditional,
     icon: 'filters/error',
     isEvent: true
   },
@@ -621,8 +622,8 @@ export const conditionalFilters = [
     category: FilterCategory.METADATA,
     label: 'Feature Flag',
     operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(["is"]), "fflag-single"lag - single',
-    isEent: false
+    operatorOptions: filterOptions.stringConditional,
+    isEvent: false
   },
 ];
 
