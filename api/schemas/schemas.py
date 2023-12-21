@@ -8,6 +8,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
     force_is_event, NAME_PATTERN, int_to_string
+from pydantic.functional_validators import BeforeValidator
 
 
 def transform_old_filter_type(cls, values):
@@ -700,9 +701,17 @@ class SortOrderType(str, Enum):
     desc = "DESC"
 
 
+def add_missing_is_event(values: dict):
+    if values.get("isEvent") is None:
+        values["isEvent"] = (EventType.has_value(values["type"])
+                             or PerformanceEventType.has_value(values["type"])
+                             or ProductAnalyticsSelectedEventType.has_value(values["type"]))
+    return values
+
+
 # this type is created to allow mixing events&filters and specifying a discriminator
 GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2], \
-    Field(discriminator='is_event')]
+    Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
@@ -732,9 +741,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             for v in values["events"]:
                 v["isEvent"] = True
 
-        for v in values.get("filters", []):
-            if v.get("isEvent") is None:
-                v["isEvent"] = False
+        # for v in values.get("filters", []):
+        #     if v.get("isEvent") is None:
+        #         v["isEvent"] = False
         return values
 
     @model_validator(mode="before")
@@ -1014,13 +1023,6 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
                 if v is not None:
                     vals.append(v)
             f["value"] = vals
-        return values
-
-    @model_validator(mode="before")
-    def __force_is_event(cls, values):
-        for v in values.get("filters", []):
-            if v.get("isEvent") is None:
-                v["isEvent"] = ProductAnalyticsSelectedEventType.has_value(v["type"])
         return values
 
     @model_validator(mode="before")
