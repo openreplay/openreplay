@@ -4,11 +4,17 @@ import ConditionSet from 'Shared/ConditionSet';
 import { Button } from 'UI';
 import { nonConditionalFlagFilters } from "Types/filter/newFilter";
 
-function ConditionalRecordingSettings({ setChanged }: { setChanged: (changed: boolean) => void }) {
-  const [conditions, setConditions] = React.useState<Conditions[]>([]);
-
+function ConditionalRecordingSettings({
+  conditions,
+  setConditions,
+  setChanged,
+}: {
+  setChanged: (changed: boolean) => void;
+  conditions: Conditions[];
+  setConditions: (conditions: Conditions[]) => void;
+}) {
   const addConditionSet = () => {
-    setChanged(true)
+    setChanged(true);
     setConditions([...conditions, new Conditions(undefined, false)]);
   };
 

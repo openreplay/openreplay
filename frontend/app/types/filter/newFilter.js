@@ -557,7 +557,7 @@ export const conditionalFilters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringOperators,
-        icon: 'filters/fetch'
+        icon: "filters/fetch"
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -567,7 +567,7 @@ export const conditionalFilters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
+        icon: "filters/fetch"
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -588,8 +588,8 @@ export const conditionalFilters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: 'filters/fetch'
-      }
+        icon: "filters/fetch"
+      },
     ],
     icon: 'filters/fetch',
     isEvent: true
@@ -612,7 +612,8 @@ export const conditionalFilters = [
     label: 'Duration',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/duration'
+    icon: "filters/duration",
+    isEvent: false
   },
   {
     key: FilterKey.FEATURE_FLAG,
@@ -620,10 +621,10 @@ export const conditionalFilters = [
     category: FilterCategory.METADATA,
     label: 'Feature Flag',
     operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'fflag-single'
-  }
-]
+    operatorOptions: filterOptions.getOperatorsByKeys(["is"]), "fflag-single"lag - single',
+    isEent: false
+  },
+];
 
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {

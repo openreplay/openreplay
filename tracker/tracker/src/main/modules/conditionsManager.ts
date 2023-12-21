@@ -22,15 +22,16 @@ export default class ConditionsManager {
     this.conditions = conditions
   }
 
-  async fetchConditions(token: string) {
+  async fetchConditions(projectId: string, token: string) {
     try {
-      const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions`, {
+      const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions/${projectId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       const { conditions } = await r.json()
+      console.log(conditions)
       this.conditions = conditions as Condition[]
     } catch (e) {
       this.app.debug.error('Critical: cannot fetch start conditions')

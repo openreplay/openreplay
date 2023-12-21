@@ -63,7 +63,9 @@ export default class Filter {
 
     fromJson(json: any) {
         this.name = json.name
-        this.filters = json.filters.map((i: Record<string, any>) => new FilterItem().fromJson(i))
+        this.filters = json.filters.map((i: Record<string, any>) =>
+          new FilterItem(undefined, this.isConditional).fromJson(i)
+        );
         this.eventsOrder = json.eventsOrder
         return this
     }

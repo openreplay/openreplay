@@ -65,9 +65,15 @@ function ConditionSet({
     conditions.setRollout(parseInt(value, 10));
   };
 
+  const changeName = (name: string) => {
+    setChanged?.(true);
+    conditions.name = name;
+  };
+
   return (
     <ConditionSetComponent
       set={set}
+      changeName={changeName}
       removeCondition={removeCondition}
       index={index}
       readonly={readonly}

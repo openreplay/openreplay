@@ -676,7 +676,7 @@ export default class App {
       })
       const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
       this.startCallbacks.forEach((cb) => cb(onStartInfo))
-      await this.conditionsManager?.fetchConditions(token as string)
+      await this.conditionsManager?.fetchConditions(projectID as string, token as string)
       await this.featureFlags.reloadFlags(token as string)
       this.conditionsManager?.processFlags(this.featureFlags.flags)
     }

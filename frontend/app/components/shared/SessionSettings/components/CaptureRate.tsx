@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Conditions } from 'App/mstore/types/FeatureFlag';
 import { Icon, Input, Loader, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -16,19 +17,32 @@ type Props = {
 };
 
 function CaptureRate(props: Props) {
+  const [conditions, setConditions] = React.useState<Conditions[]>([]);
   const { isAdmin, projectId } = props;
   const { settingsStore } = useStore();
   const [changed, setChanged] = useState(false);
   const {
-    sessionSettings: { captureRate, changeCaptureRate, captureAll, changeCaptureAll },
+    sessionSettings: {
+      captureRate,
+      changeCaptureRate,
+      captureAll,
+      changeCaptureAll,
+      captureConditions,
+    },
     loadingCaptureRate,
-    saveCaptureRate,
-    fetchCaptureRate,
+    updateCaptureConditions,
+    fetchCaptureConditions,
   } = settingsStore;
 
   useEffect(() => {
-    void fetchCaptureRate(projectId);
+    if (projectId) {
+      void fetchCaptureConditions(projectId);
+    }
   }, [projectId]);
+
+  React.useEffect(() => {
+    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true)));
+  }, [captureConditions]);
 
   const onCaptureRateChange = (input: string) => {
     setChanged(true);
@@ -45,9 +59,10 @@ function CaptureRate(props: Props) {
   };
 
   const onUpdate = () => {
-    saveCaptureRate(projectId, {
-      rate: captureRate,
+    updateCaptureConditions(projectId, {
+      rate: parseInt(captureRate, 10),
       captureAll,
+      conditions: conditions.map((c) => c.toCaptureCondition()),
     }).finally(() => setChanged(false));
   };
 
@@ -114,7 +129,14 @@ function CaptureRate(props: Props) {
               </div>
             ) : null}
           </div>
-          {!captureAll ? <ConditionalRecordingSettings setChanged={setChanged} /> : null}
+          {!captureAll ? (
+            <ConditionalRecordingSettings
+              captureConditions={captureConditions}
+              setChanged={setChanged}
+              conditions={conditions}
+              setConditions={setConditions}
+            />
+          ) : null}
         </Tooltip>
       </Loader>
     </Drawer>

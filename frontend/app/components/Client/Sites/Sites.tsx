@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Drawer, Tag } from 'antd';
+import { Tag } from 'antd';
 import cn from 'classnames';
 import { Loader, Button, TextLink, NoContent, Pagination, PageTitle, Divider, Icon } from 'UI';
 import { init, remove, fetchGDPR, setSiteId } from 'Duck/site';
@@ -15,10 +15,12 @@ import { getInitials, sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import CaptureRate from 'Shared/SessionSettings/components/CaptureRate';
+import { BranchesOutlined } from '@ant-design/icons';
 
 type Project = {
   id: number;
   name: string;
+  conditionsCount: number;
   platform: 'web' | 'mobile';
   host: string;
   projectKey: string;
@@ -82,12 +84,21 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
       <div className="col-span-3">
         <ProjectKey value={project.projectKey} tooltip="Project key copied to clipboard" />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-3 flex items-center">
         <Button variant="text-primary" onClick={() => captureRateClickHandler(project)}>
           {project.sampleRate}%
         </Button>
+        {project.conditionsCount > 0 ? (
+          <Button
+            variant="text-primary"
+            onClick={() => captureRateClickHandler(project)}
+            className="ml-2"
+          >
+            <BranchesOutlined rotate={90} /> ${project.conditionsCount} Conditions
+          </Button>
+        ) : null}
       </div>
-      <div className="col-span-3 justify-self-end flex items-center">
+      <div className="col-span-2 justify-self-end flex items-center">
         <div className="mr-4">
           <InstallButton site={project} />
         </div>
