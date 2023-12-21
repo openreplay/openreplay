@@ -33,7 +33,8 @@ class ORRoute(APIRoute):
                 response: Response = await original_route_handler(request)
             except HTTPException as e:
                 if e.status_code // 100 == 4:
-                    return JSONResponse(content={"errors": [e.detail]}, status_code=e.status_code)
+                    return JSONResponse(content={"errors": e.detail if isinstance(e.detail, list) else [e.detail]},
+                                        status_code=e.status_code)
                 else:
                     raise e
 
