@@ -1,5 +1,6 @@
 import json
-from typing import Optional
+from typing import Optional, List
+from collections import Counter
 
 from fastapi import HTTPException, status
 
@@ -269,10 +270,31 @@ def get_conditions(project_id):
         return row
 
 
+def validate_conditions(conditions: List[schemas.ProjectConditions]) -> List[str]:
+    errors = []
+    names = [condition.name for condition in conditions]
+
+    # Check for empty strings
+    if any(name.strip() == "" for name in names):
+        errors.append("Condition names cannot be empty strings")
+
+    # Check for duplicates
+    name_counts = Counter(names)
+    duplicates = [name for name, count in name_counts.items() if count > 1]
+    if duplicates:
+        errors.append(f"Duplicate condition names found: {duplicates}")
+
+    return errors
+
+
 def update_conditions(project_id, changes: schemas.ProjectSettings):
     sample_rate = changes.rate
     if changes.capture_all:
         sample_rate = 100
+
+    validation_errors = validate_conditions(changes.conditions)
+    if validation_errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_errors)
 
     conditions = []
     for condition in changes.conditions:
