@@ -78,7 +78,6 @@ describe('ConditionsManager', () => {
   test('fetchConditions fetches and sets conditions', async () => {
     const manager = new ConditionsManager(appMock, startOptionsMock)
     await manager.fetchConditions('token')
-    console.log(JSON.stringify(manager.conditions))
     expect(manager.conditions).toEqual([
       {
         type: 'custom_event',

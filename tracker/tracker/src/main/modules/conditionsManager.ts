@@ -50,32 +50,22 @@ export default class ConditionsManager {
       })
       const { conditions } = (await r.json()) as { conditions: ApiResponse[] }
       const mappedConditions: Condition[] = []
-      const processFilter = (filter: Filter) => {
-        if (filter.value.length) {
-          const resultCondition = mapCondition(filter)
-          if (resultCondition.type) {
-            return resultCondition
-          }
-        }
-      }
       conditions.forEach((c) => {
         const filters = c.filters
         filters.forEach((filter) => {
+          let cond: Condition | undefined
           if (filter.type === 'fetch') {
             filter.filters.forEach((f) => {
-              const cond = processFilter(f as unknown as Filter)
-              if (cond) {
-                mappedConditions.push({ ...cond, name: c.name })
-              }
+              cond = this.createConditionFromFilter(f as unknown as Filter)
             })
           } else {
-            const cond = processFilter(filter)
-            if (cond) {
-              if (cond.type === 'session_duration') {
-                this.processDuration(cond.value[0], c.name)
-              }
-              mappedConditions.push({ ...cond, name: c.name })
+            cond = this.createConditionFromFilter(filter)
+          }
+          if (cond) {
+            if (cond.type === 'session_duration') {
+              this.processDuration(cond.value[0], c.name)
             }
+            mappedConditions.push({ ...cond, name: c.name })
           }
         })
       })
@@ -83,6 +73,16 @@ export default class ConditionsManager {
     } catch (e) {
       this.app.debug.error('Critical: cannot fetch start conditions')
     }
+  }
+
+  createConditionFromFilter = (filter: Filter) => {
+    if (filter.value.length) {
+      const resultCondition = mapCondition(filter)
+      if (resultCondition.type) {
+        return resultCondition
+      }
+    }
+    return undefined
   }
 
   trigger(conditionName: string) {
