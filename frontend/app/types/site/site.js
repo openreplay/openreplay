@@ -6,10 +6,10 @@ export const YELLOW = 'yellow';
 export const GREEN = 'green';
 
 export const STATUS_COLOR_MAP = {
-  [ RED ]: '#CC0000',
-  [ YELLOW ]: 'orange',
-  [ GREEN ]: 'green',
-}
+  [RED]: '#CC0000',
+  [YELLOW]: 'orange',
+  [GREEN]: 'green',
+};
 
 export default Record(
   {
@@ -41,14 +41,14 @@ export default Record(
         delete js.key;
         delete js.gdpr;
         return js;
-      ,
+      },
     },
     fromJS: ({ gdpr, projectId, name, ...rest }) => ({
       ...rest,
       host: name,
       name: name,
       id: projectId === undefined ? undefined : `${projectId}`, //?!?!?!?!?
-      gdpr: GDPR(gdpr,
-    },
+      gdpr: GDPR(gdpr),
+    }),
   }
 );
