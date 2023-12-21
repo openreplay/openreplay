@@ -143,6 +143,19 @@ def update(tenant_id, user_id, changes, output=True):
     if len(changes.keys()) == 0:
         return None
 
+    # When the password is changed, invitation will be canceled
+    # Changing password, and at the same time having a pending
+    # invitation link, or pending password change does not make sense.
+    if 'password' in changes.keys():
+        related = [
+            'invitationToken',
+            'invitedAt',
+            'changePwdExpireAt',
+            'changePwdToken'
+        ]
+        for field in related:
+            changes.pop(field, None)
+
     sub_query_users = []
     sub_query_bauth = []
     for key in changes.keys():
