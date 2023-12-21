@@ -149,6 +149,15 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
+		// Use condition rate if it's set
+		if req.Condition != "" {
+			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition)
+			if err != nil {
+				log.Printf("can't get condition rate: %s", err)
+			} else {
+				p.SampleRate = byte(rate) // why byte?
+			}
+		}
 		if dice >= p.SampleRate {
 			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, bodySize)
 			return
