@@ -15,7 +15,7 @@ function ConditionalRecordingSettings({
 }) {
   const addConditionSet = () => {
     setChanged(true);
-    setConditions([...conditions, new Conditions(undefined, false)]);
+    setConditions([...conditions, new Conditions({ name: `Condition Set ${conditions.length + 1}` }, false)]);
   };
 
   return (

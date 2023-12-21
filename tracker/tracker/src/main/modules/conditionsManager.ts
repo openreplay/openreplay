@@ -9,20 +9,22 @@ import Message, {
 import App, { StartOptions } from '../app/index.js'
 import { IFeatureFlag } from './featureFlags.js'
 
-interface ApiResponse {
-  capture_rate: number
+interface Filter {
   filters: {
-    filters: {
-      operator: string
-      value: string[]
-      type: string
-      source?: string
-    }[]
     operator: string
     value: string[]
     type: string
     source?: string
-  }
+  }[]
+  operator: string
+  value: string[]
+  type: string
+  source?: string
+}
+interface ApiResponse {
+  capture_rate: number
+  name: string
+  filters: Filter[]
 }
 
 export default class ConditionsManager {
@@ -48,30 +50,46 @@ export default class ConditionsManager {
       })
       const { conditions } = (await r.json()) as { conditions: ApiResponse[] }
       const mappedConditions: Condition[] = []
-      conditions.forEach((c) => {
-        let filters: any = c.filters
-        if (filters.type === 'fetch') {
-          filters = filters.filters
-        }
-        if (filters.value.length) {
-          const resultCondition = mapCondition(filters as ApiResponse['filters'])
+      const processFilter = (filter: Filter) => {
+        if (filter.value.length) {
+          const resultCondition = mapCondition(filter)
           if (resultCondition.type) {
-            mappedConditions.push(resultCondition)
+            return resultCondition
           }
         }
+      }
+      conditions.forEach((c) => {
+        const filters = c.filters
+        filters.forEach((filter) => {
+          if (filter.type === 'fetch') {
+            filter.filters.forEach((f) => {
+              const cond = processFilter(f as unknown as Filter)
+              if (cond) {
+                mappedConditions.push({ ...cond, name: c.name })
+              }
+            })
+          } else {
+            const cond = processFilter(filter)
+            if (cond) {
+              if (cond.type === 'session_duration') {
+                this.processDuration(cond.value[0], c.name)
+              }
+              mappedConditions.push({ ...cond, name: c.name })
+            }
+          }
+        })
       })
-      console.log(mappedConditions)
       this.conditions = mappedConditions
     } catch (e) {
       this.app.debug.error('Critical: cannot fetch start conditions')
     }
   }
 
-  trigger() {
+  trigger(conditionName: string) {
     if (this.hasStarted) return
     try {
       this.hasStarted = true
-      void this.app.start(this.startParams)
+      void this.app.start(this.startParams, undefined, conditionName)
     } catch (e) {
       this.app.debug.error(e)
     }
@@ -108,8 +126,8 @@ export default class ConditionsManager {
     if (flagConds.length) {
       flagConds.forEach((flagCond) => {
         const operator = operators[flagCond.operator]
-        if (operator && flag.some((f) => operator(f.key, flagCond.value))) {
-          this.trigger()
+        if (operator && flag.find((f) => operator(f.key, flagCond.value))) {
+          this.trigger(flagCond.name)
         }
       })
     }
@@ -117,13 +135,18 @@ export default class ConditionsManager {
 
   durationInt: ReturnType<typeof setInterval> | null = null
 
-  processDuration(durationSeconds: number) {
+  processDuration(durationMs: number, condName: string) {
     this.durationInt = setInterval(() => {
       const sessionLength = performance.now()
-      if (sessionLength > durationSeconds * 1000) {
-        this.trigger()
+      if (sessionLength > durationMs) {
+        this.trigger(condName)
       }
     }, 1000)
+    this.app.attachStopCallback(() => {
+      if (this.durationInt) {
+        clearInterval(this.durationInt)
+      }
+    })
   }
 
   networkRequest(message: NetworkRequest) {
@@ -153,7 +176,7 @@ export default class ConditionsManager {
         const operator = operators[reqCond.operator] as (a: string, b: string[]) => boolean
         // @ts-ignore
         if (operator && operator(value, reqCond.value)) {
-          this.trigger()
+          this.trigger(reqCond.name)
         }
       })
     }
@@ -166,7 +189,7 @@ export default class ConditionsManager {
       evConds.forEach((evCond) => {
         const operator = operators[evCond.operator] as (a: string, b: string[]) => boolean
         if (operator && operator(message[1], evCond.value)) {
-          this.trigger()
+          this.trigger(evCond.name)
         }
       })
     }
@@ -179,7 +202,7 @@ export default class ConditionsManager {
       clickCond.forEach((click) => {
         const operator = operators[click.operator] as (a: string, b: string[]) => boolean
         if (operator && (operator(message[3], click.value) || operator(message[4], click.value))) {
-          this.trigger()
+          this.trigger(click.name)
         }
       })
     }
@@ -192,7 +215,7 @@ export default class ConditionsManager {
       urlConds.forEach((urlCond) => {
         const operator = operators[urlCond.operator] as (a: string, b: string[]) => boolean
         if (operator && operator(message[1], urlCond.value)) {
-          this.trigger()
+          this.trigger(urlCond.name)
         }
       })
     }
@@ -208,7 +231,7 @@ export default class ConditionsManager {
       exceptionConds.forEach((exceptionCond) => {
         const operator = operators[exceptionCond.operator]
         if (operator && testedValues.some((val) => operator(val, exceptionCond.value))) {
-          this.trigger()
+          this.trigger(exceptionCond.name)
         }
       })
     }
@@ -219,27 +242,32 @@ type CommonCondition = {
   type: 'visited_url' | 'click' | 'custom_event'
   operator: keyof typeof operators
   value: string[]
+  name: string
 }
 
 type ExceptionCondition = {
   type: 'exception'
   operator: 'contains' | 'startsWith' | 'endsWith'
   value: string[]
+  name: string
 }
 type FeatureFlagCondition = {
   type: 'feature_flag'
   operator: 'is'
   value: string[]
+  name: string
 }
 type SessionDurationCondition = {
   type: 'session_duration'
   value: number[]
+  name: string
 }
 type NetworkRequestCondition = {
   type: 'network_request'
   key: 'url' | 'status' | 'method' | 'duration'
   operator: keyof typeof operators
   value: string[]
+  name: string
 }
 type Condition =
   | CommonCondition
@@ -250,6 +278,7 @@ type Condition =
 
 const operators = {
   is: (val: string, target: string[]) => target.includes(val),
+  isAny: () => true,
   isNot: (val: string, target: string[]) => !target.includes(val),
   contains: (val: string, target: string[]) => target.some((t) => val.includes(t)),
   notContains: (val: string, target: string[]) => !target.some((t) => val.includes(t)),
@@ -261,7 +290,7 @@ const operators = {
   lessThan: (val: number, target: number) => val < target,
 }
 
-const mapCondition = (condition: ApiResponse['filters']): Condition => {
+const mapCondition = (condition: Filter): Condition => {
   const opMap = {
     on: 'is',
     notOn: 'isNot',
