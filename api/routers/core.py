@@ -511,6 +511,17 @@ def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(
     return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
+@app.post('/{projectId}/conditions', tags=["projects"])
+def update_conditions(projectId: int, data: schemas.ProjectSettings = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.update_conditions(project_id=projectId, changes=data)}
+
+
+@app.get('/{projectId}/conditions', tags=["projects"])
+def get_conditions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.get_conditions(project_id=projectId)}
+
+
 @app.get('/announcements', tags=["announcements"])
 def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.get_all(user_id=context.user_id)}

@@ -1,5 +1,6 @@
 import json
-from typing import Optional
+from typing import Optional, List
+from collections import Counter
 
 from fastapi import HTTPException, status
 
@@ -69,7 +70,8 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform,
+                                       (SELECT count(*) FROM jsonb_array_elements_text(s.conditions)) AS conditions_count 
                                        {extra_projection}
                                 FROM public.projects AS s
                                 WHERE s.deleted_at IS NULL
@@ -245,6 +247,71 @@ def update_capture_status(project_id, changes: schemas.SampleRateSchema):
                                WHERE project_id =%(project_id)s
                                     AND deleted_at ISNULL;""",
                             {"project_id": project_id, "sample_rate": sample_rate})
+        cur.execute(query=query)
+
+    return changes
+
+
+def get_conditions(project_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT sample_rate AS rate, sample_rate=100 AS capture_all, conditions
+                               FROM public.projects
+                               WHERE project_id =%(project_id)s 
+                                    AND deleted_at ISNULL;""",
+                            {"project_id": project_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+        row = helper.dict_to_camel_case(row)
+        if row["conditions"] is None:
+            row["conditions"] = []
+        else:
+            row["conditions"] = [schemas.ProjectConditions(**c) for c in row["conditions"]]
+
+        return row
+
+
+def validate_conditions(conditions: List[schemas.ProjectConditions]) -> List[str]:
+    errors = []
+    names = [condition.name for condition in conditions]
+
+    # Check for empty strings
+    if any(name.strip() == "" for name in names):
+        errors.append("Condition names cannot be empty strings")
+
+    # Check for duplicates
+    name_counts = Counter(names)
+    duplicates = [name for name, count in name_counts.items() if count > 1]
+    if duplicates:
+        errors.append(f"Duplicate condition names found: {duplicates}")
+
+    return errors
+
+
+def update_conditions(project_id, changes: schemas.ProjectSettings):
+    sample_rate = changes.rate
+    if changes.capture_all:
+        sample_rate = 100
+
+    validation_errors = validate_conditions(changes.conditions)
+    if validation_errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_errors)
+
+    conditions = []
+    for condition in changes.conditions:
+        conditions.append(condition.model_dump())
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""UPDATE public.projects
+                               SET
+                                    sample_rate= %(sample_rate)s,
+                                    conditions = %(conditions)s::jsonb
+                               WHERE project_id =%(project_id)s
+                                    AND deleted_at ISNULL;""",
+                            {
+                                "project_id": project_id,
+                                "sample_rate": sample_rate,
+                                "conditions": json.dumps(conditions)
+                            })
         cur.execute(query=query)
 
     return changes
