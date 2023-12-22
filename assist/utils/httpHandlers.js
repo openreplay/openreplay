@@ -12,9 +12,6 @@ const {
     extractPayloadFromRequest,
 } = require("./extractors");
 const {
-    IDENTITIES
-} = require("./assistHelper");
-const {
     RecordRequestDuration,
     IncreaseTotalRequests
 } = require('../utils/metrics');
@@ -41,40 +38,30 @@ const respond = function (req, res, data) {
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
-// Sort by projectKey
-const socketsListByProject = async function (req, res) {
-    debug_log && console.log("[WS]looking for available sessions");
-    res.handlerName = 'socketsListByProject';
-
-    let _projectKey = extractProjectKeyFromRequest(req);
-    let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractPayloadFromRequest(req, res);
-    let withFilters = hasFilters(filters);
-
-    // find a particular session
-    if (_sessionId) {
-        let sessInfo = GetRoomInfo(_sessionId);
-        if (!sessInfo) {
-            return respond(req, res, null);
-        }
-        if (!withFilters) {
-            return respond(req, res, sessInfo);
-        }
-        if (isValidSession(sessInfo, filters.filter)) {
-            return respond(req, res, sessInfo);
-        }
-        return respond(req, res, null);
+const getParticularSession = function (sessionId, filters) {
+    const sessInfo = GetRoomInfo(sessionId);
+    if (!sessInfo) {
+        return null;
     }
+    if (!hasFilters(filters)) {
+        return sessInfo;
+    }
+    if (isValidSession(sessInfo, filters.filter)) {
+        return sessInfo;
+    }
+    return null;
+}
 
-    // find all sessions for a project
-    let sessions = [];
-    let allRooms = GetRooms(_projectKey);
+const getAllSessions = function (projectKey, filters, onlineOnly= false) {
+    const sessions = [];
+    const allRooms = onlineOnly ? GetSessions(projectKey) : GetRooms(projectKey);
+
     for (let sessionId of allRooms) {
         let sessInfo = GetRoomInfo(sessionId);
         if (!sessInfo) {
             continue;
         }
-        if (!withFilters) {
+        if (!hasFilters(filters)) {
             sessions.push(sessInfo);
             continue;
         }
@@ -82,6 +69,25 @@ const socketsListByProject = async function (req, res) {
             sessions.push(sessInfo);
         }
     }
+    return sessions
+}
+
+// Sort by projectKey
+const socketsListByProject = async function (req, res) {
+    debug_log && console.log("[WS]looking for available sessions");
+    res.handlerName = 'socketsListByProject';
+
+    const filters = await extractPayloadFromRequest(req, res);
+
+    // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
+    if (_sessionId) {
+        return respond(req, res, getParticularSession(_sessionId, filters));
+    }
+
+    // find all sessions for a project
+    const _projectKey = extractProjectKeyFromRequest(req);
+    const sessions = getAllSessions(_projectKey, filters);
 
     // send response
     respond(req, res, sortPaginate(sessions, filters));
@@ -92,44 +98,17 @@ const socketsLiveByProject = async function (req, res) {
     debug_log && console.log("[WS]looking for available LIVE sessions");
     res.handlerName = 'socketsLiveByProject';
 
-    let _projectKey = extractProjectKeyFromRequest(req);
-    let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractPayloadFromRequest(req, res);
-    let withFilters = hasFilters(filters);
+    const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
-        let sessInfo = GetRoomInfo(_sessionId);
-        if (!sessInfo) {
-            return respond(req, res, null);
-        }
-        if (!withFilters) {
-            return respond(req, res, sessInfo);
-        }
-        if (isValidSession(sessInfo, filters.filter)) {
-            return respond(req, res, sessInfo);
-        }
-        return respond(req, res, null);
+        return respond(req, res, getParticularSession(_sessionId, filters));
     }
 
     // find all sessions for a project
-    let sessions = [];
-    let allSessions = GetSessions(_projectKey);
-    for (let sessionId of allSessions) {
-        let sessInfo = GetRoomInfo(sessionId);
-        if (!sessInfo) {
-            continue;
-        }
-        if (!withFilters) {
-            sessions.push(sessInfo);
-            continue;
-        }
-        if (isValidSession(sessInfo, filters.filter)) {
-            sessions.push(sessInfo);
-        }
-    }
-    console.log("sessions: ", sessions);
-    console.log("filters: ", filters);
+    const _projectKey = extractProjectKeyFromRequest(req);
+    const sessions = getAllSessions(_projectKey, filters, true);
 
     // send response
     respond(req, res, sortPaginate(sessions, filters));
@@ -140,22 +119,12 @@ const socketsLiveBySession = async function (req, res) {
     debug_log && console.log("[WS]looking for LIVE session");
     res.handlerName = 'socketsLiveBySession';
 
-    let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractPayloadFromRequest(req, res);
-    let withFilters = hasFilters(filters);
+    const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
-        let sessInfo = GetRoomInfo(_sessionId);
-        if (!sessInfo) {
-            return respond(req, res, null);
-        }
-        if (!withFilters) {
-            return respond(req, res, sessInfo);
-        }
-        if (isValidSession(sessInfo, filters.filter)) {
-            return respond(req, res, sessInfo);
-        }
+        return respond(req, res, getParticularSession(_sessionId, filters));
     }
     return respond(req, res, null);
 }
@@ -165,8 +134,8 @@ const autocomplete = async function (req, res) {
     debug_log && console.log("[WS]autocomplete");
     res.handlerName = 'autocomplete';
 
-    let _projectKey = extractProjectKeyFromRequest(req);
-    let filters = await extractPayloadFromRequest(req);
+    const _projectKey = extractProjectKeyFromRequest(req);
+    const filters = await extractPayloadFromRequest(req);
     let results = [];
     if (!hasQuery(filters)) {
         return respond(req, res, results);
