@@ -155,8 +155,11 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			if err != nil {
 				log.Printf("can't get condition rate: %s", err)
 			} else {
+				log.Printf("condition rate: %d", rate)
 				p.SampleRate = byte(rate) // why byte?
 			}
+		} else {
+			log.Printf("project sample rate: %d", p.SampleRate)
 		}
 		if dice >= p.SampleRate {
 			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, bodySize)
