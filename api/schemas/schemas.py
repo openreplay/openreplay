@@ -1324,6 +1324,7 @@ class SavedSearchSchema(BaseModel):
 
 
 class ProjectConditions(BaseModel):
+    condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     capture_rate: int = Field(..., ge=0, le=100)
     filters: List[GroupedFilterType] = Field(default=[])
@@ -1331,7 +1332,7 @@ class ProjectConditions(BaseModel):
 
 class ProjectSettings(BaseModel):
     rate: int = Field(..., ge=0, le=100)
-    capture_all: bool = Field(default=False)
+    conditional_capture: bool = Field(default=False)
     conditions: List[ProjectConditions] = Field(default=[])
 
 
