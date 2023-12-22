@@ -101,13 +101,13 @@ async function onConnect(socket) {
                 }
             }
         }
+        extractSessionInfo(socket);
         if (tabsCount < 0) {
             // New session creates new room
             IncreaseTotalRooms();
             IncreaseOnlineRooms();
-            AddRoom(socket.projectKey, socket.sessId, JSON.parse(socket.handshake.query.sessionInfo));
+            AddRoom(socket.projectKey, socket.sessId, socket.handshake.query.sessionInfo);
         }
-        extractSessionInfo(socket);
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
             debug_log && console.log(`notifying new session about agent-existence`);
