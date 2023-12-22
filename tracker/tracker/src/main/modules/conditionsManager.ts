@@ -21,6 +21,7 @@ interface Filter {
   type: string
   source?: string
 }
+
 interface ApiResponse {
   capture_rate: number
   name: string

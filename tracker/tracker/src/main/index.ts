@@ -150,7 +150,7 @@ export default class API {
     }
     if (failReason.length > 0) {
       const missingApi = failReason.join(',')
-      console.log(
+      console.error(
         `OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1. Reason: ${missingApi}`,
       )
       this.signalStartIssue('missing_api', failReason)
