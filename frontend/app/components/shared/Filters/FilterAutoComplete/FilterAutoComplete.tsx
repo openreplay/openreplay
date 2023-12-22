@@ -145,12 +145,11 @@ function FilterAutoComplete(props: Props) {
 
     const loadOptions = (inputValue: string, callback: (options: []) => void) => {
         // remove underscore from params
-        const _params = Object.keys(params).reduce((acc: any, key: string) => {
-            if (key === 'type' && params[key] === 'metadata') {
-                acc[key] = params[key].replace(/^_/, '');
-            }
-            return acc;
-        }, {});
+        const _params: Record<string, string> = {}
+        const keys = Object.keys(params);
+        keys.forEach((key) => {
+            _params[key.replace('_', '')] = params[key];
+        })
 
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
