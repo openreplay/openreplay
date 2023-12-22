@@ -5,59 +5,37 @@ export const LogLevel = {
   Errors: 2,
   Silent: 0,
 } as const
-type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
-type CustomLevel = {
-  error: boolean
-  warn: boolean
-  log: boolean
-}
-
-function IsCustomLevel(l: LogLevel | CustomLevel): l is CustomLevel {
-  return typeof l === 'object'
-}
-
-interface _Options {
-  level: LogLevel | CustomLevel
-  messages?: number[]
-}
-
-export type Options = true | _Options | LogLevel
+export type ILogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
 export default class Logger {
-  private readonly options: _Options
-  constructor(options: Options = LogLevel.Silent) {
-    this.options =
-      options === true
-        ? { level: LogLevel.Verbose }
-        : typeof options === 'number'
-        ? { level: options }
-        : options
+  private readonly level: ILogLevel
+
+  constructor(debugLevel: ILogLevel = LogLevel.Silent) {
+    this.level = debugLevel
   }
-  log(...args: any) {
-    if (
-      IsCustomLevel(this.options.level)
-        ? this.options.level.log
-        : this.options.level >= LogLevel.Log
-    ) {
+
+  private shouldLog(level: ILogLevel): boolean {
+    return this.level >= level
+  }
+
+  log(...args: any[]) {
+    if (this.shouldLog(LogLevel.Log)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.log(...args)
     }
   }
-  warn(...args: any) {
-    if (
-      IsCustomLevel(this.options.level)
-        ? this.options.level.warn
-        : this.options.level >= LogLevel.Warnings
-    ) {
+
+  warn(...args: any[]) {
+    if (this.shouldLog(LogLevel.Warnings)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.warn(...args)
     }
   }
-  error(...args: any) {
-    if (
-      IsCustomLevel(this.options.level)
-        ? this.options.level.error
-        : this.options.level >= LogLevel.Errors
-    ) {
+
+  error(...args: any[]) {
+    if (this.shouldLog(LogLevel.Errors)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.error(...args)
     }
   }
