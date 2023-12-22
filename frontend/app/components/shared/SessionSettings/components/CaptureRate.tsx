@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Conditions } from 'App/mstore/types/FeatureFlag';
-import { Icon, Input, Loader, Tooltip } from 'UI';
+import { Icon, Input, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { Switch, Drawer, Button } from 'antd';
+import { Switch, Drawer, Button, Tooltip } from 'antd';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
 
 type Props = {
   isAdmin: boolean;
-  projectId: number;
+  projectId?: number;
   setShowCaptureRate: (show: boolean) => void;
   open: boolean;
   showCaptureRate: boolean;
@@ -59,12 +59,14 @@ function CaptureRate(props: Props) {
   };
 
   const onUpdate = () => {
-    updateCaptureConditions(projectId, {
+    updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
       captureAll,
       conditions: conditions.map((c) => c.toCaptureCondition()),
     }).finally(() => setChanged(false));
   };
+
+  const updateDisabled = !changed || !isAdmin || (captureAll && conditions.length === 0);
 
   return (
     <Drawer
@@ -79,7 +81,7 @@ function CaptureRate(props: Props) {
           <Button type={'primary'} ghost onClick={() => props.setShowCaptureRate(false)}>
             Cancel
           </Button>
-          <Button disabled={!changed || !isAdmin} type={'primary'} onClick={onUpdate}>
+          <Button disabled={updateDisabled} type={'primary'} onClick={onUpdate}>
             Update
           </Button>
         </div>
@@ -88,7 +90,7 @@ function CaptureRate(props: Props) {
       destroyOnClose
     >
       <Loader loading={loadingCaptureRate || !projectId}>
-        <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
+        <Tooltip title={isAdmin ? '' : "You don't have permission to change."}>
           <div className="my-2 flex items-center gap-2 h-8">
             <div className="font-semibold">The percentage of session you want to capture</div>
             <Tooltip
@@ -102,9 +104,9 @@ function CaptureRate(props: Props) {
             <Switch
               checked={captureAll}
               onChange={toggleRate}
-              checkedChildren={'100%'}
+              checkedChildren={'Conditional'}
               disabled={!isAdmin}
-              unCheckedChildren={'custom'}
+              unCheckedChildren={'Capture Rate'}
             />
             {!captureAll ? (
               <div className={cn('relative', { disabled: !isAdmin })}>
@@ -129,9 +131,8 @@ function CaptureRate(props: Props) {
               </div>
             ) : null}
           </div>
-          {!captureAll ? (
+          {captureAll ? (
             <ConditionalRecordingSettings
-              captureConditions={captureConditions}
               setChanged={setChanged}
               conditions={conditions}
               setConditions={setConditions}

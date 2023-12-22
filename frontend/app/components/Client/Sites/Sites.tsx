@@ -11,7 +11,7 @@ import SiteSearch from './SiteSearch';
 import AddProjectButton from './AddProjectButton';
 import InstallButton from './InstallButton';
 import ProjectKey from './ProjectKey';
-import { getInitials, sliceListPerPage } from 'App/utils';
+import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import CaptureRate from 'Shared/SessionSettings/components/CaptureRate';
@@ -94,7 +94,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
             onClick={() => captureRateClickHandler(project)}
             className="ml-2"
           >
-            <BranchesOutlined rotate={90} /> ${project.conditionsCount} Conditions
+            <BranchesOutlined rotate={90} /> {project.conditionsCount} Conditions
           </Button>
         ) : null}
       </div>

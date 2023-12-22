@@ -154,8 +154,9 @@ export default class ConditionsManager {
     const reqConds = this.conditions.filter(
       (c) => c.type === 'network_request',
     ) as NetworkRequestCondition[]
-    if (reqConds.length) {
-      reqConds.forEach((reqCond) => {
+    const withoutAny = reqConds.filter((c) => c.operator !== 'isAny')
+    if (withoutAny.length) {
+      withoutAny.forEach((reqCond) => {
         let value
         switch (reqCond.key) {
           case 'url':
@@ -180,15 +181,28 @@ export default class ConditionsManager {
         }
       })
     }
+    if (withoutAny.length === 0 && reqConds.length) {
+      this.trigger(reqConds[0].name)
+    }
   }
 
   customEvent(message: CustomEvent) {
-    // name - 1
+    // name - 1, payload - 2
     const evConds = this.conditions.filter((c) => c.type === 'custom_event') as CommonCondition[]
+    console.log(message, evConds)
     if (evConds.length) {
       evConds.forEach((evCond) => {
         const operator = operators[evCond.operator] as (a: string, b: string[]) => boolean
-        if (operator && operator(message[1], evCond.value)) {
+        console.log(
+          operator,
+          evCond,
+          operator(message[1], evCond.value),
+          operator(message[2], evCond.value),
+        )
+        if (
+          operator &&
+          (operator(message[1], evCond.value) || operator(message[2], evCond.value))
+        ) {
           this.trigger(evCond.name)
         }
       })
@@ -277,9 +291,9 @@ type Condition =
   | NetworkRequestCondition
 
 const operators = {
-  is: (val: string, target: string[]) => target.includes(val),
+  is: (val: string, target: string[]) => target.some((t) => val.includes(t)),
   isAny: () => true,
-  isNot: (val: string, target: string[]) => !target.includes(val),
+  isNot: (val: string, target: string[]) => !target.some((t) => val.includes(t)),
   contains: (val: string, target: string[]) => target.some((t) => val.includes(t)),
   notContains: (val: string, target: string[]) => !target.some((t) => val.includes(t)),
   startsWith: (val: string, target: string[]) => target.some((t) => val.startsWith(t)),

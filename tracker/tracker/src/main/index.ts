@@ -205,7 +205,7 @@ export default class API {
     }
   }
 
-  checkDoNotTrack() {
+  checkDoNotTrack = () => {
     return (
       this.options.respectDoNotTrack &&
       (navigator.doNotTrack == '1' ||
@@ -214,7 +214,7 @@ export default class API {
     )
   }
 
-  signalStartIssue(reason: string, missingApi: string[]) {
+  signalStartIssue = (reason: string, missingApi: string[]) => {
     const doNotTrack = this.checkDoNotTrack()
     const req = new XMLHttpRequest()
     const orig = this.options.ingestPoint || DEFAULT_INGEST_POINT
@@ -286,6 +286,10 @@ export default class API {
     return true
   }
 
+  /**
+   * start buffering messages without starting the actual session, which gives user 30 seconds to "activate" and record
+   * session by calling start() on conditional trigger and we will then send buffered batch, so it won't get lost
+   * */
   coldStart(startOpts?: Partial<StartOptions>, conditional?: boolean) {
     if (this.browserEnvCheck()) {
       if (this.app === null) {
