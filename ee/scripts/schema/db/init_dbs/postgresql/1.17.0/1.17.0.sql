@@ -29,6 +29,11 @@ UPDATE public.sessions
 SET has_ut_test= TRUE
 WHERE session_id IN (SELECT session_id FROM public.ut_tests_signals);
 
+DROP INDEX IF EXISTS public.errors_error_id_idx;
+DROP INDEX IF EXISTS public.issues_issue_id_idx;
+DROP INDEX IF EXISTS public.projects_project_key_key;
+DROP INDEX IF EXISTS public.user_favorite_sessions_user_id_session_id_idx;
+
 COMMIT;
 
 \elif :is_next
