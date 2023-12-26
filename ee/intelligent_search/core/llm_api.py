@@ -45,11 +45,17 @@ class LLM_Model:
     async def queue_prompt(self, prompt, force=False, **params):
         if self.semaphore.acquire(timeout=10):
             if force:
-                self.responses = execute_prompts(self.queue + [prompt])
+                self.responses = self.__execute_prompts(self.queue + [prompt])
             else:
                 self.queue.append(prompt)
                 # Wait until response exists
             self.semaphore.release()
         else:
             raise TimeoutError("[Error] LLM is over-requested")
+
+    def execute_multiple_questions(self, prompts, context, **params):
+        long_prompt = ''
+        for i, prompt in enumerate(prompts):
+            long_prompt += f'({i}) {prompt}\n'
+        return self.__execute_prompts([context.format(user_question=long_prompt)], **params)
 
