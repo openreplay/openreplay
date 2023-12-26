@@ -76,3 +76,18 @@ async def chart_predict(msg: declarations.LLMQuestion):
 async def health():
     return {'status': 200}
 
+@app.post("/llm/test", dependencies=[Depends(api_key_auth)])
+async def predict_test(msg: declarations.LLMQuestion):
+    question = msg.question
+    t1 = time()
+    result = await app.llm_model.queue_prompt(prompt=search_context_v3.format(user_question=question),
+                                              process_id=msg.userId+msg.projectId,
+                                            temperature=parameters.temperature,
+                                            top_p=parameters.top_p,
+                                            max_gen_len=parameters.max_gen_len)
+    t2 = time()
+    processed = filter_sql_where_statement(result['generation'])
+    if processed is None:
+        return {"content": None, "raw_response": result, "inference_time": t2-t1}
+    return {"content": processed, "raw_response": result, "inference_time": t2-t1}
+
