@@ -225,7 +225,6 @@ $$
                 beacon_size               integer                     NOT NULL        DEFAULT 0
             );
 
-            CREATE INDEX projects_project_key_idx ON public.projects (project_key);
             CREATE INDEX projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
             CREATE INDEX projects_tenant_id_idx ON public.projects (tenant_id);
 
