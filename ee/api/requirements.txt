@@ -11,7 +11,7 @@ jira==3.5.2
 
 
 fastapi==0.105.0
-uvicorn[standard]==0.23.2
+uvicorn[standard]==0.25.0
 gunicorn==21.2.0
 python-decouple==3.8
 pydantic[email]==2.3.0

@@ -274,7 +274,7 @@ $$
                 button_url      text        NULL,
                 image_url       text        NULL,
                 created_at      timestamp   NOT NULL DEFAULT timezone('utc'::text, now()),
-                options         jsonb       NOT NULL DEFAULT'{}'::jsonb,
+                options         jsonb       NOT NULL DEFAULT '{}'::jsonb,
                 CONSTRAINT notification_tenant_xor_user CHECK ( tenant_id NOTNULL AND user_id ISNULL OR
                                                                 tenant_id ISNULL AND user_id NOTNULL )
             );
@@ -401,7 +401,6 @@ $$
             CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
             CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
             CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
-            CREATE INDEX errors_error_id_idx ON public.errors (error_id);
             CREATE INDEX errors_parent_error_id_idx ON public.errors (parent_error_id);
 
             CREATE TABLE public.user_favorite_errors
@@ -541,7 +540,6 @@ $$
                 session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
                 PRIMARY KEY (user_id, session_id)
             );
-            CREATE INDEX user_favorite_sessions_user_id_session_id_idx ON public.user_favorite_sessions (user_id, session_id);
 
 
             CREATE TABLE public.assigned_sessions
