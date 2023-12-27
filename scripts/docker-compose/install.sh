@@ -76,6 +76,32 @@ if [[ -z $DOMAIN_NAME ]]; then
 fi
 info "Using domain name: $DOMAIN_NAME 🌐"
 
+read -p "Is the domain on a public DNS? (y/n) " yn
+case $yn in 
+	y ) echo "$DOMAIN_NAME is on a public DNS";
+        ;;
+	n ) echo "$DOMAIN_NAME is on a private DNS";
+		# Maybe rename the docker-compose ?
+		# And add build image to the new docker-compose
+
+    # The docker-compose.private.yaml is the same as the docker-compose.yaml but with the chalice image changed to a local build image
+    # It's because we disable the verify in health.py
+
+		mv docker-compose.yaml docker-compose.public.yaml
+		mv docker-compose.private.yaml docker-compose.yaml
+
+    mv Caddyfile Caddyfile.public
+		mv Caddyfile.private Caddyfile
+		# this will change the calice image to a local build image
+		# Or change verify=False in health
+		sed -i 's/verify=True/verify=False/' ../../api/chalicelib/core/health.py
+    #enterprise edition
+    sed -i 's/verify=True/verify=False/' ../../ee/api/chalicelib/core/health.py
+		;;
+	* ) echo invalid response;
+		exit 1;;
+esac
+
 # Create passwords if they don't exist
 create_passwords
 
@@ -86,9 +112,18 @@ source common.env
 set +a
 
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
-find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
-sudo -E docker-compose pull --no-parallel
-sudo -E docker compose --profile migration up -d
+case $yn in 
+	y ) echo "$DOMAIN_NAME is on a public DNS";
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+    ;;
+	n ) echo "$DOMAIN_NAME is on a private DNS";
+    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.private.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+		;;
+	* ) echo invalid response;
+		exit 1;;
+esac
+sudo -E docker-compose --parallel 5 pull
+sudo -E docker-compose --profile migration up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
