@@ -117,7 +117,8 @@ case $yn in
     find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
     ;;
 	n ) echo "$DOMAIN_NAME is on a private DNS";
-    find ./ -type f \( -iname "*.env" -o -iname "docker-compose.private.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+    find ./ -type f -iname "*.env" ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+    find ./ -type f -iname "docker-compose.yaml" -exec /bin/bash -c 'file="{}"; git checkout -- docker-compose.private.yaml; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 		;;
 	* ) echo invalid response;
 		exit 1;;
