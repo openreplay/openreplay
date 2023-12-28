@@ -3,6 +3,8 @@ from decouple import config
 from utils.contexts import search_context_v2
 from threading import Semaphore
 from asyncio import sleep
+from time import time
+import re
 
 
 class LLM_Model:
@@ -17,8 +19,9 @@ class LLM_Model:
             max_batch_size (int, optional): The maximum batch size for generating sequences. Defaults to 4.
         """
         self.generator = Llama.build(**params)
-        self.max_queue_size = config('LLM_MAX_QUEUE_SIZE', cast=int, default=2)
-        self.semaphore = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=2))
+        self.max_queue_size = config('LLM_MAX_QUEUE_SIZE', cast=int, default=7)
+        self.semaphore = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=7))
+        self.api_timeout = config('API_TIMEOUT', cast=int, default=30)
         self.queue: dict[int, str] = dict()
         self.responses: dict[int, dict] = dict()
 
@@ -62,20 +65,36 @@ class LLM_Model:
 
     def add_to_list(self, key, value, **params):
         self.queue[key] = value
-        if self.queue == self.max_queue_size:
+        if len(self.queue) >= self.max_queue_size:
             self.__execute_prompts_dict(self.queue, **params)
             self.queue = dict()
 
+    def add_to_list_multiple(self, key, value, context, **params):
+        self.queue[key] = value
+        if len(self.queue) >= self.max_queue_size:
+            results = self.execute_multiple_questions(self.queue, context, **params)
+            m = re.compile('\([0-9]+\).*\n.*;')
+            results = m.findall(results[0]['generation'])
+            for i, k in enumerate(self.queue.keys()):
+                try:
+                    self.responses[k] = results[i]
+                except KeyError:
+                    self.responses[k] = ''
+            self.queue = dict()
+
     async def queue_prompt(self, prompt:str, process_id: int, force=False, **params):
-        if self.semaphore.acquire(timeout=10):
+        if self.semaphore.acquire(timeout=40):
             if force:
                 self.__execute_prompts_dict(self.queue | {process_id: prompt}, **params)
                 self.queue = dict()
             else:
                 self.add_to_list(process_id, prompt)
                 # Wait until response exists
+                init_time = time()
                 while not self.__is_ready(process_id):
-                    await sleep(1)
+                    await sleep(0.1)
+                    if time()-init_time > self.api_timeout:
+                        raise Exception('[TimeOut] TimeoutError')
             response = self.responses.pop(process_id)
             self.semaphore.release()
             return response
@@ -84,20 +103,23 @@ class LLM_Model:
 
     def execute_multiple_questions(self, prompts, context, **params):
         long_prompt = ''
-        for i, prompt in enumerate(prompts):
+        for i, prompt in enumerate(prompts.values()):
             long_prompt += f'({i}) {prompt}\n'
         return self.__execute_prompts([context.format(user_question=long_prompt)], **params)
 
-    async def queue_multiple(self, prompt, process_id: int, force=False, **params):
-        if self.semaphore.acquire(timeout=10):
+    async def queue_multiple(self, prompt, context, process_id: int, force=False, **params):
+        if self.semaphore.acquire(timeout=40):
             if force:
-                self.__execute_prompts_dict(self.queue | {process_id: prompt}, **params)
+                self.execute_multiple_questions(self.queue | {process_id: prompt}, context, **params)
                 self.queue = dict()
             else:
-                self.add_to_list(process_id, prompt, **params)
+                self.add_to_list_multiple(process_id, prompt, context, **params)
                 # Wait until response exists
+                t = time()
                 while not self.__is_ready(process_id):
-                    await sleep(1)
+                    await sleep(0.1)
+                    if time()-t > self.api_timeout:
+                        raise Exception('[TimeOut] TimeOutError')
             response = self.responses.pop(process_id)
             self.semaphore.release()
             return response
