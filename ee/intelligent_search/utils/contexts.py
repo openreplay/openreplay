@@ -119,7 +119,7 @@ search_context_v3 = """We have a SQL table called sessions that contains the col
 [[AI_BOT]]: failedRequest->name is a string representing an url that had a Failed Request event
 [[USER]]: What's the attribute of plan?
 [[AI_BOT]]: Plan is a string that could be 'payAsYouGo', 'trial', 'free', 'enterprise'
-[[USER]]: Can you translate the following text into SQL query: {user_question}
+[[USER]]: Can you translate the following text into SQL query:\n{user_question}\nANSWER ONLY WITH SQL
 [[AI_BOT]]:"""
 
 search_context_v4 = """We have a database working with GraphQL, the type system is the following:

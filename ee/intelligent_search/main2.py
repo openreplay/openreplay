@@ -13,6 +13,10 @@ from core.llm_test import LLM_Model
 from auth.auth_key import api_key_auth
 import asyncio
 
+# Testing
+from utils.llm_call import Completion
+C = Completion()
+
 
 class FastAPI_with_LLM(FastAPI):
     llm_model: LLM_Model
@@ -59,4 +63,13 @@ async def predict_test(msg: declarations.LLMQuestion):
     t2 = time()
     processed = filter_sql_where_statement(result)
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
+
+#Testing
+@app.post("/llm/test-anyscale", dependencies=[Depends(api_key_auth)])
+async def predict_anyscale(msg: declarations.LLMQuestion):
+    t = time()
+    res = ''
+    for token in C.send_stream_request(msg.question, "23535"):
+        res += token
+    return {'content': res, 'inference_time': time()-t}
 

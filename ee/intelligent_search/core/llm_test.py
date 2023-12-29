@@ -35,7 +35,8 @@ class LLM_Model:
         """
         self.generator = Llama.build(**params)
         self.max_queue_size = config('LLM_MAX_QUEUE_SIZE', cast=int, default=7)
-        self.semaphore = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=7))
+        self.semaphore_queue = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=1))
+        self.semaphore_response = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=1))
         self.api_timeout = config('API_TIMEOUT', cast=int, default=30)
         self.queue: dict[int, str] = dict()
         self.responses: dict[int, str] = dict()
@@ -43,18 +44,35 @@ class LLM_Model:
 
     async def process_queue(self, context: str, **params):
         # do something loop with self.queue
-        m = re.compile('\([0-9]+\).*\n.*;')
+        m = re.compile('\(\d\)[^;]*')
         while True:
             if not self.queue:
                 await sleep(0.2)
             else:
-                to_process = get_elements_limited_by_char(self.queue, self.char_limit)
+                #print('[INFO] FOUND DATA!!!')
+                if self.semaphore_queue.acquire(timeout=4):
+                    to_process = get_elements_limited_by_char(self.queue, self.char_limit)
+                    self.semaphore_queue.release()
+                else:
+                    continue
+                    # raise Exception('[Error] Semaphore TimeOutException')
                 res = await self.execute_multiple_questions(to_process, context, **params)
-                responses = m.findall(res[0]['generation'])
-                for i,k in enumerate(to_process.keys()):
-                    self.responses[k] = responses[i]
+                #print('Result ready:', res)
+                if len(to_process) == 1:
+                    responses = [res[0]['generation'].replace('\n',' ')]
+                else:
+                    responses = m.findall(res[0]['generation'].replace('\n',' '))
+                if self.semaphore_response.acquire(timeout=4):
+                    for i,k in enumerate(to_process.keys()):
+                        try:
+                            self.responses[k] = responses[i]
+                        except IndexError:
+                            print(f'[Error] Unmatched questions to answers:\n{to_process}\n{res}\n{responses}')
+                    self.semaphore_response.release()
+                else:
+                    raise Exception('[Error] Semaphore TimeOutException')
 
-    async def __execute_prompts(self, prompts: list, **params):
+    def __execute_prompts(self, prompts: list, **params):
         """
         Entry point of the program for generating text using a pretrained model.
 
@@ -67,19 +85,30 @@ class LLM_Model:
         return self.generator.text_completion(
                 prompts, **params)
 
-    def __is_ready(self, process_id: int):
-        return process_id in self.responses.keys()
+    async def __is_ready(self, process_id: int):
+        t = time()
+        while True:
+            if self.semaphore_response.acquire(timeout=2):
+                if process_id in self.responses.keys():
+                    value = self.responses[process_id]
+                    self.semaphore_response.release()
+                    return value
+                else:
+                    self.semaphore_response.release()
+                    await sleep(0.1)
+            if time()-t > self.api_timeout:
+                raise Exception('[Error] Semaphore TimeOutException')
 
     async def send_question(self, key_id, question: str):
-        self.queue[key_id] = question
+        if self.semaphore_queue.acquire(timeout=2):
+            self.queue[key_id] = question
+            self.semaphore_queue.release()
+        else:
+            raise Exception('[Error] Semaphore TimeOutException')
         t = time()
-        while not self.__is_ready(key_id):
-            await sleep(0.1)
-            if time()-t > self.api_timeout:
-                raise Exception('[Error] TimeOutError')
-        return self.responses.pop(key_id)
+        return await self.__is_ready(key_id)
 
-    def execute_multiple_questions(self, prompts: dict[int, str], context: str, **params):
+    async def execute_multiple_questions(self, prompts: dict[int, str], context: str, **params):
         long_prompt = ''
         for i, prompt in enumerate(prompts.values()):
             long_prompt += f'({i}) {prompt}\n'

@@ -23,3 +23,8 @@ traceloop-sdk==0.0.37
 
 # Test
 pytest==7.4.2
+
+# Maybe?
+anyscale
+openai==0.28.1
+tiktoken
