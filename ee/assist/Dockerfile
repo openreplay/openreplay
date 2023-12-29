@@ -3,7 +3,8 @@ ARG ARCH=amd64
 
 FROM --platform=linux/$ARCH node:20-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-RUN apk add --no-cache tini git libc6-compat && ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2
+RUN apk add --no-cache tini git libc6-compat
+#    && ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2
 
 ARG envarg
 ENV ENTERPRISE_BUILD=${envarg} \
