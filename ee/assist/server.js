@@ -92,15 +92,9 @@ if (process.env.uws !== "true") {
             return fn(req, res);
         }
     }
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
-    uapp.post(`${PREFIX}/${P_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
-    uapp.post(`${PREFIX}/${P_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsListByProject));
 
-    uapp.get(`${PREFIX}/${P_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
-    uapp.post(`${PREFIX}/${P_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsListByProject));
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));

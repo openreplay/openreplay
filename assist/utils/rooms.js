@@ -4,14 +4,11 @@ const projectRooms = new Map(); // projectKey -> Set(roomIDs) // online rooms
 
 function AddRoom(projKey, sessID, sessInfo) {
     console.log("AddRoom: ", projKey, sessID, sessInfo)
-    //
     roomsInfo.set(sessID, sessInfo);
-    //
     if (!projectRooms.has(projKey)) {
         projectRooms.set(projKey, new Set());
     }
     projectRooms.get(projKey).add(sessID);
-    //
     if (!projectSessions.has(projKey)) {
         projectSessions.set(projKey, new Set());
     }

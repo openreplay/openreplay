@@ -231,6 +231,7 @@ const sortPaginate = function (list, filters) {
             return tA < tB ? 1 : tA > tB ? -1 : 0; // b - a
         });
     }
+    // TODO: Check if we parse this parameter correctly (right now it doesn't work)
     if (filters.sort.order) {
         list.reverse();
     }
