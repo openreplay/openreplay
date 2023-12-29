@@ -80,7 +80,7 @@ const socketsListByProject = async function (req, res) {
     const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
-    const _sessionId = extractSessionIdFromRequest(req);
+    let _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
@@ -101,7 +101,7 @@ const socketsLiveByProject = async function (req, res) {
     const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
-    const _sessionId = extractSessionIdFromRequest(req);
+    let _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
@@ -122,7 +122,7 @@ const socketsLiveBySession = async function (req, res) {
     const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
-    const _sessionId = extractSessionIdFromRequest(req);
+    let _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
