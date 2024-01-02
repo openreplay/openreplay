@@ -231,7 +231,7 @@ const sortPaginate = function (list, filters) {
             return tB - tA
         });
     }
-    if (filters.sort.order) {
+    if (!filters.sort.order) {
         list.reverse();
     }
 
