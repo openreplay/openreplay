@@ -5,6 +5,8 @@ from threading import Semaphore
 from asyncio import sleep
 from time import time
 import re
+from utils.llm_call import Completion
+import logging
 
 
 def get_elements_limited_by_char(queue: dict[int, str], char_limit: int):
@@ -41,6 +43,7 @@ class LLM_Model:
         self.queue: dict[int, str] = dict()
         self.responses: dict[int, str] = dict()
         self.char_limit: int = config('TOKEN_LIMIT_PER_REQUEST', cast=int, default=100)
+        self.anyscale = Completion()
 
     async def process_queue(self, context: str, **params):
         # do something loop with self.queue
@@ -67,7 +70,7 @@ class LLM_Model:
                         try:
                             self.responses[k] = responses[i]
                         except IndexError:
-                            print(f'[Error] Unmatched questions to answers:\n{to_process}\n{res}\n{responses}')
+                            logging.error(f'Unmatched questions to answers:\n{to_process}\n{res}\n{responses}')
                     self.semaphore_response.release()
                 else:
                     raise Exception('[Error] Semaphore TimeOutException')
@@ -113,4 +116,44 @@ class LLM_Model:
         for i, prompt in enumerate(prompts.values()):
             long_prompt += f'({i}) {prompt}\n'
         return self.__execute_prompts([context.format(user_question=long_prompt)], **params)
+
+    async def execute_multiple_questions_anyscale(self, prompts: dict[int, str], context: str, **params):
+        long_prompt = ''
+        for i, prompt in enumerate(prompts.values()):
+            long_prompt += f'({i}) {prompt}\n'
+        response = ''
+        for k in self.anyscale.send_stream_request([context.format(user_question=long_prompt)], **params):
+            response += k
+        return [{'generation': response}]
+
+    async def process_queue_anyscale(self, context: str, **params):
+        # do something loop with self.queue
+        m = re.compile('\(\d\)[^;]*')
+        while True:
+            if not self.queue:
+                await sleep(0.2)
+            else:
+                #print('[INFO] FOUND DATA!!!')
+                if self.semaphore_queue.acquire(timeout=4):
+                    to_process = get_elements_limited_by_char(self.queue, self.char_limit)
+                    self.semaphore_queue.release()
+                else:
+                    continue
+                    # raise Exception('[Error] Semaphore TimeOutException')
+                res = await self.execute_multiple_questions_anyscale(to_process, context, **params)
+                logging.info(f'Number of requests processed simultaneosly: {len(to_process)}')
+                #print('Result ready:', res)
+                if len(to_process) == 1:
+                    responses = [res[0]['generation'].replace('\n',' ')]
+                else:
+                    responses = m.findall(res[0]['generation'].replace('\n',' '))
+                if self.semaphore_response.acquire(timeout=4):
+                    for i,k in enumerate(to_process.keys()):
+                        try:
+                            self.responses[k] = responses[i]
+                        except IndexError:
+                            logging.error(f'Unmatched questions to answers:\n{to_process}\n{res}\n{responses}')
+                    self.semaphore_response.release()
+                else:
+                    raise Exception('[Error] Semaphore TimeOutException')
 

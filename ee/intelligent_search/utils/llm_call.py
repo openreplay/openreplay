@@ -25,7 +25,7 @@ class Completion:
         #       finish_reason
         # 'usage'
 
-    def send_stream_request(self, message: str, key_id: str, raw: bool = True, context: str = ''):
+    def send_stream_request(self, message: str, raw: bool = True, context: str = ''):
         response = openai.ChatCompletion.create(
                 api_base = LLM_ENDPOINT,
                 api_key= LLM_API_KEY,

@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI_with_LLM):
                   max_seq_len=parameters.max_seq_len,
                   max_batch_size=parameters.max_batch_size)
     # loop = asyncio.get_event_loop()
-    asyncio.create_task(app.llm_model.process_queue(search_context_v3))
+    asyncio.create_task(app.llm_model.process_queue_anyscale(search_context_v3))
     yield
     app.clear()
 
@@ -65,7 +65,7 @@ async def predict_test(msg: declarations.LLMQuestion):
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
 
 #Testing
-@app.post("/llm/test-anyscale", dependencies=[Depends(api_key_auth)])
+@app.post("/llm/testanyscale", dependencies=[Depends(api_key_auth)])
 async def predict_anyscale(msg: declarations.LLMQuestion):
     t = time()
     res = ''
