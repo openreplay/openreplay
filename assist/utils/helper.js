@@ -165,7 +165,7 @@ const extractPayloadFromRequest = function (req, res) {
         "filter": {}, // for sessions search
         "sort": {
             "key": req.body.sort && req.body.sort.key ? req.body.sort.key : undefined,
-            "order": req.body.sort && req.body.sort.order === "DESC"
+            "order": req.body.sort && req.body.sort?.order.toLowerCase() === "desc"
         },
         "pagination": {
             "limit": req.body.pagination && req.body.pagination.limit ? req.body.pagination.limit : undefined,
@@ -218,7 +218,7 @@ const sortPaginate = function (list, filters) {
     }
 
     const total = list.length;
-    if ((filters.sort.key || "timestamp") !== "timestamp") {
+    if (filters.sort.key && filters.sort.key !== "timestamp") {
         list.sort((a, b) => {
             const vA = getValue(a, filters.sort.key);
             const vB = getValue(b, filters.sort.key);
@@ -228,10 +228,9 @@ const sortPaginate = function (list, filters) {
         list.sort((a, b) => {
             const tA = getValue(a, "timestamp");
             const tB = getValue(b, "timestamp");
-            return tA < tB ? 1 : tA > tB ? -1 : 0; // b - a
+            return tB - tA
         });
     }
-    // TODO: Check if we parse this parameter correctly (right now it doesn't work)
     if (filters.sort.order) {
         list.reverse();
     }
