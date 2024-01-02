@@ -237,6 +237,9 @@ export default class API {
   /**
    * Creates a named hook that expects event name, data string and msg direction (up/down),
    * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
+   * msg direction is "down" (incoming) by default
+   *
+   * @returns {(msgType: string, data: string, dir: 'up' | 'down') => void}
    * */
   trackWs(channelName: string) {
     if (this.app === null) {

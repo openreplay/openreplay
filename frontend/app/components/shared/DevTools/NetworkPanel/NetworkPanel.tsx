@@ -175,10 +175,8 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
-      // @ts-ignore
-      websocketList={websocketList}
-      // @ts-ignore
-      websocketListNow={websocketListNow}
+      websocketList={websocketList as WSMessage[]}
+      websocketListNow={websocketListNow as WSMessage[]}
     />
   );
 }
@@ -225,6 +223,14 @@ function MobileNetworkPanelCont({
   );
 }
 
+type WSMessage = Timed & {
+  channelName: string;
+  data: string;
+  timestamp: number;
+  dir: 'up' | 'down';
+  messageType: string;
+}
+
 interface Props {
   domContentLoadedTime?: {
     time: number;
@@ -239,24 +245,8 @@ interface Props {
   resourceList: Timed[];
   fetchListNow: Timed[];
   resourceListNow: Timed[];
-  websocketList: Array<
-    Timed & {
-      channelName: string;
-      data: string;
-      timestamp: number;
-      dir: 'up' | 'down';
-      messageType: string;
-    }
-  >;
-  websocketListNow: Array<
-    Timed & {
-      channelName: string;
-      data: string;
-      timestamp: number;
-      dir: 'up' | 'down';
-      messageType: string;
-    }
-  >;
+  websocketList: Array<WSMessage>;
+  websocketListNow: Array<WSMessage>;
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
@@ -277,7 +267,6 @@ const NetworkPanelComp = observer(
     isMobile,
     panelHeight,
     websocketList,
-    websocketListNow,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -449,7 +438,6 @@ const NetworkPanelComp = observer(
       stopAutoscroll();
     };
 
-    console.log(socketMsgList, websocketList);
     return (
       <React.Fragment>
         <BottomBlock
