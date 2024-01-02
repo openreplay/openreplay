@@ -200,7 +200,9 @@ export default class MessageManager {
       if (!!lastThrashing && t - lastThrashing.time < 300) {
         this.screen.cursor.shake();
       }
-
+      if (!this.activeTab) {
+        this.activeTab = this.state.get().currentTab ?? Object.keys(this.tabs)[0];
+      }
       if (tabId) {
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
