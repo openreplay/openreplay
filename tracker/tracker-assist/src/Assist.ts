@@ -535,7 +535,7 @@ export default class Assist {
         }
 
         if (!callUI) {
-          callUI = new CallWindow(console.log, this.options.callUITemplate)
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
           callUI.setVideoToggleCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
@@ -583,7 +583,6 @@ export default class Assist {
         sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIds))
         this.emit('UPDATE_SESSION', { agentIds: callingPeerIds, isCallActive: true, })
       }).catch(reason => { // in case of Confirm.remove() without user answer (not a error)
-        console.log(reason)
         app.debug.log(reason)
       })
     })
@@ -615,6 +614,7 @@ export default class Assist {
               }
             })
           },
+          app.debug.error,
         )
         this.canvasMap.set(id, canvasHandler)
       }

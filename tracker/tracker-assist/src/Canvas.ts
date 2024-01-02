@@ -6,7 +6,8 @@ export default class CanvasRecorder {
     private readonly canvas: HTMLCanvasElement,
     private readonly canvasId: number,
     private readonly fps: number,
-    private readonly onStream: (stream: MediaStream) => void
+    private readonly onStream: (stream: MediaStream) => void,
+    private readonly logError: (...args: any[]) => void,
   ) {
     this.canvas.getContext('2d', { alpha: true, })
     const stream = this.canvas.captureStream(this.fps)
@@ -39,7 +40,7 @@ export default class CanvasRecorder {
 
     void video.play()
     video.addEventListener('error', (e) => {
-      console.error('Video error:', e)
+      this.logError('Video error:', e)
     })
   }
 
@@ -50,7 +51,7 @@ export default class CanvasRecorder {
     if (this.stream) {
       this.onStream(this.stream)
     } else {
-      console.error('no stream for canvas', this.canvasId)
+      this.logError('no stream for canvas', this.canvasId)
     }
   }
 

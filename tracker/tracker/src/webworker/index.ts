@@ -115,7 +115,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
 
   if (data.type === 'compressed') {
     if (!sender) {
-      console.debug('WebWorker: sender not initialised. Compressed batch.')
+      console.debug('OR WebWorker: sender not initialised. Compressed batch.')
       initiateRestart()
       return
     }
@@ -123,7 +123,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
   if (data.type === 'uncompressed') {
     if (!sender) {
-      console.debug('WebWorker: sender not initialised. Uncompressed batch.')
+      console.debug('OR WebWorker: sender not initialised. Uncompressed batch.')
       initiateRestart()
       return
     }
@@ -163,13 +163,13 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
 
   if (data.type === 'auth') {
     if (!sender) {
-      console.debug('WebWorker: sender not initialised. Received auth.')
+      console.debug('OR WebWorker: sender not initialised. Received auth.')
       initiateRestart()
       return
     }
 
     if (!writer) {
-      console.debug('WebWorker: writer not initialised. Received auth.')
+      console.debug('OR WebWorker: writer not initialised. Received auth.')
       initiateRestart()
       return
     }

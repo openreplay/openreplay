@@ -12,7 +12,7 @@ export default class IFrameObserver extends Observer {
     this.observeRoot(doc, (docID) => {
       //MBTODO: do not send if empty (send on load? it might be in-place iframe, like our replayer, which does not get loaded)
       if (docID === undefined) {
-        console.log('OpenReplay: Iframe document not bound')
+        this.app.debug.log('OpenReplay: Iframe document not bound')
         return
       }
       this.app.send(CreateIFrameDocument(hostID, docID))

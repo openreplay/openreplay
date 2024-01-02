@@ -236,9 +236,10 @@ export default class App {
           this.stop(false)
           void this.start({}, true)
         } else if (data === 'not_init') {
-          console.warn('WebWorker: writer not initialised. Restarting tracker')
+          this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
         } else if (data.type === 'failure') {
           this.stop(false)
+          this.debug.error('worker_failed', data.reason)
           this._debug('worker_failed', data.reason)
         } else if (data.type === 'compress') {
           const batch = data.batch
@@ -246,7 +247,7 @@ export default class App {
           if (batchSize > this.compressionThreshold) {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) {
-                console.error('Openreplay compression error:', err)
+                this.debug.error('Openreplay compression error:', err)
                 this.stop(false)
                 if (this.restartAttempts < 3) {
                   this.restartAttempts += 1
@@ -595,7 +596,7 @@ export default class App {
     const sessionToken = this.session.getSessionToken()
     const isNewSession = needNewSessionID || !sessionToken
 
-    console.log(
+    this.debug.log(
       'OpenReplay: starting session; need new session id?',
       needNewSessionID,
       'session token: ',
@@ -682,7 +683,7 @@ export default class App {
           projectID,
         })
         if (!isNewSession && token === sessionToken) {
-          console.log('continuing session on new tab', this.session.getTabId())
+          this.debug.log('continuing session on new tab', this.session.getTabId())
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           this.send(TabChange(this.session.getTabId()))
         }

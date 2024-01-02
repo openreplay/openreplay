@@ -10,7 +10,7 @@ export default class ShadowRootObserver extends Observer {
     } // log
     this.observeRoot(shRoot, (rootID) => {
       if (rootID === undefined) {
-        console.log('OpenReplay: Shadow Root was not bound')
+        this.app.debug.error('OpenReplay: Shadow Root was not bound')
         return
       }
       this.app.send(CreateIFrameDocument(hostID, rootID))

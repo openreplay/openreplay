@@ -41,7 +41,7 @@ class CanvasRecorder {
         const cid = this.app.nodes.getID(node)
         const canvas = cid ? this.app.nodes.getNode(cid) : undefined
         if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
-          console.log('Canvas element not in sync')
+          this.app.debug.log('Canvas element not in sync')
           clearInterval(int)
         } else {
           const snapshot = captureSnapshot(canvas, this.options.quality)
@@ -58,7 +58,6 @@ class CanvasRecorder {
 
   sendSnaps(images: { data: string; id: number }[], canvasId: number, createdAt: number) {
     if (Object.keys(this.snapshots).length === 0) {
-      console.log(this.snapshots)
       return
     }
     const formData = new FormData()
@@ -75,16 +74,15 @@ class CanvasRecorder {
       },
       body: formData,
     })
-      .then((r) => {
-        console.log('done', r)
+      .then(() => {
+        return true
       })
       .catch((e) => {
-        console.error('error saving canvas', e)
+        this.app.debug.error('error saving canvas', e)
       })
   }
 
   clear() {
-    console.log('cleaning up')
     this.intervals.forEach((int) => clearInterval(int))
     this.snapshots = {}
   }

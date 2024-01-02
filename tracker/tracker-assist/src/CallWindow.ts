@@ -42,7 +42,7 @@ export default class CallWindow {
 
 		const doc = iframe.contentDocument
 		if (!doc) {
-			console.error('OpenReplay: CallWindow iframe document is not reachable.')
+			app.debug.error('OpenReplay: CallWindow iframe document is not reachable.')
 			return
 		}
 
