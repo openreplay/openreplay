@@ -77,16 +77,16 @@ const socketsListByProject = async function (req, res) {
     debug_log && console.log("[WS]looking for available sessions");
     res.handlerName = 'socketsListByProject';
 
-    const _projectKey = extractProjectKeyFromRequest(req);
-    const _sessionId = extractSessionIdFromRequest(req);
-    const filters = await extractPayloadFromRequest(req, res);
+    const filters = extractPayloadFromRequest(req, res);
 
     // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
 
     // find all sessions for a project
+    const _projectKey = extractProjectKeyFromRequest(req);
     const sessions = getAllSessions(_projectKey, filters);
 
     // send response
@@ -98,16 +98,16 @@ const socketsLiveByProject = async function (req, res) {
     debug_log && console.log("[WS]looking for available LIVE sessions");
     res.handlerName = 'socketsLiveByProject';
 
-    const _projectKey = extractProjectKeyFromRequest(req);
-    const _sessionId = extractSessionIdFromRequest(req);
-    const filters = await extractPayloadFromRequest(req, res);
+    const filters = extractPayloadFromRequest(req, res);
 
     // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
 
     // find all sessions for a project
+    const _projectKey = extractProjectKeyFromRequest(req);
     const sessions = getAllSessions(_projectKey, filters, true);
 
     // send response
@@ -119,10 +119,10 @@ const socketsLiveBySession = async function (req, res) {
     debug_log && console.log("[WS]looking for LIVE session");
     res.handlerName = 'socketsLiveBySession';
 
-    const _sessionId = extractSessionIdFromRequest(req);
-    const filters = await extractPayloadFromRequest(req, res);
+    const filters = extractPayloadFromRequest(req, res);
 
     // find a particular session
+    const _sessionId = extractSessionIdFromRequest(req);
     if (_sessionId) {
         return respond(req, res, getParticularSession(_sessionId, filters));
     }
@@ -135,7 +135,7 @@ const autocomplete = async function (req, res) {
     res.handlerName = 'autocomplete';
 
     const _projectKey = extractProjectKeyFromRequest(req);
-    const filters = await extractPayloadFromRequest(req);
+    const filters = extractPayloadFromRequest(req);
     let results = [];
     if (!hasQuery(filters)) {
         return respond(req, res, results);

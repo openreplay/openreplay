@@ -159,7 +159,7 @@ const transformFilters = function (filter) {
     return filter;
 }
 
-const extractPayloadFromRequest = async function (req, res) {
+const extractPayloadFromRequest = function (req, res) {
     let filters = {
         "query": {}, // for autocomplete
         "filter": {}, // for sessions search
