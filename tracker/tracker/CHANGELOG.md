@@ -1,4 +1,9 @@
-# 11.0.1
+# 11.0.3
+
+- move all logs under internal debugger
+- fix for XHR proxy ORSC 'abort' state
+
+# 11.0.1 & 11.0.2
 
 - minor fixes and refactoring
 
