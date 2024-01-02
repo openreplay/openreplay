@@ -146,7 +146,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
   protected setOnReadyStateChange(target: T, key: string, orscFunction: (args: any[]) => any) {
     return Reflect.set(target, key, (...args: any[]) => {
       this.onReadyStateChange()
-      orscFunction.apply(target, args)
+      orscFunction?.apply(target, args)
     })
   }
 
