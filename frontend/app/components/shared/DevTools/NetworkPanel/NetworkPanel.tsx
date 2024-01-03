@@ -7,7 +7,7 @@ import { Duration } from 'luxon';
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { ResourceType, Timed } from 'Player';
 import { formatBytes } from 'App/utils';
-import { formatMs, durationFromMs } from 'App/date';
+import { formatMs } from 'App/date';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
@@ -270,14 +270,12 @@ const NetworkPanelComp = observer(
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
-    const [openSocket, setOpenSocket] = useState<string | null>(null);
     const [sortAscending, setSortAscending] = useState(true);
     const [showOnlyErrors, setShowOnlyErrors] = useState(false);
 
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
     const {
       sessionStore: { devTools },
-      settingsStore,
     } = useStore();
     const filter = devTools[INDEX_KEY].filter;
     const activeTab = devTools[INDEX_KEY].activeTab;
@@ -338,12 +336,6 @@ const NetworkPanelComp = observer(
           .sort((a, b) => a.time - b.time),
       [resourceList.length, fetchList.length, socketList]
     );
-
-    const socketMsgList = useMemo(() => {
-      if (openSocket) {
-        return websocketList.filter((ws) => ws.channelName === openSocket);
-      } else return [];
-    }, [websocketList.length, openSocket]);
 
     let filteredList = useMemo(() => {
       if (!showOnlyErrors) {
@@ -413,8 +405,16 @@ const NetworkPanelComp = observer(
 
     const showDetailsModal = (item: any) => {
       if (item.type === 'websocket') {
-        setOpenSocket(item.channelName);
-        return;
+        const socketMsgList = websocketList.filter((ws) => ws.channelName === item.channelName);
+        console.log(socketMsgList)
+
+        return showModal(
+          <WSModal
+            socketMsgList={socketMsgList}
+          />, {
+            right: true, width: 700,
+          }
+        )
       }
       setIsDetailsModalActive(true);
       showModal(
@@ -520,13 +520,6 @@ const NetworkPanelComp = observer(
               size="small"
               show={filteredList.length === 0}
             >
-              {openSocket ? (
-                <WSModal
-                  setOpenSocket={setOpenSocket}
-                  panelHeight={panelHeight}
-                  socketMsgList={socketMsgList}
-                />
-              ) : null}
               {/*@ts-ignore*/}
               <TimeTable
                 rows={filteredList}
