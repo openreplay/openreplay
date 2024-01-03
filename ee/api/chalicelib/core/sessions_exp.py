@@ -353,6 +353,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density))
     extra_event = None
+    extra_deduplication = []
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
@@ -360,12 +361,14 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
                               AND ev.project_id = %(project_id)s
                               AND ev.event_type = 'LOCATION'"""
+        extra_deduplication.append("url_path")
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
-                                                  user_id=None, extra_event=extra_event)
+                                                  user_id=None, extra_event=extra_event,
+                                                  extra_deduplication=extra_deduplication)
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
@@ -518,7 +521,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                          project_id, user_id, platform="web", extra_event=None):
+                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[]):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
@@ -1486,11 +1489,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                     FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
                                     WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
         else:
+            deduplication_keys = ["session_id"] + extra_deduplication
             extra_join = f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}
                                 ORDER BY _timestamp DESC
-                                LIMIT 1 BY session_id) AS s"""
+                                LIMIT 1 BY {",".join(deduplication_keys)}) AS s"""
         query_part = f"""\
                             FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}
                             {extra_join}
