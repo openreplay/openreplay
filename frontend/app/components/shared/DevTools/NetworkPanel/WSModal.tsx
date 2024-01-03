@@ -16,7 +16,6 @@ interface Props {
 }
 
 function WSModal({ socketMsgList }: Props) {
-  const [selectedItem, setSelectedItem] = React.useState<SocketMsg | null>(null);
   return (
     <div className={'h-screen w-full bg-white shadow'}>
       <div className={'grid grid-cols-12 font-semibold border-b px-4 py-2'}>
