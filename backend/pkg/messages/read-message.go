@@ -1257,7 +1257,7 @@ func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 func DecodeWSChannel(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &WSChannel{}
-	if msg.Type, err = reader.ReadString(); err != nil {
+	if msg.ChType, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.ChannelName, err = reader.ReadString(); err != nil {

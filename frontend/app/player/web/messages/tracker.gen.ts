@@ -444,7 +444,7 @@ type TrNetworkRequest = [
 
 type TrWSChannel = [
   type: 84,
-  type: string,
+  chType: string,
   channelName: string,
   data: string,
   timestamp: number,
@@ -965,7 +965,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     case 84: {
       return {
         tp: MType.WsChannel,
-        type: tMsg[1],
+        chType: tMsg[1],
         channelName: tMsg[2],
         data: tMsg[3],
         timestamp: tMsg[4],

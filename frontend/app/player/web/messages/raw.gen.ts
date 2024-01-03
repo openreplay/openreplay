@@ -444,7 +444,7 @@ export interface RawNetworkRequest {
 
 export interface RawWsChannel {
   tp: MType.WsChannel,
-  type: string,
+  chType: string,
   channelName: string,
   data: string,
   timestamp: number,

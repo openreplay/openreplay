@@ -726,8 +726,8 @@ class NetworkRequest(Message):
 class WSChannel(Message):
     __id__ = 84
 
-    def __init__(self, type, channel_name, data, timestamp, dir, message_type):
-        self.type = type
+    def __init__(self, ch_type, channel_name, data, timestamp, dir, message_type):
+        self.ch_type = ch_type
         self.channel_name = channel_name
         self.data = data
         self.timestamp = timestamp

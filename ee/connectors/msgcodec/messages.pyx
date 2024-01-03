@@ -1071,16 +1071,16 @@ cdef class NetworkRequest(PyMessage):
 
 cdef class WSChannel(PyMessage):
     cdef public int __id__
-    cdef public str type
+    cdef public str ch_type
     cdef public str channel_name
     cdef public str data
     cdef public unsigned long timestamp
     cdef public str dir
     cdef public str message_type
 
-    def __init__(self, str type, str channel_name, str data, unsigned long timestamp, str dir, str message_type):
+    def __init__(self, str ch_type, str channel_name, str data, unsigned long timestamp, str dir, str message_type):
         self.__id__ = 84
-        self.type = type
+        self.ch_type = ch_type
         self.channel_name = channel_name
         self.data = data
         self.timestamp = timestamp

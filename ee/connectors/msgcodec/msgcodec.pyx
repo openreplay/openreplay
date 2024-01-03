@@ -760,7 +760,7 @@ cdef class MessageCodec:
 
         if message_id == 84:
             return WSChannel(
-                type=self.read_string(reader),
+                ch_type=self.read_string(reader),
                 channel_name=self.read_string(reader),
                 data=self.read_string(reader),
                 timestamp=self.read_uint(reader),

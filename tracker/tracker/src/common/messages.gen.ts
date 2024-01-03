@@ -515,7 +515,7 @@ export type NetworkRequest = [
 
 export type WSChannel = [
   /*type:*/ Type.WSChannel,
-  /*type:*/ string,
+  /*chType:*/ string,
   /*channelName:*/ string,
   /*data:*/ string,
   /*timestamp:*/ number,

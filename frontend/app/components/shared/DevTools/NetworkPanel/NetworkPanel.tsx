@@ -279,7 +279,6 @@ const NetworkPanelComp = observer(
       sessionStore: { devTools },
       settingsStore,
     } = useStore();
-    const { timezone } = settingsStore.sessionSettings;
     const filter = devTools[INDEX_KEY].filter;
     const activeTab = devTools[INDEX_KEY].activeTab;
     const activeIndex = devTools[INDEX_KEY].index;
@@ -289,7 +288,7 @@ const NetworkPanelComp = observer(
         websocketList.filter(
           (ws, i, arr) => arr.findIndex((it) => it.channelName === ws.channelName) === i
         ),
-      []
+      [websocketList]
     );
 
     const list = useMemo(

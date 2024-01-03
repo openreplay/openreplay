@@ -2070,7 +2070,7 @@ func (msg *NetworkRequest) TypeID() int {
 
 type WSChannel struct {
 	message
-	Type        string
+	ChType      string
 	ChannelName string
 	Data        string
 	Timestamp   uint64
@@ -2079,10 +2079,10 @@ type WSChannel struct {
 }
 
 func (msg *WSChannel) Encode() []byte {
-	buf := make([]byte, 61+len(msg.Type)+len(msg.ChannelName)+len(msg.Data)+len(msg.Dir)+len(msg.MessageType))
+	buf := make([]byte, 61+len(msg.ChType)+len(msg.ChannelName)+len(msg.Data)+len(msg.Dir)+len(msg.MessageType))
 	buf[0] = 84
 	p := 1
-	p = WriteString(msg.Type, buf, p)
+	p = WriteString(msg.ChType, buf, p)
 	p = WriteString(msg.ChannelName, buf, p)
 	p = WriteString(msg.Data, buf, p)
 	p = WriteUint(msg.Timestamp, buf, p)

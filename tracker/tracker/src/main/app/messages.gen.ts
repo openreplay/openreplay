@@ -818,7 +818,7 @@ export function NetworkRequest(
 }
 
 export function WSChannel(
-  type: string,
+  chType: string,
   channelName: string,
   data: string,
   timestamp: number,
@@ -827,7 +827,7 @@ export function WSChannel(
 ): Messages.WSChannel {
   return [
     Messages.Type.WSChannel,
-    type,
+    chType,
     channelName,
     data,
     timestamp,

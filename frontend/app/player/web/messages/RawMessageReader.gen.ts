@@ -652,7 +652,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 84: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
+      const chType = this.readString(); if (chType === null) { return resetPointer() }
       const channelName = this.readString(); if (channelName === null) { return resetPointer() }
       const data = this.readString(); if (data === null) { return resetPointer() }
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
@@ -660,7 +660,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const messageType = this.readString(); if (messageType === null) { return resetPointer() }
       return {
         tp: MType.WsChannel,
-        type,
+        chType,
         channelName,
         data,
         timestamp,

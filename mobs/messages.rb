@@ -459,7 +459,7 @@ message 83, 'NetworkRequest', :replayer => :devtools do
 end
 
 message 84, 'WSChannel', :replayer => :devtools do
-    string 'Type'
+    string 'ChType'
     string 'ChannelName'
     string 'Data'
     uint 'Timestamp'
