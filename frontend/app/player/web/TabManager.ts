@@ -379,47 +379,6 @@ export default class TabSessionManager {
   };
 
   public onFileReadSuccess = () => {
-    const sampleWs = [
-      {
-        type: 'websocket',
-        messageType: 'data',
-        channelName: 'channelName',
-        data: 'test msg',
-        time: 0,
-        timestamp: this.sessionStart,
-        dir: 'up',
-      },
-      {
-        type: 'websocket',
-        messageType: 'data',
-        channelName: 'channelName',
-        data: 'test msg',
-        time: 1000,
-        timestamp: this.sessionStart + 1000,
-        dir: 'up',
-      },
-      {
-        type: 'websocket',
-        messageType: 'data',
-        channelName: 'channelName',
-        data: 'test msg',
-        time: 2000,
-        timestamp: this.sessionStart + 2000,
-        dir: 'down',
-      },
-      {
-        type: 'websocket',
-        messageType: 'test',
-        channelName: 'channelName',
-        data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ac elit quis magna tincidunt interdum. Etiam risus nulla.',
-        time: 3000,
-        timestamp: this.sessionStart + 3000,
-        dir: 'down',
-      },
-    ];
-    sampleWs.forEach(msg => {
-      this.lists.lists.websocket.insert(msg)
-    })
     const stateToUpdate: Partial<Record<string, any>> = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,
