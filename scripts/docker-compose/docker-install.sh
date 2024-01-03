@@ -1,14 +1,10 @@
 #!/bin/bash
 
 REPO_URL="https://github.com/openreplay/openreplay"
-#PR test
-# REPO_URL="https://github.com/SavinienBarbotaud/openreplay"
 
 # Ask for the branch to clone (default is master/main)
 read -rp "Enter the version to clone (default is 'main'): " REPO_BRANCH
 REPO_BRANCH=${REPO_BRANCH:-main}
-#PR test  
-#REPO_BRANCH="fix_docker-compose_local_network"
 
 # Directory in which to clone the repository
 CLONE_DIR="openreplay"
@@ -29,8 +25,6 @@ fi
 
 # Clone the repository
 if git clone --depth 1 --branch "$REPO_BRANCH" "$REPO_URL" "$CLONE_DIR"; then
-# PR test
-# if git clone --branch "$REPO_BRANCH" "$REPO_URL" "$CLONE_DIR"; then
     info "Repository cloned successfully."
 else
 	error "Failed to clone the repository."
