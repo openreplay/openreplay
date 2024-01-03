@@ -4,7 +4,7 @@ import type { Timed } from '../common/types';
 
 
 const SIMPLE_LIST_NAMES = [ "event", "redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles", "frustrations"] as const
-const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const
+const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack", "websocket" ] as const
 //const entityNamesSimple = [ "event", "profile" ];
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES ] as const

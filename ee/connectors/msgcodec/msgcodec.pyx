@@ -758,6 +758,16 @@ cdef class MessageCodec:
                 transferred_body_size=self.read_uint(reader)
             )
 
+        if message_id == 84:
+            return WSChannel(
+                ch_type=self.read_string(reader),
+                channel_name=self.read_string(reader),
+                data=self.read_string(reader),
+                timestamp=self.read_uint(reader),
+                dir=self.read_string(reader),
+                message_type=self.read_string(reader)
+            )
+
         if message_id == 112:
             return InputChange(
                 id=self.read_uint(reader),

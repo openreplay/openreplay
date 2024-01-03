@@ -651,6 +651,24 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 84: {
+      const chType = this.readString(); if (chType === null) { return resetPointer() }
+      const channelName = this.readString(); if (channelName === null) { return resetPointer() }
+      const data = this.readString(); if (data === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const dir = this.readString(); if (dir === null) { return resetPointer() }
+      const messageType = this.readString(); if (messageType === null) { return resetPointer() }
+      return {
+        tp: MType.WsChannel,
+        chType,
+        channelName,
+        data,
+        timestamp,
+        dir,
+        messageType,
+      };
+    }
+
     case 113: {
       const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
       const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }

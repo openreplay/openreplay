@@ -55,6 +55,7 @@ export const TP_MAP = {
   77: MType.AdoptedSsRemoveOwner,
   79: MType.Zustand,
   83: MType.NetworkRequest,
+  84: MType.WsChannel,
   113: MType.SelectionChange,
   114: MType.MouseThrashing,
   116: MType.ResourceTiming,
