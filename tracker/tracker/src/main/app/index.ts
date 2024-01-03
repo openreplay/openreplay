@@ -261,9 +261,9 @@ export default class App {
                   this.restartAttempts += 1
                   void this.start({}, true)
                 }
+              } else {
+                this.worker?.postMessage({ type: 'compressed', batch: result })
               }
-              // @ts-ignore
-              this.worker?.postMessage({ type: 'compressed', batch: result })
             })
           } else {
             this.worker?.postMessage({ type: 'uncompressed', batch: batch })
@@ -690,6 +690,13 @@ export default class App {
           timestamp: startTimestamp || timestamp,
           projectID,
         })
+
+        this.worker.postMessage({
+          type: 'auth',
+          token,
+          beaconSizeLimit,
+        })
+
         if (!isNewSession && token === sessionToken) {
           this.debug.log('continuing session on new tab', this.session.getTabId())
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -700,12 +707,6 @@ export default class App {
           this.send(Metadata(key, value)),
         )
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-
-        this.worker.postMessage({
-          type: 'auth',
-          token,
-          beaconSizeLimit,
-        })
 
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
