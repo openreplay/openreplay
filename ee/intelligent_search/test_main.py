@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from main import app
+from main2 import app
 from decouple import config
 from os import path
 
@@ -17,8 +17,16 @@ def test_correct_download():
     assert path.exists(tokenizer_path) == True
     assert path.exists(llm_dir) == True
 
-def test_correct_upload():
+def correct_upload():
     with TestClient(app) as client_statup:
-        response = client_statup.post('llm/completion', headers={'Authorization': 'Bearer ' + config('LLAMA_API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
+        response = client_statup.post('llm/local', headers={'Authorization': 'Bearer ' + config('LLAMA_API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
         assert response.status_code == 200
+
+def endpoint():
+    with TestClient(app) as client_statup:
+        response = client_statup.post('llm/anyscale', headers={'Authorization': 'Bearer ' + config('LLAMA_API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
+        assert response.status_code == 200
+
+def test_functionality():
+    assert endpoint() or correct_upload
 

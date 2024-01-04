@@ -25,12 +25,15 @@ class FastAPI_with_LLM(FastAPI):
         super().__init__(**kwargs)
 
     def build_llm(self, ckpt_dir: str, tokenizer_path: str, max_seq_len: int, max_batch_size: int):
-        self.llm_model = LLM_Model(ckpt_dir=ckpt_dir,
+        self.llm_model = LLM_Model(local=True,
+                                ckpt_dir=ckpt_dir,
                                 tokenizer_path=tokenizer_path,
                                 max_seq_len=max_seq_len,
                                 max_batch_size=max_batch_size)
+        self.llm_endpoint = LLM_Model(local=False) 
 
     def clear(self):
+        del self.llm_endpoint
         del self.llm_model
 
 
@@ -42,6 +45,7 @@ async def lifespan(app: FastAPI_with_LLM):
                   max_batch_size=parameters.max_batch_size)
     # loop = asyncio.get_event_loop()
     asyncio.create_task(app.llm_model.process_queue_anyscale(search_context_v3))
+    asyncio.create_task(app.llm_endpoint.process_queue_anyscale(search_context_v3))
     yield
     app.clear()
 
@@ -53,7 +57,7 @@ app = FastAPI_with_LLM(lifespan=lifespan)
 async def health():
     return {'status': 200}
 
-@app.post("/llm/test", dependencies=[Depends(api_key_auth)])
+@app.post("/llm/local", dependencies=[Depends(api_key_auth)])
 async def predict_test(msg: declarations.LLMQuestion):
     question = msg.question
     t1 = time()
@@ -64,12 +68,14 @@ async def predict_test(msg: declarations.LLMQuestion):
     processed = filter_sql_where_statement(result)
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
 
-#Testing
-@app.post("/llm/testanyscale", dependencies=[Depends(api_key_auth)])
-async def predict_anyscale(msg: declarations.LLMQuestion):
-    t = time()
-    res = ''
-    for token in C.send_stream_request(msg.question, "23535"):
-        res += token
-    return {'content': res, 'inference_time': time()-t}
+@app.post("/llm/anyscale", dependencies=[Depends(api_key_auth)])
+async def predict_test(msg: declarations.LLMQuestion):
+    question = msg.question
+    t1 = time()
+    result = await app.llm_endpoint.send_question(
+            question=question,
+            key_id=10*msg.userId + msg.projectId)
+    t2 = time()
+    processed = filter_sql_where_statement(result)
+    return {"content": processed, "raw_response": result, "inference_time": t2-t1}
 

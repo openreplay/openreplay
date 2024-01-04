@@ -35,7 +35,11 @@ class LLM_Model:
             max_seq_len (int, optional): The maximum sequence length for input prompts. Defaults to 128.
             max_batch_size (int, optional): The maximum batch size for generating sequences. Defaults to 4.
         """
-        self.generator = Llama.build(**params)
+        local = params.pop('local')
+        if local:
+            self.generator = Llama.build(**params)
+        else:
+            self.generator = None
         self.max_queue_size = config('LLM_MAX_QUEUE_SIZE', cast=int, default=7)
         self.semaphore_queue = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=1))
         self.semaphore_response = Semaphore(config('LLM_MAX_BATCH_SIZE', cast=int, default=1))
@@ -46,6 +50,7 @@ class LLM_Model:
         self.anyscale = Completion()
 
     async def process_queue(self, context: str, **params):
+        assert self.generator, 'Self hosted model should be build. Set local=True during initialization, along with model checkpoint directory and tokenizer path.'
         # do something loop with self.queue
         m = re.compile('\(\d\)[^;]*')
         while True:
