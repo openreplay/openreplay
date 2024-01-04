@@ -109,14 +109,14 @@ services:
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
   frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
     container_name: frontend
     networks:
       - openreplay-net
     restart: unless-stopped
 
   alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
     container_name: alerts
     networks:
       - openreplay-net
@@ -125,7 +125,7 @@ services:
     restart: unless-stopped
 
   assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
     container_name: assets
     networks:
       - openreplay-net
@@ -134,7 +134,7 @@ services:
     restart: unless-stopped
 
   assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
     container_name: assist
     networks:
       - openreplay-net
@@ -143,7 +143,7 @@ services:
     restart: unless-stopped
 
   db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
     container_name: db
     networks:
       - openreplay-net
@@ -152,7 +152,7 @@ services:
     restart: unless-stopped
 
   ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
     container_name: ender
     networks:
       - openreplay-net
@@ -161,7 +161,7 @@ services:
     restart: unless-stopped
 
   heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: heuristics
     networks:
@@ -173,7 +173,7 @@ services:
     restart: unless-stopped
 
   imagestorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/imagestorage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
     container_name: imagestorage
     env_file:
       - imagestorage.env
@@ -182,7 +182,7 @@ services:
     restart: unless-stopped
 
   integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
     container_name: integrations
     networks:
       - openreplay-net
@@ -191,7 +191,7 @@ services:
     restart: unless-stopped
 
   peers-openreplay:
-    image: public.ecr.aws/p1t3u8a3/peers:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/peers:${COMMON_VERSION}
     container_name: peers
     networks:
       - openreplay-net
@@ -200,7 +200,7 @@ services:
     restart: unless-stopped
 
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemapreader:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
     container_name: sourcemapreader
     networks:
       - openreplay-net
@@ -209,7 +209,7 @@ services:
     restart: unless-stopped
 
   videostorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/videostorage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
     container_name: videostorage
     networks:
       - openreplay-net
@@ -218,7 +218,7 @@ services:
     restart: unless-stopped
 
   http-openreplay:
-    image: public.ecr.aws/p1t3u8a3/http:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     container_name: http
     networks:
       - openreplay-net
@@ -227,7 +227,7 @@ services:
     restart: unless-stopped
 
   chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
     container_name: chalice
     volumes:
       - shared-volume:/mnt/efs
@@ -238,7 +238,7 @@ services:
     restart: unless-stopped
 
   sink-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sink:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
     container_name: sink
     volumes:
       - shared-volume:/mnt/efs
@@ -249,7 +249,7 @@ services:
     restart: unless-stopped
 
   storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
     container_name: storage
     volumes:
       - shared-volume:/mnt/efs
