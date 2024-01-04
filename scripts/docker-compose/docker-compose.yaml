@@ -112,7 +112,7 @@ services:
     image: public.ecr.aws/p1t3u8a3/frontend:v1.16.0
     container_name: frontend
     networks:
-      - opereplay-net
+      - openreplay-net
     restart: unless-stopped
 
   alerts-openreplay:
@@ -178,7 +178,7 @@ services:
     env_file:
       - imagestorage.env
     networks:
-      - opereplay-net
+      - openreplay-net
     restart: unless-stopped
 
   integrations-openreplay:
@@ -212,7 +212,7 @@ services:
     image: public.ecr.aws/p1t3u8a3/videostorage:v1.16.0
     container_name: videostorage
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - videostorage.env
     restart: unless-stopped
