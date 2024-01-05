@@ -1,4 +1,6 @@
-import sys as __sys
-
-torch_available = 'torch' in __sys.modules
+torch_available = True
+try:
+    import torch
+except ModuleNotFoundError:
+    torch_available = False
 
