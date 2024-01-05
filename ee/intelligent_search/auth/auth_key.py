@@ -10,7 +10,7 @@ class AuthHandler:
         """
         Authorization method using an API key.
         """
-        self.__api_keys = [config("LLAMA_API_AUTH_KEY")]
+        self.__api_keys = [config("API_AUTH_KEY")]
 
     def __contains__(self, api_key):
         return api_key in self.__api_keys

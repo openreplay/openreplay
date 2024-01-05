@@ -1,21 +1,16 @@
-from typing import List, Optional
-from decouple import config
 from time import time
-
-from fastapi import FastAPI, Depends
-from contextlib import asynccontextmanager
-
 from utils.contexts import search_context_v2, search_context_v3
 from utils.contexts_charts import chart_context_v2, formatable_end
 from utils.sql_to_filters import filter_sql_where_statement
 from utils import parameters, declarations
 from core.llm_test import LLM_Model
-from auth.auth_key import api_key_auth
 import asyncio
 
-# Testing
-from utils.llm_call import Completion
-C = Completion()
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from contextlib import asynccontextmanager
+from auth.auth_key import api_key_auth
+from core.session_summary import summarize_stream
 
 
 class FastAPI_with_LLM(FastAPI):
@@ -58,7 +53,7 @@ async def health():
     return {'status': 200}
 
 @app.post("/llm/local", dependencies=[Depends(api_key_auth)])
-async def predict_test(msg: declarations.LLMQuestion):
+async def predict_local(msg: declarations.LLMQuestion):
     question = msg.question
     t1 = time()
     result = await app.llm_model.send_question(
@@ -69,7 +64,7 @@ async def predict_test(msg: declarations.LLMQuestion):
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
 
 @app.post("/llm/anyscale", dependencies=[Depends(api_key_auth)])
-async def predict_test(msg: declarations.LLMQuestion):
+async def predict_anyscale(msg: declarations.LLMQuestion):
     question = msg.question
     t1 = time()
     result = await app.llm_endpoint.send_question(
@@ -78,4 +73,17 @@ async def predict_test(msg: declarations.LLMQuestion):
     t2 = time()
     processed = filter_sql_where_statement(result)
     return {"content": processed, "raw_response": result, "inference_time": t2-t1}
+
+@app.get('/stream/{projectId}/summary/session/{sessionId}',
+          dependencies=[Depends(api_key_auth)],
+          response_model=str,
+          responses={503: {"detail": "OpenAI server is busy, try again later"}})
+@app.post('/stream/{projectId}/summary/session/{sessionId}',
+         dependencies=[Depends(api_key_auth)],
+         response_model=str,
+         responses={503: {"detail": "OpenAI server is busy, try again later"}})
+
+async def session_summary_stream(projectId: int, sessionId: int, eventList: declarations.EventList):
+    key_id = str(sessionId)
+    return StreamingResponse(summarize_stream(sessionId, projectId, key_id, eventList), media_type="text/event-stream")
 

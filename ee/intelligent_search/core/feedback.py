@@ -1,5 +1,4 @@
 from utils.ch_client import ClickHouseClient
-from core.llm_api import LLM_Model
 from threading import Semaphore
 from decouple import config
 import logging
@@ -68,7 +67,7 @@ class RequestsQueue:
         except Exception as e:
             logging.error(f'[Flush Queue Error] {repr(e)}')
 
-    def start(self, llm_model: LLM_Model):
+    def start(self, llm_model):
         ...
 
     def recurrent_flush(self):

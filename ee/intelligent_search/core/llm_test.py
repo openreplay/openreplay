@@ -1,4 +1,6 @@
-from llama import Llama, Dialog
+from utils.module_handler import torch_available
+if torch_available:
+    from llama import Llama
 from decouple import config
 from utils.contexts import search_context_v2
 from threading import Semaphore
@@ -36,7 +38,7 @@ class LLM_Model:
             max_batch_size (int, optional): The maximum batch size for generating sequences. Defaults to 4.
         """
         local = params.pop('local')
-        if local:
+        if local and torch_available:
             self.generator = Llama.build(**params)
         else:
             self.generator = None
