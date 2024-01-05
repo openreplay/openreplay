@@ -1,7 +1,0 @@
-fastapi==0.104.1
-uvicorn==0.23.2
-python-decouple==3.8
-requests==2.31.0
-anyscale==0.5.153
-openai==0.28.1
-tiktoken==0.5.1
