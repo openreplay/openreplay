@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from utils.module_handler import torch_available
-from main2 import app
+from main import app
 from decouple import config
 from os import path
 
