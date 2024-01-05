@@ -506,7 +506,7 @@ class WorkerPool:
             main_conn.send('CONTINUE')
         print('[WORKER-INFO] Sending close signal')
         main_conn.send('CLOSE')
-        self.terminate()
+        self.terminate(database_api)
         kafka_reader_process.terminate()
         print('[WORKER-SHUTDOWN] Process terminated')
 
