@@ -79,13 +79,8 @@ info "Using domain name: $DOMAIN_NAME 🌐"
 read -p "Is the domain on a public DNS? (y/n) " yn
 case $yn in 
 	y ) echo "$DOMAIN_NAME is on a public DNS";
-		##Add a variable to chalice.env file
-		echo "is_dns_public=True" >> chalice.env
         ;;
 	n ) echo "$DOMAIN_NAME is on a private DNS";
-		##Add a variable to chalice.env file
-		echo "is_dns_public=False" >> chalice.env
-
 		#add TLS internal to caddyfile
 		#In local network Caddy can't reach Let's Encrypt servers to get a certificate 
 		mv Caddyfile Caddyfile.public
@@ -106,6 +101,19 @@ set +a
 
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
 find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+
+case $yn in 
+	y ) echo "$DOMAIN_NAME is on a public DNS";
+		##Add a variable to chalice.env file
+		echo "is_dns_public=True" >> chalice.env
+        ;;
+	n ) echo "$DOMAIN_NAME is on a private DNS";
+		##Add a variable to chalice.env file
+		echo "is_dns_public=False" >> chalice.env
+		;;
+	* ) echo invalid response;
+		exit 1;;
+esac
 
 sudo -E docker-compose --parallel 1 pull
 sudo -E docker-compose --profile migration up --force-recreate --build -d
