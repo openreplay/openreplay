@@ -283,7 +283,7 @@ services:
       - openreplay-net
     environment:
       - ACME_AGREE=true # Agree to Let's Encrypt Subscriber Agreement
-      - CADDY_DOMAIN={$CADDY_DOMAIN}
+      - CADDY_DOMAIN=${CADDY_DOMAIN}
     restart: unless-stopped
 
 
