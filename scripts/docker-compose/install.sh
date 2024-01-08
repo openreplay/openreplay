@@ -75,6 +75,7 @@ if [[ -z $DOMAIN_NAME ]]; then
 	fatal "DOMAIN_NAME variable is empty. Please provide a valid domain name to proceed."
 fi
 info "Using domain name: $DOMAIN_NAME 🌐"
+echo "CADDY_DOMAIN=\"$DOMAIN_NAME\"" >> common.env 
 
 read -p "Is the domain on a public DNS? (y/n) " yn
 case $yn in 
