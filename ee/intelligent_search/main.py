@@ -12,6 +12,9 @@ from contextlib import asynccontextmanager
 from auth.auth_key import api_key_auth
 from core.session_summary import summarize_stream
 
+# Test
+from utils.llm_call import Completion
+
 
 class FastAPI_with_LLM(FastAPI):
     llm_model: LLM_Model
@@ -86,4 +89,22 @@ async def predict_anyscale(msg: declarations.LLMQuestion):
 async def session_summary_stream(projectId: int, sessionId: int, eventList: declarations.EventList):
     key_id = str(sessionId)
     return StreamingResponse(summarize_stream(sessionId, projectId, key_id, eventList), media_type="text/event-stream")
+
+@app.get('/autocomplete/filters', dependencies=[Depends(api_key_auth)])
+@app.post('/autocomplete/filters', dependencies=[Depends(api_key_auth)])
+async def direct_filter_call(msg: declarations.LLMQuestion):
+    anyscale = Completion()
+    message = search_context_v3.format(user_question=msg.question)
+    result = await anyscale.send_async_request(message=message)
+    processed = filter_sql_where_statement(result)
+    return {'content': processed, 'raw_response': result}
+
+@app.get('/autocomplete/charts', dependencies=[Depends(api_key_auth)])
+@app.post('/autocomplete/charts', dependencies=[Depends(api_key_auth)])
+async def direct_chart_call(msg: declarations.LLMQuestion):
+    anyscale = Completion()
+    message = chart_context_v2.format(user_question=msg.question)
+    result = await anyscale.send_async_request(message=message)
+    processed = None
+    return {'content': processed, 'raw_response': result}
 

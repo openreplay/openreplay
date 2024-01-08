@@ -120,9 +120,8 @@ class Completion:
     def send_stream_request(self, message: str, key_id: str, raw: bool = True, context: str = ''):
         self.update_message_history(message, key_id=key_id, raw=raw)
         message_history = self.message_history_alive[key_id]
-        response = openai.ChatCompletion.create(
-                api_base = LLM_ENDPOINT,
-                api_key= LLM_API_KEY,
+        client = openai.OpenAI(base_url = LLM_ENDPOINT, api_key= LLM_API_KEY)
+        response = client.chat.completions.create(
                 model = LLM_MODEL,
                 messages = [{'role': 'system', 'content': context if context else summary_context},
                             {'role': 'user', 'content': summary_example_user_input},
@@ -132,7 +131,7 @@ class Completion:
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
                 temperature=LLM_TEMPERATURE
-                )
+            )
         message_history.pop()
         words = ''
         first_word = True
@@ -141,6 +140,7 @@ class Completion:
             if not delta: # End token 
                 message_history.append({'role': 'assistant',
                                         'content': words})
+                client.close()
                 break
             elif 'content' in delta:
                 words += delta['content']

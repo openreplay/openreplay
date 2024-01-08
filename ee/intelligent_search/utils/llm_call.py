@@ -26,21 +26,21 @@ class Completion:
         # 'usage'
 
     def send_stream_request(self, message: str, raw: bool = True, context: str = ''):
-        response = openai.ChatCompletion.create(
-                api_base = LLM_ENDPOINT,
-                api_key= LLM_API_KEY,
+        client = openai.OpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
+        response = client.chat.completions.create(
                 model = LLM_MODEL,
                 messages = [{"role": "user", "content": search_context_v3.format(user_question=message)}],
                 stream = True,
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
                 temperature=LLM_TEMPERATURE
-                )
+            )
         words = ''
         first_word = True
         for tok in response: 
             delta = tok.choices[0].delta
             if not delta: # End token 
+                client.close()
                 break
             elif 'content' in delta:
                 words += delta['content']
@@ -56,3 +56,16 @@ class Completion:
                     yield delta['content'] 
             else: 
                 continue
+
+    async def send_async_request(self, message: str, raw: bool = True, context: str = ''):
+        client = openai.AsyncOpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
+        response = await client.chat.completions.create(
+                model = LLM_MODEL,
+                messages = [{"role": "user", "content": search_context_v3.format(user_question=message)}],
+                frequency_penalty=FREQUENCY_PENALTY,
+                max_tokens=MAX_TOKENS,
+                temperature=LLM_TEMPERATURE
+                )
+        await client.close()
+        return response.choices[0].message.content
+

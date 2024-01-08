@@ -17,6 +17,6 @@ traceloop-sdk==0.0.37
 pytest==7.4.2
 
 # Endpoints
-anyscale
-openai==0.28.1
-tiktoken
+anyscale==0.5.168
+openai==1.6.1
+tiktoken==0.5.2
