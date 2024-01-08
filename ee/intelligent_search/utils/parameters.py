@@ -1,5 +1,4 @@
 from decouple import config, Choices
-from typing import Optional, Union
 
 
 def float_range(value: object, lower_bound: float, higher_bound: float):

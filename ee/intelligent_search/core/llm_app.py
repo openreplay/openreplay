@@ -2,7 +2,6 @@ from utils.module_handler import torch_available
 if torch_available:
     from llama import Llama
 from decouple import config
-from utils.contexts import search_context_v2
 from threading import Semaphore
 from asyncio import sleep
 from time import time

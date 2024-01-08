@@ -6,6 +6,7 @@ RUN pip install -r requirements.txt
 WORKDIR api
 COPY auth/*.py auth/
 COPY utils/*.py utils/
+COPY routers/*.py routers/
 COPY core/*.py core/
 COPY *.py ./
 COPY entrypoint.sh ./

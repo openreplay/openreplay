@@ -1,10 +1,6 @@
-import json
-import requests
-from typing import List
 from utils.parameters import LLM_ENDPOINT, LLM_API_KEY, LLM_TEMPERATURE, \
         FREQUENCY_PENALTY, MAX_TOKENS, LLM_MODEL
-from utils.contexts import search_context_v3
-import tiktoken
+from utils.prompts import FilterPrompt, SummaryPrompt
 import openai
 
 
@@ -29,7 +25,7 @@ class Completion:
         client = openai.OpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
         response = client.chat.completions.create(
                 model = LLM_MODEL,
-                messages = [{"role": "user", "content": search_context_v3.format(user_question=message)}],
+                messages = [{"role": "user", "content": FilterPrompt.search_context_v3.format(user_question=message)}],
                 stream = True,
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
@@ -42,18 +38,18 @@ class Completion:
             if not delta: # End token 
                 client.close()
                 break
-            elif 'content' in delta:
-                words += delta['content']
+            elif delta.content:
+                words += delta.content
                 if first_word:
-                    if delta['content'] == ' ':
+                    if delta.content == ' ':
                         continue
-                    elif delta['content'][0] == ' ':
-                        yield delta['content'][1:]
+                    elif delta.content[0] == ' ':
+                        yield delta.content[1:]
                     else:
-                        yield delta['content']
+                        yield delta.content
                     first_word = False
                 else:
-                    yield delta['content'] 
+                    yield delta.content 
             else: 
                 continue
 
@@ -61,11 +57,51 @@ class Completion:
         client = openai.AsyncOpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
         response = await client.chat.completions.create(
                 model = LLM_MODEL,
-                messages = [{"role": "user", "content": search_context_v3.format(user_question=message)}],
+                messages = [{"role": "user", "content": FilterPrompt.search_context_v3.format(user_question=message)}],
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
                 temperature=LLM_TEMPERATURE
                 )
         await client.close()
         return response.choices[0].message.content
+
+    async def send_async_stream_request(self, message: str, raw: bool = True, context: str = ''):
+        client = openai.AsyncOpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
+        message_json = {
+            'role': 'user',
+            'content': SummaryPrompt.question_format.format(message)
+        }
+
+        response = await client.chat.completions.create(
+                model = LLM_MODEL,
+                messages = [{'role': 'system', 'content': context if context else SummaryPrompt.summary_context},
+                            {'role': 'user', 'content': SummaryPrompt.summary_example_user_input},
+                            {'role': 'assistant', 'content': SummaryPrompt.summary_example_ai_response}
+                            ] + [message_json],
+                stream = True,
+                frequency_penalty=FREQUENCY_PENALTY,
+                max_tokens=MAX_TOKENS,
+                temperature=LLM_TEMPERATURE
+            )
+        words = ''
+        first_word = True
+        async for tok in response: 
+            delta = tok.choices[0].delta
+            if not delta: # End token 
+                await client.close()
+                break
+            elif delta.content:
+                words += delta.content
+                if first_word:
+                    if delta.content == ' ':
+                        continue
+                    elif delta.content[0] == ' ':
+                        yield delta.content[1:]
+                    else:
+                        yield delta.content
+                    first_word = False
+                else:
+                    yield delta.content 
+            else: 
+                continue
 

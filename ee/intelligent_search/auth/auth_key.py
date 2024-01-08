@@ -15,10 +15,6 @@ class AuthHandler:
     def __contains__(self, api_key):
         return api_key in self.__api_keys
 
-    def add_key(self, key):
-        """Adds new key for authentication."""
-        self.__api_keys.append(key)
-
 
 auth_method = AuthHandler()
 
