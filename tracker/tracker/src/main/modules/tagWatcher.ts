@@ -3,6 +3,7 @@ export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 class TagWatcher {
   intervals: Record<string, ReturnType<typeof setInterval>> = {}
   tags: string[] = []
+  observer: IntersectionObserver
 
   constructor(
     private readonly sessionStorage: Storage,
@@ -11,6 +12,20 @@ class TagWatcher {
   ) {
     const tags = sessionStorage.getItem(WATCHED_TAGS_KEY)?.split(',') || []
     this.setTags(tags)
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          if (entry.target) {
+            // @ts-ignore
+            const tag = entry.target.__or_watcher_tagname
+            if (tag) {
+              this.onTagRendered(tag)
+            }
+            this.observer.unobserve(entry.target)
+          }
+        }
+      })
+    })
   }
 
   async fetchTags() {
@@ -30,7 +45,10 @@ class TagWatcher {
       this.intervals[tag] = setInterval(() => {
         const possibleEls = document.querySelectorAll(tag)
         if (possibleEls.length > 0) {
-          this.onTagRendered(tag)
+          const el = possibleEls[0]
+          // @ts-ignore
+          el.__or_watcher_tagname = tag
+          this.observer.observe(el)
         }
       }, 500)
     })
@@ -49,6 +67,7 @@ class TagWatcher {
     })
     this.tags = []
     this.intervals = {}
+    this.observer.disconnect()
   }
 }
 

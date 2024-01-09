@@ -5,6 +5,9 @@ describe('TagWatcher', () => {
   let sessionStorageMock: Storage
   let errLogMock: (args: any[]) => void
   const onTag = jest.fn()
+  let mockObserve: Function
+  let mockUnobserve: Function
+  let mockDisconnect: Function
 
   beforeEach(() => {
     sessionStorageMock = {
@@ -13,6 +16,17 @@ describe('TagWatcher', () => {
       setItem: jest.fn(),
     }
     errLogMock = jest.fn()
+    mockObserve = jest.fn()
+    mockUnobserve = jest.fn()
+    mockDisconnect = jest.fn()
+
+    // @ts-ignore
+    global.IntersectionObserver = jest.fn((callback) => ({
+      observe: mockObserve,
+      unobserve: mockUnobserve,
+      disconnect: mockDisconnect,
+      callback,
+    }))
     jest.useFakeTimers()
     // @ts-ignore
     global.document.querySelectorAll = jest.fn()
@@ -22,6 +36,14 @@ describe('TagWatcher', () => {
     jest.restoreAllMocks()
     jest.useRealTimers()
   })
+  function triggerIntersection(elements: any, isIntersecting: boolean, observer: any) {
+    const entries = elements.map((el: any) => ({
+      isIntersecting,
+      target: el,
+    }))
+    // @ts-ignore
+    observer.callback(entries)
+  }
 
   test('constructor initializes with tags from sessionStorage', () => {
     // @ts-ignore
@@ -50,15 +72,18 @@ describe('TagWatcher', () => {
     watcher.setTags(['div', 'p'])
     expect(watcher.intervals).toHaveProperty('div')
     expect(watcher.intervals).toHaveProperty('p')
+    expect(mockObserve).not.toHaveBeenCalled() // No elements to observe initially
   })
 
-  test('onTagRendered clears interval and logs message', () => {
+  test('onTagRendered sends messages', () => {
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
     watcher.setTags(['div'])
     // @ts-ignore
-    document.querySelectorAll.mockReturnValue([{}]) // Mock a found element
+    document.querySelectorAll.mockReturnValue([{ __or_watcher_tagname: 'div' }]) // Mock a found element
     jest.advanceTimersByTime(1000)
+    triggerIntersection([{ __or_watcher_tagname: 'div' }], true, watcher.observer)
     expect(onTag).toHaveBeenCalled()
+    expect(watcher.observer.unobserve).toHaveBeenCalled()
   })
 
   test('clear method clears all intervals and resets tags', () => {
@@ -67,5 +92,6 @@ describe('TagWatcher', () => {
     watcher.clear()
     expect(watcher.tags).toEqual([])
     expect(watcher.intervals).toEqual({})
+    expect(watcher.observer.disconnect).toHaveBeenCalled()
   })
 })
