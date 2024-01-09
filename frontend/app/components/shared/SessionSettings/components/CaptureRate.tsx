@@ -1,101 +1,150 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, Toggler, Button, Input, Loader, Tooltip } from 'UI';
+import { Conditions } from 'App/mstore/types/FeatureFlag';
+import { Icon, Input, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { Switch } from 'antd';
+import { Switch, Drawer, Button, Tooltip } from 'antd';
+import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
 
 type Props = {
   isAdmin: boolean;
-  projectId: number;
-}
+  projectId?: number;
+  setShowCaptureRate: (show: boolean) => void;
+  open: boolean;
+  showCaptureRate: boolean;
+};
 
 function CaptureRate(props: Props) {
+  const [conditions, setConditions] = React.useState<Conditions[]>([]);
   const { isAdmin, projectId } = props;
   const { settingsStore } = useStore();
   const [changed, setChanged] = useState(false);
-  const [sessionSettings] = useState(settingsStore.sessionSettings);
-  const loading = settingsStore.loadingCaptureRate;
-
-  const captureRate = sessionSettings.captureRate;
-  const setCaptureRate = sessionSettings.changeCaptureRate;
-  const captureAll = sessionSettings.captureAll;
-  const setCaptureAll = sessionSettings.changeCaptureAll;
+  const {
+    sessionSettings: {
+      captureRate,
+      changeCaptureRate,
+      captureAll,
+      changeCaptureAll,
+      captureConditions,
+    },
+    loadingCaptureRate,
+    updateCaptureConditions,
+    fetchCaptureConditions,
+  } = settingsStore;
 
   useEffect(() => {
-    settingsStore.fetchCaptureRate(projectId);
+    if (projectId) {
+      void fetchCaptureConditions(projectId);
+    }
   }, [projectId]);
 
-  const changeCaptureRate = (input: string) => {
+  React.useEffect(() => {
+    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true)));
+  }, [captureConditions]);
+
+  const onCaptureRateChange = (input: string) => {
     setChanged(true);
-    setCaptureRate(input);
+    changeCaptureRate(input);
   };
 
   const toggleRate = () => {
-    const newValue = !captureAll;
     setChanged(true);
+    const newValue = !captureAll;
+    changeCaptureAll(newValue);
     if (newValue) {
-      const updateObj = {
-        rate: '100',
-        captureAll: true
-      };
-      settingsStore.saveCaptureRate(projectId, updateObj);
-    } else {
-      setCaptureAll(newValue);
+      changeCaptureRate('100');
     }
   };
 
+  const onUpdate = () => {
+    updateCaptureConditions(projectId!, {
+      rate: parseInt(captureRate, 10),
+      captureAll,
+      conditions: conditions.map((c) => c.toCaptureCondition()),
+    }).finally(() => setChanged(false));
+  };
+
+  const updateDisabled = !changed || !isAdmin || (captureAll && conditions.length === 0);
+
   return (
-    <Loader loading={loading}>
-      {/*<h3 className='text-lg'>Capture Rate</h3>*/}
-      <div className='my-1'>The percentage of session you want to capture</div>
-      <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
-        <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
-          <Switch checked={captureAll} onChange={toggleRate} />
-          <span className='ml-2' style={{ color: captureAll ? '#000000' : '#999' }}>
-                        100%
-                    </span>
-        </div>
-      </Tooltip>
-      {!captureAll && (
-        <div className='flex items-center'>
-          <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
-            <div className={cn('relative', { 'disabled': !isAdmin })}>
-              <Input
-                type='number'
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => changeCaptureRate(e.target.value)}
-                value={captureRate.toString()}
-                style={{ height: '38px', width: '100px' }}
-                disabled={captureAll}
-                min={0}
-                max={100}
-              />
-              <Icon className='absolute right-0 mr-6 top-0 bottom-0 m-auto' name='percent' color='gray-medium'
-                    size='18' />
-            </div>
-          </Tooltip>
-          <span className='mx-3'>of the sessions</span>
-          <Button
-            disabled={!changed}
-            variant='outline'
-            onClick={() =>
-              settingsStore
-                .saveCaptureRate(projectId, {
-                  rate: captureRate,
-                  captureAll
-                })
-                .finally(() => setChanged(false))
-            }
-          >
+    <Drawer
+      size={'large'}
+      open={props.open}
+      styles={{ content: { background: '#F6F6F6' } }}
+      onClose={() => props.setShowCaptureRate(false)}
+      title={
+        <div className={'flex items-center w-full gap-2'}>
+          <span className={'font-semibold'}>Capture Rate</span>
+          <div className={'ml-auto'}></div>
+          <Button type={'primary'} ghost onClick={() => props.setShowCaptureRate(false)}>
+            Cancel
+          </Button>
+          <Button disabled={updateDisabled} type={'primary'} onClick={onUpdate}>
             Update
           </Button>
         </div>
-      )}
-    </Loader>
+      }
+      closable={false}
+      destroyOnClose
+    >
+      <Loader loading={loadingCaptureRate || !projectId}>
+        <Tooltip title={isAdmin ? '' : "You don't have permission to change."}>
+          <div className="my-2 flex items-center gap-2 h-8">
+            <div className="font-semibold">The percentage of session you want to capture</div>
+            <Tooltip
+              title={
+                'Define the percentage of user sessions to be recorded for detailed replay and analysis.' +
+                '\nSessions exceeding this specified limit will not be captured or stored.'
+              }
+            >
+              <Icon size={16} color={'black'} name={'info-circle'} />
+            </Tooltip>
+            <Switch
+              checked={captureAll}
+              onChange={toggleRate}
+              checkedChildren={'Conditional'}
+              disabled={!isAdmin}
+              unCheckedChildren={'Capture Rate'}
+            />
+            {!captureAll ? (
+              <div className={cn('relative', { disabled: !isAdmin })}>
+                <Input
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    if (/^\d+$/.test(e.target.value) || e.target.value === '') {
+                      onCaptureRateChange(e.target.value);
+                    }
+                  }}
+                  value={captureRate.toString()}
+                  style={{ height: '38px', width: '70px' }}
+                  disabled={captureAll}
+                  min={0}
+                  max={100}
+                />
+                <Icon
+                  className="absolute right-0 mr-2 top-0 bottom-0 m-auto"
+                  name="percent"
+                  color="gray-medium"
+                  size="18"
+                />
+              </div>
+            ) : null}
+          </div>
+          {captureAll ? (
+            <ConditionalRecordingSettings
+              setChanged={setChanged}
+              conditions={conditions}
+              setConditions={setConditions}
+            />
+          ) : null}
+        </Tooltip>
+      </Loader>
+    </Drawer>
   );
 }
 
 export default connect((state: any) => ({
-  isAdmin: state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin'])
+  isAdmin:
+    state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin']),
 }))(observer(CaptureRate));

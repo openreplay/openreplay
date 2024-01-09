@@ -4,7 +4,13 @@ import { fetchListType, saveType, editType, initType, removeType } from './funcT
 import { createItemInListUpdater, mergeReducers, success, array } from './funcTools/tools';
 import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
-import { addElementToFiltersMap, addElementToFlagConditionsMap, addElementToLiveFiltersMap, clearMetaFilters } from 'Types/filter/newFilter';
+import {
+  addElementToConditionalFiltersMap,
+  addElementToFiltersMap,
+  addElementToFlagConditionsMap,
+  addElementToLiveFiltersMap,
+  clearMetaFilters
+} from "Types/filter/newFilter";
 import { FilterCategory } from '../types/filter/filterType';
 import { refreshFilterOptions } from './search';
 
@@ -46,6 +52,7 @@ const reducer = (state = initialState, action = {}) => {
         addElementToFiltersMap(FilterCategory.METADATA, '_' + item.key);
         addElementToLiveFiltersMap(FilterCategory.METADATA, '_' + item.key);
         addElementToFlagConditionsMap(FilterCategory.METADATA, '_' + item.key)
+        addElementToConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key)
       });
       return state.set('list', List(action.data).map(CustomField))
 

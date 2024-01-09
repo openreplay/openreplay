@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterItem from "./filterItem"
-import { filtersMap } from 'Types/filter/newFilter';
+import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
 
 export default class Filter {
     public static get ID_KEY():string { return "filterId" }
@@ -16,7 +16,7 @@ export default class Filter {
     page: number = 1
     limit: number = 10
 
-    constructor() {
+    constructor(private readonly isConditional = false) {
         makeAutoObservable(this, {
             filters: observable,
             eventsOrder: observable,
@@ -63,7 +63,9 @@ export default class Filter {
 
     fromJson(json: any) {
         this.name = json.name
-        this.filters = json.filters.map((i: Record<string, any>) => new FilterItem().fromJson(i))
+        this.filters = json.filters.map((i: Record<string, any>) =>
+          new FilterItem(undefined, this.isConditional).fromJson(i)
+        );
         this.eventsOrder = json.eventsOrder
         return this
     }
@@ -80,7 +82,8 @@ export default class Filter {
     }
 
     createFilterBykey(key: string) {
-        return filtersMap[key] ? new FilterItem(filtersMap[key]) : new FilterItem()
+        const usedMap = this.isConditional ? conditionalFiltersMap : filtersMap
+        return usedMap[key] ? new FilterItem(usedMap[key]) : new FilterItem()
     }
 
     toJson() {

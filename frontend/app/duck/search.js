@@ -8,7 +8,7 @@ import { errors as errorsRoute, isRoute } from 'App/routes';
 import { fetchList as fetchSessionList, fetchAutoplayList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import { filtersMap, liveFiltersMap, generateFilterOptions } from 'Types/filter/newFilter';
+import { filtersMap, liveFiltersMap, conditionalFiltersMap, generateFilterOptions } from 'Types/filter/newFilter';
 import { DURATION_FILTER } from 'App/constants/storageKeys';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 
@@ -50,6 +50,7 @@ const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 const initialState = Map({
     filterList: generateFilterOptions(filtersMap),
     filterListLive: generateFilterOptions(liveFiltersMap),
+    filterListConditional: generateFilterOptions(conditionalFiltersMap),
     list: List(),
     latestRequestTime: null,
     latestList: List(),
@@ -67,7 +68,10 @@ const initialState = Map({
 function reducer(state = initialState, action = {}) {
     switch (action.type) {
         case REFRESH_FILTER_OPTIONS:
-            return state.set('filterList', generateFilterOptions(filtersMap)).set('filterListLive', generateFilterOptions(liveFiltersMap));
+            return state
+              .set('filterList', generateFilterOptions(filtersMap))
+              .set('filterListLive', generateFilterOptions(liveFiltersMap))
+              .set('filterListConditional', generateFilterOptions(conditionalFiltersMap));
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:

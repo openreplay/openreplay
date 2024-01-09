@@ -25,12 +25,25 @@ export default class SettingsService {
       .then((response) => response.data || 0);
   }
 
-  getSessions(filter: any): Promise<{ sessions: ISession[], total: number }> {
+  fetchCaptureConditions(
+    projectId: number
+  ): Promise<{ rate: number; captureAll: boolean; conditions: any[] }> {
+    return this.client
+      .get(`/${projectId}/conditions`)
+      .then((response) => response.json())
+      .then((response) => response.data || []);
+  }
+
+  saveCaptureConditions(projectId: number, data: any) {
+    return this.client.post(`/${projectId}/conditions`, data);
+  }
+
+  getSessions(filter: any): Promise<{ sessions: ISession[]; total: number }> {
     return this.client
       .post('/sessions/search', filter)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((response) => response.data || [])
-      .catch(e => Promise.reject(e))
+      .catch((e) => Promise.reject(e));
   }
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
@@ -44,46 +57,44 @@ export default class SettingsService {
   getLiveSessions(filter: any): Promise<{ sessions: ISession[] }> {
     return this.client
       .post('/assist/sessions', cleanParams(filter))
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((response) => response.data || [])
-      .catch(e => Promise.reject(e))
+      .catch((e) => Promise.reject(e));
   }
 
   getErrorStack(sessionId: string, errorId: string): Promise<{ trace: IErrorStack[] }> {
     return this.client
       .get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`)
-      .then(r => r.json())
-      .then(j => j.data || {})
-      .catch(e => Promise.reject(e))
+      .then((r) => r.json())
+      .then((j) => j.data || {})
+      .catch((e) => Promise.reject(e));
   }
 
   getAutoplayList(params = {}): Promise<{ sessionId: string }[]> {
     return this.client
       .post('/sessions/search/ids', cleanParams(params))
-      .then(r => r.json())
-      .then(j => j.data || [])
-      .catch(e => Promise.reject(e))
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch((e) => Promise.reject(e));
   }
 
   toggleFavorite(sessionId: string): Promise<any> {
-    return this.client
-      .get(`/sessions/${sessionId}/favorite`)
-      .catch(Promise.reject)
+    return this.client.get(`/sessions/${sessionId}/favorite`).catch(Promise.reject);
   }
 
   getClickMap(params = {}): Promise<any[]> {
     return this.client
       .post('/heatmaps/url', params)
-      .then(r => r.json())
-      .then(j => j.data || [])
-      .catch(Promise.reject)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch(Promise.reject);
   }
 
   getRecordingStatus(): Promise<any> {
     return this.client
       .get('/check-recording-status')
-      .then(r => r.json())
-      .then(j => j.data || {})
-      .catch(Promise.reject)
+      .then((r) => r.json())
+      .then((j) => j.data || {})
+      .catch(Promise.reject);
   }
 }

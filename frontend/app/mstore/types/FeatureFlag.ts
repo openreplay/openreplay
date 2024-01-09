@@ -4,26 +4,40 @@ import Filter from "App/mstore/types/filter";
 
 export class Conditions {
   rolloutPercentage = 100;
-  filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] })
+  filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] });
+  name = 'Condition Set';
 
-  constructor(data?: Record<string, any>) {
-    makeAutoObservable(this)
-    if (data) {
-      this.rolloutPercentage = data.rolloutPercentage
-      this.filter = new Filter().fromJson(data)
+  constructor(data?: Record<string, any>, isConditional?: boolean) {
+    makeAutoObservable(this);
+    this.name = data?.name;
+    if (data && (data.rolloutPercentage || data.captureRate)) {
+      this.rolloutPercentage = data.rolloutPercentage ?? data.captureRate;
+      this.filter = new Filter(isConditional).fromJson(data);
     }
   }
 
   setRollout = (value: number) => {
-    this.rolloutPercentage = value
-  }
+    this.rolloutPercentage = value;
+  };
+
+  setName = (name: string) => {
+    this.name = name;
+  };
 
   toJS() {
     return {
       name: this.filter.name,
       rolloutPercentage: this.rolloutPercentage,
-      filters: this.filter.filters.map(f => f.toJson()),
-    }
+      filters: this.filter.filters.map((f) => f.toJson())
+    };
+  }
+
+  toCaptureCondition() {
+    return {
+      name: this.name,
+      captureRate: this.rolloutPercentage,
+      filters: this.filter.filters.map((f) => f.toJson())
+    };
   }
 }
 

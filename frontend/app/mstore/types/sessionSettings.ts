@@ -63,71 +63,75 @@ export const generateGMTZones = (): Timezone[] => {
 };
 
 export default class SessionSettings {
-    defaultTimezones = [...generateGMTZones()]
-    skipToIssue: boolean = localStorage.getItem(SKIP_TO_ISSUE) === 'true';
-    timezone: Timezone;
-    durationFilter: any = JSON.parse(localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter));
-    captureRate: string = '0';
-    captureAll: boolean = false;
-    mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
-    shownTimezone: 'user' | 'local';
+  defaultTimezones = [...generateGMTZones()];
+  skipToIssue: boolean = localStorage.getItem(SKIP_TO_ISSUE) === 'true';
+  timezone: Timezone;
+  durationFilter: any = JSON.parse(
+    localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter)
+  );
+  captureRate: string = '0';
+  captureAll: boolean = false;
+  captureConditions: { name: string; captureRate: number; filters: any[] }[] = [];
+  mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
+  shownTimezone: 'user' | 'local';
 
+  constructor() {
+    // compatibility fix for old timezone storage
+    // TODO: remove after a while (1.7.1?)
+    const userTimezoneOffset = moment().format('Z');
+    const defaultTimezone = this.defaultTimezones.find((tz) =>
+      tz.value.includes('UTC' + userTimezoneOffset.slice(0, 3))
+    ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
-    constructor() {
-        // compatibility fix for old timezone storage
-        // TODO: remove after a while (1.7.1?)
-        const userTimezoneOffset = moment().format('Z');
-        const defaultTimezone = this.defaultTimezones.find(tz => tz.value.includes('UTC' + userTimezoneOffset.slice(0,3))) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
-
-        this.timezoneFix(defaultTimezone);
-        // @ts-ignore
-        this.timezone = JSON.parse(localStorage.getItem(TIMEZONE)) || defaultTimezone;
-        if (localStorage.getItem(MOUSE_TRAIL) === null) {
-            localStorage.setItem(MOUSE_TRAIL, 'true');
-        }
-
-        this.shownTimezone = localStorage.getItem(SHOWN_TIMEZONE) === 'user' ? 'user' : 'local'
-        makeAutoObservable(this);
+    this.timezoneFix(defaultTimezone);
+    // @ts-ignore
+    this.timezone = JSON.parse(localStorage.getItem(TIMEZONE)) || defaultTimezone;
+    if (localStorage.getItem(MOUSE_TRAIL) === null) {
+      localStorage.setItem(MOUSE_TRAIL, 'true');
     }
 
-    merge = (settings: any) => {
-        for (const key in settings) {
-            if (settings.hasOwnProperty(key)) {
-                this.updateKey(key, settings[key]);
-            }
-        }
-    };
+    this.shownTimezone = localStorage.getItem(SHOWN_TIMEZONE) === 'user' ? 'user' : 'local';
+    makeAutoObservable(this);
+  }
 
-    changeCaptureRate = (rate: string) => {
-        if (!rate) return (this.captureRate = '0');
-        // react do no see the difference between 01 and 1 decimals, this is why we have to use string casting
-        if (parseInt(rate, 10) <= 100) this.captureRate = `${parseInt(rate, 10)}`;
-    };
-
-    changeCaptureAll = (all: boolean) => {
-        this.captureAll = all;
-    };
-
-    timezoneFix(defaultTimezone: Record<string, string>) {
-        if (localStorage.getItem(TIMEZONE) === '[object Object]' || !localStorage.getItem(TIMEZONE)) {
-            localStorage.setItem(TIMEZONE, JSON.stringify(defaultTimezone));
-        }
+  merge = (settings: any) => {
+    for (const key in settings) {
+      if (settings.hasOwnProperty(key)) {
+        this.updateKey(key, settings[key]);
+      }
     }
+  };
 
-    updateKey = (key: string, value: any) => {
-        runInAction(() => {
-            // @ts-ignore
-            this[key] = value;
-        });
+  changeCaptureRate = (rate: string) => {
+    if (!rate) return (this.captureRate = '0');
+    // react do no see the difference between 01 and 1 decimals, this is why we have to use string casting
+    if (parseInt(rate, 10) <= 100) this.captureRate = `${parseInt(rate, 10)}`;
+  };
 
-        if (key === 'captureRate' || key === 'captureAll') return;
-        if (key === 'shownTimezone') {
-            return localStorage.setItem(SHOWN_TIMEZONE, value as string);
-        }
-        if (key === 'durationFilter' || key === 'timezone') {
-            localStorage.setItem(`__$session-${key}$__`, JSON.stringify(value));
-        } else {
-            localStorage.setItem(`__$session-${key}$__`, value);
-        }
-    };
+  changeCaptureAll = (all: boolean) => {
+    this.captureAll = all;
+  };
+
+  timezoneFix(defaultTimezone: Record<string, string>) {
+    if (localStorage.getItem(TIMEZONE) === '[object Object]' || !localStorage.getItem(TIMEZONE)) {
+      localStorage.setItem(TIMEZONE, JSON.stringify(defaultTimezone));
+    }
+  }
+
+  updateKey = (key: string, value: any) => {
+    runInAction(() => {
+      // @ts-ignore
+      this[key] = value;
+    });
+
+    if (key === 'captureRate' || key === 'captureAll') return;
+    if (key === 'shownTimezone') {
+      return localStorage.setItem(SHOWN_TIMEZONE, value as string);
+    }
+    if (key === 'durationFilter' || key === 'timezone') {
+      localStorage.setItem(`__$session-${key}$__`, JSON.stringify(value));
+    } else {
+      localStorage.setItem(`__$session-${key}$__`, value);
+    }
+  };
 }

@@ -62,6 +62,8 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
       return 'ff';
     case FilterKey.DURATION:
       return 'duration';
+    case FilterKey.FEATURE_FLAG:
+      return 'feature_flag';
   }
 };
 
@@ -145,6 +147,8 @@ export const getFilterKeyTypeByKey = (key: string) => {
       return FilterKey.FETCH_FAILED;
     case 'duration':
       return FilterKey.DURATION;
+    case FilterKey.FEATURE_FLAG:
+      return 'feature_flag';
   }
 };
 
@@ -301,4 +305,5 @@ export enum FilterKey {
   SLOWEST_RESOURCES = 'slowestResources',
 
   CLICKMAP_URL = 'clickMapUrl',
+  FEATURE_FLAG = 'featureFlag',
 }

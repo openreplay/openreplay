@@ -67,6 +67,7 @@ function initiateRestart(): void {
   postMessage('restart')
   reset()
 }
+
 function initiateFailure(reason: string): void {
   postMessage({ type: 'failure', reason })
   reset()
@@ -92,7 +93,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
 
   if (Array.isArray(data)) {
-    if (writer !== null) {
+    if (writer) {
       const w = writer
       data.forEach((message) => {
         if (message[0] === MType.SetPageVisibility) {
@@ -105,8 +106,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
         }
         w.writeMessage(message)
       })
-    }
-    if (!writer) {
+    } else {
       postMessage('not_init')
       initiateRestart()
     }
@@ -152,7 +152,9 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       data.pageNo,
       data.timestamp,
       data.url,
-      (batch) => sender && sender.push(batch),
+      (batch) => {
+        sender && sender.push(batch)
+      },
       data.tabId,
     )
     if (sendIntervalID === null) {

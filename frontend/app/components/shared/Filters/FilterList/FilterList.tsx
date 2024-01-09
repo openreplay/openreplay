@@ -15,6 +15,7 @@ interface Props {
   supportsEmpty?: boolean
   readonly?: boolean;
   excludeFilterKeys?: Array<string>
+  isConditional?: boolean;
 }
 function FilterList(props: Props) {
   const {
@@ -23,7 +24,8 @@ function FilterList(props: Props) {
     hideEventsOrder = false,
     saveRequestPayloads,
     supportsEmpty = true,
-    excludeFilterKeys = []
+    excludeFilterKeys = [],
+    isConditional,
   } = props;
 
   const filters = List(filter.filters);
@@ -86,6 +88,7 @@ function FilterList(props: Props) {
                 disableDelete={cannotDeleteFilter}
                 excludeFilterKeys={excludeFilterKeys}
                 readonly={props.readonly}
+                isConditional={isConditional}
               />
             ) : null
           )}
@@ -108,6 +111,7 @@ function FilterList(props: Props) {
                 onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
                 excludeFilterKeys={excludeFilterKeys}
+                isConditional={isConditional}
               />
             ) : null
           )}

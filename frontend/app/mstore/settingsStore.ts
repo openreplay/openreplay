@@ -7,6 +7,12 @@ import { webhookService } from 'App/services';
 import { GettingStarted } from './types/gettingStarted';
 import { MENU_COLLAPSED } from 'App/constants/storageKeys';
 
+interface CaptureConditions {
+  rate: number;
+  captureAll: boolean;
+  conditions: { name: string; captureRate: number; filters: any[] }[];
+}
+
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
   sessionSettings: SessionSettings = new SessionSettings();
@@ -20,7 +26,7 @@ export default class SettingsStore {
 
   constructor() {
     makeAutoObservable(this, {
-      sessionSettings: observable
+      sessionSettings: observable,
     });
   }
 
@@ -29,37 +35,74 @@ export default class SettingsStore {
     localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
   };
 
-  saveCaptureRate(projectId: number, data: any) {
+  saveCaptureRate = (projectId: number, data: any) => {
     return sessionService
       .saveCaptureRate(projectId, data)
       .then((data) => data.json())
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll
+          captureAll: data.captureAll,
         });
         toast.success('Settings updated successfully');
       })
       .catch((err) => {
         toast.error('Error saving capture rate');
       });
-  }
+  };
 
-  fetchCaptureRate(projectId: number): Promise<any> {
+  fetchCaptureRate = (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
     return sessionService
       .fetchCaptureRate(projectId)
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll
+          captureAll: data.captureAll,
         });
         this.captureRateFetched = true;
       })
       .finally(() => {
         this.loadingCaptureRate = false;
       });
-  }
+  };
+
+  fetchCaptureConditions = (projectId: number): Promise<any> => {
+    this.loadingCaptureRate = true;
+    return sessionService
+      .fetchCaptureConditions(projectId)
+      .then((data) => {
+        this.sessionSettings.merge({
+          captureRate: data.rate,
+          captureAll: data.captureAll,
+          captureConditions: data.conditions,
+        });
+      })
+      .finally(() => {
+        this.loadingCaptureRate = false;
+      });
+  };
+
+  updateCaptureConditions = (projectId: number, data: CaptureConditions) => {
+    this.loadingCaptureRate = true;
+    return sessionService
+      .saveCaptureConditions(projectId, data)
+      .then((data) => data.json())
+      .then(({ data }) => {
+        this.sessionSettings.merge({
+          captureRate: data.rate,
+          captureAll: data.captureAll,
+          captureConditions: data.conditions,
+        });
+        toast.success('Settings updated successfully');
+      })
+      .catch((err) => {
+        toast.error('Error saving capture rate');
+      })
+      .finally(() => {
+        this.loadingCaptureRate = false;
+      });
+  };
 
   fetchWebhooks = () => {
     this.hooksLoading = true;
@@ -83,7 +126,7 @@ export default class SettingsStore {
         else
           this.setWebhooks([
             ...this.webhooks.filter((hook) => hook.webhookId !== data.webhookId),
-            this.webhookInst
+            this.webhookInst,
           ]);
       })
       .finally(() => {

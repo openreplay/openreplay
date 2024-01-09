@@ -1,3 +1,5 @@
+import ConditionsManager from '../modules/conditionsManager.js'
+import FeatureFlags from '../modules/featureFlags.js'
 import type Message from './messages.gen.js'
 import {
   Timestamp,
@@ -21,14 +23,13 @@ import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
 import Ticker from './ticker.js'
-import Logger, { LogLevel } from './logger.js'
+import Logger, { LogLevel, ILogLevel } from './logger.js'
 import Session from './session.js'
 import { gzip } from 'fflate'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 import AttributeSender from '../modules/attributeSender.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
-import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
@@ -60,6 +61,7 @@ interface OnStartInfo {
 
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
+const bufferStorageKey = 'or_buffer_1'
 const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & {
   success: true
@@ -97,6 +99,7 @@ enum ActivityState {
   NotActive,
   Starting,
   Active,
+  ColdStart,
 }
 
 type AppOptions = {
@@ -109,18 +112,16 @@ type AppOptions = {
   local_uuid_key: string
   ingestPoint: string
   resourceBaseHref: string | null // resourceHref?
-  //resourceURLRewriter: (url: string) => string | boolean,
-  verbose: boolean
   __is_snippet: boolean
   __debug_report_edp: string | null
-  __debug__?: LoggerOptions
+  __debug__?: ILogLevel
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
   disableStringDict?: boolean
   assistSocketHost?: string
 
-  // @deprecated
+  /** @deprecated */
   onStart?: StartCallback
   network?: NetworkOptions
 } & WebworkerOptions &
@@ -150,8 +151,14 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
+  /**
+   * we need 2 buffers so we don't lose anything
+   * @read coldStart implementation
+   * */
+  private bufferedMessages1: Array<Message> = []
+  private readonly bufferedMessages2: Array<Message> = []
   /* private */
-  readonly observer: Observer // non-privat for attachContextCallback
+  readonly observer: Observer // non-private for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -169,11 +176,15 @@ export default class App {
   public attributeSender: AttributeSender
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
+  private conditionsManager: ConditionsManager | null = null
+  public featureFlags: FeatureFlags
 
-  constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
-    // if (options.onStart !== undefined) {
-    //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
-    // } ?? maybe onStart is good
+  constructor(
+    projectKey: string,
+    sessionToken: string | undefined,
+    options: Partial<Options>,
+    private readonly signalError: (error: string, apis: string[]) => void,
+  ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
     this.networkOptions = options.network
@@ -188,9 +199,9 @@ export default class App {
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         resourceBaseHref: null,
-        verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
+        __debug__: LogLevel.Silent,
         localStorage: null,
         sessionStorage: null,
         disableStringDict: false,
@@ -214,9 +225,9 @@ export default class App {
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
-    this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
     this.session = new Session(this, this.options)
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
+    this.featureFlags = new FeatureFlags(this)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -340,7 +351,7 @@ export default class App {
         body: JSON.stringify({
           context,
           // @ts-ignore
-          error: `${e}`,
+          error: `${e as unknown as string}`,
         }),
       })
     }
@@ -362,9 +373,17 @@ export default class App {
     if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
       return
     }
-    // ====================================================
 
-    this.messages.push(message)
+    // ====================================================
+    if (this.activityState === ActivityState.ColdStart) {
+      this.bufferedMessages1.push(message)
+      if (!this.singleBuffer) {
+        this.bufferedMessages2.push(message)
+      }
+      this.conditionsManager?.processMessage(message)
+    } else {
+      this.messages.push(message)
+    }
     // TODO: commit on start if there were `urgent` sends;
     // Clarify where urgent can be used for;
     // Clarify workflow for each type of message in case it was sent before start
@@ -375,7 +394,11 @@ export default class App {
     }
   }
 
-  private commit(): void {
+  /**
+   * Normal workflow: add timestamp and tab data to batch, then commit it
+   * every ~30ms
+   * */
+  private _nCommit(): void {
     if (this.worker !== undefined && this.messages.length) {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
@@ -386,6 +409,39 @@ export default class App {
         this.messages.length = 0
       })
     }
+  }
+
+  coldStartCommitN = 0
+
+  /**
+   * Cold start: add timestamp and tab data to both batches
+   * every 2nd tick, ~60ms
+   * this will make batches a bit larger and replay will work with bigger jumps every frame
+   * but in turn we don't overload batch writer on session start with 1000 batches
+   * */
+  private _cStartCommit(): void {
+    this.coldStartCommitN += 1
+    if (this.coldStartCommitN === 2) {
+      this.bufferedMessages1.push(Timestamp(this.timestamp()))
+      this.bufferedMessages1.push(TabData(this.session.getTabId()))
+      this.bufferedMessages2.push(Timestamp(this.timestamp()))
+      this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      this.coldStartCommitN = 0
+    }
+  }
+
+  private commit(): void {
+    if (this.activityState === ActivityState.ColdStart) {
+      this._cStartCommit()
+    } else {
+      this._nCommit()
+    }
+  }
+
+  private postToWorker(messages: Array<Message>) {
+    this.worker?.postMessage(messages)
+    this.commitCallbacks.forEach((cb) => cb(messages))
+    messages.length = 0
   }
 
   private delay = 0
@@ -559,19 +615,197 @@ export default class App {
     }
   }
 
-  private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
-    if (!this.worker) {
-      return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
+  coldInterval: ReturnType<typeof setInterval> | null = null
+  orderNumber = 0
+  coldStartTs = 0
+  singleBuffer = false
+
+  private checkSessionToken(forceNew?: boolean) {
+    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
+    const needNewSessionID = forceNew || lsReset
+    const sessionToken = this.session.getSessionToken()
+
+    return needNewSessionID || !sessionToken
+  }
+  /**
+   * start buffering messages without starting the actual session, which gives
+   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
+   * and we will then send buffered batch, so it won't get lost
+   * */
+  public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+    this.singleBuffer = false
+    const second = 1000
+    if (conditional) {
+      this.conditionsManager = new ConditionsManager(this, startOpts)
     }
-    if (this.activityState !== ActivityState.NotActive) {
-      return Promise.resolve(
-        UnsuccessfulStart(
-          'OpenReplay: trying to call `start()` on the instance that has been started already.',
-        ),
-      )
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    if (conditional) {
+      const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...this.getTrackerInfo(),
+          timestamp: now(),
+          doNotRecord: true,
+          bufferDiff: 0,
+          userID: this.session.getInfo().userID,
+          token: undefined,
+          deviceMemory,
+          jsHeapSizeLimit,
+          timezone: getTimezone(),
+        }),
+      })
+      // this token is needed to fetch conditions and flags,
+      // but it can't be used to record a session
+      const {
+        token,
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
+        projectID,
+      } = await r.json()
+      this.session.assign({ projectID })
+      this.session.setUserInfo({
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
+      })
+      const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
+      this.startCallbacks.forEach((cb) => cb(onStartInfo))
+      await this.conditionsManager?.fetchConditions(projectID as string, token as string)
+      await this.featureFlags.reloadFlags(token as string)
+      this.conditionsManager?.processFlags(this.featureFlags.flags)
+    }
+    const cycle = () => {
+      this.orderNumber += 1
+      adjustTimeOrigin()
+      this.coldStartTs = now()
+      if (this.orderNumber % 2 === 0) {
+        this.bufferedMessages1.length = 0
+        this.bufferedMessages1.push(Timestamp(this.timestamp()))
+        this.bufferedMessages1.push(TabData(this.session.getTabId()))
+      } else {
+        this.bufferedMessages2.length = 0
+        this.bufferedMessages2.push(Timestamp(this.timestamp()))
+        this.bufferedMessages2.push(TabData(this.session.getTabId()))
+      }
+      this.stop(false)
+      this.activityState = ActivityState.ColdStart
+      if (startOpts.sessionHash) {
+        this.session.applySessionHash(startOpts.sessionHash)
+      }
+      if (startOpts.forceNew) {
+        // Reset session metadata only if requested directly
+        this.session.reset()
+      }
+      this.session.assign({
+        // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+        userID: startOpts.userID,
+        metadata: startOpts.metadata,
+      })
+      if (!isNewSession) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        this.send(TabChange(this.session.getTabId()))
+      }
+      this.observer.observe()
+      this.ticker.start()
+    }
+    this.coldInterval = setInterval(() => {
+      cycle()
+    }, 30 * second)
+    cycle()
+  }
+
+  public offlineRecording(startOpts: StartOptions = {}) {
+    this.singleBuffer = true
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    adjustTimeOrigin()
+    this.coldStartTs = now()
+    this.bufferedMessages1.length = 0
+    const saverBuffer = this.localStorage.getItem(bufferStorageKey)
+    if (saverBuffer) {
+      const data = JSON.parse(saverBuffer)
+      this.bufferedMessages1 = Array.isArray(data) ? data : []
+      this.localStorage.removeItem(bufferStorageKey)
+    }
+    this.bufferedMessages1.push(Timestamp(this.timestamp()))
+    this.bufferedMessages1.push(TabData(this.session.getTabId()))
+    this.activityState = ActivityState.ColdStart
+    if (startOpts.sessionHash) {
+      this.session.applySessionHash(startOpts.sessionHash)
+    }
+    if (startOpts.forceNew) {
+      // Reset session metadata only if requested directly
+      this.session.reset()
+    }
+    this.session.assign({
+      // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+      userID: startOpts.userID,
+      metadata: startOpts.metadata,
+    })
+    if (!isNewSession) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      this.send(TabChange(this.session.getTabId()))
+    }
+    this.observer.observe()
+    this.ticker.start()
+  }
+
+  /**
+   * Saves the captured messages in localStorage (or whatever is used in its place)
+   *
+   * Then when this.offlineRecording is called, it will preload this messages and clear the storage item
+   *
+   * Keeping the size of local storage reasonable is up to the end users of this library
+   * */
+  public saveBuffer() {
+    this.localStorage.setItem(bufferStorageKey, JSON.stringify(this.bufferedMessages1))
+  }
+
+  /**
+   * Uploads the stored buffer to create session
+   * */
+  public uploadOfflineRecording() {
+    this.stop(false)
+    // then fetch it
+    this.clearBuffers()
+  }
+
+  private _start(
+    startOpts: StartOptions = {},
+    resetByWorker = false,
+    conditionName?: string,
+  ): Promise<StartPromiseReturn> {
+    const isColdStart = this.activityState === ActivityState.ColdStart
+    if (isColdStart && this.coldInterval) {
+      clearInterval(this.coldInterval)
+    }
+    if (!this.worker) {
+      const reason = 'No worker found: perhaps, CSP is not set.'
+      this.signalError(reason, [])
+      return Promise.resolve(UnsuccessfulStart(reason))
+    }
+    if (
+      this.activityState === ActivityState.Active ||
+      this.activityState === ActivityState.Starting
+    ) {
+      const reason =
+        'OpenReplay: trying to call `start()` on the instance that has been started already.'
+      this.signalError(reason, [])
+      return Promise.resolve(UnsuccessfulStart(reason))
     }
     this.activityState = ActivityState.Starting
-    adjustTimeOrigin()
+    if (!isColdStart) {
+      adjustTimeOrigin()
+    }
 
     if (startOpts.sessionHash) {
       this.session.applySessionHash(startOpts.sessionHash)
@@ -598,15 +832,13 @@ export default class App {
       tabId: this.session.getTabId(),
     })
 
-    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
-    this.sessionStorage.removeItem(this.options.session_reset_key)
-    const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
     const sessionToken = this.session.getSessionToken()
-    const isNewSession = needNewSessionID || !sessionToken
+    const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    this.sessionStorage.removeItem(this.options.session_reset_key)
 
     this.debug.log(
       'OpenReplay: starting session; need new session id?',
-      needNewSessionID,
+      isNewSession,
       'session token: ',
       sessionToken,
     )
@@ -619,11 +851,14 @@ export default class App {
         body: JSON.stringify({
           ...this.getTrackerInfo(),
           timestamp,
+          doNotRecord: false,
+          bufferDiff: timestamp - this.coldStartTs,
           userID: this.session.getInfo().userID,
           token: isNewSession ? undefined : sessionToken,
           deviceMemory,
           jsHeapSizeLimit,
           timezone: getTimezone(),
+          condition: conditionName,
         }),
       })
       .then((r) => {
@@ -641,10 +876,14 @@ export default class App {
       })
       .then((r) => {
         if (!this.worker) {
-          return Promise.reject('no worker found after start request (this might not happen)')
+          const reason = 'no worker found after start request (this might not happen)'
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         if (this.activityState === ActivityState.NotActive) {
-          return Promise.reject('Tracker stopped during authorization')
+          const reason = 'Tracker stopped during authorization'
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         const {
           token,
@@ -673,7 +912,9 @@ export default class App {
           typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
-          return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
+          const reason = `Incorrect server response: ${JSON.stringify(r)}`
+          this.signalError(reason, [])
+          return Promise.reject(reason)
         }
         this.delay = delay
         this.session.setSessionToken(token)
@@ -711,10 +952,39 @@ export default class App {
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
+        const flushBuffer = (buffer: Message[]) => {
+          let ended = false
+          const messagesBatch: Message[] = [buffer.shift() as unknown as Message]
+          while (!ended) {
+            const nextMsg = buffer[0]
+            if (!nextMsg || nextMsg[0] === MType.Timestamp) {
+              ended = true
+            } else {
+              messagesBatch.push(buffer.shift() as unknown as Message)
+            }
+          }
+          this.postToWorker(messagesBatch)
+        }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-        this.observer.observe()
-        this.ticker.start()
+        void this.featureFlags.reloadFlags()
+        /** --------------- COLD START BUFFER ------------------*/
+        this.activityState = ActivityState.Active
+        if (isColdStart) {
+          const biggestBurger =
+            this.bufferedMessages1.length > this.bufferedMessages2.length
+              ? this.bufferedMessages1
+              : this.bufferedMessages2
+          while (biggestBurger.length > 0) {
+            flushBuffer(biggestBurger)
+          }
+          this.clearBuffers()
+          this.commit()
+          /** --------------- COLD START BUFFER ------------------*/
+        } else {
+          this.observer.observe()
+          this.ticker.start()
+        }
 
         if (canvasEnabled) {
           this.canvasRecorder =
@@ -722,9 +992,7 @@ export default class App {
             new CanvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
           this.canvasRecorder.startTracking()
         }
-        this.activityState = ActivityState.Active
 
-        this.notify.log('OpenReplay tracking started.')
         // get rid of onStart ?
         if (typeof this.options.onStart === 'function') {
           this.options.onStart(onStartInfo)
@@ -767,11 +1035,12 @@ export default class App {
         this.stop()
         this.session.reset()
         if (reason === CANCELED) {
+          this.signalError(CANCELED, [])
           return UnsuccessfulStart(CANCELED)
         }
 
-        this.notify.log('OpenReplay was unable to start. ', reason)
         this._debug('session_start', reason)
+        this.signalError(START_ERROR, [])
         return UnsuccessfulStart(START_ERROR)
       })
   }
@@ -821,7 +1090,7 @@ export default class App {
     return this.session.getTabId()
   }
 
-  /**
+ /**
    * Creates a named hook that expects event name, data string and msg direction (up/down),
    * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
    * @returns {(msgType: string, data: string, dir: 'up' | 'down') => void}
@@ -840,6 +1109,11 @@ export default class App {
       this.send(WSChannel('websocket', channel, data, this.timestamp(), dir, msgType))
     }
   }
+  
+  clearBuffers() {
+    this.bufferedMessages1.length = 0
+    this.bufferedMessages2.length = 0
+  }
 
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
@@ -850,7 +1124,7 @@ export default class App {
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
-        this.notify.log('OpenReplay tracking stopped.')
+        this.debug.log('OpenReplay tracking stopped.')
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }

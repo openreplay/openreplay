@@ -39,9 +39,8 @@ export default class MessageLoader {
       : (b: Uint8Array) => Promise.resolve(b)
     // Each time called - new fileReader created
     const unarchived = (b: Uint8Array) => {
-      const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd
       // zstd magical numbers 40 181 47 253
-      console.log(isZstd, b[0], b[1], b[2], b[3])
+      const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd
       if (isZstd) {
        return fzstd.decompress(b)
       } else {

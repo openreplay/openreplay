@@ -18,10 +18,11 @@ interface Props {
   excludeFilterKeys?: Array<string>;
   allowedFilterKeys?: Array<string>;
   disabled?: boolean;
+  isConditional?: boolean;
 }
 
 function FilterSelection(props: Props) {
-  const { filter, onFilterClick, children, excludeFilterKeys = [], allowedFilterKeys = [], disabled = false } = props;
+  const { filter, onFilterClick, children, excludeFilterKeys = [], allowedFilterKeys = [], disabled = false, isConditional } = props;
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -66,6 +67,7 @@ function FilterSelection(props: Props) {
             onFilterClick={onFilterClick}
             excludeFilterKeys={excludeFilterKeys}
             allowedFilterKeys={allowedFilterKeys}
+            isConditional={isConditional}
           />
         </div>
       )}

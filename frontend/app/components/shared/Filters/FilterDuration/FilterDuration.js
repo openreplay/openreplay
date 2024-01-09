@@ -27,40 +27,47 @@ export default class FilterDuration extends React.PureComponent {
     const {
       minDuration,
       maxDuration,
+      isConditional,
     } = this.props;
 
     return (
-      <div className={ styles.wrapper }>
+      <div className={styles.wrapper}>
         <div className="flex items-center">
-          <span basic className={ styles.label }>{ 'Min' }</span>
+          <span basic className={styles.label}>
+            {'Min'}
+          </span>
           <Input
             min="1"
             type="number"
             placeholder="0 min"
             name="minDuration"
-            value={ fromMs(minDuration) }
-            onChange={ this.onChange }
-            onKeyPress={ this.onKeyPress }
+            value={fromMs(minDuration)}
+            onChange={this.onChange}
+            onKeyPress={this.onKeyPress}
             onFocus={() => this.setState({ focused: true })}
             onBlur={this.props.onBlur}
-            style={{ height: '26px' }}
+            style={{ height: '26px', width: '90px' }}
           />
         </div>
-        <div className="flex items-center">
-          <span basic className={ styles.label }>{ 'Max' }</span>
-          <Input
-            min="1"
-            type="number"
-            placeholder="∞ min"
-            name="maxDuration"
-            value={ fromMs(maxDuration) }
-            onChange={ this.onChange }
-            onKeyPress={ this.onKeyPress }
-            onFocus={() => this.setState({ focused: true })}
-            onBlur={this.props.onBlur}
-            style={{ height: '26px' }}
-          />
-        </div>
+        {isConditional ? null : (
+          <div className="flex items-center">
+            <span basic className={styles.label}>
+              {'Max'}
+            </span>
+            <Input
+              min="1"
+              type="number"
+              placeholder="∞ min"
+              name="maxDuration"
+              value={fromMs(maxDuration)}
+              onChange={this.onChange}
+              onKeyPress={this.onKeyPress}
+              onFocus={() => this.setState({ focused: true })}
+              onBlur={this.props.onBlur}
+              style={{ height: '26px', width: '90px' }}
+            />
+          </div>)
+        }
       </div>
     );
   }

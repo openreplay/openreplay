@@ -92,6 +92,7 @@ function TestsTable() {
           placeholder="E.g. Checkout user journey evaluation"
           style={{ marginBottom: '2em' }}
           value={newTestTitle}
+          type={'text'}
           onChange={(e) => setNewTestTitle(e.target.value)}
         />
         <Typography.Text strong>Test Objective (optional)</Typography.Text>

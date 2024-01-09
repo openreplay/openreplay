@@ -1,3 +1,4 @@
+import { stringConditional, targetConditional } from "App/constants/filterOptions";
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -509,7 +510,17 @@ export const flagConditionFilters = [
   }
 ];
 
-const pathAnalysisStartPoint = [
+export const conditionalFilters = [
+  {
+    key: FilterKey.CLICK,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Click',
+    operator: 'on',
+    operatorOptions: filterOptions.targetConditional,
+    icon: 'filters/click',
+    isEvent: true
+  },
   {
     key: FilterKey.LOCATION,
     type: FilterType.MULTIPLE,
@@ -517,15 +528,111 @@ const pathAnalysisStartPoint = [
     label: 'Visited URL',
     placeholder: 'Enter path',
     operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
+    operatorOptions: filterOptions.stringConditional,
     icon: 'filters/location',
     isEvent: true
-  }
+  },
+  {
+    key: FilterKey.CUSTOM,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.JAVASCRIPT,
+    label: 'Custom Events',
+    placeholder: 'Enter event key',
+    operator: 'is',
+    operatorOptions: filterOptions.stringConditional,
+    icon: 'filters/custom',
+    isEvent: true
+  },
+  {
+    key: FilterKey.FETCH,
+    type: FilterType.SUB_FILTERS,
+    category: FilterCategory.JAVASCRIPT,
+    operator: 'is',
+    label: 'Network Request',
+    filters: [
+      {
+        key: FilterKey.FETCH_URL,
+        type: FilterType.MULTIPLE,
+        category: FilterCategory.PERFORMANCE,
+        label: 'with URL',
+        placeholder: 'Enter path or URL',
+        operator: 'is',
+        operatorOptions: filterOptions.stringConditional,
+        icon: "filters/fetch"
+      },
+      {
+        key: FilterKey.FETCH_STATUS_CODE,
+        type: FilterType.NUMBER_MULTIPLE,
+        category: FilterCategory.PERFORMANCE,
+        label: 'with status code',
+        placeholder: 'Enter status code',
+        operator: '=',
+        operatorOptions: filterOptions.customOperators,
+        icon: "filters/fetch"
+      },
+      {
+        key: FilterKey.FETCH_METHOD,
+        type: FilterType.MULTIPLE_DROPDOWN,
+        category: FilterCategory.PERFORMANCE,
+        label: 'with method',
+        operator: 'is',
+        placeholder: 'Select method type',
+        operatorOptions: filterOptions.stringOperatorsLimited,
+        icon: 'filters/fetch',
+        options: filterOptions.methodOptions
+      },
+      {
+        key: FilterKey.FETCH_DURATION,
+        type: FilterType.NUMBER,
+        category: FilterCategory.PERFORMANCE,
+        label: 'with duration (ms)',
+        placeholder: 'E.g. 12',
+        operator: '=',
+        operatorOptions: filterOptions.customOperators,
+        icon: "filters/fetch"
+      },
+    ],
+    icon: 'filters/fetch',
+    isEvent: true
+  },
+  {
+    key: FilterKey.ERROR,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.JAVASCRIPT,
+    label: 'Error Message',
+    placeholder: 'E.g. Uncaught SyntaxError',
+    operator: 'is',
+    operatorOptions: filterOptions.stringConditional,
+    icon: 'filters/error',
+    isEvent: true
+  },
+  {
+    key: FilterKey.DURATION,
+    type: FilterType.DURATION,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
+    label: 'Duration',
+    operator: 'is',
+    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    icon: "filters/duration",
+    isEvent: false
+  },
+  {
+    key: FilterKey.FEATURE_FLAG,
+    type: FilterType.STRING,
+    category: FilterCategory.METADATA,
+    label: 'Feature Flag',
+    operator: 'is',
+    operatorOptions: filterOptions.stringConditional,
+    isEvent: false
+  },
 ];
 
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {
   return flagConditionFilters.findIndex(f => f.key === i.key) === -1;
+}).map(i => i.key);
+export const nonConditionalFlagFilters = filters.filter(i => {
+  return conditionalFilters.findIndex(f => f.key === i.key) === -1;
 }).map(i => i.key);
 
 export const clickmapFilter = {
@@ -577,6 +684,7 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
 export let filtersMap = mapFilters(filters);
 export let liveFiltersMap = mapLiveFilters(filters);
 export let fflagsConditionsMap = mapFilters(flagConditionFilters);
+export let conditionalFiltersMap = mapFilters(conditionalFilters);
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
@@ -622,6 +730,26 @@ export const addElementToFlagConditionsMap = (
   icon = 'filters/metadata'
 ) => {
   fflagsConditionsMap[key] = {
+    key,
+    type,
+    category,
+    label: capitalize(key),
+    operator: operator,
+    operatorOptions,
+    icon,
+    isLive: true
+  };
+};
+
+export const addElementToConditionalFiltersMap = (
+  category = FilterCategory.METADATA,
+  key,
+  type = FilterType.MULTIPLE,
+  operator = 'is',
+  operatorOptions = filterOptions.stringOperators,
+  icon = 'filters/metadata'
+) => {
+  conditionalFiltersMap[key] = {
     key,
     type,
     category,
