@@ -9,7 +9,7 @@ describe('BatchWriter', () => {
 
   beforeEach(() => {
     onBatchMock = jest.fn()
-    batchWriter = new BatchWriter(1, 123456789, 'example.com', onBatchMock, '123')
+    batchWriter = new BatchWriter(1, 123456789, 'example.com', onBatchMock, '123', () => null)
   })
 
   afterEach(() => {

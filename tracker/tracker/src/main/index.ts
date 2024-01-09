@@ -315,6 +315,45 @@ export default class API {
     }
   }
 
+  /**
+   * Starts offline session recording. Keep in mind that only user device time will be used for timestamps.
+   * (no backend delay sync)
+   *
+   * @param {Object} startOpts - options for session start, same as .start()
+   * @param {Function} onSessionSent - callback that will be called once session is fully sent
+   * @returns methods to manipulate buffer:
+   *
+   * saveBuffer - to save it in localStorage
+   *
+   * getBuffer - returns current buffer
+   *
+   * setBuffer - replaces current buffer with given
+   * */
+  startOfflineRecording(startOpts: Partial<StartOptions>, onSessionSent: () => void) {
+    if (this.browserEnvCheck()) {
+      if (this.app === null) {
+        return Promise.reject('Tracker not initialized')
+      }
+      return this.app.offlineRecording(startOpts, onSessionSent)
+    } else {
+      return Promise.reject('Trying to start not in browser.')
+    }
+  }
+
+  /**
+   * Uploads the stored session buffer to backend
+   * @returns promise that resolves once messages are loaded, it has to be awaited
+   * so the session can be uploaded properly
+   * @resolve {boolean} - if messages were loaded successfully
+   * @reject {string} - error message
+   * */
+  uploadOfflineRecording() {
+    if (this.app === null) {
+      return
+    }
+    return this.app.uploadOfflineRecording()
+  }
+
   stop(): string | undefined {
     if (this.app === null) {
       return

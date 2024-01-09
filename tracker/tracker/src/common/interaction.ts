@@ -29,10 +29,15 @@ export type ToWorkerData =
   | { type: 'compressed'; batch: Uint8Array }
   | { type: 'uncompressed'; batch: Uint8Array }
   | 'forceFlushBatch'
+  | 'check_queue'
 
 type Failure = {
   type: 'failure'
   reason: string
+}
+
+type QEmpty = {
+  type: 'queue_empty'
 }
 
 export type FromWorkerData =
@@ -40,3 +45,4 @@ export type FromWorkerData =
   | Failure
   | 'not_init'
   | { type: 'compress'; batch: Uint8Array }
+  | QEmpty
