@@ -37,7 +37,6 @@ export default Record(
 
       toData() {
         const js = this.toJS();
-        console.log(js, this);
         delete js.key;
         delete js.gdpr;
         return js;
