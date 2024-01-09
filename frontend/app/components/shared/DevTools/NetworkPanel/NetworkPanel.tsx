@@ -18,6 +18,7 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import WSModal from './WSModal'
 
 const INDEX_KEY = 'network';
 
@@ -28,6 +29,7 @@ const CSS = 'css';
 const IMG = 'img';
 const MEDIA = 'media';
 const OTHER = 'other';
+const WS = 'websocket';
 
 const TYPE_TO_TAB = {
   [ResourceType.XHR]: XHR,
@@ -36,10 +38,11 @@ const TYPE_TO_TAB = {
   [ResourceType.CSS]: CSS,
   [ResourceType.IMG]: IMG,
   [ResourceType.MEDIA]: MEDIA,
+  [ResourceType.WS]: WS,
   [ResourceType.OTHER]: OTHER,
 };
 
-const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER] as const;
+const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS] as const;
 const TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
@@ -156,6 +159,8 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
     resourceList = [],
     fetchListNow = [],
     resourceListNow = [],
+    websocketList = [],
+    websocketListNow = [],
   } = tabStates[currentTab];
 
   return (
@@ -170,11 +175,19 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
+      websocketList={websocketList as WSMessage[]}
+      websocketListNow={websocketListNow as WSMessage[]}
     />
   );
 }
 
-function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number, panelHeight: number }) {
+function MobileNetworkPanelCont({
+  startedAt,
+  panelHeight,
+}: {
+  startedAt: number;
+  panelHeight: number;
+}) {
   const { player, store } = React.useContext(MobilePlayerContext);
 
   const domContentLoadedTime = undefined;
@@ -185,6 +198,8 @@ function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number,
     resourceList = [],
     fetchListNow = [],
     resourceListNow = [],
+    websocketList = [],
+    websocketListNow = [],
   } = store.get();
 
   return (
@@ -200,8 +215,20 @@ function MobileNetworkPanelCont({ startedAt, panelHeight }: { startedAt: number,
       resourceListNow={resourceListNow}
       player={player}
       startedAt={startedAt}
+      // @ts-ignore
+      websocketList={websocketList}
+      // @ts-ignore
+      websocketListNow={websocketListNow}
     />
   );
+}
+
+type WSMessage = Timed & {
+  channelName: string;
+  data: string;
+  timestamp: number;
+  dir: 'up' | 'down';
+  messageType: string;
 }
 
 interface Props {
@@ -218,6 +245,8 @@ interface Props {
   resourceList: Timed[];
   fetchListNow: Timed[];
   resourceListNow: Timed[];
+  websocketList: Array<WSMessage>;
+  websocketListNow: Array<WSMessage>;
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
@@ -237,6 +266,7 @@ const NetworkPanelComp = observer(
     startedAt,
     isMobile,
     panelHeight,
+    websocketList,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -250,6 +280,14 @@ const NetworkPanelComp = observer(
     const filter = devTools[INDEX_KEY].filter;
     const activeTab = devTools[INDEX_KEY].activeTab;
     const activeIndex = devTools[INDEX_KEY].index;
+
+    const socketList = useMemo(
+      () =>
+        websocketList.filter(
+          (ws, i, arr) => arr.findIndex((it) => it.channelName === ws.channelName) === i
+        ),
+      [websocketList]
+    );
 
     const list = useMemo(
       () =>
@@ -283,8 +321,20 @@ const NetworkPanelComp = observer(
               })
           )
           .concat(fetchList)
+          .concat(
+            socketList.map((ws) => ({
+              ...ws,
+              type: 'websocket',
+              method: 'ws',
+              url: ws.channelName,
+              name: ws.channelName,
+              status: '101',
+              duration: 0,
+              transferredBodySize: 0,
+            }))
+          )
           .sort((a, b) => a.time - b.time),
-      [resourceList.length, fetchList.length]
+      [resourceList.length, fetchList.length, socketList]
     );
 
     let filteredList = useMemo(() => {
@@ -354,6 +404,18 @@ const NetworkPanelComp = observer(
     }, [domContentLoadedTime, loadTime]);
 
     const showDetailsModal = (item: any) => {
+      if (item.type === 'websocket') {
+        const socketMsgList = websocketList.filter((ws) => ws.channelName === item.channelName);
+        console.log(socketMsgList)
+
+        return showModal(
+          <WSModal
+            socketMsgList={socketMsgList}
+          />, {
+            right: true, width: 700,
+          }
+        )
+      }
       setIsDetailsModalActive(true);
       showModal(
         <FetchDetailsModal

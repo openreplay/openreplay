@@ -64,4 +64,9 @@ public class ORTrackerConnector: NSObject {
     open func userAnonymousID(_ userID: String) {
         Openreplay.shared.userAnonymousID(userID)
     }
+    
+    @objc(networkRequest:method:requestJSON:responseJSON:status:duration:)
+    open func networkRequest(_ url: String, method: String, requestJSON: String, responseJSON: String, status: NSNumber, duration: NSNumber) {
+        Openreplay.shared.networkRequest(url: url, method: method, requestJSON: requestJSON, responseJSON: responseJSON, status: Int(truncating: status), duration: UInt64(truncating: duration))
+    }
 }

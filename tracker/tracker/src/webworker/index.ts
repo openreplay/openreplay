@@ -119,7 +119,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       initiateRestart()
       return
     }
-    sender.sendCompressed(data.batch)
+    data.batch && sender.sendCompressed(data.batch)
   }
   if (data.type === 'uncompressed') {
     if (!sender) {
@@ -127,7 +127,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       initiateRestart()
       return
     }
-    sender.sendUncompressed(data.batch)
+    data.batch && sender.sendUncompressed(data.batch)
   }
 
   if (data.type === 'start') {

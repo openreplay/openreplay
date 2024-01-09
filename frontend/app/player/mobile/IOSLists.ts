@@ -10,7 +10,7 @@ const SIMPLE_LIST_NAMES = [
   "frustrations",
   "performance"
 ] as const
-const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const
+const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack", "websocket" ] as const
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES ] as const
 

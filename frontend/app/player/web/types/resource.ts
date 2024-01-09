@@ -9,6 +9,7 @@ export const enum ResourceType {
   CSS = 'css',
   IMG = 'img',
   MEDIA = 'media',
+  WS = 'websocket',
   OTHER = 'other',
 }
 

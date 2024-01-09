@@ -1254,6 +1254,30 @@ func DecodeNetworkRequest(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeWSChannel(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &WSChannel{}
+	if msg.ChType, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ChannelName, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Data, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Dir, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.MessageType, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeInputChange(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &InputChange{}
@@ -1991,6 +2015,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePartitionedMessage(reader)
 	case 83:
 		return DecodeNetworkRequest(reader)
+	case 84:
+		return DecodeWSChannel(reader)
 	case 112:
 		return DecodeInputChange(reader)
 	case 113:

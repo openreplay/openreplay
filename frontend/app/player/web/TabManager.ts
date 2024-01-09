@@ -1,12 +1,21 @@
-import type { Store } from "Player";
-import { getResourceFromNetworkRequest, getResourceFromResourceTiming, Log, ResourceType } from "Player";
-import ListWalker from "Player/common/ListWalker";
-import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, InitialLists, State as ListsState } from "Player/web/Lists";
-import CanvasManager from "Player/web/managers/CanvasManager";
-import { VElement } from "Player/web/managers/DOM/VirtualDOM";
-import PagesManager from "Player/web/managers/PagesManager";
-import PerformanceTrackManager from "Player/web/managers/PerformanceTrackManager";
-import WindowNodeCounter from "Player/web/managers/WindowNodeCounter";
+import type { Store } from 'Player';
+import {
+  getResourceFromNetworkRequest,
+  getResourceFromResourceTiming,
+  Log,
+  ResourceType,
+} from 'Player';
+import ListWalker from 'Player/common/ListWalker';
+import Lists, {
+  INITIAL_STATE as LISTS_INITIAL_STATE,
+  InitialLists,
+  State as ListsState,
+} from 'Player/web/Lists';
+import CanvasManager from 'Player/web/managers/CanvasManager';
+import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
+import PagesManager from 'Player/web/managers/PagesManager';
+import PerformanceTrackManager from 'Player/web/managers/PerformanceTrackManager';
+import WindowNodeCounter from 'Player/web/managers/WindowNodeCounter';
 import {
   CanvasNode,
   ConnectionInformation,
@@ -15,22 +24,22 @@ import {
   ResourceTiming,
   SetPageLocation,
   SetViewportScroll,
-  SetViewportSize
-} from "Player/web/messages";
-import { isDOMType } from "Player/web/messages/filters.gen";
-import Screen from "Player/web/Screen/Screen";
+  SetViewportSize,
+} from 'Player/web/messages';
+import { isDOMType } from 'Player/web/messages/filters.gen';
+import Screen from 'Player/web/Screen/Screen';
 // @ts-ignore
-import { Decoder } from "syncod";
-import { TYPES as EVENT_TYPES } from "Types/session/event";
-import type { PerformanceChartPoint } from "./managers/PerformanceTrackManager";
+import { Decoder } from 'syncod';
+import { TYPES as EVENT_TYPES } from 'Types/session/event';
+import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 
 export interface TabState extends ListsState {
-  performanceAvailability?: PerformanceTrackManager['availability']
-  performanceChartData: PerformanceChartPoint[],
-  performanceChartTime: PerformanceChartPoint[]
-  cssLoading: boolean
-  location: string
-  urlsList: SetPageLocation[]
+  performanceAvailability?: PerformanceTrackManager['availability'];
+  performanceChartData: PerformanceChartPoint[];
+  performanceChartTime: PerformanceChartPoint[];
+  cssLoading: boolean;
+  location: string;
+  urlsList: SetPageLocation[];
 }
 
 /**
@@ -46,10 +55,10 @@ export default class TabSessionManager {
     cssLoading: false,
     location: '',
     urlsList: [],
-  }
+  };
 
   public locationManager: ListWalker<SetPageLocation> = new ListWalker();
-  private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
+  private locationEventManager: ListWalker<any> /*<LocationEvent>*/ = new ListWalker();
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
   private connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
   private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
@@ -61,8 +70,10 @@ export default class TabSessionManager {
 
   public readonly decoder = new Decoder();
   private lists: Lists;
-  private navigationStartOffset = 0
-  private canvasManagers: { [key: string]: { manager: CanvasManager, start: number, running: boolean } } = {}
+  private navigationStartOffset = 0;
+  private canvasManagers: {
+    [key: string]: { manager: CanvasManager; start: number; running: boolean };
+  } = {};
   private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
   constructor(
@@ -70,36 +81,37 @@ export default class TabSessionManager {
     private readonly state: Store<{ tabStates: { [tabId: string]: TabState } }>,
     private readonly screen: Screen,
     private readonly id: string,
-    private readonly setSize: ({ height, width }: { height: number, width: number }) => void,
+    private readonly setSize: ({ height, width }: { height: number; width: number }) => void,
     private readonly sessionStart: number,
-    initialLists?: Partial<InitialLists>,
+    initialLists?: Partial<InitialLists>
   ) {
-    this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
-    this.lists = new Lists(initialLists)
-    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Movable" module
+    this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading);
+    this.lists = new Lists(initialLists);
+    initialLists?.event?.forEach((e: Record<string, string>) => {
+      // TODO: to one of "Movable" module
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);
       }
-    })
+    });
   }
 
   public getNode = (id: number) => {
-    return this.pagesManager.getNode(id)
-  }
+    return this.pagesManager.getNode(id);
+  };
 
   public updateLists(lists: Partial<InitialLists>) {
     Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
-      const currentList = this.lists.lists[key]
-      lists[key]!.forEach(item => currentList.insert(item))
-    })
+      const currentList = this.lists.lists[key];
+      lists[key]!.forEach((item) => currentList.insert(item));
+    });
     lists?.event?.forEach((e: Record<string, string>) => {
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);
       }
-    })
-    const eventCount = lists?.event?.length || 0
+    });
+    const eventCount = lists?.event?.length || 0;
 
-    const currentState = this.state.get()
+    const currentState = this.state.get();
     this.state.update({
       // @ts-ignore comes from parent state
       eventCount: currentState.eventCount + eventCount,
@@ -108,9 +120,9 @@ export default class TabSessionManager {
         [this.id]: {
           ...currentState.tabStates[this.id],
           ...this.lists.getFullListsState(),
-        }
-      }
-    })
+        },
+      },
+    });
   }
 
   updateLocalState(state: Partial<TabState>) {
@@ -119,22 +131,22 @@ export default class TabSessionManager {
         ...this.state.get().tabStates,
         [this.id]: {
           ...this.state.get().tabStates[this.id],
-          ...state
-        }
-      }
-    })
+          ...state,
+        },
+      },
+    });
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
-    this.screen.displayFrame(!cssLoading)
+    this.screen.displayFrame(!cssLoading);
     this.updateLocalState({
-      cssLoading
-    })
+      cssLoading,
+    });
     this.state.update({
-    // @ts-ignore
-      ready: !this.state.get().messagesLoading && !cssLoading
-    })
-  }
+      // @ts-ignore
+      ready: !this.state.get().messagesLoading && !cssLoading,
+    });
+  };
 
   public resetMessageManagers() {
     this.locationEventManager = new ListWalker();
@@ -144,11 +156,10 @@ export default class TabSessionManager {
     this.scrollManager = new ListWalker();
     this.resizeManager = new ListWalker();
 
-    this.performanceTrackManager = new PerformanceTrackManager()
+    this.performanceTrackManager = new PerformanceTrackManager();
     this.windowNodeCounter = new WindowNodeCounter();
-    this.pagesManager = new PagesManager(this.screen, this.session.isMobile, this.setCSSLoading)
+    this.pagesManager = new PagesManager(this.screen, this.session.isMobile, this.setCSSLoading);
   }
-
 
   distributeMessage(msg: Message): void {
     switch (msg.tp) {
@@ -166,7 +177,6 @@ export default class TabSessionManager {
           );
           this.canvasManagers[managerId] = { manager, start: msg.timestamp, running: false };
           this.canvasReplayWalker.append(msg);
-
         }
         break;
       case MType.SetPageLocation:
@@ -185,7 +195,7 @@ export default class TabSessionManager {
         this.performanceTrackManager.append(msg);
         break;
       case MType.SetPageVisibility:
-        this.performanceTrackManager.handleVisibility(msg)
+        this.performanceTrackManager.handleVisibility(msg);
         break;
       case MType.ConnectionInformation:
         this.connectionInfoManger.append(msg);
@@ -199,18 +209,23 @@ export default class TabSessionManager {
         this.lists.lists.log.append(
           // @ts-ignore : TODO: enums in the message schema
           Log(msg)
-        )
+        );
         break;
       case MType.ResourceTimingDeprecated:
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
         if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
-          this.lists.lists.resource.insert(getResourceFromResourceTiming(msg as ResourceTiming, this.sessionStart))
+          this.lists.lists.resource.insert(
+            getResourceFromResourceTiming(msg as ResourceTiming, this.sessionStart)
+          );
         }
         break;
       case MType.Fetch:
       case MType.NetworkRequest:
-        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
+        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart));
+        break;
+      case MType.WsChannel:
+        this.lists.lists.websocket.insert(msg);
         break;
       case MType.Redux:
         this.lists.lists.redux.append(msg);
@@ -222,8 +237,8 @@ export default class TabSessionManager {
         this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
-        this.lists.lists.zustand.append(msg)
-        break
+        this.lists.lists.zustand.append(msg);
+        break;
       case MType.MobX:
         this.lists.lists.mobx.append(msg);
         break;
@@ -254,8 +269,8 @@ export default class TabSessionManager {
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
         }
-        this.performanceTrackManager.addNodeCountPointIfNeed(msg.time)
-        isDOMType(msg.tp) && this.pagesManager.appendMessage(msg)
+        this.performanceTrackManager.addNodeCountPointIfNeed(msg.time);
+        isDOMType(msg.tp) && this.pagesManager.appendMessage(msg);
         break;
     }
   }
@@ -274,13 +289,13 @@ export default class TabSessionManager {
         stateToUpdate.domContentLoadedTime = {
           time: llEvent.domContentLoadedTime + this.navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
           value: llEvent.domContentLoadedTime,
-        }
+        };
       }
       if (llEvent.loadTime != null) {
         stateToUpdate.loadTime = {
           time: llEvent.loadTime + this.navigationStartOffset,
           value: llEvent.loadTime,
-        }
+        };
       }
       if (llEvent.domBuildingTime != null) {
         stateToUpdate.domBuildingTime = llEvent.domBuildingTime;
@@ -290,7 +305,7 @@ export default class TabSessionManager {
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
       // @ts-ignore comes from parent state
-      this.state.update({ location: lastLocationMsg.url })
+      this.state.update({ location: lastLocationMsg.url });
     }
     // ConnectionInformation message is not used at this moment
     // const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
@@ -303,40 +318,42 @@ export default class TabSessionManager {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
-    Object.assign(stateToUpdate, this.lists.moveGetState(t))
+    Object.assign(stateToUpdate, this.lists.moveGetState(t));
     Object.keys(stateToUpdate).length > 0 && this.updateLocalState(stateToUpdate);
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);
     if (!!lastResize) {
-      this.setSize(lastResize)
+      this.setSize(lastResize);
     }
     this.pagesManager.moveReady(t).then(() => {
       const lastScroll = this.scrollManager.moveGetLast(t, index);
       if (!!lastScroll && this.screen.window) {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
-      const canvasMsg = this.canvasReplayWalker.moveGetLast(t)
+      const canvasMsg = this.canvasReplayWalker.moveGetLast(t);
       if (canvasMsg) {
         this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
         this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
       }
-      const runningManagers = Object.keys(this.canvasManagers).filter((key) => this.canvasManagers[key].running);
+      const runningManagers = Object.keys(this.canvasManagers).filter(
+        (key) => this.canvasManagers[key].running
+      );
       runningManagers.forEach((key) => {
         const manager = this.canvasManagers[key].manager;
         manager.move(t);
-      })
-    })
+      });
+    });
   }
 
   public decodeMessage(msg: Message) {
-    return this.decoder.decode(msg)
+    return this.decoder.decode(msg);
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
     // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-    const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
+    const headChildrenIds = msgs.filter((m) => m.parentID === 1).map((m) => m.id);
     this.pagesManager.sortPages((m1, m2) => {
       if (m1.time === m2.time) {
         if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
@@ -347,7 +364,7 @@ export default class TabSessionManager {
           if (headChildrenIds.includes(m2.id)) {
             return 1;
           }
-        }  else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
+        } else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
           const m1FromHead = headChildrenIds.includes(m1.id);
           const m2FromHead = headChildrenIds.includes(m2.id);
           if (m1FromHead && !m2FromHead) {
@@ -358,25 +375,25 @@ export default class TabSessionManager {
         }
       }
       return 0;
-    })
-  }
+    });
+  };
 
   public onFileReadSuccess = () => {
-    const stateToUpdate : Partial<Record<string,any>> = {
+    const stateToUpdate: Partial<Record<string, any>> = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvailability: this.performanceTrackManager.availability,
       urlsList: this.locationManager.list,
       ...this.lists.getFullListsState(),
-    }
+    };
 
-    this.updateLocalState(stateToUpdate)
-  }
+    this.updateLocalState(stateToUpdate);
+  };
 
   public getListsFullState = () => {
-    return this.lists.getFullListsState()
-  }
+    return this.lists.getFullListsState();
+  };
 
   clean() {
-    this.pagesManager.reset()
+    this.pagesManager.reset();
   }
 }
