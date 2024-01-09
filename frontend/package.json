@@ -19,9 +19,9 @@
     "test:ci": "jest --maxWorkers=1 --no-cache --coverage",
     "test": "jest --watch",
     "cy:open": "cypress open",
-    "cy:test": "cypress run --browser chrome",
-    "cy:test-firefox": "cypress run --browser firefox",
-    "cy:test-edge": "cypress run --browser edge"
+    "cy:test": "cypress install && cypress run --browser chrome",
+    "cy:test-firefox": "cypress install && cypress run --browser firefox",
+    "cy:test-edge": "cypress install && cypress run --browser edge"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.5",
