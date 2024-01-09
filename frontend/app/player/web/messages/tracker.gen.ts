@@ -442,6 +442,16 @@ type TrNetworkRequest = [
   transferredBodySize: number,
 ]
 
+type TrWSChannel = [
+  type: 84,
+  chType: string,
+  channelName: string,
+  data: string,
+  timestamp: number,
+  dir: string,
+  messageType: string,
+]
+
 type TrInputChange = [
   type: 112,
   id: number,
@@ -500,7 +510,7 @@ type TrCanvasNode = [
 ]
 
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode
+export type TrackerMessage = TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -949,6 +959,18 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         timestamp: tMsg[7],
         duration: tMsg[8],
         transferredBodySize: tMsg[9],
+      }
+    }
+    
+    case 84: {
+      return {
+        tp: MType.WsChannel,
+        chType: tMsg[1],
+        channelName: tMsg[2],
+        data: tMsg[3],
+        timestamp: tMsg[4],
+        dir: tMsg[5],
+        messageType: tMsg[6],
       }
     }
     

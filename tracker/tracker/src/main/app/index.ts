@@ -1,7 +1,15 @@
 import ConditionsManager from '../modules/conditionsManager.js'
 import FeatureFlags from '../modules/featureFlags.js'
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID, Type as MType, TabChange, TabData } from './messages.gen.js'
+import {
+  Timestamp,
+  Metadata,
+  UserID,
+  Type as MType,
+  TabChange,
+  TabData,
+  WSChannel,
+} from './messages.gen.js'
 import {
   now,
   adjustTimeOrigin,
@@ -264,9 +272,9 @@ export default class App {
                   this.restartAttempts += 1
                   void this.start({}, true)
                 }
+              } else {
+                this.worker?.postMessage({ type: 'compressed', batch: result })
               }
-              // @ts-ignore
-              this.worker?.postMessage({ type: 'compressed', batch: result })
             })
           } else {
             this.worker?.postMessage({ type: 'uncompressed', batch: batch })
@@ -923,6 +931,13 @@ export default class App {
           timestamp: startTimestamp || timestamp,
           projectID,
         })
+
+        this.worker.postMessage({
+          type: 'auth',
+          token,
+          beaconSizeLimit,
+        })
+
         if (!isNewSession && token === sessionToken) {
           this.debug.log('continuing session on new tab', this.session.getTabId())
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -933,12 +948,6 @@ export default class App {
           this.send(Metadata(key, value)),
         )
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-
-        this.worker.postMessage({
-          type: 'auth',
-          token,
-          beaconSizeLimit,
-        })
 
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
@@ -1081,6 +1090,26 @@ export default class App {
     return this.session.getTabId()
   }
 
+ /**
+   * Creates a named hook that expects event name, data string and msg direction (up/down),
+   * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
+   * @returns {(msgType: string, data: string, dir: 'up' | 'down') => void}
+   * */
+  trackWs(channelName: string): (msgType: string, data: string, dir: 'up' | 'down') => void {
+    const channel = channelName
+    return (msgType: string, data: string, dir: 'up' | 'down' = 'down') => {
+      if (
+        typeof msgType !== 'string' ||
+        typeof data !== 'string' ||
+        data.length > 5 * 1024 * 1024 ||
+        msgType.length > 255
+      ) {
+        return
+      }
+      this.send(WSChannel('websocket', channel, data, this.timestamp(), dir, msgType))
+    }
+  }
+  
   clearBuffers() {
     this.bufferedMessages1.length = 0
     this.bufferedMessages2.length = 0

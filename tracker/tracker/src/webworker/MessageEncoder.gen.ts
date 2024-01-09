@@ -258,6 +258,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.string(msg[5]) && this.uint(msg[6]) && this.uint(msg[7]) && this.uint(msg[8]) && this.uint(msg[9])
     break
 
+    case Messages.Type.WSChannel:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.uint(msg[4]) && this.string(msg[5]) && this.string(msg[6])
+    break
+
     case Messages.Type.InputChange:
       return  this.uint(msg[1]) && this.string(msg[2]) && this.boolean(msg[3]) && this.string(msg[4]) && this.int(msg[5]) && this.int(msg[6])
     break

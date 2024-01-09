@@ -13,6 +13,9 @@ export default function App() {
       process.env.REACT_APP_INGEST
     );
     console.log('test', Openreplay.tracker, 123123);
+    Openreplay.patchNetwork(
+      global, () => false, {}
+    )
   };
 
   const setMedatada = () => {
@@ -26,6 +29,14 @@ export default function App() {
   const setID = () => {
     Openreplay.tracker.setUserID('react-native@connector.me');
   };
+
+  const apiTest = () => {
+    fetch('https://pokeapi.co/api/v2/pokemon/ditto').then((res) => {
+      return res.json()
+    }).then((res) => {
+      console.log(res)
+    })
+  }
 
   return (
     <Openreplay.ORTouchTrackingView style={styles.container}>
@@ -47,6 +58,9 @@ export default function App() {
         </TouchableOpacity>
         <TouchableOpacity onPress={event}>
           <Text>event</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={apiTest}>
+          <Text>Request</Text>
         </TouchableOpacity>
         <Openreplay.ORTrackedInput
           style={styles.input}

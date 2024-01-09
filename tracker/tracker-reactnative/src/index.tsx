@@ -7,6 +7,8 @@ import {
   TextInput,
 } from 'react-native';
 import type { ViewProps, TextInputProps } from 'react-native';
+import network from './network'
+import type { Options as NetworkOptions } from './network'
 
 const { ORTrackerConnector } = NativeModules;
 
@@ -68,6 +70,14 @@ interface IORTrackerConnector {
   event: (name: string, payload?: string) => void;
   setUserID: (userID: string) => void;
   userAnonymousID: (userID: string) => void;
+  networkRequest: (
+    url: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    requestJSON: string,
+    responseJSON: string,
+    status: number,
+    duration: number
+  ) => void;
 }
 
 const emptyShell = {
@@ -77,13 +87,19 @@ const emptyShell = {
   event: () => null,
   setUserID: () => null,
   userAnonymousID: () => null,
+  networkRequest: () => null,
 };
+
+const patchNetwork = (ctx = global, isServiceUrl = () => false, opts: Partial<NetworkOptions>) => {
+  network(ctx, ORTrackerConnector.networkRequest, isServiceUrl, opts)
+}
 
 export default {
   tracker:
     Platform.OS === 'ios'
       ? (ORTrackerConnector as IORTrackerConnector)
       : emptyShell,
+  patchNetwork: Platform.OS === 'ios' ? patchNetwork : () => null,
   ORTouchTrackingView:
     Platform.OS === 'ios' ? RntrackerTouchTrackingView : View,
   ORSanitizedView: Platform.OS === 'ios' ? RntrackerSanitizedView : View,

@@ -226,6 +226,9 @@ export default class IOSMessageManager implements IMessageManager {
       case MType.IosNetworkCall:
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
+      case MType.WsChannel:
+        this.lists.lists.websocket.insert(msg)
+        break;
       case MType.IosEvent:
         // @ts-ignore
         this.lists.lists.event.insert({...msg, source: 'openreplay'});
