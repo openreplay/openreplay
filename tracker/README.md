@@ -32,4 +32,4 @@ npm install --save ../path/to/openreplay/monorepo/tracker/tracker
 
 ## Contributing notes
 
-Please use `dev` branch as base and target branch.
+read [CONTRIBUTING.md](./CONTRIBUTING.md)
