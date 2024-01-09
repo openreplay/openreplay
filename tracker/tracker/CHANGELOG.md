@@ -1,3 +1,9 @@
+# 12.0.0
+
+- offline session recording and manual sending
+- conditional recording with 30s buffer
+- websockets tracking hook
+
 # 11.0.3
 
 - move all logs under internal debugger

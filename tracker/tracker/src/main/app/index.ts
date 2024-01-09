@@ -1048,9 +1048,9 @@ export default class App {
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         void this.featureFlags.reloadFlags()
+        this.activityState = ActivityState.Active
 
         /** --------------- COLD START BUFFER ------------------*/
-        this.activityState = ActivityState.Active
         if (isColdStart) {
           const biggestBuffer =
             this.bufferedMessages1.length > this.bufferedMessages2.length
