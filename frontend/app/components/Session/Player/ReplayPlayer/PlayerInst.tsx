@@ -33,6 +33,7 @@ import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
+import { observer } from 'mobx-react-lite';
 
 interface IProps {
   fullView: boolean;
@@ -109,6 +110,7 @@ function Player(props: IProps) {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
+  const isInspMode = playerContext.store.get().inspectorMode;
 
   return (
     <div
@@ -118,7 +120,7 @@ function Player(props: IProps) {
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div className={cn('relative flex-1', 'overflow-hidden')}>
         <Overlay nextId={nextId} />
-        <div className={cn(stl.screenWrapper)} ref={screenWrapper} />
+        <div className={cn(stl.screenWrapper, isInspMode ? stl.solidBg : stl.checkers)} ref={screenWrapper} />
       </div>
       {!fullscreen && !!bottomBlock && (
         <div
@@ -143,7 +145,6 @@ function Player(props: IProps) {
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
           {bottomBlock === GRAPHQL && <GraphQL />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}
-          {bottomBlock === INSPECTOR && <Inspector />}
         </div>
       )}
       {!fullView ? (
@@ -168,4 +169,4 @@ export default connect(
     fullscreenOff,
     updateLastPlayedSession,
   }
-)(Player);
+)(observer(Player));

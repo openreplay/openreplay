@@ -24,7 +24,7 @@ function Player() {
     >
       <div className={cn("relative flex-1", 'overflow-visible')}>
         <Overlay isClickmap />
-        <div className={cn(stl.screenWrapper, '!overflow-y-scroll')} style={{ maxHeight: 800 }} ref={screenWrapper} />
+        <div className={cn(stl.screenWrapper, stl.checkers, '!overflow-y-scroll')} style={{ maxHeight: 800 }} ref={screenWrapper} />
       </div>
     </div>
   );

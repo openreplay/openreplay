@@ -52,7 +52,7 @@ function Player(props: IProps) {
     >
       <div className="relative flex-1 overflow-hidden">
         <Overlay closedLive={closedLive} />
-        <div className={cn(stl.screenWrapper)} ref={screenWrapper} />
+        <div className={cn(stl.screenWrapper, stl.checkers)} ref={screenWrapper} />
       </div>
       {bottomBlock === CONSOLE ? (
         <div style={{ maxWidth, width: '100%' }}>

@@ -34,6 +34,7 @@ import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
 import UserTestManager from '../modules/userTesting/index.js'
+import TagWatcher from '../modules/tagWatcher.js'
 
 import type {
   Options as WebworkerOptions,
@@ -179,6 +180,7 @@ export default class App {
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
+  private tagWatcher: TagWatcher
 
   constructor(
     projectKey: string,
@@ -230,6 +232,7 @@ export default class App {
     this.session = new Session(this, this.options)
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
     this.featureFlags = new FeatureFlags(this)
+    this.tagWatcher = new TagWatcher(this.sessionStorage, this.debug.error)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -1234,6 +1237,7 @@ export default class App {
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
         this.debug.log('OpenReplay tracking stopped.')
+        this.tagWatcher.clear()
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
