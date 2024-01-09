@@ -7,9 +7,10 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "alwaysStrict": true,
-    "target": "es6",
+    "target": "es2017",
     "module": "es6",
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true
   },
   "exclude": ["**/*.test.ts"]
 }
