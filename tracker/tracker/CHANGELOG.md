@@ -1,3 +1,7 @@
+# 11.0.4
+
+- some additional security for canvas capture (check if canvas el itself is obscured/ignored)
+
 # 11.0.3
 
 - move all logs under internal debugger
