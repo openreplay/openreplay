@@ -27,7 +27,12 @@ class CanvasRecorder {
   startTracking() {
     this.app.nodes.attachNodeCallback((node: Node): void => {
       const id = this.app.nodes.getID(node)
-      if (!id || !hasTag(node, 'canvas') || this.snapshots[id]) {
+      if (!id) {
+        return
+      }
+
+      const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
+      if (isIgnored || !hasTag(node, 'canvas') || this.snapshots[id]) {
         return
       }
       const ts = this.app.timestamp()
