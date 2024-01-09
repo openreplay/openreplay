@@ -1,4 +1,4 @@
-const WATCHED_TAGS_KEY = '__or__watched_tags__'
+export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
   intervals: Record<string, ReturnType<typeof setInterval>> = {}
@@ -7,18 +7,15 @@ class TagWatcher {
   constructor(
     private readonly sessionStorage: Storage,
     private readonly errLog: (args: any[]) => void,
+    private readonly onTag: (tag: string) => void,
   ) {
     const tags = sessionStorage.getItem(WATCHED_TAGS_KEY)?.split(',') || []
     this.setTags(tags)
   }
 
-  fetchTags() {
-    // fetch (tags)
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(['div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
-      }, 1000)
-    })
+  async fetchTags() {
+    return fetch('https://api.openreplay.com/tags')
+      .then((r) => r.json())
       .then((tags: string[]) => {
         this.setTags(tags)
         this.sessionStorage.setItem(WATCHED_TAGS_KEY, tags.join(',') || '')
@@ -43,7 +40,7 @@ class TagWatcher {
     if (this.intervals[tag]) {
       clearInterval(this.intervals[tag])
     }
-    console.log(`Tag ${tag} has been rendered`)
+    this.onTag(tag)
   }
 
   clear() {
