@@ -55,8 +55,8 @@ function PlayerBlockHeader(props: any) {
       return { label: key, value };
     });
 
-  const TABS = [props.tabs.EVENTS].map((tab) => ({
-    text: tab,
+  const TABS = Object.keys(props.tabs).map((tab) => ({
+    text: props.tabs[tab],
     key: tab,
   }));
 
