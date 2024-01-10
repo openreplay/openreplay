@@ -7,8 +7,8 @@ import {
   TextInput,
 } from 'react-native';
 import type { ViewProps, TextInputProps } from 'react-native';
-import network from './network'
-import type { Options as NetworkOptions } from './network'
+import network from './network';
+import type { Options as NetworkOptions } from './network';
 
 const { ORTrackerConnector } = NativeModules;
 
@@ -90,9 +90,17 @@ const emptyShell = {
   networkRequest: () => null,
 };
 
-const patchNetwork = (ctx = global, isServiceUrl = () => false, opts: Partial<NetworkOptions>) => {
-  network(ctx, ORTrackerConnector.networkRequest, isServiceUrl, opts)
-}
+let patched = false;
+const patchNetwork = (
+  ctx = global,
+  isServiceUrl = () => false,
+  opts: Partial<NetworkOptions>
+) => {
+  if (!patched) {
+    network(ctx, ORTrackerConnector.networkRequest, isServiceUrl, opts);
+    patched = true;
+  }
+};
 
 export default {
   tracker:
