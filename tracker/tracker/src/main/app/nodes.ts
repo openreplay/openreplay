@@ -16,6 +16,10 @@ export default class Nodes {
     this.nodeCallbacks.push(nodeCallback)
   }
 
+  scanTree = (cb: (node: Node | void) => void) => {
+    this.nodes.forEach((node) => cb(node))
+  }
+
   attachNodeListener(node: Node, type: string, listener: EventListener, useCapture = true): void {
     const id = this.getID(node)
     if (id === undefined) {
