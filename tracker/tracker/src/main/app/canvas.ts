@@ -25,40 +25,45 @@ class CanvasRecorder {
   }
 
   startTracking() {
+    this.app.nodes.scanTree(this.handleCanvasEl)
     this.app.nodes.attachNodeCallback((node: Node): void => {
-      const id = this.app.nodes.getID(node)
-      if (!id) {
-        return
-      }
-
-      const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
-      if (isIgnored || !hasTag(node, 'canvas') || this.snapshots[id]) {
-        return
-      }
-      const ts = this.app.timestamp()
-      this.snapshots[id] = {
-        images: [],
-        createdAt: ts,
-      }
-      const canvasMsg = CanvasNode(id.toString(), ts)
-      this.app.send(canvasMsg as Message)
-      const int = setInterval(() => {
-        const cid = this.app.nodes.getID(node)
-        const canvas = cid ? this.app.nodes.getNode(cid) : undefined
-        if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
-          this.app.debug.log('Canvas element not in sync')
-          clearInterval(int)
-        } else {
-          const snapshot = captureSnapshot(canvas, this.options.quality)
-          this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
-          if (this.snapshots[id].images.length > 9) {
-            this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
-            this.snapshots[id].images = []
-          }
-        }
-      }, this.interval)
-      this.intervals.push(int)
+      this.handleCanvasEl(node)
     })
+  }
+
+  handleCanvasEl = (node: Node) => {
+    const id = this.app.nodes.getID(node)
+    if (!id || !hasTag(node, 'canvas')) {
+      return
+    }
+
+    const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
+    if (isIgnored || !hasTag(node, 'canvas') || this.snapshots[id]) {
+      return
+    }
+    const ts = this.app.timestamp()
+    this.snapshots[id] = {
+      images: [],
+      createdAt: ts,
+    }
+    const canvasMsg = CanvasNode(id.toString(), ts)
+    this.app.send(canvasMsg as Message)
+    const int = setInterval(() => {
+      const cid = this.app.nodes.getID(node)
+      const canvas = cid ? this.app.nodes.getNode(cid) : undefined
+      if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
+        this.app.debug.log('Canvas element not in sync')
+        clearInterval(int)
+      } else {
+        const snapshot = captureSnapshot(canvas, this.options.quality)
+        this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
+        if (this.snapshots[id].images.length > 9) {
+          this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
+          this.snapshots[id].images = []
+        }
+      }
+    }, this.interval)
+    this.intervals.push(int)
   }
 
   sendSnaps(images: { data: string; id: number }[], canvasId: number, createdAt: number) {
