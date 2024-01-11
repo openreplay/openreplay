@@ -1,3 +1,7 @@
+## 7.0.3
+
+- small fix for canvas context tracking
+
 ## 7.0.1
 
 - mark live sessions with ux test active

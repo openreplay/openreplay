@@ -4,6 +4,15 @@
 - conditional recording with 30s buffer
 - websockets tracking hook
 
+# 11.0.5
+
+- add method to restart canvas tracking (in case of context recreation)
+- scan dom tree for canvas els on tracker start
+
+# 11.0.4
+
+- some additional security for canvas capture (check if canvas el itself is obscured/ignored)
+
 # 11.0.3
 
 - move all logs under internal debugger

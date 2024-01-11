@@ -115,6 +115,7 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: ILogLevel
+  __save_canvas_locally?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
@@ -202,6 +203,7 @@ export default class App {
         __is_snippet: false,
         __debug_report_edp: null,
         __debug__: LogLevel.Silent,
+        __save_canvas_locally: false,
         localStorage: null,
         sessionStorage: null,
         disableStringDict: false,
@@ -629,6 +631,7 @@ export default class App {
 
     return needNewSessionID || !sessionToken
   }
+
   /**
    * start buffering messages without starting the actual session, which gives
    * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
@@ -1050,6 +1053,17 @@ export default class App {
         void this.featureFlags.reloadFlags()
         this.activityState = ActivityState.Active
 
+        if (canvasEnabled) {
+          this.canvasRecorder =
+            this.canvasRecorder ??
+            new CanvasRecorder(this, {
+              fps: canvasFPS,
+              quality: canvasQuality,
+              isDebug: this.options.__save_canvas_locally,
+            })
+          this.canvasRecorder.startTracking()
+        }
+
         /** --------------- COLD START BUFFER ------------------*/
         if (isColdStart) {
           const biggestBuffer =
@@ -1065,13 +1079,6 @@ export default class App {
         } else {
           this.observer.observe()
           this.ticker.start()
-        }
-
-        if (canvasEnabled) {
-          this.canvasRecorder =
-            this.canvasRecorder ??
-            new CanvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
-          this.canvasRecorder.startTracking()
         }
 
         // get rid of onStart ?
@@ -1124,6 +1131,10 @@ export default class App {
         this.signalError(START_ERROR, [])
         return UnsuccessfulStart(START_ERROR)
       })
+  }
+
+  restartCanvasTracking = () => {
+    this.canvasRecorder?.restartTracking()
   }
 
   flushBuffer = async (buffer: Message[]) => {
@@ -1196,7 +1207,7 @@ export default class App {
   /**
    * Creates a named hook that expects event name, data string and msg direction (up/down),
    * it will skip any message bigger than 5 mb or event name bigger than 255 symbols
-   * @returns {(msgType: string, data: string, dir: 'up' | 'down') => void}
+   * @returns {(msgType: string, data: string, dir: "up" | "down") => void}
    * */
   trackWs(channelName: string): (msgType: string, data: string, dir: 'up' | 'down') => void {
     const channel = channelName

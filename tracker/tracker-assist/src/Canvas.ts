@@ -9,7 +9,6 @@ export default class CanvasRecorder {
     private readonly onStream: (stream: MediaStream) => void,
     private readonly logError: (...args: any[]) => void,
   ) {
-    this.canvas.getContext('2d', { alpha: true, })
     const stream = this.canvas.captureStream(this.fps)
     this.emitStream(stream)
   }
