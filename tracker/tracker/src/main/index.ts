@@ -223,6 +223,13 @@ export default class API {
     return this.featureFlags.flags
   }
 
+  public restartCanvasTracking = () => {
+    if (this.app === null) {
+      return
+    }
+    this.app.restartCanvasTracking()
+  }
+
   use<T>(fn: (app: App | null, options?: Options) => T): T {
     return fn(this.app, this.options)
   }

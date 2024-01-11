@@ -10,6 +10,7 @@ interface CanvasSnapshot {
 interface Options {
   fps: number
   quality: 'low' | 'medium' | 'high'
+  isDebug?: boolean
 }
 
 class CanvasRecorder {
@@ -25,10 +26,17 @@ class CanvasRecorder {
   }
 
   startTracking() {
+    setTimeout(() => {
+      this.app.nodes.scanTree(this.handleCanvasEl)
+      this.app.nodes.attachNodeCallback((node: Node): void => {
+        this.handleCanvasEl(node)
+      })
+    }, 500)
+  }
+
+  restartTracking = () => {
+    this.clear()
     this.app.nodes.scanTree(this.handleCanvasEl)
-    this.app.nodes.attachNodeCallback((node: Node): void => {
-      this.handleCanvasEl(node)
-    })
   }
 
   handleCanvasEl = (node: Node) => {
@@ -74,7 +82,9 @@ class CanvasRecorder {
     images.forEach((snapshot) => {
       const blob = dataUrlToBlob(snapshot.data)[0]
       formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
-      // saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      if (this.options.isDebug) {
+        saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      }
     })
 
     fetch(this.app.options.ingestPoint + '/v1/web/images', {

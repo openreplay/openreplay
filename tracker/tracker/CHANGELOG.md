@@ -1,3 +1,8 @@
+# 11.0.5
+
+- add method to restart canvas tracking (in case of context recreation)
+- scan dom tree for canvas els on tracker start
+
 # 11.0.4
 
 - some additional security for canvas capture (check if canvas el itself is obscured/ignored)

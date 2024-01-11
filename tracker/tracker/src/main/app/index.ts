@@ -106,6 +106,7 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: LoggerOptions
+  __save_canvas_locally?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
@@ -183,6 +184,7 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
+        __save_canvas_locally: false,
         localStorage: null,
         sessionStorage: null,
         disableStringDict: false,
@@ -702,17 +704,21 @@ export default class App {
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
+        if (canvasEnabled) {
+          this.canvasRecorder =
+            this.canvasRecorder ??
+            new CanvasRecorder(this, {
+              fps: canvasFPS,
+              quality: canvasQuality,
+              isDebug: this.options.__save_canvas_locally,
+            })
+          this.canvasRecorder.startTracking()
+        }
         // TODO: start as early as possible (before receiving the token)
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
 
-        if (canvasEnabled) {
-          this.canvasRecorder =
-            this.canvasRecorder ??
-            new CanvasRecorder(this, { fps: canvasFPS, quality: canvasQuality })
-          this.canvasRecorder.startTracking()
-        }
         this.activityState = ActivityState.Active
 
         this.notify.log('OpenReplay tracking started.')
@@ -765,6 +771,10 @@ export default class App {
         this._debug('session_start', reason)
         return UnsuccessfulStart(START_ERROR)
       })
+  }
+
+  restartCanvasTracking = () => {
+    this.canvasRecorder?.restartTracking()
   }
 
   onUxtCb = []
