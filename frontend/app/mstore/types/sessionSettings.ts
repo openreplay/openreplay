@@ -70,7 +70,7 @@ export default class SessionSettings {
     localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter)
   );
   captureRate: string = '0';
-  captureAll: boolean = false;
+  conditionalCapture: boolean = false;
   captureConditions: { name: string; captureRate: number; filters: any[] }[] = [];
   mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
   shownTimezone: 'user' | 'local';
@@ -108,8 +108,8 @@ export default class SessionSettings {
     if (parseInt(rate, 10) <= 100) this.captureRate = `${parseInt(rate, 10)}`;
   };
 
-  changeCaptureAll = (all: boolean) => {
-    this.captureAll = all;
+  changeConditionalCapture = (all: boolean) => {
+    this.conditionalCapture = all;
   };
 
   timezoneFix(defaultTimezone: Record<string, string>) {

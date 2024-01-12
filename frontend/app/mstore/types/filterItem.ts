@@ -60,7 +60,6 @@ export default class FilterItem {
   fromJson(json: any, mainFilterKey = '') {
     const isMetadata = json.type === FilterKey.METADATA;
     let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
-    console.log(_filter, json);
     if (this.isConditional) {
       _filter = conditionalFiltersMap[json.type] || conditionalFiltersMap[json.source];
     }

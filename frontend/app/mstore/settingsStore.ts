@@ -9,7 +9,7 @@ import { MENU_COLLAPSED } from 'App/constants/storageKeys';
 
 interface CaptureConditions {
   rate: number;
-  captureAll: boolean;
+  conditionalCapture: boolean;
   conditions: { name: string; captureRate: number; filters: any[] }[];
 }
 
@@ -42,7 +42,7 @@ export default class SettingsStore {
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          conditionalCapture: data.conditionalCapture,
         });
         toast.success('Settings updated successfully');
       })
@@ -58,7 +58,7 @@ export default class SettingsStore {
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          conditionalCapture: data.conditionalCapture,
         });
         this.captureRateFetched = true;
       })
@@ -74,7 +74,7 @@ export default class SettingsStore {
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          conditionalCapture: data.conditionalCapture,
           captureConditions: data.conditions,
         });
       })
@@ -91,7 +91,7 @@ export default class SettingsStore {
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          captureAll: data.captureAll,
+          conditionalCapture: data.conditionalCapture,
           captureConditions: data.conditions,
         });
         toast.success('Settings updated successfully');

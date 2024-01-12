@@ -26,8 +26,8 @@ function CaptureRate(props: Props) {
     sessionSettings: {
       captureRate,
       changeCaptureRate,
-      captureAll,
-      changeCaptureAll,
+      conditionalCapture,
+      changeConditionalCapture,
       captureConditions,
     },
     loadingCaptureRate,
@@ -52,8 +52,8 @@ function CaptureRate(props: Props) {
 
   const toggleRate = () => {
     setChanged(true);
-    const newValue = !captureAll;
-    changeCaptureAll(newValue);
+    const newValue = !conditionalCapture;
+    changeConditionalCapture(newValue);
     if (newValue) {
       changeCaptureRate('100');
     }
@@ -62,12 +62,12 @@ function CaptureRate(props: Props) {
   const onUpdate = () => {
     updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
-      captureAll,
+      conditionalCapture: conditionalCapture,
       conditions: conditions.map((c) => c.toCaptureCondition()),
     }).finally(() => setChanged(false));
   };
 
-  const updateDisabled = !changed || !isAdmin || (captureAll && conditions.length === 0);
+  const updateDisabled = !changed || !isAdmin || (conditionalCapture && conditions.length === 0);
   return (
     <Drawer
       size={'large'}
@@ -102,13 +102,13 @@ function CaptureRate(props: Props) {
               <Icon size={16} color={'black'} name={'info-circle'} />
             </Tooltip>
             <Switch
-              checked={captureAll}
+              checked={conditionalCapture}
               onChange={toggleRate}
               checkedChildren={'Conditional'}
               disabled={!isAdmin}
               unCheckedChildren={'Capture Rate'}
             />
-            {!captureAll ? (
+            {!conditionalCapture ? (
               <div className={cn('relative', { disabled: !isAdmin })}>
                 <Input
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +118,7 @@ function CaptureRate(props: Props) {
                   }}
                   value={captureRate.toString()}
                   style={{ height: '38px', width: '70px' }}
-                  disabled={captureAll}
+                  disabled={conditionalCapture}
                   min={0}
                   max={100}
                 />
@@ -131,7 +131,7 @@ function CaptureRate(props: Props) {
               </div>
             ) : null}
           </div>
-          {captureAll && isEnterprise ? (
+          {conditionalCapture && isEnterprise ? (
             <ConditionalRecordingSettings
               setChanged={setChanged}
               conditions={conditions}

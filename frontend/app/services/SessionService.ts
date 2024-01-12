@@ -27,7 +27,7 @@ export default class SettingsService {
 
   fetchCaptureConditions(
     projectId: number
-  ): Promise<{ rate: number; captureAll: boolean; conditions: any[] }> {
+  ): Promise<{ rate: number; conditionalCapture: boolean; conditions: any[] }> {
     return this.client
       .get(`/${projectId}/conditions`)
       .then((response) => response.json())
