@@ -80,7 +80,8 @@ def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False, use
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
                                 SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
-                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform 
+                                       s.created_at, s.sessions_last_check_at, s.sample_rate, s.platform,
+                                       (SELECT count(*) FROM projects_conditions WHERE project_id = s.project_id) AS conditions_count 
                                        {extra_projection}
                                 FROM public.projects AS s
                                         {role_query if user_id is not None else ""}
