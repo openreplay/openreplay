@@ -1,3 +1,7 @@
+# 11.0.6
+
+- fix blob generation for canvas capture (Cannot read properties of null (reading '1'))
+
 # 11.0.5
 
 - add method to restart canvas tracking (in case of context recreation)
