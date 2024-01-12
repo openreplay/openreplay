@@ -147,7 +147,8 @@ function CaptureRate(props: Props) {
 export default connect((state: any) => ({
   isAdmin:
     state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin']),
-  isEnterprise:
+  isEnterprise: !document.location.href.includes('app.openreplay.com') && (
     state.getIn(['user', 'account', 'edition']) === 'ee' ||
     state.getIn(['user', 'authDetails', 'edition']) === 'ee'
+  )
 }))(observer(CaptureRate));
