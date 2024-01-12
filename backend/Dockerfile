@@ -57,6 +57,7 @@ ENV TZ=UTC \
     TOPIC_TRIGGER=trigger \
     TOPIC_MOBILE_TRIGGER=mobile-trigger \
     TOPIC_CANVAS_IMAGES=canvas-images \
+    TOPIC_CANVAS_TRIGGER=canvas-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
