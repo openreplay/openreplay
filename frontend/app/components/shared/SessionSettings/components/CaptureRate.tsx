@@ -10,6 +10,7 @@ import ConditionalRecordingSettings from 'Shared/SessionSettings/components/Cond
 
 type Props = {
   isAdmin: boolean;
+  isEnterprise?: boolean;
   projectId?: number;
   setShowCaptureRate: (show: boolean) => void;
   open: boolean;
@@ -18,7 +19,7 @@ type Props = {
 
 function CaptureRate(props: Props) {
   const [conditions, setConditions] = React.useState<Conditions[]>([]);
-  const { isAdmin, projectId } = props;
+  const { isAdmin, projectId, isEnterprise } = props;
   const { settingsStore } = useStore();
   const [changed, setChanged] = useState(false);
   const {
@@ -67,7 +68,6 @@ function CaptureRate(props: Props) {
   };
 
   const updateDisabled = !changed || !isAdmin || (captureAll && conditions.length === 0);
-
   return (
     <Drawer
       size={'large'}
@@ -131,7 +131,7 @@ function CaptureRate(props: Props) {
               </div>
             ) : null}
           </div>
-          {captureAll ? (
+          {captureAll && isEnterprise ? (
             <ConditionalRecordingSettings
               setChanged={setChanged}
               conditions={conditions}
@@ -147,4 +147,7 @@ function CaptureRate(props: Props) {
 export default connect((state: any) => ({
   isAdmin:
     state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin']),
+  isEnterprise:
+    state.getIn(['user', 'account', 'edition']) === 'ee' ||
+    state.getIn(['user', 'authDetails', 'edition']) === 'ee'
 }))(observer(CaptureRate));
