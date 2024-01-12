@@ -155,7 +155,7 @@ func (v *ImageStorage) ProcessCanvas(sessID uint64, data []byte) error {
 	}
 	// Use the same workflow
 	v.writeToDiskTasks <- &Task{sessionID: sessID, images: map[string]*bytes.Buffer{msg.Name: bytes.NewBuffer(msg.Data)}, imageType: canvas}
-	log.Printf("new canvas image, sessID: %d, name: %s, size: %d mb", sessID, msg.Name, len(msg.Data)/1024/1024)
+	log.Printf("new canvas image, sessID: %d, name: %s, size: %3.3f mb", sessID, msg.Name, float64(len(msg.Data))/1024.0/1024.0)
 	return nil
 }
 
@@ -212,6 +212,7 @@ func (v *ImageStorage) writeToDisk(task *Task) {
 	}
 
 	// Write images to disk
+	saved := 0
 	for name, img := range task.images {
 		outFile, err := os.Create(path + name) // or open file in rewrite mode
 		if err != nil {
@@ -221,7 +222,9 @@ func (v *ImageStorage) writeToDisk(task *Task) {
 			log.Printf("can't copy file: %s", err.Error())
 		}
 		outFile.Close()
+		saved++
 	}
+	log.Printf("saved %d images to disk", saved)
 	return
 }
 

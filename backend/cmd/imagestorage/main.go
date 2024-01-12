@@ -61,9 +61,10 @@ func main() {
 						log.Printf("can't send session end signal to video service: %s", err)
 					}
 				}
-			}
-			if err := srv.ProcessCanvas(sessID, data); err != nil {
-				log.Printf("can't process canvas image: %s", err)
+			} else {
+				if err := srv.ProcessCanvas(sessID, data); err != nil {
+					log.Printf("can't process canvas image: %s", err)
+				}
 			}
 		}, nil, true),
 		false,
