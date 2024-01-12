@@ -80,8 +80,9 @@ class CanvasRecorder {
     }
     const formData = new FormData()
     images.forEach((snapshot) => {
-      const blob = dataUrlToBlob(snapshot.data)[0]
-      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      const blob = dataUrlToBlob(snapshot.data)
+      if (!blob) return
+      formData.append('snapshot', blob[0], `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
       if (this.options.isDebug) {
         saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
       }
@@ -119,10 +120,11 @@ function captureSnapshot(canvas: HTMLCanvasElement, quality: 'low' | 'medium' | 
   return canvas.toDataURL(imageFormat, qualityInt[quality])
 }
 
-function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] {
+function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
   const [header, base64] = dataUrl.split(',')
-  // @ts-ignore
-  const mime = header.match(/:(.*?);/)[1]
+  const encParts = header.match(/:(.*?);/)
+  if (!encParts) return null
+  const mime = encParts[1]
   const blobStr = atob(base64)
   let n = blobStr.length
   const u8arr = new Uint8Array(n)
