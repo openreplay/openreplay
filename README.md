@@ -38,11 +38,7 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/openreplay/openreplay">
-    <img src="static/openreplay-git-hero.svg">
-  </a>
-</p>
+https://github.com/openreplay/openreplay/assets/20417222/684133c4-575a-48a7-aa91-d4bf88c5436a
 
 OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web app, helping you troubleshoot issues faster.
 
