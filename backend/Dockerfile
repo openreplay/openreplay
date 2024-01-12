@@ -98,7 +98,8 @@ ENV TZ=UTC \
     # Use to set compression threshold for tracker requests (20kb by default)
     COMPRESSION_THRESHOLD="20000" \
     # Set Access-Control-* headers for tracker requests if true
-    USE_CORS=false
+    USE_CORS=false \
+    RECORD_CANVAS=true
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
