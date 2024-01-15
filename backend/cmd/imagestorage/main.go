@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -51,8 +52,23 @@ func main() {
 			cfg.TopicCanvasImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			reader := messages.NewBytesReader(data)
-			if msg, err := messages.DecodeSessionEnd(reader); err == nil {
+			checkSessionEnd := func(data []byte) (messages.Message, error) {
+				reader := messages.NewBytesReader(data)
+				msgType, err := reader.ReadUint()
+				if err != nil {
+					return nil, err
+				}
+				if msgType != messages.MsgSessionEnd {
+					return nil, fmt.Errorf("not a session end message")
+				}
+				msg, err := messages.ReadMessage(msgType, reader)
+				if err != nil {
+					return nil, fmt.Errorf("read message err: %s", err)
+				}
+				return msg, nil
+			}
+
+			if msg, err := checkSessionEnd(data); err == nil {
 				// Received session end
 				if err = srv.PrepareCanvas(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
