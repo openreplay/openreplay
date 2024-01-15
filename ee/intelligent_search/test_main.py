@@ -30,6 +30,11 @@ def endpoint():
         response = client_statup.post('autocomplete/filters', headers={'Authorization': 'Bearer ' + config('API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
         assert response.status_code == 200
 
+        response = client_statup.post('autocomplete/charts', headers={'Authorization': 'Bearer ' + config('API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "I want to see where users from US click in the page /buy", "userId": 0, "projectId": 0})
+        assert response.status_code == 200
+
+
+
 def test_functionality():
     assert endpoint() or correct_upload
 

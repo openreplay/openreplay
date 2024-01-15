@@ -4,7 +4,7 @@ from time import time
 from utils import declarations
 from auth.auth_key import api_key_auth
 from utils.prompts import FilterPrompt, ChartPrompt
-from utils.helpers import filter_sql_where_statement
+from utils.helpers import filter_sql_where_statement, filter_code_markdown
 from utils.llm_call import Completion
 from utils.event_preprocessing import split_events_selection_filter
 
@@ -29,7 +29,7 @@ async def direct_chart_call(msg: declarations.LLMQuestion):
     anyscale = Completion()
     messages = [{"role": "system", "content": ChartPrompt.chart_context}] + ChartPrompt.chart_chat_v3 + [{"role": "user", "content": msg.question}]
     result = await anyscale.send_async_request(messages=messages)
-    processed = None
+    processed = filter_code_markdown(result)
     return {'content': processed, 'raw_response': result}
 
 @router.get('/summary/session', dependencies=[Depends(api_key_auth)])
