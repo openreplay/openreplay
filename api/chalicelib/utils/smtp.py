@@ -10,6 +10,8 @@ class EmptySMTP:
     def sendmail(self, from_addr, to_addrs, msg, mail_options=(), rcpt_options=()):
         logging.error("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
 
+    def send_message(self, msg):
+        self.sendmail( msg["FROM"], msg["TO"], msg.as_string() )
 
 class SMTPClient:
     server = None

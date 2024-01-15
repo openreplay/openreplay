@@ -69,7 +69,7 @@ def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
                 r += [bcc]
             try:
                 logging.info(f"Email sending to: {r}")
-                s.sendmail(msg['FROM'], r, msg.as_string().encode('ascii'))
+                s.send_message(msg)
             except Exception as e:
                 logging.error("!!! Email error!")
                 logging.error(e)
@@ -84,7 +84,7 @@ def send_text(recipients, text, subject):
         body = MIMEText(text)
         msg.attach(body)
         try:
-            s.sendmail(msg['FROM'], recipients, msg.as_string().encode('ascii'))
+            s.send_message(msg)
         except Exception as e:
             logging.error("!! Text-email failed: " + subject),
             logging.error(e)
