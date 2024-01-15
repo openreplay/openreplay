@@ -234,8 +234,8 @@ const reducer = (state = initialState, action: IAction) => {
               errors,
               issues,
               resources,
-              stackEvents,
               userEvents,
+              stackEvents,
               userTesting
             );
             

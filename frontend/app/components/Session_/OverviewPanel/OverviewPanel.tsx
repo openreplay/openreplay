@@ -76,7 +76,7 @@ function MobileOverviewPanelCont({  issuesList }: { issuesList: Record<string, a
   )
 }
 
-function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[] }) {
+function WebOverviewPanelCont() {
   const { store } = React.useContext(PlayerContext);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -92,7 +92,6 @@ function WebOverviewPanelCont({ issuesList }: { issuesList: Record<string, any>[
   } = store.get();
 
   const stackEventList = tabStates[currentTab]?.stackList || []
-  // const eventsList = tabStates[currentTab]?.eventList || []
   const frustrationsList = tabStates[currentTab]?.frustrationsList || []
   const exceptionsList = tabStates[currentTab]?.exceptionsList || []
   const resourceListUnmap = tabStates[currentTab]?.resourceList || []

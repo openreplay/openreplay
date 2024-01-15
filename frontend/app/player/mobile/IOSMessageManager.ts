@@ -128,8 +128,13 @@ export default class IOSMessageManager implements IMessageManager {
     });
   }
 
-  _sortMessagesHack() {
+  /** empty here. Kept for consistency with normal manager */
+  sortDomRemoveMessages() {
     return;
+  }
+
+  public getListsFullState = () => {
+    return  this.lists.getFullListsState();
   }
 
   private waitingForFiles: boolean = false;
@@ -148,7 +153,7 @@ export default class IOSMessageManager implements IMessageManager {
     this.state.update(newState);
   };
 
-  public onFileReadFailed = (e: any) => {
+  public onFileReadFailed = (...e: any[]) => {
     logger.error(e);
     this.state.update({error: true});
     this.uiErrorHandler?.error('Error requesting a session file');

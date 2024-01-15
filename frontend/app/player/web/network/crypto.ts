@@ -1,5 +1,3 @@
-import { gunzipSync } from 'fflate'
-
 const u8aFromHex = (hexString:string) =>
   Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)))
 
@@ -20,24 +18,6 @@ export function decryptSessionBytes(cypher: Uint8Array, keyString: string): Prom
 	return crypto.subtle.importKey("raw", byteKey, { name: "AES-CBC" }, false, ["decrypt"])
 		.then(key => crypto.subtle.decrypt({ name: "AES-CBC", iv: iv}, key, cypher))
 		.then((bArray: ArrayBuffer) => new Uint8Array(bArray))
-		.then(async (u8Array: Uint8Array) => {
-			const isGzip = u8Array[0] === 0x1F && u8Array[1] === 0x8B && u8Array[2] === 0x08;
-			if (isGzip) {
-				const now = performance.now()
-				const data = gunzipSync(u8Array)
-				console.debug(
-					"Decompression time",
-					Math.floor(performance.now() - now) + 'ms',
-					'size',
-					Math.floor(u8Array.byteLength/1024),
-					'->',
-					Math.floor(data.byteLength/1024),
-					'kb'
-				)
-				return data
-			} else return u8Array
-		})
-	//?? TS doesn not catch the `decrypt`` returning type
 }
 
 

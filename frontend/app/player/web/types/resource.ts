@@ -83,6 +83,29 @@ interface IResource {
   responseBodySize?: number,
 }
 
+export interface IResourceTiming extends IResource {
+  name: string,
+  isRed: boolean,
+  isYellow: boolean,
+  type: ResourceType,
+  method: "GET" | "POST" | "PUT" | "DELETE" | "..",
+  success: boolean,
+  status: "2xx-3xx" | "4xx-5xx",
+  time: number,
+}
+
+export interface IResourceRequest extends IResource {
+  name: string,
+  isRed: boolean,
+  isYellow: boolean,
+  type: ResourceType.XHR | ResourceType.FETCH | ResourceType.IOS,
+  method: "GET" | "POST" | "PUT" | "DELETE" | "..",
+  success: boolean,
+  status: number,
+  time: number,
+  decodedBodySize?: number,
+}
+
 
 export const Resource = (resource: IResource) => ({
   ...resource,

@@ -27,11 +27,12 @@ export interface IMessageManager {
   onFileReadFinally(): void;
   startLoading(): void;
   resetMessageManagers(): void;
+  getListsFullState(): Record<string, unknown>
   move(t: number): any;
   distributeMessage(msg: Message): void;
   setMessagesLoading(messagesLoading: boolean): void;
   clean(): void;
-  _sortMessagesHack: (msgs: Message[]) => void;
+  sortDomRemoveMessages: (msgs: Message[]) => void;
 }
 
 export interface SetState {

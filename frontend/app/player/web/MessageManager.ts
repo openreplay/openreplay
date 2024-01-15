@@ -146,8 +146,12 @@ export default class MessageManager {
     });
   }
 
-  public _sortMessagesHack = (msgs: Message[]) => {
-    Object.values(this.tabs).forEach((tab) => tab._sortMessagesHack(msgs));
+  /**
+   * Legacy code. Iterates over all tab managers and sorts messages for their pagesManager.
+   * Ensures that RemoveNode messages with parent being <HEAD> are sorted before other RemoveNode messages.
+   * */
+  public sortDomRemoveMessages = (msgs: Message[]) => {
+    Object.values(this.tabs).forEach((tab) => tab.sortDomRemoveMessages(msgs));
   };
 
   private waitingForFiles: boolean = false;
@@ -159,7 +163,7 @@ export default class MessageManager {
     Object.values(this.tabs).forEach((tab) => tab.onFileReadSuccess?.());
   };
 
-  public onFileReadFailed = (e: any) => {
+  public onFileReadFailed = (...e: any[]) => {
     logger.error(e);
     this.state.update({ error: true });
     this.uiErrorHandler?.error('Error requesting a session file');

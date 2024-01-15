@@ -351,22 +351,25 @@ export default class TabSessionManager {
     return this.decoder.decode(msg);
   }
 
-  public _sortMessagesHack = (msgs: Message[]) => {
+  /**
+   * Legacy code. Ensures that RemoveNode messages with parent being <HEAD> are sorted before other RemoveNode messages.
+   * */
+  public sortDomRemoveMessages = (msgs: Message[]) => {
     // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-    const headChildrenIds = msgs.filter((m) => m.parentID === 1).map((m) => m.id);
+    const headChildrenMsgIds = msgs.filter((m) => m.parentID === 1).map((m) => m.id);
     this.pagesManager.sortPages((m1, m2) => {
       if (m1.time === m2.time) {
         if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
-          if (headChildrenIds.includes(m1.id)) {
+          if (headChildrenMsgIds.includes(m1.id)) {
             return -1;
           }
         } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
-          if (headChildrenIds.includes(m2.id)) {
+          if (headChildrenMsgIds.includes(m2.id)) {
             return 1;
           }
         } else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
-          const m1FromHead = headChildrenIds.includes(m1.id);
-          const m2FromHead = headChildrenIds.includes(m2.id);
+          const m1FromHead = headChildrenMsgIds.includes(m1.id);
+          const m2FromHead = headChildrenMsgIds.includes(m2.id);
           if (m1FromHead && !m2FromHead) {
             return -1;
           } else if (m2FromHead && !m1FromHead) {

@@ -65,7 +65,7 @@ export default class MFileReader extends RawMessageReader {
   }
 
   currentTab = 'back-compatability'
-  readNext(): Message & { _index?: number } | null {
+  readNext(): Message & { tabId: string; _index?: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
     }
@@ -95,6 +95,7 @@ export default class MFileReader extends RawMessageReader {
       this.currentTime = rMsg.timestamp - this.startTime
       return {
         tp: 9999,
+        tabId: '',
         time: this.currentTime,
       }
     }
