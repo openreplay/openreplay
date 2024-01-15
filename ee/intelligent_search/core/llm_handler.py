@@ -3,7 +3,7 @@ from core.llm_app import LLM_Model
 
 class Handler:
      llm_model: LLM_Model
-     llm_endpoint: LLM_Model
+     # llm_endpoint: LLM_Model
 
      def __init__(self):
          pass
@@ -14,10 +14,10 @@ class Handler:
                                 tokenizer_path=tokenizer_path,
                                 max_seq_len=max_seq_len,
                                 max_batch_size=max_batch_size)
-         self.llm_endpoint = LLM_Model(local=False) 
+         # self.llm_endpoint = LLM_Model(local=False) 
 
      def clear(self):
-         del self.llm_endpoint
+         # del self.llm_endpoint
          del self.llm_model
 
 llm_handler = Handler()

@@ -2,7 +2,7 @@ from utils.parameters import LLM_ENDPOINT, LLM_API_KEY, LLM_TEMPERATURE, \
         FREQUENCY_PENALTY, MAX_TOKENS, LLM_MODEL
 from utils.prompts import FilterPrompt, SummaryPrompt
 import openai
-
+from typing import AsyncIterator, Iterator, List
 
 class Completion:
 
@@ -21,11 +21,14 @@ class Completion:
         #       finish_reason
         # 'usage'
 
-    def send_stream_request(self, message: str, raw: bool = True, context: str = ''):
+    def send_stream_request(self, messages: List[dict[str,str]], context: str = '') -> Iterator:
         client = openai.OpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
+        if context:
+            messages = [{"role": "system", "content": context}] + messages
+
         response = client.chat.completions.create(
                 model = LLM_MODEL,
-                messages = [{"role": "user", "content": FilterPrompt.search_context_v3.format(user_question=message)}],
+                messages = messages,
                 stream = True,
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
@@ -53,11 +56,13 @@ class Completion:
             else: 
                 continue
 
-    async def send_async_request(self, message: str, raw: bool = True, context: str = ''):
+    async def send_async_request(self, messages: List[dict[str, str]], context: str = '')-> str:
         client = openai.AsyncOpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
+        if context:
+            messages = [{"role": "system", "content": context}] + messages
         response = await client.chat.completions.create(
                 model = LLM_MODEL,
-                messages = [{"role": "user", "content": FilterPrompt.search_context_v3.format(user_question=message)}],
+                messages = messages,
                 frequency_penalty=FREQUENCY_PENALTY,
                 max_tokens=MAX_TOKENS,
                 temperature=LLM_TEMPERATURE
@@ -65,7 +70,7 @@ class Completion:
         await client.close()
         return response.choices[0].message.content
 
-    async def send_async_stream_request(self, message: str, raw: bool = True, context: str = ''):
+    async def send_async_stream_request(self, message: str, context: str = '') -> AsyncIterator[str]:
         client = openai.AsyncOpenAI(api_key= LLM_API_KEY,base_url = LLM_ENDPOINT)
         message_json = {
             'role': 'user',

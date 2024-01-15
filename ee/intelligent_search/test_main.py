@@ -27,7 +27,7 @@ def correct_upload():
 
 def endpoint():
     with TestClient(app) as client_statup:
-        response = client_statup.post('llm/anyscale', headers={'Authorization': 'Bearer ' + config('API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
+        response = client_statup.post('autocomplete/filters', headers={'Authorization': 'Bearer ' + config('API_AUTH_KEY', cast=str), 'Content-Type': 'application/json'}, json={"question": "Show me the sessions from Texas", "userId": 0, "projectId": 0})
         assert response.status_code == 200
 
 def test_functionality():

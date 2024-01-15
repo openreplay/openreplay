@@ -15,8 +15,8 @@ async def lifespan(app: FastAPI):
                   tokenizer_path=parameters.tokenizer_path,
                   max_seq_len=parameters.max_seq_len,
                   max_batch_size=parameters.max_batch_size)
-    asyncio.create_task(llm_handler.llm_model.process_queue_anyscale(FilterPrompt.search_context_v3))
-    asyncio.create_task(llm_handler.llm_endpoint.process_queue_anyscale(FilterPrompt.search_context_v3))
+    asyncio.create_task(llm_handler.llm_model.process_queue_anyscale(FilterPrompt.filter_chat_v3))
+    # asyncio.create_task(llm_handler.llm_endpoint.process_queue_anyscale(FilterPrompt.filter_chat_v3))
     yield
     llm_handler.clear()
 
