@@ -45,3 +45,5 @@ def delete_tag(tag_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(query, {'tag_id': tag_id})
         cur.execute(query)
+
+    return True

@@ -557,7 +557,7 @@ def update_feature_flag_status(project_id: int, feature_flag_id: int,
 @app.post('/{projectId}/tags', tags=["tags"])
 def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.create_tag(project_id=projectId, data=data)
-    return data
+    return {'data': data}
 
 
 @app.get('/{projectId}/tags', tags=["tags"])
@@ -569,4 +569,4 @@ def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 @app.delete('/{projectId}/tags/{tagId}', tags=["tags"])
 def tags_delete(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.delete_tag(tag_id=tagId)
-    return data
+    return {'data': data}

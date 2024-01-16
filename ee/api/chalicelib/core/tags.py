@@ -29,7 +29,7 @@ def _can_do(project_id, user_id):
 def create_tag(project_id: int, data: schemas.TagCreate, user_id: int) -> int:
     if not _can_do(project_id, user_id):
         logger.debug('Tried to create tag for a project the user should not have access')
-        return None
+        return -1
     
     query = """
     INSERT INTO public.tags (project_id, selector, ignore_click_rage, ignore_dead_click)
@@ -71,7 +71,7 @@ def delete_tag(project_id: int, tag_id: int, user_id: int):
 
     if not _can_do(project_id, user_id):
         logger.debug('Tried to delete tag from a project the user should not have access')
-        return
+        return False
     
     query = """
     DELETE FROM public.tags
@@ -81,3 +81,4 @@ def delete_tag(project_id: int, tag_id: int, user_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(query, {'tag_id': tag_id})
         cur.execute(query)
+    return True
