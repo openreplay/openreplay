@@ -1114,6 +1114,25 @@ $$
             CREATE INDEX swipes_label_gin_idx ON events_ios.swipes USING GIN (label gin_trgm_ops);
             CREATE INDEX swipes_timestamp_idx ON events_ios.swipes (timestamp);
             CREATE INDEX swipes_label_session_id_timestamp_idx ON events_ios.swipes (label, session_id, timestamp);
+            
+            CREATE TABLE public.tags
+            (
+                tag_id               bigint       NOT NULL PRIMARY KEY,
+                project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+                selector             text         NOT NULL
+            );
+            CREATE INDEX tags_project_id_idx ON public.tags (project_id);
+
+            CREATE TABLE events.tags
+            (
+                session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+                timestamp  bigint  NOT NULL,
+                seq_index  integer NOT NULL,
+                tag_id     bigint  NOT NULL REFERENCES public.tags (tag_id) ON DELETE SET NULL,
+                PRIMARY KEY (session_id, timestamp, seq_index)
+            );
+            CREATE INDEX tags_session_id_idx ON events.tags (session_id);
+            CREATE INDEX tags_timestamp_idx ON events.tags (timestamp);
 
             IF NOT EXISTS(SELECT *
                           FROM pg_type typ

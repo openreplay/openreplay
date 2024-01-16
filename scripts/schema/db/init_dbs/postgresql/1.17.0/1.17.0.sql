@@ -41,6 +41,26 @@ CREATE TABLE IF NOT EXISTS public.projects_conditions
     filters      jsonb        NOT NULL DEFAULT '[]'::jsonb
 );
 
+CREATE TABLE IF NOT EXISTS public.tags
+(
+        tag_id               bigint       NOT NULL PRIMARY KEY,
+        project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+        selector             text         NOT NULL
+);
+CREATE INDEX tags_project_id_idx ON public.tags (project_id);
+
+CREATE TABLE IF NOT EXISTS events.tags
+(
+        session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+        timestamp  bigint  NOT NULL,
+        seq_index  integer NOT NULL,
+        tag_id     bigint  NOT NULL REFERENCES public.tags (tag_id) ON DELETE SET NULL,
+        PRIMARY KEY (session_id, timestamp, seq_index)
+);
+CREATE INDEX IF NOT EXISTS tags_session_id_idx ON events.tags (session_id);
+CREATE INDEX IF NOT EXISTS tags_timestamp_idx ON events.tags (timestamp);
+
+
 COMMIT;
 
 \elif :is_next
