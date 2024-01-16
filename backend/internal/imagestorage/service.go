@@ -77,7 +77,7 @@ type ScreenshotMessage struct {
 	Data []byte
 }
 
-func (v *ImageStorage) PrepareCanvas(sessID uint64) error {
+func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
 	// Build the directory path to session's canvas images
 	path := v.cfg.FSDir + "/"
 	if v.cfg.CanvasDir != "" {
@@ -88,10 +88,10 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) error {
 	// Check that the directory exists
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(files) == 0 {
-		return nil
+		return []string{}, nil
 	}
 	log.Printf("There are %d canvas images of session %d\n", len(files), sessID)
 
@@ -122,9 +122,11 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) error {
 	}
 
 	// Prepare screenshot lists for ffmpeg
+	namesList := make([]string, 0)
 	for name, cData := range images {
 		// Write to file
-		mixList := fmt.Sprintf("%s%s-list", path, name)
+		mixName := fmt.Sprintf("%s-list", name)
+		mixList := path + mixName
 		outputFile, err := os.Create(mixList)
 		if err != nil {
 			log.Printf("can't create mix list, err: %s", err)
@@ -144,8 +146,9 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) error {
 		}
 		outputFile.Close()
 		log.Printf("made canvas list %s", mixList)
+		namesList = append(namesList, mixName)
 	}
-	return nil
+	return namesList, nil
 }
 
 func (v *ImageStorage) ProcessCanvas(sessID uint64, data []byte) error {

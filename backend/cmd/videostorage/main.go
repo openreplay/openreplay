@@ -72,7 +72,13 @@ func main() {
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
 				sessCount++
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/canvas/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", true); err != nil {
+				filePath := workDir + "/canvas/" + strconv.FormatUint(sesEnd.SessionID(), 10) + "/"
+				canvasMix := sesEnd.EncryptionKey // dirty hack to use encryption key as canvas mix holder (only between canvas handler and canvas maker)
+				if canvasMix == "" {
+					log.Printf("no canvas mix for session: %d", sesEnd.SessionID())
+					return
+				}
+				if err := srv.Process(sesEnd.SessionID(), filePath, canvasMix); err != nil {
 					if !strings.Contains(err.Error(), "no such file or directory") {
 						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 					}

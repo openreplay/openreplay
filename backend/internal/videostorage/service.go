@@ -79,7 +79,7 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 	return nil
 }
 
-func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath string) error {
+func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix string) error {
 	files, err := ioutil.ReadDir(filesPath)
 	if err != nil {
 		return err
@@ -140,9 +140,9 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	return
 }
 
-func (v *VideoStorage) Process(sessID uint64, filesPath string, isCanvas bool) error {
-	if isCanvas {
-		return v.makeCanvasVideo(sessID, filesPath)
+func (v *VideoStorage) Process(sessID uint64, filesPath string, canvasMix string) error {
+	if canvasMix != "" {
+		return v.makeCanvasVideo(sessID, filesPath, canvasMix)
 	}
 	return v.makeVideo(sessID, filesPath)
 }

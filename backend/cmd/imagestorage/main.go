@@ -69,12 +69,16 @@ func main() {
 			}
 
 			if msg, err := checkSessionEnd(data); err == nil {
+				sessEnd := msg.(*messages.SessionEnd)
 				// Received session end
-				if err = srv.PrepareCanvas(sessID); err != nil {
+				if list, err := srv.PrepareCanvas(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
 				} else {
-					if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, msg.Encode()); err != nil {
-						log.Printf("can't send session end signal to video service: %s", err)
+					for _, name := range list {
+						sessEnd.EncryptionKey = name
+						if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
+							log.Printf("can't send session end signal to video service: %s", err)
+						}
 					}
 				}
 			} else {
