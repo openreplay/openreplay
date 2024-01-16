@@ -77,7 +77,9 @@ func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 		*RemoveNode,
 		*SetCSSData,
 		*CSSInsertRule,
-		*CSSDeleteRule:
+		*CSSDeleteRule,
+		*SetInputValue,
+		*SetInputChecked:
 		return d.Build()
 	}
 	return nil
