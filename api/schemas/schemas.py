@@ -1576,3 +1576,10 @@ class ModuleStatus(BaseModel):
     "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(...,
                                                                                                  description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
     status: bool = Field(...)
+
+
+class TagCreate(BaseModel):
+    name: str = Field()
+    selector: str = Field()
+    ignore_click_rage: bool = Field()
+    ignore_dead_click: bool = Field()
