@@ -2,7 +2,7 @@
 import { Decoder } from 'syncod';
 import logger from 'App/logger';
 
-import type { Store, ILog } from 'Player';
+import type { Store, ILog, SessionFilesInfo } from 'Player';
 import ListWalker from '../common/ListWalker';
 
 import MouseMoveManager from './managers/MouseMoveManager';
@@ -108,7 +108,7 @@ export default class MessageManager {
   private activeTab = '';
 
   constructor(
-    private readonly session: Record<string, any>,
+    private readonly session: SessionFilesInfo,
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly initialLists?: Partial<InitialLists>,

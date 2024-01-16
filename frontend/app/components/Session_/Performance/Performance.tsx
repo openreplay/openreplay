@@ -458,7 +458,6 @@ function Performance({
   const availableCount = [fps, cpu, heap, nodes].reduce((c, av) => (av ? c + 1 : c), 0);
   const height = availableCount === 0 ? '0' : `${100 / availableCount}%`;
 
-  console.log(_data)
   return (
     <BottomBlock>
       <BottomBlock.Header>

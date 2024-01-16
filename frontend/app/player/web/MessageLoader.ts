@@ -1,8 +1,7 @@
-import type { Store, SessionFilesInfo } from 'Player';
-import { decryptSessionBytes } from './network/crypto';
+import type { Store, SessionFilesInfo, PlayerMsg } from "Player";
+import { decryptSessionBytes }                     from './network/crypto';
 import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
-import type { Message } from './messages';
 import logger from 'App/logger';
 import unpack from 'Player/common/unpack';
 import MessageManager from 'Player/web/MessageManager';
@@ -33,55 +32,58 @@ export default class MessageLoader {
 
   createNewParser(
     shouldDecrypt = true,
+    onMessagesDone: (msgs: PlayerMsg[], file?: string) => void,
     file?: string
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
         : (b: Uint8Array) => Promise.resolve(b);
-    // Each time called - new fileReader created
     const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt);
-    return (b: Uint8Array) => {
-      return decrypt(b)
-        .then((b) => {
-          const data = unpack(b);
-          fileReader.append(data);
-          fileReader.checkForIndexes();
-          const msgs: Array<Message & { tabId: string }> = [];
-          let finished = false;
-          while (!finished) {
-            const msg = fileReader.readNext();
-            if (msg) {
-              msgs.push(msg);
-            } else {
-              finished = true;
-              break;
-            }
+    return async (b: Uint8Array) => {
+      try {
+        const mobBytes = await decrypt(b);
+        const data = unpack(mobBytes);
+        fileReader.append(data);
+        fileReader.checkForIndexes();
+        const msgs: Array<PlayerMsg> = [];
+        let finished = false;
+        while (!finished) {
+          const msg = fileReader.readNext();
+          if (msg) {
+            msgs.push(msg);
+          } else {
+            finished = true;
+            break;
           }
+        }
 
-          const sortedMessages = msgs.sort((m1, m2) => {
-            return m1.time - m2.time;
-          });
-
-          sortedMessages.forEach((msg) => {
-            this.messageManager.distributeMessage(msg);
-          });
-          logger.info('Messages count: ', msgs.length, sortedMessages, file);
-
-          this.messageManager.sortDomRemoveMessages(sortedMessages);
-          this.messageManager.setMessagesLoading(false);
-        })
-        .catch((e) => {
-          console.error(e);
-          this.uiErrorHandler?.error('Error parsing file: ' + e.message);
+        const sortedMsgs = msgs.sort((m1, m2) => {
+          return m1.time - m2.time;
         });
+        onMessagesDone(sortedMsgs, file);
+      } catch (e) {
+        console.error(e);
+        this.uiErrorHandler?.error('Error parsing file: ' + e.message);
+      }
     };
   }
 
-  loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
+  processMessages = (msgs: PlayerMsg[], file?: string) => {
+    msgs.forEach((msg) => {
+      this.messageManager.distributeMessage(msg);
+    });
+    logger.info('Messages count: ', msgs.length, msgs, file);
+
+    this.messageManager.sortDomRemoveMessages(msgs);
+    this.messageManager.setMessagesLoading(false);
+  };
+
+  async loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
     if (urls.length > 0) {
       this.store.update({ domLoading: true });
-      return loadFiles(urls, parser, true).then(() => this.store.update({ domLoading: false }));
+      await loadFiles(urls, parser, true);
+      return this.store.update({ domLoading: false });
     } else {
       return Promise.resolve();
     }
@@ -111,11 +113,17 @@ export default class MessageLoader {
 
     const loadMethod =
       this.session.domURL && this.session.domURL.length > 0
-        ? { mobUrls: this.session.domURL, parser: () => this.createNewParser(true, 'dom') }
-        : { mobUrls: this.session.mobsUrl, parser: () => this.createNewParser(false, 'dom') };
+        ? {
+            mobUrls: this.session.domURL,
+            parser: () => this.createNewParser(true, this.processMessages, 'dom'),
+          }
+        : {
+            mobUrls: this.session.mobsUrl,
+            parser: () => this.createNewParser(false, this.processMessages, 'dom'),
+          };
 
     const parser = loadMethod.parser();
-    const devtoolsParser = this.createNewParser(true, 'devtools');
+    const devtoolsParser = this.createNewParser(true, this.processMessages, 'devtools');
     /**
      * to speed up time to replay
      * we load first dom mob file before the rest
@@ -140,8 +148,8 @@ export default class MessageLoader {
           efsDomFilePromise,
           efsDevtoolsFilePromise,
         ]);
-        const domParser = this.createNewParser(false, 'domEFS');
-        const devtoolsParser = this.createNewParser(false, 'devtoolsEFS');
+        const domParser = this.createNewParser(false, this.processMessages, 'domEFS');
+        const devtoolsParser = this.createNewParser(false, this.processMessages, 'devtoolsEFS');
         const parseDomPromise: Promise<any> =
           domData.status === 'fulfilled'
             ? domParser(domData.value)

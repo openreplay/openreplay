@@ -1,4 +1,6 @@
-export interface Timed { 
+import { Message } from "Player/web/messages";
+
+export interface Timed {
   time: number
   /** present in mobile events and in db events */
   timestamp?: number
@@ -33,7 +35,10 @@ export interface SessionFilesInfo {
   sessionId: string
   isMobile: boolean
   agentToken?: string
-  duration: number
+  duration: {
+    milliseconds: number
+    valueOf: () => number
+  }
   domURL: string[]
   devtoolsURL: string[]
   /** deprecated */
@@ -45,3 +50,5 @@ export interface SessionFilesInfo {
   errors: Record<string, any>[]
   agentInfo?: { email: string, name: string }
 }
+
+export type PlayerMsg = Message & { tabId: string }

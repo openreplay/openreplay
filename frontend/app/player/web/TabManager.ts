@@ -125,6 +125,9 @@ export default class TabSessionManager {
     });
   }
 
+  /**
+   * Because we use main state (from messageManager), we have to update it this way
+   * */
   updateLocalState(state: Partial<TabState>) {
     this.state.update({
       tabStates: {
@@ -283,22 +286,23 @@ export default class TabSessionManager {
       // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
-    const llEvent = this.locationEventManager.moveGetLast(t, index);
-    if (!!llEvent) {
-      if (llEvent.domContentLoadedTime != null) {
+    const lastLocationEvent = this.locationEventManager.moveGetLast(t, index);
+    if (!!lastLocationEvent) {
+      if (lastLocationEvent.domContentLoadedTime != null) {
         stateToUpdate.domContentLoadedTime = {
-          time: llEvent.domContentLoadedTime + this.navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
-          value: llEvent.domContentLoadedTime,
+          time: lastLocationEvent.domContentLoadedTime + this.navigationStartOffset,
+          // TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
+          value: lastLocationEvent.domContentLoadedTime,
         };
       }
-      if (llEvent.loadTime != null) {
+      if (lastLocationEvent.loadTime != null) {
         stateToUpdate.loadTime = {
-          time: llEvent.loadTime + this.navigationStartOffset,
-          value: llEvent.loadTime,
+          time: lastLocationEvent.loadTime + this.navigationStartOffset,
+          value: lastLocationEvent.loadTime,
         };
       }
-      if (llEvent.domBuildingTime != null) {
-        stateToUpdate.domBuildingTime = llEvent.domBuildingTime;
+      if (lastLocationEvent.domBuildingTime != null) {
+        stateToUpdate.domBuildingTime = lastLocationEvent.domBuildingTime;
       }
     }
     /* === */
@@ -307,12 +311,7 @@ export default class TabSessionManager {
       // @ts-ignore comes from parent state
       this.state.update({ location: lastLocationMsg.url });
     }
-    // ConnectionInformation message is not used at this moment
-    // const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
-    // if (!!lastConnectionInfoMsg) {
-    //   stateToUpdate.connType = lastConnectionInfoMsg.type;
-    //   stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
-    // }
+
     const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
     if (!!lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
@@ -347,6 +346,9 @@ export default class TabSessionManager {
     });
   }
 
+  /**
+   * Used to decode state messages, because they can be large we only want to decode whats rendered atm
+   * */
   public decodeMessage(msg: Message) {
     return this.decoder.decode(msg);
   }

@@ -166,7 +166,7 @@ export default class Session {
   canvasURL: ISession['canvasURL'];
   live: ISession['live'];
   startedAt: ISession['startedAt'];
-  duration: ISession['duration'];
+  duration: Duration;
   events: ISession['events'];
   stackEvents: ISession['stackEvents'];
   metadata: ISession['metadata'];

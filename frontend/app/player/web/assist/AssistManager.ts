@@ -1,8 +1,7 @@
 import MessageManager from 'Player/web/MessageManager';
 import type { Socket } from 'socket.io-client';
 import type Screen from '../Screen/Screen';
-import type { Store } from '../../common/types';
-import type { Message } from '../messages';
+import type { PlayerMsg, Store } from 'App/player';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader';
 import Call, { CallingState } from './Call';
@@ -71,7 +70,7 @@ export default class AssistManager {
   constructor(
     private session: any,
     private setMessagesLoading: (flag: boolean) => void,
-    private handleMessage: (m: Message, index: number) => void,
+    private handleMessage: (m: PlayerMsg, index: number) => void,
     private screen: Screen,
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
@@ -159,7 +158,7 @@ export default class AssistManager {
     const reader = new MStreamReader(jmr, this.session.startedAt);
     let waitingForMessages = true;
 
-    const now = +new Date();
+    const now = new Date().getTime();
     this.store.update({ assistStart: now });
 
     // @ts-ignore
@@ -168,7 +167,8 @@ export default class AssistManager {
         return;
       }
       // @ts-ignore
-      const urlObject = new URL(window.env.API_EDP || window.location.origin); // does it handle ssl automatically?
+      const urlObject = new URL(window.env.API_EDP || window.location.origin);
+      // does it handle ssl automatically?
 
       const socket: Socket = (this.socket = io(urlObject.origin, {
         withCredentials: true,
@@ -192,7 +192,8 @@ export default class AssistManager {
       }));
       socket.on('connect', () => {
         waitingForMessages = true;
-        this.setStatus(ConnectionStatus.WaitingMessages); // TODO: reconnect happens frequently on bad network
+        // TODO: reconnect happens frequently on bad network
+        this.setStatus(ConnectionStatus.WaitingMessages);
       });
 
       socket.on('messages', (messages) => {
@@ -229,9 +230,12 @@ export default class AssistManager {
         const { tabId } = meta;
         const usedData = this.assistVersion === 1 ? evData : data;
         const { active } = usedData;
+
         const currentTab = this.store.get().currentTab;
+
         this.clearDisconnectTimeout();
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected);
+
         if (typeof active === 'boolean') {
           this.clearInactiveTimeout();
           if (active) {
@@ -291,14 +295,17 @@ export default class AssistManager {
         this.getAssistVersion
       );
       this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
-            ...this.session.agentInfo,
-            id: agentId,
-          });
+        ...this.session.agentInfo,
+        id: agentId,
+      });
 
       document.addEventListener('visibilitychange', this.onVisChange);
     });
   }
 
+  /**
+   * Sends event ping to stats service
+   * */
   public ping(event: StatsEvent, id: number) {
     this.socket?.emit(event, id);
   }

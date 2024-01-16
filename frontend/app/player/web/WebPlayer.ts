@@ -16,7 +16,7 @@ export default class WebPlayer extends Player {
     ...TargetMarker.INITIAL_STATE,
     ...MessageManager.INITIAL_STATE,
     ...MessageLoader.INITIAL_STATE,
-
+    liveTimeTravel: false,
     inspectorMode: false,
   }
 

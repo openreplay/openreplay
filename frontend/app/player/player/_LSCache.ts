@@ -1,63 +1,64 @@
-import * as lstore from './localStorage'
+import * as lstore from './localStorage';
+import SimpleStore from 'App/player/common/SimpleStore';
 
-import type { SimpleState } from './PlayerState'
+const SPEED_STORAGE_KEY = '__$player-speed$__';
+const SKIP_STORAGE_KEY = '__$player-skip$__';
+const SKIP_TO_ISSUE_STORAGE_KEY = '__$session-skipToIssue$__';
+const AUTOPLAY_STORAGE_KEY = '__$player-autoplay$__';
+const SHOW_EVENTS_STORAGE_KEY = '__$player-show-events$__';
 
-const SPEED_STORAGE_KEY = "__$player-speed$__";
-const SKIP_STORAGE_KEY = "__$player-skip$__";
-const SKIP_TO_ISSUE_STORAGE_KEY = "__$session-skipToIssue$__";
-const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
-const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__";
+const storedSpeed = lstore.number(SPEED_STORAGE_KEY, 1);
+const initialSpeed = [0.5, 1, 2, 4, 8, 16].includes(storedSpeed) ? storedSpeed : 1;
+const initialSkip = lstore.boolean(SKIP_STORAGE_KEY);
+const initialSkipToIssue = lstore.boolean(SKIP_TO_ISSUE_STORAGE_KEY);
+const initialAutoplay = lstore.boolean(AUTOPLAY_STORAGE_KEY);
+const initialShowEvents = lstore.boolean(SHOW_EVENTS_STORAGE_KEY);
 
-
-const storedSpeed = lstore.number(SPEED_STORAGE_KEY, 1)
-const initialSpeed = [1,2,4,8,16].includes(storedSpeed) ? storedSpeed : 1;
-const initialSkip = lstore.boolean(SKIP_STORAGE_KEY)
-const initialSkipToIssue = lstore.boolean(SKIP_TO_ISSUE_STORAGE_KEY)
-const initialAutoplay = lstore.boolean(AUTOPLAY_STORAGE_KEY)
-const initialShowEvents = lstore.boolean(SHOW_EVENTS_STORAGE_KEY)
-
-export const INITIAL_STATE = {
+const INITIAL_STATE = {
   skipToIssue: initialSkipToIssue,
   autoplay: initialAutoplay,
   showEvents: initialShowEvents,
   skip: initialSkip,
   speed: initialSpeed,
-}
+};
 
 const KEY_MAP = {
-	speed: SPEED_STORAGE_KEY,
-	skip: SKIP_STORAGE_KEY,
-	skipToIssue: SKIP_TO_ISSUE_STORAGE_KEY,
-	autoplay: AUTOPLAY_STORAGE_KEY,
-	showEvents: SHOW_EVENTS_STORAGE_KEY,
-}
+  skipToIssue: SKIP_TO_ISSUE_STORAGE_KEY,
+  autoplay: AUTOPLAY_STORAGE_KEY,
+  showEvents: SHOW_EVENTS_STORAGE_KEY,
+  skip: SKIP_STORAGE_KEY,
+  speed: SPEED_STORAGE_KEY,
+} as const
 
-type KeysOfBoolean<T> = keyof T & keyof { [ K in keyof T as T[K] extends boolean ? K : never ] : K };
+const keys = Object.keys(KEY_MAP) as (keyof typeof KEY_MAP)[];
+const booleanKeys = ['skipToIssue', 'autoplay', 'showEvents', 'skip'] as const;
+type LSCState = typeof INITIAL_STATE
 
-type Entries<T> = {
-    [K in keyof T]: [K, T[K]];
-}[keyof T][];
+export default class LSCache {
+  static readonly INITIAL_STATE = INITIAL_STATE;
+	private readonly state: SimpleStore<typeof LSCache.INITIAL_STATE>;
 
-export default class LSCache<G extends Record<string, boolean | number | string>> {
-	constructor(private state: SimpleState<G>, private keyMap: Record<keyof Partial<G>, string>) {
-	}
-	update(newState: Partial<G>) {
-		for (let [k, v] of Object.entries(newState) as Entries<Partial<G>>) {
-			if (k in this.keyMap) {
-				// @ts-ignore TODO: nice typing
-				//lstore[typeof v](this.keyMap[k], v)
-				localStorage.setItem(this.keyMap[k], String(v))
-			}
-		}
-		this.state.update(newState)
-	}
-	toggle(key: KeysOfBoolean<G>) {
-		// @ts-ignore TODO: nice typing
-		this.update({ 
-			[key]: !this.get()[key] 
-		})
-	}
-	get() {
-		return this.state.get()
-	}
+  constructor() {
+    this.state = new SimpleStore<typeof LSCache.INITIAL_STATE>(LSCache.INITIAL_STATE);
+  }
+
+  update(newState: Partial<LSCState>) {
+    for (let [k, v] of Object.entries(newState) as [keyof LSCState, LSCState[keyof LSCState]][]) {
+      if (k in keys) {
+        localStorage.setItem(KEY_MAP[k], String(v));
+      }
+    }
+    this.state.update(newState);
+  }
+
+  toggle(key: typeof booleanKeys[number]) {
+    // @ts-ignore TODO: nice typing
+    this.update({
+      [key]: !this.get()[key],
+    });
+  }
+
+  get() {
+    return this.state.get();
+  }
 }

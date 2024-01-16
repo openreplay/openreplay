@@ -13,7 +13,7 @@ export default class MStreamReader {
   private idx: number = 0
 
   currentTab = 'back-compatability'
-  readNext(): Message & { _index: number } | null {
+  readNext(): Message & { _index: number, tabId: string } | null {
     let msg = this.r.readMessage()
     if (msg === null) { return null }
     if (msg.tp === MType.Timestamp) {
