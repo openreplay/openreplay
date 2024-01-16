@@ -44,8 +44,12 @@ CREATE TABLE IF NOT EXISTS public.projects_conditions
 CREATE TABLE IF NOT EXISTS public.tags
 (
         tag_id               bigint       NOT NULL PRIMARY KEY,
+        name                 string       NOT NULL,
         project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
-        selector             text         NOT NULL
+        selector             text         NOT NULL,
+        ignore_click_rage    boolean      NOT NULL,
+        ignore_dead_click    boolean      NOT NULL,
+        deleted_at           timestamp without time zone NULL DEFAULT NULL
 );
 CREATE INDEX tags_project_id_idx ON public.tags (project_id);
 
@@ -54,7 +58,7 @@ CREATE TABLE IF NOT EXISTS events.tags
         session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
         timestamp  bigint  NOT NULL,
         seq_index  integer NOT NULL,
-        tag_id     bigint  NOT NULL REFERENCES public.tags (tag_id) ON DELETE SET NULL,
+        tag_id     bigint  NOT NULL REFERENCES public.tags (tag_id) ON DELETE CASCADE,
         PRIMARY KEY (session_id, timestamp, seq_index)
 );
 CREATE INDEX IF NOT EXISTS tags_session_id_idx ON events.tags (session_id);
