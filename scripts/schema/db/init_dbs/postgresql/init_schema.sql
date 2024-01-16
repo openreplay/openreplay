@@ -1119,7 +1119,9 @@ $$
             (
                 tag_id               bigint       NOT NULL PRIMARY KEY,
                 project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
-                selector             text         NOT NULL
+                selector             text         NOT NULL,
+                ignore_click_rage    boolean      NOT NULL,
+                ignore_dead_click    boolean      NOT NULL,
             );
             CREATE INDEX tags_project_id_idx ON public.tags (project_id);
 
