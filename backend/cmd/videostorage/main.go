@@ -60,7 +60,6 @@ func main() {
 	//)
 
 	// Debug: global counter for canvases
-	sessCount := 0
 	canvasCount := 0
 
 	canvasConsumer := queue.NewConsumer(
@@ -71,7 +70,6 @@ func main() {
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				sessCount++
 				filePath := workDir + "/canvas/" + strconv.FormatUint(sesEnd.SessionID(), 10) + "/"
 				canvasMix := sesEnd.EncryptionKey // dirty hack to use encryption key as canvas mix holder (only between canvas handler and canvas maker)
 				if canvasMix == "" {
@@ -116,8 +114,7 @@ func main() {
 				log.Printf("can't commit messages: %s", err)
 			}
 			// Debug log
-			log.Printf("sessCount: %d, canvasCount: %d", sessCount, canvasCount)
-			sessCount = 0
+			log.Printf("canvasCount: %d", canvasCount)
 			canvasCount = 0
 		//case msg := <-consumer.Rebalanced():
 		//	log.Println(msg)
