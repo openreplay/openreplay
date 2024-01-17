@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.projects_conditions
 
 CREATE TABLE IF NOT EXISTS public.tags
 (
-        tag_id               bigint       NOT NULL PRIMARY KEY,
+        tag_id               serial       NOT NULL PRIMARY KEY,
         name                 text         NOT NULL,
         project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
         selector             text         NOT NULL,
