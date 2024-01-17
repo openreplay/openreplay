@@ -53,6 +53,23 @@ def list_tags(project_id: int, user_id: int):
     return helper.list_to_camel_case(rows)
 
 
+def update_tag(project_id, tag_id: int, data: schemas.TagUpdate):
+    # Ensure the user has permission to list tags in this project
+    if not projects.is_authorized(project_id=project_id, user_id=user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update tags in this project")
+
+    query = """
+    UPDATE public.tags
+    SET name = %(name)s
+    WHERE tag_id = %(tag_id)s
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(query, {'tag_id': tag_id, 'name': data.name})
+        cur.execute(query)
+
+    return True
+
 def delete_tag(project_id: int, tag_id: int, user_id: int):
     # Ensure the user has permission to delete tags in this project
     if not projects.is_authorized(project_id=project_id, user_id=user_id):

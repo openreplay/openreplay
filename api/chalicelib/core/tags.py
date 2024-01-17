@@ -41,6 +41,20 @@ def list_tags(project_id: int):
     return helper.list_to_camel_case(rows)
 
 
+def update_tag(project_id: int, tag_id: int, data: schemas.TagUpdate):
+    query = """
+    UPDATE public.tags
+    SET name = %(name)s
+    WHERE tag_id = %(tag_id)s
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(query, {'tag_id': tag_id, 'name': data.name})
+        cur.execute(query)
+
+    return True
+
+
 def delete_tag(tag_id: int):
     query = """
     UPDATE public.tags

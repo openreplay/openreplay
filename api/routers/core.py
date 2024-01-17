@@ -880,6 +880,12 @@ def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schem
     return {'data': data}
 
 
+@app.put('/{projectId}/tags/{tagId}', tags=["tags"])
+def tags_update(projectId: int, tagId: int, data: schemas.TagUpdate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
+    data = tags.update_tag(project_id=projectId, tag_id=tagId, data=data)
+    return {'data': data}
+
+
 @app.get('/{projectId}/tags', tags=["tags"])
 def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.list_tags(project_id=projectId)
