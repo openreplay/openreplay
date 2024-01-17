@@ -470,6 +470,7 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
+    tag = "tag"
     click_ios = "tapIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
