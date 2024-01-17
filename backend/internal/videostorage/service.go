@@ -7,9 +7,7 @@ import (
 	"log"
 	config "openreplay/backend/internal/config/videostorage"
 	"openreplay/backend/pkg/objectstorage"
-	"os"
 	"os/exec"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -81,7 +79,7 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 	return nil
 }
 
-func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath string) error {
+func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix string) error {
 	files, err := ioutil.ReadDir(filesPath)
 	if err != nil {
 		return err
@@ -89,61 +87,23 @@ func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath string) error {
 	if len(files) == 0 {
 		return nil
 	}
-	log.Printf("There are %d canvas images of session %d\n", len(files), 0)
-	type canvasData struct {
-		files map[int]string
-		times []int
-	}
-	images := make(map[string]*canvasData)
+	log.Printf("There are %d mix lists of session %d\n", len(files), sessID)
+
 	for _, file := range files {
-		name := strings.Split(file.Name(), ".")
-		parts := strings.Split(name[0], "_")
-		if len(name) != 2 || len(parts) != 3 {
-			log.Printf("unknown file name: %s, skipping", file.Name())
-			continue
-		}
-		canvasID := fmt.Sprintf("%s_%s", parts[0], parts[1])
-		canvasTS, _ := strconv.Atoi(parts[2])
-		log.Printf("%s : %d", canvasID, canvasTS)
-		if _, ok := images[canvasID]; !ok {
-			images[canvasID] = &canvasData{
-				files: make(map[int]string),
-				times: make([]int, 0),
-			}
-		}
-		images[canvasID].files[canvasTS] = file.Name()
-		images[canvasID].times = append(images[canvasID].times, canvasTS)
-	}
-	for name, cData := range images {
-		// Write to file
-		mixList := fmt.Sprintf("%s/%s-list", filesPath, name)
-		outputFile, err := os.Create(mixList)
-		if err != nil {
-			log.Printf("can't create mix list, err: %s", err)
+		if !strings.HasSuffix(file.Name(), "-list") {
 			continue
 		}
 
-		sort.Ints(cData.times)
-		for i := 0; i < len(cData.times)-1; i++ {
-			dur := float64(cData.times[i+1]-cData.times[i]) / 1000.0
-			line := fmt.Sprintf("file %s\nduration %.3f\n", cData.files[cData.times[i]], dur)
-			_, err := outputFile.WriteString(line)
-			if err != nil {
-				outputFile.Close()
-				log.Printf("%s", err)
-				continue
-			}
-			log.Printf(line)
-		}
-		outputFile.Close()
+		name := strings.TrimSuffix(file.Name(), "-list")
+		mixList := fmt.Sprintf("%s%s-list", filesPath, name)
+		videoPath := fmt.Sprintf("%s%s.mp4", filesPath, name)
 
 		// Run ffmpeg to build video
 		start := time.Now()
 		sessionID := strconv.FormatUint(sessID, 10)
-		videoPath := fmt.Sprintf("%s/%s.mp4", filesPath, name)
-		cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vsync", "vfr",
+
+		cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
 			"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
-		// ffmpeg -f concat -safe 0 -i input.txt -vsync vfr -pix_fmt yuv420p output.mp4
 
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -180,9 +140,9 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	return
 }
 
-func (v *VideoStorage) Process(sessID uint64, filesPath string, isCanvas bool) error {
-	if isCanvas {
-		return v.makeCanvasVideo(sessID, filesPath)
+func (v *VideoStorage) Process(sessID uint64, filesPath string, canvasMix string) error {
+	if canvasMix != "" {
+		return v.makeCanvasVideo(sessID, filesPath, canvasMix)
 	}
 	return v.makeVideo(sessID, filesPath)
 }

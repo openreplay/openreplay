@@ -72,6 +72,7 @@ ENV TZ=UTC \
     TOPIC_TRIGGER=trigger \
     TOPIC_MOBILE_TRIGGER=mobile-trigger \
     TOPIC_CANVAS_IMAGES=canvas-images \
+    TOPIC_CANVAS_TRIGGER=canvas-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
@@ -112,7 +113,8 @@ ENV TZ=UTC \
     # Use to set compression threshold for tracker requests (20kb by default)
     COMPRESSION_THRESHOLD="20000" \
     # Set Access-Control-* headers for tracker requests if true
-    USE_CORS=false
+    USE_CORS=false \
+    RECORD_CANVAS=true
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \

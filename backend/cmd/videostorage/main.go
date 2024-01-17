@@ -47,7 +47,7 @@ func main() {
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.IOSSessionEnd)
 				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", false); err != nil {
+				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", ""); err != nil {
 					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 				}
 			},
@@ -61,12 +61,18 @@ func main() {
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupVideoStorage,
 		[]string{
-			cfg.TopicTrigger,
+			cfg.TopicCanvasTrigger,
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/canvas/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", true); err != nil {
+				filePath := workDir + "/canvas/" + strconv.FormatUint(sesEnd.SessionID(), 10) + "/"
+				canvasMix := sesEnd.EncryptionKey // dirty hack to use encryption key as canvas mix holder (only between canvas handler and canvas maker)
+				if canvasMix == "" {
+					log.Printf("no canvas mix for session: %d", sesEnd.SessionID())
+					return
+				}
+				if err := srv.Process(sesEnd.SessionID(), filePath, canvasMix); err != nil {
 					if !strings.Contains(err.Error(), "no such file or directory") {
 						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 					}
@@ -91,6 +97,7 @@ func main() {
 			log.Printf("Caught signal %v: terminating\n", sig)
 			srv.Wait()
 			consumer.Close()
+			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
@@ -101,6 +108,8 @@ func main() {
 				log.Printf("can't commit messages: %s", err)
 			}
 		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
+		case msg := <-canvasConsumer.Rebalanced():
 			log.Println(msg)
 		default:
 			err = consumer.ConsumeNext()

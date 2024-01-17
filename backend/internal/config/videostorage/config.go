@@ -13,6 +13,7 @@ type Config struct {
 	GroupVideoStorage  string `env:"GROUP_VIDEO_STORAGE,required"`
 	TopicMobileTrigger string `env:"TOPIC_MOBILE_TRIGGER,required"`
 	TopicTrigger       string `env:"TOPIC_TRIGGER,required"`
+	TopicCanvasTrigger string `env:"TOPIC_CANVAS_TRIGGER,required"`
 	VideoReplayFPS     int    `env:"VIDEO_REPLAY_FPS,default=3"`
 	UseProfiler        bool   `env:"PROFILER_ENABLED,default=false"`
 }
