@@ -181,8 +181,12 @@ func main() {
 					}
 				} else {
 					if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
-						log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
+						log.Printf("can't send sessionEnd to raw topic: %s; sessID: %d", err, sessionID)
 						return false, 0
+					}
+					// Inform canvas service about session end
+					if err := producer.Produce(cfg.TopicCanvasImages, sessionID, msg.Encode()); err != nil {
+						log.Printf("can't send sessionEnd signal to canvas topic: %s; sessID: %d", err, sessionID)
 					}
 				}
 
