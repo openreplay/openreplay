@@ -10,8 +10,16 @@ def create_tag(project_id: int, data: schemas.TagCreate) -> int:
     RETURNING tag_id;
     """
 
+    data = {
+        'project_id': project_id,
+        'name': data.name.strip(),
+        'selector': data.selector,
+        'ignore_click_rage': data.ignoreClickRage,
+        'ignore_dead_click': data.ignoreDeadClick
+    }
+    
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {'project_id': project_id, **data.dict()})
+        query = cur.mogrify(query, data)
         cur.execute(query)
         row = cur.fetchone()
 
