@@ -510,7 +510,8 @@ cdef class MessageCodec:
                 operation_kind=self.read_string(reader),
                 operation_name=self.read_string(reader),
                 variables=self.read_string(reader),
-                response=self.read_string(reader)
+                response=self.read_string(reader),
+                duration=self.read_int(reader)
             )
 
         if message_id == 49:

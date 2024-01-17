@@ -248,6 +248,7 @@ type TrGraphQL = [
   operationName: string,
   variables: string,
   response: string,
+  duration: number,
 ]
 
 type TrPerformanceTrack = [
@@ -791,6 +792,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         operationName: tMsg[2],
         variables: tMsg[3],
         response: tMsg[4],
+        duration: tMsg[5],
       }
     }
     

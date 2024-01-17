@@ -407,11 +407,12 @@ class NgRx(Message):
 class GraphQL(Message):
     __id__ = 48
 
-    def __init__(self, operation_kind, operation_name, variables, response):
+    def __init__(self, operation_kind, operation_name, variables, response, duration):
         self.operation_kind = operation_kind
         self.operation_name = operation_name
         self.variables = variables
         self.response = response
+        self.duration = duration
 
 
 class PerformanceTrack(Message):

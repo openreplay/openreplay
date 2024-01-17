@@ -348,12 +348,14 @@ export default class RawMessageReader extends PrimitiveReader {
       const operationName = this.readString(); if (operationName === null) { return resetPointer() }
       const variables = this.readString(); if (variables === null) { return resetPointer() }
       const response = this.readString(); if (response === null) { return resetPointer() }
+      const duration = this.readInt(); if (duration === null) { return resetPointer() }
       return {
         tp: MType.GraphQl,
         operationKind,
         operationName,
         variables,
         response,
+        duration,
       };
     }
 

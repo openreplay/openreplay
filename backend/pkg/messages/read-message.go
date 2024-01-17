@@ -708,6 +708,9 @@ func DecodeGraphQL(reader BytesReader) (Message, error) {
 	if msg.Response, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	if msg.Duration, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
 	return msg, err
 }
 

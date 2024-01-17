@@ -602,13 +602,15 @@ cdef class GraphQL(PyMessage):
     cdef public str operation_name
     cdef public str variables
     cdef public str response
+    cdef public long duration
 
-    def __init__(self, str operation_kind, str operation_name, str variables, str response):
+    def __init__(self, str operation_kind, str operation_name, str variables, str response, long duration):
         self.__id__ = 48
         self.operation_kind = operation_kind
         self.operation_name = operation_name
         self.variables = variables
         self.response = response
+        self.duration = duration
 
 
 cdef class PerformanceTrack(PyMessage):

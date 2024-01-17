@@ -323,6 +323,7 @@ export type GraphQL = [
   /*operationName:*/ string,
   /*variables:*/ string,
   /*response:*/ string,
+  /*duration:*/ number,
 ]
 
 export type PerformanceTrack = [

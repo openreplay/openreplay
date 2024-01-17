@@ -274,6 +274,7 @@ export interface RawGraphQl {
   operationName: string,
   variables: string,
   response: string,
+  duration: number,
 }
 
 export interface RawPerformanceTrack {
