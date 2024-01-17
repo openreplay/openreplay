@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_tag(project_id: int, data: schemas.TagCreate, user_id: int) -> int:
-   # Ensure the user has permission to create tags in this project
+    # Ensure the user has permission to create tags in this project
     if not projects.is_authorized(project_id=project_id, user_id=user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to create tags in this project")
     
