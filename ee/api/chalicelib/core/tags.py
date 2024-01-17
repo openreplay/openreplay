@@ -1,3 +1,6 @@
+from fastapi import HTTPException, status
+
+import projects
 import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
@@ -8,28 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 
-def _can_do(project_id, user_id):
-    # make sure the user is part of the tenant associated with project_id
-    query """
-    SELECT user_id
-    FROM public.projects, public.tenants, public.users
-    WHERE public.projects.project_id = %(project_id)s 
-      AND public.tenants.tenant_id = public.projects.tenant_id
-      AND public.users.tenant_id = public.tenants.tenant_id
-      AND public.users.user_id = $(user_id)s;
-    """
-
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {'project_id': project_id, 'user_id': user_id})
-        cur.execute(query)
-        row = cur.fetchone()
-        return row is not None
-
-
 def create_tag(project_id: int, data: schemas.TagCreate, user_id: int) -> int:
-    if not _can_do(project_id, user_id):
-        logger.debug('Tried to create tag for a project the user should not have access')
-        return -1
+   # Ensure the user has permission to create tags in this project
+    if not projects.is_authorized(project_id=project_id, user_id=user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to create tags in this project")
     
     query = """
     INSERT INTO public.tags (project_id, selector, ignore_click_rage, ignore_dead_click)
@@ -49,14 +34,15 @@ def create_tag(project_id: int, data: schemas.TagCreate, user_id: int) -> int:
 
 
 def list_tags(project_id: int, user_id: int):
-    if not _can_do(project_id, user_id):
-        logger.debug('Tried to list tag from a project the user should not have access')
-        return []
+    # Ensure the user has permission to list tags in this project
+    if not projects.is_authorized(project_id=project_id, user_id=user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to list tags in this project")
 
     query = """
     SELECT tag_id, selector, ignore_click_rage, ignore_dead_click
     FROM public.tags
     WHERE project_id = %(project_id)s
+      AND deleted_at IS NULL
     """
 
     with pg_client.PostgresClient() as cur:
@@ -68,13 +54,13 @@ def list_tags(project_id: int, user_id: int):
 
 
 def delete_tag(project_id: int, tag_id: int, user_id: int):
-
-    if not _can_do(project_id, user_id):
-        logger.debug('Tried to delete tag from a project the user should not have access')
-        return False
+    # Ensure the user has permission to delete tags in this project
+    if not projects.is_authorized(project_id=project_id, user_id=user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete tags in this project")
     
     query = """
-    DELETE FROM public.tags
+    UPDATE public.tags
+    SET deleted_at = now() at time zone 'utc'
     WHERE tag_id = %(tag_id)s
     """
 
