@@ -1118,7 +1118,7 @@ $$
             CREATE TABLE public.tags
             (
                 tag_id               bigint       NOT NULL PRIMARY KEY,
-                name                 string       NOT NULL,
+                name                 text         NOT NULL,
                 project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
                 selector             text         NOT NULL,
                 ignore_click_rage    boolean      NOT NULL,
