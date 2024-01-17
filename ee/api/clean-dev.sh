@@ -52,6 +52,7 @@ rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py
 rm -rf ./chalicelib/core/user_testing.py
+rm -rf ./chalicelib/core/tags.py
 rm -rf ./chalicelib/saml
 rm -rf ./chalicelib/utils/__init__.py
 rm -rf ./chalicelib/utils/args_transformer.py

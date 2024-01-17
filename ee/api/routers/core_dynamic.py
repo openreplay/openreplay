@@ -590,22 +590,3 @@ def update_feature_flag_status(project_id: int, feature_flag_id: int,
                                data: schemas.FeatureFlagStatus = Body(...)):
     return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,
                                                              is_active=data.is_active)}
-
-# tags
-
-@app.post('/{projectId}/tags', tags=["tags"])
-def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.create_tag(project_id=projectId, data=data, user_id=context.user_id)
-    return {'data': data}
-
-
-@app.get('/{projectId}/tags', tags=["tags"])
-def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.list_tags(project_id=projectId, user_id=context.user_id)
-    return {'data': data}
-
-
-@app.delete('/{projectId}/tags/{tagId}', tags=["tags"])
-def tags_delete(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.delete_tag(tag_id=tagId, project_id=projectId, user_id=context.user_id)
-    return {'data': data}

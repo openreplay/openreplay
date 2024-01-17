@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, tags
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -871,3 +871,22 @@ async def check_recording_status(project_id: int):
 @public_app.get('/', tags=["health"])
 def health_check():
     return {}
+
+# tags
+
+@app.post('/{projectId}/tags', tags=["tags"])
+def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
+    data = tags.create_tag(project_id=projectId, data=data)
+    return {'data': data}
+
+
+@app.get('/{projectId}/tags', tags=["tags"])
+def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = tags.list_tags(project_id=projectId)
+    return {'data': data}
+
+
+@app.delete('/{projectId}/tags/{tagId}', tags=["tags"])
+def tags_delete(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = tags.delete_tag(tag_id=tagId)
+    return {'data': data}

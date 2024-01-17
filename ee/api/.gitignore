@@ -230,6 +230,7 @@ Pipfile.lock
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
+/chalicelib/core/tags.py
 /chalicelib/saml
 /chalicelib/utils/__init__.py
 /chalicelib/utils/args_transformer.py
