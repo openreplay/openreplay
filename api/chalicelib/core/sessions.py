@@ -712,6 +712,11 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                             sh.multi_conditions(f"main.{events.EventType.CLICK_IOS.column} {op} %({e_k})s", event.value,
                                                 value_key=e_k))
 
+            elif event_type == events.EventType.TAG.ui_type:
+                event_from = event_from % f"{events.EventType.CLICK.table} AS main "
+                if not is_any:
+                    event_where.append(
+                        sh.multi_conditions(f"main.tag_id = %({e_k})s", event.value, value_key=e_k))
             elif event_type == events.EventType.INPUT.ui_type:
                 if platform == "web":
                     event_from = event_from % f"{events.EventType.INPUT.table} AS main "
