@@ -5,8 +5,8 @@ from chalicelib.utils import pg_client
 
 def create_tag(project_id: int, data: schemas.TagCreate) -> int:
     query = """
-    INSERT INTO public.tags (project_id, selector, ignore_click_rage, ignore_dead_click)
-    VALUES (%(project_id)s, %(selector)s, %(ignore_click_rage)s, %(ignore_dead_click)s)
+    INSERT INTO public.tags (project_id, name, selector, ignore_click_rage, ignore_dead_click)
+    VALUES (%(project_id)s, %(name)s, %(selector)s, %(ignore_click_rage)s, %(ignore_dead_click)s)
     RETURNING tag_id;
     """
 
@@ -23,9 +23,10 @@ def create_tag(project_id: int, data: schemas.TagCreate) -> int:
 
 def list_tags(project_id: int):
     query = """
-    SELECT tag_id, selector, ignore_click_rage, ignore_dead_click
+    SELECT tag_id, name, selector, ignore_click_rage, ignore_dead_click
     FROM public.tags
     WHERE project_id = %(project_id)s
+      AND deleted_at IS NULL
     """
 
     with pg_client.PostgresClient() as cur:
@@ -38,7 +39,8 @@ def list_tags(project_id: int):
 
 def delete_tag(tag_id: int):
     query = """
-    DELETE FROM public.tags
+    UPDATE public.tags
+    SET deleted_at = now() at time zone 'utc'
     WHERE tag_id = %(tag_id)s
     """
 
