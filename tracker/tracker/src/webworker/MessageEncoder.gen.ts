@@ -294,6 +294,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.uint(msg[2])
     break
 
+    case Messages.Type.TagTrigger:
+      return  this.int(msg[1])
+    break
+
     }
   }
 

@@ -193,51 +193,51 @@ cdef class MessageCodec:
 
         if message_id == 0:
             return Timestamp(
-                timestamp=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader)
             )
 
         if message_id == 1:
             return SessionStart(
-                timestamp=MessageCodec.read_uint(reader),
-                project_id=MessageCodec.read_uint(reader),
-                tracker_version=MessageCodec.read_string(reader),
-                rev_id=MessageCodec.read_string(reader),
-                user_uuid=MessageCodec.read_string(reader),
-                user_agent=MessageCodec.read_string(reader),
-                user_os=MessageCodec.read_string(reader),
-                user_os_version=MessageCodec.read_string(reader),
-                user_browser=MessageCodec.read_string(reader),
-                user_browser_version=MessageCodec.read_string(reader),
-                user_device=MessageCodec.read_string(reader),
-                user_device_type=MessageCodec.read_string(reader),
-                user_device_memory_size=MessageCodec.read_uint(reader),
-                user_device_heap_size=MessageCodec.read_uint(reader),
-                user_country=MessageCodec.read_string(reader),
-                user_id=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                project_id=self.read_uint(reader),
+                tracker_version=self.read_string(reader),
+                rev_id=self.read_string(reader),
+                user_uuid=self.read_string(reader),
+                user_agent=self.read_string(reader),
+                user_os=self.read_string(reader),
+                user_os_version=self.read_string(reader),
+                user_browser=self.read_string(reader),
+                user_browser_version=self.read_string(reader),
+                user_device=self.read_string(reader),
+                user_device_type=self.read_string(reader),
+                user_device_memory_size=self.read_uint(reader),
+                user_device_heap_size=self.read_uint(reader),
+                user_country=self.read_string(reader),
+                user_id=self.read_string(reader)
             )
 
         if message_id == 3:
             return SessionEndDeprecated(
-                timestamp=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader)
             )
 
         if message_id == 4:
             return SetPageLocation(
-                url=MessageCodec.read_string(reader),
-                referrer=MessageCodec.read_string(reader),
-                navigation_start=MessageCodec.read_uint(reader)
+                url=self.read_string(reader),
+                referrer=self.read_string(reader),
+                navigation_start=self.read_uint(reader)
             )
 
         if message_id == 5:
             return SetViewportSize(
-                width=MessageCodec.read_uint(reader),
-                height=MessageCodec.read_uint(reader)
+                width=self.read_uint(reader),
+                height=self.read_uint(reader)
             )
 
         if message_id == 6:
             return SetViewportScroll(
-                x=MessageCodec.read_int(reader),
-                y=MessageCodec.read_int(reader)
+                x=self.read_int(reader),
+                y=self.read_int(reader)
             )
 
         if message_id == 7:
@@ -247,515 +247,515 @@ cdef class MessageCodec:
 
         if message_id == 8:
             return CreateElementNode(
-                id=MessageCodec.read_uint(reader),
-                parent_id=MessageCodec.read_uint(reader),
-                index=MessageCodec.read_uint(reader),
-                tag=MessageCodec.read_string(reader),
-                svg=MessageCodec.read_boolean(reader)
+                id=self.read_uint(reader),
+                parent_id=self.read_uint(reader),
+                index=self.read_uint(reader),
+                tag=self.read_string(reader),
+                svg=self.read_boolean(reader)
             )
 
         if message_id == 9:
             return CreateTextNode(
-                id=MessageCodec.read_uint(reader),
-                parent_id=MessageCodec.read_uint(reader),
-                index=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader),
+                parent_id=self.read_uint(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 10:
             return MoveNode(
-                id=MessageCodec.read_uint(reader),
-                parent_id=MessageCodec.read_uint(reader),
-                index=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader),
+                parent_id=self.read_uint(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 11:
             return RemoveNode(
-                id=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader)
             )
 
         if message_id == 12:
             return SetNodeAttribute(
-                id=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 13:
             return RemoveNodeAttribute(
-                id=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                name=self.read_string(reader)
             )
 
         if message_id == 14:
             return SetNodeData(
-                id=MessageCodec.read_uint(reader),
-                data=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                data=self.read_string(reader)
             )
 
         if message_id == 15:
             return SetCSSData(
-                id=MessageCodec.read_uint(reader),
-                data=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                data=self.read_string(reader)
             )
 
         if message_id == 16:
             return SetNodeScroll(
-                id=MessageCodec.read_uint(reader),
-                x=MessageCodec.read_int(reader),
-                y=MessageCodec.read_int(reader)
+                id=self.read_uint(reader),
+                x=self.read_int(reader),
+                y=self.read_int(reader)
             )
 
         if message_id == 17:
             return SetInputTarget(
-                id=MessageCodec.read_uint(reader),
-                label=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                label=self.read_string(reader)
             )
 
         if message_id == 18:
             return SetInputValue(
-                id=MessageCodec.read_uint(reader),
-                value=MessageCodec.read_string(reader),
-                mask=MessageCodec.read_int(reader)
+                id=self.read_uint(reader),
+                value=self.read_string(reader),
+                mask=self.read_int(reader)
             )
 
         if message_id == 19:
             return SetInputChecked(
-                id=MessageCodec.read_uint(reader),
-                checked=MessageCodec.read_boolean(reader)
+                id=self.read_uint(reader),
+                checked=self.read_boolean(reader)
             )
 
         if message_id == 20:
             return MouseMove(
-                x=MessageCodec.read_uint(reader),
-                y=MessageCodec.read_uint(reader)
+                x=self.read_uint(reader),
+                y=self.read_uint(reader)
             )
 
         if message_id == 21:
             return NetworkRequestDeprecated(
-                type=MessageCodec.read_string(reader),
-                method=MessageCodec.read_string(reader),
-                url=MessageCodec.read_string(reader),
-                request=MessageCodec.read_string(reader),
-                response=MessageCodec.read_string(reader),
-                status=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader)
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 22:
             return ConsoleLog(
-                level=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                level=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 23:
             return PageLoadTiming(
-                request_start=MessageCodec.read_uint(reader),
-                response_start=MessageCodec.read_uint(reader),
-                response_end=MessageCodec.read_uint(reader),
-                dom_content_loaded_event_start=MessageCodec.read_uint(reader),
-                dom_content_loaded_event_end=MessageCodec.read_uint(reader),
-                load_event_start=MessageCodec.read_uint(reader),
-                load_event_end=MessageCodec.read_uint(reader),
-                first_paint=MessageCodec.read_uint(reader),
-                first_contentful_paint=MessageCodec.read_uint(reader)
+                request_start=self.read_uint(reader),
+                response_start=self.read_uint(reader),
+                response_end=self.read_uint(reader),
+                dom_content_loaded_event_start=self.read_uint(reader),
+                dom_content_loaded_event_end=self.read_uint(reader),
+                load_event_start=self.read_uint(reader),
+                load_event_end=self.read_uint(reader),
+                first_paint=self.read_uint(reader),
+                first_contentful_paint=self.read_uint(reader)
             )
 
         if message_id == 24:
             return PageRenderTiming(
-                speed_index=MessageCodec.read_uint(reader),
-                visually_complete=MessageCodec.read_uint(reader),
-                time_to_interactive=MessageCodec.read_uint(reader)
+                speed_index=self.read_uint(reader),
+                visually_complete=self.read_uint(reader),
+                time_to_interactive=self.read_uint(reader)
             )
 
         if message_id == 25:
             return JSExceptionDeprecated(
-                name=MessageCodec.read_string(reader),
-                message=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 26:
             return IntegrationEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                source=MessageCodec.read_string(reader),
-                name=MessageCodec.read_string(reader),
-                message=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                source=self.read_string(reader),
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 27:
             return CustomEvent(
-                name=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                name=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 28:
             return UserID(
-                id=MessageCodec.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 29:
             return UserAnonymousID(
-                id=MessageCodec.read_string(reader)
+                id=self.read_string(reader)
             )
 
         if message_id == 30:
             return Metadata(
-                key=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                key=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 31:
             return PageEvent(
-                message_id=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                url=MessageCodec.read_string(reader),
-                referrer=MessageCodec.read_string(reader),
-                loaded=MessageCodec.read_boolean(reader),
-                request_start=MessageCodec.read_uint(reader),
-                response_start=MessageCodec.read_uint(reader),
-                response_end=MessageCodec.read_uint(reader),
-                dom_content_loaded_event_start=MessageCodec.read_uint(reader),
-                dom_content_loaded_event_end=MessageCodec.read_uint(reader),
-                load_event_start=MessageCodec.read_uint(reader),
-                load_event_end=MessageCodec.read_uint(reader),
-                first_paint=MessageCodec.read_uint(reader),
-                first_contentful_paint=MessageCodec.read_uint(reader),
-                speed_index=MessageCodec.read_uint(reader),
-                visually_complete=MessageCodec.read_uint(reader),
-                time_to_interactive=MessageCodec.read_uint(reader)
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                url=self.read_string(reader),
+                referrer=self.read_string(reader),
+                loaded=self.read_boolean(reader),
+                request_start=self.read_uint(reader),
+                response_start=self.read_uint(reader),
+                response_end=self.read_uint(reader),
+                dom_content_loaded_event_start=self.read_uint(reader),
+                dom_content_loaded_event_end=self.read_uint(reader),
+                load_event_start=self.read_uint(reader),
+                load_event_end=self.read_uint(reader),
+                first_paint=self.read_uint(reader),
+                first_contentful_paint=self.read_uint(reader),
+                speed_index=self.read_uint(reader),
+                visually_complete=self.read_uint(reader),
+                time_to_interactive=self.read_uint(reader)
             )
 
         if message_id == 32:
             return InputEvent(
-                message_id=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                value=MessageCodec.read_string(reader),
-                value_masked=MessageCodec.read_boolean(reader),
-                label=MessageCodec.read_string(reader)
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader)
             )
 
         if message_id == 37:
             return CSSInsertRule(
-                id=MessageCodec.read_uint(reader),
-                rule=MessageCodec.read_string(reader),
-                index=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 38:
             return CSSDeleteRule(
-                id=MessageCodec.read_uint(reader),
-                index=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 39:
             return Fetch(
-                method=MessageCodec.read_string(reader),
-                url=MessageCodec.read_string(reader),
-                request=MessageCodec.read_string(reader),
-                response=MessageCodec.read_string(reader),
-                status=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader)
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 40:
             return Profiler(
-                name=MessageCodec.read_string(reader),
-                duration=MessageCodec.read_uint(reader),
-                args=MessageCodec.read_string(reader),
-                result=MessageCodec.read_string(reader)
+                name=self.read_string(reader),
+                duration=self.read_uint(reader),
+                args=self.read_string(reader),
+                result=self.read_string(reader)
             )
 
         if message_id == 41:
             return OTable(
-                key=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                key=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 42:
             return StateAction(
-                type=MessageCodec.read_string(reader)
+                type=self.read_string(reader)
             )
 
         if message_id == 44:
             return Redux(
-                action=MessageCodec.read_string(reader),
-                state=MessageCodec.read_string(reader),
-                duration=MessageCodec.read_uint(reader)
+                action=self.read_string(reader),
+                state=self.read_string(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 45:
             return Vuex(
-                mutation=MessageCodec.read_string(reader),
-                state=MessageCodec.read_string(reader)
+                mutation=self.read_string(reader),
+                state=self.read_string(reader)
             )
 
         if message_id == 46:
             return MobX(
-                type=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                type=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 47:
             return NgRx(
-                action=MessageCodec.read_string(reader),
-                state=MessageCodec.read_string(reader),
-                duration=MessageCodec.read_uint(reader)
+                action=self.read_string(reader),
+                state=self.read_string(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 48:
             return GraphQL(
-                operation_kind=MessageCodec.read_string(reader),
-                operation_name=MessageCodec.read_string(reader),
-                variables=MessageCodec.read_string(reader),
-                response=MessageCodec.read_string(reader)
+                operation_kind=self.read_string(reader),
+                operation_name=self.read_string(reader),
+                variables=self.read_string(reader),
+                response=self.read_string(reader)
             )
 
         if message_id == 49:
             return PerformanceTrack(
-                frames=MessageCodec.read_int(reader),
-                ticks=MessageCodec.read_int(reader),
-                total_js_heap_size=MessageCodec.read_uint(reader),
-                used_js_heap_size=MessageCodec.read_uint(reader)
+                frames=self.read_int(reader),
+                ticks=self.read_int(reader),
+                total_js_heap_size=self.read_uint(reader),
+                used_js_heap_size=self.read_uint(reader)
             )
 
         if message_id == 50:
             return StringDict(
-                key=MessageCodec.read_uint(reader),
-                value=MessageCodec.read_string(reader)
+                key=self.read_uint(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 51:
             return SetNodeAttributeDict(
-                id=MessageCodec.read_uint(reader),
-                name_key=MessageCodec.read_uint(reader),
-                value_key=MessageCodec.read_uint(reader)
+                id=self.read_uint(reader),
+                name_key=self.read_uint(reader),
+                value_key=self.read_uint(reader)
             )
 
         if message_id == 53:
             return ResourceTimingDeprecated(
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader),
-                ttfb=MessageCodec.read_uint(reader),
-                header_size=MessageCodec.read_uint(reader),
-                encoded_body_size=MessageCodec.read_uint(reader),
-                decoded_body_size=MessageCodec.read_uint(reader),
-                url=MessageCodec.read_string(reader),
-                initiator=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader)
             )
 
         if message_id == 54:
             return ConnectionInformation(
-                downlink=MessageCodec.read_uint(reader),
-                type=MessageCodec.read_string(reader)
+                downlink=self.read_uint(reader),
+                type=self.read_string(reader)
             )
 
         if message_id == 55:
             return SetPageVisibility(
-                hidden=MessageCodec.read_boolean(reader)
+                hidden=self.read_boolean(reader)
             )
 
         if message_id == 56:
             return PerformanceTrackAggr(
-                timestamp_start=MessageCodec.read_uint(reader),
-                timestamp_end=MessageCodec.read_uint(reader),
-                min_fps=MessageCodec.read_uint(reader),
-                avg_fps=MessageCodec.read_uint(reader),
-                max_fps=MessageCodec.read_uint(reader),
-                min_cpu=MessageCodec.read_uint(reader),
-                avg_cpu=MessageCodec.read_uint(reader),
-                max_cpu=MessageCodec.read_uint(reader),
-                min_total_js_heap_size=MessageCodec.read_uint(reader),
-                avg_total_js_heap_size=MessageCodec.read_uint(reader),
-                max_total_js_heap_size=MessageCodec.read_uint(reader),
-                min_used_js_heap_size=MessageCodec.read_uint(reader),
-                avg_used_js_heap_size=MessageCodec.read_uint(reader),
-                max_used_js_heap_size=MessageCodec.read_uint(reader)
+                timestamp_start=self.read_uint(reader),
+                timestamp_end=self.read_uint(reader),
+                min_fps=self.read_uint(reader),
+                avg_fps=self.read_uint(reader),
+                max_fps=self.read_uint(reader),
+                min_cpu=self.read_uint(reader),
+                avg_cpu=self.read_uint(reader),
+                max_cpu=self.read_uint(reader),
+                min_total_js_heap_size=self.read_uint(reader),
+                avg_total_js_heap_size=self.read_uint(reader),
+                max_total_js_heap_size=self.read_uint(reader),
+                min_used_js_heap_size=self.read_uint(reader),
+                avg_used_js_heap_size=self.read_uint(reader),
+                max_used_js_heap_size=self.read_uint(reader)
             )
 
         if message_id == 57:
             return LoadFontFace(
-                parent_id=MessageCodec.read_uint(reader),
-                family=MessageCodec.read_string(reader),
-                source=MessageCodec.read_string(reader),
-                descriptors=MessageCodec.read_string(reader)
+                parent_id=self.read_uint(reader),
+                family=self.read_string(reader),
+                source=self.read_string(reader),
+                descriptors=self.read_string(reader)
             )
 
         if message_id == 58:
             return SetNodeFocus(
-                id=MessageCodec.read_int(reader)
+                id=self.read_int(reader)
             )
 
         if message_id == 59:
             return LongTask(
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader),
-                context=MessageCodec.read_uint(reader),
-                container_type=MessageCodec.read_uint(reader),
-                container_src=MessageCodec.read_string(reader),
-                container_id=MessageCodec.read_string(reader),
-                container_name=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                context=self.read_uint(reader),
+                container_type=self.read_uint(reader),
+                container_src=self.read_string(reader),
+                container_id=self.read_string(reader),
+                container_name=self.read_string(reader)
             )
 
         if message_id == 60:
             return SetNodeAttributeURLBased(
-                id=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader),
-                base_url=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_string(reader),
+                base_url=self.read_string(reader)
             )
 
         if message_id == 61:
             return SetCSSDataURLBased(
-                id=MessageCodec.read_uint(reader),
-                data=MessageCodec.read_string(reader),
-                base_url=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                data=self.read_string(reader),
+                base_url=self.read_string(reader)
             )
 
         if message_id == 62:
             return IssueEventDeprecated(
-                message_id=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                type=MessageCodec.read_string(reader),
-                context_string=MessageCodec.read_string(reader),
-                context=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                type=self.read_string(reader),
+                context_string=self.read_string(reader),
+                context=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 63:
             return TechnicalInfo(
-                type=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                type=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 64:
             return CustomIssue(
-                name=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                name=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 66:
             return AssetCache(
-                url=MessageCodec.read_string(reader)
+                url=self.read_string(reader)
             )
 
         if message_id == 67:
             return CSSInsertRuleURLBased(
-                id=MessageCodec.read_uint(reader),
-                rule=MessageCodec.read_string(reader),
-                index=MessageCodec.read_uint(reader),
-                base_url=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader),
+                base_url=self.read_string(reader)
             )
 
         if message_id == 69:
             return MouseClick(
-                id=MessageCodec.read_uint(reader),
-                hesitation_time=MessageCodec.read_uint(reader),
-                label=MessageCodec.read_string(reader),
-                selector=MessageCodec.read_string(reader)
+                id=self.read_uint(reader),
+                hesitation_time=self.read_uint(reader),
+                label=self.read_string(reader),
+                selector=self.read_string(reader)
             )
 
         if message_id == 70:
             return CreateIFrameDocument(
-                frame_id=MessageCodec.read_uint(reader),
-                id=MessageCodec.read_uint(reader)
+                frame_id=self.read_uint(reader),
+                id=self.read_uint(reader)
             )
 
         if message_id == 71:
             return AdoptedSSReplaceURLBased(
-                sheet_id=MessageCodec.read_uint(reader),
-                text=MessageCodec.read_string(reader),
-                base_url=MessageCodec.read_string(reader)
+                sheet_id=self.read_uint(reader),
+                text=self.read_string(reader),
+                base_url=self.read_string(reader)
             )
 
         if message_id == 72:
             return AdoptedSSReplace(
-                sheet_id=MessageCodec.read_uint(reader),
-                text=MessageCodec.read_string(reader)
+                sheet_id=self.read_uint(reader),
+                text=self.read_string(reader)
             )
 
         if message_id == 73:
             return AdoptedSSInsertRuleURLBased(
-                sheet_id=MessageCodec.read_uint(reader),
-                rule=MessageCodec.read_string(reader),
-                index=MessageCodec.read_uint(reader),
-                base_url=MessageCodec.read_string(reader)
+                sheet_id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader),
+                base_url=self.read_string(reader)
             )
 
         if message_id == 74:
             return AdoptedSSInsertRule(
-                sheet_id=MessageCodec.read_uint(reader),
-                rule=MessageCodec.read_string(reader),
-                index=MessageCodec.read_uint(reader)
+                sheet_id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 75:
             return AdoptedSSDeleteRule(
-                sheet_id=MessageCodec.read_uint(reader),
-                index=MessageCodec.read_uint(reader)
+                sheet_id=self.read_uint(reader),
+                index=self.read_uint(reader)
             )
 
         if message_id == 76:
             return AdoptedSSAddOwner(
-                sheet_id=MessageCodec.read_uint(reader),
-                id=MessageCodec.read_uint(reader)
+                sheet_id=self.read_uint(reader),
+                id=self.read_uint(reader)
             )
 
         if message_id == 77:
             return AdoptedSSRemoveOwner(
-                sheet_id=MessageCodec.read_uint(reader),
-                id=MessageCodec.read_uint(reader)
+                sheet_id=self.read_uint(reader),
+                id=self.read_uint(reader)
             )
 
         if message_id == 78:
             return JSException(
-                name=MessageCodec.read_string(reader),
-                message=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader),
-                metadata=MessageCodec.read_string(reader)
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader),
+                metadata=self.read_string(reader)
             )
 
         if message_id == 79:
             return Zustand(
-                mutation=MessageCodec.read_string(reader),
-                state=MessageCodec.read_string(reader)
+                mutation=self.read_string(reader),
+                state=self.read_string(reader)
             )
 
         if message_id == 80:
             return BatchMeta(
-                page_no=MessageCodec.read_uint(reader),
-                first_index=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_int(reader)
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader)
             )
 
         if message_id == 81:
             return BatchMetadata(
-                version=MessageCodec.read_uint(reader),
-                page_no=MessageCodec.read_uint(reader),
-                first_index=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_int(reader),
-                location=MessageCodec.read_string(reader)
+                version=self.read_uint(reader),
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader),
+                location=self.read_string(reader)
             )
 
         if message_id == 82:
             return PartitionedMessage(
-                part_no=MessageCodec.read_uint(reader),
-                part_total=MessageCodec.read_uint(reader)
+                part_no=self.read_uint(reader),
+                part_total=self.read_uint(reader)
             )
 
         if message_id == 83:
             return NetworkRequest(
-                type=MessageCodec.read_string(reader),
-                method=MessageCodec.read_string(reader),
-                url=MessageCodec.read_string(reader),
-                request=MessageCodec.read_string(reader),
-                response=MessageCodec.read_string(reader),
-                status=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader),
-                transferred_body_size=MessageCodec.read_uint(reader)
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                transferred_body_size=self.read_uint(reader)
             )
 
         if message_id == 84:
@@ -770,256 +770,261 @@ cdef class MessageCodec:
 
         if message_id == 112:
             return InputChange(
-                id=MessageCodec.read_uint(reader),
-                value=MessageCodec.read_string(reader),
-                value_masked=MessageCodec.read_boolean(reader),
-                label=MessageCodec.read_string(reader),
-                hesitation_time=MessageCodec.read_int(reader),
-                input_duration=MessageCodec.read_int(reader)
+                id=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader),
+                hesitation_time=self.read_int(reader),
+                input_duration=self.read_int(reader)
             )
 
         if message_id == 113:
             return SelectionChange(
-                selection_start=MessageCodec.read_uint(reader),
-                selection_end=MessageCodec.read_uint(reader),
-                selection=MessageCodec.read_string(reader)
+                selection_start=self.read_uint(reader),
+                selection_end=self.read_uint(reader),
+                selection=self.read_string(reader)
             )
 
         if message_id == 114:
             return MouseThrashing(
-                timestamp=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader)
             )
 
         if message_id == 115:
             return UnbindNodes(
-                total_removed_percent=MessageCodec.read_uint(reader)
+                total_removed_percent=self.read_uint(reader)
             )
 
         if message_id == 116:
             return ResourceTiming(
-                timestamp=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader),
-                ttfb=MessageCodec.read_uint(reader),
-                header_size=MessageCodec.read_uint(reader),
-                encoded_body_size=MessageCodec.read_uint(reader),
-                decoded_body_size=MessageCodec.read_uint(reader),
-                url=MessageCodec.read_string(reader),
-                initiator=MessageCodec.read_string(reader),
-                transferred_size=MessageCodec.read_uint(reader),
-                cached=MessageCodec.read_boolean(reader)
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader),
+                transferred_size=self.read_uint(reader),
+                cached=self.read_boolean(reader)
             )
 
         if message_id == 117:
             return TabChange(
-                tab_id=MessageCodec.read_string(reader)
+                tab_id=self.read_string(reader)
             )
 
         if message_id == 118:
             return TabData(
-                tab_id=MessageCodec.read_string(reader)
+                tab_id=self.read_string(reader)
             )
 
         if message_id == 119:
             return CanvasNode(
-                node_id=MessageCodec.read_string(reader),
-                timestamp=MessageCodec.read_uint(reader)
+                node_id=self.read_string(reader),
+                timestamp=self.read_uint(reader)
+            )
+
+        if message_id == 120:
+            return TagTrigger(
+                tag_id=self.read_int(reader)
             )
 
         if message_id == 125:
             return IssueEvent(
-                message_id=MessageCodec.read_uint(reader),
-                timestamp=MessageCodec.read_uint(reader),
-                type=MessageCodec.read_string(reader),
-                context_string=MessageCodec.read_string(reader),
-                context=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader),
-                url=MessageCodec.read_string(reader)
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                type=self.read_string(reader),
+                context_string=self.read_string(reader),
+                context=self.read_string(reader),
+                payload=self.read_string(reader),
+                url=self.read_string(reader)
             )
 
         if message_id == 126:
             return SessionEnd(
-                timestamp=MessageCodec.read_uint(reader),
-                encryption_key=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                encryption_key=self.read_string(reader)
             )
 
         if message_id == 127:
             return SessionSearch(
-                timestamp=MessageCodec.read_uint(reader),
-                partition=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                partition=self.read_uint(reader)
             )
 
         if message_id == 90:
             return IOSSessionStart(
-                timestamp=MessageCodec.read_uint(reader),
-                project_id=MessageCodec.read_uint(reader),
-                tracker_version=MessageCodec.read_string(reader),
-                rev_id=MessageCodec.read_string(reader),
-                user_uuid=MessageCodec.read_string(reader),
-                user_os=MessageCodec.read_string(reader),
-                user_os_version=MessageCodec.read_string(reader),
-                user_device=MessageCodec.read_string(reader),
-                user_device_type=MessageCodec.read_string(reader),
-                user_country=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                project_id=self.read_uint(reader),
+                tracker_version=self.read_string(reader),
+                rev_id=self.read_string(reader),
+                user_uuid=self.read_string(reader),
+                user_os=self.read_string(reader),
+                user_os_version=self.read_string(reader),
+                user_device=self.read_string(reader),
+                user_device_type=self.read_string(reader),
+                user_country=self.read_string(reader)
             )
 
         if message_id == 91:
             return IOSSessionEnd(
-                timestamp=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader)
             )
 
         if message_id == 92:
             return IOSMetadata(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                key=MessageCodec.read_string(reader),
-                value=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                key=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 93:
             return IOSEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
         if message_id == 94:
             return IOSUserID(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                id=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                id=self.read_string(reader)
             )
 
         if message_id == 95:
             return IOSUserAnonymousID(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                id=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                id=self.read_string(reader)
             )
 
         if message_id == 96:
             return IOSScreenChanges(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                x=MessageCodec.read_uint(reader),
-                y=MessageCodec.read_uint(reader),
-                width=MessageCodec.read_uint(reader),
-                height=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader),
+                width=self.read_uint(reader),
+                height=self.read_uint(reader)
             )
 
         if message_id == 97:
             return IOSCrash(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader),
-                reason=MessageCodec.read_string(reader),
-                stacktrace=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                reason=self.read_string(reader),
+                stacktrace=self.read_string(reader)
             )
 
         if message_id == 98:
             return IOSViewComponentEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                screen_name=MessageCodec.read_string(reader),
-                view_name=MessageCodec.read_string(reader),
-                visible=MessageCodec.read_boolean(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                screen_name=self.read_string(reader),
+                view_name=self.read_string(reader),
+                visible=self.read_boolean(reader)
             )
 
         if message_id == 100:
             return IOSClickEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                label=MessageCodec.read_string(reader),
-                x=MessageCodec.read_uint(reader),
-                y=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                label=self.read_string(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader)
             )
 
         if message_id == 101:
             return IOSInputEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                value=MessageCodec.read_string(reader),
-                value_masked=MessageCodec.read_boolean(reader),
-                label=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader)
             )
 
         if message_id == 102:
             return IOSPerformanceEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                name=MessageCodec.read_string(reader),
-                value=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_uint(reader)
             )
 
         if message_id == 103:
             return IOSLog(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                severity=MessageCodec.read_string(reader),
-                content=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                severity=self.read_string(reader),
+                content=self.read_string(reader)
             )
 
         if message_id == 104:
             return IOSInternalError(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                content=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                content=self.read_string(reader)
             )
 
         if message_id == 105:
             return IOSNetworkCall(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                type=MessageCodec.read_string(reader),
-                method=MessageCodec.read_string(reader),
-                url=MessageCodec.read_string(reader),
-                request=MessageCodec.read_string(reader),
-                response=MessageCodec.read_string(reader),
-                status=MessageCodec.read_uint(reader),
-                duration=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 106:
             return IOSSwipeEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                label=MessageCodec.read_string(reader),
-                x=MessageCodec.read_uint(reader),
-                y=MessageCodec.read_uint(reader),
-                direction=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                label=self.read_string(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader),
+                direction=self.read_string(reader)
             )
 
         if message_id == 107:
             return IOSBatchMeta(
-                timestamp=MessageCodec.read_uint(reader),
-                length=MessageCodec.read_uint(reader),
-                first_index=MessageCodec.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                first_index=self.read_uint(reader)
             )
 
         if message_id == 110:
             return IOSPerformanceAggregated(
-                timestamp_start=MessageCodec.read_uint(reader),
-                timestamp_end=MessageCodec.read_uint(reader),
-                min_fps=MessageCodec.read_uint(reader),
-                avg_fps=MessageCodec.read_uint(reader),
-                max_fps=MessageCodec.read_uint(reader),
-                min_cpu=MessageCodec.read_uint(reader),
-                avg_cpu=MessageCodec.read_uint(reader),
-                max_cpu=MessageCodec.read_uint(reader),
-                min_memory=MessageCodec.read_uint(reader),
-                avg_memory=MessageCodec.read_uint(reader),
-                max_memory=MessageCodec.read_uint(reader),
-                min_battery=MessageCodec.read_uint(reader),
-                avg_battery=MessageCodec.read_uint(reader),
-                max_battery=MessageCodec.read_uint(reader)
+                timestamp_start=self.read_uint(reader),
+                timestamp_end=self.read_uint(reader),
+                min_fps=self.read_uint(reader),
+                avg_fps=self.read_uint(reader),
+                max_fps=self.read_uint(reader),
+                min_cpu=self.read_uint(reader),
+                avg_cpu=self.read_uint(reader),
+                max_cpu=self.read_uint(reader),
+                min_memory=self.read_uint(reader),
+                avg_memory=self.read_uint(reader),
+                max_memory=self.read_uint(reader),
+                min_battery=self.read_uint(reader),
+                avg_battery=self.read_uint(reader),
+                max_battery=self.read_uint(reader)
             )
 
         if message_id == 111:
             return IOSIssueEvent(
-                timestamp=MessageCodec.read_uint(reader),
-                type=MessageCodec.read_string(reader),
-                context_string=MessageCodec.read_string(reader),
-                context=MessageCodec.read_string(reader),
-                payload=MessageCodec.read_string(reader)
+                timestamp=self.read_uint(reader),
+                type=self.read_string(reader),
+                context_string=self.read_string(reader),
+                context=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 

@@ -1,6 +1,6 @@
 import ConditionsManager from '../modules/conditionsManager.js'
 import FeatureFlags from '../modules/featureFlags.js'
-import type Message from './messages.gen.js'
+import Message, { TagTrigger } from './messages.gen.js'
 import {
   Timestamp,
   Metadata,
@@ -233,7 +233,7 @@ export default class App {
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
     this.featureFlags = new FeatureFlags(this)
     this.tagWatcher = new TagWatcher(this.sessionStorage, this.debug.error, (tag) =>
-      console.log(`Tag ${tag} has been rendered`),
+      this.send(TagTrigger(tag)),
     )
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {

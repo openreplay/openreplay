@@ -942,3 +942,12 @@ export function CanvasNode(
   ]
 }
 
+export function TagTrigger(
+  tagId: number,
+): Messages.TagTrigger {
+  return [
+    Messages.Type.TagTrigger,
+    tagId,
+  ]
+}
+

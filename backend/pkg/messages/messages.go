@@ -86,6 +86,7 @@ const (
 	MsgTabChange                   = 117
 	MsgTabData                     = 118
 	MsgCanvasNode                  = 119
+	MsgTagTrigger                  = 120
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2299,6 +2300,27 @@ func (msg *CanvasNode) Decode() Message {
 
 func (msg *CanvasNode) TypeID() int {
 	return 119
+}
+
+type TagTrigger struct {
+	message
+	TagId int64
+}
+
+func (msg *TagTrigger) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 120
+	p := 1
+	p = WriteInt(msg.TagId, buf, p)
+	return buf[:p]
+}
+
+func (msg *TagTrigger) Decode() Message {
+	return msg
+}
+
+func (msg *TagTrigger) TypeID() int {
+	return 120
 }
 
 type IssueEvent struct {

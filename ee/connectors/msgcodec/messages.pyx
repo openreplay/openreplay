@@ -1194,6 +1194,15 @@ cdef class CanvasNode(PyMessage):
         self.timestamp = timestamp
 
 
+cdef class TagTrigger(PyMessage):
+    cdef public int __id__
+    cdef public long tag_id
+
+    def __init__(self, long tag_id):
+        self.__id__ = 120
+        self.tag_id = tag_id
+
+
 cdef class IssueEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long message_id

@@ -808,6 +808,13 @@ class CanvasNode(Message):
         self.timestamp = timestamp
 
 
+class TagTrigger(Message):
+    __id__ = 120
+
+    def __init__(self, tag_id):
+        self.tag_id = tag_id
+
+
 class IssueEvent(Message):
     __id__ = 125
 

@@ -63,6 +63,7 @@ import type {
   RawTabChange,
   RawTabData,
   RawCanvasNode,
+  RawTagTrigger,
   RawIosEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
@@ -195,6 +196,8 @@ export type TabChange = RawTabChange & Timed
 export type TabData = RawTabData & Timed
 
 export type CanvasNode = RawCanvasNode & Timed
+
+export type TagTrigger = RawTagTrigger & Timed
 
 export type IosEvent = RawIosEvent & Timed
 
