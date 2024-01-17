@@ -32,19 +32,19 @@ func main() {
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
-	//consumer := queue.NewConsumer(
-	//	cfg.GroupImageStorage,
-	//	[]string{
-	//		cfg.TopicRawImages,
-	//	},
-	//	messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-	//		if err := srv.Process(sessID, data); err != nil {
-	//			log.Printf("can't process image: %s", err)
-	//		}
-	//	}, nil, true),
-	//	false,
-	//	cfg.MessageSizeLimit,
-	//)
+	consumer := queue.NewConsumer(
+		cfg.GroupImageStorage,
+		[]string{
+			cfg.TopicRawImages,
+		},
+		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			if err := srv.Process(sessID, data); err != nil {
+				log.Printf("can't process image: %s", err)
+			}
+		}, nil, true),
+		false,
+		cfg.MessageSizeLimit,
+	)
 
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
@@ -103,26 +103,26 @@ func main() {
 			log.Printf("Caught signal %v: terminating\n", sig)
 			srv.Wait()
 			// close all consumers
-			//consumer.Close()
+			consumer.Close()
 			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
-			//if err := consumer.Commit(); err != nil {
-			//	log.Printf("can't commit messages: %s", err)
-			//}
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 			if err := canvasConsumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-		//case msg := <-consumer.Rebalanced():
-		//	log.Println(msg)
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		case msg := <-canvasConsumer.Rebalanced():
 			log.Println(msg)
 		default:
-			//err := consumer.ConsumeNext()
-			//if err != nil {
-			//	log.Fatalf("Error on images consumption: %v", err)
-			//}
+			err := consumer.ConsumeNext()
+			if err != nil {
+				log.Fatalf("Error on images consumption: %v", err)
+			}
 			err = canvasConsumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on images consumption: %v", err)

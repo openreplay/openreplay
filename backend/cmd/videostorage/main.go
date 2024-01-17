@@ -38,29 +38,25 @@ func main() {
 
 	workDir := cfg.FSDir
 
-	//consumer := queue.NewConsumer(
-	//	cfg.GroupVideoStorage,
-	//	[]string{
-	//		cfg.TopicMobileTrigger,
-	//	},
-	//	messages.NewMessageIterator(
-	//		func(msg messages.Message) {
-	//			sesEnd := msg.(*messages.IOSSessionEnd)
-	//			log.Printf("skipped mobile session end: %d", sesEnd.SessionID())
-	//			//log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
-	//			//if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", false); err != nil {
-	//			//	log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
-	//			//}
-	//		},
-	//		[]int{messages.MsgIOSSessionEnd},
-	//		true,
-	//	),
-	//	false,
-	//	cfg.MessageSizeLimit,
-	//)
-
-	// Debug: global counter for canvases
-	canvasCount := 0
+	consumer := queue.NewConsumer(
+		cfg.GroupVideoStorage,
+		[]string{
+			cfg.TopicMobileTrigger,
+		},
+		messages.NewMessageIterator(
+			func(msg messages.Message) {
+				sesEnd := msg.(*messages.IOSSessionEnd)
+				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
+				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", ""); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+				}
+			},
+			[]int{messages.MsgIOSSessionEnd},
+			true,
+		),
+		false,
+		cfg.MessageSizeLimit,
+	)
 
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupVideoStorage,
@@ -80,8 +76,6 @@ func main() {
 					if !strings.Contains(err.Error(), "no such file or directory") {
 						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 					}
-				} else {
-					canvasCount++
 				}
 			},
 			[]int{messages.MsgSessionEnd},
@@ -102,29 +96,26 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			srv.Wait()
-			//consumer.Close()
+			consumer.Close()
 			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
-			//if err := consumer.Commit(); err != nil {
-			//	log.Printf("can't commit messages: %s", err)
-			//}
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 			if err := canvasConsumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-			// Debug log
-			log.Printf("canvasCount: %d", canvasCount)
-			canvasCount = 0
-		//case msg := <-consumer.Rebalanced():
-		//	log.Println(msg)
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		case msg := <-canvasConsumer.Rebalanced():
 			log.Println(msg)
 		default:
-			//err = consumer.ConsumeNext()
-			//if err != nil {
-			//	log.Fatalf("Error on end event consumption: %v", err)
-			//}
+			err = consumer.ConsumeNext()
+			if err != nil {
+				log.Fatalf("Error on end event consumption: %v", err)
+			}
 			err = canvasConsumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on end event consumption: %v", err)
