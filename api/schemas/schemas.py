@@ -1579,7 +1579,7 @@ class ModuleStatus(BaseModel):
 
 
 class TagCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, regex='^[a-zA-Z0-9_ -]+$')
+    name: str = Field(..., min_length=1, max_length=100, pattern='^[a-zA-Z0-9_ -]+$')
     selector: str = Field(..., min_length=1, max_length=255)
     ignore_click_rage: bool = Field(default=False)
     ignore_dead_click: bool = Field(default=False)
