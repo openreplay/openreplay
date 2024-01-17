@@ -887,6 +887,6 @@ def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 
 
 @app.delete('/{projectId}/tags/{tagId}', tags=["tags"])
-def tags_delete(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def tags_delete(projectId: int, tagId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.delete_tag(tag_id=tagId)
     return {'data': data}

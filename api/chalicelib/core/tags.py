@@ -10,11 +10,8 @@ def create_tag(project_id: int, data: schemas.TagCreate) -> int:
     RETURNING tag_id;
     """
 
-    # Remove project_id if any, to avoid a clash in the query
-    data.pop('project_id', None)
-
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {'project_id': project_id, **data})
+        query = cur.mogrify(query, {'project_id': project_id, **data.dict()})
         cur.execute(query)
         row = cur.fetchone()
 
@@ -33,7 +30,6 @@ def list_tags(project_id: int):
         query = cur.mogrify(query, {'project_id': project_id})
         cur.execute(query)
         rows = cur.fetchall()
-
     return helper.list_to_camel_case(rows)
 
 
