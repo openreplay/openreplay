@@ -19,6 +19,8 @@ fatal() {
     exit 1
 }
 
+export PATH=/var/lib/openreplay:$PATH
+
 usr=$(whoami)
 
 # Installing k3s
@@ -142,9 +144,11 @@ function set_permissions() {
 
 ## Installing OpenReplay
 function install_openreplay() {
-    info "installing toolings"
-    helm uninstall tooling -n app || true
-    helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS}
+    [[ $OR_CORE_ONLY ]] || {
+        info "installing toolings"
+        helm uninstall tooling -n app || true
+        helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS}
+    }
     info "installing databases"
     helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS}
     info "installing application"
