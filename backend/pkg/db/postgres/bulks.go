@@ -30,6 +30,7 @@ type BulkSet struct {
 	webClickEvents    Bulk
 	webNetworkRequest Bulk
 	webCanvasNodes    Bulk
+	webTagTriggers    Bulk
 	workerTask        chan *bulksTask
 	done              chan struct{}
 	finished          chan struct{}
@@ -79,6 +80,8 @@ func (conn *BulkSet) Get(name string) Bulk {
 		return conn.webNetworkRequest
 	case "canvasNodes":
 		return conn.webCanvasNodes
+	case "tagTriggers":
+		return conn.webTagTriggers
 	default:
 		return nil
 	}
@@ -207,6 +210,11 @@ func (conn *BulkSet) initBulks() {
 		"(session_id, recording_id, timestamp)",
 		"($%d, $%d, $%d)",
 		3, 200)
+	conn.webTagTriggers, err = NewBulk(conn.c,
+		"events.tags",
+		"(session_id, timestamp, seq_index, tag_id)",
+		"($%d, $%d, $%d, $%d)",
+		4, 200)
 	if err != nil {
 		log.Fatalf("can't create webCanvasNodes bulk: %s", err)
 	}
@@ -231,6 +239,7 @@ func (conn *BulkSet) Send() {
 	newTask.bulks = append(newTask.bulks, conn.webClickEvents)
 	newTask.bulks = append(newTask.bulks, conn.webNetworkRequest)
 	newTask.bulks = append(newTask.bulks, conn.webCanvasNodes)
+	newTask.bulks = append(newTask.bulks, conn.webTagTriggers)
 
 	conn.workerTask <- newTask
 

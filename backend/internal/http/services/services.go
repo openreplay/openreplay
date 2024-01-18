@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/tags"
 	"openreplay/backend/pkg/token"
 	"openreplay/backend/pkg/uxtesting"
 )
@@ -29,6 +30,7 @@ type ServicesBuilder struct {
 	Tokenizer    *token.Tokenizer
 	ObjStorage   objectstorage.ObjectStorage
 	UXTesting    uxtesting.UXTesting
+	Tags         tags.Tags
 }
 
 func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
@@ -49,5 +51,6 @@ func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *red
 		Flaker:       flakeid.NewFlaker(cfg.WorkerID),
 		ObjStorage:   objStore,
 		UXTesting:    uxtesting.New(pgconn),
+		Tags:         tags.New(pgconn),
 	}, nil
 }

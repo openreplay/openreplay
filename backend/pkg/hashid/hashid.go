@@ -38,3 +38,11 @@ func MouseThrashingID(projectID uint32, sessID, ts uint64) string {
 	hash.Write([]byte(strconv.FormatUint(ts, 10)))
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
+
+func TagTriggerID(projectID uint32, sessID, ts uint64) string {
+	hash := fnv.New128a()
+	hash.Write([]byte("tag_trigger"))
+	hash.Write([]byte(strconv.FormatUint(sessID, 10)))
+	hash.Write([]byte(strconv.FormatUint(ts, 10)))
+	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
+}

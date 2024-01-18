@@ -194,6 +194,10 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertCanvasNode(session, m); err != nil {
 			return err
 		}
+	case *TagTrigger:
+		if err = s.pg.InsertTagTrigger(session, m); err != nil {
+			return err
+		}
 	}
 	return nil
 }

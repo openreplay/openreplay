@@ -588,3 +588,31 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 	}
 	ResponseOK(w, startTime, r.URL.Path, 0)
 }
+
+func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	sessInfo, err := e.services.Sessions.Get(sessionData.ID)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Get tags
+	tags, err := e.services.Tags.Get(sessInfo.ProjectID)
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	type UrlResponse struct {
+		Tags interface{} `json:"tags"`
+	}
+	ResponseWithJSON(w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
+}
