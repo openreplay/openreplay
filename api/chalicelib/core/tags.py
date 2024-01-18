@@ -3,7 +3,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
 
-def create_tag(project_id: int, data: schemas.TagCreate) -> int:
+def create_tag(project_id: int, data: schemas.TagCreate, user_id=None) -> int:
     query = """
     INSERT INTO public.tags (project_id, name, selector, ignore_click_rage, ignore_dead_click)
     VALUES (%(project_id)s, %(name)s, %(selector)s, %(ignore_click_rage)s, %(ignore_dead_click)s)
@@ -26,7 +26,7 @@ def create_tag(project_id: int, data: schemas.TagCreate) -> int:
     return row['tag_id']
 
 
-def list_tags(project_id: int):
+def list_tags(project_id: int, user_id=None):
     query = """
     SELECT tag_id, name, selector, ignore_click_rage, ignore_dead_click
     FROM public.tags
@@ -41,7 +41,7 @@ def list_tags(project_id: int):
     return helper.list_to_camel_case(rows)
 
 
-def update_tag(project_id: int, tag_id: int, data: schemas.TagUpdate):
+def update_tag(project_id: int, tag_id: int, data: schemas.TagUpdate, user_id=None):
     query = """
     UPDATE public.tags
     SET name = %(name)s
@@ -55,7 +55,7 @@ def update_tag(project_id: int, tag_id: int, data: schemas.TagUpdate):
     return True
 
 
-def delete_tag(tag_id: int):
+def delete_tag(tag_id: int, user_id=None):
     query = """
     UPDATE public.tags
     SET deleted_at = now() at time zone 'utc'
