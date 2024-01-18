@@ -713,7 +713,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                                 value_key=e_k))
 
             elif event_type == events.EventType.TAG.ui_type:
-                event_from = event_from % f"{events.EventType.CLICK.table} AS main "
+                event_from = event_from % f"{events.EventType.TAG.table} AS main "
                 if not is_any:
                     event_where.append(
                         sh.multi_conditions(f"main.tag_id = %({e_k})s", event.value, value_key=e_k))
