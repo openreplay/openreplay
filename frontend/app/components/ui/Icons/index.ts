@@ -225,6 +225,7 @@ export { default as Filters_referrer } from './filters_referrer';
 export { default as Filters_resize } from './filters_resize';
 export { default as Filters_rev_id } from './filters_rev_id';
 export { default as Filters_state_action } from './filters_state_action';
+export { default as Filters_tag_element } from './filters_tag_element';
 export { default as Filters_ttfb } from './filters_ttfb';
 export { default as Filters_user_alt } from './filters_user_alt';
 export { default as Filters_userid } from './filters_userid';

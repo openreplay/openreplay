@@ -269,6 +269,7 @@ export const filters = [
     label: 'Tagged Element',
     operator: 'is',
     isEvent: true,
+    icon: 'filters/tag-element',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     options: [],
   },
