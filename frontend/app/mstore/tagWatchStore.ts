@@ -10,51 +10,54 @@ export default class TagWatchStore {
     makeAutoObservable(this);
   }
 
-  setTags(tags: Tag[]) {
+  setTags = (tags: Tag[]) => {
     this.tags = tags;
-  }
+  };
 
-  setLoading(loading: boolean) {
+  setLoading = (loading: boolean) => {
     this.isLoading = loading;
-  }
+  };
 
-  async getTags() {
+  getTags = async () => {
     this.setLoading(true);
     try {
       const tags: Tag[] = await tagWatchService.getTags();
       this.setTags(tags);
-      return tags
+      return tags;
     } catch (e) {
       console.error(e);
     } finally {
       this.setLoading(false);
     }
-  }
+  };
 
-  async createTag(data: CreateTag) {
+  createTag = async (data: CreateTag) => {
     try {
       const tag = await tagWatchService.createTag(data);
       this.setTags([...this.tags, tag]);
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 
-  async deleteTag(id: number) {
+  deleteTag = async (id: number) => {
     try {
       await tagWatchService.deleteTag(id);
-      this.setTags(this.tags.filter(t => t.tagId !== id));
+      this.setTags(this.tags.filter((t) => t.tagId !== id));
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 
-  async updateTagName(id: number, name: string) {
+  updateTagName = async (id: number, name: string) => {
     try {
-      const tag = await tagWatchService.updateTagName(id, name);
-      this.setTags(this.tags.map(t => t.tagId === tag.tagId ? tag : t));
+      await tagWatchService.updateTagName(id, name);
+      const updatedTag = this.tags.find((t) => t.tagId === id)
+      if (updatedTag) {
+        this.setTags(this.tags.map((t) => t.tagId === id ? { ...updatedTag, name } : t));
+      }
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 }
