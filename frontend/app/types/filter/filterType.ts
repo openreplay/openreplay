@@ -64,6 +64,8 @@ export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
       return 'duration';
     case FilterKey.FEATURE_FLAG:
       return 'feature_flag';
+    case FilterKey.TAGGED_ELEMENT:
+      return 'tnw'
   }
 };
 
@@ -149,6 +151,8 @@ export const getFilterKeyTypeByKey = (key: string) => {
       return FilterKey.DURATION;
     case FilterKey.FEATURE_FLAG:
       return 'feature_flag';
+    case 'tnw':
+      return FilterKey.TAGGED_ELEMENT
   }
 };
 
@@ -306,4 +310,5 @@ export enum FilterKey {
 
   CLICKMAP_URL = 'clickMapUrl',
   FEATURE_FLAG = 'featureFlag',
+  TAGGED_ELEMENT = 'tag',
 }

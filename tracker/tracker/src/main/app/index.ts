@@ -233,7 +233,7 @@ export default class App {
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
     this.featureFlags = new FeatureFlags(this)
     this.tagWatcher = new TagWatcher(this.sessionStorage, this.debug.error, (tag) =>
-      this.send(TagTrigger(tag)),
+      this.send(TagTrigger(tag) as Message),
     )
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {

@@ -48,9 +48,9 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
     return;
   }
 
-  const entires = getQueryObject(search);
-  const period: any = getPeriodFromEntries(entires);
-  const filters = getFiltersFromEntries(entires);
+  const entries = getQueryObject(search);
+  const period: any = getPeriodFromEntries(entries);
+  const filters = getFiltersFromEntries(entries);
 
   return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
@@ -72,29 +72,33 @@ const getFiltersFromEntries = (entires: any) => {
       const sourceArr = tmp[1] ? tmp[1].split('|') : [];
       const sourceOperator = sourceArr.shift();
 
-      if (filterKey) {
-        filter.type = filterKey;
-        filter.key = filterKey;
+      if (filterKey && _filters[filterKey]) {
+        filter = _filters[filterKey];
+        filter.value = valueArr;
       } else {
-        filter = _filters[item.key];
-        if (!!filter) {
-          filter.type = filter.key;
-          filter.key = filter.key;
+        if (filterKey) {
+          filter.type = filterKey;
+          filter.key = filterKey;
+        } else {
+          filter = _filters[item.key];
+          if (!!filter) {
+            filter.type = filter.key;
+          }
         }
-      }
 
-      if (!filter) {
-        return;
-      }
+        if (!filter) {
+          return;
+        }
 
-      filter.value = valueArr;
-      filter.operator = operator;
-      if (filter.icon === 'filters/metadata') {
-        filter.source = filter.type;
-        filter.type = 'MULTIPLE';
-      } else {
-        filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
-        filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+        filter.value = valueArr;
+        filter.operator = operator;
+        if (filter.icon === 'filters/metadata') {
+          filter.source = filter.type;
+          filter.type = 'MULTIPLE';
+        } else {
+          filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
+          filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+        }
       }
 
       if (!filter.filters || filter.filters.size === 0) {

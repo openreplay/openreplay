@@ -7,6 +7,7 @@ import { CopyButton } from 'UI';
 import { SearchOutlined, ZoomInOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
+import { toast } from 'react-toastify';
 
 function TagWatch() {
   const { tagWatchStore } = useStore();
@@ -45,6 +46,13 @@ function TagWatch() {
       selector,
       ignoreClickRage: ignoreClRage,
       ignoreDeadClick: ignoreDeadCl,
+    }).then(() => {
+      // @ts-ignore
+      toast.success('Tag created');
+      setSelector('');
+    }).catch(() => {
+      // @ts-ignore
+      toast.error('Failed to create tag');
     })
   };
   const openSaveModal = () => {

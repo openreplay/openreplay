@@ -4,6 +4,7 @@ import { CreateTag, Tag } from 'App/services/TagWatchService';
 
 export default class TagWatchStore {
   tags: Tag[] = [];
+  isLoading = true;
 
   constructor() {
     makeAutoObservable(this);
@@ -13,12 +14,20 @@ export default class TagWatchStore {
     this.tags = tags;
   }
 
+  setLoading(loading: boolean) {
+    this.isLoading = loading;
+  }
+
   async getTags() {
+    this.setLoading(true);
     try {
-      const tags = await tagWatchService.getTags();
+      const tags: Tag[] = await tagWatchService.getTags();
       this.setTags(tags);
+      return tags
     } catch (e) {
       console.error(e);
+    } finally {
+      this.setLoading(false);
     }
   }
 
@@ -31,19 +40,19 @@ export default class TagWatchStore {
     }
   }
 
-  async deleteTag(id: string) {
+  async deleteTag(id: number) {
     try {
       await tagWatchService.deleteTag(id);
-      this.setTags(this.tags.filter(t => t.id !== id));
+      this.setTags(this.tags.filter(t => t.tagId !== id));
     } catch (e) {
       console.error(e);
     }
   }
 
-  async updateTagName(id: string, name: string) {
+  async updateTagName(id: number, name: string) {
     try {
       const tag = await tagWatchService.updateTagName(id, name);
-      this.setTags(this.tags.map(t => t.id === tag.id ? tag : t));
+      this.setTags(this.tags.map(t => t.tagId === tag.tagId ? tag : t));
     } catch (e) {
       console.error(e);
     }

@@ -8,7 +8,7 @@ export interface CreateTag {
 }
 
 export interface Tag extends CreateTag {
-  id: string;
+  tagId: number;
 }
 
 export default class TagWatchService extends BaseService {
@@ -24,13 +24,13 @@ export default class TagWatchService extends BaseService {
       .then((response: { data: any; }) => response.data || {})
   }
 
-  deleteTag(id: string) {
+  deleteTag(id: number) {
     return this.client.delete(`/tags/${id}`)
       .then(r => r.json())
       .then((response: { data: any; }) => response.data || {})
   }
 
-  updateTagName(id: string, name: string) {
+  updateTagName(id: number, name: string) {
     return this.client.put(`/tags/${id}`, { name })
       .then(r => r.json())
       .then((response: { data: any; }) => response.data || {})
