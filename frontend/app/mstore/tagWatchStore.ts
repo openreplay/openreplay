@@ -33,8 +33,8 @@ export default class TagWatchStore {
 
   createTag = async (data: CreateTag) => {
     try {
-      const tag = await tagWatchService.createTag(data);
-      this.setTags([...this.tags, tag]);
+      const tagId: number = await tagWatchService.createTag(data);
+      return tagId;
     } catch (e) {
       console.error(e);
     }

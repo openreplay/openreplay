@@ -40,20 +40,22 @@ function TagWatch() {
     }
   }, [selector]);
 
-  const onSave = (name: string, ignoreClRage: boolean, ignoreDeadCl: boolean) => {
-    tagWatchStore.createTag({
-      name,
-      selector,
-      ignoreClickRage: ignoreClRage,
-      ignoreDeadClick: ignoreDeadCl,
-    }).then(() => {
+  const onSave = async (name: string, ignoreClRage: boolean, ignoreDeadCl: boolean) => {
+    try {
+      const tag = await tagWatchStore.createTag({
+        name,
+        selector,
+        ignoreClickRage: ignoreClRage,
+        ignoreDeadClick: ignoreDeadCl,
+      });
       // @ts-ignore
       toast.success('Tag created');
       setSelector('');
-    }).catch(() => {
+      return tag
+    } catch {
       // @ts-ignore
       toast.error('Failed to create tag');
-    })
+    }
   };
   const openSaveModal = () => {
     if (selector === '') {
