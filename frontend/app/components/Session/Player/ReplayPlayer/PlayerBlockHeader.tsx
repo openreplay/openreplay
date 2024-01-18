@@ -116,6 +116,7 @@ function PlayerBlockHeader(props: any) {
             tabs={TABS}
             active={activeTab}
             onClick={(tab) => {
+              console.log(tab, activeTab)
               if (activeTab === tab) {
                 setActiveTab('');
                 player.toggleEvents();
