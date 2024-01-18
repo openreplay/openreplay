@@ -220,8 +220,7 @@ func (conn *Conn) InsertCanvasNode(sess *sessions.Session, m *messages.CanvasNod
 }
 
 func (conn *Conn) InsertTagTrigger(sess *sessions.Session, m *messages.TagTrigger) error {
-	seqIndex := hashid.TagTriggerID(sess.ProjectID, sess.SessionID, m.Timestamp)
-	if err := conn.bulks.Get("tagTriggers").Append(sess.SessionID, m.Timestamp, seqIndex, m.TagId); err != nil {
+	if err := conn.bulks.Get("tagTriggers").Append(sess.SessionID, m.Timestamp, m.Index, m.TagId); err != nil {
 		log.Printf("insert tag trigger %d to db, err: %s", m.TagId, err)
 	}
 	return nil
