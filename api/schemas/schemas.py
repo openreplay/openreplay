@@ -607,7 +607,7 @@ class RequestGraphqlFilterSchema(BaseModel):
 
 class SessionSearchEventSchema2(BaseModel):
     is_event: Literal[True] = True
-    value: List[str] = Field(...)
+    value: List[Union[str, int]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
