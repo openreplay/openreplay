@@ -61,11 +61,11 @@ def update_tag(project_id, tag_id: int, data: schemas.TagUpdate):
     query = """
     UPDATE public.tags
     SET name = %(name)s
-    WHERE tag_id = %(tag_id)s
+    WHERE tag_id = %(tag_id)s AND project_id = %(project_id)s
     """
 
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {'tag_id': tag_id, 'name': data.name})
+        query = cur.mogrify(query, {'tag_id': tag_id, 'name': data.name, 'project_id': project_id})
         cur.execute(query)
 
     return True
@@ -78,10 +78,10 @@ def delete_tag(project_id: int, tag_id: int, user_id: int):
     query = """
     UPDATE public.tags
     SET deleted_at = now() at time zone 'utc'
-    WHERE tag_id = %(tag_id)s
+    WHERE tag_id = %(tag_id)s AND project_id = %(project_id)s
     """
 
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {'tag_id': tag_id})
+        query = cur.mogrify(query, {'tag_id': tag_id, 'project_id': project_id})
         cur.execute(query)
     return True
