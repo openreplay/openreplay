@@ -55,11 +55,11 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
   return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
 
-const getFiltersFromEntries = (entires: any) => {
+const getFiltersFromEntries = (entries: any) => {
   const _filters: any = { ...filtersMap };
   const filters: any = [];
-  if (entires.length > 0) {
-    entires.forEach((item: any) => {
+  if (entries.length > 0) {
+    entries.forEach((item: any) => {
       if (!item.key || !item.value) {
         return;
       }
@@ -110,15 +110,15 @@ const getFiltersFromEntries = (entires: any) => {
   return filters;
 };
 
-const getPeriodFromEntries = (entires: any) => {
-  const rangeFilter = entires.find(({ key }: any) => key === 'range');
+const getPeriodFromEntries = (entries: any) => {
+  const rangeFilter = entries.find(({ key }: any) => key === 'range');
   if (!rangeFilter) {
     return Period();
   }
 
   if (rangeFilter.value === CUSTOM_RANGE) {
-    const start = entires.find(({ key }: any) => key === 'rStart').value;
-    const end = entires.find(({ key }: any) => key === 'rEnd').value;
+    const start = entries.find(({ key }: any) => key === 'rStart').value;
+    const end = entries.find(({ key }: any) => key === 'rEnd').value;
     return Period({ rangeName: rangeFilter.value, start, end });
   }
 
