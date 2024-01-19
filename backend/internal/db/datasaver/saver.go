@@ -129,10 +129,8 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *Metadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
-		// Tags filter
 		if m.Type == "dead_click" || m.Type == "click_rage" {
 			if s.tags.ShouldIgnoreTag(session.ProjectID, m.Context) {
-				log.Printf("Tag %s ignored", m.Context)
 				return nil
 			}
 		}
