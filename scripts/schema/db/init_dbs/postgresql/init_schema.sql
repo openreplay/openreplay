@@ -1132,7 +1132,7 @@ $$
                 session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
                 timestamp  bigint  NOT NULL,
                 seq_index  integer NOT NULL,
-                tag_id     bigint  NOT NULL REFERENCES public.tags (tag_id) ON DELETE CASCADE,
+                tag_id     integer  NOT NULL REFERENCES public.tags (tag_id) ON DELETE CASCADE,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX tags_session_id_idx ON events.tags (session_id);
