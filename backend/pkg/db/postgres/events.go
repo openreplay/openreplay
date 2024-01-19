@@ -219,6 +219,13 @@ func (conn *Conn) InsertCanvasNode(sess *sessions.Session, m *messages.CanvasNod
 	return nil
 }
 
+func (conn *Conn) InsertTagTrigger(sess *sessions.Session, m *messages.TagTrigger) error {
+	if err := conn.bulks.Get("tagTriggers").Append(sess.SessionID, m.Timestamp, truncSqIdx(m.Index), m.TagId); err != nil {
+		log.Printf("insert tag trigger %d to db, err: %s", m.TagId, err)
+	}
+	return nil
+}
+
 func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) error {
 	sessionID := p.SessionID()
 	timestamp := (p.TimestampEnd + p.TimestampStart) / 2

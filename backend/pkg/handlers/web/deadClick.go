@@ -44,6 +44,7 @@ func (d *DeadClickDetector) Build() Message {
 		ContextString: d.lastMouseClick.Label,
 		Timestamp:     d.lastClickTimestamp,
 		MessageID:     d.lastMessageID,
+		Context:       d.lastMouseClick.Selector, // hack to pass selector to db (tags filter)
 	}
 	return event
 }

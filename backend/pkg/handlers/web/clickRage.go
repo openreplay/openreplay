@@ -13,6 +13,7 @@ const MinClicksInARow = 3
 type ClickRageDetector struct {
 	lastTimestamp        uint64
 	lastLabel            string
+	lastSelector         string
 	firstInARawTimestamp uint64
 	firstInARawMessageId uint64
 	countsInARow         int
@@ -22,6 +23,7 @@ type ClickRageDetector struct {
 func (crd *ClickRageDetector) reset() {
 	crd.lastTimestamp = 0
 	crd.lastLabel = ""
+	crd.lastSelector = ""
 	crd.firstInARawTimestamp = 0
 	crd.firstInARawMessageId = 0
 	crd.countsInARow = 0
@@ -49,6 +51,7 @@ func (crd *ClickRageDetector) Build() Message {
 		Timestamp:     crd.firstInARawTimestamp,
 		MessageID:     crd.firstInARawMessageId,
 		URL:           crd.url,
+		Context:       crd.lastSelector, // hack to pass selector to db (tags filter)
 	}
 }
 
@@ -74,6 +77,7 @@ func (crd *ClickRageDetector) Handle(message Message, timestamp uint64) Message 
 		// Use current message as init values for new event
 		crd.lastTimestamp = timestamp
 		crd.lastLabel = msg.Label
+		crd.lastSelector = msg.Selector
 		crd.firstInARawTimestamp = timestamp
 		crd.firstInARawMessageId = message.MsgID()
 		crd.countsInARow = 1

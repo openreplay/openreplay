@@ -2,6 +2,7 @@ package datasaver
 
 import (
 	"log"
+	"openreplay/backend/pkg/tags"
 
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/clickhouse"
@@ -24,13 +25,15 @@ type saverImpl struct {
 	sessions sessions.Sessions
 	ch       clickhouse.Connector
 	producer queue.Producer
+	tags     tags.Tags
 }
 
-func New(cfg *db.Config, pg *postgres.Conn, session sessions.Sessions) Saver {
+func New(cfg *db.Config, pg *postgres.Conn, session sessions.Sessions, tags tags.Tags) Saver {
 	s := &saverImpl{
 		cfg:      cfg,
 		pg:       pg,
 		sessions: session,
+		tags:     tags,
 	}
 	s.init()
 	return s
@@ -126,6 +129,11 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *Metadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
 	case *IssueEvent:
+		if m.Type == "dead_click" || m.Type == "click_rage" {
+			if s.tags.ShouldIgnoreTag(session.ProjectID, m.Context) {
+				return nil
+			}
+		}
 		err = s.pg.InsertIssueEvent(session, m)
 		if err != nil {
 			return err
@@ -192,6 +200,10 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.sessions.UpdateIssuesStats(session.SessionID, 0, 50)
 	case *CanvasNode:
 		if err = s.pg.InsertCanvasNode(session, m); err != nil {
+			return err
+		}
+	case *TagTrigger:
+		if err = s.pg.InsertTagTrigger(session, m); err != nil {
 			return err
 		}
 	}

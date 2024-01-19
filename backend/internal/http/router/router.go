@@ -116,6 +116,7 @@ func (e *Router) init() {
 	getHandlers := map[string]func(http.ResponseWriter, *http.Request){
 		"/v1/web/uxt/test/{id}":  e.getUXTestInfo,
 		"/v1/web/uxt/upload-url": e.getUXUploadUrl,
+		"/v1/web/tags":           e.getTags,
 	}
 	prefix := "/ingest"
 

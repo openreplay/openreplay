@@ -15,6 +15,7 @@ import (
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/tags"
 	"openreplay/backend/pkg/terminator"
 )
 
@@ -47,9 +48,10 @@ func main() {
 
 	projManager := projects.New(pgConn, redisClient)
 	sessManager := sessions.New(pgConn, projManager, redisClient)
+	tagsManager := tags.New(pgConn)
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessManager)
+	saver := datasaver.New(cfg, pg, sessManager, tagsManager)
 
 	// Message filter
 	msgFilter := []int{
@@ -60,7 +62,7 @@ func main() {
 		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction, messages.MsgMouseClick,
 		messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
 		messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
-		messages.MsgUnbindNodes, messages.MsgCanvasNode,
+		messages.MsgUnbindNodes, messages.MsgCanvasNode, messages.MsgTagTrigger,
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
 		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,
