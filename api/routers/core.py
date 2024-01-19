@@ -876,23 +876,23 @@ def health_check():
 
 @app.post('/{projectId}/tags', tags=["tags"])
 def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.create_tag(project_id=projectId, data=data, user_id=context.user_id)
+    data = tags.create_tag(project_id=projectId, data=data)
     return {'data': data}
 
 
 @app.put('/{projectId}/tags/{tagId}', tags=["tags"])
 def tags_update(projectId: int, tagId: int, data: schemas.TagUpdate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.update_tag(project_id=projectId, tag_id=tagId, data=data, user_id=context.user_id)
+    data = tags.update_tag(project_id=projectId, tag_id=tagId, data=data)
     return {'data': data}
 
 
 @app.get('/{projectId}/tags', tags=["tags"])
 def tags_list(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.list_tags(project_id=projectId, user_id=context.user_id)
+    data = tags.list_tags(project_id=projectId)
     return {'data': data}
 
 
 @app.delete('/{projectId}/tags/{tagId}', tags=["tags"])
 def tags_delete(projectId: int, tagId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = tags.delete_tag(tag_id=tagId, user_id=context.user_id)
+    data = tags.delete_tag(projectId, tag_id=tagId)
     return {'data': data}
