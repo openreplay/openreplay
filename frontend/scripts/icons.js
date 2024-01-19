@@ -1,11 +1,13 @@
+/// <reference types="node" />
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { optimize } = require('svgo');
 const fs = require('fs');
 const { collectFilenames } = require('./fs');
+const path = require('path');
 
 const svgRE = /\.svg$/;
-const ICONS_DIRNAME = 'app/svg/icons';
-const UI_DIRNAME = 'app/components/ui';
+const ICONS_DIRNAME =  path.join(__dirname, '../app/svg/icons')
+const UI_DIRNAME = path.join(__dirname, '../app/components/ui')
 const icons = collectFilenames(ICONS_DIRNAME, n => svgRE.test(n));
 
 const getDirectories = source =>
