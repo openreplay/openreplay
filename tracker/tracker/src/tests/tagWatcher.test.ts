@@ -1,4 +1,4 @@
-import TagWatcher, { WATCHED_TAGS_KEY } from './TagWatcher'
+import TagWatcher, { WATCHED_TAGS_KEY } from '../main/modules/TagWatcher'
 import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globals'
 
 describe('TagWatcher', () => {
@@ -62,14 +62,17 @@ describe('TagWatcher', () => {
       }),
     )
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
-    await watcher.fetchTags()
+    await watcher.fetchTags('https://localhost.com', '123')
     expect(watcher.tags).toEqual(['div', 'span', 'p'])
     expect(sessionStorageMock.setItem).toHaveBeenCalledWith(WATCHED_TAGS_KEY, 'div,span,p')
   })
 
   test('setTags sets intervals for each tag', () => {
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
-    watcher.setTags(['div', 'p'])
+    watcher.setTags([
+      { id: 1, selector: 'div' },
+      { id: 2, selector: 'p' },
+    ])
     expect(watcher.intervals).toHaveProperty('div')
     expect(watcher.intervals).toHaveProperty('p')
     expect(mockObserve).not.toHaveBeenCalled() // No elements to observe initially
@@ -77,7 +80,7 @@ describe('TagWatcher', () => {
 
   test('onTagRendered sends messages', () => {
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
-    watcher.setTags(['div'])
+    watcher.setTags([{ id: 1, selector: 'div' }])
     // @ts-ignore
     document.querySelectorAll.mockReturnValue([{ __or_watcher_tagname: 'div' }]) // Mock a found element
     jest.advanceTimersByTime(1000)
@@ -88,7 +91,10 @@ describe('TagWatcher', () => {
 
   test('clear method clears all intervals and resets tags', () => {
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
-    watcher.setTags(['div', 'p'])
+    watcher.setTags([
+      { id: 1, selector: 'div' },
+      { id: 2, selector: 'p' },
+    ])
     watcher.clear()
     expect(watcher.tags).toEqual([])
     expect(watcher.intervals).toEqual({})

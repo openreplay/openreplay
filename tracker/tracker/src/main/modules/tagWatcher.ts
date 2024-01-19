@@ -10,11 +10,9 @@ class TagWatcher {
     private readonly errLog: (args: any[]) => void,
     private readonly onTag: (tag: number) => void,
   ) {
-    const tags: { id: number; selector: string }[] =
-      sessionStorage
-        .getItem(WATCHED_TAGS_KEY)
-        ?.split(',')
-        .map((tag) => JSON.parse(tag)) || []
+    const tags: { id: number; selector: string }[] = JSON.parse(
+      sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
+    )
     this.setTags(tags)
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -32,12 +30,19 @@ class TagWatcher {
     })
   }
 
-  async fetchTags() {
-    return fetch('https://api.openreplay.com/tags')
+  async fetchTags(ingest: string, token: string) {
+    return fetch(`${ingest}/v1/web/tags`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((r) => r.json())
-      .then((tags: { id: number; selector: string }[]) => {
-        this.setTags(tags)
-        this.sessionStorage.setItem(WATCHED_TAGS_KEY, tags.join(',') || '')
+      .then(({ tags }: { tags: { id: number; selector: string }[] }) => {
+        if (tags && tags.length) {
+          this.setTags(tags)
+          this.sessionStorage.setItem(WATCHED_TAGS_KEY, JSON.stringify(tags) || '')
+        }
       })
       .catch((e) => this.errLog(e))
   }
