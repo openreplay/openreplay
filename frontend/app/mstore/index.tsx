@@ -5,22 +5,21 @@ import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
 import FunnelStore from './funnelStore';
-import {
-  services
-} from 'App/services';
+import { services } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
 import NotificationStore from './notificationStore';
 import ErrorStore from './errorStore';
 import SessionStore from './sessionStore';
 import NotesStore from './notesStore';
-import BugReportStore from './bugReportStore'
-import RecordingsStore from './recordingsStore'
+import BugReportStore from './bugReportStore';
+import RecordingsStore from './recordingsStore';
 import AssistMultiviewStore from './assistMultiviewStore';
-import WeeklyReportStore from './weeklyReportConfigStore'
-import AlertStore from './alertsStore'
-import FeatureFlagsStore from "./featureFlagsStore";
+import WeeklyReportStore from './weeklyReportConfigStore';
+import AlertStore from './alertsStore';
+import FeatureFlagsStore from './featureFlagsStore';
 import UxtestingStore from './uxtestingStore';
+import TagWatchStore from './tagWatchStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -37,10 +36,11 @@ export class RootStore {
   bugReportStore: BugReportStore;
   recordingsStore: RecordingsStore;
   assistMultiviewStore: AssistMultiviewStore;
-  weeklyReportStore: WeeklyReportStore
-  alertsStore: AlertStore
-  featureFlagsStore: FeatureFlagsStore
-  uxtestingStore: UxtestingStore
+  weeklyReportStore: WeeklyReportStore;
+  alertsStore: AlertStore;
+  featureFlagsStore: FeatureFlagsStore;
+  uxtestingStore: UxtestingStore;
+  tagWatchStore: TagWatchStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -61,13 +61,14 @@ export class RootStore {
     this.alertsStore = new AlertStore();
     this.featureFlagsStore = new FeatureFlagsStore();
     this.uxtestingStore = new UxtestingStore();
+    this.tagWatchStore = new TagWatchStore();
   }
 
   initClient() {
     const client = new APIClient();
-    services.forEach(service => {
+    services.forEach((service) => {
       service.initClient(client);
-    })
+    });
   }
 }
 

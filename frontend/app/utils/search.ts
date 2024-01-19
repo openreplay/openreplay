@@ -48,18 +48,18 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
     return;
   }
 
-  const entires = getQueryObject(search);
-  const period: any = getPeriodFromEntries(entires);
-  const filters = getFiltersFromEntries(entires);
+  const entries = getQueryObject(search);
+  const period: any = getPeriodFromEntries(entries);
+  const filters = getFiltersFromEntries(entries);
 
   return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
 
-const getFiltersFromEntries = (entires: any) => {
+const getFiltersFromEntries = (entries: any) => {
   const _filters: any = { ...filtersMap };
   const filters: any = [];
-  if (entires.length > 0) {
-    entires.forEach((item: any) => {
+  if (entries.length > 0) {
+    entries.forEach((item: any) => {
       if (!item.key || !item.value) {
         return;
       }
@@ -72,29 +72,33 @@ const getFiltersFromEntries = (entires: any) => {
       const sourceArr = tmp[1] ? tmp[1].split('|') : [];
       const sourceOperator = sourceArr.shift();
 
-      if (filterKey) {
-        filter.type = filterKey;
-        filter.key = filterKey;
+      if (filterKey && _filters[filterKey]) {
+        filter = _filters[filterKey];
+        filter.value = valueArr;
       } else {
-        filter = _filters[item.key];
-        if (!!filter) {
-          filter.type = filter.key;
-          filter.key = filter.key;
+        if (filterKey) {
+          filter.type = filterKey;
+          filter.key = filterKey;
+        } else {
+          filter = _filters[item.key];
+          if (!!filter) {
+            filter.type = filter.key;
+          }
         }
-      }
 
-      if (!filter) {
-        return;
-      }
+        if (!filter) {
+          return;
+        }
 
-      filter.value = valueArr;
-      filter.operator = operator;
-      if (filter.icon === 'filters/metadata') {
-        filter.source = filter.type;
-        filter.type = 'MULTIPLE';
-      } else {
-        filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
-        filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+        filter.value = valueArr;
+        filter.operator = operator;
+        if (filter.icon === 'filters/metadata') {
+          filter.source = filter.type;
+          filter.type = 'MULTIPLE';
+        } else {
+          filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
+          filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+        }
       }
 
       if (!filter.filters || filter.filters.size === 0) {
@@ -106,15 +110,15 @@ const getFiltersFromEntries = (entires: any) => {
   return filters;
 };
 
-const getPeriodFromEntries = (entires: any) => {
-  const rangeFilter = entires.find(({ key }: any) => key === 'range');
+const getPeriodFromEntries = (entries: any) => {
+  const rangeFilter = entries.find(({ key }: any) => key === 'range');
   if (!rangeFilter) {
     return Period();
   }
 
   if (rangeFilter.value === CUSTOM_RANGE) {
-    const start = entires.find(({ key }: any) => key === 'rStart').value;
-    const end = entires.find(({ key }: any) => key === 'rEnd').value;
+    const start = entries.find(({ key }: any) => key === 'rStart').value;
+    const end = entries.find(({ key }: any) => key === 'rEnd').value;
     return Period({ rangeName: rangeFilter.value, start, end });
   }
 

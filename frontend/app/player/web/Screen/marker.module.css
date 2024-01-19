@@ -39,24 +39,21 @@
   position: absolute;
   left: 0;
   bottom: 100%;
-  padding: 15px;
+  padding: 8px;
+  max-width: 600px;
   box-shadow: 2px 2px 1px rgba(40, 40, 100, .3);
   z-index: 999;
   border-radius: 3px;
   background-color: #202124;
-  min-width: 400px;
-  font-size: 20px !important;
+  min-width: 300px;
+  font-size: 16px !important;
+  color:#9BBBDC;
+}
 
-  & div:first-child {
-    max-width: 600px;
-    height: 22px;
-    white-space: nowrap;  
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  & div:last-child {    
-    font-size: 18px;
-    margin-top: 10px;
-    color: $tealx;
-  }
+.tooltipHint {
+  margin-top: 4px;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+  color: rgba(138, 170, 201, 0.8);
 }

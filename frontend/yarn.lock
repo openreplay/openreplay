@@ -2762,6 +2762,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@medv/finder@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@medv/finder@npm:3.1.0"
+  checksum: 43f8f5af50d51e2609a26b7f1306cf0b170967df9aa0169d70319215957d47066c35d888d8d049d47384639e28c1bba96bc9c09558bb7368ea43c8b0b6e03836
+  languageName: node
+  linkType: hard
+
 "@mrmlnc/readdir-enhanced@npm:^2.2.1":
   version: 2.2.1
   resolution: "@mrmlnc/readdir-enhanced@npm:2.2.1"
@@ -18091,6 +18098,7 @@ __metadata:
     "@babel/runtime": ^7.23.2
     "@floating-ui/react-dom-interactions": ^0.10.3
     "@jest/globals": ^29.7.0
+    "@medv/finder": ^3.1.0
     "@openreplay/sourcemap-uploader": ^3.0.8
     "@sentry/browser": ^5.21.1
     "@storybook/addon-actions": ^6.5.12

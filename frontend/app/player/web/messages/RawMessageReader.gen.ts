@@ -741,6 +741,14 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 120: {
+      const tagId = this.readInt(); if (tagId === null) { return resetPointer() }
+      return {
+        tp: MType.TagTrigger,
+        tagId,
+      };
+    }
+
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }

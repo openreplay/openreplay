@@ -30,7 +30,8 @@ const siteIdRequiredPaths: string[] = [
   '/notes',
   '/feature-flags',
   '/check-recording-status',
-  '/usability-tests'
+  '/usability-tests',
+  '/tags'
 ];
 
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {

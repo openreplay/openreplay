@@ -3,7 +3,6 @@ import { Button, PageTitle } from 'UI'
 import FFlagsSearch from "Components/FFlags/FFlagsSearch";
 import { useHistory } from "react-router";
 import { newFFlag, withSiteId } from 'App/routes';
-import { observer } from 'mobx-react-lite';
 
 function FFlagsListHeader({ siteId }: { siteId: string }) {
   const history = useHistory();

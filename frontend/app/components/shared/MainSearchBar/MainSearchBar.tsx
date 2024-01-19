@@ -4,12 +4,14 @@ import SavedSearch from 'Shared/SavedSearch';
 import { Button } from 'UI';
 import { connect } from 'react-redux';
 import { clearSearch } from 'Duck/search';
+import TagList from './components/TagList';
 
 interface Props {
   clearSearch: () => void;
   appliedFilter: any;
   savedSearch: any;
 }
+
 const MainSearchBar = (props: Props) => {
   const { appliedFilter } = props;
   const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
@@ -20,7 +22,8 @@ const MainSearchBar = (props: Props) => {
       <div style={{ width: '60%', marginRight: '10px' }}>
         <SessionSearchField />
       </div>
-      <div className="flex items-center" style={{ width: '40%' }}>
+      <div className="flex items-center gap-2" style={{ width: '40%' }}>
+        <TagList />
         <SavedSearch />
         <Button
           variant={hasSearch ? 'text-primary' : 'text'}
@@ -37,7 +40,7 @@ const MainSearchBar = (props: Props) => {
 export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['search', 'instance']),
-    savedSearch: state.getIn([ 'search', 'savedSearch' ])
+    savedSearch: state.getIn(['search', 'savedSearch']),
   }),
   {
     clearSearch,

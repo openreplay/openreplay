@@ -112,11 +112,11 @@ ${iconPaths.map(icon => `  ${titleCase(icon.fileName)}`).join(',\n')}
 } from './Icons'
 
 
-// export type IconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4).replaceAll('-', '_') + '\'').join(' | ')};
-export type OldIconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4) + '\'').join(' | ')};
+// export type NewIconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4).replaceAll('-', '_') + '\'').join(' | ')};
+export type IconNames = ${icons.map((icon) => '\'' + icon.slice(0, -4) + '\'').join(' | ')};
 
 interface Props {
-    name: OldIconNames;
+    name: IconNames;
     size?: number | string;
     width?: number | string;
     height?: number | string;

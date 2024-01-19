@@ -62,6 +62,7 @@ export const TP_MAP = {
   117: MType.TabChange,
   118: MType.TabData,
   119: MType.CanvasNode,
+  120: MType.TagTrigger,
   93: MType.IosEvent,
   96: MType.IosScreenChanges,
   100: MType.IosClickEvent,

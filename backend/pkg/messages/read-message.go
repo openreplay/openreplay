@@ -1401,6 +1401,15 @@ func DecodeCanvasNode(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeTagTrigger(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &TagTrigger{}
+	if msg.TagId, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -2033,6 +2042,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTabData(reader)
 	case 119:
 		return DecodeCanvasNode(reader)
+	case 120:
+		return DecodeTagTrigger(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

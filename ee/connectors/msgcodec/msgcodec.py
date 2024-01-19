@@ -727,6 +727,11 @@ class MessageCodec(Codec):
                 timestamp=self.read_uint(reader)
             )
 
+        if message_id == 120:
+            return TagTrigger(
+                tag_id=self.read_int(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),

@@ -518,6 +518,10 @@ message 119, 'CanvasNode' do
     uint 'Timestamp'
 end
 
+message 120, 'TagTrigger', :replayer => :devtools do
+    int 'TagId'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

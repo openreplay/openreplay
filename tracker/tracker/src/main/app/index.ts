@@ -1,6 +1,6 @@
 import ConditionsManager from '../modules/conditionsManager.js'
 import FeatureFlags from '../modules/featureFlags.js'
-import type Message from './messages.gen.js'
+import Message, { TagTrigger } from './messages.gen.js'
 import {
   Timestamp,
   Metadata,
@@ -34,6 +34,7 @@ import type { Options as SessOptions } from './session.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
 import UserTestManager from '../modules/userTesting/index.js'
+import TagWatcher from '../modules/tagWatcher.js'
 
 import type {
   Options as WebworkerOptions,
@@ -179,6 +180,7 @@ export default class App {
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
+  private tagWatcher: TagWatcher
 
   constructor(
     projectKey: string,
@@ -230,6 +232,9 @@ export default class App {
     this.session = new Session(this, this.options)
     this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
     this.featureFlags = new FeatureFlags(this)
+    this.tagWatcher = new TagWatcher(this.sessionStorage, this.debug.error, (tag) => {
+      this.send(TagTrigger(tag) as Message)
+    })
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -687,6 +692,7 @@ export default class App {
       this.startCallbacks.forEach((cb) => cb(onStartInfo))
       await this.conditionsManager?.fetchConditions(projectID as string, token as string)
       await this.featureFlags.reloadFlags(token as string)
+      await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
       this.conditionsManager?.processFlags(this.featureFlags.flags)
     }
     const cycle = () => {
@@ -896,7 +902,6 @@ export default class App {
     ) {
       const reason =
         'OpenReplay: trying to call `start()` on the instance that has been started already.'
-      this.signalError(reason, [])
       return Promise.resolve(UnsuccessfulStart(reason))
     }
     this.activityState = ActivityState.Starting
@@ -1049,8 +1054,10 @@ export default class App {
         this.compressionThreshold = compressionThreshold
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
         // TODO: start as early as possible (before receiving the token)
+        /** after start */
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         void this.featureFlags.reloadFlags()
+        await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
         this.activityState = ActivityState.Active
 
         if (canvasEnabled) {
@@ -1234,6 +1241,7 @@ export default class App {
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
         this.debug.log('OpenReplay tracking stopped.')
+        this.tagWatcher.clear()
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }

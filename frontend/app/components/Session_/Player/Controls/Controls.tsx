@@ -2,7 +2,7 @@ import { useStore } from "App/mstore";
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import {MarkedTarget, selectStorageType, STORAGE_TYPES, StorageType} from 'Player';
+import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
 import { Tooltip } from 'UI';
@@ -131,13 +131,8 @@ function Controls(props: any) {
   };
 
   const toggleBottomTools = (blockName: number) => {
-    if (blockName === INSPECTOR) {
-      // player.toggleInspectorMode(false);
-      bottomBlock && toggleBottomBlock();
-    } else {
-      // player.toggleInspectorMode(false);
+      player.toggleInspectorMode(false);
       toggleBottomBlock(blockName);
-    }
   };
 
   const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused

@@ -8,7 +8,12 @@ import { errors as errorsRoute, isRoute } from 'App/routes';
 import { fetchList as fetchSessionList, fetchAutoplayList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import { filtersMap, liveFiltersMap, conditionalFiltersMap, generateFilterOptions } from 'Types/filter/newFilter';
+import {
+    filtersMap,
+    liveFiltersMap,
+    conditionalFiltersMap,
+    generateFilterOptions
+} from "Types/filter/newFilter";
 import { DURATION_FILTER } from 'App/constants/storageKeys';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 

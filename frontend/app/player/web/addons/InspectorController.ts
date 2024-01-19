@@ -1,72 +1,58 @@
-import Marker from '../Screen/Marker'
-import Inspector from '../Screen/Inspector'
-import Screen from '../Screen/Screen'
-import type { Dimensions } from '../Screen/types'
-
+import type { Store } from 'Player';
+import { State } from 'Player/web/addons/TargetMarker';
+import Marker from '../Screen/Marker';
+import Inspector from '../Screen/Inspector';
+import Screen, { ScaleMode } from '../Screen/Screen';
+import type { Dimensions } from '../Screen/types';
 
 export default class InspectorController {
-  private substitutor: Screen | null = null
-  private inspector: Inspector | null = null
-  marker: Marker | null = null
-  constructor(private screen: Screen) {
-      screen.overlay.addEventListener('contextmenu', () => {
-        screen.overlay.style.display = 'none'
-        const doc = screen.document
-        if (!doc) { return }
-        const returnOverlay = () => {
-          screen.overlay.style.display = 'block'
-          doc.removeEventListener('mousemove', returnOverlay)
-          doc.removeEventListener('mouseclick', returnOverlay) // TODO: prevent default in case of input selection
-        }
-        doc.addEventListener('mousemove', returnOverlay)
-        doc.addEventListener('mouseclick', returnOverlay)
-      })
+  static INITIAL_STATE = {
+    tagSelector: '',
+  }
+  private substitutor: Screen | null = null;
+  private inspector: Inspector | null = null;
+  marker: Marker | null = null;
+
+  constructor(private screen: Screen, private readonly store: Store<{ tagSelector: string }>) {
+    screen.overlay.addEventListener('contextmenu', () => {
+      screen.overlay.style.display = 'none';
+      const doc = screen.document;
+      if (!doc) {
+        return;
+      }
+      const returnOverlay = () => {
+        screen.overlay.style.display = 'block';
+        doc.removeEventListener('mousemove', returnOverlay);
+        doc.removeEventListener('mouseclick', returnOverlay); // TODO: prevent default in case of input selection
+      };
+      doc.addEventListener('mousemove', returnOverlay);
+      doc.addEventListener('mouseclick', returnOverlay);
+    });
   }
 
   scale(dims: Dimensions) {
-    if (this.substitutor) {
-      this.substitutor.scale(dims)
-    }
+    this.screen.scale(dims);
   }
 
-  enableInspector(clickCallback?: (e: { target: Element }) => void): Document | null {
-    const parent = this.screen.getParentElement()
-    if (!parent) return null;
-    if (!this.substitutor) {
-      this.substitutor = new Screen()
-      this.marker = new Marker(this.substitutor.overlay, this.substitutor)
-      this.inspector = new Inspector(this.substitutor, this.marker)
-      //this.inspector.addClickListener(clickCallback, true)
-      this.substitutor.attach(parent)
-    }
+  enableInspector(): Document | null {
+    this.marker = new Marker(this.screen.overlay, this.screen);
+    this.inspector = new Inspector(this.screen, this.marker);
+    this.inspector.addClickListener(() => {
+      this.store.update({ tagSelector: this.marker?.lastSelector ?? '' })
+    });
 
-    this.substitutor.display(false)
+    this.inspector?.enable();
+    return this.screen.document;
+  }
 
-    const docElement = this.screen.document?.documentElement // this.substitutor.document?.importNode(
-    const doc = this.substitutor.document
-    if (doc && docElement) {
-      doc.open()
-      doc.write(docElement.outerHTML)
-      doc.close()
-
-      // TODO! : copy stylesheets & cssRules?
-    }
-    this.screen.display(false);
-    this.inspector.enable(clickCallback);
-    this.substitutor.display(true);
-    return doc;
+  markBySelector(selector: string) {
+    this.marker?.markBySelector(selector);
   }
 
   disableInspector() {
-    if (this.substitutor) {
-      const doc = this.substitutor.document;
-      if (doc) {
-        doc.documentElement.innerHTML = "";
-      }
-      this.inspector.clean();
-      this.substitutor.display(false);
-    }
-    this.screen.display(true);
+    this.inspector?.clean();
+    this.inspector = null;
+    this.marker?.clean();
+    this.marker = null;
   }
-
 }

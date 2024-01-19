@@ -17,8 +17,9 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const TABS = {
-  EVENTS: 'User Events',
+  EVENTS: 'Activity',
   CLICKMAP: 'Click Map',
+  INSPECTOR: 'Tag',
 };
 const UXTTABS = {
   EVENTS: TABS.EVENTS

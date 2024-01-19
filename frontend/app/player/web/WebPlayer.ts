@@ -16,6 +16,8 @@ export default class WebPlayer extends Player {
     ...TargetMarker.INITIAL_STATE,
     ...MessageManager.INITIAL_STATE,
     ...MessageLoader.INITIAL_STATE,
+    ...InspectorController.INITIAL_STATE,
+
     liveTimeTravel: false,
     inspectorMode: false,
   }
@@ -65,7 +67,7 @@ export default class WebPlayer extends Player {
     }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
-    this.inspectorController = new InspectorController(screen)
+    this.inspectorController = new InspectorController(screen, wpState)
 
 
     const endTime = session.duration?.valueOf() || 0
@@ -126,7 +128,7 @@ export default class WebPlayer extends Player {
     this.inspectorController.marker?.mark(e)
   }
 
-  toggleInspectorMode = (flag: boolean, clickCallback?: Parameters<InspectorController['enableInspector']>[0]) => {
+  toggleInspectorMode = (flag: boolean) => {
     if (typeof flag !== 'boolean') {
       const { inspectorMode } = this.wpState.get()
       flag = !inspectorMode
@@ -135,11 +137,15 @@ export default class WebPlayer extends Player {
     if (flag) {
       this.pause()
       this.wpState.update({ inspectorMode: true })
-      return this.inspectorController.enableInspector(clickCallback)
+      return this.inspectorController.enableInspector()
     } else {
       this.inspectorController.disableInspector()
       this.wpState.update({ inspectorMode: false })
     }
+  }
+
+  markBySelector = (selector: string) => {
+    this.inspectorController.markBySelector(selector)
   }
 
   // Target Marker

@@ -263,6 +263,17 @@ export const filters = [
     icon: 'filters/duration'
   },
   {
+    key: FilterKey.TAGGED_ELEMENT,
+    type: FilterType.MULTIPLE_DROPDOWN,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
+    label: 'Tagged Element',
+    operator: 'is',
+    isEvent: true,
+    icon: 'filters/tag-element',
+    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    options: [],
+  },
+  {
     key: FilterKey.USER_COUNTRY,
     type: FilterType.MULTIPLE_DROPDOWN,
     category: FilterCategory.USER,
@@ -721,6 +732,15 @@ export const addElementToFiltersMap = (
   };
 };
 
+export const addOptionsToFilter = (
+  key,
+  options,
+) => {
+  if (filtersMap[key] && filtersMap[key].options) {
+    filtersMap[key].options = options
+  }
+}
+
 export const addElementToFlagConditionsMap = (
   category = FilterCategory.METADATA,
   key,
@@ -830,7 +850,11 @@ export default Record({
       if (type === FilterKey.METADATA) {
         _filter = filtersMap[filter.source];
       } else {
-        _filter = filtersMap[type];
+        if (filtersMap[filter.key]) {
+          _filter = filtersMap[filter.key]
+        } else {
+          _filter = filtersMap[type];
+        }
       }
     }
 
