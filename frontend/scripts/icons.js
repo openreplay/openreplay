@@ -51,6 +51,8 @@ const plugins = (removeFill = true) => {
 const iconPaths = [];
 const dirs = getDirectories(ICONS_DIRNAME);
 
+console.log(ICONS_DIRNAME, UI_DIRNAME, icons, dirs)
+
 fs.mkdirSync(`${UI_DIRNAME}/Icons`, { recursive: true });
 dirs.forEach((dir) => {
   fs.mkdirSync(`${UI_DIRNAME}/Icons/${dir.replaceAll('-', '_')}`, { recursive: true });
