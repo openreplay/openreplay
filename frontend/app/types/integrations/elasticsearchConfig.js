@@ -1,8 +1,8 @@
 import Record from 'Types/Record';
 import { validateURL } from 'App/validate'
 
-export const API_KEY_ID_LENGTH = 20;
-export const API_KEY_LENGTH = 22;
+export const API_KEY_ID_LENGTH = 5;
+export const API_KEY_LENGTH = 5;
 
 export default Record({
   projectId: undefined,
@@ -20,7 +20,7 @@ export default Record({
   }),
   methods: {
     validateKeys() {
-      return this.apiKeyId.length >= API_KEY_ID_LENGTH && this.apiKey.length >= API_KEY_LENGTH && validateURL(this.host);
+      return this.apiKeyId.length > API_KEY_ID_LENGTH && this.apiKey.length > API_KEY_LENGTH && validateURL(this.host);
     },
     validate() {
       return this.host !== '' && this.apiKeyId !== '' && this.apiKey !== '' && this.indexes !== '' && !!this.port && 
