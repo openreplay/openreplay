@@ -36,7 +36,6 @@ function SessionSearch(props: Props) {
     appliedFilter,
     applyFilter: props.updateFilter,
     loading: metaLoading,
-    tagsLoading: tagWatchStore.isLoading,
     onBeforeLoad: async () => {
       const tags = await tagWatchStore.getTags();
       if (tags) {

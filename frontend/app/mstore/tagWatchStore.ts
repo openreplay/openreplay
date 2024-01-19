@@ -4,7 +4,7 @@ import { CreateTag, Tag } from 'App/services/TagWatchService';
 
 export default class TagWatchStore {
   tags: Tag[] = [];
-  isLoading = true;
+  isLoading = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -19,6 +19,9 @@ export default class TagWatchStore {
   };
 
   getTags = async () => {
+    if (this.isLoading) {
+      return;
+    }
     this.setLoading(true);
     try {
       const tags: Tag[] = await tagWatchService.getTags();

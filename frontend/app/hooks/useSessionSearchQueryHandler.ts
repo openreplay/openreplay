@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 import { createUrlQuery, getFiltersFromQuery } from 'App/utils/search';
 
@@ -7,11 +7,11 @@ interface Props {
   appliedFilter: any;
   applyFilter: any;
   loading: boolean;
-  tagsLoading: boolean;
 }
 
 const useSessionSearchQueryHandler = (props: Props) => {
-  const { appliedFilter, applyFilter, loading, tagsLoading } = props;
+  const [beforeHookLoaded, setBeforeHookLoaded] = useState(!props.onBeforeLoad);
+  const { appliedFilter, applyFilter, loading } = props;
   const history = useHistory();
 
   useEffect(() => {
@@ -19,25 +19,26 @@ const useSessionSearchQueryHandler = (props: Props) => {
       if (!loading) {
         if (props.onBeforeLoad) {
           await props.onBeforeLoad();
+          setBeforeHookLoaded(true);
         }
         const filter = getFiltersFromQuery(history.location.search, appliedFilter);
         applyFilter(filter, true, false);
       }
     };
 
-    applyFilterFromQuery();
+    void applyFilterFromQuery();
   }, [loading]);
 
   useEffect(() => {
     const generateUrlQuery = () => {
-      if (!loading && !tagsLoading) {
+      if (!loading && beforeHookLoaded) {
         const search: any = createUrlQuery(appliedFilter);
         history.replace({ search });
       }
     };
 
     generateUrlQuery();
-  }, [appliedFilter, loading, tagsLoading]);
+  }, [appliedFilter, loading, beforeHookLoaded]);
 
   return null;
 };
