@@ -470,6 +470,7 @@ class EventType(str, Enum):
     graphql = "graphql"
     state_action = "stateAction"
     error = "error"
+    tag = "tag"
     click_ios = "tapIos"
     input_ios = "inputIos"
     view_ios = "viewIos"
@@ -606,7 +607,7 @@ class RequestGraphqlFilterSchema(BaseModel):
 
 class SessionSearchEventSchema2(BaseModel):
     is_event: Literal[True] = True
-    value: List[str] = Field(...)
+    value: List[Union[str, int]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
@@ -1576,3 +1577,15 @@ class ModuleStatus(BaseModel):
     "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(...,
                                                                                                  description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
     status: bool = Field(...)
+
+
+class TagUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, pattern='^[a-zA-Z0-9][a-zA-Z0-9_ -]+$')
+
+
+class TagCreate(TagUpdate):
+    selector: str = Field(..., min_length=1, max_length=255)
+    ignoreClickRage: bool = Field(default=False)
+    ignoreDeadClick: bool = Field(default=False)
+
+

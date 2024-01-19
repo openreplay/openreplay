@@ -98,6 +98,22 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
     return rows
 
 
+def _search_tags(project_id, value, key=None, source=None):
+    with pg_client.PostgresClient() as cur:
+        query = f"""
+        SELECT public.tags.name
+               '{events.EventType.TAG.ui_type}' AS type
+        FROM public.tags
+        WHERE public.tags.project_id = %(project_id)s
+        ORDER BY SIMILARITY(public.tags.name, %(value)s) DESC
+        LIMIT 10
+        """
+        query = cur.mogrify(query, {'project_id': project_id, 'value': value})
+        cur.execute(query)
+        results = helper.list_to_camel_case(cur.fetchall())
+    return results
+
+
 class EventType:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
@@ -106,6 +122,7 @@ class EventType:
     REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
     GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
     STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
+    TAG = Event(ui_type=schemas.EventType.tag, table="events.tags", column="tag_id")
     ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
                   column=None)  # column=None because errors are searched by name or message
     METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
@@ -139,6 +156,7 @@ SUPPORTED_TYPES = {
     EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.STATEACTION.ui_type)),
+    EventType.TAG.ui_type: SupportedFilter(get=_search_tags, query=None),
     EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
                                              query=None),
     EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
