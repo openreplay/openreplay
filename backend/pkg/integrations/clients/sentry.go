@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -58,7 +57,7 @@ PageLoop:
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 400 {
-			io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+			io.Copy(io.Discard, resp.Body) // Read the body to free socket
 			return fmt.Errorf("Sentry: server respond with the code %v", resp.StatusCode)
 		}
 

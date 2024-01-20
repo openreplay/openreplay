@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -64,7 +63,7 @@ func (nr *newrelic) Request(c *client) error {
 	//  401 (unauthorised) if wrong XQueryKey/deploymentServer is wrong or 403 (Forbidden) if ApplicationId is wrong
 	// 400 if Query has problems
 	if resp.StatusCode >= 400 {
-		io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+		io.Copy(io.Discard, resp.Body) // Read the body to free socket
 		return fmt.Errorf("Newrelic: server respond with the code %v| Request: ", resp.StatusCode, *req)
 	}
 	// Pagination depending on returning metadata ?

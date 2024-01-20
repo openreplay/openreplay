@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -66,7 +65,7 @@ func (b *bugsnag) Request(c *client) error {
 		// Status code
 		//  401 (unauthorised)
 		if resp.StatusCode >= 400 {
-			io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+			io.Copy(io.Discard, resp.Body) // Read the body to free socket
 			return fmt.Errorf("Bugsnag: server respond with the code %v | data: %v ", resp.StatusCode, *b)
 		}
 

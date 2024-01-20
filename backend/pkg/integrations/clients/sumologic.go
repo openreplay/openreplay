@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -62,7 +61,7 @@ func (sl *sumologic) deleteJob(jobId string, errChan chan<- error) {
 		errChan <- fmt.Errorf("Error on DELETE request: %v", err)
 		return
 	}
-	io.Copy(ioutil.Discard, resp.Body)
+	io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
 }
 
@@ -104,7 +103,7 @@ func (sl *sumologic) Request(c *client) error {
 	// https://help.sumologic.com/APIs/Search-Job-API/About-the-Search-Job-API#status-codes
 	// responce body is NOT the same as in docs (look at the sumologic_job_start.json)
 	if resp.StatusCode >= 400 {
-		io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+		io.Copy(io.Discard, resp.Body) // Read the body to free socket
 		return fmt.Errorf("Sumologic: server respond with the code %v | req %v |Resp: %v", resp.StatusCode, *req, *resp)
 	}
 	sl.cookies = resp.Cookies()
