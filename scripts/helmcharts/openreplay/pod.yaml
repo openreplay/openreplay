@@ -1,0 +1,24 @@
+# https://kubernetes.io/docs/concepts/workloads/pods/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "ubuntu"
+  namespace: dev
+  labels:
+    app: "ubuntu"
+spec:
+  containers:
+  - name: ubuntu
+    image: "ubuntu"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 200Mi
+    command:["sleep", "36000"]
+    ports:
+    - containerPort: 80
+      name:  http
+

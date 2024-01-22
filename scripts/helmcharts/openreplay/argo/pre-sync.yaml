@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-application-helm-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://your-application-chart-repo-url.git'
+    targetRevision: HEAD
+    path: path/to/your/application/chart
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: application-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
