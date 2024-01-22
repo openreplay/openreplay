@@ -1,3 +1,7 @@
+## 8.0.0
+
+- Keeping up with major tracker release.
+
 ## 7.0.3
 
 - small fix for canvas context tracking

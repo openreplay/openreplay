@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "7.0.4",
+  "version": "8.0.0",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -20,7 +20,7 @@
     "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && bun run replace-paths && bun run replace-req-version",
     "replace-paths": "replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs' && replace-in-files cjs/* --string='/lib/' --replacement='/'",
     "replace-pkg-version": "sh pkgver.sh",
-    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='11.0.0'",
+    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='12.0.0'",
     "prepublishOnly": "bun run test && bun run build",
     "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",

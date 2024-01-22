@@ -56,8 +56,18 @@ export default class ConditionsManager {
         filters.forEach((filter) => {
           let cond: Condition | undefined
           if (filter.type === 'fetch') {
+            cond = {
+              type: 'network_request',
+              subConditions: [],
+              name: c.name,
+            }
             filter.filters.forEach((f) => {
-              cond = this.createConditionFromFilter(f as unknown as Filter)
+              const subCond = this.createConditionFromFilter(f as unknown as Filter)
+              if (subCond) {
+                ;(cond as unknown as NetworkRequestCondition).subConditions.push(
+                  subCond as unknown as SubCondition,
+                )
+              }
             })
           } else {
             cond = this.createConditionFromFilter(filter)
@@ -155,36 +165,41 @@ export default class ConditionsManager {
     const reqConds = this.conditions.filter(
       (c) => c.type === 'network_request',
     ) as NetworkRequestCondition[]
-    const withoutAny = reqConds.filter((c) => c.operator !== 'isAny')
-    if (withoutAny.length) {
-      withoutAny.forEach((reqCond) => {
-        let value
-        switch (reqCond.key) {
-          case 'url':
-            value = message[3]
-            break
-          case 'status':
-            value = message[6]
-            break
-          case 'method':
-            value = message[2]
-            break
-          case 'duration':
-            value = message[8]
-            break
-          default:
-            break
-        }
-        const operator = operators[reqCond.operator] as (a: string, b: string[]) => boolean
-        // @ts-ignore
-        if (operator && operator(value, reqCond.value)) {
+    if (!reqConds.length) return
+    reqConds.forEach((reqCond) => {
+      const validSubConditions = reqCond.subConditions.filter((c) => c.operator !== 'isAny')
+      if (validSubConditions.length) {
+        const allPass = validSubConditions.every((subCond) => {
+          let value
+          switch (subCond.key) {
+            case 'url':
+              value = message[3]
+              break
+            case 'status':
+              value = message[6]
+              break
+            case 'method':
+              value = message[2]
+              break
+            case 'duration':
+              value = message[8]
+              break
+            default:
+              break
+          }
+          const operator = operators[subCond.operator] as (a: string, b: string[]) => boolean
+          // @ts-ignore
+          if (operator && operator(value, subCond.value)) {
+            return true
+          }
+        })
+        if (allPass) {
           this.trigger(reqCond.name)
         }
-      })
-    }
-    if (withoutAny.length === 0 && reqConds.length) {
-      this.trigger(reqConds[0].name)
-    }
+      } else if (validSubConditions.length === 0 && reqCond.subConditions.length) {
+        this.trigger(reqCond.name)
+      }
+    })
   }
 
   customEvent(message: CustomEvent) {
@@ -277,11 +292,15 @@ type SessionDurationCondition = {
   value: number[]
   name: string
 }
-type NetworkRequestCondition = {
+type SubCondition = {
   type: 'network_request'
   key: 'url' | 'status' | 'method' | 'duration'
   operator: keyof typeof operators
   value: string[]
+}
+type NetworkRequestCondition = {
+  type: 'network_request'
+  subConditions: SubCondition[]
   name: string
 }
 type Condition =
