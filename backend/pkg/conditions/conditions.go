@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"fmt"
+	"log"
 	"openreplay/backend/pkg/db/postgres/pool"
 )
 
@@ -64,13 +65,29 @@ type Response struct {
 
 func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error) {
 	var conditions []ConditionSet
-	err := c.db.QueryRow(`
-		SELECT conditions
-		FROM projects
+	rows, err := c.db.Query(`
+		SELECT name, capture_rate, filters
+		FROM projects_conditions
 		WHERE project_id = $1
-	`, projectID).Scan(&conditions)
+	`, projectID)
 	if err != nil {
 		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var rate int
+		var filters interface{}
+		if err := rows.Scan(&name, &rate, &filters); err != nil {
+			log.Printf("can't scan row: %s", err)
+			continue
+		}
+		conditions = append(conditions, ConditionSet{
+			Name:    name,
+			Filters: filters,
+			Rate:    rate,
+		})
 	}
 
 	// Save project's conditions to cache
