@@ -58,7 +58,7 @@ function DefaultTimezone() {
     sessionSettings.updateKey('shownTimezone', value)
     setShownTimezone(value)
   }
-  console.log(shownTimezone, sessionSettings.shownTimezone)
+
   return (
     <>
       <h3 className="text-lg">Default Timezone</h3>

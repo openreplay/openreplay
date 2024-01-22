@@ -81,7 +81,6 @@ const StepList = React.memo((props: StepListProps) => {
 
   const onClick = (step: any) => {
     const { siteId, history } = props;
-    console.log('step', withSiteId(onboardingRoute(step.url), siteId));
     hideModal();
     history.push(withSiteId(onboardingRoute(step.url), siteId));
   };

@@ -39,16 +39,12 @@ export default class Call {
     private getAssistVersion: () => number
   ) {
     socket.on('call_end', (d) => {
-      console.log(d, socket.id)
       this.onRemoteCallEnd()
     });
     socket.on('videofeed', ({ streamId, enabled }) => {
-      console.log(streamId, enabled);
-      console.log(this.videoStreams);
       if (this.videoStreams[streamId]) {
         this.videoStreams[streamId].enabled = enabled;
       }
-      console.log(this.videoStreams);
     });
     let reconnecting = false;
     socket.on('SESSION_DISCONNECTED', () => {
