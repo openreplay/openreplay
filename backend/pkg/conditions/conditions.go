@@ -80,6 +80,9 @@ func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error)
 	}
 	c.cache[projectID] = conditionSet
 
+	if conditions == nil {
+		return []ConditionSet{}, nil
+	}
 	return conditions, nil
 }
 
