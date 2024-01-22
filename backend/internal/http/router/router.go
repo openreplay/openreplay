@@ -114,9 +114,10 @@ func (e *Router) init() {
 		"/v1/web/uxt/signals/task": e.sendUXTaskSignal,
 	}
 	getHandlers := map[string]func(http.ResponseWriter, *http.Request){
-		"/v1/web/uxt/test/{id}":  e.getUXTestInfo,
-		"/v1/web/uxt/upload-url": e.getUXUploadUrl,
-		"/v1/web/tags":           e.getTags,
+		"/v1/web/uxt/test/{id}":        e.getUXTestInfo,
+		"/v1/web/uxt/upload-url":       e.getUXUploadUrl,
+		"/v1/web/tags":                 e.getTags,
+		"/v1/web/conditions/{project}": e.getConditions,
 	}
 	prefix := "/ingest"
 

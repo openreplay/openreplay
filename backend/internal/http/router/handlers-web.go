@@ -149,6 +149,18 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
+		// Use condition rate if it's set
+		if req.Condition != "" {
+			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition)
+			if err != nil {
+				log.Printf("can't get condition rate: %s", err)
+			} else {
+				log.Printf("condition rate: %d", rate)
+				p.SampleRate = byte(rate) // why byte?
+			}
+		} else {
+			log.Printf("project sample rate: %d", p.SampleRate)
+		}
 		if dice >= p.SampleRate {
 			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, bodySize)
 			return
@@ -615,4 +627,33 @@ func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
 		Tags interface{} `json:"tags"`
 	}
 	ResponseWithJSON(w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getConditions(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	// Check authorization
+	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Get taskID
+	vars := mux.Vars(r)
+	projID := vars["project"]
+	projectID, err := strconv.Atoi(projID)
+	if err != nil {
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Get task info
+	info, err := e.services.Conditions.Get(uint32(projectID))
+	if err != nil {
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	ResponseWithJSON(w, info, startTime, r.URL.Path, bodySize)
 }

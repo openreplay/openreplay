@@ -16,6 +16,7 @@ type StartSessionRequest struct {
 	DoNotRecord     bool    `json:"doNotRecord"` // start record session or not
 	BufferDiff      uint64  `json:"bufferDiff"`  // buffer diff in ms for start record session
 	IsOffline       bool    `json:"isOffline"`   // to indicate that we have to use user's start timestamp
+	Condition       string  `json:"condition"`   // condition for start record session
 }
 
 type StartSessionResponse struct {

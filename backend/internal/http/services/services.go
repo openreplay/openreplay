@@ -5,6 +5,7 @@ import (
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
+	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/featureflags"
@@ -31,6 +32,7 @@ type ServicesBuilder struct {
 	ObjStorage   objectstorage.ObjectStorage
 	UXTesting    uxtesting.UXTesting
 	Tags         tags.Tags
+	Conditions   conditions.Conditions
 }
 
 func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
@@ -52,5 +54,6 @@ func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *red
 		ObjStorage:   objStore,
 		UXTesting:    uxtesting.New(pgconn),
 		Tags:         tags.New(pgconn),
+		Conditions:   conditions.New(pgconn),
 	}, nil
 }
