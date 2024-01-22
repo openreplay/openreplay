@@ -150,8 +150,24 @@ describe('ConditionsManager', () => {
   test('processMessage correctly processes a NetworkRequest message', () => {
     const manager = new ConditionsManager(appMock, startOptionsMock)
     manager.setConditions([
-      { type: 'network_request', key: 'url', operator: 'is', value: ['https://api.example.com'] },
-      { type: 'network_request', key: 'status', operator: 'greaterThan', value: 200 },
+      {
+        type: 'network_request',
+        subConditions: [
+          { type: 'network_request', key: 'status', operator: 'greaterThan', value: 200 },
+          {
+            type: 'network_request',
+            key: 'url',
+            operator: 'is',
+            value: ['https://api.example.com'],
+          },
+        ],
+      },
+      {
+        type: 'network_request',
+        subConditions: [
+          { type: 'network_request', key: 'status', operator: 'greaterOrEqual', value: 400 },
+        ],
+      },
     ])
     const networkRequestMessage = [
       Type.NetworkRequest,
@@ -160,7 +176,7 @@ describe('ConditionsManager', () => {
       'https://api.example.com',
       'Request',
       'Response',
-      200,
+      201,
       Date.now(),
       4000,
       1024,

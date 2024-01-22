@@ -667,9 +667,9 @@ export default class App {
           timezone: getTimezone(),
         }),
       })
-      // this token is needed to fetch conditions and flags,
-      // but it can't be used to record a session
       const {
+        // this token is needed to fetch conditions and flags,
+        // but it can't be used to record a session
         token,
         userBrowser,
         userCity,
@@ -714,11 +714,9 @@ export default class App {
         this.session.applySessionHash(startOpts.sessionHash)
       }
       if (startOpts.forceNew) {
-        // Reset session metadata only if requested directly
         this.session.reset()
       }
       this.session.assign({
-        // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
         userID: startOpts.userID,
         metadata: startOpts.metadata,
       })
@@ -764,11 +762,9 @@ export default class App {
       this.session.applySessionHash(startOpts.sessionHash)
     }
     if (startOpts.forceNew) {
-      // Reset session metadata only if requested directly
       this.session.reset()
     }
     this.session.assign({
-      // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
       userID: startOpts.userID,
       metadata: startOpts.metadata,
     })
