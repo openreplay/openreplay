@@ -105,12 +105,11 @@ find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "co
 
 case $yn in 
 	y ) echo "$DOMAIN_NAME is on a public DNS";
-		##Add a variable to chalice.env file
-		echo "is_dns_public=True" >> chalice.env
+		##No changes needed
         ;;
 	n ) echo "$DOMAIN_NAME is on a private DNS";
 		##Add a variable to chalice.env file
-		echo "is_dns_public=False" >> chalice.env
+		echo "SKIP_H_SSL=True" >> chalice.env
 		;;
 	* ) echo invalid response;
 		exit 1;;

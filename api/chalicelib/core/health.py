@@ -147,10 +147,7 @@ def __check_SSL(*_):
         }
     }
     try:
-        if(config("is_dns_public")==True):
-            requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
-        else:
-            requests.get(config("SITE_URL"), verify=False, allow_redirects=True)
+        requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
     except Exception as e:
         print("!! health failed: SSL Certificate")
         print(str(e))
