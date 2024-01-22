@@ -33,7 +33,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
 	canvasConsumer := queue.NewConsumer(
-		cfg.GroupImageStorage,
+		cfg.GroupCanvasImages,
 		[]string{
 			cfg.TopicCanvasImages,
 		},

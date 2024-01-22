@@ -39,7 +39,7 @@ func main() {
 	workDir := cfg.FSDir
 
 	canvasConsumer := queue.NewConsumer(
-		cfg.GroupVideoStorage,
+		cfg.GroupCanvasVideo,
 		[]string{
 			cfg.TopicCanvasTrigger,
 		},

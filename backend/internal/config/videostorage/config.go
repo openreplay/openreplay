@@ -11,6 +11,7 @@ type Config struct {
 	objectstorage.ObjectsConfig
 	FSDir              string `env:"FS_DIR,required"`
 	GroupVideoStorage  string `env:"GROUP_VIDEO_STORAGE,required"`
+	GroupCanvasVideo   string `env:"GROUP_CANVAS_VIDEO,required"`
 	TopicMobileTrigger string `env:"TOPIC_MOBILE_TRIGGER,required"`
 	TopicTrigger       string `env:"TOPIC_TRIGGER,required"`
 	TopicCanvasTrigger string `env:"TOPIC_CANVAS_TRIGGER,required"`
