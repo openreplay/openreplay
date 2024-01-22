@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -37,27 +38,34 @@ func main() {
 
 	workDir := cfg.FSDir
 
-	consumer := queue.NewConsumer(
+	canvasConsumer := queue.NewConsumer(
 		cfg.GroupVideoStorage,
 		[]string{
-			cfg.TopicMobileTrigger,
+			cfg.TopicCanvasTrigger,
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
-				sesEnd := msg.(*messages.IOSSessionEnd)
-				log.Printf("recieved mobile session end: %d", sesEnd.SessionID())
-				if err := srv.Process(sesEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sesEnd.SessionID(), 10)+"/", ""); err != nil {
-					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+				sesEnd := msg.(*messages.SessionEnd)
+				filePath := workDir + "/canvas/" + strconv.FormatUint(sesEnd.SessionID(), 10) + "/"
+				canvasMix := sesEnd.EncryptionKey // dirty hack to use encryption key as canvas mix holder (only between canvas handler and canvas maker)
+				if canvasMix == "" {
+					log.Printf("no canvas mix for session: %d", sesEnd.SessionID())
+					return
+				}
+				if err := srv.Process(sesEnd.SessionID(), filePath, canvasMix); err != nil {
+					if !strings.Contains(err.Error(), "no such file or directory") {
+						log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+					}
 				}
 			},
-			[]int{messages.MsgIOSSessionEnd},
+			[]int{messages.MsgSessionEnd},
 			true,
 		),
 		false,
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Video storage service started\n")
+	log.Printf("Canvas maker service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -68,17 +76,17 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			srv.Wait()
-			consumer.Close()
+			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
-			if err := consumer.Commit(); err != nil {
+			if err := canvasConsumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-		case msg := <-consumer.Rebalanced():
+		case msg := <-canvasConsumer.Rebalanced():
 			log.Println(msg)
 		default:
-			err = consumer.ConsumeNext()
+			err = canvasConsumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on end event consumption: %v", err)
 			}
