@@ -47,7 +47,7 @@ jobs:
         set -x
         cd frontend
         mv .env.sample .env
-        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:16-stretch-slim /bin/bash -c "yarn && yarn build"
+        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:18-slim /bin/bash -c "yarn && yarn build"
         # https://github.com/docker/cli/issues/1134#issuecomment-613516912
         DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
         docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
