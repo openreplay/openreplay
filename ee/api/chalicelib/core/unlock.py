@@ -24,7 +24,7 @@ def check():
         environ["numberOfSeats"] = "0"
         return
     print(f"validating: {helper.obfuscate(license)}")
-    r = requests.post('https://api.openreplay.com/os/license', json={"mid": __get_mid(), "license": get_license()})
+    r = requests.post('https://api.openreplay.com/license/validate', json={"mid": __get_mid(), "license": get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
         print("license validation failed")
         print(r.text)
