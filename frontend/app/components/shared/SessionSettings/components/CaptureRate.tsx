@@ -63,11 +63,11 @@ function CaptureRate(props: Props) {
     updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
       conditionalCapture: conditionalCapture,
-      conditions: conditions.map((c) => c.toCaptureCondition()),
+      conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : [],
     }).finally(() => setChanged(false));
   };
 
-  const updateDisabled = !changed || !isAdmin || (conditionalCapture && conditions.length === 0);
+  const updateDisabled = !changed || !isAdmin || (isEnterprise && (conditionalCapture && conditions.length === 0));
   return (
     <Drawer
       size={'large'}
@@ -104,7 +104,7 @@ function CaptureRate(props: Props) {
             <Switch
               checked={conditionalCapture}
               onChange={toggleRate}
-              checkedChildren={'Conditional'}
+              checkedChildren={isEnterprise ? 'All' : 'Conditional'}
               disabled={!isAdmin}
               unCheckedChildren={'Capture Rate'}
             />

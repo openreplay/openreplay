@@ -47,24 +47,43 @@ describe('TagWatcher', () => {
 
   test('constructor initializes with tags from sessionStorage', () => {
     // @ts-ignore
-    sessionStorageMock.getItem.mockReturnValue('div,span')
+    sessionStorageMock.getItem.mockReturnValue(
+      '[{"id":1,"selector":"div"},{"id":2,"selector":"span"}]',
+    )
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
-    expect(watcher.tags).toEqual(['div', 'span'])
-    expect(watcher.intervals).toHaveProperty('div')
-    expect(watcher.intervals).toHaveProperty('span')
+    expect(watcher.tags).toEqual([
+      { id: 1, selector: 'div' },
+      { id: 2, selector: 'span' },
+    ])
+    expect(watcher.intervals).toHaveProperty('1')
+    expect(watcher.intervals).toHaveProperty('2')
   })
 
   test('fetchTags sets tags and updates sessionStorage', async () => {
     // @ts-ignore
     global.fetch = jest.fn(() =>
       Promise.resolve({
-        json: () => Promise.resolve(['div', 'span', 'p']),
+        json: () =>
+          Promise.resolve({
+            tags: [
+              { id: 1, selector: 'div' },
+              { id: 2, selector: 'span' },
+              { id: 3, selector: 'p' },
+            ],
+          }),
       }),
     )
     const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
     await watcher.fetchTags('https://localhost.com', '123')
-    expect(watcher.tags).toEqual(['div', 'span', 'p'])
-    expect(sessionStorageMock.setItem).toHaveBeenCalledWith(WATCHED_TAGS_KEY, 'div,span,p')
+    expect(watcher.tags).toEqual([
+      { id: 1, selector: 'div' },
+      { id: 2, selector: 'span' },
+      { id: 3, selector: 'p' },
+    ])
+    expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
+      WATCHED_TAGS_KEY,
+      '[{"id":1,"selector":"div"},{"id":2,"selector":"span"},{"id":3,"selector":"p"}]',
+    )
   })
 
   test('setTags sets intervals for each tag', () => {
@@ -73,8 +92,8 @@ describe('TagWatcher', () => {
       { id: 1, selector: 'div' },
       { id: 2, selector: 'p' },
     ])
-    expect(watcher.intervals).toHaveProperty('div')
-    expect(watcher.intervals).toHaveProperty('p')
+    expect(watcher.intervals).toHaveProperty('1')
+    expect(watcher.intervals).toHaveProperty('2')
     expect(mockObserve).not.toHaveBeenCalled() // No elements to observe initially
   })
 

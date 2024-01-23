@@ -41,7 +41,8 @@ class TagWatcher {
       .then(({ tags }: { tags: { id: number; selector: string }[] }) => {
         if (tags && tags.length) {
           this.setTags(tags)
-          this.sessionStorage.setItem(WATCHED_TAGS_KEY, JSON.stringify(tags) || '')
+          const tagString = JSON.stringify(tags)
+          this.sessionStorage.setItem(WATCHED_TAGS_KEY, tagString || '')
         }
       })
       .catch((e) => this.errLog(e))

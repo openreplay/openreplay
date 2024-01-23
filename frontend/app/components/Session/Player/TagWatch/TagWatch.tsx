@@ -82,10 +82,6 @@ function TagWatch() {
       <div className={'text-disabled-text text-sm'}>
         Create and filter sessions by ‘watch elements’ to determine if they rendered or not.
       </div>
-      <div className={'w-full border border-b-light-gray'} />
-      <Button type={'link'} icon={<SearchOutlined />}>
-        Find session with selector
-      </Button>
     </div>
   );
 }

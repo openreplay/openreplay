@@ -205,16 +205,9 @@ export default class ConditionsManager {
   customEvent(message: CustomEvent) {
     // name - 1, payload - 2
     const evConds = this.conditions.filter((c) => c.type === 'custom_event') as CommonCondition[]
-    console.log(message, evConds)
     if (evConds.length) {
       evConds.forEach((evCond) => {
         const operator = operators[evCond.operator] as (a: string, b: string[]) => boolean
-        console.log(
-          operator,
-          evCond,
-          operator(message[1], evCond.value),
-          operator(message[2], evCond.value),
-        )
         if (
           operator &&
           (operator(message[1], evCond.value) || operator(message[2], evCond.value))
