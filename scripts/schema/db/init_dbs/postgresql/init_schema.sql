@@ -1,3 +1,17 @@
+\set or_version 'v1.14.0'
+SET client_min_messages TO NOTICE;
+\set ON_ERROR_STOP true
+SELECT EXISTS (SELECT 1
+               FROM information_schema.tables
+               WHERE table_schema = 'public'
+                 AND table_name = 'tenants') AS db_exists;
+\gset
+\if :db_exists
+\echo >DB already exists, stopping script
+\echo >If you are trying to upgrade openreplay, please follow the instructions here: https://docs.openreplay.com/en/deployment/upgrade/
+\q
+\endif
+
 BEGIN;
 -- Schemas and functions definitions:
 CREATE SCHEMA IF NOT EXISTS events_common;
@@ -5,11 +19,14 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.14.0'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
+$fn_def$, :'or_version')
+\gexec
 
 
 CREATE OR REPLACE FUNCTION generate_api_key(length integer) RETURNS text AS
@@ -475,16 +492,16 @@ $$
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_browser_constraint CHECK (
-                        (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
-                        (sessions.platform != 'web' AND sessions.user_browser ISNULL));
+                    (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
+                    (sessions.platform != 'web' AND sessions.user_browser ISNULL));
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_user_browser_version_constraint CHECK ( sessions.platform = 'web' OR sessions.user_browser_version ISNULL);
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_user_agent_constraint CHECK (
-                        (sessions.platform = 'web' AND sessions.user_agent NOTNULL) OR
-                        (sessions.platform != 'web' AND sessions.user_agent ISNULL));
+                    (sessions.platform = 'web' AND sessions.user_agent NOTNULL) OR
+                    (sessions.platform != 'web' AND sessions.user_agent ISNULL));
 
 
             CREATE TABLE user_viewed_sessions
