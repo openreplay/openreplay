@@ -1,3 +1,17 @@
+\set or_version 'v1.17.0'
+SET client_min_messages TO NOTICE;
+\set ON_ERROR_STOP true
+SELECT EXISTS (SELECT 1
+               FROM information_schema.tables
+               WHERE table_schema = 'public'
+                 AND table_name = 'tenants') AS db_exists;
+\gset
+\if :db_exists
+\echo >DB already exists, stopping script
+\echo >If you are trying to upgrade openreplay, please follow the instructions here: https://docs.openreplay.com/en/deployment/upgrade/
+\q
+\endif
+
 BEGIN;
 -- Schemas and functions definitions:
 CREATE SCHEMA IF NOT EXISTS events_common;
@@ -6,12 +20,14 @@ CREATE SCHEMA IF NOT EXISTS events_ios;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.17.0'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
-
+$fn_def$, :'or_version')
+\gexec
 
 CREATE OR REPLACE FUNCTION generate_api_key(length integer) RETURNS text AS
 $$
