@@ -1,3 +1,17 @@
+\set or_version 'v1.15.0-ee'
+SET client_min_messages TO NOTICE;
+\set ON_ERROR_STOP true
+SELECT EXISTS (SELECT 1
+               FROM information_schema.tables
+               WHERE table_schema = 'public'
+                 AND table_name = 'tenants') AS db_exists;
+\gset
+\if :db_exists
+\echo >DB already exists, stopping script
+\echo >If you are trying to upgrade openreplay, please follow the instructions here: https://docs.openreplay.com/en/deployment/upgrade/
+\q
+\endif
+
 BEGIN;
 -- Schemas and functions definitions:
 CREATE SCHEMA IF NOT EXISTS events_common;
@@ -6,12 +20,14 @@ CREATE SCHEMA IF NOT EXISTS events_ios;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+SELECT format($fn_def$
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.15.0-ee'
+SELECT '%1$s'
 $$ LANGUAGE sql IMMUTABLE;
-
+$fn_def$, :'or_version')
+\gexec
 
 CREATE OR REPLACE FUNCTION generate_api_key(length integer) RETURNS text AS
 $$
@@ -201,7 +217,7 @@ $$
                 jwt_iat         timestamp without time zone NULL     DEFAULT NULL,
                 jwt_refresh_jti integer                     NULL     DEFAULT NULL,
                 jwt_refresh_iat timestamp without time zone NULL     DEFAULT NULL,
-                data            jsonb                       NOT NULL DEFAULT'{}'::jsonb,
+                data            jsonb                       NOT NULL DEFAULT '{}'::jsonb,
                 weekly_report   boolean                     NOT NULL DEFAULT TRUE,
                 settings        jsonb                                DEFAULT NULL,
                 origin          text                        NULL     DEFAULT NULL,
@@ -338,7 +354,7 @@ $$
                 button_url      text        NULL,
                 image_url       text        NULL,
                 created_at      timestamp   NOT NULL DEFAULT timezone('utc'::text, now()),
-                options         jsonb       NOT NULL DEFAULT'{}'::jsonb,
+                options         jsonb       NOT NULL DEFAULT '{}'::jsonb,
                 CONSTRAINT notification_tenant_xor_user CHECK ( tenant_id NOTNULL AND user_id ISNULL OR
                                                                 tenant_id ISNULL AND user_id NOTNULL )
             );
@@ -386,7 +402,7 @@ $$
                 project_id   integer              NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
                 provider     integration_provider NOT NULL,
                 options      jsonb                NOT NULL,
-                request_data jsonb                NOT NULL DEFAULT'{}'::jsonb,
+                request_data jsonb                NOT NULL DEFAULT '{}'::jsonb,
                 PRIMARY KEY (project_id, provider)
             );
 
@@ -614,8 +630,8 @@ $$
             BEGIN
                 ALTER TABLE public.sessions
                     ADD CONSTRAINT web_browser_constraint CHECK (
-                            (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
-                            (sessions.platform != 'web' AND sessions.user_browser ISNULL));
+                        (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
+                        (sessions.platform != 'web' AND sessions.user_browser ISNULL));
             EXCEPTION
                 WHEN duplicate_object THEN RAISE NOTICE 'Table constraint exists';
             END;
@@ -629,8 +645,8 @@ $$
             BEGIN
                 ALTER TABLE public.sessions
                     ADD CONSTRAINT web_user_agent_constraint CHECK (
-                            (sessions.platform = 'web' AND sessions.user_agent NOTNULL) OR
-                            (sessions.platform != 'web' AND sessions.user_agent ISNULL));
+                        (sessions.platform = 'web' AND sessions.user_agent NOTNULL) OR
+                        (sessions.platform != 'web' AND sessions.user_agent ISNULL));
             EXCEPTION
                 WHEN duplicate_object THEN RAISE NOTICE 'Table constraint already exists';
             END;
@@ -672,7 +688,7 @@ $$
                 provider      oauth_provider                                 NOT NULL,
                 created_by    integer                                        NOT NULL,
                 created_at    timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
-                provider_data jsonb     DEFAULT'{}'::jsonb                   NOT NULL
+                provider_data jsonb     DEFAULT '{}'::jsonb                  NOT NULL
             );
             CREATE INDEX IF NOT EXISTS assigned_sessions_session_id_idx ON public.assigned_sessions (session_id);
 
@@ -973,13 +989,13 @@ $$
 
             CREATE TABLE IF NOT EXISTS public.assist_events
             (
-                event_id    varchar NOT NULL PRIMARY KEY,
-                project_id  integer NOT NULL,
-                session_id  varchar NOT NULL,
-                event_type  varchar NOT NULL,
-                timestamp   bigint NOT NULL,
-                duration    integer,
-                agent_id    integer
+                event_id   varchar NOT NULL PRIMARY KEY,
+                project_id integer NOT NULL,
+                session_id varchar NOT NULL,
+                event_type varchar NOT NULL,
+                timestamp  bigint  NOT NULL,
+                duration   integer,
+                agent_id   integer
             );
 
             CREATE TABLE IF NOT EXISTS public.assist_events_aggregates
