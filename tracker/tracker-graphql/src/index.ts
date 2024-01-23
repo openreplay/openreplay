@@ -1,28 +1,9 @@
-import { App, Messages } from '@openreplay/tracker';
+import createTrackerLink from './apolloMiddleware';
+import createRelayMiddleware from './relayMiddleware';
+import createGraphqlMiddleware from './graphqlMiddleware';
 
-export default function() {
-  return (app: App | null) => {
-    if (app === null) {
-      return (_1: string, _2: string, _3: any, result: any) => result;
-    }
-    return (
-      operationKind: string,
-      operationName: string,
-      variables: any,
-      result: any,
-    ) => {
-      try {
-        app.send(
-          Messages.GraphQL(
-            operationKind,
-            operationName,
-            JSON.stringify(variables),
-            JSON.stringify(result),
-          ),
-        );
-      } finally {
-        return result;
-      }
-    };
-  };
+export {
+  createTrackerLink,
+  createRelayMiddleware,
+  createGraphqlMiddleware,
 }

@@ -449,6 +449,7 @@ export function GraphQL(
   operationName: string,
   variables: string,
   response: string,
+  duration: number,
 ): Messages.GraphQL {
   return [
     Messages.Type.GraphQL,
@@ -456,6 +457,7 @@ export function GraphQL(
     operationName,
     variables,
     response,
+    duration,
   ]
 }
 

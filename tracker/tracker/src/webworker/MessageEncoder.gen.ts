@@ -151,7 +151,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.GraphQL:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4])
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.int(msg[5])
     break
 
     case Messages.Type.PerformanceTrack:

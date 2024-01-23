@@ -1206,16 +1206,18 @@ type GraphQL struct {
 	OperationName string
 	Variables     string
 	Response      string
+	Duration      int64
 }
 
 func (msg *GraphQL) Encode() []byte {
-	buf := make([]byte, 41+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+	buf := make([]byte, 51+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
 	buf[0] = 48
 	p := 1
 	p = WriteString(msg.OperationKind, buf, p)
 	p = WriteString(msg.OperationName, buf, p)
 	p = WriteString(msg.Variables, buf, p)
 	p = WriteString(msg.Response, buf, p)
+	p = WriteInt(msg.Duration, buf, p)
 	return buf[:p]
 }
 

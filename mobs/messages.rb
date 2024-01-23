@@ -247,6 +247,7 @@ message 48, 'GraphQL', :replayer => :devtools do
   string 'OperationName'
   string 'Variables'
   string 'Response'
+  int 'Duration'
 end
 message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player performance refactoring (now is tied with nodes counter)
   int 'Frames'
