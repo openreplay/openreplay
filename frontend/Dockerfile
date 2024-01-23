@@ -1,4 +1,4 @@
-from node:14-stretch-slim AS builder
+from node:18-slim AS builder
 workdir /work
 COPY . .
 RUN cp .env.sample .env
