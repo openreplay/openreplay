@@ -43,17 +43,21 @@ func NewStorage(cfg *config.ObjectsConfig) (objectstorage.ObjectStorage, error) 
 	}, nil
 }
 
-func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
+func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentEncoding string, compression objectstorage.CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
-	var contentEncoding *string
+	var encoding *string
 	switch compression {
 	case objectstorage.Gzip:
 		gzipStr := "gzip"
-		contentEncoding = &gzipStr
+		encoding = &gzipStr
 	case objectstorage.Brotli:
 		gzipStr := "br"
-		contentEncoding = &gzipStr
+		encoding = &gzipStr
 	}
+	if contentEncoding != "" {
+		encoding = &contentEncoding
+	}
+
 	// Remove leading slash to avoid empty folder creation
 	if strings.HasPrefix(key, "/") {
 		key = key[1:]
@@ -61,7 +65,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 	_, err := s.client.UploadStream(context.Background(), s.container, key, reader, &azblob.UploadStreamOptions{
 		HTTPHeaders: &blob.HTTPHeaders{
 			BlobCacheControl:    &cacheControl,
-			BlobContentEncoding: contentEncoding,
+			BlobContentEncoding: encoding,
 			BlobContentType:     &contentType,
 		},
 		Tags: s.tags,
