@@ -67,16 +67,19 @@ func (s *storageImpl) tagging() *string {
 	return &s.fileTag
 }
 
-func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
+func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentEncoding string, compression objectstorage.CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
-	var contentEncoding *string
+	var encoding *string
 	switch compression {
 	case objectstorage.Gzip:
 		gzipStr := "gzip"
-		contentEncoding = &gzipStr
+		encoding = &gzipStr
 	case objectstorage.Brotli:
 		gzipStr := "br"
-		contentEncoding = &gzipStr
+		encoding = &gzipStr
+	}
+	if contentEncoding != "" {
+		encoding = &contentEncoding
 	}
 
 	_, err := s.uploader.Upload(&s3manager.UploadInput{
@@ -85,7 +88,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		Key:             &key,
 		ContentType:     &contentType,
 		CacheControl:    &cacheControl,
-		ContentEncoding: contentEncoding,
+		ContentEncoding: encoding,
 		Tagging:         s.tagging(),
 	})
 	return err
