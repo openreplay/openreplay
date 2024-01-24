@@ -813,7 +813,7 @@ export default class App {
    * Uploads the stored session buffer to backend
    * @returns promise that resolves once messages are loaded, it has to be awaited
    * so the session can be uploaded properly
-   * @resolve {boolean} - if messages were loaded successfully
+   * @resolve - if messages were loaded in service worker successfully
    * @reject {string} - error message
    * */
   public async uploadOfflineRecording() {
