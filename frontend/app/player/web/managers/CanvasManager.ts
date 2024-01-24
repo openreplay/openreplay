@@ -8,11 +8,17 @@ export default class CanvasManager {
   private lastTs = 0;
 
   constructor(
+    /**
+     * Canvas node id
+     * */
     private readonly nodeId: string,
+    /**
+     * time between node creation and session start
+     */
     private readonly delta: number,
     private readonly filename: string,
     private readonly getNode: (id: number) => VElement | undefined) {
-      // getting mp4 file composed from canvas snapshot images
+      // getting mp4 file composed of canvas snapshot images
       fetch(this.filename).then((r) => {
         if (r.status === 200) {
           r.blob().then((blob) => {
