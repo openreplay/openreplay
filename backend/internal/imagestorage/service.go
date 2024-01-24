@@ -89,8 +89,8 @@ func (v *ImageStorage) Prepare(sessID uint64) error {
 		return errors.New("no screenshots found")
 	}
 
-	var images map[int]string
-	var times []int
+	images := make(map[int]string)
+	times := make([]int, 0, len(files))
 
 	// Build the list of canvas images sets
 	for _, file := range files {
