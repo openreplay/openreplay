@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -73,6 +74,63 @@ func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 }
 
 func (v *ImageStorage) Prepare(sessID uint64) error {
+	path := v.cfg.FSDir + "/"
+	if v.cfg.ScreenshotsDir != "" {
+		path += v.cfg.ScreenshotsDir + "/"
+	}
+	path += strconv.FormatUint(sessID, 10) + "/"
+
+	// Check that the directory exists
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return errors.New("no screenshots found")
+	}
+
+	var images map[int]string
+	var times []int
+
+	// Build the list of canvas images sets
+	for _, file := range files {
+		name := strings.Split(file.Name(), ".")
+		parts := strings.Split(name[0], "_")
+		if len(name) != 2 || len(parts) != 3 {
+			log.Printf("unknown file name: %s, skipping", file.Name())
+			continue
+		}
+		screenshotTS, _ := strconv.Atoi(parts[2])
+		images[screenshotTS] = file.Name()
+		times = append(times, screenshotTS)
+	}
+
+	// Prepare screenshot lists for ffmpeg
+
+	mixName := fmt.Sprintf("%d-list", sessID)
+	mixList := path + mixName
+	outputFile, err := os.Create(mixList)
+	if err != nil {
+		log.Printf("can't create mix list, err: %s", err)
+		return err
+	}
+
+	sort.Ints(times)
+	count := 0
+	for i := 0; i < len(times)-1; i++ {
+		dur := float64(times[i+1]-times[i]) / 1000.0
+		line := fmt.Sprintf("file %s\nduration %.3f\n", images[times[i]], dur)
+		_, err := outputFile.WriteString(line)
+		if err != nil {
+			outputFile.Close()
+			log.Printf("%s", err)
+			continue
+		}
+		count++
+	}
+	outputFile.Close()
+	log.Printf("new canvas mix %s with %d images", mixList, count)
+
 	return nil
 }
 

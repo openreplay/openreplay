@@ -58,26 +58,17 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 		return err // nil error is there is no screenshots
 	}
 	log.Printf("There are %d screenshot of session %d\n", len(files), sessID)
-	startNumber := "999999"
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		name := strings.Split(file.Name(), ".")[0]
-		if file.Name() < startNumber {
-			startNumber = name
-		}
-	}
-	log.Printf("start name: %s\n", startNumber)
 
 	// Try to call ffmpeg and print the result
 	start := time.Now()
 	sessionID := strconv.FormatUint(sessID, 10)
-	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
+	mixList := fmt.Sprintf("%s%s", filesPath, sessionID+"-list")
 	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
-	cmd := exec.Command("ffmpeg", "-y", "-f", "image2", "-framerate", v.framerate, "-start_number", startNumber, "-i",
-		imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-		videoPath)
+	cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
+		"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
+	//cmd := exec.Command("ffmpeg", "-y", "-f", "image2", "-framerate", v.framerate, "-start_number", startNumber, "-i",
+	//	imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+	//	videoPath)
 	// ffmpeg -y -f concat -safe 0 -i 1699978964098_29-list -vf --pix_fmt yuv420p -preset ultrafast canvas.mp4
 
 	var stdout, stderr bytes.Buffer
@@ -86,7 +77,8 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 
 	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return err
 	}
 	log.Printf("made video replay in %v", time.Since(start))
 	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath}
