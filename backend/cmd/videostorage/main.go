@@ -40,7 +40,7 @@ func main() {
 	consumer := queue.NewConsumer(
 		cfg.GroupVideoStorage,
 		[]string{
-			cfg.TopicMobileTrigger,
+			cfg.TopicReplayTrigger,
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {

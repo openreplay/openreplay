@@ -72,6 +72,10 @@ func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 	return nil
 }
 
+func (v *ImageStorage) Prepare(sessID uint64) error {
+	return nil
+}
+
 type ScreenshotMessage struct {
 	Name string
 	Data []byte
@@ -93,7 +97,6 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
 	if len(files) == 0 {
 		return []string{}, nil
 	}
-	log.Printf("There are %d canvas images of session %d\n", len(files), sessID)
 
 	type canvasData struct {
 		files map[int]string
@@ -134,6 +137,7 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
 		}
 
 		sort.Ints(cData.times)
+		count := 0
 		for i := 0; i < len(cData.times)-1; i++ {
 			dur := float64(cData.times[i+1]-cData.times[i]) / 1000.0
 			line := fmt.Sprintf("file %s\nduration %.3f\n", cData.files[cData.times[i]], dur)
@@ -143,11 +147,13 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
 				log.Printf("%s", err)
 				continue
 			}
+			count++
 		}
 		outputFile.Close()
-		log.Printf("made canvas list %s", mixList)
+		log.Printf("new canvas mix %s with %d images", mixList, count)
 		namesList = append(namesList, mixName)
 	}
+	log.Printf("prepared %d canvas mixes for session %d", len(namesList), sessID)
 	return namesList, nil
 }
 
