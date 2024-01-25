@@ -32,7 +32,9 @@ RUN if [ "$GSSAPI" = "true" ]; then \
 
 FROM --platform=linux/$ARCH alpine AS entrypoint
 ARG GIT_SHA
+ARG GSSAPI=false
 LABEL GIT_SHA=$GIT_SHA
+LABEL GSSAPI=$GSSAPI
 
 RUN if [ "$GSSAPI" = "true" ]; then \
       apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5; \
@@ -44,6 +46,7 @@ RUN adduser -u 1001 openreplay -D
 ARG SERVICE_NAME
 ENV TZ=UTC \
     GIT_SHA=$GIT_SHA \
+    GSSAPI=$GSSAPI \
     FS_ULIMIT=10000 \
     FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \

@@ -46,7 +46,7 @@ update_helm_release() {
 function build_service() {
 	image="$1"
 	echo "BUILDING $image"
-	docker build -t ${DOCKER_REPO:-'local'}/$image:${image_tag} --platform linux/$arch --build-arg ARCH=$arch --build-arg SERVICE_NAME=$image --build-arg GIT_SHA=$git_sha .
+	docker build -t ${DOCKER_REPO:-'local'}/$image:${image_tag} --platform linux/$arch --build-arg ARCH=$arch --build-arg SERVICE_NAME=$image --build-arg GIT_SHA=$git_sha --build-arg GSSAPI=${GSSAPI:-'false'} .
 	[[ $PUSH_IMAGE -eq 1 ]] && {
 		docker push ${DOCKER_REPO:-'local'}/$image:${image_tag}
 	}
