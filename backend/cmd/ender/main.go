@@ -58,7 +58,7 @@ func main() {
 		return
 	}
 
-	mobileMessages := []int{90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
+	mobileMessages := []int{90, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewConsumer(
