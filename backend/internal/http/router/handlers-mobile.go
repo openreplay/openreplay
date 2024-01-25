@@ -55,6 +55,11 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if !checkMobileTrackerVersion(req.TrackerVersion) {
+		ResponseWithError(w, http.StatusUpgradeRequired, errors.New("tracker version not supported"), startTime, r.URL.Path, 0)
+		return
+	}
+
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 

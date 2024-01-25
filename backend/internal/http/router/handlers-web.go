@@ -61,6 +61,23 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 	return bodyBytes, nil
 }
 
+func checkMobileTrackerVersion(ver string) bool {
+	c, err := semver.NewConstraint(">=1.0.9")
+	if err != nil {
+		return false
+	}
+	// Check for beta version
+	parts := strings.Split(ver, "-")
+	if len(parts) > 1 {
+		ver = parts[0]
+	}
+	v, err := semver.NewVersion(ver)
+	if err != nil {
+		return false
+	}
+	return c.Check(v)
+}
+
 func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint64) {
 	ts = uint64(req.Timestamp)
 	if req.IsOffline {

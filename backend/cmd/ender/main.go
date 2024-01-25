@@ -179,6 +179,10 @@ func main() {
 						log.Printf("can't send iOSSessionEnd to topic: %s; sessID: %d", err, sessionID)
 						return false, 0
 					}
+					// Inform canvas service about session end
+					if err := producer.Produce(cfg.TopicRawImages, sessionID, msg.Encode()); err != nil {
+						log.Printf("can't send sessionEnd signal to mobile images topic: %s; sessID: %d", err, sessionID)
+					}
 				} else {
 					if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
 						log.Printf("can't send sessionEnd to raw topic: %s; sessID: %d", err, sessionID)

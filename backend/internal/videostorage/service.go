@@ -53,26 +53,28 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 }
 
 func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
-	files, _ := ioutil.ReadDir(filesPath)
+	files, err := ioutil.ReadDir(filesPath)
+	if err != nil || len(files) == 0 {
+		return err // nil error is there is no screenshots
+	}
 	log.Printf("There are %d screenshot of session %d\n", len(files), sessID)
 
 	// Try to call ffmpeg and print the result
 	start := time.Now()
 	sessionID := strconv.FormatUint(sessID, 10)
-	imagesPath := "/mnt/efs/screenshots/" + sessionID + "/%06d.jpeg"
+	mixList := fmt.Sprintf("%s%s", filesPath, sessionID+"-list")
 	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
-	cmd := exec.Command("ffmpeg", "-y", "-f", "image2", "-framerate", v.framerate, "-start_number", "000000", "-i",
-		imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-		videoPath)
-	// ffmpeg -y -f concat -safe 0 -i 1699978964098_29-list -vf --pix_fmt yuv420p -preset ultrafast canvas.mp4
+	cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
+		"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return err
 	}
 	log.Printf("made video replay in %v", time.Since(start))
 	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath}
@@ -80,42 +82,32 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 }
 
 func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix string) error {
-	files, err := ioutil.ReadDir(filesPath)
-	if err != nil {
+	name := strings.TrimSuffix(canvasMix, "-list")
+	mixList := fmt.Sprintf("%s%s", filesPath, canvasMix)
+	// check that mixList exists
+	if _, err := ioutil.ReadFile(mixList); err != nil {
 		return err
 	}
-	if len(files) == 0 {
-		return nil
+	videoPath := fmt.Sprintf("%s%s.mp4", filesPath, name)
+
+	// Run ffmpeg to build video
+	start := time.Now()
+	sessionID := strconv.FormatUint(sessID, 10)
+
+	cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
+		"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return err
 	}
-	log.Printf("There are %d mix lists of session %d\n", len(files), sessID)
-
-	for _, file := range files {
-		if !strings.HasSuffix(file.Name(), "-list") {
-			continue
-		}
-
-		name := strings.TrimSuffix(file.Name(), "-list")
-		mixList := fmt.Sprintf("%s%s-list", filesPath, name)
-		videoPath := fmt.Sprintf("%s%s.mp4", filesPath, name)
-
-		// Run ffmpeg to build video
-		start := time.Now()
-		sessionID := strconv.FormatUint(sessID, 10)
-
-		cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
-			"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
-
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-
-		err = cmd.Run()
-		if err != nil {
-			log.Fatalf("Failed to execute command: %v, stderr: %v", err, stderr.String())
-		}
-		log.Printf("made video replay in %v", time.Since(start))
-		v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath, name: "/" + name + ".mp4"}
-	}
+	log.Printf("made video replay in %v", time.Since(start))
+	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: videoPath, name: "/" + name + ".mp4"}
 	return nil
 }
 

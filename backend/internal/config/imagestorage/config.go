@@ -13,6 +13,7 @@ type Config struct {
 	TopicRawImages     string `env:"TOPIC_RAW_IMAGES,required"`
 	TopicCanvasImages  string `env:"TOPIC_CANVAS_IMAGES,required"`
 	TopicCanvasTrigger string `env:"TOPIC_CANVAS_TRIGGER,required"`
+	TopicReplayTrigger string `env:"TOPIC_REPLAY_TRIGGER,required"`
 	GroupImageStorage  string `env:"GROUP_IMAGE_STORAGE,required"`
 	GroupCanvasImage   string `env:"GROUP_CANVAS_IMAGE,required"`
 	UseProfiler        bool   `env:"PROFILER_ENABLED,default=false"`
