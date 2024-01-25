@@ -156,7 +156,6 @@ export default class RemoteControl {
 
   requestReleaseRemoteControl = () => {
     const remoteControl = this.store.get().remoteControl;
-    console.log(remoteControl);
     if (remoteControl === RemoteControlStatus.Requesting) {
       return;
     }

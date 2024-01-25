@@ -19,7 +19,6 @@ const iconMap = {
 } as const
 
 const Tabs = ({ tabs, active, onClick, border = true, className }: Props) => {
-  console.log(tabs)
   return (
     <div className={cn(stl.tabs, className, { [stl.bordered]: border })} role="tablist">
       <Segmented

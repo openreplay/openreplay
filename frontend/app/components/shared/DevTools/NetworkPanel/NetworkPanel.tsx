@@ -406,7 +406,6 @@ const NetworkPanelComp = observer(
     const showDetailsModal = (item: any) => {
       if (item.type === 'websocket') {
         const socketMsgList = websocketList.filter((ws) => ws.channelName === item.channelName);
-        console.log(socketMsgList)
 
         return showModal(
           <WSModal

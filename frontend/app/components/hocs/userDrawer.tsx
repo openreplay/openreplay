@@ -39,7 +39,6 @@ const useDrawer = () => {
   });
 
   const showDrawer = (component: React.ReactNode, props: DrawerProps) => {
-    console.log('here');
     setContent(component);
     setDrawerProps(props);
     setVisible(true);
