@@ -317,12 +317,15 @@ export default class TabSessionManager {
       if (!!lastScroll && this.screen.window) {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
-      const canvasMsg = this.canvasReplayWalker.moveGetLast(t)
-      if (canvasMsg) {
-        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
-        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
-      }
-      const runningManagers = Object.keys(this.canvasManagers).filter((key) => this.canvasManagers[key].running);
+      this.canvasReplayWalker.moveApply(t, (canvasMsg) => {
+        if (canvasMsg) {
+          this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
+          this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
+        }
+      })
+      const runningManagers = Object.keys(this.canvasManagers).filter(
+        (key) => this.canvasManagers[key].running
+      );
       runningManagers.forEach((key) => {
         const manager = this.canvasManagers[key].manager;
         manager.move(t);
@@ -330,8 +333,11 @@ export default class TabSessionManager {
     })
   }
 
+  /**
+   * Used to decode state messages, because they can be large we only want to decode whats rendered atm
+   * */
   public decodeMessage(msg: Message) {
-    return this.decoder.decode(msg)
+    return this.decoder.decode(msg);
   }
 
   public _sortMessagesHack = (msgs: Message[]) => {
