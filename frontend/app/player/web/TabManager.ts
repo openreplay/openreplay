@@ -331,11 +331,12 @@ export default class TabSessionManager {
       if (!!lastScroll && this.screen.window) {
         this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
-      const canvasMsg = this.canvasReplayWalker.moveGetLast(t);
-      if (canvasMsg) {
-        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
-        this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
-      }
+      this.canvasReplayWalker.moveApply(t, (canvasMsg) => {
+        if (canvasMsg) {
+          this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].manager.startVideo();
+          this.canvasManagers[`${canvasMsg.timestamp}_${canvasMsg.nodeId}`].running = true;
+        }
+      })
       const runningManagers = Object.keys(this.canvasManagers).filter(
         (key) => this.canvasManagers[key].running
       );
