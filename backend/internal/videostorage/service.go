@@ -66,10 +66,6 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 	videoPath := "/mnt/efs/screenshots/" + sessionID + "/replay.mp4"
 	cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", mixList, "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr",
 		"-pix_fmt", "yuv420p", "-preset", "ultrafast", videoPath)
-	//cmd := exec.Command("ffmpeg", "-y", "-f", "image2", "-framerate", v.framerate, "-start_number", startNumber, "-i",
-	//	imagesPath, "-vf", "scale=-2:1064", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-	//	videoPath)
-	// ffmpeg -y -f concat -safe 0 -i 1699978964098_29-list -vf --pix_fmt yuv420p -preset ultrafast canvas.mp4
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
