@@ -59,6 +59,9 @@ func (t *tagsImpl) Get(projectID uint32) ([]Tag, error) {
 			IgnoreDeadClick: ignoreDeadClick,
 		})
 	}
+	if tags == nil {
+		return []Tag{}, nil
+	}
 	return tags, nil
 }
 
