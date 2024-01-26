@@ -25,7 +25,7 @@ services:
     image: bitnami/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
-      - miniodata:/bitnami/minio/data
+      - miniodata:/data
     networks:
       - opereplay-net
     ports:
