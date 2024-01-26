@@ -2,11 +2,11 @@ from fastapi import Body, Depends
 
 from chalicelib.core.usability_testing import service
 from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestUpdate, UTTestSearch
-from or_dependencies import OR_context, OR_role
+from or_dependencies import OR_context
 from routers.base import get_routers
 from schemas import schemas
 
-public_app, app, app_apikey = get_routers(extra_dependencies=[OR_role("owner", "admin")])
+public_app, app, app_apikey = get_routers()
 tags = ["usability-tests"]
 
 
