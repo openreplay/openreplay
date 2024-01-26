@@ -8,7 +8,7 @@ import (
 
 type Conditions interface {
 	Get(projectID uint32) (*Response, error)
-	GetRate(projectID uint32, condition string) (int, error)
+	GetRate(projectID uint32, condition string, def int) (int, error)
 }
 
 type conditionsImpl struct {
@@ -108,7 +108,7 @@ func (c *conditionsImpl) Get(projectID uint32) (*Response, error) {
 	return &Response{Conditions: conditions}, err
 }
 
-func (c *conditionsImpl) GetRate(projectID uint32, condition string) (int, error) {
+func (c *conditionsImpl) GetRate(projectID uint32, condition string, def int) (int, error) {
 	proj, ok := c.cache[projectID]
 	if ok {
 		rate, ok := proj[condition]

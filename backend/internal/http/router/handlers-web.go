@@ -168,12 +168,11 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		dice := byte(rand.Intn(100)) // [0, 100)
 		// Use condition rate if it's set
 		if req.Condition != "" {
-			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition)
+			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
 			if err != nil {
 				log.Printf("can't get condition rate: %s", err)
 			} else {
-				log.Printf("condition rate: %d", rate)
-				p.SampleRate = byte(rate) // why byte?
+				p.SampleRate = byte(rate)
 			}
 		} else {
 			log.Printf("project sample rate: %d", p.SampleRate)
