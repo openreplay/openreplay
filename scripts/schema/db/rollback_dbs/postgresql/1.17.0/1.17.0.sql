@@ -20,6 +20,9 @@ $fn_def$, :'next_version')
 --
 
 
+DROP TABLE IF EXISTS public.projects_conditions;
+DROP TABLE IF EXISTS events.tags;
+DROP TABLE IF EXISTS public.tags;
 
 COMMIT;
 
