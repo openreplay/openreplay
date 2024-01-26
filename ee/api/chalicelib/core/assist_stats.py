@@ -16,12 +16,12 @@ event_type_mapping = {
 
 def insert_aggregated_data():
     try:
-        logging.info("Assist Stats: Inserting aggregated data")
+        logging.debug("Assist Stats: Inserting aggregated data")
         end_timestamp = int(datetime.timestamp(datetime.now())) * 1000
         start_timestamp = __last_run_end_timestamp_from_aggregates()
 
         if start_timestamp is None:  # first run
-            logging.info("Assist Stats: First run, inserting data for last 7 days")
+            logging.debug("Assist Stats: First run, inserting data for last 7 days")
             start_timestamp = end_timestamp - (7 * 24 * 60 * 60 * 1000)
 
         offset = 0
@@ -40,14 +40,14 @@ def insert_aggregated_data():
                 "step_size": f"{60} seconds",
             }
 
-            logging.info(f"Assist Stats: Fetching data from {start_timestamp} to {end_timestamp}")
+            logging.debug(f"Assist Stats: Fetching data from {start_timestamp} to {end_timestamp}")
             aggregated_data = __get_all_events_hourly_averages(constraints, params)
 
             if not aggregated_data:  # No more data to insert
-                logging.info("Assist Stats: No more data to insert")
+                logging.debug("Assist Stats: No more data to insert")
                 break
 
-            logging.info(f"Assist Stats: Inserting {len(aggregated_data)} rows")
+            logging.debug(f"Assist Stats: Inserting {len(aggregated_data)} rows")
 
             for data in aggregated_data:
                 sql = """
