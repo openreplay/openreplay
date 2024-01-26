@@ -38,15 +38,11 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/openreplay/openreplay">
-    <img src="static/openreplay-git-hero.svg">
-  </a>
-</p>
+https://github.com/openreplay/openreplay/assets/20417222/684133c4-575a-48a7-aa91-d4bf88c5436a
 
-OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web app, helping you troubleshoot issues faster.
+OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web and mobile apps, helping you troubleshoot issues faster.
 
-- **Session replay.** OpenReplay replays what users do, but not only. It also shows you what went under the hood, how your website or app behaves by capturing network activity, console logs, JS errors, store actions/state, page speed metrics, cpu/memory usage and much more.
+- **Session replay**. OpenReplay replays what users do, but not only. It also shows you what went under the hood, how your website or app behaves by capturing network activity, console logs, JS errors, store actions/state, page speed metrics, cpu/memory usage and much more. In addition to web applications, iOS and React Native apps are also supported (Android and Flutter are coming out soon).
 - **Low footprint**. With a ~26KB (.br) tracker that asynchronously sends minimal data for a very limited impact on performance.
 - **Self-hosted**. No more security compliance checks, 3rd-parties processing user data. Everything OpenReplay captures stays in your cloud for a complete control over your data.
 - **Privacy controls**. Fine-grained security features for sanitizing user data.
