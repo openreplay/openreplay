@@ -27,7 +27,8 @@ CREATE INDEX IF NOT EXISTS sessions_session_id_has_ut_test_idx ON public.session
 
 UPDATE public.sessions
 SET has_ut_test= TRUE
-WHERE session_id IN (SELECT session_id FROM public.ut_tests_signals);
+WHERE session_id IN (SELECT session_id FROM public.ut_tests_signals)
+  AND has_ut_test = FALSE;
 
 ALTER TABLE IF EXISTS public.projects
     ADD COLUMN IF NOT EXISTS conditional_capture boolean DEFAULT FALSE;
