@@ -51,13 +51,16 @@ func (s *saverImpl) Handle(msg Message) {
 			}
 			return
 		}
-	}
-	if err := s.handleMessage(msg); err != nil {
-		if !postgres.IsPkeyViolation(err) {
-			log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+	} else {
+		// Handle Web messages
+		if err := s.handleMessage(msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+			}
+			return
 		}
-		return
 	}
+
 	if err := s.handleExtraMessage(msg); err != nil {
 		log.Printf("Stats Insertion Error %v; Session: %d, Message: %v", err, msg.SessionID(), msg)
 	}
