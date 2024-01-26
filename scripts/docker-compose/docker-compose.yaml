@@ -5,7 +5,7 @@ services:
     image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/bitnami/postgresql
     networks:
       - opereplay-net
     environment:
@@ -25,7 +25,7 @@ services:
     image: bitnami/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
-      - miniodata:/bitnami/minio/data
+      - miniodata:/data
     networks:
       - opereplay-net
     ports:
@@ -280,9 +280,8 @@ services:
       - caddy_config:/config
     networks:
       - opereplay-net
-    environment:
-      - ACME_AGREE=true # Agree to Let's Encrypt Subscriber Agreement
-      - CADDY_DOMAIN=or-foss.rjsh.me
+    env_file:
+      - caddy.env
     restart: unless-stopped
 
 
