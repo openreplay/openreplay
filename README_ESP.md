@@ -38,15 +38,11 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/openreplay/openreplay">
-    <img src="static/openreplay-git-hero.svg">
-  </a>
-</p>
+https://github.com/openreplay/openreplay/assets/20417222/684133c4-575a-48a7-aa91-d4bf88c5436a
 
 OpenReplay es una suite de retransmisión de sesiones que puedes alojar tú mismo, lo que te permite ver lo que hacen los usuarios en tu aplicación web y ayudarte a solucionar problemas más rápido.
 
-- **Reproducción de sesiones.** OpenReplay reproduce lo que hacen los usuarios, pero no solo eso. También te muestra lo que ocurre bajo el capó, cómo se comporta tu sitio web o aplicación al capturar la actividad de la red, registros de la consola, errores de JavaScript, acciones/estado del almacén, métricas de velocidad de la página, uso de CPU/memoria y mucho más.
+- **Reproducción de sesiones**. OpenReplay reproduce lo que hacen los usuarios, pero no solo eso. También te muestra lo que ocurre bajo el capó, cómo se comporta tu sitio web o aplicación al capturar la actividad de la red, registros de la consola, errores de JavaScript, acciones/estado del almacén, métricas de velocidad de la página, uso de CPU/memoria y mucho más. Además de las aplicaciones web, las aplicaciones de iOS y React Native también son compatibles (las versiones de Android y Flutter saldrán pronto).
 - **Huella reducida.** Con un rastreador de aproximadamente 26 KB (.br) que envía datos mínimos de forma asíncrona, lo que tiene un impacto muy limitado en el rendimiento.
 - **Auto-alojado.** No más verificaciones de cumplimiento de seguridad, procesamiento de datos de usuario por terceros. Todo lo que OpenReplay captura se queda en tu nube para un control completo sobre tus datos.
 - **Controles de privacidad.** Funciones de seguridad detalladas para desinfectar los datos de usuario.
