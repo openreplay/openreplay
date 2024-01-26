@@ -87,7 +87,6 @@ rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/subs/v1_api.py
-rm -rf ./routers/subs/usability_tests.py
 rm -rf ./run-alerts-dev.sh
 rm -rf ./run-dev.sh
 rm -rf ./schemas/overrides.py
