@@ -159,6 +159,6 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (e *Router) GetHandler() http.Handler {
+func (e *Router) bGetHandler() http.Handler {
 	return e.router
 }
