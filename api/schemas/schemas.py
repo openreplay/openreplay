@@ -295,7 +295,7 @@ class IntegartionStackdriverSchema(IntegrationBase):
 class IntegrationNewrelicSchema(IntegrationBase):
     application_id: str = Field(...)
     x_query_key: str = Field(...)
-    region: str = Field(...)
+    region: bool = Field(default=False)
 
 
 class IntegrationRollbarSchema(IntegrationBase):
@@ -1587,5 +1587,3 @@ class TagCreate(TagUpdate):
     selector: str = Field(..., min_length=1, max_length=255)
     ignoreClickRage: bool = Field(default=False)
     ignoreDeadClick: bool = Field(default=False)
-
-
