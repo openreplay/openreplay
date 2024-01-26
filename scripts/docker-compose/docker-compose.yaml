@@ -7,7 +7,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - opereplay-net
+      - openreplay-net
     environment:
       POSTGRESQL_PASSWORD: ${COMMON_PG_PASSWORD}
 
@@ -17,7 +17,7 @@ services:
     volumes:
       - redisdata:/var/lib/postgresql/data
     networks:
-      - opereplay-net
+      - openreplay-net
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
 
@@ -27,7 +27,7 @@ services:
     volumes:
       - miniodata:/bitnami/minio/data
     networks:
-      - opereplay-net
+      - openreplay-net
     ports:
       - 9001:9001
     environment:
@@ -48,6 +48,7 @@ services:
       - -c
       - |
         chown -R 1001:1001 /mnt/{efs,minio,postgres}
+    restart: on-failure
 
   minio-migration:
     image: bitnami/minio:2020.10.9-debian-10-r6
@@ -58,7 +59,7 @@ services:
       - minio
       - fs-permission
     networks:
-      - opereplay-net
+      - openreplay-net
     volumes:
       - ../helmcharts/openreplay/files/minio.sh:/tmp/minio.sh
     environment:
@@ -87,7 +88,7 @@ services:
       - postgresql
       - minio-migration
     networks:
-      - opereplay-net
+      - openreplay-net
     volumes:
       - ../schema/db/init_dbs/postgresql/init_schema.sql:/tmp/init_schema.sql
     environment:
@@ -108,63 +109,63 @@ services:
           psql -v ON_ERROR_STOP=1 -f /tmp/init_schema.sql
 
   frontend-openreplay:
-    image: public.ecr.aws/p1t3u8a3/frontend:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/frontend:${COMMON_VERSION}
     container_name: frontend
     networks:
-      - opereplay-net
+      - openreplay-net
     restart: unless-stopped
 
   alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/alerts:${COMMON_VERSION}
     container_name: alerts
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - alerts.env
     restart: unless-stopped
 
   assets-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assets:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/assets:${COMMON_VERSION}
     container_name: assets
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - assets.env
     restart: unless-stopped
 
   assist-openreplay:
-    image: public.ecr.aws/p1t3u8a3/assist:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/assist:${COMMON_VERSION}
     container_name: assist
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - assist.env
     restart: unless-stopped
 
   db-openreplay:
-    image: public.ecr.aws/p1t3u8a3/db:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/db:${COMMON_VERSION}
     container_name: db
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - db.env
     restart: unless-stopped
 
   ender-openreplay:
-    image: public.ecr.aws/p1t3u8a3/ender:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/ender:${COMMON_VERSION}
     container_name: ender
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - ender.env
     restart: unless-stopped
 
   heuristics-openreplay:
-    image: public.ecr.aws/p1t3u8a3/heuristics:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/heuristics:${COMMON_VERSION}
     domainname: app.svc.cluster.local
     container_name: heuristics
     networks:
-      opereplay-net:
+      openreplay-net:
         aliases:
           - heuristics-openreplay.app.svc.cluster.local
     env_file:
@@ -172,88 +173,88 @@ services:
     restart: unless-stopped
 
   imagestorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/imagestorage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/imagestorage:${COMMON_VERSION}
     container_name: imagestorage
     env_file:
       - imagestorage.env
     networks:
-      - opereplay-net
+      - openreplay-net
     restart: unless-stopped
 
   integrations-openreplay:
-    image: public.ecr.aws/p1t3u8a3/integrations:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/integrations:${COMMON_VERSION}
     container_name: integrations
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - integrations.env
     restart: unless-stopped
 
   peers-openreplay:
-    image: public.ecr.aws/p1t3u8a3/peers:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/peers:${COMMON_VERSION}
     container_name: peers
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - peers.env
     restart: unless-stopped
 
   sourcemapreader-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sourcemapreader:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/sourcemapreader:${COMMON_VERSION}
     container_name: sourcemapreader
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - sourcemapreader.env
     restart: unless-stopped
 
   videostorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/videostorage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
     container_name: videostorage
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - videostorage.env
     restart: unless-stopped
 
   http-openreplay:
-    image: public.ecr.aws/p1t3u8a3/http:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     container_name: http
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - http.env
     restart: unless-stopped
 
   chalice-openreplay:
-    image: public.ecr.aws/p1t3u8a3/chalice:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/chalice:${COMMON_VERSION}
     container_name: chalice
     volumes:
       - shared-volume:/mnt/efs
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - chalice.env
     restart: unless-stopped
 
   sink-openreplay:
-    image: public.ecr.aws/p1t3u8a3/sink:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/sink:${COMMON_VERSION}
     container_name: sink
     volumes:
       - shared-volume:/mnt/efs
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - sink.env
     restart: unless-stopped
 
   storage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/storage:v1.16.0
+    image: public.ecr.aws/p1t3u8a3/storage:${COMMON_VERSION}
     container_name: storage
     volumes:
       - shared-volume:/mnt/efs
     networks:
-      - opereplay-net
+      - openreplay-net
     env_file:
       - storage.env
     restart: unless-stopped
@@ -262,7 +263,7 @@ services:
     image: nginx:latest
     container_name: nginx
     networks:
-      - opereplay-net
+      - openreplay-net
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
@@ -279,10 +280,10 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     networks:
-      - opereplay-net
+      - openreplay-net
     environment:
       - ACME_AGREE=true # Agree to Let's Encrypt Subscriber Agreement
-      - CADDY_DOMAIN=or-foss.rjsh.me
+      - CADDY_DOMAIN=${CADDY_DOMAIN}
     restart: unless-stopped
 
 
@@ -295,4 +296,4 @@ volumes:
   caddy_config:
 
 networks:
-  opereplay-net:
+  openreplay-net:

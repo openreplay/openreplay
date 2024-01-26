@@ -25,7 +25,7 @@ fi
 
 # Clone the repository
 if git clone --depth 1 --branch "$REPO_BRANCH" "$REPO_URL" "$CLONE_DIR"; then
-	info "Repository cloned successfully."
+    info "Repository cloned successfully."
 else
 	error "Failed to clone the repository."
 fi
