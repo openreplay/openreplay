@@ -1,0 +1,6 @@
+ {$CADDY_DOMAIN} {
+    reverse_proxy nginx-openreplay:80
+    tls {
+        issuer internal
+    }
+}
