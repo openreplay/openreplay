@@ -40,7 +40,7 @@
 
 https://github.com/openreplay/openreplay/assets/20417222/684133c4-575a-48a7-aa91-d4bf88c5436a
 
-OpenReplay es una suite de retransmisión de sesiones que puedes alojar tú mismo, lo que te permite ver lo que hacen los usuarios en tu aplicación web y ayudarte a solucionar problemas más rápido.
+OpenReplay es una suite de retransmisión de sesiones que puedes alojar tú mismo, lo que te permite ver lo que hacen los usuarios en tu aplicación web y móviles y ayudarte a solucionar problemas más rápido.
 
 - **Reproducción de sesiones**. OpenReplay reproduce lo que hacen los usuarios, pero no solo eso. También te muestra lo que ocurre bajo el capó, cómo se comporta tu sitio web o aplicación al capturar la actividad de la red, registros de la consola, errores de JavaScript, acciones/estado del almacén, métricas de velocidad de la página, uso de CPU/memoria y mucho más. Además de las aplicaciones web, las aplicaciones de iOS y React Native también son compatibles (las versiones de Android y Flutter saldrán pronto).
 - **Huella reducida.** Con un rastreador de aproximadamente 26 KB (.br) que envía datos mínimos de forma asíncrona, lo que tiene un impacto muy limitado en el rendimiento.
@@ -53,6 +53,7 @@ OpenReplay es una suite de retransmisión de sesiones que puedes alojar tú mism
 - **Reproducción de sesiones:** Te permite revivir la experiencia de tus usuarios, ver dónde encuentran dificultades y cómo afecta su comportamiento. Cada reproducción de sesión se analiza automáticamente en función de heurísticas, para un triaje sencillo.
 - **Herramientas de desarrollo (DevTools):** Es como depurar en tu propio navegador. OpenReplay te proporciona el contexto completo (actividad de red, errores de JavaScript, acciones/estado del almacén y más de 40 métricas) para que puedas reproducir instantáneamente errores y entender problemas de rendimiento.
 - **Asistencia (Assist):** Te ayuda a brindar soporte a tus usuarios al ver su pantalla en tiempo real y unirte instantáneamente a una llamada (WebRTC) con ellos, sin necesidad de software de uso compartido de pantalla de terceros.
+- **Banderas de características:** Habilitar o deshabilitar una característica, hacer lanzamientos graduales y pruebas A/B sin necesidad de volver a desplegar tu aplicación.
 - **Búsqueda universal (Omni-search):** Busca y filtra por casi cualquier acción/criterio de usuario, atributo de sesión o evento técnico, para que puedas responder a cualquier pregunta. No se requiere instrumentación.
 - **Embudos (Funnels):** Para resaltar los problemas más impactantes que causan la conversión y la pérdida de ingresos.
 - **Controles de privacidad detallados:** Elige qué capturar, qué ocultar o qué ignorar para que los datos de usuario ni siquiera lleguen a tus servidores.

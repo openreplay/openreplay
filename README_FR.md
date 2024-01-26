@@ -40,7 +40,7 @@
 
 https://github.com/openreplay/openreplay/assets/20417222/684133c4-575a-48a7-aa91-d4bf88c5436a
 
-OpenReplay est une suite d'outils de relecture (appelée aussi "replay") de sessions que vous pouvez héberger vous-même, vous permettant de voir ce que les utilisateurs font sur une application web, vous aidant ainsi à résoudre différents types de problèmes plus rapidement.
+OpenReplay est une suite d'outils de relecture (appelée aussi "replay") de sessions que vous pouvez héberger vous-même, vous permettant de voir ce que les utilisateurs font sur une application web ou mobile, vous aidant ainsi à résoudre différents types de problèmes plus rapidement.
 
 - **Relecture de session**. OpenReplay rejoue ce que les utilisateurs font, mais pas seulement. Il vous montre également ce qui se passe en coulisse, comment votre site web ou votre application se comporte en capturant l'activité réseau, les journaux de console, les erreurs JS, les actions/états du store, les métriques de chargement des pages, l'utilisation du CPU/mémoire, et bien plus encore. En plus des applications web, les applications iOS et React Native sont également prises en charge (les versions Android et Flutter seront bientôt disponibles).
 - **Faible empreinte**. Avec un traqueur d'environ 26 Ko (.br) qui envoie de manière asynchrone des données minimales, ce qui a un impact très limité sur les performances.
@@ -53,6 +53,7 @@ OpenReplay est une suite d'outils de relecture (appelée aussi "replay") de sess
 - **Relecture de session :** Vous permet de revivre l'expérience de vos utilisateurs, de voir où ils rencontrent des problèmes et comment cela affecte leur comportement. Chaque relecture de session est automatiquement analysée en se basant sur des heuristiques, pour un triage plus facile des problèmes en fonction de l'impact.
 - **Outils de développement (DevTools) :** C'est comme déboguer dans votre propre navigateur. OpenReplay vous fournit le contexte complet (activité réseau, erreurs JS, actions/états du store et plus de 40 métriques) pour que vous puissiez instantanément reproduire les bugs et comprendre les problèmes de performance.
 - **Assistance (Assist) :** Vous aide à soutenir vos utilisateurs en voyant leur écran en direct et en vous connectant instantanément avec eux via appel/vidéo (WebRTC), sans nécessiter de logiciel tiers de partage d'écran.
+- **Drapeaux de fonctionnalité :** Activer ou désactiver une fonctionnalité, faire des déploiements progressifs et des tests A/B sans avoir à redéployer votre application.
 - **Recherche universelle (Omni-search) :** Recherchez et filtrez presque n'importe quelle action/critère utilisateur, attribut de session ou événement technique, afin de pouvoir répondre à n'importe quelle question. Aucune instrumentation requise.
 - **Entonnoirs (Funnels) :** Pour mettre en évidence les problèmes les plus impactants entraînant une conversion et une perte de revenus.
 - **Contrôles de confidentialité détaillés :** Choisissez ce que vous voulez capturer, ce que vous voulez obscurcir ou ignorer, de sorte que les données utilisateur n'atteignent même pas vos serveurs.
