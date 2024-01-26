@@ -291,7 +291,7 @@ $$
                 button_url      text        NULL,
                 image_url       text        NULL,
                 created_at      timestamp   NOT NULL DEFAULT timezone('utc'::text, now()),
-                options         jsonb       NOT NULL DEFAULT'{}'::jsonb,
+                options         jsonb       NOT NULL DEFAULT '{}'::jsonb,
                 CONSTRAINT notification_tenant_xor_user CHECK ( tenant_id NOTNULL AND user_id ISNULL OR
                                                                 tenant_id ISNULL AND user_id NOTNULL )
             );
@@ -1172,13 +1172,13 @@ $$
 
             CREATE TABLE public.tags
             (
-                tag_id               serial       NOT NULL PRIMARY KEY,
-                name                 text         NOT NULL,
-                project_id           integer      NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
-                selector             text         NOT NULL,
-                ignore_click_rage    boolean      NOT NULL,
-                ignore_dead_click    boolean      NOT NULL,
-                deleted_at           timestamp without time zone NULL DEFAULT NULL
+                tag_id            serial                      NOT NULL PRIMARY KEY,
+                name              text                        NOT NULL,
+                project_id        integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+                selector          text                        NOT NULL,
+                ignore_click_rage boolean                     NOT NULL,
+                ignore_dead_click boolean                     NOT NULL,
+                deleted_at        timestamp without time zone NULL DEFAULT NULL
             );
             CREATE INDEX tags_project_id_idx ON public.tags (project_id);
 
@@ -1187,7 +1187,7 @@ $$
                 session_id bigint  NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
                 timestamp  bigint  NOT NULL,
                 seq_index  integer NOT NULL,
-                tag_id     integer  NOT NULL REFERENCES public.tags (tag_id) ON DELETE CASCADE,
+                tag_id     integer NOT NULL REFERENCES public.tags (tag_id) ON DELETE CASCADE,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX tags_session_id_idx ON events.tags (session_id);
