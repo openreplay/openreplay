@@ -674,7 +674,8 @@ const mapLiveFilters = (list) => {
       filter.category !== FilterCategory.JAVASCRIPT &&
       filter.category !== FilterCategory.PERFORMANCE &&
       filter.key !== FilterKey.DURATION &&
-      filter.key !== FilterKey.REFERRER
+      filter.key !== FilterKey.REFERRER &&
+      filter.key !== FilterKey.TAGGED_ELEMENT
     ) {
       obj[filter.key] = { ...filter };
       obj[filter.key].operatorOptions = filter.operatorOptions.filter(operator => liveFilterSupportedOperators.includes(operator.value));
