@@ -264,7 +264,6 @@ Pipfile.lock
 /routers/core.py
 /routers/subs/__init__.py
 /routers/subs/v1_api.py
-/routers/subs/usability_tests.py
 /run-alerts-dev.sh
 /run-dev.sh
 /schemas/overrides.py
