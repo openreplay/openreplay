@@ -85,6 +85,14 @@ export default class SettingsStore {
 
   updateCaptureConditions = (projectId: number, data: CaptureConditions) => {
     this.loadingCaptureRate = true;
+    const duplicates = data.conditions.filter(
+      (c, index) => data.conditions.findIndex((c2) => c2.name === c.name) !== index
+    );
+    if (duplicates.length > 0) {
+      toast.error('Condition set names must be unique');
+      this.loadingCaptureRate = false;
+      return;
+    }
     return sessionService
       .saveCaptureConditions(projectId, data)
       .then((data) => data.json())
