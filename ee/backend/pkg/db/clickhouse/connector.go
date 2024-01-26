@@ -51,7 +51,7 @@ type task struct {
 }
 
 func NewTask() *task {
-	return &task{bulks: make([]Bulk, 0, 14)}
+	return &task{bulks: make([]Bulk, 0, 21)}
 }
 
 type connectorImpl struct {
@@ -95,7 +95,7 @@ func NewConnector(url string) Connector {
 
 	c := &connectorImpl{
 		conn:       conn,
-		batches:    make(map[string]Bulk, 13),
+		batches:    make(map[string]Bulk, 20),
 		workerTask: make(chan *task, 1),
 		done:       make(chan struct{}),
 		finished:   make(chan struct{}),
@@ -152,7 +152,7 @@ func (c *connectorImpl) Commit() error {
 	for _, b := range c.batches {
 		newTask.bulks = append(newTask.bulks, b)
 	}
-	c.batches = make(map[string]Bulk, 13)
+	c.batches = make(map[string]Bulk, 20)
 	if err := c.Prepare(); err != nil {
 		log.Printf("can't prepare new CH batch set: %s", err)
 	}
