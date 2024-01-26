@@ -20,6 +20,10 @@ function ConditionalRecordingSettings({
       new Conditions({ name: `Condition Set ${conditions.length + 1}` }, false),
     ]);
   };
+  const removeCondition = (index: number) => {
+    setChanged(true);
+    setConditions(conditions.filter((_, i) => i !== index))
+  }
 
   return (
     <div className={'relative py-1 px-5'}>
@@ -49,7 +53,7 @@ function ConditionalRecordingSettings({
               set={index + 1}
               index={index}
               conditions={condition}
-              removeCondition={() => setConditions(conditions.filter((_, i) => i !== index))}
+              removeCondition={() => removeCondition(index)}
               readonly={false}
               bottomLine1={'Capture'}
               bottomLine2={'of total session rate matching this condition.'}
