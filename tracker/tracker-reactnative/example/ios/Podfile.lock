@@ -1,7 +1,7 @@
 PODS:
   - BitByteData (2.0.3)
   - boost (1.76.0)
-  - DeviceKit (5.1.0)
+  - DeviceKit (5.2.1)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.72.4)
   - FBReactNativeSpec (0.72.4):
@@ -17,10 +17,10 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.4)
   - hermes-engine/Pre-built (0.72.4)
   - libevent (2.1.12)
-  - Openreplay (1.0.8):
+  - Openreplay (1.0.9):
     - DeviceKit
     - SWCompression
-  - openreplay-reactnative (0.1.2):
+  - openreplay-reactnative (0.2.0):
     - Openreplay
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -486,7 +486,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
-  - Openreplay (~> 1.0.8)
+  - Openreplay (~> 1.0.9)
   - openreplay-reactnative (from `../..`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
@@ -619,7 +619,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   BitByteData: 95b9b252c3b8d936df5e87750301f7a60542069d
   boost: 57d2868c099736d80fcd648bf211b4431e51a558
-  DeviceKit: bcce5c26d9502e77e3a9fa5d1282877db388d922
+  DeviceKit: db421de2378e21644799766b98dc3d2c96f5d3bf
   DoubleConversion: 5189b271737e1565bdce30deb4a08d647e3f5f54
   FBLazyVector: 5d4a3b7f411219a45a6d952f77d2c0a6c9989da5
   FBReactNativeSpec: 3fc2d478e1c4b08276f9dd9128f80ec6d5d85c1f
@@ -627,8 +627,8 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 81191603c4eaa01f5e4ae5737a9efcf64756c7b2
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  Openreplay: 61de0723de9fa3e1dfef9058b93680cdc479be99
-  openreplay-reactnative: 6d30623f1f38e711db1cf1bd783a56b80f8a444e
+  Openreplay: 2ed5af2b9f3fb228135523d1f2800830fee88b38
+  openreplay-reactnative: 7dfff6fc7903f1d2135770f5117f66171e5c0813
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: c0569ecc035894e4a68baecb30fe6a7ea6e399f9
   RCTTypeSafety: e90354072c21236e0bcf1699011e39acd25fea2f
@@ -665,6 +665,6 @@ SPEC CHECKSUMS:
   SWCompression: 15e38b06c37077399a1b60bfecc1c2cd71f0ee99
   Yoga: 3efc43e0d48686ce2e8c60f99d4e6bd349aff981
 
-PODFILE CHECKSUM: 71d4a7e6c76578117b61227a2f4ab0838c7711bc
+PODFILE CHECKSUM: 9ed302eb9a3842dc9e94c5cfa4b80fbd9653663c
 
 COCOAPODS: 1.12.1
