@@ -5,7 +5,7 @@ services:
     image: bitnami/postgresql:${POSTGRES_VERSION}
     container_name: postgres
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/bitnami/postgresql
     networks:
       - openreplay-net
     environment:
@@ -25,7 +25,7 @@ services:
     image: bitnami/minio:${MINIO_VERSION}
     container_name: minio
     volumes:
-      - miniodata:/bitnami/minio/data
+      - miniodata:/data
     networks:
       - openreplay-net
     ports:
