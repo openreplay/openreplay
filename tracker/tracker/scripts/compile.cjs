@@ -3,16 +3,10 @@ const replaceInFiles = require('replace-in-files')
 const packageConfig = require('../package.json')
 
 async function main() {
-  const webworker = await fs.readFile('build/webworker.js', 'utf8');
   await replaceInFiles({
     files: 'build/**/*',
     from: 'TRACKER_VERSION',
     to: packageConfig.version,
-  });
-  await replaceInFiles({
-    files: 'build/**/*',
-    from: 'WEBWORKER_BODY',
-    to: webworker.replace(/'/g, "\\'").replace(/\n/g, ""),
   });
   await fs.rename('build/main', 'lib');
   await fs.rename('build/common', 'lib/common');

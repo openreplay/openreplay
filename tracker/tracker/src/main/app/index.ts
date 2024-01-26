@@ -1,3 +1,4 @@
+import WorkerMock from './webworker2/wworker_mock.js'
 import ConditionsManager from '../modules/conditionsManager.js'
 import FeatureFlags from '../modules/featureFlags.js'
 import Message, { TagTrigger } from './messages.gen.js'
@@ -180,7 +181,7 @@ export default class App {
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
-  private tagWatcher: TagWatcher
+  private readonly tagWatcher: TagWatcher
 
   constructor(
     projectKey: string,
@@ -251,45 +252,17 @@ export default class App {
     }
 
     try {
-      this.worker = new Worker(
-        URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
-      )
-      this.worker.onerror = (e) => {
-        this._debug('webworker_error', e)
-      }
-      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
-        if (data === 'restart') {
-          this.stop(false)
-          void this.start({}, true)
-        } else if (data === 'not_init') {
-          this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
-        } else if (data.type === 'failure') {
-          this.stop(false)
-          this.debug.error('worker_failed', data.reason)
-          this._debug('worker_failed', data.reason)
-        } else if (data.type === 'compress') {
-          const batch = data.batch
-          const batchSize = batch.byteLength
-          if (batchSize > this.compressionThreshold) {
-            gzip(data.batch, { mtime: 0 }, (err, result) => {
-              if (err) {
-                this.debug.error('Openreplay compression error:', err)
-                this.stop(false)
-                if (this.restartAttempts < 3) {
-                  this.restartAttempts += 1
-                  void this.start({}, true)
-                }
-              } else {
-                this.worker?.postMessage({ type: 'compressed', batch: result })
-              }
-            })
-          } else {
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-          }
-        } else if (data.type === 'queue_empty') {
-          this.onSessionSent()
-        }
-      }
+      // this.worker = new Worker(
+      //   URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
+      // )
+      // @ts-ignore
+      this.worker = new WorkerMock(this)
+      // this.worker.onerror = (e) => {
+      //   this._debug('webworker_error', e)
+      // }
+      // this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
+      //   this.handleWorkerMsg(data)
+      // }
       const alertWorker = () => {
         if (this.worker) {
           this.worker.postMessage(null)
@@ -349,6 +322,40 @@ export default class App {
           }
         }
       }
+    }
+  }
+
+  handleWorkerMsg(data: FromWorkerData) {
+    if (data === 'restart') {
+      this.stop(false)
+      void this.start({}, true)
+    } else if (data === 'not_init') {
+      this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
+    } else if (data.type === 'failure') {
+      this.stop(false)
+      this.debug.error('worker_failed', data.reason)
+      this._debug('worker_failed', data.reason)
+    } else if (data.type === 'compress') {
+      const batch = data.batch
+      const batchSize = batch.byteLength
+      if (batchSize > this.compressionThreshold) {
+        gzip(data.batch, { mtime: 0 }, (err, result) => {
+          if (err) {
+            this.debug.error('Openreplay compression error:', err)
+            this.stop(false)
+            if (this.restartAttempts < 3) {
+              this.restartAttempts += 1
+              void this.start({}, true)
+            }
+          } else {
+            this.worker?.postMessage({ type: 'compressed', batch: result })
+          }
+        })
+      } else {
+        this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+      }
+    } else if (data.type === 'queue_empty') {
+      this.onSessionSent()
     }
   }
 
