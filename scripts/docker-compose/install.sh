@@ -55,11 +55,16 @@ info "Grabbing latest apt caches"
 sudo apt update
 
 # setup docker
-info "Setting up Docker"
-sudo apt install docker.io docker-compose -y
+# Check if Docker is already installed
+if ! command -v docker &> /dev/null; then
+	info "Setting up Docker"
+	sudo apt install docker.io docker-compose -y
 
-# enable docker without sudo
-sudo usermod -aG docker "${USER}" || true
+	# enable docker without sudo
+	sudo usermod -aG docker "${USER}" || true
+else
+    echo "Docker is already installed. Skipping installation."
+fi
 
 # Prompt for DOMAIN_NAME input
 echo -e "${GREEN}Please provide your domain name.${NC}"
@@ -115,8 +120,16 @@ case $yn in
 		exit 1;;
 esac
 
-sudo -E docker-compose --parallel 1 pull
-sudo -E docker-compose --profile migration up --force-recreate --build -d
+if command -v docker-compose >/dev/null 2>&1; then
+    # Docker Compose V1 is installed.
+    sudo -E docker-compose --parallel 1 pull
+	sudo -E docker-compose --profile migration up --force-recreate --build -d
+else
+    # Docker Compose V2 or higher is installed.
+    sudo -E docker compose --parallel 1 pull
+	sudo -E docker compose --profile migration up --force-recreate --build -d
+fi
+
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
 
