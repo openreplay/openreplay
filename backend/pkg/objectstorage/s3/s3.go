@@ -29,6 +29,7 @@ type storageImpl struct {
 	svc      *s3.S3
 	bucket   *string
 	fileTag  string
+	useTags  bool
 }
 
 func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
@@ -61,10 +62,14 @@ func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
 		svc:      s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
 		bucket:   &cfg.BucketName,
 		fileTag:  loadFileTag(),
+		useTags:  cfg.UseS3Tags,
 	}, nil
 }
 
 func (s *storageImpl) tagging() *string {
+	if !s.useTags {
+		return nil
+	}
 	return &s.fileTag
 }
 
