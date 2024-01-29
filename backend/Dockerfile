@@ -1,15 +1,8 @@
-# GSSAPI = true to enable Kerberos auth for Kafka and manually build librdkafka with GSSAPI support
-ARG GSSAPI=false
-
 #ARCH can be amd64 or arm64
 ARG ARCH=amd64
 
 FROM --platform=linux/$ARCH golang:1.21-alpine3.18 AS build
-RUN if [ "$GSSAPI" = "true" ]; then \
-      apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5; \
-    else \
-      apk add --no-cache gcc g++ make libc-dev; \
-    fi
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5;
 WORKDIR /root
 
 # Load code dependencies
@@ -24,11 +17,7 @@ COPY internal internal
 
 # Build service
 ARG SERVICE_NAME
-RUN if [ "$GSSAPI" = "true" ]; then \
-      CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME; \
-    else \
-      CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME; \
-    fi
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 FROM --platform=linux/$ARCH alpine AS entrypoint
 ARG GIT_SHA
@@ -36,11 +25,7 @@ ARG GSSAPI=false
 LABEL GIT_SHA=$GIT_SHA
 LABEL GSSAPI=$GSSAPI
 
-RUN if [ "$GSSAPI" = "true" ]; then \
-      apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5; \
-    else \
-      apk add --no-cache ca-certificates cyrus-sasl cyrus-sasl-gssapiv2 krb5; \
-    fi
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
 ARG SERVICE_NAME
