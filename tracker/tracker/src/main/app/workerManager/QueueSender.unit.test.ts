@@ -1,4 +1,4 @@
-import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
+import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import QueueSender from './QueueSender.js'
 
 global.fetch = () => Promise.resolve(new Response()) // jsdom does not have it
@@ -10,7 +10,7 @@ function mockFetch(status: number, headers?: Record<string, string>) {
     }),
   )
 }
-const baseURL = 'MYBASEURL'
+const baseURL = 'BASEURL'
 const sampleArray = new Uint8Array(1)
 const randomToken = 'abc'
 
