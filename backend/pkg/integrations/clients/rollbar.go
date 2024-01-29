@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -87,7 +86,7 @@ func (rb *rollbar) Request(c *client) error {
 	// status != 200 || 201
 	// status can be 403 then should report about wrong token
 	if resp.StatusCode >= 400 {
-		io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+		io.Copy(io.Discard, resp.Body) // Read the body to free socket
 		return fmt.Errorf("Rollbar: server respond with the code %v", resp.StatusCode)
 	}
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -586,7 +585,7 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 			}
 
 			// Read the file content
-			fileBytes, err := ioutil.ReadAll(file)
+			fileBytes, err := io.ReadAll(file)
 			if err != nil {
 				file.Close()
 				http.Error(w, err.Error(), http.StatusInternalServerError)

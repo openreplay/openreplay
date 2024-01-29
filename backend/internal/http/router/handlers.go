@@ -3,7 +3,6 @@ package router
 import (
 	gzip "github.com/klauspost/pgzip"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -32,7 +31,7 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 		reader = body
 	}
 	log.Println("Reader after switch:", reader)
-	buf, err := ioutil.ReadAll(reader)
+	buf, err := io.ReadAll(reader)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return

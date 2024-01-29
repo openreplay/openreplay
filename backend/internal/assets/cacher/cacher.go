@@ -5,10 +5,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -62,7 +62,7 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 			log.Fatalf("Error creating x509 keypair from the client cert file %s and client key file %s , Error: %s", err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
 		}
 
-		caCert, err := ioutil.ReadFile(cfg.CaCertFilePath)
+		caCert, err := os.ReadFile(cfg.CaCertFilePath)
 		if err != nil {
 			log.Fatalf("Error opening cert file %s, Error: %s", cfg.CaCertFilePath, err)
 		}
@@ -128,7 +128,7 @@ func (c *cacher) cacheURL(t *Task) {
 		}
 		return
 	}
-	data, err := ioutil.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
+	data, err := io.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
 		c.Errors <- errors.Wrap(err, t.urlContext)
 		return

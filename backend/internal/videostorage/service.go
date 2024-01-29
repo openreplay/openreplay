@@ -3,14 +3,15 @@ package videostorage
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
-	config "openreplay/backend/internal/config/videostorage"
-	"openreplay/backend/pkg/objectstorage"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
+
+	config "openreplay/backend/internal/config/videostorage"
+	"openreplay/backend/pkg/objectstorage"
 )
 
 type Task struct {
@@ -53,7 +54,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 }
 
 func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
-	files, err := ioutil.ReadDir(filesPath)
+	files, err := os.ReadDir(filesPath)
 	if err != nil || len(files) == 0 {
 		return err // nil error is there is no screenshots
 	}
@@ -85,7 +86,7 @@ func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix strin
 	name := strings.TrimSuffix(canvasMix, "-list")
 	mixList := fmt.Sprintf("%s%s", filesPath, canvasMix)
 	// check that mixList exists
-	if _, err := ioutil.ReadFile(mixList); err != nil {
+	if _, err := os.ReadFile(mixList); err != nil {
 		return err
 	}
 	videoPath := fmt.Sprintf("%s%s.mp4", filesPath, name)
@@ -114,7 +115,7 @@ func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix strin
 func (v *VideoStorage) sendToS3(task *Task) {
 	start := time.Now()
 	// Read video file from disk
-	video, err := ioutil.ReadFile(task.path)
+	video, err := os.ReadFile(task.path)
 	if err != nil {
 		log.Fatalf("Failed to read video file: %v", err)
 	}
