@@ -58,12 +58,20 @@ sudo apt update
 # Check if Docker is already installed
 if ! command -v docker &> /dev/null; then
 	info "Setting up Docker"
-	sudo apt install docker.io docker-compose -y
+	sudo apt install docker.io -y
 
 	# enable docker without sudo
 	sudo usermod -aG docker "${USER}" || true
 else
-    echo "Docker is already installed. Skipping installation."
+	echo "Docker is already installed. Skipping Docker installation."
+fi
+
+# Check if Docker Compose is already installed
+if ! command -v docker-compose &>/dev/null && ! command -v docker compose &>/dev/null; then
+	info "Setting up Docker Compose"
+	sudo apt install docker-compose -y
+else
+	echo "Docker Compose is already installed. Skipping Docker Compose installation."
 fi
 
 # Prompt for DOMAIN_NAME input
@@ -80,20 +88,20 @@ if [[ -z $DOMAIN_NAME ]]; then
 	fatal "DOMAIN_NAME variable is empty. Please provide a valid domain name to proceed."
 fi
 info "Using domain name: $DOMAIN_NAME 🌐"
-echo "CADDY_DOMAIN=\"$DOMAIN_NAME\"" >> common.env 
+echo "CADDY_DOMAIN=\"$DOMAIN_NAME\"" >> common.env
 
 read -p "Is the domain on a public DNS? (y/n) " yn
-case $yn in 
-	y ) echo "$DOMAIN_NAME is on a public DNS";
-        ;;
-	n ) echo "$DOMAIN_NAME is on a private DNS";
-		#add TLS internal to caddyfile
-		#In local network Caddy can't reach Let's Encrypt servers to get a certificate 
-		mv Caddyfile Caddyfile.public
-		mv Caddyfile.private Caddyfile
-		;;
-	* ) echo invalid response;
-		exit 1;;
+case $yn in
+y ) echo "$DOMAIN_NAME is on a public DNS";
+	;;
+n ) echo "$DOMAIN_NAME is on a private DNS";
+	#add TLS internal to caddyfile
+	#In local network Caddy can't reach Let's Encrypt servers to get a certificate
+	mv Caddyfile Caddyfile.public
+	mv Caddyfile.private Caddyfile
+	;;
+* ) echo invalid response;
+	exit 1;;
 esac
 
 # Create passwords if they don't exist
@@ -108,25 +116,25 @@ set +a
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
 find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 
-case $yn in 
-	y ) echo "$DOMAIN_NAME is on a public DNS";
-		##No changes needed
-        ;;
-	n ) echo "$DOMAIN_NAME is on a private DNS";
-		##Add a variable to chalice.env file
-		echo "SKIP_H_SSL=True" >> chalice.env
-		;;
-	* ) echo invalid response;
-		exit 1;;
+case $yn in
+y ) echo "$DOMAIN_NAME is on a public DNS";
+	##No changes needed
+	;;
+n ) echo "$DOMAIN_NAME is on a private DNS";
+	##Add a variable to chalice.env file
+	echo "SKIP_H_SSL=True" >> chalice.env
+	;;
+* ) echo invalid response;
+	exit 1;;
 esac
 
 if command -v docker-compose >/dev/null 2>&1; then
-    # Docker Compose V1 is installed.
-    sudo -E docker-compose --parallel 1 pull
+	# Docker Compose V1 is installed.
+	sudo -E docker-compose --parallel 1 pull
 	sudo -E docker-compose --profile migration up --force-recreate --build -d
 else
-    # Docker Compose V2 or higher is installed.
-    sudo -E docker compose --parallel 1 pull
+	# Docker Compose V2 or higher is installed.
+	sudo -E docker compose --parallel 1 pull
 	sudo -E docker compose --profile migration up --force-recreate --build -d
 fi
 
