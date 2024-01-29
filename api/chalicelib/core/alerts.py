@@ -13,21 +13,21 @@ from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get(id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get(id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     SELECT *
                     FROM public.alerts 
                     WHERE alert_id =%(id)s;""",
                         {"id": id})
         )
-        a = helper.dict_to_camel_case(cur.fetchone())
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return helper.custom_alert_to_front(__process_circular(a))
 
 
-def get_all(project_id):
-    with pg_client.PostgresClient() as cur:
+async def get_all(project_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""\
                     SELECT alerts.*,
                            COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
@@ -39,8 +39,8 @@ def get_all(project_id):
                         AND alerts.deleted_at ISNULL
                     ORDER BY alerts.created_at;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        all = helper.list_to_camel_case(cur.fetchall())
+        await cur.execute(query=query)
+        all = helper.list_to_camel_case(await cur.fetchall())
     for i in range(len(all)):
         all[i] = helper.custom_alert_to_front(__process_circular(all[i]))
     return all
@@ -54,29 +54,29 @@ def __process_circular(alert):
     return alert
 
 
-def create(project_id, data: schemas.AlertSchema):
+async def create(project_id, data: schemas.AlertSchema):
     data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id, change)
                     VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s, %(options)s::jsonb, %(series_id)s, %(change)s)
                     RETURNING *;""",
                         {"project_id": project_id, **data})
         )
-        a = helper.dict_to_camel_case(cur.fetchone())
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return {"data": helper.custom_alert_to_front(helper.dict_to_camel_case(__process_circular(a)))}
 
 
-def update(id, data: schemas.AlertSchema):
+async def update(id, data: schemas.AlertSchema):
     data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""\
                     UPDATE public.alerts
                     SET name = %(name)s,
@@ -90,8 +90,8 @@ def update(id, data: schemas.AlertSchema):
                     WHERE alert_id =%(id)s AND deleted_at ISNULL
                     RETURNING *;""",
                             {"id": id, **data})
-        cur.execute(query=query)
-        a = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return {"data": helper.custom_alert_to_front(__process_circular(a))}
 
 
@@ -211,9 +211,9 @@ def send_to_msteams_batch(notifications_list):
                            attachments=webhookId_map[batch]["batch"])
 
 
-def delete(project_id, alert_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def delete(project_id, alert_id):
+    with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(""" UPDATE public.alerts 
                             SET deleted_at = timezone('utc'::text, now()),
                                 active = FALSE

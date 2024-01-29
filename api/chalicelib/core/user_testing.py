@@ -3,9 +3,9 @@ from chalicelib.utils.storage import StorageClient
 from decouple import config
 
 
-def get_test_signals(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+async def get_test_signals(session_id, project_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify("""\
             SELECT *
             FROM public.ut_tests_signals
                      LEFT JOIN public.ut_tests_tasks USING (task_id)
@@ -13,22 +13,22 @@ def get_test_signals(session_id, project_id):
             ORDER BY timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
     return helper.dict_to_camel_case(rows)
 
 
-def has_test_signals(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+async def has_test_signals(session_id, project_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify("""\
             SELECT EXISTS(SELECT 1 FROM public.ut_tests_signals
                             WHERE session_id = %(session_id)s) AS has;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        row = cur.fetchone()
+        row = await cur.fetchone()
     return row.get("has")
 
 
-def get_ux_webcam_signed_url(session_id, project_id, check_existence: bool = True):
+async def get_ux_webcam_signed_url(session_id, project_id, check_existence: bool = True):
     results = []
     bucket_name = "uxtesting-records" # config("sessions_bucket")
     k = f'{session_id}/ux_webcam_record.webm'

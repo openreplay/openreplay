@@ -4,8 +4,8 @@ from decouple import config
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get_all(user_id):
-    with pg_client.PostgresClient() as cur:
+async def get_all(user_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""
         SELECT a.*, u.last >= (EXTRACT(EPOCH FROM a.created_at)*1000) AS viewed
         FROM public.announcements AS a,
@@ -15,10 +15,10 @@ def get_all(user_id):
               LIMIT 1) AS u(last)
         ORDER BY a.created_at DESC;""",
                             {"userId": user_id})
-        cur.execute(
+        await cur.execute(
             query
         )
-        announcements = helper.list_to_camel_case(cur.fetchall())
+        announcements = helper.list_to_camel_case(await cur.fetchall())
         for a in announcements:
             a["createdAt"] = TimeUTC.datetime_to_timestamp(a["createdAt"])
             if a["imageUrl"] is not None and len(a["imageUrl"]) > 0:
@@ -26,8 +26,8 @@ def get_all(user_id):
         return announcements
 
 
-def view(user_id):
-    with pg_client.PostgresClient() as cur:
+async def view(user_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""
         UPDATE public.users
         SET data=data ||
@@ -36,7 +36,7 @@ def view(user_id):
                   '}')::jsonb
         WHERE user_id = %(userId)s;""",
                             {"userId": user_id})
-        cur.execute(
+        await cur.execute(
             query
         )
     return True

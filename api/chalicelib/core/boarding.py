@@ -4,23 +4,23 @@ from chalicelib.core import projects, log_tool_datadog, log_tool_stackdriver, lo
 from chalicelib.core import users
 
 
-def get_state(tenant_id):
+async def get_state(tenant_id):
     pids = projects.get_projects_ids(tenant_id=tenant_id)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         recorded = False
         meta = False
 
         if len(pids) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify("""SELECT EXISTS((  SELECT 1
                                                 FROM public.sessions AS s
                                                 WHERE s.project_id IN %(ids)s)) AS exists;""",
                             {"ids": tuple(pids)})
             )
-            recorded = cur.fetchone()["exists"]
+            recorded = await cur.fetchone()["exists"]
             meta = False
             if recorded:
-                cur.execute("""SELECT EXISTS((SELECT 1
+                await cur.execute("""SELECT EXISTS((SELECT 1
                                FROM public.projects AS p
                                         LEFT JOIN LATERAL ( SELECT 1
                                                             FROM public.sessions
@@ -36,7 +36,7 @@ def get_state(tenant_id):
                                        OR p.metadata_10 IS NOT NULL )
                                    )) AS exists;""")
 
-                meta = cur.fetchone()["exists"]
+                meta = await cur.fetchone()["exists"]
 
     return [
         {"task": "Install OpenReplay",
@@ -46,7 +46,7 @@ def get_state(tenant_id):
          "done": meta,
          "URL": "https://docs.openreplay.com/data-privacy-security/metadata"},
         {"task": "Invite Team Members",
-         "done": len(users.get_members(tenant_id=tenant_id)) > 1,
+         "done": len(await users.get_members(tenant_id=tenant_id)) > 1,
          "URL": "https://app.openreplay.com/client/manage-users"},
         {"task": "Integrations",
          "done": len(log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
@@ -58,7 +58,7 @@ def get_state(tenant_id):
 
 def get_state_installing(tenant_id):
     pids = projects.get_projects_ids(tenant_id=tenant_id)
-    with pg_client.PostgresClient() as cur:
+    with pg_client.cursor() as cur:
         recorded = False
 
         if len(pids) > 0:
@@ -76,7 +76,7 @@ def get_state_installing(tenant_id):
 
 
 def get_state_identify_users(tenant_id):
-    with pg_client.PostgresClient() as cur:
+    with pg_client.cursor() as cur:
         cur.execute("""SELECT EXISTS((SELECT 1
                                        FROM public.projects AS p
                                                 LEFT JOIN LATERAL ( SELECT 1

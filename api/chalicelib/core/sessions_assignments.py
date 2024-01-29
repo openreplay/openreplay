@@ -6,8 +6,8 @@ from chalicelib.core import integrations_manager, integration_base_issue
 import json
 
 
-def __get_saved_data(project_id, session_id, issue_id, tool):
-    with pg_client.PostgresClient() as cur:
+async def __get_saved_data(project_id, session_id, issue_id, tool):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""\
                     SELECT *
                     FROM public.assigned_sessions
@@ -17,13 +17,13 @@ def __get_saved_data(project_id, session_id, issue_id, tool):
                         AND provider = %(provider)s;\
     """,
                             {"session_id": session_id, "issue_id": issue_id, "provider": tool.lower()})
-        cur.execute(
+        await cur.execute(
             query
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        return helper.dict_to_camel_case(await cur.fetchone())
 
 
-def create_new_assignment(tenant_id, project_id, session_id, creator_id, assignee, description, title, issue_type,
+async def create_new_assignment(tenant_id, project_id, session_id, creator_id, assignee, description, title, issue_type,
                           integration_project_id):
     error, integration = integrations_manager.get_integration(tenant_id=tenant_id, user_id=creator_id)
     if error is not None:
@@ -43,7 +43,7 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
         return integration_base_issue.proxy_issues_handler(e)
     if issue is None or "id" not in issue:
         return {"errors": ["something went wrong while creating the issue"]}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""\
                 INSERT INTO public.assigned_sessions(session_id, issue_id, created_by, provider,provider_data) 
                 VALUES (%(session_id)s, %(issue_id)s, %(creator_id)s, %(provider)s,%(provider_data)s);\
@@ -51,14 +51,14 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
                             {"session_id": session_id, "creator_id": creator_id,
                              "issue_id": issue["id"], "provider": integration.provider.lower(),
                              "provider_data": json.dumps({"integrationProjectId": integration_project_id})})
-        cur.execute(
+        await cur.execute(
             query
         )
     issue["provider"] = integration.provider.lower()
     return issue
 
 
-def get_all(project_id, user_id):
+async def get_all(project_id, user_id):
     available_integrations = integrations_manager.get_available_integrations(user_id=user_id)
     no_integration = not any(available_integrations.values())
     if no_integration:
@@ -67,7 +67,7 @@ def get_all(project_id, user_id):
     extra_query = ["sessions.project_id = %(project_id)s"]
     if not all_integrations:
         extra_query.append("provider IN %(providers)s")
-    with pg_client.PostgresClient() as cur:
+    with pg_client.cursor() as cur:
         query = cur.mogrify(f"""\
                 SELECT assigned_sessions.*
                 FROM public.assigned_sessions
@@ -85,12 +85,12 @@ def get_all(project_id, user_id):
         return assignments
 
 
-def get_by_session(tenant_id, user_id, project_id, session_id):
+async def get_by_session(tenant_id, user_id, project_id, session_id):
     available_integrations = integrations_manager.get_available_integrations(user_id=user_id)
     if not any(available_integrations.values()):
         return []
     extra_query = ["session_id = %(session_id)s", "provider IN %(providers)s"]
-    with pg_client.PostgresClient() as cur:
+    with pg_client.cursor() as cur:
         query = cur.mogrify(f"""\
                 SELECT *
                 FROM public.assigned_sessions

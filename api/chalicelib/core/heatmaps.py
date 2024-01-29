@@ -3,7 +3,7 @@ import schemas
 from chalicelib.utils import helper, pg_client
 
 
-def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
+async def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["sessions.project_id = %(project_id)s",
@@ -52,7 +52,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         q_count += ",COALESCE(bool_or(mis.type = 'click_rage'), FALSE) AS click_rage"
         query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
                        LEFT JOIN issues AS mis USING (issue_id)"""
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""SELECT selector, {q_count}
                                 FROM {query_from}
                                 WHERE {" AND ".join(constraints)}
@@ -62,7 +62,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         # print(query.decode('UTF-8'))
         # print("---------")
         try:
-            cur.execute(query)
+            await cur.execute(query)
         except Exception as err:
             print("--------- HEATMAP SEARCH QUERY EXCEPTION -----------")
             print(query.decode('UTF-8'))
@@ -70,5 +70,5 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
             print(data)
             print("--------------------")
             raise err
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
     return helper.list_to_camel_case(rows)

@@ -10,8 +10,8 @@ from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get_note(tenant_id, project_id, user_id, note_id, share=None):
-    with pg_client.PostgresClient() as cur:
+async def get_note(tenant_id, project_id, user_id, note_id, share=None):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
                                 {",(SELECT name FROM users WHERE user_id=%(share)s AND deleted_at ISNULL) AS share_name" if share else ""}
                                 FROM sessions_notes INNER JOIN users USING (user_id)
@@ -22,16 +22,16 @@ def get_note(tenant_id, project_id, user_id, note_id, share=None):
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id,
                              "note_id": note_id, "share": share})
 
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         row = helper.dict_to_camel_case(row)
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
     return row
 
 
-def get_session_notes(tenant_id, project_id, session_id, user_id):
-    with pg_client.PostgresClient() as cur:
+async def get_session_notes(tenant_id, project_id, session_id, user_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE sessions_notes.project_id = %(project_id)s
@@ -43,16 +43,16 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
                             {"project_id": project_id, "user_id": user_id,
                              "tenant_id": tenant_id, "session_id": session_id})
 
-        cur.execute(query=query)
-        rows = cur.fetchall()
+        await cur.execute(query=query)
+        rows = await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
     return rows
 
 
-def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
-    with pg_client.PostgresClient() as cur:
+async def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
+    async with pg_client.cursor() as cur:
         conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL"]
         extra_params = {}
         if data.tags and len(data.tags) > 0:
@@ -73,29 +73,29 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
                                 LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id, **extra_params})
 
-        cur.execute(query=query)
-        rows = cur.fetchall()
+        await cur.execute(query=query)
+        rows = await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
     return rows
 
 
-def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
-    with pg_client.PostgresClient() as cur:
+async def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
                             VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
                             RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
                             {"user_id": user_id, "project_id": project_id, "session_id": session_id,
                              **data.model_dump()})
-        cur.execute(query)
-        result = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query)
+        result = helper.dict_to_camel_case(await cur.fetchone())
         if result:
             result["createdAt"] = TimeUTC.datetime_to_timestamp(result["createdAt"])
     return result
 
 
-def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNoteSchema):
+async def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNoteSchema):
     sub_query = []
     if data.message is not None:
         sub_query.append("message = %(message)s")
@@ -105,8 +105,8 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         sub_query.append("is_public = %(is_public)s")
     if data.timestamp is not None:
         sub_query.append("timestamp = %(timestamp)s")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(f"""UPDATE public.sessions_notes
                             SET 
                               {" ,".join(sub_query)} 
@@ -118,16 +118,16 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
                             RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s) AS user_name;""",
                         {"project_id": project_id, "user_id": user_id, "note_id": note_id, **data.model_dump()})
         )
-        row = helper.dict_to_camel_case(cur.fetchone())
+        row = helper.dict_to_camel_case(await cur.fetchone())
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             return row
         return {"errors": ["Note not found"]}
 
 
-def delete(tenant_id, user_id, project_id, note_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def delete(tenant_id, user_id, project_id, note_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(""" UPDATE public.sessions_notes 
                             SET deleted_at = timezone('utc'::text, now())
                             WHERE note_id = %(note_id)s
@@ -139,7 +139,7 @@ def delete(tenant_id, user_id, project_id, note_id):
         return {"data": {"state": "success"}}
 
 
-def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
+async def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
     note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
     if note is None:
         return {"errors": ["Note not found"]}
@@ -171,7 +171,7 @@ def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
     )
 
 
-def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
+async def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
     note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
     if note is None:
         return {"errors": ["Note not found"]}

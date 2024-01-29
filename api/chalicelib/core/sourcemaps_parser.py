@@ -1,5 +1,4 @@
-import requests
-
+import httpx
 from decouple import config
 
 SMR_URL = config("sourcemaps_reader")
@@ -20,14 +19,12 @@ def get_original_trace(key, positions, is_url=False):
         "isURL": is_url
     }
     try:
-        r = requests.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
+        async with httpx.AsyncClient() as client:
+            r = await client.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:
             print(f"Issue getting sourcemap status_code:{r.status_code}")
             return None
         return r.json()
-    except requests.exceptions.Timeout:
-        print("Timeout getting sourcemap")
-        return None
     except Exception as e:
         print("Issue getting sourcemap")
         print(e)

@@ -2,11 +2,9 @@ import logging
 import time
 from datetime import datetime
 
-import requests
 from fastapi import HTTPException, status
 from jira import JIRA
 from jira.exceptions import JIRAError
-from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
 fields = "id, summary, description, creator, reporter, created, assignee, status, updated, comment, issuetype, labels"
@@ -91,11 +89,12 @@ class JiraManager:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         return self.__parser_issue_info(issue)
 
-    def get_issue_v3(self, issue_id: str):
+    async def get_issue_v3(self, issue_id: str):
         try:
             url = f"{self._config['JIRA_URL']}/rest/api/3/issue/{issue_id}?fields={fields}"
-            auth = HTTPBasicAuth(self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
-            issue = requests.get(
+            auth = (self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
+            async with httpx.AsyncClient() as client:
+                issue = await client.get(
                 url,
                 headers={
                     "Accept": "application/json"
@@ -159,11 +158,12 @@ class JiraManager:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         return self.__parser_comment_info(comment)
 
-    def add_comment_v3(self, issue_id: str, comment: str):
+    async def add_comment_v3(self, issue_id: str, comment: str):
         try:
             url = f"{self._config['JIRA_URL']}/rest/api/3/issue/{issue_id}/comment"
-            auth = HTTPBasicAuth(self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
-            comment_response = requests.post(
+            auth = (self._config['JIRA_USERNAME'], self._config['JIRA_PASSWORD'])
+            async with httpx.AsyncClient() as client:
+                comment_response = await client.post(
                 url,
                 headers={
                     "Accept": "application/json"

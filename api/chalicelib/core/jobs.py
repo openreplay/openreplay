@@ -14,8 +14,8 @@ class JobStatus:
     CANCELLED = "cancelled"
 
 
-def get(job_id, project_id):
-    with pg_client.PostgresClient() as cur:
+async def get(job_id, project_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             """SELECT *
                FROM public.jobs
@@ -23,8 +23,8 @@ def get(job_id, project_id):
                     AND project_id= %(project_id)s;""",
             {"job_id": job_id, "project_id": project_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchone()
+        await cur.execute(query=query)
+        data = await cur.fetchone()
         if data is None:
             return {}
 
@@ -33,23 +33,23 @@ def get(job_id, project_id):
     return helper.dict_to_camel_case(data)
 
 
-def get_all(project_id):
-    with pg_client.PostgresClient() as cur:
+async def get_all(project_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             """SELECT *
                FROM public.jobs
                WHERE project_id = %(project_id)s;""",
             {"project_id": project_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchall()
+        await cur.execute(query=query)
+        data = await cur.fetchall()
         for record in data:
             format_datetime(record)
     return helper.list_to_camel_case(data)
 
 
-def create(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+async def create(project_id, user_id):
+    async with pg_client.cursor() as cur:
         job = {"status": "scheduled",
                "project_id": project_id,
                "action": Actions.DELETE_USER_DATA,
@@ -62,21 +62,21 @@ def create(project_id, user_id):
                VALUES (%(project_id)s, %(description)s, %(status)s, %(action)s,%(reference_id)s, %(start_at)s)
                RETURNING *;""", job)
 
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        r = cur.fetchone()
+        r = await cur.fetchone()
         format_datetime(r)
         record = helper.dict_to_camel_case(r)
     return record
 
 
-def cancel_job(job_id, job):
+async def cancel_job(job_id, job):
     job["status"] = JobStatus.CANCELLED
-    update(job_id=job_id, job=job)
+    await update(job_id=job_id, job=job)
 
 
-def update(job_id, job):
-    with pg_client.PostgresClient() as cur:
+async def update(job_id, job):
+    async with pg_client.cursor() as cur:
         job_data = {
             "job_id": job_id,
             "errors": job.get("errors"),
@@ -91,9 +91,9 @@ def update(job_id, job):
                WHERE job_id = %(job_id)s
                RETURNING *;""", job_data)
 
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        r = cur.fetchone()
+        r = await cur.fetchone()
         format_datetime(r)
         record = helper.dict_to_camel_case(r)
     return record
@@ -105,8 +105,8 @@ def format_datetime(r):
     r["start_at"] = TimeUTC.datetime_to_timestamp(r["start_at"])
 
 
-def __get_session_ids_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient() as cur:
+async def __get_session_ids_by_user_ids(project_id, user_ids):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             """SELECT session_id 
                FROM public.sessions
@@ -114,19 +114,19 @@ def __get_session_ids_by_user_ids(project_id, user_ids):
                     AND user_id IN %(userId)s
                LIMIT 1000;""",
             {"project_id": project_id, "userId": tuple(user_ids)})
-        cur.execute(query=query)
-        ids = cur.fetchall()
+        await cur.execute(query=query)
+        ids = await cur.fetchall()
     return [s["session_id"] for s in ids]
 
 
-def __delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
+async def __delete_sessions_by_session_ids(session_ids):
+    async with pg_client.cursor(unlimited_query=True) as cur:
         query = cur.mogrify(
             """DELETE FROM public.sessions
                WHERE session_id IN %(session_ids)s""",
             {"session_ids": tuple(session_ids)}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
 
 def __delete_session_mobs_by_session_ids(session_ids, project_id):
@@ -134,31 +134,31 @@ def __delete_session_mobs_by_session_ids(session_ids, project_id):
     sessions_devtool.delete_mobs(session_ids=session_ids, project_id=project_id)
 
 
-def get_scheduled_jobs():
-    with pg_client.PostgresClient() as cur:
+async def get_scheduled_jobs():
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             """SELECT * 
                FROM public.jobs
                WHERE status = %(status)s 
                     AND start_at <= (now() at time zone 'utc');""",
             {"status": JobStatus.SCHEDULED})
-        cur.execute(query=query)
-        data = cur.fetchall()
+        await cur.execute(query=query)
+        data = await cur.fetchall()
     return helper.list_to_camel_case(data)
 
 
-def execute_jobs():
-    jobs = get_scheduled_jobs()
+async def execute_jobs():
+    jobs = await get_scheduled_jobs()
     for job in jobs:
         print(f"Executing jobId:{job['jobId']}")
         try:
             if job["action"] == Actions.DELETE_USER_DATA:
-                session_ids = __get_session_ids_by_user_ids(project_id=job["projectId"],
+                session_ids = await __get_session_ids_by_user_ids(project_id=job["projectId"],
                                                             user_ids=[job["referenceId"]])
                 if len(session_ids) > 0:
                     print(f"Deleting {len(session_ids)} sessions")
-                    __delete_sessions_by_session_ids(session_ids=session_ids)
-                    __delete_session_mobs_by_session_ids(session_ids=session_ids, project_id=job["projectId"])
+                    await __delete_sessions_by_session_ids(session_ids=session_ids)
+                    await __delete_session_mobs_by_session_ids(session_ids=session_ids, project_id=job["projectId"])
             else:
                 raise Exception(f"The action '{job['action']}' not supported.")
 
@@ -169,4 +169,4 @@ def execute_jobs():
             job["errors"] = str(e)
             print(f"Job failed {job['jobId']}")
 
-        update(job["jobId"], job)
+        await update(job["jobId"], job)

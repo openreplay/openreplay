@@ -20,7 +20,7 @@ public_app, app, app_apikey = get_routers()
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str,
+async def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
                   schemas.PerformanceEventType, schemas.FetchFilterType,
                   schemas.GraphqlFilterType, str] = None,
@@ -29,7 +29,7 @@ def events_search(projectId: int, q: str,
     if len(q) == 0:
         return {"data": []}
     if live:
-        return assist.autocomplete(project_id=projectId, q=q,
+        return await assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request

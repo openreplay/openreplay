@@ -1,8 +1,7 @@
 import logging
 
-import requests
+import httpx
 from decouple import config
-
 from chalicelib.utils import helper
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,8 @@ def is_valid(response):
         logger.info("!! Captcha is disabled")
         return True
     url, secret = __get_captcha_config()
-    r = requests.post(url=url, data={"secret": secret, "response": response})
+    async with httpx.AsyncClient() as client:
+        r = await client.post(url=url, data={"secret": secret, "response": response})
     if r.status_code != 200:
         logger.warning("something went wrong")
         logger.error(r)

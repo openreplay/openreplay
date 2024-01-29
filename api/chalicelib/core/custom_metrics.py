@@ -311,8 +311,8 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     return r
 
 
-def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
-    with pg_client.PostgresClient() as cur:
+async def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
+    async with pg_client.cursor() as cur:
         session_data = None
         if data.metric_type == schemas.MetricType.click_map:
             session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
@@ -349,14 +349,14 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
                         RETURNING metric_id;"""
 
         query = cur.mogrify(query, params)
-        cur.execute(query)
-        r = cur.fetchone()
+        await cur.execute(query)
+        r = await cur.fetchone()
         if dashboard:
             return r["metric_id"]
     return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
+async def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -393,7 +393,7 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     if data.metric_type == schemas.MetricType.pathAnalysis:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         sub_queries = []
         if len(n_series) > 0:
             sub_queries.append(f"""\
@@ -430,11 +430,11 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
-        cur.execute(query)
+        await cur.execute(query)
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
+async def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
     params = {"project_id": project_id, "user_id": user_id,
@@ -451,7 +451,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         constraints.append("(name ILIKE %(query)s OR owner.owner_email ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator._contains)
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         sub_join = ""
         if include_series:
             sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
@@ -481,8 +481,8 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                 WHERE {" AND ".join(constraints)}
                 ORDER BY created_at {data.order.value}
                 LIMIT %(limit)s OFFSET %(offset)s;""", params)
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
         if include_series:
             for r in rows:
                 for s in r["series"]:
@@ -506,9 +506,9 @@ def get_all(project_id, user_id):
     return result
 
 
-def delete_card(project_id, metric_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def delete_card(project_id, metric_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
@@ -530,8 +530,8 @@ def __get_path_analysis_attributes(row):
     return row
 
 
-def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
-    with pg_client.PostgresClient() as cur:
+async def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
@@ -563,8 +563,8 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
                 ORDER BY created_at;""",
             {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
         if row is None:
             return None
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
@@ -578,9 +578,9 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
     return row
 
 
-def get_series_for_alert(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_series_for_alert(project_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(
                 """SELECT series_id AS value,
                        metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
@@ -598,13 +598,13 @@ def get_series_for_alert(project_id, user_id):
                 {"project_id": project_id, "user_id": user_id}
             )
         )
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
     return helper.list_to_camel_case(rows)
 
 
-def change_state(project_id, metric_id, user_id, status):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def change_state(project_id, metric_id, user_id, status):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 
             SET active = %(status)s 
@@ -612,14 +612,14 @@ def change_state(project_id, metric_id, user_id, status):
               AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
         )
-    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
+async def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    card: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if card is None:
         return None
     metric: schemas.CardSchema = schemas.CardSchema(**card)
@@ -654,8 +654,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
+async def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
+    raw_metric: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
 
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")

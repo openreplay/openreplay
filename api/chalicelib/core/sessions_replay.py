@@ -15,9 +15,9 @@ def __group_metadata(session, project_metadata):
 
 
 # for backward compatibility
-def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
+async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                   group_metadata=False, live=True):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         extra_query = []
         if include_fav_viewed:
             extra_query.append("""COALESCE((SELECT TRUE
@@ -41,9 +41,9 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        data = cur.fetchone()
+        data = await cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
@@ -89,9 +89,9 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             return None
 
 
-def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
+async def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                group_metadata=False, live=True):
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         extra_query = []
         if include_fav_viewed:
             extra_query.append("""COALESCE((SELECT TRUE
@@ -115,9 +115,9 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        data = cur.fetchone()
+        data = await cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
@@ -150,8 +150,8 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             return None
 
 
-def get_events(project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+async def get_events(project_id, session_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             f"""SELECT session_id, platform, start_ts, duration
                 FROM public.sessions AS s
@@ -159,9 +159,9 @@ def get_events(project_id, session_id):
                     AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id}
         )
-        cur.execute(query=query)
+        await cur.execute(query=query)
 
-        s_data = cur.fetchone()
+        s_data = await cur.fetchone()
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
             data = {}

@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 import redis
-import requests
+import httpx
 from decouple import config
 
 from chalicelib.utils import pg_client
@@ -34,24 +34,24 @@ HEALTH_ENDPOINTS = {
 }
 
 
-def __check_database_pg(*_):
+async def __check_database_pg(*_):
     fail_response = {
         "health": False,
         "details": {
             "errors": ["Postgres health-check failed"]
         }
     }
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         try:
-            cur.execute("SHOW server_version;")
-            server_version = cur.fetchone()
+            await cur.execute("SHOW server_version;")
+            server_version = await cur.fetchone()
         except Exception as e:
             print("!! health failed: postgres not responding")
             print(str(e))
             return fail_response
         try:
-            cur.execute("SELECT openreplay_version() AS version;")
-            schema_version = cur.fetchone()
+            await cur.execute("SELECT openreplay_version() AS version;")
+            schema_version = await cur.fetchone()
         except Exception as e:
             print("!! health failed: openreplay_version not defined")
             print(str(e))
@@ -76,7 +76,7 @@ def __always_healthy(*_):
     }
 
 
-def __check_be_service(service_name):
+async def __check_be_service(service_name):
     def fn(*_):
         fail_response = {
             "health": False,
@@ -85,16 +85,13 @@ def __check_be_service(service_name):
             }
         }
         try:
-            results = requests.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
+            async with httpx.AsyncClient() as client:
+                results = await client.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
             if results.status_code != 200:
                 print(f"!! issue with the {service_name}-health code:{results.status_code}")
                 print(results.text)
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
-        except requests.exceptions.Timeout:
-            print(f"!! Timeout getting {service_name}-health")
-            # fail_response["details"]["errors"].append("timeout")
-            return fail_response
         except Exception as e:
             print(f"!! Issue getting {service_name}-health response")
             print(str(e))
@@ -139,7 +136,7 @@ def __check_redis(*_):
     }
 
 
-def __check_SSL(*_):
+async def __check_SSL(*_):
     fail_response = {
         "health": False,
         "details": {
@@ -147,7 +144,8 @@ def __check_SSL(*_):
         }
     }
     try:
-        requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
+        async with httpx.AsyncClient() as client:
+            await client.get(config("SITE_URL"), follow_redirects=True)
     except Exception as e:
         print("!! health failed: SSL Certificate")
         print(str(e))
@@ -158,23 +156,23 @@ def __check_SSL(*_):
     }
 
 
-def __get_sessions_stats(*_):
-    with pg_client.PostgresClient() as cur:
+async def __get_sessions_stats(*_):
+    await with pg_client.cursor() as cur:
         constraints = ["projects.deleted_at IS NULL"]
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
                                        COALESCE(SUM(events_count),0) AS e_c
                                 FROM public.projects_stats
                                      INNER JOIN public.projects USING(project_id)
                                 WHERE {" AND ".join(constraints)};""")
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
     return {
         "numberOfSessionsCaptured": row["s_c"],
         "numberOfEventCaptured": row["e_c"]
     }
 
 
-def get_health():
+async def get_health():
     health_map = {
         "databases": {
             "postgres": __check_database_pg
@@ -205,7 +203,7 @@ def get_health():
     return __process_health(health_map=health_map)
 
 
-def __process_health(health_map):
+async def __process_health(health_map):
     response = dict(health_map)
     for parent_key in health_map.keys():
         if config(f"SKIP_H_{parent_key.upper()}", cast=bool, default=False):
@@ -215,14 +213,14 @@ def __process_health(health_map):
                 if config(f"SKIP_H_{parent_key.upper()}_{element_key.upper()}", cast=bool, default=False):
                     response[parent_key].pop(element_key)
                 else:
-                    response[parent_key][element_key] = health_map[parent_key][element_key]()
+                    await response[parent_key][element_key] = health_map[parent_key][element_key]()
         else:
-            response[parent_key] = health_map[parent_key]()
+            response[parent_key] = await health_map[parent_key]()
     return response
 
 
-def cron():
-    with pg_client.PostgresClient() as cur:
+async def cron():
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""SELECT projects.project_id,
                                       projects.created_at,
                                       projects.sessions_last_check_at,
@@ -232,8 +230,8 @@ def cron():
                                      LEFT JOIN public.projects_stats USING (project_id)
                                 WHERE projects.deleted_at IS NULL
                                 ORDER BY project_id;""")
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
         for r in rows:
             insert = False
             if r["last_update_at"] is None:
@@ -266,8 +264,8 @@ def cron():
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
                                 params)
-            cur.execute(query)
-            row = cur.fetchone()
+            await cur.execute(query)
+            row = await cur.fetchone()
             if row is not None:
                 params["sessions_count"] = row["sessions_count"]
                 params["events_count"] = row["events_count"]
@@ -283,20 +281,20 @@ def cron():
                                            last_update_at=(now() AT TIME ZONE 'utc'::text)
                                        WHERE project_id=%(project_id)s;""",
                                     params)
-            cur.execute(query)
+            await cur.execute(query)
 
 
 # this cron is used to correct the sessions&events count every week
-def weekly_cron():
-    with pg_client.PostgresClient(long_query=True) as cur:
+async def weekly_cron():
+    async with pg_client.cursor(long_query=True) as cur:
         query = cur.mogrify("""SELECT project_id,
                                       projects_stats.last_update_at
                                FROM public.projects
                                     LEFT JOIN public.projects_stats USING (project_id)
                                WHERE projects.deleted_at IS NULL
                                ORDER BY project_id;""")
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
         for r in rows:
             if r["last_update_at"] is None:
                 continue
@@ -313,16 +311,16 @@ def weekly_cron():
                                       AND start_ts<=%(end_ts)s
                                       AND duration IS NOT NULL;""",
                                 params)
-            cur.execute(query)
-            row = cur.fetchone()
+            await cur.execute(query)
+            row = await cur.fetchone()
             if row is not None:
                 params["sessions_count"] = row["sessions_count"]
                 params["events_count"] = row["events_count"]
 
-            query = cur.mogrify("""UPDATE public.projects_stats
+            query = await cur.mogrify("""UPDATE public.projects_stats
                                    SET sessions_count=%(sessions_count)s,
                                        events_count=%(events_count)s,
                                        last_update_at=(now() AT TIME ZONE 'utc'::text)
                                    WHERE project_id=%(project_id)s;""",
                                 params)
-            cur.execute(query)
+            await cur.execute(query)

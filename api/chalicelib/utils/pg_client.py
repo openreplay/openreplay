@@ -6,6 +6,8 @@ import psycopg2
 import psycopg2.extras
 from decouple import config
 from psycopg2 import pool
+import contextlib
+
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +181,11 @@ async def terminate():
             logging.info("Closed all connexions to PostgreSQL")
         except (Exception, psycopg2.DatabaseError) as error:
             logging.error("Error while closing all connexions to PostgreSQL", error)
+
+
+@contextlib.asynccontextmanager
+async def cursor():
+    from app import app
+    async with app.state.postgresql.connection() as cnx:
+        with cnx.cursor() as cur:
+            yield cur

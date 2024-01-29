@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-import requests
+import httpx
 from decouple import config
 
 from chalicelib.core import sourcemaps_parser
@@ -67,9 +67,10 @@ def format_payload(p, truncate_to_first=False):
     return []
 
 
-def url_exists(url):
+async def url_exists(url):
     try:
-        r = requests.head(url, allow_redirects=False)
+        async with httpx.AsyncClient() as client:
+            r = await client.head(url, follow_redirects=False)
         return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
         print(f"!! Issue checking if URL exists: {url}")

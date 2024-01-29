@@ -1,6 +1,6 @@
 import logging
 
-import requests
+import httpx
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -26,7 +26,8 @@ class MSTeams(BaseCollaboration):
 
     @classmethod
     def say_hello(cls, url):
-        r = requests.post(
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
             url=url,
             json={
                 "@type": "MessageCard",
@@ -46,7 +47,8 @@ class MSTeams(BaseCollaboration):
         if integration is None:
             return {"errors": ["msteams integration not found"]}
         try:
-            r = requests.post(
+            async with httpx.AsyncClient() as client:
+                r = await client.post(
                 url=integration["endpoint"],
                 json=body,
                 timeout=5)
@@ -54,9 +56,6 @@ class MSTeams(BaseCollaboration):
                 logging.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
                 logging.warning(r.text)
                 return None
-        except requests.exceptions.Timeout:
-            logging.warning(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
-            return None
         except Exception as e:
             logging.warning(f"!! Issue sending msteams raw webhookId:{webhook_id}")
             logging.warning(e)
@@ -74,7 +73,8 @@ class MSTeams(BaseCollaboration):
             for j in range(1, len(part), 2):
                 part.insert(j, {"text": "***"})
 
-            r = requests.post(url=integration["endpoint"],
+            async with httpx.AsyncClient() as client:
+                r = await client.post(url=integration["endpoint"],
                               json={
                                   "@type": "MessageCard",
                                   "@context": "http://schema.org/extensions",
@@ -86,13 +86,14 @@ class MSTeams(BaseCollaboration):
                 logging.warning(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, attachement, extra=None):
+    async def __share(cls, tenant_id, integration_id, attachement, extra=None):
         if extra is None:
             extra = {}
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["Microsoft Teams integration not found"]}
-        r = requests.post(
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
             url=integration["endpoint"],
             json={
                 "@type": "MessageCard",

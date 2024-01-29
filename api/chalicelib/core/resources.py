@@ -2,8 +2,8 @@ from chalicelib.utils import helper, pg_client
 from decouple import config
 
 
-def get_by_session_id(session_id, project_id, start_ts, duration):
-    with pg_client.PostgresClient() as cur:
+async def get_by_session_id(session_id, project_id, start_ts, duration):
+    async with pg_client.cursor() as cur:
         if duration is None or (type(duration) != 'int' and type(duration) != 'float') or duration < 0:
             duration = 0
         delta = config("events_ts_delta", cast=int, default=60 * 60) * 1000
@@ -27,6 +27,6 @@ def get_by_session_id(session_id, project_id, start_ts, duration):
                     AND resources.timestamp<=%(res_end_ts)s;"""
         params = {"session_id": session_id, "project_id": project_id, "start_ts": start_ts, "duration": duration,
                   "res_start_ts": start_ts - delta, "res_end_ts": start_ts + duration + delta, }
-        cur.execute(cur.mogrify(ch_query, params))
-        rows = cur.fetchall()
+        await cur.execute(cur.mogrify(ch_query, params))
+        rows = await cur.fetchall()
         return helper.list_to_camel_case(rows)

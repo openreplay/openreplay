@@ -2,13 +2,13 @@ from chalicelib.utils import pg_client, helper
 from chalicelib.core import events
 
 
-def get_customs_by_session_id(session_id, project_id):
-    return events.get_customs_by_session_id(session_id=session_id, project_id=project_id)
+async def get_customs_by_session_id(session_id, project_id):
+    return await events.get_customs_by_session_id(session_id=session_id, project_id=project_id)
 
 
-def get_by_sessionId(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""
+async def get_by_sessionId(session_id, project_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify(f"""
             SELECT 
                 c.*,
                 'TAP' AS type
@@ -18,9 +18,9 @@ def get_by_sessionId(session_id, project_id):
             ORDER BY c.timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
 
-        cur.execute(cur.mogrify(f"""
+        await cur.execute(cur.mogrify(f"""
             SELECT 
                 i.*,
                 'INPUT' AS type
@@ -30,8 +30,8 @@ def get_by_sessionId(session_id, project_id):
             ORDER BY i.timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        rows += cur.fetchall()
-        cur.execute(cur.mogrify(f"""
+        rows += await cur.fetchall()
+        await cur.execute(cur.mogrify(f"""
             SELECT 
                 v.*,
                 'VIEW' AS type
@@ -39,8 +39,8 @@ def get_by_sessionId(session_id, project_id):
             WHERE 
               v.session_id = %(session_id)s
             ORDER BY v.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-        rows += cur.fetchall()
-        cur.execute(cur.mogrify(f"""
+        rows += await cur.fetchall()
+        await cur.execute(cur.mogrify(f"""
             SELECT 
                 s.*,
                 'SWIPE' AS type
@@ -48,15 +48,15 @@ def get_by_sessionId(session_id, project_id):
             WHERE 
               s.session_id = %(session_id)s
             ORDER BY s.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-        rows += cur.fetchall()
+        rows += await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: k["timestamp"])
     return rows
 
 
-def get_crashes_by_session_id(session_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""
+async def get_crashes_by_session_id(session_id):
+    with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
                     FROM {events.EventType.CRASH_IOS.table} AS cr 
                         INNER JOIN public.crashes_ios AS uc USING (crash_ios_id) 
@@ -64,5 +64,5 @@ def get_crashes_by_session_id(session_id):
                     WHERE
                       cr.session_id = %(session_id)s
                     ORDER BY timestamp;""", {"session_id": session_id}))
-        errors = cur.fetchall()
+        errors = await cur.fetchall()
         return helper.list_to_camel_case(errors)

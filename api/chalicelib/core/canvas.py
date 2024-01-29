@@ -3,16 +3,16 @@ from chalicelib.utils.storage import StorageClient
 from decouple import config
 
 
-def get_canvas_presigned_urls(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+async def get_canvas_presigned_urls(session_id, project_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify("""\
             SELECT *
             FROM events.canvas_recordings
             WHERE session_id = %(session_id)s
             ORDER BY timestamp;""",
                                 {"project_id": project_id, "session_id": session_id})
                     )
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
 
         for i in range(len(rows)):
             params = {

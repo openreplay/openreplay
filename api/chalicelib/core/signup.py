@@ -72,8 +72,8 @@ async def create_tenant(data: schemas.UserSignupSchema):
                  VALUES (%(projectName)s, TRUE)
                  RETURNING project_id, (SELECT api_key FROM t) AS api_key;"""
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(query, params))
+    with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify(query, params))
 
     telemetry.new_client()
     r = users.authenticate(email, password)

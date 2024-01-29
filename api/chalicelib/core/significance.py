@@ -28,7 +28,7 @@ T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.36
             30: 2.042}
 
 
-def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
+async def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
     """
     Add minimal timestamp
     :param filter_d: dict contains events&filters&...
@@ -232,14 +232,14 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
               "endTimestamp": filter_d.endTimestamp,
               "issueTypes": tuple(filter_issues), **values}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(n_stages_query, params)
         logging.debug("---------------------------------------------------")
         logging.debug(query)
         logging.debug("---------------------------------------------------")
         try:
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
         except Exception as err:
             logging.warning("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
             logging.warning(query.decode('UTF-8'))

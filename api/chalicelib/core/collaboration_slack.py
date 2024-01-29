@@ -1,9 +1,9 @@
 from datetime import datetime
 
-import requests
 from decouple import config
 from fastapi import HTTPException, status
 
+import httpx
 import schemas
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_base import BaseCollaboration
@@ -23,8 +23,9 @@ class Slack(BaseCollaboration):
         return None
 
     @classmethod
-    def say_hello(cls, url):
-        r = requests.post(
+    async def say_hello(cls, url):
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
             url=url,
             json={
                 "attachments": [
@@ -41,12 +42,13 @@ class Slack(BaseCollaboration):
         return True
 
     @classmethod
-    def send_raw(cls, tenant_id, webhook_id, body):
+    async def send_raw(cls, tenant_id, webhook_id, body):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         try:
-            r = requests.post(
+            async with httpx.AsyncClient() as client:
+                r = await client.post(
                 url=integration["endpoint"],
                 json=body,
                 timeout=5)
@@ -54,9 +56,6 @@ class Slack(BaseCollaboration):
                 print(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
                 print(r.text)
                 return None
-        except requests.exceptions.Timeout:
-            print(f"!! Timeout sending slack raw webhookId:{webhook_id}")
-            return None
         except Exception as e:
             print(f"!! Issue sending slack raw webhookId:{webhook_id}")
             print(str(e))
@@ -64,13 +63,14 @@ class Slack(BaseCollaboration):
         return {"data": r.text}
 
     @classmethod
-    def send_batch(cls, tenant_id, webhook_id, attachments):
+    async def send_batch(cls, tenant_id, webhook_id, attachments):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         print(f"====> sending slack batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 100):
-            r = requests.post(
+            async with httpx.AsyncClient() as client:
+                r = await client.post(
                 url=integration["endpoint"],
                 json={"attachments": attachments[i:i + 100]})
             if r.status_code != 200:
@@ -80,14 +80,15 @@ class Slack(BaseCollaboration):
                 print(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, attachement, extra=None):
+    async def __share(cls, tenant_id, integration_id, attachement, extra=None):
         if extra is None:
             extra = {}
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         attachement["ts"] = datetime.now().timestamp()
-        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement], **extra})
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url=integration["endpoint"], json={"attachments": [attachement], **extra})
         return r.text
 
     @classmethod

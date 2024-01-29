@@ -4,9 +4,9 @@ from chalicelib.utils import pg_client
 SUPPORTED_TOOLS = [integration_github.PROVIDER, integration_jira_cloud.PROVIDER]
 
 
-def get_available_integrations(user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_available_integrations(user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(f"""\
                     SELECT EXISTS((SELECT 1
                                FROM public.oauth_authentication
@@ -17,19 +17,19 @@ def get_available_integrations(user_id):
                                    WHERE user_id = %(user_id)s))       AS jira;""",
                         {"user_id": user_id})
         )
-        current_integrations = cur.fetchone()
+        current_integrations = await cur.fetchone()
     return dict(current_integrations)
 
 
-def __get_default_integration(user_id):
-    current_integrations = get_available_integrations(user_id)
+async def __get_default_integration(user_id):
+    current_integrations = await get_available_integrations(user_id)
     return integration_github.PROVIDER if current_integrations["github"] else integration_jira_cloud.PROVIDER if \
         current_integrations["jira"] else None
 
 
-def get_integration(tenant_id, user_id, tool=None, for_delete=False):
+async def get_integration(tenant_id, user_id, tool=None, for_delete=False):
     if tool is None:
-        tool = __get_default_integration(user_id=user_id)
+        tool = await __get_default_integration(user_id=user_id)
     if tool is None:
         return {"errors": [f"no issue tracking tool found"]}, None
     tool = tool.upper()

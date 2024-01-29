@@ -2,9 +2,9 @@ import schemas
 from chalicelib.utils import pg_client
 
 
-def get_global_integrations_status(tenant_id, user_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_global_integrations_status(tenant_id, user_id, project_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(f"""\
                     SELECT EXISTS((SELECT 1
                                FROM public.oauth_authentication
@@ -57,7 +57,7 @@ def get_global_integrations_status(tenant_id, user_id, project_id):
                                    WHERE type='msteams' AND deleted_at ISNULL)) AS {schemas.IntegrationType.ms_teams.value};""",
                         {"user_id": user_id, "tenant_id": tenant_id, "project_id": project_id})
         )
-        current_integrations = cur.fetchone()
+        current_integrations = await cur.fetchone()
     result = []
     for k in current_integrations.keys():
         result.append({"name": k, "integrated": current_integrations[k]})

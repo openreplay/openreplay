@@ -7,7 +7,7 @@ from chalicelib.utils.event_filter_definition import Event
 TABLE = "public.autocomplete"
 
 
-def __get_autocomplete_table(value, project_id):
+async def __get_autocomplete_table(value, project_id):
     autocomplete_events = [schemas.FilterType.rev_id,
                            schemas.EventType.click,
                            schemas.FilterType.user_device,
@@ -48,7 +48,7 @@ def __get_autocomplete_table(value, project_id):
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(" UNION DISTINCT ".join(sub_queries) + ";",
                             {"project_id": project_id,
                              "value": helper.string_to_sql_like(value),
@@ -56,7 +56,7 @@ def __get_autocomplete_table(value, project_id):
                              "c_list": tuple(c_list)
                              })
         try:
-            cur.execute(query)
+            await cur.execute(query)
         except Exception as err:
             print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
             print(query.decode('UTF-8'))
@@ -64,7 +64,7 @@ def __get_autocomplete_table(value, project_id):
             print(value)
             print("--------------------")
             raise err
-        results = cur.fetchall()
+        results = await cur.fetchall()
     for r in results:
         r["type"] = r.pop("_type")
     results = helper.list_to_camel_case(results)
@@ -110,20 +110,20 @@ def __generic_query(typename, value_length=None):
 
 
 def __generic_autocomplete(event: Event):
-    def f(project_id, value, key=None, source=None):
-        with pg_client.PostgresClient() as cur:
+    async def f(project_id, value, key=None, source=None):
+        async with pg_client.cursor() as cur:
             query = __generic_query(event.ui_type, value_length=len(value))
             params = {"project_id": project_id, "value": helper.string_to_sql_like(value),
                       "svalue": helper.string_to_sql_like("^" + value)}
-            cur.execute(cur.mogrify(query, params))
-            return helper.list_to_camel_case(cur.fetchall())
+            await cur.execute(cur.mogrify(query, params))
+            return helper.list_to_camel_case(await cur.fetchall())
 
     return f
 
 
 def __generic_autocomplete_metas(typename):
-    def f(project_id, text):
-        with pg_client.PostgresClient() as cur:
+    async def f(project_id, text):
+        async with pg_client.cursor() as cur:
             params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
                       "svalue": helper.string_to_sql_like("^" + text)}
 
@@ -133,8 +133,8 @@ def __generic_autocomplete_metas(typename):
                     return []
 
             query = cur.mogrify(__generic_query(typename, value_length=len(text)), params)
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
         return rows
 
     return f
@@ -214,19 +214,19 @@ def __errors_query(source=None, value_length=None):
                 LIMIT 5));"""
 
 
-def __search_errors(project_id, value, key=None, source=None):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def __search_errors(project_id, value, key=None, source=None):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(__errors_query(source,
                                        value_length=len(value)),
                         {"project_id": project_id, "value": helper.string_to_sql_like(value),
                          "svalue": helper.string_to_sql_like("^" + value),
                          "source": source}))
-        results = helper.list_to_camel_case(cur.fetchall())
+        results = helper.list_to_camel_case(await cur.fetchall())
     return results
 
 
-def __search_errors_ios(project_id, value, key=None, source=None):
+async def __search_errors_ios(project_id, value, key=None, source=None):
     if len(value) > 2:
         query = f"""(SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
@@ -287,14 +287,14 @@ def __search_errors_ios(project_id, value, key=None, source=None):
                           AND lg.project_id = %(project_id)s
                           AND lg.name ILIKE %(svalue)s
                         LIMIT 5);"""
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
                                         "svalue": helper.string_to_sql_like("^" + value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
+        results = helper.list_to_camel_case(await cur.fetchall())
     return results
 
 
-def __search_metadata(project_id, value, key=None, source=None):
+async def __search_metadata(project_id, value, key=None, source=None):
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():
@@ -321,11 +321,11 @@ def __search_metadata(project_id, value, key=None, source=None):
                                 FROM public.sessions 
                                 WHERE project_id = %(project_id)s 
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)""")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify(f"""\
                     SELECT key, value, 'METADATA' AS TYPE
                     FROM({" UNION ALL ".join(sub_from)}) AS all_metas
                     LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value),
                                   "svalue": helper.string_to_sql_like("^" + value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
+        results = helper.list_to_camel_case(await cur.fetchall())
     return results

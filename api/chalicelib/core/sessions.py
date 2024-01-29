@@ -39,7 +39,7 @@ COALESCE((SELECT TRUE
 
 
 # This function executes the query and return result
-def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+async def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False,
                     platform="web"):
     if data.bookmarked:
@@ -58,7 +58,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         full_args["sessions_limit_e"] = 200
 
     meta_keys = []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         if errors_only:
             main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id,
                                          COALESCE((SELECT TRUE
@@ -132,8 +132,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         logging.debug(main_query)
         logging.debug("--------------------")
         try:
-            cur.execute(main_query)
-            sessions = cur.fetchone()
+            await cur.execute(main_query)
+            sessions = await cur.fetchone()
         except Exception as err:
             logging.warning("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
             logging.warning(main_query.decode('UTF-8'))
@@ -142,7 +142,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             logging.warning("--------------------")
             raise err
         if errors_only or ids_only:
-            return helper.list_to_camel_case(cur.fetchall())
+            return helper.list_to_camel_case(await cur.fetchall())
 
         if count_only:
             return helper.dict_to_camel_case(sessions)
@@ -170,7 +170,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
 
 # TODO: remove "table of" search from this function
-def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
+async def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
                    metric_of: schemas.MetricOfTable, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
@@ -186,7 +186,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
     sessions = []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
@@ -208,7 +208,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             logging.debug(main_query)
             logging.debug("--------------------")
             try:
-                cur.execute(main_query)
+                await cur.execute(main_query)
             except Exception as err:
                 logging.warning("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
                 logging.warning(main_query.decode('UTF-8'))
@@ -217,9 +217,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 logging.warning("--------------------")
                 raise err
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                sessions = cur.fetchall()
+                sessions = await cur.fetchall()
             else:
-                sessions = cur.fetchone()["count"]
+                sessions = await cur.fetchone()["count"]
         elif metric_type == schemas.MetricType.table:
             if isinstance(metric_of, schemas.MetricOfTable):
                 main_col = "user_id"
@@ -269,15 +269,15 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
-            cur.execute(main_query)
-            sessions = helper.dict_to_camel_case(cur.fetchone())
+            await cur.execute(main_query)
+            sessions = helper.dict_to_camel_case(await cur.fetchone())
             for s in sessions["values"]:
                 s.pop("rn")
 
         return sessions
 
 
-def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
+async def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                   metric_of: schemas.MetricOfTable, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density, factor=1, decimal=True))
@@ -291,7 +291,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         if isinstance(metric_of, schemas.MetricOfTable):
             main_col = "user_id"
             extra_col = ""
@@ -340,20 +340,20 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         logging.debug("--------------------")
         logging.debug(main_query)
         logging.debug("--------------------")
-        cur.execute(main_query)
-        sessions = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(main_query)
+        sessions = helper.dict_to_camel_case(await cur.fetchone())
         for s in sessions["values"]:
             s.pop("rn")
 
         return sessions
 
 
-def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
+async def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         full_args["issues_limit"] = data.limit
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
@@ -377,8 +377,8 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         logging.debug("--------------------")
         logging.debug(main_query)
         logging.debug("--------------------")
-        cur.execute(main_query)
-        sessions = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(main_query)
+        sessions = helper.dict_to_camel_case(await cur.fetchone())
         for s in sessions["values"]:
             s.pop("rn")
 
@@ -1095,7 +1095,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     return full_args, query_part
 
 
-def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
+async def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     if project_id is None:
         all_projects = projects.get_projects(tenant_id=tenant_id)
     else:
@@ -1117,7 +1117,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
             results[i] = {"total": 0, "sessions": [], "missingMetadata": True}
     project_ids = list(available_keys.keys())
     if len(project_ids) > 0:
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.cursor() as cur:
             sub_queries = []
             for i in project_ids:
                 col_name = list(available_keys[i].keys())[list(available_keys[i].values()).index(m_key)]
@@ -1125,9 +1125,9 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                     f"(SELECT COALESCE(COUNT(s.*)) AS count FROM public.sessions AS s WHERE s.project_id = %(id)s AND s.{col_name} = %(value)s) AS \"{i}\"",
                     {"id": i, "value": m_value}).decode('UTF-8'))
             query = f"""SELECT {", ".join(sub_queries)};"""
-            cur.execute(query=query)
+            await cur.execute(query=query)
 
-            rows = cur.fetchone()
+            rows = await cur.fetchone()
 
             sub_queries = []
             for i in rows.keys():
@@ -1151,15 +1151,15 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                                 )""",
                             {"id": i, "value": m_value, "userId": user_id}).decode('UTF-8'))
             if len(sub_queries) > 0:
-                cur.execute("\nUNION\n".join(sub_queries))
-                rows = cur.fetchall()
+                await cur.execute("\nUNION\n".join(sub_queries))
+                rows = await cur.fetchall()
                 for i in rows:
                     results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
     return results
 
 
-def get_user_sessions(project_id, user_id, start_date, end_date):
-    with pg_client.PostgresClient() as cur:
+async def get_user_sessions(project_id, user_id, start_date, end_date):
+    async with pg_client.cursor() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
         if start_date is not None:
             constraints.append("s.start_ts >= %(startDate)s")
@@ -1170,7 +1170,7 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
             FROM public.sessions AS s
             WHERE {" AND ".join(constraints)}"""
 
-        cur.execute(cur.mogrify(f"""\
+        await cur.execute(cur.mogrify(f"""\
                     SELECT s.project_id,
                            s.session_id::text AS session_id,
                            s.user_uuid,
@@ -1193,12 +1193,12 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
             "endDate": end_date
         }))
 
-        sessions = cur.fetchall()
+        sessions = await cur.fetchall()
     return helper.list_to_camel_case(sessions)
 
 
-def get_session_user(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
+async def get_session_user(project_id, user_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(
             """\
             SELECT
@@ -1216,32 +1216,32 @@ def get_session_user(project_id, user_id):
             """,
             {"project_id": project_id, "userId": user_id}
         )
-        cur.execute(query=query)
-        data = cur.fetchone()
+        await cur.execute(query=query)
+        data = await cur.fetchone()
     return helper.dict_to_camel_case(data)
 
 
-def count_all():
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
-        cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
-        row = cur.fetchone()
+async def count_all():
+    async with pg_client.cursor(unlimited_query=True) as cur:
+        await cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+        row = await cur.fetchone()
     return row.get("count", 0) if row else 0
 
 
-def session_exists(project_id, session_id):
-    with pg_client.PostgresClient() as cur:
+async def session_exists(project_id, session_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""SELECT 1 
                              FROM public.sessions 
                              WHERE session_id=%(session_id)s 
                                 AND project_id=%(project_id)s
                              LIMIT 1;""",
                             {"project_id": project_id, "session_id": session_id})
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
     return row is not None
 
 
-def check_recording_status(project_id: int) -> dict:
+async def check_recording_status(project_id: int) -> dict:
     query = f"""
         WITH project_sessions AS (SELECT COUNT(1)                                      AS full_count,
                                  COUNT(1) FILTER ( WHERE duration IS NOT NULL) AS nn_duration_count
@@ -1258,10 +1258,10 @@ def check_recording_status(project_id: int) -> dict:
         FROM project_sessions;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(query, {"project_id": project_id})
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
 
     return {
         "recordingStatus": row["recording_status"],
@@ -1269,11 +1269,11 @@ def check_recording_status(project_id: int) -> dict:
     }
 
 
-def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
+async def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
     if session_ids is None or len(session_ids) == 0:
         return {"total": 0, "sessions": []}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         meta_keys = metadata.get(project_id=project_id)
         params = {"project_id": project_id, "session_ids": tuple(session_ids)}
         order_direction = 'ASC' if ascending else 'DESC'
@@ -1284,8 +1284,8 @@ def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 's
                                             AND session_id IN %(session_ids)s
                                      ORDER BY {sort_by} {order_direction};""", params)
 
-        cur.execute(main_query)
-        rows = cur.fetchall()
+        await cur.execute(main_query)
+        rows = await cur.fetchall()
         if len(meta_keys) > 0:
             for s in rows:
                 s["metadata"] = {}

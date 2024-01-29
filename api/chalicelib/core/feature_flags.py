@@ -22,8 +22,8 @@ feature_flag_columns = (
 )
 
 
-def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
-    with pg_client.PostgresClient() as cur:
+async def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) -> bool:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.feature_flags
                                 WHERE deleted_at IS NULL
@@ -31,29 +31,29 @@ def exists_by_name(flag_key: str, project_id: int, exclude_id: Optional[int]) ->
                                     {"AND feature_flag_id!=%(exclude_id)s" if exclude_id else ""}) AS exists;""",
                             {"flag_key": flag_key, "exclude_id": exclude_id, "project_id": project_id})
 
-        cur.execute(query=query)
-        row = cur.fetchone()
+        await cur.execute(query=query)
+        row = await cur.fetchone()
         return row["exists"]
 
 
-def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
+async def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active: bool) -> Dict[str, Any]:
     try:
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.cursor() as cur:
             query = cur.mogrify(f"""UPDATE feature_flags
                                 SET is_active = %(is_active)s, updated_at=NOW()
                                 WHERE feature_flag_id=%(feature_flag_id)s AND project_id=%(project_id)s
                                 RETURNING is_active;""",
                                 {"feature_flag_id": feature_flag_id, "is_active": is_active, "project_id": project_id})
-            cur.execute(query=query)
+            await cur.execute(query=query)
 
-            return {"is_active": cur.fetchone()["is_active"]}
+            return {"is_active": await cur.fetchone()["is_active"]}
     except Exception as e:
         logging.error(f"Failed to update feature flag status: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Failed to update feature flag status")
 
 
-def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
+async def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlagsSchema) -> Dict[str, Any]:
     """
     Get all feature flags and their total count.
     """
@@ -67,10 +67,10 @@ def search_feature_flags(project_id: int, user_id: int, data: schemas.SearchFlag
         LIMIT %(limit)s OFFSET %(offset)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, params)
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
 
     if len(rows) == 0:
         return {"data": {"total": 0, "list": []}}
@@ -110,12 +110,12 @@ def prepare_constraints_params_to_search(data, project_id, user_id):
     return constraints, params
 
 
-def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
+async def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
     if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant and len(feature_flag_data.variants) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Variants are required for multi variant flag")
 
-    validate_unique_flag_key(feature_flag_data, project_id)
+    await validate_unique_flag_key(feature_flag_data, project_id)
     validate_multi_variant_flag(feature_flag_data)
 
     insert_columns = (
@@ -176,19 +176,19 @@ def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schema
             SELECT feature_flag_id FROM inserted_flag;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(query, params)
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
 
         if row is None:
             return None
 
-    return get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
+    return await get_feature_flag(project_id=project_id, feature_flag_id=row["feature_flag_id"])
 
 
-def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
-    if exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
+async def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
+    if await exists_by_name(project_id=project_id, flag_key=feature_flag_data.flag_key, exclude_id=exclude_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Feature flag with key already exists.")
 
 
@@ -238,7 +238,7 @@ def prepare_conditions_values(feature_flag_data):
     return conditions_data
 
 
-def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
+async def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str, Any]]:
     conditions_query = """
             SELECT COALESCE(jsonb_agg(ffc ORDER BY condition_id), '[]'::jsonb) AS conditions
             FROM feature_flags_conditions AS ffc
@@ -261,10 +261,10 @@ def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str
                 AND ff.deleted_at IS NULL;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "project_id": project_id})
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
 
         if row is None:
             return {"errors": ["Feature flag not found"]}
@@ -275,7 +275,7 @@ def get_feature_flag(project_id: int, feature_flag_id: int) -> Optional[Dict[str
     return {"data": helper.dict_to_camel_case(row)}
 
 
-def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> List[Dict[str, Any]]:
+async def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> List[Dict[str, Any]]:
     """
     Create new feature flag conditions and return their data.
     """
@@ -297,18 +297,18 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
             RETURNING condition_id, {", ".join(columns)}
         """
 
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.cursor() as cur:
             params = [
                 (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.model_dump() for filter_ in c.filters]))
                 for c in conditions]
             query = cur.mogrify(sql, params)
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
 
     return rows
 
 
-def update_feature_flag(project_id: int, feature_flag_id: int,
+async def update_feature_flag(project_id: int, feature_flag_id: int,
                         feature_flag: schemas.FeatureFlagSchema, user_id: int):
     """
     Update an existing feature flag and return its updated data.
@@ -342,23 +342,23 @@ def update_feature_flag(project_id: int, feature_flag_id: int,
         RETURNING feature_flag_id, {", ".join(columns)}, created_at, updated_at
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, params)
-        cur.execute(query)
-        row = cur.fetchone()
+        await cur.execute(query)
+        row = await cur.fetchone()
 
         if row is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Feature flag not found")
 
     row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     row["updated_at"] = TimeUTC.datetime_to_timestamp(row["updated_at"])
-    row['conditions'] = check_conditions(feature_flag_id, feature_flag.conditions)
-    row['variants'] = check_variants(feature_flag_id, feature_flag.variants)
+    row['conditions'] = await check_conditions(feature_flag_id, feature_flag.conditions)
+    row['variants'] = await check_variants(feature_flag_id, feature_flag.variants)
 
     return {"data": helper.dict_to_camel_case(row)}
 
 
-def get_conditions(feature_flag_id: int):
+async def get_conditions(feature_flag_id: int):
     """
     Get all conditions for a feature flag.
     """
@@ -374,15 +374,15 @@ def get_conditions(feature_flag_id: int):
         ORDER BY condition_id;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id})
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
 
     return rows
 
 
-def check_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
+async def check_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
     existing_ids = [ev.get("variant_id") for ev in get_variants(feature_flag_id)]
     to_be_deleted = []
     to_be_updated = []
@@ -399,18 +399,18 @@ def check_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVaria
             to_be_updated.append(variant)
 
     if len(to_be_created) > 0:
-        create_variants(feature_flag_id=feature_flag_id, variants=to_be_created)
+        await create_variants(feature_flag_id=feature_flag_id, variants=to_be_created)
 
     if len(to_be_updated) > 0:
-        update_variants(feature_flag_id=feature_flag_id, variants=to_be_updated)
+        await update_variants(feature_flag_id=feature_flag_id, variants=to_be_updated)
 
     if len(to_be_deleted) > 0:
-        delete_variants(feature_flag_id=feature_flag_id, ids=to_be_deleted)
+        await delete_variants(feature_flag_id=feature_flag_id, ids=to_be_deleted)
 
-    return get_variants(feature_flag_id)
+    return await get_variants(feature_flag_id)
 
 
-def get_variants(feature_flag_id: int):
+async def get_variants(feature_flag_id: int):
     sql = """
         SELECT
             variant_id,
@@ -423,15 +423,15 @@ def get_variants(feature_flag_id: int):
         ORDER BY variant_id;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id})
-        cur.execute(query)
-        rows = cur.fetchall()
+        await cur.execute(query)
+        rows = await cur.fetchall()
 
     return rows
 
 
-def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> List[Dict[str, Any]]:
+async def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> List[Dict[str, Any]]:
     """
     Create new feature flag variants and return their data.
     """
@@ -454,16 +454,16 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
             RETURNING variant_id, {", ".join(columns)}
         """
 
-        with pg_client.PostgresClient() as cur:
+        async with pg_client.cursor() as cur:
             params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
             query = cur.mogrify(sql, params)
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
 
     return rows
 
 
-def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
+async def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVariant]) -> Any:
     """
     Update existing feature flag variants and return their updated data.
     """
@@ -485,12 +485,12 @@ def update_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         WHERE c.variant_id = feature_flags_variants.variant_id AND feature_flag_id = %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, params)
-        cur.execute(query)
+        await cur.execute(query)
 
 
-def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
+async def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
     """
     Delete existing feature flag variants and return their data.
     """
@@ -500,12 +500,12 @@ def delete_variants(feature_flag_id: int, ids: List[int]) -> None:
                 AND feature_flag_id= %(feature_flag_id)s;
         """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "ids": tuple(ids)})
-        cur.execute(query)
+        await cur.execute(query)
 
 
-def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
+async def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
     existing_ids = [ec.get("condition_id") for ec in get_conditions(feature_flag_id)]
     to_be_deleted = []
     to_be_updated = []
@@ -522,18 +522,18 @@ def check_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagC
             to_be_updated.append(condition)
 
     if len(to_be_created) > 0:
-        create_conditions(feature_flag_id=feature_flag_id, conditions=to_be_created)
+        await create_conditions(feature_flag_id=feature_flag_id, conditions=to_be_created)
 
     if len(to_be_updated) > 0:
-        update_conditions(feature_flag_id=feature_flag_id, conditions=to_be_updated)
+        await update_conditions(feature_flag_id=feature_flag_id, conditions=to_be_updated)
 
     if len(to_be_deleted) > 0:
-        delete_conditions(feature_flag_id=feature_flag_id, ids=to_be_deleted)
+        await delete_conditions(feature_flag_id=feature_flag_id, ids=to_be_deleted)
 
-    return get_conditions(feature_flag_id)
+    return await get_conditions(feature_flag_id)
 
 
-def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
+async def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlagCondition]) -> Any:
     """
     Update existing feature flag conditions and return their updated data.
     """
@@ -555,12 +555,12 @@ def update_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
         WHERE c.condition_id = feature_flags_conditions.condition_id AND feature_flag_id = %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, params)
-        cur.execute(query)
+        await cur.execute(query)
 
 
-def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
+async def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
     """
     Delete feature flag conditions.
     """
@@ -570,12 +570,12 @@ def delete_conditions(feature_flag_id: int, ids: List[int]) -> None:
             AND feature_flag_id= %(feature_flag_id)s;
     """
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(sql, {"feature_flag_id": feature_flag_id, "ids": tuple(ids)})
-        cur.execute(query)
+        await cur.execute(query)
 
 
-def delete_feature_flag(project_id: int, feature_flag_id: int):
+async def delete_feature_flag(project_id: int, feature_flag_id: int):
     """
     Delete a feature flag.
     """
@@ -584,10 +584,10 @@ def delete_feature_flag(project_id: int, feature_flag_id: int):
         "feature_flags.feature_flag_id=%(feature_flag_id)s"
     ]
     params = {"project_id": project_id, "feature_flag_id": feature_flag_id}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(f"""UPDATE feature_flags
                                 SET deleted_at= (now() at time zone 'utc'), is_active=false
                                 WHERE {" AND ".join(conditions)};""", params)
-        cur.execute(query)
+        await cur.execute(query)
 
     return {"state": "success"}

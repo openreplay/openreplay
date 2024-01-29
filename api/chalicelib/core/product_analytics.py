@@ -377,7 +377,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                             avg_time_from_previous
                                      FROM n{i})""")
 
-    with pg_client.PostgresClient() as cur:
+    with pg_client.cursor() as cur:
         pg_query = f"""\
 WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
                       FROM public.sessions {" ".join(start_join)}
@@ -515,7 +515,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #                                      time_constraint=True)
 #     pg_sub_query.append("user_id IS NOT NULL")
 #     pg_sub_query.append("DATE_TRUNC('week', to_timestamp(start_ts / 1000)) = to_timestamp(%(startTimestamp)s / 1000)")
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT FLOOR(DATE_PART('day', connexion_week - DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000)::timestamp)) / 7)::integer AS week,
 #                                COUNT(DISTINCT connexions_list.user_id)                                     AS users_count,
 #                                ARRAY_AGG(DISTINCT connexions_list.user_id)                                 AS connected_users
@@ -562,7 +562,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
 #                                      time_constraint=True)
 #     pg_sub_query.append("user_id IS NOT NULL")
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT EXTRACT(EPOCH FROM first_connexion_week::date)::bigint*1000 AS first_connexion_week,
 #                                FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
 #                                COUNT(DISTINCT connexions_list.user_id)                            AS users_count,
@@ -628,7 +628,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #     event_column = JOURNEY_TYPES[event_type]["column"]
 #     pg_sub_query.append(f"feature.{event_column} = %(value)s")
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         if default:
 #             # get most used value
 #             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
@@ -718,7 +718,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #
 #     pg_sub_query.append(f"feature.{event_column} = %(value)s")
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         if default:
 #             # get most used value
 #             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
@@ -800,7 +800,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
 #                         FROM sessions
 #                         WHERE {" AND ".join(pg_sub_query)}
@@ -866,7 +866,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
 #     event_column = JOURNEY_TYPES[event_type]["column"]
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
 #                         FROM sessions
 #                         WHERE {" AND ".join(pg_sub_query)}
@@ -935,7 +935,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
 #     event_column = JOURNEY_TYPES[event_type]["column"]
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
 #         pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
 #         if default:
@@ -995,7 +995,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
 #     event_column = JOURNEY_TYPES[event_type]["column"]
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_sub_query_chart.append("feature.timestamp >= %(startTimestamp)s")
 #         pg_sub_query_chart.append("feature.timestamp < %(endTimestamp)s")
 #         pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
@@ -1056,7 +1056,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     pg_sub_query.append(f"length({event_column})>2")
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
 #                     FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
 #                     WHERE {" AND ".join(pg_sub_query)}
@@ -1090,7 +1090,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(chart) AS chart
 #                         FROM (SELECT generated_timestamp       AS timestamp,
 #                                      COALESCE(COUNT(users), 0) AS count
@@ -1120,7 +1120,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #     pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
 #     pg_sub_query.append("user_id IS NOT NULL")
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(day_users_partition) AS partition
 #                         FROM (SELECT number_of_days, COUNT(user_id) AS count
 #                               FROM (SELECT user_id, COUNT(DISTINCT DATE_TRUNC('day', to_timestamp(start_ts / 1000))) AS number_of_days
@@ -1163,7 +1163,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #     event_column = JOURNEY_TYPES[event_type]["column"]
 #     pg_sub_query.append(f"feature.{event_column} = %(value)s")
 #
-#     with pg_client.PostgresClient() as cur:
+#     with pg_client.cursor() as cur:
 #         if default:
 #             # get most used value
 #             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
@@ -1218,7 +1218,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #               "value": helper.string_to_sql_like(text.lower()),
 #               "platform_0": platform}
 #     if feature_type == "ALL":
-#         with pg_client.PostgresClient() as cur:
+#         with pg_client.cursor() as cur:
 #             sub_queries = []
 #             for e in JOURNEY_TYPES:
 #                 sub_queries.append(f"""(SELECT DISTINCT {JOURNEY_TYPES[e]["column"]} AS value, '{e}' AS "type"
@@ -1230,7 +1230,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #             cur.execute(cur.mogrify(pg_query, params))
 #             rows = cur.fetchall()
 #     elif JOURNEY_TYPES.get(feature_type) is not None:
-#         with pg_client.PostgresClient() as cur:
+#         with pg_client.cursor() as cur:
 #             pg_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
 #                              FROM {JOURNEY_TYPES[feature_type]["table"]} INNER JOIN public.sessions USING(session_id)
 #                              WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[feature_type]["column"]} ILIKE %(value)s

@@ -2,7 +2,7 @@ from os import access, R_OK
 from os.path import exists as path_exists, getsize
 
 import jwt
-import requests
+import httpx
 from decouple import config
 from fastapi import HTTPException, status
 
@@ -63,16 +63,14 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
+        async with httpx.AsyncClient() as client:
+            results = await client.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
             print(results.text)
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
-    except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
-        live_peers = {"total": 0, "sessions": []}
     except Exception as e:
         print("!! Issue getting Live-Assist response")
         print(str(e))
@@ -113,7 +111,8 @@ def __get_agent_token(project_id, project_key, session_id):
 def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+        async with httpx.AsyncClient() as client:
+            results = await client.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
@@ -124,9 +123,6 @@ def get_live_session_by_id(project_id, session_id):
             return None
         results["live"] = True
         results["agentToken"] = __get_agent_token(project_id=project_id, project_key=project_key, session_id=session_id)
-    except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
-        return None
     except Exception as e:
         print("!! Issue getting Assist response")
         print(str(e))
@@ -143,16 +139,14 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
+        async with httpx.AsyncClient() as client:
+            results = await client.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for is_live")
             print(results.text)
             return False
         results = results.json().get("data")
-    except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
-        return False
     except Exception as e:
         print("!! Issue getting Assist response")
         print(str(e))
@@ -165,13 +159,14 @@ def is_live(project_id, session_id, project_key=None):
     return str(session_id) == results
 
 
-def autocomplete(project_id, q: str, key: str = None):
-    project_key = projects.get_project_key(project_id)
+async def autocomplete(project_id, q: str, key: str = None):
+    project_key = await projects.get_project_key(project_id)
     params = {"q": q}
     if key:
         params["key"] = key
     try:
-        results = requests.get(
+        async with httpx.AsyncClient() as client:
+            results = await client.get(
             ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
@@ -179,9 +174,6 @@ def autocomplete(project_id, q: str, key: str = None):
             print(results.text)
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
-    except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
-        return {"errors": ["Assist request timeout"]}
     except Exception as e:
         print("!! Issue getting Assist response")
         print(str(e))
@@ -255,7 +247,8 @@ def get_raw_devtools_by_id(project_id, session_id):
 def session_exists(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+        async with httpx.AsyncClient() as client:
+            results = await client.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print(f"!! issue with the peer-server code:{results.status_code} for session_exists")
@@ -265,9 +258,6 @@ def session_exists(project_id, session_id):
         if results is None:
             return False
         return True
-    except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
-        return False
     except Exception as e:
         print("!! Issue getting Assist response")
         print(str(e))

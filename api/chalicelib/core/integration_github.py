@@ -26,10 +26,10 @@ class GitHubIntegration(integration_base.BaseIntegration):
             return None
         return {"token": helper.obfuscate(text=integration["token"]), "provider": self.provider.lower()}
 
-    def update(self, changes, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
+    async def update(self, changes, obfuscate=False):
+        async with pg_client.cursor() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""\
                         UPDATE public.oauth_authentication
                         SET {','.join(sub_query)}
@@ -38,7 +38,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id,
                              **changes})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = helper.dict_to_camel_case(await cur.fetchone())
             if w and w.get("token") and obfuscate:
                 w["token"] = helper.obfuscate(w["token"])
             return w
@@ -46,9 +46,9 @@ class GitHubIntegration(integration_base.BaseIntegration):
     def _add(self, data):
         pass
 
-    def add(self, token, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
+    async def add(self, token, obfuscate=False):
+        async with pg_client.cursor() as cur:
+            await cur.execute(
                 cur.mogrify("""\
                         INSERT INTO public.oauth_authentication(user_id, provider, provider_user_id, token)
                         VALUES(%(user_id)s, 'github', '', %(token)s)
@@ -56,15 +56,15 @@ class GitHubIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id,
                              "token": token})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = helper.dict_to_camel_case(await cur.fetchone())
             if w and w.get("token") and obfuscate:
                 w["token"] = helper.obfuscate(w["token"])
             return w
 
     # TODO: make a revoke token call
-    def delete(self):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
+    async def delete(self):
+        async with pg_client.cursor() as cur:
+            await cur.execute(
                 cur.mogrify("""\
                         DELETE FROM public.oauth_authentication
                         WHERE user_id=%(user_id)s AND provider=%(provider)s;""",

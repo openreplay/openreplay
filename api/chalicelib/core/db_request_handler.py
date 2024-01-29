@@ -93,44 +93,44 @@ class DatabaseRequestHandler:
         logging.info(f"Query: {query}")
         return query
 
-    def execute_query(self, query, data=None):
+    async def execute_query(self, query, data=None):
         try:
-            with self.client.PostgresClient() as cur:
+            async with self.client.cursor() as cur:
                 mogrified_query = cur.mogrify(query, {**data, **self.params} if data else self.params)
-                cur.execute(mogrified_query)
-                return cur.fetchall() if cur.description else None
+                await cur.execute(mogrified_query)
+                return await cur.fetchall() if cur.description else None
         except Exception as e:
             self.logger.error(f"Database operation failed: {e}")
             raise
 
     def fetchall(self):
         query = self.build_query()
-        return self.execute_query(query)
+        return await self.execute_query(query)
 
     def fetchone(self):
         query = self.build_query()
-        result = self.execute_query(query)
+        result = await self.execute_query(query)
         return result[0] if result else None
 
     def insert(self, data):
         query = self.build_query(action="insert", data=data)
         query += " RETURNING *;"
 
-        result = self.execute_query(query, data)
+        result = await self.execute_query(query, data)
         return result[0] if result else None
 
     def update(self, data):
         query = self.build_query(action="update", data=data)
         query += " RETURNING *;"
 
-        result = self.execute_query(query, data)
+        result = await self.execute_query(query, data)
         return result[0] if result else None
 
     def delete(self):
         query = self.build_query(action="delete")
-        return self.execute_query(query)
+        return await self.execute_query(query)
 
-    def batch_insert(self, items):
+    async def batch_insert(self, items):
         if not items:
             return None
 
@@ -145,27 +145,27 @@ class DatabaseRequestHandler:
         query = f"INSERT INTO {self.table_name} ({columns}) VALUES {all_values_query} RETURNING *;"
 
         try:
-            with self.client.PostgresClient() as cur:
+            async with self.client.cursor() as cur:
                 # Flatten items into a single dictionary with unique keys
                 combined_params = {f"{k}_{i}": v for i, item in enumerate(items) for k, v in item.items()}
                 mogrified_query = cur.mogrify(query, combined_params)
-                cur.execute(mogrified_query)
-                return cur.fetchall()
+                await cur.execute(mogrified_query)
+                return await cur.fetchall()
         except Exception as e:
             self.logger.error(f"Database batch insert operation failed: {e}")
             raise
 
-    def raw_query(self, query, params=None):
+    async def raw_query(self, query, params=None):
         try:
-            with self.client.PostgresClient() as cur:
+            async with self.client.cursor() as cur:
                 mogrified_query = cur.mogrify(query, params)
-                cur.execute(mogrified_query)
-                return cur.fetchall() if cur.description else None
+                await cur.execute(mogrified_query)
+                return await cur.fetchall() if cur.description else None
         except Exception as e:
             self.logger.error(f"Database operation failed: {e}")
             raise
 
-    def batch_update(self, items):
+    async def batch_update(self, items):
         if not items:
             return None
 
@@ -192,11 +192,11 @@ class DatabaseRequestHandler:
         """
 
         try:
-            with self.client.PostgresClient() as cur:
+            async with self.client.cursor() as cur:
                 # Flatten items into a single dictionary for mogrify
                 combined_params = {k: v for item in items for k, v in item.items()}
                 mogrified_query = cur.mogrify(query, combined_params)
-                cur.execute(mogrified_query)
+                await cur.execute(mogrified_query)
         except Exception as e:
             self.logger.error(f"Database batch update operation failed: {e}")
             raise
