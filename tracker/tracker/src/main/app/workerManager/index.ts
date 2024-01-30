@@ -1,5 +1,10 @@
 import { Type as MType } from '../../../common/messages.gen.js'
-import { FromWorkerData, ToWorkerData } from '../../../common/interaction.js'
+import {
+  FromWorkerData,
+  ToWorkerData,
+  WorkerAuth,
+  WorkerStart,
+} from '../../../common/interaction.js'
 import App from '../index.js'
 import QueueSender from './QueueSender.js'
 
@@ -109,12 +114,6 @@ class WebWorkerManager {
       return
     }
 
-    if (data.type === 'stop') {
-      this.finalize()
-      this.reset()
-      return
-    }
-
     if (data.type === 'batch' && Array.isArray(data.data)) {
       data.data.forEach((message) => {
         if (message[0] === MType.SetPageVisibility) {
@@ -130,68 +129,75 @@ class WebWorkerManager {
       })
       this.worker.postMessage({ type: 'to_writer', data: data.data })
     }
+  }
 
-    // @ts-ignore
-    if (data.type === 'compressed') {
-      if (!this.sender) {
-        console.debug('OR Worker: sender not init. Compressed batch')
-        return this.initiateRestart()
-      }
-      if (data.batch) {
-        this.sender?.sendCompressed(data.batch)
-      }
-    }
-    if (data.type === 'uncompressed') {
-      if (!this.sender) {
-        console.debug('OR Worker: sender not init. Compressed batch.')
+  startWorker = (data: WorkerStart): void => {
+    this.sender = new QueueSender(
+      data.ingestPoint,
+      () => {
+        // onUnauthorised
         this.initiateRestart()
-        return
-      }
-      if (data.batch) {
-        this.sender.sendUncompressed(data.batch)
-      }
+      },
+      (reason) => {
+        // onFailure
+        this.initiateFailure(reason)
+      },
+      data.connAttemptCount,
+      data.connAttemptGap,
+      (batch) => {
+        this.postMessage({ type: 'compress', batch })
+      },
+    )
+    if (this.sendIntervalID === null) {
+      this.sendIntervalID = setInterval(this.finalize, AUTO_SEND_INTERVAL)
     }
+    this.worker.postMessage(data)
+    return
+  }
 
-    if (data.type === 'start') {
-      this.sender = new QueueSender(
-        data.ingestPoint,
-        () => {
-          // onUnauthorised
-          this.initiateRestart()
-        },
-        (reason) => {
-          // onFailure
-          this.initiateFailure(reason)
-        },
-        data.connAttemptCount,
-        data.connAttemptGap,
-        (batch) => {
-          this.postMessage({ type: 'compress', batch })
-        },
-      )
-      if (this.sendIntervalID === null) {
-        this.sendIntervalID = setInterval(this.finalize, AUTO_SEND_INTERVAL)
-      }
-      this.worker.postMessage(data)
+  stopWorker = (): void => {
+    this.finalize()
+    this.reset()
+    return
+  }
+
+  authorizeWorker = (data: WorkerAuth): void => {
+    if (!this.sender) {
+      console.debug('OR WebWorker: sender not initialised. Received auth.')
+      this.initiateRestart()
       return
     }
 
-    if (data.type === 'auth') {
-      if (!this.sender) {
-        console.debug('OR WebWorker: sender not initialised. Received auth.')
-        this.initiateRestart()
-        return
-      }
+    this.sender.authorise(data.token)
+    if (data.beaconSizeLimit) {
+      this.worker.postMessage({ type: 'beacon_size_limit', data: data.beaconSizeLimit })
+    }
+    return
+  }
 
-      this.sender.authorise(data.token)
-      if (data.beaconSizeLimit) {
-        this.worker.postMessage({ type: 'beacon_size_limit', data: data.beaconSizeLimit })
-      }
+  sendCompressedBatch = (data: Uint8Array): void => {
+    if (!this.sender) {
+      console.debug('OR Worker: sender not init. Compressed batch')
+      this.initiateRestart()
+      return
+    }
+    this.sender?.sendCompressed(data)
+    return
+  }
+
+  sendUncompressedBatch = (data: Uint8Array): void => {
+    if (!this.sender) {
+      console.debug('OR Worker: sender not init. Compressed batch.')
+      this.initiateRestart()
+      return
+    }
+    if (data) {
+      this.sender.sendUncompressed(data)
       return
     }
   }
 
-  postMessage = (data: FromWorkerData) => {
+  postMessage = (data: FromWorkerData): void => {
     this.app.handleWorkerMsg(data)
   }
 }

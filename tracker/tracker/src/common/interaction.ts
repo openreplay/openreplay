@@ -8,13 +8,10 @@ export interface Options {
 export type ToWorkerData =
   | null
   | Stop
-  | Start
-  | Auth
   | Batch
+  | WorkerStart
   | BeaconSizeLimit
   | ToWriterData
-  | Compressed
-  | Uncompressed
   | ForceFlushBatch
   | CheckQueue
   | ResetWriter
@@ -33,8 +30,7 @@ type ForceFlushBatch = { type: 'forceFlushBatch' }
 type CheckQueue = { type: 'check_queue' }
 type WriterFinalize = { type: 'writer_finalize' }
 type ResetWriter = { type: 'reset_writer' }
-type Compressed = { type: 'compressed'; batch: Uint8Array }
-type Uncompressed = { type: 'uncompressed'; batch: Uint8Array }
+
 type BeaconSizeLimit = {
   type: 'beacon_size_limit'
   data: number
@@ -50,7 +46,7 @@ type Failure = {
 type QEmpty = {
   type: 'queue_empty'
 }
-type Start = {
+export type WorkerStart = {
   type: 'start'
   ingestPoint: string
   pageNo: number
@@ -58,8 +54,7 @@ type Start = {
   url: string
   tabId: string
 } & Options
-type Auth = {
-  type: 'auth'
+export type WorkerAuth = {
   token: string
   beaconSizeLimit?: number
 }

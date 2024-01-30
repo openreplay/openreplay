@@ -125,4 +125,8 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     }
     return
   }
+
+  if (data.type === 'restart') {
+    initiateRestart()
+  }
 }

@@ -315,7 +315,7 @@ export default class App {
       this.stop(false)
       void this.start({}, true)
     } else if (data.type === 'not_init') {
-      this.debug.warn('OR WebWorker: writer not initialised')
+      this.debug.warn('OR WebWorker: writer not initialised; restarting worker')
     } else if (data.type === 'failure') {
       this.stop(false)
       this.debug.error('worker_failed', data.reason)
@@ -333,11 +333,11 @@ export default class App {
               void this.start({}, true)
             }
           } else {
-            this.workerManager?.processMessage({ type: 'compressed', batch: result })
+            this.workerManager?.sendCompressedBatch(result)
           }
         })
       } else {
-        this.workerManager?.processMessage({ type: 'uncompressed', batch: batch })
+        this.workerManager?.sendUncompressedBatch(batch)
       }
     } else if (data.type === 'queue_empty') {
       this.onSessionSent()
@@ -849,8 +849,8 @@ export default class App {
       beaconSizeLimit,
       projectID,
     } = await r.json()
-    this.workerManager?.processMessage({
-      type: 'auth',
+
+    this.workerManager?.authorizeWorker({
       token,
       beaconSizeLimit,
     })
@@ -911,7 +911,7 @@ export default class App {
     })
 
     const timestamp = now()
-    this.workerManager.processMessage({
+    this.workerManager?.startWorker({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -1022,8 +1022,7 @@ export default class App {
           projectID,
         })
 
-        this.workerManager.processMessage({
-          type: 'auth',
+        this.workerManager?.authorizeWorker({
           token,
           beaconSizeLimit,
         })
@@ -1231,7 +1230,7 @@ export default class App {
         this.debug.log('OpenReplay tracking stopped.')
         this.tagWatcher.clear()
         if (this.workerManager && stopWorker) {
-          this.workerManager.processMessage({ type: 'stop' })
+          this.workerManager?.stopWorker()
         }
         this.canvasRecorder?.clear()
       } finally {
