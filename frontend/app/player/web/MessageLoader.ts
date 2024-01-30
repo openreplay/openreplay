@@ -108,59 +108,18 @@ export default class MessageLoader {
     }
   }
 
+  /**
+   * Try to get session files, if they aren't present, try to load them from EFS
+   * if EFS fails, then session doesn't exist
+   * */
   async loadFiles() {
     this.messageManager.startLoading();
 
-    const loadMethod =
-      this.session.domURL && this.session.domURL.length > 0
-        ? {
-            mobUrls: this.session.domURL,
-            parser: () => this.createNewParser(true, this.processMessages, 'dom'),
-          }
-        : {
-            mobUrls: this.session.mobsUrl,
-            parser: () => this.createNewParser(false, this.processMessages, 'dom'),
-          };
-
-    const parser = loadMethod.parser();
-    const devtoolsParser = this.createNewParser(true, this.processMessages, 'devtools');
-    /**
-     * to speed up time to replay
-     * we load first dom mob file before the rest
-     * (because parser can read them in parallel)
-     * as a tradeoff we have some copy-paste code
-     * for the devtools file
-     * */
     try {
-      await loadFiles([loadMethod.mobUrls[0]], parser);
-      const restDomFilesPromise = this.loadDomFiles([...loadMethod.mobUrls.slice(1)], parser);
-      const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
-
-      await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
-      this.messageManager.onFileReadSuccess();
+      await this.loadMobs()
     } catch (sessionLoadError) {
       try {
-        this.store.update({ domLoading: true, devtoolsLoading: true });
-        const efsDomFilePromise = requestEFSDom(this.session.sessionId);
-        const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId);
-
-        const [domData, devtoolsData] = await Promise.allSettled([
-          efsDomFilePromise,
-          efsDevtoolsFilePromise,
-        ]);
-        const domParser = this.createNewParser(false, this.processMessages, 'domEFS');
-        const devtoolsParser = this.createNewParser(false, this.processMessages, 'devtoolsEFS');
-        const parseDomPromise: Promise<any> =
-          domData.status === 'fulfilled'
-            ? domParser(domData.value)
-            : Promise.reject('No dom file in EFS');
-        const parseDevtoolsPromise: Promise<any> =
-          devtoolsData.status === 'fulfilled'
-            ? devtoolsParser(devtoolsData.value)
-            : Promise.reject('No devtools file in EFS');
-
-        await Promise.all([parseDomPromise, parseDevtoolsPromise]);
-        this.messageManager.onFileReadSuccess();
+        await this.loadEFSMobs()
       } catch (unprocessedLoadError) {
         this.messageManager.onFileReadFailed(sessionLoadError, unprocessedLoadError);
       }
@@ -168,6 +127,60 @@ export default class MessageLoader {
       this.messageManager.onFileReadFinally();
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }
+  }
+
+   loadMobs = async () => {
+   const loadMethod =
+     this.session.domURL && this.session.domURL.length > 0
+     ? {
+         mobUrls: this.session.domURL,
+         parser: () => this.createNewParser(true, this.processMessages, 'dom'),
+       }
+     : {
+         mobUrls: this.session.mobsUrl,
+         parser: () => this.createNewParser(false, this.processMessages, 'dom'),
+       };
+
+   const parser = loadMethod.parser();
+   const devtoolsParser = this.createNewParser(true, this.processMessages, 'devtools');
+
+   /**
+    * to speed up time to replay
+    * we load first dom mob file before the rest
+    * (because parser can read them in parallel)
+    * as a tradeoff we have some copy-paste code
+    * for the devtools file
+    * */
+    await loadFiles([loadMethod.mobUrls[0]], parser);
+    const restDomFilesPromise = this.loadDomFiles([...loadMethod.mobUrls.slice(1)], parser);
+    const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
+
+    await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
+    this.messageManager.onFileReadSuccess();
+  }
+
+  loadEFSMobs = async () => {
+    this.store.update({ domLoading: true, devtoolsLoading: true });
+    const efsDomFilePromise = requestEFSDom(this.session.sessionId);
+    const efsDevtoolsFilePromise = requestEFSDevtools(this.session.sessionId);
+
+    const [domData, devtoolsData] = await Promise.allSettled([
+      efsDomFilePromise,
+      efsDevtoolsFilePromise,
+    ]);
+    const domParser = this.createNewParser(false, this.processMessages, 'domEFS');
+    const devtoolsParser = this.createNewParser(false, this.processMessages, 'devtoolsEFS');
+    const parseDomPromise: Promise<any> =
+      domData.status === 'fulfilled'
+      ? domParser(domData.value)
+      : Promise.reject('No dom file in EFS');
+    const parseDevtoolsPromise: Promise<any> =
+      devtoolsData.status === 'fulfilled'
+      ? devtoolsParser(devtoolsData.value)
+      : Promise.reject('No devtools file in EFS');
+
+    await Promise.all([parseDomPromise, parseDevtoolsPromise]);
+    this.messageManager.onFileReadSuccess();
   }
 
   clean() {

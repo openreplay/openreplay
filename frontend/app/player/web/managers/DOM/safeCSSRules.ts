@@ -4,6 +4,11 @@ export function insertRule(
   sheet: { insertRule: (rule: string, index: number) => void },
   msg: { rule: string, index: number }
 ) {
+  // we don't really need this anymore I believe
+  if (msg.rule.includes('-moz-') || msg.rule.includes('-ms-')) {
+    return
+  }
+
   try {
     sheet.insertRule(msg.rule, msg.index)
   } catch (e) {
