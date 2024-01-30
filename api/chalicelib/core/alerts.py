@@ -95,7 +95,7 @@ async def update(id, data: schemas.AlertSchema):
     return {"data": helper.custom_alert_to_front(__process_circular(a))}
 
 
-def process_notifications(data):
+async def process_notifications(data):
     full = {}
     for n in data:
         if "message" in n["options"]:
@@ -112,7 +112,7 @@ def process_notifications(data):
                     })
                 elif c["type"] in ["webhook"]:
                     full[c["type"]].append({"data": webhook_data, "destination": c["value"]})
-    notifications.create(data)
+    await notifications.create(data)
     BATCH_SIZE = 200
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
@@ -122,52 +122,51 @@ def process_notifications(data):
 
             if t == "slack":
                 try:
-                    send_to_slack_batch(notifications_list=notifications_list)
+                    await send_to_slack_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending slack notifications batch")
                     logging.error(str(e))
             elif t == "msteams":
                 try:
-                    send_to_msteams_batch(notifications_list=notifications_list)
+                    await send_to_msteams_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending msteams notifications batch")
                     logging.error(str(e))
             elif t == "email":
                 try:
-                    send_by_email_batch(notifications_list=notifications_list)
+                    await send_by_email_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending email notifications batch")
                     logging.error(str(e))
             elif t == "webhook":
                 try:
-                    webhook.trigger_batch(data_list=notifications_list)
+                    await webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending webhook notifications batch")
                     logging.error(str(e))
 
 
-def send_by_email(notification, destination):
+async def send_by_email(notification, destination):
     if notification is None:
         return
-    email_helper.alert_email(recipients=destination,
+    await email_helper.alert_email(recipients=destination,
                              subject=f'"{notification["title"]}" has been triggered',
                              data={
                                  "message": f'"{notification["title"]}" {notification["description"]}',
                                  "project_id": notification["options"]["projectId"]})
 
 
-def send_by_email_batch(notifications_list):
+async def send_by_email_batch(notifications_list):
     if not smtp.has_smtp():
         logging.info("no SMTP configuration for email notifications")
     if notifications_list is None or len(notifications_list) == 0:
         logging.info("no email notifications")
         return
     for n in notifications_list:
-        send_by_email(notification=n.get("notification"), destination=n.get("destination"))
-        time.sleep(1)
+        await send_by_email(notification=n.get("notification"), destination=n.get("destination"))
 
 
-def send_to_slack_batch(notifications_list):
+async def send_to_slack_batch(notifications_list):
     webhookId_map = {}
     for n in notifications_list:
         if n.get("destination") not in webhookId_map:
@@ -178,11 +177,11 @@ def send_to_slack_batch(notifications_list):
                                                              "title_link": n["notification"]["buttonUrl"],
                                                              "ts": datetime.now().timestamp()})
     for batch in webhookId_map.keys():
-        Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+        await Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                          attachments=webhookId_map[batch]["batch"])
 
 
-def send_to_msteams_batch(notifications_list):
+async def send_to_msteams_batch(notifications_list):
     webhookId_map = {}
     for n in notifications_list:
         if n.get("destination") not in webhookId_map:
@@ -207,7 +206,7 @@ def send_to_msteams_batch(notifications_list):
             }
         )
     for batch in webhookId_map.keys():
-        MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+        await MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                            attachments=webhookId_map[batch]["batch"])
 
 

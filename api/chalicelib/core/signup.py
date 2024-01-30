@@ -24,9 +24,9 @@ async def create_tenant(data: schemas.UserSignupSchema):
     if email is None or len(email) < 5:
         errors.append("Invalid email address.")
     else:
-        if users.email_exists(email):
+        if await users.email_exists(email):
             errors.append("Email address already in use.")
-        if users.get_deleted_user_by_email(email) is not None:
+        if await users.get_deleted_user_by_email(email) is not None:
             errors.append("Email address previously deleted.")
 
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
@@ -75,8 +75,8 @@ async def create_tenant(data: schemas.UserSignupSchema):
     with pg_client.cursor() as cur:
         await cur.execute(cur.mogrify(query, params))
 
-    telemetry.new_client()
-    r = users.authenticate(email, password)
+    await telemetry.new_client()
+    r = await users.authenticate(email, password)
     r["smtp"] = smtp.has_smtp()
 
     return {

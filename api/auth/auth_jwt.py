@@ -13,8 +13,8 @@ from chalicelib.core import authorizers, users
 logger = logging.getLogger(__name__)
 
 
-def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
-    user = users.get(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
+async def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.CurrentContext:
+    user = await users.get(user_id=jwt_payload.get("userId", -1), tenant_id=jwt_payload.get("tenantId", -1))
     if user is None:
         logger.warning("User not found.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
@@ -36,7 +36,7 @@ class JWTAuth(HTTPBearer):
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=refresh_token)
             if jwt_payload is None or jwt_payload.get("jti") is None:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
-            auth_exists = users.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
+            auth_exists = await users.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
                                                     jwt_jti=jwt_payload["jti"])
             if not auth_exists:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")

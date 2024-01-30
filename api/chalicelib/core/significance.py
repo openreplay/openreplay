@@ -96,7 +96,7 @@ async def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, projec
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = await metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 # op = sessions.__get_sql_operator(f["operator"])
                 if f.source in meta_keys.keys():
@@ -550,7 +550,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
+async def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     output = []
     stages = filter_d.events
     # TODO: handle 1 stage alone
@@ -577,13 +577,13 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
         # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
         #                                   project_id=project_id, user_id=None, count_only=True)
         # last change
-        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
+        counts = await sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
                                           project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         return get_stages(stages, []), 0
     # Obtain the first part of the output

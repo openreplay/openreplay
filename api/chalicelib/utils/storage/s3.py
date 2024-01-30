@@ -36,8 +36,8 @@ class AmazonS3Storage(ObjectStorage):
                 raise
         return True
 
-    def get_presigned_url_for_sharing(self, bucket, expires_in, key, check_exists=False):
-        if check_exists and not self.exists(bucket, key):
+    async def get_presigned_url_for_sharing(self, bucket, expires_in, key, check_exists=False):
+        if check_exists and not await self.exists(bucket, key):
             return None
 
         return self.client.generate_presigned_url(
@@ -79,7 +79,7 @@ class AmazonS3Storage(ObjectStorage):
             f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
         return req.url
 
-    def get_file(self, source_bucket, source_key):
+    async def get_file(self, source_bucket, source_key):
         try:
             result = self.client.get_object(
                 Bucket=source_bucket,

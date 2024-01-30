@@ -28,7 +28,7 @@ def __quantiles(a, q, interpolation='higher'):
         return arr[ind]
 
 
-def __get_constraints(project_id, time_constraint=True, chart=False, duration=True, project=True,
+async def __get_constraints(project_id, time_constraint=True, chart=False, duration=True, project=True,
                       project_identifier="project_id",
                       main_table="sessions", time_column="start_ts", data={}):
     pg_sub_query = []
@@ -43,7 +43,7 @@ def __get_constraints(project_id, time_constraint=True, chart=False, duration=Tr
     if chart:
         pg_sub_query.append(f"{main_table}{time_column} >= generated_timestamp")
         pg_sub_query.append(f"{main_table}{time_column} < generated_timestamp + %(step_size)s")
-    return pg_sub_query + __get_meta_constraint(project_id=project_id, data=data)
+    return pg_sub_query + await __get_meta_constraint(project_id=project_id, data=data)
 
 
 def __merge_charts(list1, list2, time_key="timestamp"):
@@ -77,11 +77,11 @@ METADATA_FIELDS = {"userId": "user_id",
                    "metadata10": "metadata_10"}
 
 
-def __get_meta_constraint(project_id, data):
+async def __get_meta_constraint(project_id, data):
     if len(data.get("filters", [])) == 0:
         return []
     constraints = []
-    meta_keys = metadata.get(project_id=project_id)
+    meta_keys = await metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
 
     for i, f in enumerate(data.get("filters", [])):
@@ -2872,13 +2872,13 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
     return helper.dict_to_camel_case(row)
 
 
-def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                    endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            duration=False)
 

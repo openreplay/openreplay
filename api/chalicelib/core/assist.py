@@ -28,24 +28,24 @@ SESSION_PROJECTION_COLS = """s.project_id,
                            """
 
 
-def get_live_sessions_ws_user_id(project_id, user_id):
+async def get_live_sessions_ws_user_id(project_id, user_id):
     data = {
         "filter": {"userId": user_id} if user_id else {}
     }
-    return __get_live_sessions_ws(project_id=project_id, data=data)
+    return await __get_live_sessions_ws(project_id=project_id, data=data)
 
 
-def get_live_sessions_ws_test_id(project_id, test_id):
+async def get_live_sessions_ws_test_id(project_id, test_id):
     data = {
         "filter": {
             'uxtId': test_id,
             'operator': 'is'
         }
     }
-    return __get_live_sessions_ws(project_id=project_id, data=data)
+    return await __get_live_sessions_ws(project_id=project_id, data=data)
 
 
-def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
+async def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
     data = {
         "filter": {},
         "pagination": {"limit": body.limit, "page": body.page},
@@ -57,10 +57,10 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 
         else:
             data["filter"][f.type] = {"values": f.value, "operator": f.operator}
-    return __get_live_sessions_ws(project_id=project_id, data=data)
+    return await __get_live_sessions_ws(project_id=project_id, data=data)
 
 
-def __get_live_sessions_ws(project_id, data):
+async def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
         async with httpx.AsyncClient() as client:
@@ -108,8 +108,8 @@ def __get_agent_token(project_id, project_key, session_id):
     )
 
 
-def get_live_session_by_id(project_id, session_id):
-    project_key = projects.get_project_key(project_id)
+async def get_live_session_by_id(project_id, session_id):
+    project_key = await projects.get_project_key(project_id)
     try:
         async with httpx.AsyncClient() as client:
             results = await client.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
@@ -135,9 +135,9 @@ def get_live_session_by_id(project_id, session_id):
     return results
 
 
-def is_live(project_id, session_id, project_key=None):
+async def is_live(project_id, session_id, project_key=None):
     if project_key is None:
-        project_key = projects.get_project_key(project_id)
+        project_key = await projects.get_project_key(project_id)
     try:
         async with httpx.AsyncClient() as client:
             results = await client.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
@@ -244,8 +244,8 @@ def get_raw_devtools_by_id(project_id, session_id):
     return None
 
 
-def session_exists(project_id, session_id):
-    project_key = projects.get_project_key(project_id)
+async def session_exists(project_id, session_id):
+    project_key = await projects.get_project_key(project_id)
     try:
         async with httpx.AsyncClient() as client:
             results = await client.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",

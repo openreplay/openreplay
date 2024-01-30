@@ -11,20 +11,23 @@ def obfuscate_string(string):
 
 
 class JIRAIntegration(integration_base.BaseIntegration):
+
     def __init__(self, tenant_id, user_id):
         self.__tenant_id = tenant_id
         # TODO: enable super-constructor when OAuth is done
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._issue_handler = None
         self._user_id = user_id
-        self.integration = self.get()
 
+
+    async def init(self):
+        self.integration = self.get()
         if self.integration is None:
             return
         self.integration["valid"] = True
         if not self.integration["url"].endswith('atlassian.net'):
             self.integration["valid"] = False
-
+            
     @property
     def provider(self):
         return PROVIDER

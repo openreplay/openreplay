@@ -5,10 +5,10 @@ from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
 
-def __group_metadata(session, project_metadata):
+async def __group_metadata(session, project_metadata):
     meta = {}
     for m in project_metadata.keys():
-        if project_metadata[m] is not None and session.get(m) is not None:
+        if project_metadata[m] is not None and await session.get(m) is not None:
             meta[project_metadata[m]] = session[m]
         session.pop(m)
     return meta
@@ -48,43 +48,43 @@ async def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext,
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] == 'ios':
-                    data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
+                    data['events'] = await events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
                     for e in data['events']:
                         if e["type"].endswith("_IOS"):
                             e["type"] = e["type"][:-len("_IOS")]
-                    data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                    data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                    data['crashes'] = await events_ios.get_crashes_by_session_id(session_id=session_id)
+                    data['userEvents'] = await events_ios.get_customs_by_session_id(project_id=project_id,
                                                                               session_id=session_id)
                     data['mobsUrl'] = []
                 else:
-                    data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
+                    data['events'] = await events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                               group_clickrage=True)
-                    all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
+                    all_errors = await events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     # limit the number of errors to reduce the response-body size
                     data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                       if e['source'] == "js_exception"][:500]
-                    data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
+                    data['userEvents'] = await events.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
-                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
+                    data['domURL'] = await sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
-                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                    data['mobsUrl'] = await sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
+                    data['devtoolsURL'] = await sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     check_existence=False)
-                    data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
+                    data['resources'] = await resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"], duration=data["duration"])
 
-                data['notes'] = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=project_id,
+                data['notes'] = await sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=project_id,
                                                                  session_id=session_id, user_id=context.user_id)
-                data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
-                data['live'] = live and assist.is_live(project_id=project_id, session_id=session_id,
+                data['metadata'] = await __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
+                data['issues'] = await issues.get_by_session_id(session_id=session_id, project_id=project_id)
+                data['live'] = live and await assist.is_live(project_id=project_id, session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
         elif live:
-            return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            return await assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
         else:
             return None
 
@@ -123,29 +123,29 @@ async def get_replay(project_id, session_id, context: schemas.CurrentContext, fu
             if full_data:
                 if data["platform"] == 'ios':
                     data['mobsUrl'] = []
-                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
+                    data['videoURL'] = await sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
                                                                     check_existence=False)
                 else:
-                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                    data['mobsUrl'] = await sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
+                    data['devtoolsURL'] = await sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     check_existence=False)
-                    data['canvasURL'] = canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
-                    if user_testing.has_test_signals(session_id=session_id, project_id=project_id):
-                        data['utxVideo'] = user_testing.get_ux_webcam_signed_url(session_id=session_id,
+                    data['canvasURL'] = await canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
+                    if await user_testing.has_test_signals(session_id=session_id, project_id=project_id):
+                        data['utxVideo'] = user_await testing.get_ux_webcam_signed_url(session_id=session_id,
                                                                                  project_id=project_id,
                                                                                  check_existence=False)
                     else:
                         data['utxVideo'] = []
 
-                data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
+                data['domURL'] = await sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                         check_existence=False)
-                data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['live'] = live and assist.is_live(project_id=project_id, session_id=session_id,
+                data['metadata'] = await __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
+                data['live'] = live and await assist.is_live(project_id=project_id, session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
         elif live:
-            return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+            return await assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
         else:
             return None
 
@@ -166,30 +166,30 @@ async def get_events(project_id, session_id):
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
             if s_data["platform"] == 'ios':
-                data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
+                data['events'] = await events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
-                data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                data['crashes'] = await events_ios.get_crashes_by_session_id(session_id=session_id)
+                data['userEvents'] = await events_ios.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
                 data['userTesting'] = []
             else:
-                data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
+                data['events'] = await events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
-                all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
+                all_errors = await events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                 data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                 # to keep only the first stack
                 # limit the number of errors to reduce the response-body size
                 data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                   if e['source'] == "js_exception"][:500]
-                data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
+                data['userEvents'] = await events.get_customs_by_session_id(project_id=project_id,
                                                                       session_id=session_id)
-                data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
+                data['resources'] = await resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                 start_ts=s_data["startTs"], duration=s_data["duration"])
-                data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
+                data['userTesting'] = await user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
-            data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
+            data['issues'] = await issues.get_by_session_id(session_id=session_id, project_id=project_id)
             data['issues'] = reduce_issues(data['issues'])
             return data
         else:

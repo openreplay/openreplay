@@ -138,7 +138,7 @@ async def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_aut
     if __exists_by_name(name=data.name, exclude_id=None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if not skip_authorization:
-        admin = users.get(user_id=user_id, tenant_id=tenant_id)
+        admin = await users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
     return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
@@ -147,7 +147,7 @@ async def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_aut
 async def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     if __exists_by_name(name=data.name, exclude_id=project_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = await users.get(user_id=user_id, tenant_id=tenant_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
@@ -155,7 +155,7 @@ async def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema
 
 
 async def delete(tenant_id, user_id, project_id):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
+    admin = await users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -396,7 +396,7 @@ def update_project_conditions(project_id, conditions):
     if conditions is None:
         return
 
-    existing = get_conditions(project_id)["conditions"]
+    existing = await get_conditions(project_id)["conditions"]
     existing_ids = {c.condition_id for c in existing}
 
     to_be_updated = [c for c in conditions if c.condition_id in existing_ids]
@@ -404,16 +404,16 @@ def update_project_conditions(project_id, conditions):
     to_be_deleted = existing_ids - {c.condition_id for c in conditions}
 
     if to_be_deleted:
-        delete_project_condition(project_id, to_be_deleted)
+        await delete_project_condition(project_id, to_be_deleted)
 
     if to_be_created:
-        create_project_conditions(project_id, to_be_created)
+        await create_project_conditions(project_id, to_be_created)
 
     if to_be_updated:
         print(to_be_updated)
-        update_project_condition(project_id, to_be_updated)
+        await update_project_condition(project_id, to_be_updated)
 
-    return get_conditions(project_id)
+    return await get_conditions(project_id)
 
 
 async def get_projects_ids(tenant_id):

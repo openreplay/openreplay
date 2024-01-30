@@ -19,10 +19,10 @@ PIE_CHART_GROUP = 5
 #  timeseries /
 #  table of errors / table of issues / table of browsers / table of devices / table of countries / table of URLs
 # remove "table of" calls from this function
-def __try_live(project_id, data: schemas.CardSchema):
+async def __try_live(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
-        results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
+        results.append(await sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
         if data.view_type == schemas.MetricTimeseriesViewType.progress:
@@ -30,7 +30,7 @@ def __try_live(project_id, data: schemas.CardSchema):
             diff = s.filter.endTimestamp - s.filter.startTimestamp
             s.filter.endTimestamp = s.filter.startTimestamp
             s.filter.startTimestamp = s.filter.endTimestamp - diff
-            r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
+            r["previousCount"] = await sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
@@ -48,10 +48,10 @@ def __try_live(project_id, data: schemas.CardSchema):
     return results
 
 
-def __get_table_of_series(project_id, data: schemas.CardSchema):
+async def __get_table_of_series(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
-        results.append(sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
+        results.append(await sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
                                               metric_of=data.metric_of, metric_value=data.metric_value))
 
     return results

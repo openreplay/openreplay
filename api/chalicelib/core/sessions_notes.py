@@ -140,7 +140,7 @@ async def delete(tenant_id, user_id, project_id, note_id):
 
 
 async def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
-    note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
+    note = await get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
     if note is None:
         return {"errors": ["Note not found"]}
     session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}?note={note['noteId']}")
@@ -172,7 +172,7 @@ async def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
 
 
 async def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
-    note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
+    note = await get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
     if note is None:
         return {"errors": ["Note not found"]}
     session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}?note={note['noteId']}")
@@ -205,7 +205,7 @@ async def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
                    "text": bottom,
                    "size": "Small",
                    "fontType": "Monospace"})
-    return MSTeams.send_raw(
+    return await MSTeams.send_raw(
         tenant_id=tenant_id,
         webhook_id=webhook_id,
         body={"type": "message",

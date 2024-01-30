@@ -10,7 +10,7 @@ if '%s' in SMR_URL:
         SMR_URL = SMR_URL % "smr"
 
 
-def get_original_trace(key, positions, is_url=False):
+async def get_original_trace(key, positions, is_url=False):
     payload = {
         "key": key,
         "positions": positions,

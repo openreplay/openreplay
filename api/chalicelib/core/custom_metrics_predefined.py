@@ -10,7 +10,7 @@ from chalicelib.core import metrics
 logger = logging.getLogger(__name__)
 
 
-def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
+async def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
         schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
     supported = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
                  schemas.MetricOfWebVitals.avg_image_load_time: metrics.get_application_activity_avg_image_load_time,
@@ -58,4 +58,4 @@ def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
                  schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
                  schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
 
-    return supported.get(key, lambda *args: None)(project_id=project_id, **data)
+    return await supported.get(key, lambda *args: None)(project_id=project_id, **data)

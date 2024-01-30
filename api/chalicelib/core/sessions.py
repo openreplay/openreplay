@@ -83,7 +83,7 @@ async def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id,
             else:
                 sort = 'start_ts'
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = await metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -117,7 +117,7 @@ async def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id,
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = await metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -556,7 +556,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
             elif filter_type == events.EventType.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = await metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 if f.source in meta_keys.keys():
                     if is_any:
@@ -1097,16 +1097,16 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
 
 async def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     if project_id is None:
-        all_projects = projects.get_projects(tenant_id=tenant_id)
+        all_projects = await projects.get_projects(tenant_id=tenant_id)
     else:
         all_projects = [
-            projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
+            await projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
                                  include_gdpr=False)]
 
     all_projects = {int(p["projectId"]): p["name"] for p in all_projects}
     project_ids = list(all_projects.keys())
 
-    available_keys = metadata.get_keys_by_projects(project_ids)
+    available_keys = await metadata.get_keys_by_projects(project_ids)
     for i in available_keys:
         available_keys[i]["user_id"] = schemas.FilterType.user_id
         available_keys[i]["user_anonymous_id"] = schemas.FilterType.user_anonymous_id
@@ -1274,7 +1274,7 @@ async def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: st
     if session_ids is None or len(session_ids) == 0:
         return {"total": 0, "sessions": []}
     async with pg_client.cursor() as cur:
-        meta_keys = metadata.get(project_id=project_id)
+        meta_keys = await metadata.get(project_id=project_id)
         params = {"project_id": project_id, "session_ids": tuple(session_ids)}
         order_direction = 'ASC' if ascending else 'DESC'
         main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_BASE_COLS}

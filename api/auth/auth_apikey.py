@@ -18,7 +18,7 @@ class APIKeyAuth(APIKeyHeader):
 
     async def __call__(self, request: Request) -> Optional[CurrentAPIContext]:
         api_key: Optional[str] = await super(APIKeyAuth, self).__call__(request)
-        r = authorizers.api_key_authorizer(api_key)
+        r = await authorizers.api_key_authorizer(api_key)
         if r is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

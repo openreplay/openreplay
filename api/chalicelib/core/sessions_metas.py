@@ -66,11 +66,11 @@ SUPPORTED_TYPES = {
 }
 
 
-def search(text: str, meta_type: schemas.FilterType, project_id: int):
+async def search(text: str, meta_type: schemas.FilterType, project_id: int):
     rows = []
     if meta_type not in list(SUPPORTED_TYPES.keys()):
         return {"errors": ["unsupported type"]}
-    rows += SUPPORTED_TYPES[meta_type].get(project_id=project_id, text=text)
+    rows += await SUPPORTED_TYPES[meta_type].get(project_id=project_id, text=text)
     # for IOS events autocomplete
     # if meta_type + "_IOS" in list(SUPPORTED_TYPES.keys()):
     #     rows += SUPPORTED_TYPES[meta_type + "_IOS"].get(project_id=project_id, text=text)

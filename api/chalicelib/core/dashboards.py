@@ -29,7 +29,7 @@ async def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSch
         row = await cur.fetchone()
     if row is None:
         return {"errors": ["something went wrong while creating the dashboard"]}
-    return {"data": get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=row["dashboard_id"])}
+    return {"data": await get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=row["dashboard_id"])}
 
 
 async def get_dashboards(project_id, user_id):

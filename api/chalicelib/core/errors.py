@@ -460,7 +460,7 @@ async def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+        statuses = await sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                             error_status=data.status)
         if len(statuses) == 0:
             return empty_response
@@ -594,8 +594,8 @@ async def __save_stacktrace(error_id, data):
         await cur.execute(query=query)
 
 
-def get_trace(project_id, error_id):
-    error = get(error_id=error_id, family=False)
+async def get_trace(project_id, error_id):
+    error = await get(error_id=error_id, family=False)
     if error is None:
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":
@@ -606,7 +606,7 @@ def get_trace(project_id, error_id):
         return {"sourcemapUploaded": True,
                 "trace": error.get("stacktrace"),
                 "preparsed": True}
-    trace, all_exists = sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
+    trace, all_exists = await sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
     if all_exists:
         __save_stacktrace(error_id=error_id, data=trace)
     return {"sourcemapUploaded": all_exists,

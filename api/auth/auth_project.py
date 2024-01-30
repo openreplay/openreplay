@@ -23,9 +23,9 @@ class ProjectAuthorizer:
         current_project = None
         if self.project_identifier == "projectId" \
                 and (isinstance(value, int) or isinstance(value, str) and value.isnumeric()):
-            current_project = projects.get_project(project_id=value, tenant_id=current_user.tenant_id)
+            current_project = await projects.get_project(project_id=value, tenant_id=current_user.tenant_id)
         elif self.project_identifier == "projectKey":
-            current_project = projects.get_by_project_key(project_key=value)
+            current_project = await projects.get_by_project_key(project_key=value)
 
         if current_project is None:
             logger.debug(f"unauthorized project {self.project_identifier}:{value}")

@@ -5,7 +5,7 @@ from chalicelib.core import users
 
 
 async def get_state(tenant_id):
-    pids = projects.get_projects_ids(tenant_id=tenant_id)
+    pids = await projects.get_projects_ids(tenant_id=tenant_id)
     async with pg_client.cursor() as cur:
         recorded = False
         meta = False
@@ -49,35 +49,35 @@ async def get_state(tenant_id):
          "done": len(await users.get_members(tenant_id=tenant_id)) > 1,
          "URL": "https://app.openreplay.com/client/manage-users"},
         {"task": "Integrations",
-         "done": len(log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
-                 or len(log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
-                 or len(log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
+         "done": len(await log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
+                 or len(await log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
+                 or len(await log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
          "URL": "https://docs.openreplay.com/integrations"}
     ]
 
 
-def get_state_installing(tenant_id):
-    pids = projects.get_projects_ids(tenant_id=tenant_id)
-    with pg_client.cursor() as cur:
+async def get_state_installing(tenant_id):
+    pids = await projects.get_projects_ids(tenant_id=tenant_id)
+    async with pg_client.cursor() as cur:
         recorded = False
 
         if len(pids) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify("""SELECT EXISTS((  SELECT 1
                                                 FROM public.sessions AS s
                                                 WHERE s.project_id IN %(ids)s)) AS exists;""",
                             {"ids": tuple(pids)})
             )
-            recorded = cur.fetchone()["exists"]
+            recorded = await cur.fetchone()["exists"]
 
     return {"task": "Install OpenReplay",
             "done": recorded,
             "URL": "https://docs.openreplay.com/getting-started/quick-start"}
 
 
-def get_state_identify_users(tenant_id):
-    with pg_client.cursor() as cur:
-        cur.execute("""SELECT EXISTS((SELECT 1
+async def get_state_identify_users(tenant_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute("""SELECT EXISTS((SELECT 1
                                        FROM public.projects AS p
                                                 LEFT JOIN LATERAL ( SELECT 1
                                                                     FROM public.sessions
@@ -93,22 +93,22 @@ def get_state_identify_users(tenant_id):
                                                OR p.metadata_10 IS NOT NULL )
                                            )) AS exists;""")
 
-        meta = cur.fetchone()["exists"]
+        meta = await cur.fetchone()["exists"]
 
     return {"task": "Identify Users",
             "done": meta,
             "URL": "https://docs.openreplay.com/data-privacy-security/metadata"}
 
 
-def get_state_manage_users(tenant_id):
+async def get_state_manage_users(tenant_id):
     return {"task": "Invite Team Members",
-            "done": len(users.get_members(tenant_id=tenant_id)) > 1,
+            "done": len(await users.get_members(tenant_id=tenant_id)) > 1,
             "URL": "https://app.openreplay.com/client/manage-users"}
 
 
-def get_state_integrations(tenant_id):
+async def get_state_integrations(tenant_id):
     return {"task": "Integrations",
-            "done": len(log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
-                    or len(log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
-                    or len(log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
+            "done": len(await log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
+                    or len(await log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
+                    or len(await log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
             "URL": "https://docs.openreplay.com/integrations"}

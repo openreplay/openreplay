@@ -1,5 +1,6 @@
 import logging
 import time
+import httpx
 from datetime import datetime
 
 from fastapi import HTTPException, status

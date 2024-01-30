@@ -31,8 +31,8 @@ def __merge_cells(rows, start, count, replacement):
     return rows
 
 
-def __get_grouped_clickrage(rows, session_id, project_id):
-    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage", project_id=project_id)
+async def __get_grouped_clickrage(rows, session_id, project_id):
+    click_rage_issues = await issues.get_by_session_id(session_id=session_id, issue_type="click_rage", project_id=project_id)
     if len(click_rage_issues) == 0:
         return rows
 
@@ -56,7 +56,7 @@ async def get_by_session_id(session_id, project_id, group_clickrage=False, event
     async with pg_client.cursor() as cur:
         rows = []
         if event_type is None or event_type == schemas.EventType.click:
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
                 SELECT 
                     c.*,
                     'CLICK' AS type
@@ -66,11 +66,11 @@ async def get_by_session_id(session_id, project_id, group_clickrage=False, event
                 ORDER BY c.timestamp;""",
                                     {"project_id": project_id, "session_id": session_id})
                         )
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
             if group_clickrage:
-                rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
+                rows = await __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
         if event_type is None or event_type == schemas.EventType.input:
-            cur.execute(cur.mogrify("""
+            await cur.execute(cur.mogrify("""
                 SELECT 
                     i.*,
                     'INPUT' AS type
@@ -80,9 +80,9 @@ async def get_by_session_id(session_id, project_id, group_clickrage=False, event
                 ORDER BY i.timestamp;""",
                                     {"project_id": project_id, "session_id": session_id})
                         )
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
         if event_type is None or event_type == schemas.EventType.location:
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
                 SELECT 
                     l.*,
                     l.path AS value,
@@ -92,7 +92,7 @@ async def get_by_session_id(session_id, project_id, group_clickrage=False, event
                 WHERE 
                   l.session_id = %(session_id)s
                 ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-            rows += cur.fetchall()
+            rows += await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
@@ -200,17 +200,17 @@ def search(text, event_type, project_id, source, key):
         return {"data": autocomplete.__get_autocomplete_table(text, project_id)}
 
     if event_type in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
+        rows = await SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
         # for IOS events autocomplete
         # if event_type + "_IOS" in SUPPORTED_TYPES.keys():
         #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,source=source)
     elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key, source=source)
+        rows = await SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key, source=source)
     elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
-        return sessions_metas.search(text, event_type, project_id)
+        return await sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_IOS") \
             and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
-        return sessions_metas.search(text, event_type, project_id)
+        return await sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}
 

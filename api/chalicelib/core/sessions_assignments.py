@@ -25,7 +25,7 @@ async def __get_saved_data(project_id, session_id, issue_id, tool):
 
 async def create_new_assignment(tenant_id, project_id, session_id, creator_id, assignee, description, title, issue_type,
                           integration_project_id):
-    error, integration = integrations_manager.get_integration(tenant_id=tenant_id, user_id=creator_id)
+    error, integration = await integrations_manager.get_integration(tenant_id=tenant_id, user_id=creator_id)
     if error is not None:
         return error
 
@@ -36,7 +36,7 @@ async def create_new_assignment(tenant_id, project_id, session_id, creator_id, a
     link = config("SITE_URL") + f"/{project_id}/session/{session_id}"
     description += f"\n> {link}"
     try:
-        issue = integration.issue_handler.create_new_assignment(title=title, assignee=assignee, description=description,
+        issue = await integration.issue_handler.create_new_assignment(title=title, assignee=assignee, description=description,
                                                                 issue_type=issue_type,
                                                                 integration_project_id=integration_project_id)
     except integration_base_issue.RequestException as e:
@@ -59,7 +59,7 @@ async def create_new_assignment(tenant_id, project_id, session_id, creator_id, a
 
 
 async def get_all(project_id, user_id):
-    available_integrations = integrations_manager.get_available_integrations(user_id=user_id)
+    available_integrations = await integrations_manager.get_available_integrations(user_id=user_id)
     no_integration = not any(available_integrations.values())
     if no_integration:
         return []
@@ -86,7 +86,7 @@ async def get_all(project_id, user_id):
 
 
 async def get_by_session(tenant_id, user_id, project_id, session_id):
-    available_integrations = integrations_manager.get_available_integrations(user_id=user_id)
+    available_integrations = await integrations_manager.get_available_integrations(user_id=user_id)
     if not any(available_integrations.values()):
         return []
     extra_query = ["session_id = %(session_id)s", "provider IN %(providers)s"]
@@ -110,49 +110,49 @@ async def get_by_session(tenant_id, user_id, project_id, session_id):
                                       "id": i["issue_id"]})
     results = []
     for tool in issues.keys():
-        error, integration = integrations_manager.get_integration(tool=tool, tenant_id=tenant_id, user_id=user_id)
+        error, integration = await integrations_manager.get_integration(tool=tool, tenant_id=tenant_id, user_id=user_id)
         if error is not None:
             return error
 
-        i = integration.get()
+        i = await integration.get()
         if i is None:
             print("integration not found")
             continue
 
-        r = integration.issue_handler.get_by_ids(saved_issues=issues[tool])
+        r = await integration.issue_handler.get_by_ids(saved_issues=issues[tool])
         for i in r["issues"]:
             i["provider"] = tool
         results += r["issues"]
     return results
 
 
-def get(tenant_id, user_id, project_id, session_id, assignment_id):
-    error, integration = integrations_manager.get_integration(tenant_id=tenant_id, user_id=user_id)
+async def get(tenant_id, user_id, project_id, session_id, assignment_id):
+    error, integration = await integrations_manager.get_integration(tenant_id=tenant_id, user_id=user_id)
     if error is not None:
         return error
-    l = __get_saved_data(project_id, session_id, assignment_id, tool=integration.provider)
+    l = await __get_saved_data(project_id, session_id, assignment_id, tool=integration.provider)
     if l is None:
         return {"errors": ["issue not found"]}
-    i = integration.get()
+    i = await integration.get()
     if i is None:
         return {"errors": ["integration not found"]}
-    r = integration.issue_handler.get(integration_project_id=l["providerData"]["integrationProjectId"],
+    r = await integration.issue_handler.get(integration_project_id=l["providerData"]["integrationProjectId"],
                                       assignment_id=assignment_id)
 
     r["provider"] = integration.provider.lower()
     return r
 
 
-def comment(tenant_id, user_id, project_id, session_id, assignment_id, message):
-    error, integration = integrations_manager.get_integration(tenant_id=tenant_id, user_id=user_id)
+async def comment(tenant_id, user_id, project_id, session_id, assignment_id, message):
+    error, integration = await integrations_manager.get_integration(tenant_id=tenant_id, user_id=user_id)
     if error is not None:
         return error
-    i = integration.get()
+    i = await integration.get()
 
     if i is None:
         return {"errors": [f"integration not found"]}
-    l = __get_saved_data(project_id, session_id, assignment_id, tool=integration.provider)
+    l = await __get_saved_data(project_id, session_id, assignment_id, tool=integration.provider)
 
-    return integration.issue_handler.comment(integration_project_id=l["providerData"]["integrationProjectId"],
+    return await integration.issue_handler.comment(integration_project_id=l["providerData"]["integrationProjectId"],
                                              assignment_id=assignment_id,
                                              comment=message)

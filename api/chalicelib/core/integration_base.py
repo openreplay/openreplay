@@ -21,7 +21,7 @@ class BaseIntegration(ABC):
 
     @property
     def integration_token(self):
-        integration = self.get()
+        integration = await self.get()
         if integration is None:
             print("no token configured yet")
             return None
