@@ -1,4 +1,4 @@
-import BatchWriter from './BatchWriter'
+import BatchWriter from '../webworker/BatchWriter'
 import * as Messages from '../common/messages.gen.js'
 import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
 import Message from '../common/messages.gen.js'

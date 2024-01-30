@@ -1,5 +1,5 @@
 import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals'
-import PrimitiveEncoder from './PrimitiveEncoder.js'
+import PrimitiveEncoder from '../webworker/PrimitiveEncoder.js'
 
 describe('PrimitiveEncoder', () => {
   test('initial state', () => {
