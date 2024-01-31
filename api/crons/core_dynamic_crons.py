@@ -5,23 +5,23 @@ from chalicelib.core import telemetry
 from chalicelib.core import weekly_report, jobs, health
 
 
-async def run_scheduled_jobs() -> None:
+def run_scheduled_jobs() -> None:
     jobs.execute_jobs()
 
 
-async def weekly_report_cron() -> None:
+def weekly_report_cron() -> None:
     weekly_report.cron()
 
 
-async def telemetry_cron() -> None:
+def telemetry_cron() -> None:
     telemetry.compute()
 
 
-async def health_cron() -> None:
+def health_cron() -> None:
     health.cron()
 
 
-async def weekly_health_cron() -> None:
+def weekly_health_cron() -> None:
     health.weekly_cron()
 
 
