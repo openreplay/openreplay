@@ -191,7 +191,7 @@ async def add_edit_rollbar(projectId: int, data: schemas.IntegrationRollbarSchem
 
 
 @app.delete('/{projectId}/integrations/rollbar', tags=["integrations"])
-async def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_rollbar(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
