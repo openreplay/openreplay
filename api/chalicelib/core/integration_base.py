@@ -9,6 +9,9 @@ class BaseIntegration(ABC):
         self._user_id = user_id
         self._issue_handler = ISSUE_CLASS(self.integration_token)
 
+    async def init():
+        pass
+        
     @property
     @abstractmethod
     def provider(self):
@@ -43,17 +46,17 @@ class BaseIntegration(ABC):
         pass
 
     @abstractmethod
-    def update(self, changes, obfuscate=False):
+    async def update(self, changes, obfuscate=False):
         pass
 
     @abstractmethod
-    def _add(self, data):
+    async def _add(self, data):
         pass
 
     @abstractmethod
-    def delete(self):
+    async def delete(self):
         pass
 
     @abstractmethod
-    def add_edit(self, data):
+    async def add_edit(self, data):
         pass

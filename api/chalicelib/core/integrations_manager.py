@@ -37,6 +37,7 @@ async def get_integration(tenant_id, user_id, tool=None, for_delete=False):
         return {"errors": [f"issue tracking tool not supported yet, available: {SUPPORTED_TOOLS}"]}, None
     if tool == integration_jira_cloud.PROVIDER:
         integration = integration_jira_cloud.JIRAIntegration(tenant_id=tenant_id, user_id=user_id)
+        await integration.init()
         if not for_delete and integration.integration is not None and not integration.integration.get("valid", True):
             return {"errors": ["JIRA: connexion issue/unauthorized"]}, integration
         return None, integration

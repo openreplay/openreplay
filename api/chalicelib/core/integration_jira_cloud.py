@@ -18,10 +18,12 @@ class JIRAIntegration(integration_base.BaseIntegration):
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._issue_handler = None
         self._user_id = user_id
-
+        self.integeration = None
 
     async def init(self):
-        self.integration = self.get()
+        if self.integration is not None:
+            return
+        self.integration = await self.get()
         if self.integration is None:
             return
         self.integration["valid"] = True
@@ -116,9 +118,9 @@ class JIRAIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data: schemas.IssueTrackingJiraSchema):
+    async def add_edit(self, data: schemas.IssueTrackingJiraSchema):
         if self.integration is not None:
-            return self.update(
+            return await self.update(
                 changes={
                     "username": data.username,
                     "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
@@ -128,7 +130,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
                 obfuscate=True
             )
         else:
-            return self.add(
+            return await self.add(
                 username=data.username,
                 token=data.token,
                 url=str(data.url)
