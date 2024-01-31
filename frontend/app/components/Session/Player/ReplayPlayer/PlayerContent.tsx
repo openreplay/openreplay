@@ -60,7 +60,7 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
             style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)' } : undefined}
           >
             <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
-              <PlayerBlock activeTab={activeTab} />
+              <PlayerBlock setActiveTab={setActiveTab} activeTab={activeTab} />
             </div>
           </div>
           {activeTab !== '' && (
@@ -77,9 +77,9 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
   );
 }
 
-function RightMenu({ tabs, activeTab, setActiveTab, fullscreen }: any) {
+function RightMenu({ activeTab, setActiveTab, fullscreen }: any) {
   return (
-    !fullscreen ? <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} /> : null
+    !fullscreen ? <RightBlock setActiveTab={setActiveTab} activeTab={activeTab} /> : null
   );
 }
 

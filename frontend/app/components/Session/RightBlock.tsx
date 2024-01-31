@@ -1,7 +1,8 @@
-import React from 'react';
-import EventsBlock from '../Session_/EventsBlock';
+import SummaryBlock      from "Components/Session/Player/ReplayPlayer/SummaryBlock";
+import React             from 'react';
+import EventsBlock       from '../Session_/EventsBlock';
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
-import TagWatch from "Components/Session/Player/TagWatch";
+import TagWatch          from "Components/Session/Player/TagWatch";
 
 import cn from 'classnames';
 import stl from './rightblock.module.css';
@@ -32,6 +33,12 @@ function RightBlock({
           <TagWatch />
         </div>
       );
+    case 'SUMMARY':
+      return (
+        <div className={cn('bg-white border-l', stl.panel)}>
+          <SummaryBlock />
+        </div>
+      )
     default:
       return null;
   }

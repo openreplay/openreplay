@@ -427,6 +427,7 @@ export { default as Sleep } from './sleep';
 export { default as Sliders } from './sliders';
 export { default as Social_slack } from './social_slack';
 export { default as Social_trello } from './social_trello';
+export { default as Sparkles } from './sparkles';
 export { default as Speedometer2 } from './speedometer2';
 export { default as Spinner } from './spinner';
 export { default as Star_solid } from './star_solid';
