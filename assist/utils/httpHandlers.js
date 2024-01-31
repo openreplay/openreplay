@@ -64,8 +64,9 @@ const getAllSessions = async  function (projectKey, filters, onlineOnly= false) 
     const sessions = [];
 
     let io = getServer();
-    let connected_sockets = await io.in("/").fetchSockets();
+    let connected_sockets = await io.fetchSockets();
     if (connected_sockets.length === 0) {
+        console.log("No connected sockets");
         return sessions;
     }
 
