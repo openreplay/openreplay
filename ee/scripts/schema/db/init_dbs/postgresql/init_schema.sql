@@ -1,4 +1,4 @@
-\set or_version 'v1.17.0-ee'
+\set or_version 'v1.18.0-ee'
 SET client_min_messages TO NOTICE;
 \set ON_ERROR_STOP true
 SELECT EXISTS (SELECT 1
@@ -46,30 +46,6 @@ begin
     return result;
 end;
 $$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE FUNCTION events.funnel(steps integer[], m integer) RETURNS boolean AS
-$$
-DECLARE
-    step integer;
-    c    integer := 0;
-BEGIN
-    FOREACH step IN ARRAY steps
-        LOOP
-            IF step + c = 0 THEN
-                IF c = 0 THEN
-                    RETURN false;
-                END IF;
-                c := 0;
-                CONTINUE;
-            END IF;
-            IF c + 1 = step THEN
-                c := step;
-            END IF;
-        END LOOP;
-    RETURN c = m;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION notify_integration() RETURNS trigger AS
