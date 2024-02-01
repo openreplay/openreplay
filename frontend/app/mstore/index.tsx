@@ -19,8 +19,8 @@ import WeeklyReportStore from './weeklyReportConfigStore';
 import AlertStore from './alertsStore';
 import FeatureFlagsStore from './featureFlagsStore';
 import UxtestingStore from './uxtestingStore';
-import TagWatchStore from './tagWatchStore';
-
+import TagWatchStore  from './tagWatchStore';
+import AiSummaryStore from "./aiSummaryStore";
 export class RootStore {
   dashboardStore: DashboardStore;
   metricStore: MetricStore;
@@ -41,6 +41,7 @@ export class RootStore {
   featureFlagsStore: FeatureFlagsStore;
   uxtestingStore: UxtestingStore;
   tagWatchStore: TagWatchStore;
+  aiSummaryStore: AiSummaryStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -62,6 +63,7 @@ export class RootStore {
     this.featureFlagsStore = new FeatureFlagsStore();
     this.uxtestingStore = new UxtestingStore();
     this.tagWatchStore = new TagWatchStore();
+    this.aiSummaryStore = new AiSummaryStore();
   }
 
   initClient() {

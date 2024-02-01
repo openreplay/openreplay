@@ -63,23 +63,12 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
               <PlayerBlock setActiveTab={setActiveTab} activeTab={activeTab} />
             </div>
           </div>
-          {activeTab !== '' && (
-            <RightMenu
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              fullscreen={fullscreen}
-              tabs={TABS}
-            />
-          )}
+          {!fullscreen && activeTab !== '' ? (
+            <RightBlock session={session} setActiveTab={setActiveTab} activeTab={activeTab} />
+          ) : null}
         </div>
       )}
     </div>
-  );
-}
-
-function RightMenu({ activeTab, setActiveTab, fullscreen }: any) {
-  return (
-    !fullscreen ? <RightBlock setActiveTab={setActiveTab} activeTab={activeTab} /> : null
   );
 }
 

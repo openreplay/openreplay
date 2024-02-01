@@ -31,7 +31,8 @@ const siteIdRequiredPaths: string[] = [
   '/feature-flags',
   '/check-recording-status',
   '/usability-tests',
-  '/tags'
+  '/tags',
+  '/intelligent'
 ];
 
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
@@ -71,13 +72,19 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  private getInit(method: string = 'GET', params?: any): RequestInit {
+  private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
     const jwt = store.getState().getIn(['user', 'jwt']);
     const headers = new Headers({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     });
+
+    if (reqHeaders) {
+      for (const [key, value] of Object.entries(reqHeaders)) {
+        headers.set(key, value);
+      }
+    }
 
     if (jwt) {
       headers.set('Authorization', `Bearer ${jwt}`);
@@ -122,15 +129,14 @@ export default class APIClient {
 
   async fetch(path: string, params?: any, method: string = 'GET', options: {
     clean?: boolean
-  } = { clean: true }): Promise<Response> {
+  } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
     let jwt = store.getState().getIn(['user', 'jwt']);
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       jwt = await this.handleTokenRefresh();
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
 
-    const init = this.getInit(method, options.clean && params ? clean(params) : params);
-
+    const init = this.getInit(method, options.clean && params ? clean(params) : params, headers);
 
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
@@ -186,14 +192,14 @@ export default class APIClient {
     }
   }
 
-  get(path: string, params?: any, options?: any): Promise<Response> {
+  get(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
     this.init.method = 'GET';
-    return this.fetch(queried(path, params), 'GET', options);
+    return this.fetch(queried(path, params), options, 'GET', undefined, headers);
   }
 
-  post(path: string, params?: any, options?: any): Promise<Response> {
+  post(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
     this.init.method = 'POST';
-    return this.fetch(path, params, 'POST');
+    return this.fetch(path, params, 'POST', options, headers);
   }
 
   put(path: string, params?: any, options?: any): Promise<Response> {

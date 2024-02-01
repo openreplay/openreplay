@@ -1,8 +1,9 @@
-import SummaryBlock      from "Components/Session/Player/ReplayPlayer/SummaryBlock";
-import React             from 'react';
-import EventsBlock       from '../Session_/EventsBlock';
+import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
+import React from 'react';
+import Session from 'Types/session/session';
+import EventsBlock from '../Session_/EventsBlock';
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
-import TagWatch          from "Components/Session/Player/TagWatch";
+import TagWatch from 'Components/Session/Player/TagWatch';
 
 import cn from 'classnames';
 import stl from './rightblock.module.css';
@@ -10,10 +11,13 @@ import stl from './rightblock.module.css';
 function RightBlock({
   activeTab,
   setActiveTab,
+  session,
 }: {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  session: Session;
 }) {
+  console.log(session)
   switch (activeTab) {
     case 'EVENTS':
       return (
@@ -36,9 +40,9 @@ function RightBlock({
     case 'SUMMARY':
       return (
         <div className={cn('bg-white border-l', stl.panel)}>
-          <SummaryBlock />
+          <SummaryBlock session={session} />
         </div>
-      )
+      );
     default:
       return null;
   }
