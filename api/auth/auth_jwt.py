@@ -53,7 +53,7 @@ class JWTAuth(HTTPBearer):
                         or old_jwt_payload.get("userId") != jwt_payload.get("userId"):
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-                return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                return await _get_current_auth_context(request=request, jwt_payload=jwt_payload)
 
         else:
             credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)
@@ -63,7 +63,7 @@ class JWTAuth(HTTPBearer):
                                         detail="Invalid authentication scheme.")
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
                 auth_exists = jwt_payload is not None \
-                              and users.auth_exists(user_id=jwt_payload.get("userId", -1),
+                              and await users.auth_exists(user_id=jwt_payload.get("userId", -1),
                                                     jwt_iat=jwt_payload.get("iat", 100))
                 if jwt_payload is None \
                         or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
@@ -79,7 +79,7 @@ class JWTAuth(HTTPBearer):
 
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-                return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                return await _get_current_auth_context(request=request, jwt_payload=jwt_payload)
 
         logger.warning("Invalid authorization code.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")

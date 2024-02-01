@@ -8,9 +8,11 @@ class BaseIntegration(ABC):
     def __init__(self, user_id, ISSUE_CLASS):
         self._user_id = user_id
         self._issue_handler = ISSUE_CLASS(self.integration_token)
-
+        self.integration = None
+        
     async def init():
-        pass
+        integration = await self.get()
+        self.integration = integration
         
     @property
     @abstractmethod
@@ -24,7 +26,6 @@ class BaseIntegration(ABC):
 
     @property
     def integration_token(self):
-        integration = await self.get()
         if integration is None:
             print("no token configured yet")
             return None

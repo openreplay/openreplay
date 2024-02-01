@@ -103,30 +103,30 @@ class DatabaseRequestHandler:
             self.logger.error(f"Database operation failed: {e}")
             raise
 
-    def fetchall(self):
+    async def fetchall(self):
         query = self.build_query()
         return await self.execute_query(query)
 
-    def fetchone(self):
+    async def fetchone(self):
         query = self.build_query()
         result = await self.execute_query(query)
         return result[0] if result else None
 
-    def insert(self, data):
+    async def insert(self, data):
         query = self.build_query(action="insert", data=data)
         query += " RETURNING *;"
 
         result = await self.execute_query(query, data)
         return result[0] if result else None
 
-    def update(self, data):
+    async def update(self, data):
         query = self.build_query(action="update", data=data)
         query += " RETURNING *;"
 
         result = await self.execute_query(query, data)
         return result[0] if result else None
 
-    def delete(self):
+    async def delete(self):
         query = self.build_query(action="delete")
         return await self.execute_query(query)
 

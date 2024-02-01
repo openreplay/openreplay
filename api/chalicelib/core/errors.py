@@ -608,7 +608,7 @@ async def get_trace(project_id, error_id):
                 "preparsed": True}
     trace, all_exists = await sourcemaps.get_traces_group(project_id=project_id, payload=error["payload"])
     if all_exists:
-        __save_stacktrace(error_id=error_id, data=trace)
+        await __save_stacktrace(error_id=error_id, data=trace)
     return {"sourcemapUploaded": all_exists,
             "trace": trace,
             "preparsed": False}

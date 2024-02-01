@@ -224,7 +224,7 @@ async def pin_dashboard(project_id, user_id, dashboard_id):
 
 
 async def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.CardSchema):
-    metric_id = custom_metrics.create_card(project_id=project_id, user_id=user_id, data=data, dashboard=True)
+    metric_id = await custom_metrics.create_card(project_id=project_id, user_id=user_id, data=data, dashboard=True)
     return await add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
                       data=schemas.AddWidgetToDashboardPayloadSchema(metricId=metric_id))
 

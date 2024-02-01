@@ -167,13 +167,13 @@ class PostgresClient:
         return self.__enter__()
 
 
-async def init():
+def init():
     logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
     if config('PG_POOL', cast=bool, default=True):
         make_pool()
 
 
-async def terminate():
+def terminate():
     global postgreSQL_pool
     if postgreSQL_pool is not None:
         try:

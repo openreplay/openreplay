@@ -211,7 +211,7 @@ async def send_to_msteams_batch(notifications_list):
 
 
 async def delete(project_id, alert_id):
-    with pg_client.cursor() as cur:
+    async with pg_client.cursor() as cur:
         await cur.execute(
             cur.mogrify(""" UPDATE public.alerts 
                             SET deleted_at = timezone('utc'::text, now()),

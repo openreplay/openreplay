@@ -61,7 +61,7 @@ async def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPaylo
 
 
 async def __get_live_sessions_ws(project_id, data):
-    project_key = projects.get_project_key(project_id)
+    project_key = await projects.get_project_key(project_id)
     try:
         async with httpx.AsyncClient() as client:
             results = await client.post(ASSIST_URL + config("assist") + f"/{project_key}",

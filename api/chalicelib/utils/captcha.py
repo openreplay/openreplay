@@ -11,7 +11,7 @@ def __get_captcha_config():
     return config("captcha_server"), config("captcha_key")
 
 
-def is_valid(response):
+async def is_valid(response):
     if not helper.allow_captcha():
         logger.info("!! Captcha is disabled")
         return True

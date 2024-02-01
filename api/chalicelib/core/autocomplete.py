@@ -1,4 +1,4 @@
-import schemas
+.import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
@@ -295,7 +295,7 @@ async def __search_errors_ios(project_id, value, key=None, source=None):
 
 
 async def __search_metadata(project_id, value, key=None, source=None):
-    meta_keys = metadata.get(project_id=project_id)
+    meta_keys = await metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():
         return []

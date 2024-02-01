@@ -57,55 +57,55 @@ async def __get_table_of_series(project_id, data: schemas.CardSchema):
     return results
 
 
-def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
+async def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
     if len(data.series) == 0:
         return {
             "stages": [],
             "totalDropDueToIssues": 0
         }
-    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+    return await funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
-def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
+async def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
             "errors": []
         }
-    return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+    return await errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
+async def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         logger.debug("empty series")
         return {
             "total": 0,
             "sessions": []
         }
-    return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
+    return await sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
+async def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
-    return click_maps.search_short_session(project_id=project_id, user_id=user_id,
+    return await click_maps.search_short_session(project_id=project_id, user_id=user_id,
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
                                            include_mobs=include_mobs)
 
 
-def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
+async def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         data.series.append(
             schemas.CardPathAnalysisSeriesSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data)
+    return await product_analytics.path_analysis(project_id=project_id, data=data)
 
 
-def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
-    series_charts = __try_live(project_id=project_id, data=data)
+async def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
+    series_charts = await __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress:
         return series_charts
     results = [{}] * len(series_charts[0])
@@ -120,39 +120,39 @@ def not_supported(**args):
     raise Exception("not supported")
 
 
-def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
-    return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+async def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
+    return await __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
 
 
-def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
-    return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+async def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
+    return await __get_errors_list(project_id=project_id, user_id=user_id, data=data)
 
 
-def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+async ef __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return await __get_table_of_series(project_id=project_id, data=data)
 
 
-def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
+async def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.sessions: __get_table_of_sessions,
         schemas.MetricOfTable.errors: __get_table_of_errors,
@@ -163,12 +163,12 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.user_country: __get_table_of_countries,
         schemas.MetricOfTable.visited_url: __get_table_of_urls,
     }
-    return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return await supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
-def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
+async def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     if data.is_predefined:
-        return custom_metrics_predefined.get_metric(key=data.metric_of,
+        return await custom_metrics_predefined.get_metric(key=data.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
 
@@ -180,7 +180,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_chart
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return await supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def __merge_metric_with_data(metric: schemas.CardSchema,
@@ -200,8 +200,8 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     return metric
 
 
-def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+async def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
+    card: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if card is None:
         return None
     metric: schemas.CardSchema = schemas.CardSchema(**card)
@@ -209,13 +209,13 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
     results = []
     for s in metric.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **await sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
 
-def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+async def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
+    raw_metric: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
@@ -224,11 +224,11 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessions
         return None
     for s in metric.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
-                **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
+                **await funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
-def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+async def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
+    raw_metric: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
@@ -237,10 +237,10 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
         return None
     for s in metric.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
-                **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
+                **await errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
-def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
+async def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
         return results
@@ -250,21 +250,21 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
             s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
 
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **await sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
 
-def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
+async def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
     if len(data.series) == 0:
         return {"data": []}
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
-    data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+    data = await funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
     return {"data": data}
 
 
-def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
+async def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.filters) > 0 or len(data.series) > 0:
         filters = [f.model_dump(by_alias=True) for f in data.filters] \
                   + [f.model_dump(by_alias=True) for f in data.series[0].filter.filters]
@@ -283,15 +283,15 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
                                                                      operator=schemas.SearchEventOperator._not_on,
                                                                      value=s.value))
-    result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
+    result = await sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
     return result
 
 
-def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
+async def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
     if data.is_predefined:
         return not_supported()
     if data.metric_of == schemas.MetricOfTable.issues:
-        return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
+        return await __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
     supported = {
         schemas.MetricType.timeseries: not_supported,
         schemas.MetricType.table: not_supported,
@@ -300,7 +300,7 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_issues,
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return await supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
@@ -315,7 +315,7 @@ async def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=F
     async with pg_client.cursor() as cur:
         session_data = None
         if data.metric_type == schemas.MetricType.click_map:
-            session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
+            session_data = await __get_click_map_chart(project_id=project_id, user_id=user_id,
                                                  data=data, include_mobs=False)
             if session_data is not None:
                 session_data = json.dumps(session_data)
@@ -330,7 +330,7 @@ async def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=F
         params["default_config"] = json.dumps(data.default_config.model_dump())
         params["card_info"] = None
         if data.metric_type == schemas.MetricType.pathAnalysis:
-            params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+            params["card_info"] = json.dumps(await __get_path_analysis_card_info(data=data))
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
@@ -353,11 +353,11 @@ async def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=F
         r = await cur.fetchone()
         if dashboard:
             return r["metric_id"]
-    return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
+    return {"data": await get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
 async def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
-    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -391,7 +391,7 @@ async def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     params["d_series_ids"] = tuple(d_series_ids)
     params["card_info"] = None
     if data.metric_type == schemas.MetricType.pathAnalysis:
-        params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+        params["card_info"] = json.dumps(await __get_path_analysis_card_info(data=data))
 
     async with pg_client.cursor() as cur:
         sub_queries = []
@@ -431,7 +431,7 @@ async def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
         await cur.execute(query)
-    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return await get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
 async def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
@@ -497,10 +497,10 @@ async def search_all(project_id, user_id, data: schemas.SearchCardsSchema, inclu
 
 def get_all(project_id, user_id):
     default_search = schemas.SearchCardsSchema()
-    result = rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    result = rows = await search_all(project_id=project_id, user_id=user_id, data=default_search)
     while len(rows) == default_search.limit:
         default_search.page += 1
-        rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+        rows = await search_all(project_id=project_id, user_id=user_id, data=default_search)
         result += rows
 
     return result
@@ -631,7 +631,7 @@ async def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
         s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        issues_list = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
+        issues_list = await funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
         issues_list = issues_list.get("significant", []) + issues_list.get("insignificant", [])
         issue = None
         for i in issues_list:
@@ -639,7 +639,7 @@ async def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 issue = i
                 break
         if issue is None:
-            issue = issues.get(project_id=project_id, issue_id=issue_id)
+            issue = await issues.get(project_id=project_id, issue_id=issue_id)
             if issue is not None:
                 issue = {**issue,
                          "affectedSessions": 0,
@@ -648,7 +648,7 @@ async def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                          "lostConversions": 0,
                          "unaffectedSessions": 0}
         return {"seriesId": s.series_id, "seriesName": s.name,
-                "sessions": sessions.search_sessions(user_id=user_id, project_id=project_id,
+                "sessions": await sessions.search_sessions(user_id=user_id, project_id=project_id,
                                                      issue=issue, data=s.filter)
                 if issue is not None else {"total": 0, "sessions": []},
                 "issue": issue}
@@ -666,7 +666,7 @@ async def make_chart_from_card(project_id, user_id, metric_id, data: schemas.Car
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
 
     if metric.is_predefined:
-        return custom_metrics_predefined.get_metric(key=metric.metric_of,
+        return await custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
     elif metric.metric_type == schemas.MetricType.click_map:
@@ -675,14 +675,14 @@ async def make_chart_from_card(project_id, user_id, metric_id, data: schemas.Car
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
             mob_exists = False
             for k in keys:
-                if StorageClient.exists(bucket=config("sessions_bucket"), key=k):
+                if await StorageClient.exists(bucket=config("sessions_bucket"), key=k):
                     mob_exists = True
                     break
             if mob_exists:
-                raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
+                raw_metric["data"]['domURL'] = await sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
                                                                       project_id=project_id)
-                raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
+                raw_metric["data"]['mobsUrl'] = await sessions_mobs.get_urls_depercated(
                     session_id=raw_metric["data"]["sessionId"])
                 return raw_metric["data"]
 
-    return get_chart(project_id=project_id, data=metric, user_id=user_id)
+    return await get_chart(project_id=project_id, data=metric, user_id=user_id)
