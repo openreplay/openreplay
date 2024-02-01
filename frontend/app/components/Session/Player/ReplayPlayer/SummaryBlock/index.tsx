@@ -35,7 +35,6 @@ function TextPlaceholder() {
     >
       <div className={'h-2 bg-gray-medium rounded'} />
       <div className={'h-2 bg-gray-medium rounded'} />
-
       <div className={'grid grid-cols-3 gap-2'}>
         <div className={'h-2 bg-gray-medium rounded col-span-2'} />
         <div className={'h-2 bg-gray-medium rounded col-span-1'} />
@@ -48,7 +47,7 @@ function TextPlaceholder() {
       </div>
       <div className={'grid grid-cols-4 gap-2'}>
         <div className={'h-2 bg-gray-medium rounded col-span-2'} />
-        <div className={'h-2 bg-gray-medium rounded col-span-2'} />
+        <div className={'h-2 bg-transparent rounded col-span-2'} />
       </div>
     </div>
   );
