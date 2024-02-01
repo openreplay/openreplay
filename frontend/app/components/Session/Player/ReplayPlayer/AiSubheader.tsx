@@ -1,4 +1,5 @@
 import { useStore } from 'App/mstore';
+import SummaryBlock from "Components/Session/Player/ReplayPlayer/SummaryBlock";
 import React, { useMemo } from 'react';
 import { Icon, Tooltip } from 'UI';
 import QueueControls from 'App/components/Session_/QueueControls';
@@ -75,6 +76,11 @@ function SubHeader(props: any) {
       { right: true, width: 620 }
     );
   };
+
+  const showSummary = () => {
+    player.pause();
+    showModal(<SummaryBlock sessionId={props.sessionId} />, { right: true, width: 300 })
+  }
 
   const showWarning =
     location && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(location) && showWarningModal;
@@ -172,7 +178,7 @@ function SubHeader(props: any) {
           )}
           style={{ width: 'max-content' }}
         >
-          <SummaryButton onClick={() => props.setActiveTab(props.activeTab === 'SUMMARY' ? '' : 'SUMMARY')} />
+          <SummaryButton onClick={showSummary} />
           <NotePopup />
           <ItemMenu items={additionalMenu} />
           {uxtestingStore.isUxt() ? (
@@ -224,7 +230,7 @@ function SummaryButton({ onClick }: { onClick?: () => void }) {
 }
 
 const gradientButton = {
-  border: 'double 2px transparent',
+  border: 'double 1px transparent',
   borderRadius: '60px',
   background:
     'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',

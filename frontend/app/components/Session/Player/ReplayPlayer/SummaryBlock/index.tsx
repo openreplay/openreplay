@@ -1,14 +1,13 @@
-import { SessionFilesInfo } from 'Player';
 import React from 'react';
 import Icon from 'UI/Icon';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-function SummaryBlock({ session }: { session: SessionFilesInfo }) {
+function SummaryBlock({ sessionId }: { sessionId: string }) {
   const { aiSummaryStore } = useStore();
 
   React.useEffect(() => {
-    void aiSummaryStore.getSummary(session.sessionId);
+    void aiSummaryStore.getSummary(sessionId);
   }, []);
   return (
     <div style={summaryBlockStyle}>
@@ -56,7 +55,7 @@ function TextPlaceholder() {
 const summaryBlockStyle: React.CSSProperties = {
   background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
   width: '100%',
-  height: '100%',
+  height: '100vh',
   overflow: 'auto',
   display: 'flex',
   flexDirection: 'column',

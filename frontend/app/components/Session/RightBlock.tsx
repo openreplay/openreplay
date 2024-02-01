@@ -11,13 +11,10 @@ import stl from './rightblock.module.css';
 function RightBlock({
   activeTab,
   setActiveTab,
-  session,
 }: {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  session: Session;
 }) {
-  console.log(session)
   switch (activeTab) {
     case 'EVENTS':
       return (
@@ -35,12 +32,6 @@ function RightBlock({
       return (
         <div className={cn('bg-white border-l', stl.panel)}>
           <TagWatch />
-        </div>
-      );
-    case 'SUMMARY':
-      return (
-        <div className={cn('bg-white border-l', stl.panel)}>
-          <SummaryBlock session={session} />
         </div>
       );
     default:

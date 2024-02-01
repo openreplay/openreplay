@@ -64,7 +64,7 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
             </div>
           </div>
           {!fullscreen && activeTab !== '' ? (
-            <RightBlock session={session} setActiveTab={setActiveTab} activeTab={activeTab} />
+            <RightBlock setActiveTab={setActiveTab} activeTab={activeTab} />
           ) : null}
         </div>
       )}

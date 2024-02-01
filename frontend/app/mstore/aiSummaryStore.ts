@@ -46,7 +46,10 @@ export default class AiSummaryStore {
           }
           break;
         }
-        const textChunk = new TextDecoder().decode(value, { stream: true });
+        let textChunk = new TextDecoder().decode(value, { stream: true });
+        if (this.text === '') {
+          textChunk = textChunk.trimStart()
+        }
         processTextChunk(textChunk);
       }
     } catch (error) {
