@@ -15,7 +15,7 @@ const {
     RecordRequestDuration,
     IncreaseTotalRequests
 } = require('../utils/metrics');
-const {getServer} = require("./wsServer");
+const {fetchSockets} = require("./wsServer");
 const {IDENTITIES} = require("./assistHelper");
 
 const debug_log = process.env.debug === "1";
@@ -36,8 +36,7 @@ const respond = function (req, res, data) {
 }
 
 const getParticularSession = async function (roomId, filters) {
-    let io = getServer();
-    let connected_sockets = await io.in(roomId).fetchSockets();
+    let connected_sockets = await fetchSockets(roomId);
     if (connected_sockets.length === 0) {
         return null;
     }
@@ -61,9 +60,8 @@ const getParticularSession = async function (roomId, filters) {
 }
 
 const getAllSessions = async  function (projectKey, filters, onlineOnly= false) {
-    const io = getServer();
     const sessions = [];
-    const connected_sockets = await io.fetchSockets();
+    const connected_sockets = await fetchSockets();
     if (connected_sockets.length === 0) {
         return sessions;
     }
@@ -172,8 +170,7 @@ const autocomplete = async function (req, res) {
         return respond(req, res, results);
     }
 
-    let io = getServer();
-    let connected_sockets = await io.in("/").fetchSockets();
+    let connected_sockets = await fetchSockets();
     if (connected_sockets.length === 0) {
         return results;
     }
