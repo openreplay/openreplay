@@ -15,7 +15,7 @@ if (useRedis) {
     const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
     redisClient = createClient({url: REDIS_URL});
     redisClient.on("error", (error) => console.error(`Redis error : ${error}`));
-    await redisClient.connect();
+    void redisClient.connect();
 }
 
 const doFetchAllSockets = async function () {
@@ -37,7 +37,7 @@ const doFetchAllSockets = async function () {
         }
     }
     console.log('no cache')
-    return  await io.fetchSockets();
+    return await io.fetchSockets();
 }
 
 const fetchSockets = async function (roomID) {
