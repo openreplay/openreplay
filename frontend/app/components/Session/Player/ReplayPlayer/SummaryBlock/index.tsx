@@ -12,12 +12,12 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
   return (
     <div style={summaryBlockStyle}>
       <div className={'flex items-center gap-2'}>
-        <Icon name={'sparkles'} size={16} />
+        <Icon name={'sparkles'} size={18} />
         <div className={'font-semibold text-xl'}>AI Summary</div>
       </div>
 
       {aiSummaryStore.text
-       ? <div className={'border border-gray-light rounded p-4 bg-white whitespace-pre-wrap'}>
+       ? <div className={'rounded p-4 bg-white whitespace-pre-wrap'}>
          {aiSummaryStore.text}
       </div>
        : <TextPlaceholder />}
@@ -29,7 +29,7 @@ function TextPlaceholder() {
   return (
     <div
       className={
-        'animate-pulse border border-gray-light rounded p-4 bg-white whitespace-pre-wrap flex flex-col gap-2'
+        'animate-pulse rounded p-4 bg-white whitespace-pre-wrap flex flex-col gap-2'
       }
     >
       <div className={'h-2 bg-gray-medium rounded'} />
