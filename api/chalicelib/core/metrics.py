@@ -130,8 +130,8 @@ async def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_da
                            endTimestamp=TimeUTC.now(),
                            density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     async with pg_client.cursor() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
@@ -175,9 +175,9 @@ async def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
                density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
                                             time_constraint=False)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="errors", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset.append("m_errors.source = 'js_exception'")
@@ -234,9 +234,9 @@ async def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                      density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=False,
                                             chart=False, data=args, main_table="m_errors", duration=False)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="errors_subsest", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("errors.timestamp >= %(startTimestamp)s")
@@ -310,7 +310,7 @@ async def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
 
 async def __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
     pg_sub_query.append("pages.timestamp<%(endTimestamp)s")
     pg_sub_query.append("(pages.dom_content_loaded_time > 0 OR pages.first_contentful_paint_time > 0)")
@@ -331,7 +331,7 @@ async def __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **ar
 async def get_application_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
@@ -345,7 +345,7 @@ async def get_application_activity(project_id, startTimestamp=TimeUTC.now(delta_
 
 async def __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **args):
     result = {}
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp >= %(startTimestamp)s")
     pg_sub_query.append("pages.timestamp > %(endTimestamp)s")
     pg_sub_query.append("pages.load_time > 0")
@@ -359,7 +359,7 @@ async def __get_application_activity(cur, project_id, startTimestamp, endTimesta
     await cur.execute(cur.mogrify(pg_query, params))
     row = await cur.fetchone()
     result = {**result, **row}
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.duration > 0")
     pg_sub_query.append("resources.type= %(type)s")
     pg_query = f"""SELECT COALESCE(AVG(resources.duration),0) AS avg 
@@ -396,7 +396,7 @@ async def get_user_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1
 
 
 async def __get_user_activity(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("(sessions.pages_count>0 OR sessions.duration>0)")
     pg_query = f"""SELECT COALESCE(CEIL(AVG(NULLIF(sessions.pages_count,0))),0) AS avg_visited_pages,
                            COALESCE(AVG(NULLIF(sessions.duration,0)),0)         AS avg_session_duration
@@ -414,14 +414,14 @@ async def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-
                        endTimestamp=TimeUTC.now(),
                        density=7, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.type = 'img'")
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query_chart.append("resources.type = 'img'")
     pg_sub_query_chart.append("resources.url_hostpath = top_img.url_hostpath")
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
     pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
     pg_sub_query_subset.append("resources.timestamp < %(endTimestamp)s")
@@ -496,9 +496,9 @@ async def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
     async with pg_client.cursor() as cur:
-        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+        pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                                 chart=False, data=args)
-        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+        pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                                chart=True, data=args, main_table="resources", time_column="timestamp",
                                                duration=False)
         pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
@@ -525,9 +525,9 @@ async def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         rows = await cur.fetchall()
         images = helper.list_to_camel_case(rows)
 
-        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+        pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                                 chart=False, data=args)
-        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+        pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                                chart=True, data=args, main_table="resources", time_column="timestamp",
                                                duration=False)
         pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
@@ -553,9 +553,9 @@ async def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         cur.execute(cur.mogrify(pg_query, {**params, **request_constraints_vals, **__get_constraint_values(args)}))
         rows = await cur.fetchall()
         requests = helper.list_to_camel_case(rows)
-        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+        pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                                 chart=False, data=args)
-        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+        pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                                chart=True, data=args, main_table="pages", time_column="timestamp",
                                                duration=False)
         pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
@@ -620,7 +620,7 @@ async def search(text, resource_type, project_id, performance=False, pages_only=
                            platform=platform))
         return data
 
-    pg_sub_query = __get_constraints(project_id=project_id, time_constraint=False, duration=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, time_constraint=False, duration=True,
                                      data={} if platform is None else {"platform": platform})
 
     if resource_type == "ALL" and not pages_only and not events_only:
@@ -761,8 +761,8 @@ async def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(del
                                 endTimestamp=TimeUTC.now(),
                                 density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True, chart=True, data=args)
     pg_sub_query.append("resources.success = FALSE")
     pg_sub_query_chart.append("resources.success = FALSE")
     pg_sub_query.append("resources.type = 'img'")
@@ -816,8 +816,8 @@ async def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(),
                 density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="resources", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
@@ -881,8 +881,8 @@ async def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delt
                                endTimestamp=TimeUTC.now(),
                                density=19, type=None, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="resources", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
@@ -928,8 +928,8 @@ async def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delt
 async def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), density=19, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            project=False, duration=False)
 
@@ -974,9 +974,9 @@ async def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_
 async def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), type="all", density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="resources", time_column="timestamp",
                                            project=False, duration=False)
 
@@ -1046,7 +1046,7 @@ async def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_day
 
 async def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
 
     async with pg_client.cursor() as cur:
         pg_query = f"""SELECT user_country, COUNT(session_id) AS count
@@ -1064,7 +1064,7 @@ async def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_day
 
 async def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.speed_index IS NOT NULL")
     pg_sub_query.append("pages.speed_index>0")
 
@@ -1093,10 +1093,10 @@ async def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_
 async def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                             endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.response_time IS NOT NULL")
     pg_sub_query.append("pages.response_time>0")
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True, chart=True,
                                            data=args)
     pg_sub_query_chart.append("pages.response_time IS NOT NULL")
     pg_sub_query_chart.append("pages.response_time>0")
@@ -1133,7 +1133,7 @@ async def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_d
 
 async def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                          endTimestamp=TimeUTC.now(), density=20, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.response_time IS NOT NULL")
     pg_sub_query.append("pages.response_time>0")
 
@@ -1251,7 +1251,7 @@ async def get_pages_response_time_distribution(project_id, startTimestamp=TimeUT
 
 async def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                             endTimestamp=TimeUTC.now(), **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
 
     async with pg_client.cursor() as cur:
         pg_query = f"""SELECT
@@ -1270,7 +1270,7 @@ async def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_d
 
 async def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                     endTimestamp=TimeUTC.now(), value=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
 
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
@@ -1321,8 +1321,8 @@ async def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 async def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset.append("pages.visually_complete>0")
@@ -1358,8 +1358,8 @@ async def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-
 async def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(), value=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True, chart=True,
                                            data=args)
     pg_sub_query.append("pages.response_time IS NOT NULL")
     pg_sub_query_chart.append("pages.response_time IS NOT NULL")
@@ -1396,8 +1396,8 @@ async def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC
 async def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     async with pg_client.cursor() as cur:
@@ -1428,8 +1428,8 @@ async def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_da
 async def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     async with pg_client.cursor() as cur:
@@ -1461,8 +1461,8 @@ async def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 async def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query.append("performance.avg_fps>0")
     pg_sub_query_chart.append("performance.avg_fps>0")
@@ -1494,9 +1494,9 @@ async def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 async def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("m_issues.type = 'crash'")
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query_chart.append("m_issues.type = 'crash'")
     async with pg_client.cursor() as cur:
@@ -1578,8 +1578,8 @@ def __merge_rows_with_neutral(rows, neutral):
 async def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
     pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
@@ -1628,8 +1628,8 @@ async def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-
 async def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                      endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
     pg_sub_query_subset.append("requests.status_code/100 = %(status_code)s")
@@ -1687,7 +1687,7 @@ def __nested_array_to_dict_array(rows, key="url_host", value="count"):
 
 async def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         endTimestamp=TimeUTC.now(), **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.duration IS NOT NULL")
     pg_sub_query.append("resources.duration>0")
 
@@ -1718,7 +1718,7 @@ async def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=
 
 async def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("requests.success = FALSE")
 
     async with pg_client.cursor() as cur:
@@ -1739,7 +1739,7 @@ async def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_da
 
 async def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                              platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query2 = pg_sub_query[:]
     pg_sub_query2.append("sessions.user_browser = b.user_browser")
     async with pg_client.cursor() as cur:
@@ -1781,7 +1781,7 @@ async def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_
 
 async def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                      platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.type = 'fetch'")
     pg_sub_query.append("resources.method IS NOT NULL")
     pg_sub_query.append("resources.status/100 != 2")
@@ -1807,7 +1807,7 @@ async def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 async def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                   endTimestamp=TimeUTC.now(),
                                   platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("requests.type = 'fetch'")
     pg_sub_query.append("requests.method IS NOT NULL")
     pg_sub_query.append(f"requests.status_code/100 = {status}")
@@ -1849,14 +1849,14 @@ async def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=
                         platform=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
     pg_sub_query_subset.append("requests.status_code > 200")
 
-    pg_sub_query_subset_e = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
+    pg_sub_query_subset_e = await __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
                                               time_constraint=False)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset_e.append("timestamp>=%(startTimestamp)s")
@@ -1911,8 +1911,8 @@ async def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=
 async def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                   endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="resources", time_column="timestamp", project=False,
                                            duration=False)
     pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
@@ -1937,8 +1937,8 @@ async def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(d
                         ORDER BY generated_timestamp;"""
         await cur.execute(cur.mogrify(pg_query, params))
         actions = await cur.fetchall()
-        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+        pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+        pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                                data=args, main_table="pages", time_column="timestamp",
                                                project=False,
                                                duration=False)
@@ -1965,8 +1965,8 @@ async def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(d
 def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query.append("m_errors.source = 'js_exception'")
     pg_sub_query.append("m_errors.project_id = %(project_id)s")
@@ -1977,9 +1977,9 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
     pg_sub_query_chart.append("errors.timestamp >= generated_timestamp")
     pg_sub_query_chart.append("errors.timestamp < generated_timestamp+ %(step_size)s")
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
                                             time_constraint=False)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="errors", time_column="timestamp",
                                            project=False, duration=False)
     pg_sub_query_subset.append("m_errors.source = 'js_exception'")
@@ -2046,8 +2046,8 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
 async def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="", time_column="timestamp", project=False,
                                            duration=False)
     pg_sub_query_subset.append("timestamp>=%(startTimestamp)s")
@@ -2096,8 +2096,8 @@ async def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.
 def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="resources", time_column="timestamp", project=False,
                                            duration=False)
 
@@ -2132,9 +2132,9 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="requests", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("requests.timestamp >= %(startTimestamp)s")
@@ -2184,8 +2184,8 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     return rows
 
 
-def __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.duration > 0")
     pg_sub_query.append("resources.type= %(type)s")
     pg_query = f"""SELECT COALESCE(AVG(resources.duration),0) AS value 
@@ -2201,20 +2201,20 @@ def __get_application_activity_avg_image_load_time(cur, project_id, startTimesta
 def get_application_activity_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                  endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
-        results["chart"] = get_performance_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = await get_performance_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
     helper.__time_value(results)
     return results
 
 
-def get_performance_avg_image_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_performance_avg_image_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(),
                                         density=19, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
@@ -2224,9 +2224,9 @@ def get_performance_avg_image_load_time(cur, project_id, startTimestamp=TimeUTC.
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="resources", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
@@ -2255,8 +2255,8 @@ def get_performance_avg_image_load_time(cur, project_id, startTimestamp=TimeUTC.
     return rows
 
 
-def __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp >= %(startTimestamp)s")
     pg_sub_query.append("pages.timestamp > %(endTimestamp)s")
     pg_sub_query.append("pages.load_time > 0")
@@ -2273,23 +2273,23 @@ def __get_application_activity_avg_page_load_time(cur, project_id, startTimestam
     return row
 
 
-def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
-        results["chart"] = get_performance_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = await get_performance_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
     helper.__time_value(results)
     return results
 
 
-def get_performance_avg_page_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_performance_avg_page_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(),
                                        density=19, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
@@ -2297,9 +2297,9 @@ def get_performance_avg_page_load_time(cur, project_id, startTimestamp=TimeUTC.n
     location_constraints_vals = {}
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
@@ -2324,8 +2324,8 @@ def get_performance_avg_page_load_time(cur, project_id, startTimestamp=TimeUTC.n
     return rows
 
 
-def __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.duration > 0")
     pg_sub_query.append("resources.type= %(type)s")
     pg_query = f"""SELECT COALESCE(AVG(resources.duration),0) AS value 
@@ -2342,23 +2342,23 @@ def __get_application_activity_avg_request_load_time(cur, project_id, startTimes
     return row
 
 
-def get_application_activity_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_application_activity_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                    endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         results = row
-        results["chart"] = get_performance_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = await get_performance_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
     helper.__time_value(results)
     return results
 
 
-def get_performance_avg_request_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_performance_avg_request_load_time(cur, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                           endTimestamp=TimeUTC.now(),
                                           density=19, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
@@ -2368,9 +2368,9 @@ def get_performance_avg_request_load_time(cur, project_id, startTimestamp=TimeUT
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
 
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="resources", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
@@ -2398,25 +2398,25 @@ def get_performance_avg_request_load_time(cur, project_id, startTimestamp=TimeUT
     return rows
 
 
-def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp,
+        results["chart"] = await __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp,
                                                                                endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
     helper.__time_value(results)
     return results
 
 
-def __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
     pg_sub_query.append("pages.timestamp<%(endTimestamp)s")
     pg_sub_query.append("pages.dom_content_loaded_time > 0")
@@ -2433,14 +2433,14 @@ def __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestam
     return row
 
 
-def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp, endTimestamp, density=19,
+async def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp, endTimestamp, density=19,
                                                         **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
@@ -2466,18 +2466,18 @@ def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTi
     return rows
 
 
-def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
+        rows = await __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
-        results["chart"] = __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp,
+        results["chart"] = await __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp,
                                                                                endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
+        rows = await __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
@@ -2485,8 +2485,8 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
     return results
 
 
-def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
     pg_sub_query.append("pages.timestamp<%(endTimestamp)s")
     pg_sub_query.append("pages.first_contentful_paint_time > 0")
@@ -2503,14 +2503,14 @@ def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestam
     return rows
 
 
-def __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp, endTimestamp, density=20,
+async def __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp, endTimestamp, density=20,
                                                         **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
@@ -2536,18 +2536,18 @@ def __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTi
     return rows
 
 
-def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
+        results["chart"] = await __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
                                                                        endTimestamp, **args)
 
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
@@ -2555,8 +2555,8 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
     return results
 
 
-def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("sessions.pages_count>0")
     pg_query = f"""SELECT COALESCE(CEIL(AVG(sessions.pages_count)),0) AS value
                     FROM public.sessions
@@ -2569,13 +2569,13 @@ def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTi
     return row
 
 
-def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
+async def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="sessions", time_column="start_ts",
                                            duration=False)
     pg_sub_query_subset.append("sessions.duration IS NOT NULL")
@@ -2599,18 +2599,18 @@ def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
     return rows
 
 
-def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                            endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp,
+        results["chart"] = await __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp,
                                                                           endTimestamp, **args)
 
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
+        row = await __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
@@ -2618,8 +2618,8 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
     return results
 
 
-def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+async def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("sessions.duration IS NOT NULL")
     pg_sub_query.append("sessions.duration > 0")
     pg_query = f"""SELECT COALESCE(AVG(sessions.duration),0) AS value
@@ -2633,12 +2633,12 @@ def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, en
     return row
 
 
-def __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
+async def __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+    pg_sub_query_subset = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=False, project=False,
                                            chart=True, data=args, main_table="sessions", time_column="start_ts",
                                            duration=False)
     pg_sub_query_subset.append("sessions.duration IS NOT NULL")
@@ -2663,11 +2663,11 @@ def __get_user_activity_avg_session_duration_chart(cur, project_id, startTimesta
     return rows
 
 
-def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                       endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     if value is not None:
@@ -2704,11 +2704,11 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
     return helper.dict_to_camel_case(row)
 
 
-def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                     endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     if value is not None:
@@ -2745,11 +2745,11 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
     return helper.dict_to_camel_case(row)
 
 
-def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                            endTimestamp=TimeUTC.now(), value=None, density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query.append("pages.dom_content_loaded_time>0")
     pg_sub_query_chart.append("pages.dom_content_loaded_time>0")
@@ -2789,11 +2789,11 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
     return helper.dict_to_camel_case(row)
 
 
-def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     if value is not None:
@@ -2830,11 +2830,11 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
     return helper.dict_to_camel_case(row)
 
 
-def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                             endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+    pg_sub_query = await __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = await __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
     pg_sub_query.append("pages.time_to_interactive > 0")

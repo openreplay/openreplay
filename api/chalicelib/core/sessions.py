@@ -43,7 +43,7 @@ async def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False,
                     platform="web"):
     if data.bookmarked:
-        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
+        data.startTimestamp, data.endTimestamp = await sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,

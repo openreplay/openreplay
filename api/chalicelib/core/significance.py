@@ -596,11 +596,11 @@ async def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id)
     return stages_list, total_drop_due_to_issues
 
 
-def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
+async def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
     output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
     stages = filter_d.events
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         return output
         # Obtain the second part of the output

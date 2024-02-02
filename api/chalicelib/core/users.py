@@ -104,10 +104,10 @@ async def generate_new_invitation(user_id):
 
 
 async def reset_member(tenant_id, editor_id, user_id_to_update):
-    admin = get(tenant_id=tenant_id, user_id=editor_id)
+    admin = await get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    user = get(tenant_id=tenant_id, user_id=user_id_to_update)
+    user = await get(tenant_id=tenant_id, user_id=user_id_to_update)
     if not user:
         return {"errors": ["user not found"]}
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
@@ -151,30 +151,30 @@ async def update(tenant_id, user_id, changes, output=True):
 
 
 async def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, background_tasks: BackgroundTasks):
-    admin = get(tenant_id=tenant_id, user_id=user_id)
+    admin = await get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     if data.user_id is not None:
         return {"errors": ["please use POST/PUT /client/members/{memberId} for update"]}
-    user = get_by_email_only(email=data.email)
+    user = await get_by_email_only(email=data.email)
     if user:
         return {"errors": ["user already exists"]}
 
     if data.name is None or len(data.name) == 0:
         data.name = data.email
     invitation_token = __generate_invitation_token()
-    user = get_deleted_user_by_email(email=data.email)
+    user = await get_deleted_user_by_email(email=data.email)
     if user is not None:
-        new_member = restore_member(email=data.email, invitation_token=invitation_token,
+        new_member = await restore_member(email=data.email, invitation_token=invitation_token,
                                     admin=data.admin, name=data.name, user_id=user["userId"])
     else:
-        new_member = create_new_member(email=data.email, invitation_token=invitation_token,
+        new_member = await create_new_member(email=data.email, invitation_token=invitation_token,
                                        admin=data.admin, name=data.name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data.email,
         "invitation_link": new_member["invitationLink"],
-        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+        "client_id": await tenants.get_by_tenant_id(tenant_id)["name"],
         "sender_name": admin["name"]
     })
     return {"data": new_member}
@@ -256,7 +256,7 @@ async def __get_account_info(tenant_id, user_id):
 
 async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if changes.opt_out is not None or changes.tenantName is not None and len(changes.tenantName) > 0:
-        user = get(user_id=user_id, tenant_id=tenant_id)
+        user = await get(user_id=user_id, tenant_id=tenant_id)
         if not user["superAdmin"] and not user["admin"]:
             return {"errors": ["unauthorized"]}
 
@@ -276,7 +276,7 @@ async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
 
 
 async def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
-    user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
+    user = await get_member(user_id=user_id_to_update, tenant_id=tenant_id)
     _changes = {}
     if editor_id != user_id_to_update:
         admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
@@ -397,11 +397,11 @@ async def delete_member(user_id, tenant_id, id_to_delete):
     if user_id == id_to_delete:
         return {"errors": ["unauthorized, cannot delete self"]}
 
-    admin = get(user_id=user_id, tenant_id=tenant_id)
+    admin = await get(user_id=user_id, tenant_id=tenant_id)
     if admin["member"]:
         return {"errors": ["unauthorized"]}
 
-    to_delete = get(user_id=id_to_delete, tenant_id=tenant_id)
+    to_delete = await get(user_id=id_to_delete, tenant_id=tenant_id)
     if to_delete is None:
         return {"errors": ["not found"]}
 
@@ -427,17 +427,17 @@ async def delete_member(user_id, tenant_id, id_to_delete):
 
 
 async def change_password(tenant_id, user_id, email, old_password, new_password):
-    item = get(tenant_id=tenant_id, user_id=user_id)
+    item = await get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
-    auth = authenticate(email, old_password, for_change_password=True)
+    auth = await authenticate(email, old_password, for_change_password=True)
     if auth is None:
         return {"errors": ["wrong password"]}
     changes = {"password": new_password}
-    user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
+    user = await update(tenant_id=tenant_id, user_id=user_id, changes=changes)
+    r = await authenticate(user['email'], new_password)
 
     return {
         'jwt': r.pop('jwt')
@@ -446,8 +446,8 @@ async def change_password(tenant_id, user_id, email, old_password, new_password)
 
 async def set_password_invitation(user_id, new_password):
     changes = {"password": new_password}
-    user = update(tenant_id=-1, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], new_password)
+    user = await update(tenant_id=-1, user_id=user_id, changes=changes)
+    r = await authenticate(user['email'], new_password)
 
     tenant_id = r.pop("tenantId")
     r["limits"] = {
@@ -455,9 +455,9 @@ async def set_password_invitation(user_id, new_password):
         "projects": -1,
         "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
 
-    c = tenants.get_by_tenant_id(tenant_id)
+    c = await tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True)
+    c["projects"] = await projects.get_projects(tenant_id=tenant_id, recorded=True)
     c["smtp"] = smtp.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     return {
@@ -634,7 +634,7 @@ async def logout(user_id: int):
 
 
 def refresh(user_id: int, tenant_id: int = -1) -> dict:
-    jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
+    jwt_iat, jwt_r_jti, jwt_r_iat = await refresh_jwt_iat_jti(user_id=user_id)
     return {
         "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
                                         aud=f"front:{helper.get_stage_name()}"),

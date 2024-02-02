@@ -392,7 +392,7 @@ async def delete_project_condition(project_id, ids):
         await cur.execute(query)
 
 
-def update_project_conditions(project_id, conditions):
+async def update_project_conditions(project_id, conditions):
     if conditions is None:
         return
 

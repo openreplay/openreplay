@@ -21,7 +21,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
         return self._issue_handler
 
     def get_obfuscated(self):
-        integration = self.get()
+        integration = await self.get()
         if integration is None:
             return None
         return {"token": helper.obfuscate(text=integration["token"]), "provider": self.provider.lower()}

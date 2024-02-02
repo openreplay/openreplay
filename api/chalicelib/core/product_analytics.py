@@ -84,7 +84,7 @@ JOURNEY_TYPES = {
 # sort by top 5 according to sessions_count at the CTE level
 # final part project data without grouping
 # if start-point is selected, the selected event is ranked n°1
-def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
+async def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_from = "pre_ranked_events"
     sub_sessions_extra_projection = ""
@@ -377,7 +377,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                             avg_time_from_previous
                                      FROM n{i})""")
 
-    with pg_client.cursor() as cur:
+    async with pg_client.cursor() as cur:
         pg_query = f"""\
 WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
                       FROM public.sessions {" ".join(start_join)}
@@ -413,13 +413,13 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
         logger.debug("----------------------")
         logger.debug(query)
         logger.debug("----------------------")
-        cur.execute(query)
+        await cur.execute(query)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query ({int(time() - _now)}s)<<<<<<<<<")
             logger.warning("----------------------")
             logger.warning(query)
             logger.warning("----------------------")
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
 
     return __transform_journey(rows=rows, reverse_path=reverse)
 

@@ -79,7 +79,7 @@ async def get_all(project_id, user_id):
         cur.execute(
             query
         )
-        assignments = helper.list_to_camel_case(cur.fetchall())
+        assignments = helper.list_to_camel_case(await cur.fetchall())
         for a in assignments:
             a["createdAt"] = TimeUTC.datetime_to_timestamp(a["createdAt"])
         return assignments
@@ -100,7 +100,7 @@ async def get_by_session(tenant_id, user_id, project_id, session_id):
         cur.execute(
             query
         )
-        results = cur.fetchall()
+        results = await cur.fetchall()
     issues = {}
     for i in results:
         if i["provider"] not in issues.keys():
