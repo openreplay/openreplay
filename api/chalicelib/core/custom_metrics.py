@@ -148,7 +148,7 @@ async def __get_table_of_countries(project_id: int, data: schemas.CardTable, use
     return await __get_table_of_series(project_id=project_id, data=data)
 
 
-async ef __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
+async def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
     return await __get_table_of_series(project_id=project_id, data=data)
 
 
@@ -495,7 +495,7 @@ async def search_all(project_id, user_id, data: schemas.SearchCardsSchema, inclu
     return rows
 
 
-def get_all(project_id, user_id):
+async def get_all(project_id, user_id):
     default_search = schemas.SearchCardsSchema()
     result = rows = await search_all(project_id=project_id, user_id=user_id, data=default_search)
     while len(rows) == default_search.limit:

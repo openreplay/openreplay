@@ -7,7 +7,7 @@ from chalicelib.core import sourcemaps_parser
 from chalicelib.utils.storage import StorageClient, generators
 
 
-def presign_share_urls(project_id, urls):
+async def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
         results.append(await StorageClient.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
@@ -16,7 +16,7 @@ def presign_share_urls(project_id, urls):
     return results
 
 
-def presign_upload_urls(project_id, urls):
+async def presign_upload_urls(project_id, urls):
     results = []
     for u in urls:
         results.append(await StorageClient.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),

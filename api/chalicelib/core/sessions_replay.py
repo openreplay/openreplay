@@ -131,7 +131,7 @@ async def get_replay(project_id, session_id, context: schemas.CurrentContext, fu
                                                                     check_existence=False)
                     data['canvasURL'] = await canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
                     if await user_testing.has_test_signals(session_id=session_id, project_id=project_id):
-                        data['utxVideo'] = user_await testing.get_ux_webcam_signed_url(session_id=session_id,
+                        data['utxVideo'] = await user_testing.get_ux_webcam_signed_url(session_id=session_id,
                                                                                  project_id=project_id,
                                                                                  check_existence=False)
                     else:

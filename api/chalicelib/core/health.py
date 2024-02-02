@@ -76,8 +76,8 @@ def __always_healthy(*_):
     }
 
 
-async def __check_be_service(service_name):
-    def fn(*_):
+def __check_be_service(service_name):
+    async def fn(*_):
         fail_response = {
             "health": False,
             "details": {
@@ -157,7 +157,7 @@ async def __check_SSL(*_):
 
 
 async def __get_sessions_stats(*_):
-    await with pg_client.cursor() as cur:
+    async with pg_client.cursor() as cur:
         constraints = ["projects.deleted_at IS NULL"]
         query = cur.mogrify(f"""SELECT COALESCE(SUM(sessions_count),0) AS s_c,
                                        COALESCE(SUM(events_count),0) AS e_c
@@ -213,7 +213,7 @@ async def __process_health(health_map):
                 if config(f"SKIP_H_{parent_key.upper()}_{element_key.upper()}", cast=bool, default=False):
                     response[parent_key].pop(element_key)
                 else:
-                    await response[parent_key][element_key] = health_map[parent_key][element_key]()
+                    response[parent_key][element_key] = await health_map[parent_key][element_key]()
         else:
             response[parent_key] = await health_map[parent_key]()
     return response

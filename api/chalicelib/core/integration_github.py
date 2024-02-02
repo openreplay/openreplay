@@ -20,7 +20,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
     def issue_handler(self):
         return self._issue_handler
 
-    def get_obfuscated(self):
+    async def get_obfuscated(self):
         integration = await self.get()
         if integration is None:
             return None

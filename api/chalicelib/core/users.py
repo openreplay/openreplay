@@ -633,7 +633,7 @@ async def logout(user_id: int):
         await cur.execute(query)
 
 
-def refresh(user_id: int, tenant_id: int = -1) -> dict:
+async def refresh(user_id: int, tenant_id: int = -1) -> dict:
     jwt_iat, jwt_r_jti, jwt_r_iat = await refresh_jwt_iat_jti(user_id=user_id)
     return {
         "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,

@@ -1,4 +1,4 @@
-.import schemas
+import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client

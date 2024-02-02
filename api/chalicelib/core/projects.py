@@ -215,7 +215,7 @@ async def get_by_project_key(project_key):
 
 
 async def get_project_key(project_id):
-    async async with pg_client.cursor() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""SELECT project_key
                                FROM public.projects
                                WHERE project_id =%(project_id)s

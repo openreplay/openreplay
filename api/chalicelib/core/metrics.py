@@ -1962,7 +1962,7 @@ async def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(d
     return helper.list_to_camel_case(__merge_charts(response_end, actions))
 
 
-def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = await __get_constraints(project_id=project_id, data=args)
@@ -2093,7 +2093,7 @@ async def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.
     return helper.list_to_camel_case(rows)
 
 
-def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
@@ -2129,7 +2129,7 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
     return rows
 
 
-def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = await __get_constraints(project_id=project_id, time_constraint=True,
@@ -2198,7 +2198,7 @@ async def __get_application_activity_avg_image_load_time(cur, project_id, startT
     return row
 
 
-def get_application_activity_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+async def get_application_activity_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                  endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
         row = await __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)

@@ -129,9 +129,9 @@ async def __delete_sessions_by_session_ids(session_ids):
         await cur.execute(query=query)
 
 
-def __delete_session_mobs_by_session_ids(session_ids, project_id):
-    sessions_mobs.delete_mobs(session_ids=session_ids, project_id=project_id)
-    sessions_devtool.delete_mobs(session_ids=session_ids, project_id=project_id)
+async def __delete_session_mobs_by_session_ids(session_ids, project_id):
+    await sessions_mobs.delete_mobs(session_ids=session_ids, project_id=project_id)
+    await sessions_devtool.delete_mobs(session_ids=session_ids, project_id=project_id)
 
 
 async def get_scheduled_jobs():

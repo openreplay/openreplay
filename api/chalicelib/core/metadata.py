@@ -79,7 +79,7 @@ def index_to_colname(index):
     return f"metadata_{index}"
 
 
-def __get_available_index(project_id):
+async def __get_available_index(project_id):
     used_indexs = await get(project_id)
     used_indexs = [i["index"] for i in used_indexs]
     if len(used_indexs) >= MAX_INDEXES:
@@ -144,7 +144,7 @@ async def delete(tenant_id, project_id, index: int):
 
 
 async def add(tenant_id, project_id, new_name):
-    index = __get_available_index(project_id=project_id)
+    index = await __get_available_index(project_id=project_id)
     if index < 1:
         return {"errors": ["maximum allowed metadata reached"]}
     if __exists_by_name(project_id=project_id, name=new_name, exclude_index=None):
