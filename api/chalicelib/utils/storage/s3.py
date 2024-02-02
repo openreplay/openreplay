@@ -25,7 +25,7 @@ class AmazonS3Storage(ObjectStorage):
                                   region_name=config("sessions_region"),
                                   verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
 
-    def exists(self, bucket, key):
+    async def exists(self, bucket, key):
         try:
             self.resource.Object(bucket, key).load()
         except botocore.exceptions.ClientError as e:
@@ -92,7 +92,7 @@ class AmazonS3Storage(ObjectStorage):
                 raise ex
         return result["Body"].read().decode()
 
-    def tag_for_deletion(self, bucket, key):
+    async def tag_for_deletion(self, bucket, key):
         if not self.exists(bucket, key):
             return False
         # Copy the file to change the creation date, so it can be deleted X days after the tag's creation
@@ -103,10 +103,10 @@ class AmazonS3Storage(ObjectStorage):
             TaggingDirective='COPY'
         )
 
-        self.tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days',
+        await self.tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days',
                       tag_value=config("SCH_DELETE_DAYS", default='7'))
 
-    def tag_file(self, file_key, bucket, tag_key, tag_value):
+    async def tag_file(self, file_key, bucket, tag_key, tag_value):
         return self.client.put_object_tagging(
             Bucket=bucket,
             Key=file_key,
