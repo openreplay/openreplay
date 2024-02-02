@@ -79,7 +79,7 @@ function SubHeader(props: any) {
 
   const showSummary = () => {
     player.pause();
-    showModal(<SummaryBlock sessionId={props.sessionId} />, { right: true, width: 300 })
+    showModal(<SummaryBlock sessionId={props.sessionId} />, { right: true, width: 330 })
   }
 
   const showWarning =
