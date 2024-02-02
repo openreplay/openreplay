@@ -38,7 +38,7 @@ async def search_short_session(data: schemas.ClickMapSessionsSearch, project_id,
                                                               value=[schemas.PlatformType.desktop],
                                                               operator=schemas.SearchEventOperator._is))
 
-    full_args, query_part = sessions_search.search_query_parts(data=data, error_status=None, errors_only=False,
+    full_args, query_part = await sessions_search.search_query_parts(data=data, error_status=None, errors_only=False,
                                                                favorite_only=data.bookmarked, issue=None,
                                                                project_id=project_id, user_id=user_id)
 

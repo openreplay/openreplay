@@ -120,7 +120,7 @@ def Build(a):
             logging.warning(a["filter"])
             raise
 
-        full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
+        full_args, query_part = await sessions.search_query_parts(data=data, error_status=None, errors_only=False,
                                                             issue=None, project_id=a["projectId"], user_id=None,
                                                             favorite_only=False)
         subQ = f"""SELECT COUNT(session_id) AS value 

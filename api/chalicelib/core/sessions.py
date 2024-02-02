@@ -45,7 +45,7 @@ async def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id,
     if data.bookmarked:
         data.startTimestamp, data.endTimestamp = await sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
-    full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
+    full_args, query_part = await search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id, platform=platform)
     if data.limit is not None and data.page is not None:
@@ -181,7 +181,7 @@ async def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: 
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
-    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+    full_args, query_part = await search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
@@ -287,7 +287,7 @@ async def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: i
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
-    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+    full_args, query_part = await search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
@@ -349,7 +349,7 @@ async def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: i
 
 
 async def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
-    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+    full_args, query_part = await search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None)
 
@@ -399,7 +399,7 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
 
 
 # this function generates the query and return the generated-query with the dict of query arguments
-def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
+async def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                        project_id, user_id, platform="web", extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
