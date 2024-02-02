@@ -1118,11 +1118,7 @@ CREATE TABLE events.tags
 CREATE INDEX tags_session_id_idx ON events.tags (session_id);
 CREATE INDEX tags_timestamp_idx ON events.tags (timestamp);
 
-IF NOT EXISTS(SELECT *
-                          FROM pg_type typ
-                          WHERE typ.typname = 'ui_tests_status') THEN
 CREATE TYPE ui_tests_status AS ENUM ('preview', 'in-progress', 'paused', 'closed');
-END IF;
 
 CREATE TABLE public.ut_tests
 (
@@ -1153,11 +1149,7 @@ CREATE TABLE public.ut_tests_tasks
     allow_typing BOOLEAN DEFAULT FALSE
 );
 
-IF NOT EXISTS(SELECT *
-                          FROM pg_type typ
-                          WHERE typ.typname = 'ut_signal_status') THEN
 CREATE TYPE ut_signal_status AS ENUM ('begin', 'done', 'skipped');
-END IF;
 
 CREATE TABLE public.ut_tests_signals
 (
