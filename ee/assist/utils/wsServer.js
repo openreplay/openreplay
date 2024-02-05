@@ -18,6 +18,13 @@ if (useRedis) {
     void redisClient.connect();
 }
 
+const socketReplacer = function (key, value) {
+    if (key !== "roomId" && key !== "projectKey" && key !== "handshake") {
+        return undefined;
+    }
+    return value;
+}
+
 const doFetchAllSockets = async function () {
     if (useRedis) {
         try {
@@ -30,7 +37,7 @@ const doFetchAllSockets = async function () {
             console.log('cache miss')
             let result = await io.fetchSockets();
             console.log('setting cache')
-            await redisClient.set('fetchSocketsResult', JSON.stringify(result), {EX: 5});
+            await redisClient.set('fetchSocketsResult', JSON.stringify(result, socketReplacer), {EX: 5});
             return result;
         } catch (error) {
             console.error('Error setting value with expiration:', error);
