@@ -69,10 +69,10 @@ const getAllSessions = async  function (projectKey, filters, onlineOnly= false) 
     const rooms = new Map();
     for (let item of connected_sockets) {
         // Prefilter checks
-        if (rooms.has(item.roomId)) {
+        if (rooms.has(item.handshake.query.roomId)) {
             continue;
         }
-        if (item.projectKey !== projectKey || !item.handshake.query.sessionInfo) {
+        if (item.handshake.query.projectKey !== projectKey || !item.handshake.query.sessionInfo) {
             continue;
         }
         if (onlineOnly && item.handshake.query.identity !== IDENTITIES.session) {
@@ -80,7 +80,7 @@ const getAllSessions = async  function (projectKey, filters, onlineOnly= false) 
         }
 
         // Mark this room as visited
-        rooms.set(item.roomId, true);
+        rooms.set(item.handshake.query.roomId, true);
 
         // Add session to the list without filtering
         if (!hasFilters(filters)) {
@@ -177,15 +177,15 @@ const autocomplete = async function (req, res) {
 
     const rooms = new Map();
     for (let item of connected_sockets) {
-        if (rooms.has(item.roomId)) {
+        if (rooms.has(item.handshake.query.roomId)) {
             continue;
         }
         if (item.handshake.query.sessionInfo) {
-            if ((item.projectKey !== _projectKey) || (item.handshake.query.identity !== IDENTITIES.session)) {
+            if ((item.handshake.query.projectKey !== _projectKey) || (item.handshake.query.identity !== IDENTITIES.session)) {
                 continue;
             }
             // Mark this room as visited
-            rooms.set(item.roomId, true);
+            rooms.set(item.handshake.query.roomId, true);
             results.push(...getValidAttributes(item.handshake.query.sessionInfo, filters.query))
         }
     }

@@ -21,8 +21,8 @@ if (useRedis) {
 const processSocketsList = function (sockets) {
     let res = []
     for (let socket of sockets) {
-        let {roomId, projectKey, handshake} = socket;
-        res.push({roomId, projectKey, handshake});
+        let {handshake} = socket;
+        res.push({handshake});
     }
     return res
 }
