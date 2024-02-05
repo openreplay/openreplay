@@ -48,7 +48,7 @@ def __replace_images(HTML):
     return HTML, mime_img
 
 
-def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
+async def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
     BODY_HTML, mime_img = __replace_images(BODY_HTML)
     if not isinstance(recipient, list):
         recipient = [recipient]

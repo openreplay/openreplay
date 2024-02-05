@@ -36,7 +36,7 @@ def __find_streams(project_id, log_group, client, token, stream_filter):
     data = client.describe_log_streams(**d_args)
     streams = list(filter(stream_filter, data['logStreams']))
     if 'nextToken' not in data:
-        save_new_token(project_id=project_id, token=token)
+        await save_new_token(project_id=project_id, token=token)
         return streams
     return streams + __find_streams(project_id, log_group, client, data['nextToken'], stream_filter)
 

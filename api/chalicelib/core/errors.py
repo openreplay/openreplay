@@ -681,7 +681,7 @@ ACTION_STATE = {
 
 
 async def change_state(project_id, user_id, error_id, action):
-    errors = get(error_id, family=True)
+    errors = await get(error_id, family=True)
     print(len(errors))
     status = ACTION_STATE.get(action)
     if errors is None or len(errors) == 0:

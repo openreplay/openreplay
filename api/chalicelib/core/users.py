@@ -279,7 +279,7 @@ async def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberS
     user = await get_member(user_id=user_id_to_update, tenant_id=tenant_id)
     _changes = {}
     if editor_id != user_id_to_update:
-        admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
+        admin = await get_user_role(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
         if admin["admin"] and user["superAdmin"]:
@@ -297,8 +297,8 @@ async def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberS
         _changes["role"] = "admin" if changes.admin else "member"
 
     if len(_changes.keys()) > 0:
-        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
-        return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
+        await update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
+        return {"data": await get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
 
 
@@ -423,7 +423,7 @@ async def delete_member(user_id, tenant_id, id_to_delete):
                                 change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete}))
-    return {"data": get_members(tenant_id=tenant_id)}
+    return {"data": await get_members(tenant_id=tenant_id)}
 
 
 async def change_password(tenant_id, user_id, email, old_password, new_password):
@@ -453,7 +453,7 @@ async def set_password_invitation(user_id, new_password):
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
+        "metadata": await metadata.get_remaining_metadata_with_count(tenant_id)}
 
     c = await tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
@@ -689,7 +689,7 @@ async def update_user_module(user_id, data: schemas.ModuleStatus):
     #   if module property is not exists, it will be created
     #  if module property exists, it will be updated, modify here and call update_user_settings
     # module is a single element to be added or removed
-    settings = get_user_settings(user_id)["settings"]
+    settings = (await get_user_settings(user_id))["settings"]
     if settings is None:
         settings = {}
 
@@ -702,7 +702,7 @@ async def update_user_module(user_id, data: schemas.ModuleStatus):
     elif not data.status and data.module in settings["modules"]:
         settings["modules"].remove(data.module)
 
-    return update_user_settings(user_id, settings)
+    return await update_user_settings(user_id, settings)
 
 
 async def update_user_settings(user_id, settings):

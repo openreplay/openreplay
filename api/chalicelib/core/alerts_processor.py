@@ -102,7 +102,7 @@ def can_check(a) -> bool:
         and ((now - a["createdAt"]) % (TimeInterval[repetitionBase] * 60 * 1000)) < 60 * 1000
 
 
-def Build(a):
+async def Build(a):
     now = TimeUTC.now()
     params = {"project_id": a["projectId"], "now": now}
     full_args = {}
@@ -186,13 +186,18 @@ def Build(a):
     return q, params
 
 
-async def process():
+def process():
+    import asyncio
+    asyncio.run(_process())
+
+
+async def _process():
     notifications = []
     all_alerts = alerts_listener.get_all_alerts()
     async with pg_client.cursor() as cur:
         for alert in all_alerts:
             if can_check(alert):
-                query, params = Build(alert)
+                query, params = await Build(alert)
                 try:
                     query = cur.mogrify(query, params)
                 except Exception as e:
@@ -219,7 +224,7 @@ async def process():
                                 SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
-        alerts.process_notifications(notifications)
+        await alerts.process_notificationsq(notifications)
 
 
 def __format_value(x):

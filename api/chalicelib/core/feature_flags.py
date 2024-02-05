@@ -313,7 +313,7 @@ async def update_feature_flag(project_id: int, feature_flag_id: int,
     """
     Update an existing feature flag and return its updated data.
     """
-    validate_unique_flag_key(feature_flag_data=feature_flag, project_id=project_id, exclude_id=feature_flag_id)
+    await validate_unique_flag_key(feature_flag_data=feature_flag, project_id=project_id, exclude_id=feature_flag_id)
     validate_multi_variant_flag(feature_flag_data=feature_flag)
 
     columns = (

@@ -295,13 +295,13 @@ async def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 async def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(), **args):
     async with pg_client.cursor() as cur:
-        rows = __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args)
+        rows = await __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        rows = __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args)
+        rows = await __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             for key in previous.keys():

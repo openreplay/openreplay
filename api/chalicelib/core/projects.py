@@ -411,7 +411,6 @@ async def update_project_conditions(project_id, conditions):
         await create_project_conditions(project_id, to_be_created)
 
     if to_be_updated:
-        print(to_be_updated)
         await update_project_condition(project_id, to_be_updated)
 
     return await get_conditions(project_id)

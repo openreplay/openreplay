@@ -2,7 +2,7 @@ from chalicelib.utils import pg_client, helper
 
 
 async def get_all_alerts():
-    async with pg_client.cursor(long_query=True) as cur:
+    async with pg_client.cursor() as cur:
         query = """SELECT -1 AS tenant_id,
                            alert_id,
                            projects.project_id,

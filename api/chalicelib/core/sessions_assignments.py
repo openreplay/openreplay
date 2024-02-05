@@ -29,7 +29,7 @@ async def create_new_assignment(tenant_id, project_id, session_id, creator_id, a
     if error is not None:
         return error
 
-    i = integration.get()
+    i = await integration.get()
 
     if i is None:
         return {"errors": [f"integration not found"]}
@@ -76,7 +76,7 @@ async def get_all(project_id, user_id):
 """,
                             {"project_id": project_id,
                              "providers": tuple(d for d in available_integrations if available_integrations[d])})
-        cur.execute(
+        await cur.execute(
             query
         )
         assignments = helper.list_to_camel_case(await cur.fetchall())
@@ -97,7 +97,7 @@ async def get_by_session(tenant_id, user_id, project_id, session_id):
                 WHERE {" AND ".join(extra_query)};""",
                             {"session_id": session_id,
                              "providers": tuple([k for k in available_integrations if available_integrations[k]])})
-        cur.execute(
+        await cur.execute(
             query
         )
         results = await cur.fetchall()

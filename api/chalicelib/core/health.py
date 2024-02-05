@@ -200,7 +200,7 @@ async def get_health():
         "details": __get_sessions_stats,
         "ssl": __check_SSL
     }
-    return __process_health(health_map=health_map)
+    return await __process_health(health_map=health_map)
 
 
 async def __process_health(health_map):
