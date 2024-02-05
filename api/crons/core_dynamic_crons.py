@@ -1,3 +1,4 @@
+import asyncio
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -6,23 +7,23 @@ from chalicelib.core import weekly_report, jobs, health
 
 
 def run_scheduled_jobs() -> None:
-    jobs.execute_jobs()
+    asyncio.run(jobs.execute_jobs())
 
 
 def weekly_report_cron() -> None:
-    weekly_report.cron()
+    asyncio.run(weekly_report.cron()) 
 
 
 def telemetry_cron() -> None:
-    telemetry.compute()
+    asyncio.run(telemetry.compute())
 
 
 def health_cron() -> None:
-    health.cron()
+    asyncio.run(health.cron())
 
 
 def weekly_health_cron() -> None:
-    health.weekly_cron()
+    asyncio.run(health.weekly_cron())
 
 
 cron_jobs = [
