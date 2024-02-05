@@ -249,12 +249,17 @@ function install() {
     # process override file while installing
     # OVERRIDE_FILE=/tmp/override.yaml openreplay -i
     [[ -z $OVERRIDE_FILE ]] || {
+        [[ -f $OVERRIDE_FILE ]] || {
+            echo "OVERRIDE_FILE does not exist, exiting"
+            exit 100
+        }
         override_tmpdir=$(pwd)
         err_cd /tmp
         cp "$OVERRIDE_FILE" new_vars.yaml
         cp "$override_tmpdir/vars.yaml" old_vars.yaml
         yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' new_vars.yaml >vars.yaml
         mv vars.yaml "$override_tmpdir"
+        err_cd "$override_tmpdir"
     }
     SKIP_K8S_TOOLS=1 DOMAIN_NAME=$domain_name bash init.sh
     return
