@@ -52,15 +52,15 @@ async def edit_tenant(tenant_id, changes):
         return helper.dict_to_camel_case(await cur.fetchone())
 
 
-async def tenants_exists_sync(use_pool=True):
+def tenants_exists_sync(use_pool=True):
     with pg_client.PostgresClient(use_pool=use_pool) as cur:
-        await cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
-        out = await cur.fetchone()["exists"]
+        cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        out = cur.fetchone()["exists"]
         return out
 
 
 async def tenants_exists(use_pool=True):
-    async with pg_client.cusor() as cur:
+    async with pg_client.cursor() as cur:
         await cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
         row = await cur.fetchone()
         return row["exists"]

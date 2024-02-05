@@ -49,8 +49,8 @@ async def __create(tenant_id, data):
                                 RETURNING project_id;""",
                             data)
         await cur.execute(query=query)
-        project_id = await cur.fetchone()["project_id"]
-    return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
+        project_id = (await cur.fetchone())["project_id"]
+    return await get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
 async def get_projects(tenant_id: int, gdpr: bool = False, recorded: bool = False):
@@ -135,13 +135,13 @@ async def get_project(tenant_id, project_id, include_last_session=False, include
 
 
 async def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
-    if __exists_by_name(name=data.name, exclude_id=None):
+    if await __exists_by_name(name=data.name, exclude_id=None):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if not skip_authorization:
         admin = await users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, data=data.model_dump())}
+    return {"data": await __create(tenant_id=tenant_id, data=data.model_dump())}
 
 
 async def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
@@ -177,7 +177,8 @@ async def get_gdpr(project_id):
                                     AND s.deleted_at IS NULL;""",
                             {"project_id": project_id})
         await cur.execute(query=query)
-        row = await cur.fetchone()["gdpr"]
+        row = await cur.fetchone()
+        row = row["gdpr"]
         row["projectId"] = project_id
         return row
 

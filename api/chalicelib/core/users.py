@@ -174,7 +174,7 @@ async def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, ba
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data.email,
         "invitation_link": new_member["invitationLink"],
-        "client_id": await tenants.get_by_tenant_id(tenant_id)["name"],
+        "client_id": (await tenants.get_by_tenant_id(tenant_id))["name"],
         "sender_name": admin["name"]
     })
     return {"data": new_member}
@@ -261,7 +261,7 @@ async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
             return {"errors": ["unauthorized"]}
 
     if changes.name is not None and len(changes.name) > 0:
-        update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
+        await update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
 
     _tenant_changes = {}
     if changes.tenantName is not None and len(changes.tenantName) > 0:
@@ -272,7 +272,7 @@ async def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
     if len(_tenant_changes.keys()) > 0:
         tenants.edit_tenant(tenant_id=tenant_id, changes=_tenant_changes)
 
-    return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
+    return {"data": await __get_account_info(tenant_id=tenant_id, user_id=user_id)}
 
 
 async def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id):
@@ -565,7 +565,7 @@ async def change_jwt_iat_jti(user_id):
                                           EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
                             {"user_id": user_id})
         await cur.execute(query)
-        row = cur.fetchone()
+        row = await cur.fetchone()
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
@@ -609,7 +609,7 @@ async def authenticate(email, password, for_change_password=False) -> dict | boo
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
+        jwt_iat, jwt_r_jti, jwt_r_iat = await change_jwt_iat_jti(user_id=r['userId'])
         return {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
                                             aud=f"front:{helper.get_stage_name()}"),

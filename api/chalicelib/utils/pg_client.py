@@ -186,6 +186,7 @@ def terminate():
 @contextlib.asynccontextmanager
 async def cursor():
     from app import app
+    import psycopg
     async with app.state.postgresql.connection() as cnx:
-        with cnx.cursor() as cur:
+        async with psycopg.AsyncClientCursor(cnx) as cur:
             yield cur

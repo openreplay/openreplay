@@ -72,9 +72,10 @@ async def create_tenant(data: schemas.UserSignupSchema):
                  VALUES (%(projectName)s, TRUE)
                  RETURNING project_id, (SELECT api_key FROM t) AS api_key;"""
 
-    with pg_client.cursor() as cur:
+    async with pg_client.cursor() as cur:
+        print('fuuuu')
         await cur.execute(cur.mogrify(query, params))
-
+    print('barrr')
     await telemetry.new_client()
     r = await users.authenticate(email, password)
     r["smtp"] = smtp.has_smtp()
