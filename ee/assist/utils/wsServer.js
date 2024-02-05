@@ -18,13 +18,6 @@ if (useRedis) {
     void redisClient.connect();
 }
 
-const socketReplacer = function (key, value) {
-    if (key !== "roomId" && key !== "projectKey" && key !== "handshake") {
-        return undefined;
-    }
-    return value;
-}
-
 const processSocketsList = function (sockets) {
     let res = []
     for (let socket of sockets) {
@@ -45,6 +38,7 @@ const doFetchAllSockets = async function () {
             }
             console.log('cache miss')
             let result = await io.fetchSockets();
+            console.log('fetchResult:', result);
             console.log('setting cache')
             let cachedString = JSON.stringify(processSocketsList(result));
             console.log('cachedString:', cachedString)
