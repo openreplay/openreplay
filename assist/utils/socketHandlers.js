@@ -70,10 +70,6 @@ function processNewSocket(socket) {
     socket.handshake.query.sessId = connSessionId;
     socket.handshake.query.tabId = connTabId;
     debug_log && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.handshake.query.roomId}`);
-
-    // socket.identity = socket.handshake.query.identity;
-    // socket.peerId = socket.handshake.query.peerId;
-    // socket.projectId = socket.handshake.query.projectId;
 }
 
 async function onConnect(socket) {

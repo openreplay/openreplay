@@ -21,7 +21,7 @@ const {IDENTITIES} = require("./assistHelper");
 const debug_log = process.env.debug === "1";
 
 const respond = function (req, res, data) {
-    console.log("responding with data: ", JSON.stringify(data))
+    debug_log && console.log("responding with data: ", JSON.stringify(data))
     let result = {data}
     if (process.env.uws !== "true") {
         res.statusCode = 200;

@@ -30,25 +30,18 @@ const processSocketsList = function (sockets) {
 const doFetchAllSockets = async function () {
     if (useRedis) {
         try {
-            console.log('checking cache')
             let cachedResult = await redisClient.get('fetchSocketsResult');
             if (cachedResult) {
-                console.log('using cache')
                 return JSON.parse(cachedResult);
             }
-            console.log('cache miss')
             let result = await io.fetchSockets();
-            console.log('fetchResult:', result);
-            console.log('setting cache')
             let cachedString = JSON.stringify(processSocketsList(result));
-            console.log('cachedString:', cachedString)
             await redisClient.set('fetchSocketsResult', cachedString, {EX: 5});
             return result;
         } catch (error) {
             console.error('Error setting value with expiration:', error);
         }
     }
-    console.log('no cache')
     return await io.fetchSockets();
 }
 
