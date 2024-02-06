@@ -83,7 +83,7 @@ export default class Assist {
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
   private remoteControl: RemoteControl | null = null;
-
+  private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null
   private agents: Record<string, Agent> = {}
   private readonly options: Options
   private readonly canvasMap: Map<number, Canvas> = new Map()
@@ -434,7 +434,7 @@ export default class Assist {
     peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
     peer.on('disconnected', () => {
       if (peerReconnectAttempts < 30) {
-        setTimeout(() => {
+        this.peerReconnectTimeout = setTimeout(() => {
           peer.reconnect()
         }, Math.min(peerReconnectAttempts, 8) * 2 * 1000)
         peerReconnectAttempts += 1
@@ -635,6 +635,10 @@ export default class Assist {
   private clean() {
     // sometimes means new agent connected so we keep id for control
     this.remoteControl?.releaseControl(false, true)
+    if (this.peerReconnectTimeout) {
+      clearTimeout(this.peerReconnectTimeout)
+      this.peerReconnectTimeout = null
+    }
     if (this.peer) {
       this.peer.destroy()
       this.app.debug.log('Peer destroyed')
