@@ -29,7 +29,7 @@ def __make_stream_filter(start_time, end_time):
     return __valid_stream
 
 
-def __find_streams(project_id, log_group, client, token, stream_filter):
+async def __find_streams(project_id, log_group, client, token, stream_filter):
     d_args = {"logGroupName": log_group, "orderBy": 'LastEventTime', 'limit': 50}
     if token is not None and len(token) > 0:
         d_args["nextToken"] = token
