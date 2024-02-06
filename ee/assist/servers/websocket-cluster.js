@@ -14,7 +14,7 @@ const {
     socketsLiveByProject,
     socketsLiveBySession,
     autocomplete
-} = require('../utils/httpHandlers-cluster');
+} = require('../utils/httpHandlers');
 
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
