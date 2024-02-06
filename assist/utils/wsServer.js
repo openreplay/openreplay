@@ -7,6 +7,16 @@ const getServer = function () {
     return io;
 }
 
+const fetchSockets = async function (roomID) {
+    if (!io) {
+        return [];
+    }
+    if (!roomID) {
+        return await io.fetchSockets();
+    }
+    return await io.in(roomID).fetchSockets();
+}
+
 const createSocketIOServer = function (server, prefix) {
     if (io) {
         return io;
@@ -26,4 +36,5 @@ const createSocketIOServer = function (server, prefix) {
 module.exports = {
     createSocketIOServer,
     getServer,
+    fetchSockets,
 }
