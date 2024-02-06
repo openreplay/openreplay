@@ -15,16 +15,13 @@ const {
     RecordRequestDuration,
     IncreaseTotalRequests
 } = require('../utils/metrics');
-const {
-    GetRoomInfo,
-    GetRooms,
-    GetSessions,
-} = require('../utils/rooms');
+const {fetchSockets} = require("./wsServer");
+const {IDENTITIES} = require("./assistHelper");
 
 const debug_log = process.env.debug === "1";
 
 const respond = function (req, res, data) {
-    console.log("responding with data: ", data)
+    console.log("responding with data: ", JSON.stringify(data))
     let result = {data}
     if (process.env.uws !== "true") {
         res.statusCode = 200;
@@ -38,8 +35,18 @@ const respond = function (req, res, data) {
     RecordRequestDuration(req.method.toLowerCase(), res.handlerName, 200, duration/1000.0);
 }
 
-const getParticularSession = function (sessionId, filters) {
-    const sessInfo = GetRoomInfo(sessionId);
+const getParticularSession = async function (roomId, filters) {
+    let connected_sockets = await fetchSockets(roomId);
+    if (connected_sockets.length === 0) {
+        return null;
+    }
+    let sessInfo;
+    for (let item of connected_sockets) {
+        if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
+            sessInfo = item.handshake.query.sessionInfo;
+            break;
+        }
+    }
     if (!sessInfo) {
         return null;
     }
@@ -52,23 +59,41 @@ const getParticularSession = function (sessionId, filters) {
     return null;
 }
 
-const getAllSessions = function (projectKey, filters, onlineOnly= false) {
+const getAllSessions = async  function (projectKey, filters, onlineOnly= false) {
     const sessions = [];
-    const allRooms = onlineOnly ? GetSessions(projectKey) : GetRooms(projectKey);
+    const connected_sockets = await fetchSockets();
+    if (connected_sockets.length === 0) {
+        return sessions;
+    }
 
-    for (let sessionId of allRooms) {
-        let sessInfo = GetRoomInfo(sessionId);
-        if (!sessInfo) {
+    const rooms = new Map();
+    for (let item of connected_sockets) {
+        // Prefilter checks
+        if (rooms.has(item.handshake.query.roomId)) {
             continue;
         }
+        if (item.handshake.query.projectKey !== projectKey || !item.handshake.query.sessionInfo) {
+            continue;
+        }
+        if (onlineOnly && item.handshake.query.identity !== IDENTITIES.session) {
+            continue;
+        }
+
+        // Mark this room as visited
+        rooms.set(item.handshake.query.roomId, true);
+
+        // Add session to the list without filtering
         if (!hasFilters(filters)) {
-            sessions.push(sessInfo);
+            sessions.push(item.handshake.query.sessionInfo);
             continue;
         }
-        if (isValidSession(sessInfo, filters.filter)) {
-            sessions.push(sessInfo);
+
+        // Add session to the list if it passes the filter
+        if (isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
+            sessions.push(item.handshake.query.sessionInfo);
         }
     }
+
     return sessions
 }
 
@@ -83,11 +108,12 @@ const socketsListByProject = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        return respond(req, res, getParticularSession(_sessionId, filters));
+        const sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        return respond(req, res, sessInfo);
     }
 
     // find all sessions for a project
-    const sessions = getAllSessions(_projectKey, filters);
+    const sessions = await getAllSessions(_projectKey, filters);
 
     // send response
     respond(req, res, sortPaginate(sessions, filters));
@@ -104,11 +130,12 @@ const socketsLiveByProject = async function (req, res) {
 
     // find a particular session
     if (_sessionId) {
-        return respond(req, res, getParticularSession(_sessionId, filters));
+        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        return respond(req, res, sessInfo);
     }
 
     // find all sessions for a project
-    const sessions = getAllSessions(_projectKey, filters, true);
+    const sessions = await getAllSessions(_projectKey, filters, true);
 
     // send response
     respond(req, res, sortPaginate(sessions, filters));
@@ -119,12 +146,14 @@ const socketsLiveBySession = async function (req, res) {
     debug_log && console.log("[WS]looking for LIVE session");
     res.handlerName = 'socketsLiveBySession';
 
+    const _projectKey = extractProjectKeyFromRequest(req);
     const _sessionId = extractSessionIdFromRequest(req);
     const filters = await extractPayloadFromRequest(req, res);
 
     // find a particular session
     if (_sessionId) {
-        return respond(req, res, getParticularSession(_sessionId, filters));
+        let sessInfo = await getParticularSession(`${_projectKey}-${_sessionId}`, filters);
+        return respond(req, res, sessInfo);
     }
     return respond(req, res, null);
 }
@@ -140,14 +169,27 @@ const autocomplete = async function (req, res) {
     if (!hasQuery(filters)) {
         return respond(req, res, results);
     }
-    let allSessions = GetSessions(_projectKey);
-    for (let sessionId of allSessions) {
-        let sessInfo = GetRoomInfo(sessionId);
-        if (!sessInfo) {
+
+    let connected_sockets = await fetchSockets();
+    if (connected_sockets.length === 0) {
+        return results;
+    }
+
+    const rooms = new Map();
+    for (let item of connected_sockets) {
+        if (rooms.has(item.handshake.query.roomId)) {
             continue;
         }
-        results = [...results, ...getValidAttributes(sessInfo, filters.query)];
+        if (item.handshake.query.sessionInfo) {
+            if ((item.handshake.query.projectKey !== _projectKey) || (item.handshake.query.identity !== IDENTITIES.session)) {
+                continue;
+            }
+            // Mark this room as visited
+            rooms.set(item.handshake.query.roomId, true);
+            results.push(...getValidAttributes(item.handshake.query.sessionInfo, filters.query))
+        }
     }
+
     respond(req, res, uniqueAutocomplete(results));
 }
 

@@ -20,7 +20,7 @@ const extractTabId = (peerId) => {
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
     if (splited.length < 2 || splited.length > 3) {
-        debug && console.error(`cannot split peerId: ${peerId}`);
+        // debug && console.error(`cannot split peerId: ${peerId}`);
         return {};
     }
     if (PROJECT_KEY_LENGTH > 0 && splited[0].length !== PROJECT_KEY_LENGTH) {
