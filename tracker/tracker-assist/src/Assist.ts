@@ -435,7 +435,9 @@ export default class Assist {
     peer.on('disconnected', () => {
       if (peerReconnectAttempts < 30) {
         this.peerReconnectTimeout = setTimeout(() => {
-          peer.reconnect()
+          if (this.app.active()) {
+            peer.reconnect()
+          }
         }, Math.min(peerReconnectAttempts, 8) * 2 * 1000)
         peerReconnectAttempts += 1
       }

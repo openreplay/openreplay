@@ -1,3 +1,7 @@
+## 8.0.1
+
+- fix peer reconnection strategy
+
 ## 8.0.0
 
 - Keeping up with major tracker release.
