@@ -160,9 +160,7 @@ export default class APIClient {
       } else {
         return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
       }
-    }).catch((error) => {
-      return Promise.reject({ message: `! ${this.init.method} error on ${path};` });
-    });
+    })
   }
 
   async refreshToken(): Promise<string> {
