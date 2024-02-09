@@ -153,6 +153,7 @@ function captureSnapshot(canvas: HTMLCanvasElement, quality: 'low' | 'medium' | 
 
 function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
   const [header, base64] = dataUrl.split(',')
+  if (!header || !base64) return null
   const encParts = header.match(/:(.*?);/)
   if (!encParts) return null
   const mime = encParts[1]
