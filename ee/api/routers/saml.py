@@ -1,9 +1,11 @@
+import json
+import logging
+
 from fastapi import HTTPException, Request, Response, status
 
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 from routers.base import get_routers
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +20,11 @@ from starlette.responses import RedirectResponse
 
 @public_app.get("/sso/saml2", tags=["saml2"])
 @public_app.get("/sso/saml2/", tags=["saml2"])
-async def start_sso(request: Request):
+async def start_sso(request: Request, iFrame: bool = False):
     request.path = ''
     req = await prepare_request(request=request)
     auth = init_saml_auth(req)
-    sso_built_url = auth.login()
+    sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame}))
     return RedirectResponse(url=sso_built_url)
 
 
@@ -33,6 +35,8 @@ async def process_sso_assertion(request: Request):
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
 
+    redirect_to_link2 = json.loads(req.get("post_data", {}) \
+                                   .get('RelayState', '{}')).get("iFrame")
     request_id = None
     if 'AuthNRequestID' in session:
         request_id = session['AuthNRequestID']
@@ -111,7 +115,7 @@ async def process_sso_assertion(request: Request):
     refresh_token_max_age = jwt["refreshTokenMaxAge"]
     response = Response(
         status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"])})
+        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     return response
@@ -124,6 +128,8 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
 
+    redirect_to_link2 = json.loads(req.get("post_data", {}) \
+                                   .get('RelayState', '{}')).get("iFrame")
     request_id = None
     if 'AuthNRequestID' in session:
         request_id = session['AuthNRequestID']
@@ -194,9 +200,14 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    return Response(
+    refresh_token = jwt["refreshToken"]
+    refresh_token_max_age = jwt["refreshTokenMaxAge"]
+    response = Response(
         status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt)})
+        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
+    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    return response
 
 
 @public_app.get('/sso/saml2/sls', tags=["saml2"])
