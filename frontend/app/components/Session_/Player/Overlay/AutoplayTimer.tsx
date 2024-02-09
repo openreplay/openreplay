@@ -71,6 +71,6 @@ function AutoplayTimer({ nextId, siteId, history }: IProps) {
 export default withRouter(
   connect((state: any) => ({
     siteId: state.getIn(['site', 'siteId']),
-    nextId: parseInt(state.getIn(['sessions', 'nextId'])),
+    nextId: state.getIn(['sessions', 'nextId']),
   }))(AutoplayTimer)
 );
