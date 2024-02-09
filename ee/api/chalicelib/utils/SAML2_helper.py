@@ -10,17 +10,18 @@ from starlette.datastructures import FormData
 if config("ENABLE_SSO", cast=bool, default=True):
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
+API_PREFIX = "/api"
 SAML2 = {
     "strict": config("saml_strict", cast=bool, default=True),
     "debug": config("saml_debug", cast=bool, default=True),
     "sp": {
-        "entityId": config("SITE_URL") + "/api/sso/saml2/metadata/",
+        "entityId": config("SITE_URL") + API_PREFIX + "/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/acs/",
+            "url": config("SITE_URL") + API_PREFIX + "/sso/saml2/acs/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/sls/",
+            "url": config("SITE_URL") + API_PREFIX + "/sso/saml2/sls/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -110,8 +111,8 @@ async def prepare_request(request: Request):
     # add / to /acs
     if not path.endswith("/"):
         path = path + '/'
-    if not path.startswith("/api"):
-        path = "/api" + path
+    if len(API_PREFIX) > 0 and not path.startswith(API_PREFIX):
+        path = API_PREFIX + path
 
     return {
         'https': 'on' if proto == 'https' else 'off',
@@ -136,7 +137,13 @@ def get_saml2_provider():
         config("idp_name", default="saml2")) > 0 else None
 
 
-def get_landing_URL(jwt):
+def get_landing_URL(jwt, redirect_to_link2=False):
+    if redirect_to_link2:
+        if len(config("sso_landing_override", default="")) == 0:
+            logging.warning("SSO trying to redirect to custom URL, but sso_landing_override env var is empty")
+        else:
+            return config("sso_landing_override") + "?jwt=%s" % jwt
+
     return config("SITE_URL") + config("sso_landing", default="/login?jwt=%s") % jwt
 
 
