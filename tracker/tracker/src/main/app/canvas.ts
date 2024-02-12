@@ -55,7 +55,7 @@ class CanvasRecorder {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           if (entry.target) {
-            if (this.snapshots[id].createdAt) {
+            if (this.snapshots[id] && this.snapshots[id].createdAt) {
               this.snapshots[id].paused = false
             } else {
               this.recordCanvas(entry.target, id)
@@ -67,7 +67,9 @@ class CanvasRecorder {
              * */
             // observer.unobserve(entry.target)
           } else {
-            this.snapshots[id].paused = true
+            if (this.snapshots[id]) {
+              this.snapshots[id].paused = true
+            }
           }
         }
       })
