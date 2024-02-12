@@ -11,6 +11,7 @@ interface Props {
   fetchListSavedSearch: () => void;
   list: any;
   savedSearch: any;
+  fetchedMeta: boolean
 }
 function SavedSearch(props: Props) {
   const { list } = props;
@@ -18,10 +19,10 @@ function SavedSearch(props: Props) {
   const { showModal } = useModal();
 
   useEffect(() => {
-    if (list.size === 0) {
+    if (list.size === 0 && props.fetchedMeta) {
       props.fetchListSavedSearch()
     }
-  }, [])
+  }, [props.fetchedMeta])
 
   return (
     <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
@@ -48,5 +49,6 @@ function SavedSearch(props: Props) {
 
 export default connect((state: any) => ({
   list: state.getIn([ 'search', 'list' ]),
-  savedSearch: state.getIn([ 'search', 'savedSearch' ])
+  savedSearch: state.getIn([ 'search', 'savedSearch' ]),
+  fetchedMeta: state.getIn(['customFields', 'fetchedMetadata'])
 }), { fetchListSavedSearch })(SavedSearch);
