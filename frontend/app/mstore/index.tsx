@@ -21,6 +21,8 @@ import FeatureFlagsStore from './featureFlagsStore';
 import UxtestingStore from './uxtestingStore';
 import TagWatchStore  from './tagWatchStore';
 import AiSummaryStore from "./aiSummaryStore";
+import AiFiltersStore from "./aiFiltersStore";
+
 export class RootStore {
   dashboardStore: DashboardStore;
   metricStore: MetricStore;
@@ -42,6 +44,7 @@ export class RootStore {
   uxtestingStore: UxtestingStore;
   tagWatchStore: TagWatchStore;
   aiSummaryStore: AiSummaryStore;
+  aiFiltersStore: AiFiltersStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -64,6 +67,7 @@ export class RootStore {
     this.uxtestingStore = new UxtestingStore();
     this.tagWatchStore = new TagWatchStore();
     this.aiSummaryStore = new AiSummaryStore();
+    this.aiFiltersStore = new AiFiltersStore();
   }
 
   initClient() {
