@@ -38,6 +38,7 @@ const FETCH_SOURCES_SUCCESS = success(FETCH_SOURCES);
 const initialState = Map({
   list: List(),
   instance: CustomField(),
+  fetchedMetadata: false,
   sources: List(),
   optionsReady: false,
 });
@@ -54,7 +55,7 @@ const reducer = (state = initialState, action = {}) => {
         addElementToFlagConditionsMap(FilterCategory.METADATA, '_' + item.key)
         addElementToConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key)
       });
-      return state.set('list', List(action.data).map(CustomField))
+      return state.set('list', List(action.data).map(CustomField)).set('fetchedMetadata', true)
 
     case FETCH_SOURCES_SUCCESS:
       return state.set(
