@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "keywords": [
     "WebRTC",
     "assistance",

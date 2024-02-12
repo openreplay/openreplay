@@ -1,3 +1,7 @@
+## 8.0.2
+
+- another fix for peer reconnection strategy
+
 ## 8.0.1
 
 - fix peer reconnection strategy
