@@ -1,3 +1,11 @@
+# 12.0.2
+
+- fix for canvas snapshot check
+
+# 12.0.1
+
+- pause canvas snapshotting when its offscreen
+
 # 12.0.0
 
 - offline session recording and manual sending

@@ -5,6 +5,7 @@ import Message, { CanvasNode } from './messages.gen.js'
 interface CanvasSnapshot {
   images: { data: string; id: number }[]
   createdAt: number
+  paused: boolean
 }
 
 interface Options {
@@ -27,19 +28,19 @@ class CanvasRecorder {
 
   startTracking() {
     setTimeout(() => {
-      this.app.nodes.scanTree(this.handleCanvasEl)
+      this.app.nodes.scanTree(this.captureCanvas)
       this.app.nodes.attachNodeCallback((node: Node): void => {
-        this.handleCanvasEl(node)
+        this.captureCanvas(node)
       })
     }, 500)
   }
 
   restartTracking = () => {
     this.clear()
-    this.app.nodes.scanTree(this.handleCanvasEl)
+    this.app.nodes.scanTree(this.captureCanvas)
   }
 
-  handleCanvasEl = (node: Node) => {
+  captureCanvas = (node: Node) => {
     const id = this.app.nodes.getID(node)
     if (!id || !hasTag(node, 'canvas')) {
       return
@@ -49,10 +50,40 @@ class CanvasRecorder {
     if (isIgnored || !hasTag(node, 'canvas') || this.snapshots[id]) {
       return
     }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          if (entry.target) {
+            if (this.snapshots[id] && this.snapshots[id].createdAt) {
+              this.snapshots[id].paused = false
+            } else {
+              this.recordCanvas(entry.target, id)
+            }
+            /**
+             * We can switch this to start observing when element is in the view
+             * but otherwise right now we're just pausing when it's not
+             * just to save some bandwidth and space on backend
+             * */
+            // observer.unobserve(entry.target)
+          } else {
+            if (this.snapshots[id]) {
+              this.snapshots[id].paused = true
+            }
+          }
+        }
+      })
+    })
+
+    observer.observe(node)
+  }
+
+  recordCanvas = (node: Node, id: number) => {
     const ts = this.app.timestamp()
     this.snapshots[id] = {
       images: [],
       createdAt: ts,
+      paused: false,
     }
     const canvasMsg = CanvasNode(id.toString(), ts)
     this.app.send(canvasMsg as Message)
@@ -63,11 +94,13 @@ class CanvasRecorder {
         this.app.debug.log('Canvas element not in sync')
         clearInterval(int)
       } else {
-        const snapshot = captureSnapshot(canvas, this.options.quality)
-        this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
-        if (this.snapshots[id].images.length > 9) {
-          this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
-          this.snapshots[id].images = []
+        if (!this.snapshots[id].paused) {
+          const snapshot = captureSnapshot(canvas, this.options.quality)
+          this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
+          if (this.snapshots[id].images.length > 9) {
+            this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
+            this.snapshots[id].images = []
+          }
         }
       }
     }, this.interval)
@@ -122,6 +155,7 @@ function captureSnapshot(canvas: HTMLCanvasElement, quality: 'low' | 'medium' | 
 
 function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
   const [header, base64] = dataUrl.split(',')
+  if (!header || !base64) return null
   const encParts = header.match(/:(.*?);/)
   if (!encParts) return null
   const mime = encParts[1]

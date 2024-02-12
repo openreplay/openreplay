@@ -19,7 +19,9 @@ interface IProps {
 function PlayerBlock(props: IProps) {
   const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, setActiveTab } = props;
 
-  const isSaas = true // /api\.openreplay\.com/.test(window.location.host);
+  const originStr = window.env.ORIGIN || window.location.origin
+  const isSaas = /api\.openreplay\.com/.test(originStr)
+
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
     <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}>

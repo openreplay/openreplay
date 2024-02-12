@@ -44,10 +44,6 @@ dependencies:
     repository: file://charts/redis
     version: 12.10.1
     condition: redis.enabled
-  - name: minio
-    repository: file://charts/minio
-    version: 3.7.14
-    condition: minio.enabled
   - name: vault
     repository: file://charts/vault
     version: 0.22.1

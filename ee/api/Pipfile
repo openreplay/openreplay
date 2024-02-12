@@ -15,16 +15,16 @@ fastapi = "==0.104.1"
 gunicorn = "==21.2.0"
 python-decouple = "==3.8"
 apscheduler = "==3.10.4"
+python3-saml = "==1.16.0"
 python-multipart = "==0.0.6"
 redis = "==5.0.1"
-python3-saml = "==1.16.0"
 azure-storage-blob = "==12.19.0"
+psycopg = {extras = ["binary", "pool"], version = "==3.1.14"}
 uvicorn = {extras = ["standard"], version = "==0.23.2"}
 pydantic = {extras = ["email"], version = "==2.3.0"}
 clickhouse-driver = {extras = ["lz4"], version = "==0.2.6"}
-psycopg = {extras = ["binary", "pool"], version = "==3.1.12"}
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.12"
