@@ -15,6 +15,7 @@ import FFlagsService from 'App/services/FFlagsService';
 import AssistStatsService from './AssistStatsService';
 import UxtestingService from './UxtestingService';
 import TagWatchService from 'App/services/TagWatchService';
+import AiService       from "App/services/AiService";
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -39,6 +40,8 @@ export const uxtestingService = new UxtestingService();
 
 export const tagWatchService = new TagWatchService();
 
+export const aiService = new AiService();
+
 export const services = [
   dashboardService,
   metricService,
@@ -57,4 +60,5 @@ export const services = [
   assistStatsService,
   uxtestingService,
   tagWatchService,
+  aiService,
 ];

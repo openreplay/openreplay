@@ -45,7 +45,7 @@ function Bookmark(props: Props) {
               color={isFavorite ? 'teal' : undefined}
               size="16"
             />
-            <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+            <span className="ml-2 text-black">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
           </div>
         ) : (
           <Button data-favourite={isFavorite}>
@@ -54,7 +54,7 @@ function Bookmark(props: Props) {
               color={isFavorite ? 'teal' : undefined}
               size="16"
             />
-            <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+            <span className="ml-2 text-black">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
           </Button>
         )}
       </Tooltip>
