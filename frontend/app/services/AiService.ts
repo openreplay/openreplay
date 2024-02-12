@@ -5,7 +5,7 @@ export default class AiService extends BaseService {
    * @returns stream of text symbols
    * */
   async getSummary(sessionId: string) {
-    const r = await this.client.get(
+    const r = await this.client.post(
       `/sessions/${sessionId}/intelligent/summary`,
     );
     return r.body;
