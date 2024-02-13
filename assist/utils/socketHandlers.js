@@ -220,7 +220,7 @@ async function onAny(socket, eventName, ...args) {
 // Back compatibility (add top layer with meta information)
 function updateSessionData(socket, sessionData) {
     if (sessionData?.meta === undefined && socket.handshake.query.identity === IDENTITIES.session) {
-        sessionData = {meta: {tabId: socket.tabId, version: 1}, data: sessionData};
+        sessionData = {meta: {tabId: socket.handshake.query.tabId, version: 1}, data: sessionData};
     }
     return sessionData
 }
