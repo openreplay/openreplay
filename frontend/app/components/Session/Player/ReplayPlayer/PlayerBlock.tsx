@@ -20,7 +20,7 @@ function PlayerBlock(props: IProps) {
   const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, setActiveTab } = props;
 
   const originStr = window.env.ORIGIN || window.location.origin
-  const isSaas = /api\.openreplay\.com/.test(originStr)
+  const isSaas = /app\.openreplay\.com/.test(originStr)
 
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (

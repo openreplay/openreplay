@@ -12,7 +12,6 @@ import {
 
 const ASSIST_ROUTE = assistRoute();
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 
 interface Props {
   fetchFilterSearch: (query: any) => void;
@@ -22,8 +21,6 @@ interface Props {
 }
 
 function SessionSearchField(props: Props) {
-  const { aiFiltersStore } = useStore();
-
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
@@ -31,14 +28,12 @@ function SessionSearchField(props: Props) {
     debounce(isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch, 1000),
     []
   );
-  const debounceAiFetch = React.useCallback(debounce(aiFiltersStore.getSearchFilters, 1000), []);
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const onSearchChange = ({ target: { value } }: any) => {
     setSearchQuery(value);
     debounceFetchFilterSearch({ q: value });
-    debounceAiFetch(value)
   };
 
   const onAddFilter = (filter: any) => {
