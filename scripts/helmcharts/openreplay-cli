@@ -257,7 +257,7 @@ function install() {
         err_cd /tmp
         cp "$OVERRIDE_FILE" new_vars.yaml
         cp "$override_tmpdir/vars.yaml" old_vars.yaml
-        yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' new_vars.yaml >vars.yaml
+        yq '(load("new_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' old_vars.yaml >vars.yaml
         mv vars.yaml "$override_tmpdir"
         err_cd "$override_tmpdir"
     }
