@@ -64,7 +64,8 @@ function CaptureRate(props: Props) {
       rate: parseInt(captureRate, 10),
       conditionalCapture: conditionalCapture,
       conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : [],
-    }).finally(() => setChanged(false));
+    })
+    setChanged(false)
   };
 
   const updateDisabled = !changed || !isAdmin || (isEnterprise && (conditionalCapture && conditions.length === 0));
@@ -104,9 +105,9 @@ function CaptureRate(props: Props) {
             <Switch
               checked={conditionalCapture}
               onChange={toggleRate}
-              checkedChildren={isEnterprise ? 'All' : 'Conditional'}
+              checkedChildren={!isEnterprise ? '100%' : 'Conditional'}
               disabled={!isAdmin}
-              unCheckedChildren={'Capture Rate'}
+              unCheckedChildren={!isEnterprise ? 'Custom' : 'Capture Rate'}
             />
             {!conditionalCapture ? (
               <div className={cn('relative', { disabled: !isAdmin })}>
