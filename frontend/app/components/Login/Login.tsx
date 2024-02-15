@@ -159,7 +159,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
               {authDetails.sso ? (
-                <a href="/api/sso/saml2" rel="noopener noreferrer">
+                <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
                   <Button variant="text-primary" type="submit">
                     {`Login with SSO ${
                       authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
