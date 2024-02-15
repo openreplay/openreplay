@@ -18,9 +18,18 @@ OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
     sudo mkdir $OR_DIR
 }
 export PATH=/var/lib/openreplay:$PATH
-function xargs() {
-    /var/lib/openreplay/busybox xargs
-}
+
+# Check arch
+architecture=$(uname -m)
+pkg_type="amd64"
+if [[ "$architecture" == "x86_64" ]]; then
+    echo "This machine is AMD (x86_64) architecture."
+elif [[ "$architecture" == "aarch64" ]]; then
+    pkg_type="arm64"
+    echo "This machine is ARM architecture."
+else
+    echo "This machine has another architecture: $architecture"
+fi
 
 [[ $(awk '/enterpriseEditionLicense/{print $2}' <"/var/lib/openreplay/vars.yaml") != "" ]] && EE=true
 
@@ -114,11 +123,13 @@ function install_packages() {
     log info Installing yq
     sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" mikefarah/yq --asset=^tar.gz
     log info Installing helm
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-${pkg_type}.tar.gz -f helm
     log info Installing kubectl
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/amd64/kubectl
-    log info Installing Busybox
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/${pkg_type}/kubectl
+    [[ $pkg_type != "arm64" ]] && {
+        log info Installing Busybox
+        sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+    }
     date | sudo tee $OR_DIR/packages.lock &>/dev/null
 }
 
