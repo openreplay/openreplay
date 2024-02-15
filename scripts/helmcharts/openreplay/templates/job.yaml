@@ -129,7 +129,7 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
-        image: bitnami/postgresql:13.3.0-debian-10-r53
+        image: bitnami/postgresql:15.5.0
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
