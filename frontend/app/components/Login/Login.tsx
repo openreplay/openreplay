@@ -66,9 +66,9 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
 
   const onSSOClick = () => {
     if (params.get('iframe')) {
-      window.parent.location.href = "/api/sso/saml2?iFrame=true";
+      window.parent.location.href = `${window.location.origin}/api/sso/saml2?iFrame=true`;
     } else {
-      window.location.href = "/api/sso/saml2";
+      window.location.href = `${window.location.origin}/api/sso/saml2`;
     }
   }
 
