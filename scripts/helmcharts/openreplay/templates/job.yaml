@@ -142,7 +142,7 @@ spec:
           mountPath: /opt/migrations/
       {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
-        image: bitnami/minio:2020.10.9-debian-10-r6
+        image: bitnami/minio:2023.11.20
         env:
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
