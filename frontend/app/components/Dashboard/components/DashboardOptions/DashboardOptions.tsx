@@ -30,5 +30,5 @@ function DashboardOptions(props: Props) {
 }
 
 export default connect(state => ({
-    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee' || state.getIn([ 'user', 'account', 'edition' ]) === 'msaas',
 }))(DashboardOptions);
