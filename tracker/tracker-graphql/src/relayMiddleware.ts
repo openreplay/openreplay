@@ -1,5 +1,5 @@
 import { App, Messages } from '@openreplay/tracker';
-import { Middleware, RelayRequest } from './relaytypes';
+import type { Middleware, RelayRequest } from './relaytypes';
 
 const createRelayMiddleware = (app: App | null): Middleware => {
   if (!app) {
@@ -25,12 +25,13 @@ function getMessage(request: RelayRequest, json: Record<string, any>, duration: 
   const opName = request.operation.name;
   const vars = JSON.stringify(request.variables)
   const opResp = JSON.stringify(json)
+  console.log('relay', opKind, opName, vars, opResp, duration)
   return Messages.GraphQL(
     opKind,
     opName,
     vars,
     opResp,
-    duration
+    // duration
   )
 }
 
