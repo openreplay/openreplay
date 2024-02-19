@@ -1,3 +1,15 @@
+# 12.0.3
+
+- fixed scaling option for canvas (to ignore window.devicePixelRatio and always render the canvas as 1)
+
+# 12.0.2
+
+- fix for canvas snapshot check
+
+# 12.0.1
+
+- pause canvas snapshotting when its offscreen
+
 # 12.0.0
 
 - offline session recording and manual sending
