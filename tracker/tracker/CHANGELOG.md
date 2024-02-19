@@ -1,3 +1,7 @@
+# 12.1.0
+
+- Rewrite of webworker service to move all network activity to main thread (chrome SIGSEGV bug caused by network requests from worker thread)
+
 # 12.0.2
 
 - fix for canvas snapshot check
