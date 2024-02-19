@@ -117,6 +117,7 @@ type AppOptions = {
   __debug_report_edp: string | null
   __debug__?: ILogLevel
   __save_canvas_locally?: boolean
+  fixedCanvasScaling?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
@@ -211,6 +212,7 @@ export default class App {
         disableStringDict: false,
         forceSingleTab: false,
         assistSocketHost: '',
+        fixedCanvasScaling: false,
       },
       options,
     )
@@ -1063,6 +1065,7 @@ export default class App {
               fps: canvasFPS,
               quality: canvasQuality,
               isDebug: this.options.__save_canvas_locally,
+              fixedScaling: this.options.fixedCanvasScaling,
             })
           this.canvasRecorder.startTracking()
         }

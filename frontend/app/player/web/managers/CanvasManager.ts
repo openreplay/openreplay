@@ -2,8 +2,6 @@ import { VElement } from "Player/web/managers/DOM/VirtualDOM";
 
 export default class CanvasManager {
   private fileData: string | undefined;
-  private canvasEl: HTMLVideoElement
-  private canvasCtx: CanvasRenderingContext2D | null = null;
   private videoTag = document.createElement('video')
   private lastTs = 0;
 
@@ -38,10 +36,6 @@ export default class CanvasManager {
     this.videoTag.setAttribute('crossorigin', 'anonymous');
     this.videoTag.src = this.fileData;
     this.videoTag.currentTime = 0;
-
-    const node = this.getNode(parseInt(this.nodeId, 10)) as unknown as VElement
-    this.canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
-    this.canvasEl = node.node as HTMLVideoElement;
   }
 
   move(t: number) {
@@ -49,11 +43,14 @@ export default class CanvasManager {
     this.lastTs = t;
     const playTime = t - this.delta
     if (playTime > 0) {
+      const node = this.getNode(parseInt(this.nodeId, 10)) as unknown as VElement
+      const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
+      const canvasEl = node.node as HTMLVideoElement;
       if (!this.videoTag.paused) {
           void this.videoTag.pause()
       }
       this.videoTag.currentTime = playTime/1000;
-      this.canvasCtx?.drawImage(this.videoTag, 0, 0, this.canvasEl.width, this.canvasEl.height);
+      canvasCtx?.drawImage(this.videoTag, 0, 0, canvasEl.width, canvasEl.height);
     }
   }
 }

@@ -1,3 +1,7 @@
+# 12.0.3
+
+- fixed scaling option for canvas (to ignore window.devicePixelRatio and always render the canvas as 1)
+
 # 12.0.2
 
 - fix for canvas snapshot check
