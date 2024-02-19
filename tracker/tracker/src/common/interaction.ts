@@ -5,7 +5,48 @@ export interface Options {
   connAttemptGap?: number
 }
 
-type Start = {
+export type ToWorkerData =
+  | null
+  | Stop
+  | Batch
+  | WorkerStart
+  | BeaconSizeLimit
+  | ToWriterData
+  | ForceFlushBatch
+  | CheckQueue
+  | ResetWriter
+  | WriterFinalize
+
+export type FromWorkerData = Restart | Failure | NotInit | Compress | QEmpty | Status | BatchReady
+
+type BatchReady = { type: 'batch_ready'; data: Uint8Array }
+type Status = { type: 'status'; data: number }
+type Compress = { type: 'compress'; batch: Uint8Array }
+type Restart = { type: 'restart' }
+type NotInit = { type: 'not_init' }
+type Stop = { type: 'stop' }
+type Batch = { type: 'batch'; data: Array<Message> }
+type ForceFlushBatch = { type: 'forceFlushBatch' }
+type CheckQueue = { type: 'check_queue' }
+type WriterFinalize = { type: 'writer_finalize' }
+type ResetWriter = { type: 'reset_writer' }
+
+type BeaconSizeLimit = {
+  type: 'beacon_size_limit'
+  data: number
+}
+type ToWriterData = {
+  type: 'to_writer'
+  data: Array<Message>
+}
+type Failure = {
+  type: 'failure'
+  reason: string
+}
+type QEmpty = {
+  type: 'queue_empty'
+}
+export type WorkerStart = {
   type: 'start'
   ingestPoint: string
   pageNo: number
@@ -13,36 +54,7 @@ type Start = {
   url: string
   tabId: string
 } & Options
-
-type Auth = {
-  type: 'auth'
+export type WorkerAuth = {
   token: string
   beaconSizeLimit?: number
 }
-
-export type ToWorkerData =
-  | null
-  | 'stop'
-  | Start
-  | Auth
-  | Array<Message>
-  | { type: 'compressed'; batch: Uint8Array }
-  | { type: 'uncompressed'; batch: Uint8Array }
-  | 'forceFlushBatch'
-  | 'check_queue'
-
-type Failure = {
-  type: 'failure'
-  reason: string
-}
-
-type QEmpty = {
-  type: 'queue_empty'
-}
-
-export type FromWorkerData =
-  | 'restart'
-  | Failure
-  | 'not_init'
-  | { type: 'compress'; batch: Uint8Array }
-  | QEmpty
