@@ -265,7 +265,7 @@ persistence:
 
   ## Data volume mount path
   ##
-  mountPath: /data
+  mountPath: /bitnami/minio/data
 
   ## Persistent Volume Access Mode
   ##
