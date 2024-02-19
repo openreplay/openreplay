@@ -6,6 +6,7 @@ interface CanvasSnapshot {
   images: { data: string; id: number }[]
   createdAt: number
   paused: boolean
+  dummy: HTMLCanvasElement
 }
 
 interface Options {
@@ -84,6 +85,7 @@ class CanvasRecorder {
       images: [],
       createdAt: ts,
       paused: false,
+      dummy: document.createElement('canvas'),
     }
     const canvasMsg = CanvasNode(id.toString(), ts)
     this.app.send(canvasMsg as Message)
@@ -95,7 +97,7 @@ class CanvasRecorder {
         clearInterval(int)
       } else {
         if (!this.snapshots[id].paused) {
-          const snapshot = captureSnapshot(canvas, this.options.quality)
+          const snapshot = captureSnapshot(canvas, this.options.quality, this.snapshots[id].dummy)
           this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
           if (this.snapshots[id].images.length > 9) {
             this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
@@ -148,9 +150,21 @@ const qualityInt = {
   high: 0.8,
 }
 
-function captureSnapshot(canvas: HTMLCanvasElement, quality: 'low' | 'medium' | 'high' = 'medium') {
+function captureSnapshot(
+  canvas: HTMLCanvasElement,
+  quality: 'low' | 'medium' | 'high' = 'medium',
+  dummy: HTMLCanvasElement,
+) {
+  const canvasScaleRatio = window.devicePixelRatio || 1
+  dummy.width = canvas.width / canvasScaleRatio
+  dummy.height = canvas.height / canvasScaleRatio
+  const ctx = dummy.getContext('2d')
+  if (!ctx) {
+    return ''
+  }
+  ctx.drawImage(canvas, 0, 0, dummy.width, dummy.height)
   const imageFormat = 'image/jpeg' // or /png'
-  return canvas.toDataURL(imageFormat, qualityInt[quality])
+  return dummy.toDataURL(imageFormat, qualityInt[quality])
 }
 
 function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
