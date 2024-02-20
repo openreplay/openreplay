@@ -19,6 +19,14 @@ check_prereq() {
     }
 }
 
+# Sourcing init scripts
+for file in ./build_init_*; do
+    if [ -f "$file" ]; then
+        echo "Sourcing $file"
+        source "$file"
+    fi
+done
+
 chart=frontend
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
