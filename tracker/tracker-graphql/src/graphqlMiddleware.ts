@@ -13,14 +13,13 @@ function createGraphqlMiddleware() {
       duration = 0
     ) => {
       try {
-        console.log('graphql', operationKind, operationName, variables, result, duration)
         app.send(
           Messages.GraphQL(
             operationKind,
             operationName,
             JSON.stringify(variables),
             JSON.stringify(result),
-            // duration,
+            duration,
           ),
         );
       } catch (e) {

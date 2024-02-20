@@ -66,6 +66,7 @@ function fetchQuery(operation, variables, cacheConfig, uploadables) {
           operation.name,
           variables,
           result,
+          duration,
         ),
     );
 }

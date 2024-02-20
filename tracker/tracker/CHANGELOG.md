@@ -1,3 +1,7 @@
+# 15.0.0
+
+- updated graphql plugin and messages
+
 # 14.0.0
 
 - titles for tabs
