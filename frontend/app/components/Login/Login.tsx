@@ -65,12 +65,12 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
   };
 
   const onSSOClick = () => {
-    if (params.get('iframe')) {
+    if (window !== window.top) { // if in iframe
       window.parent.location.href = `${window.location.origin}/api/sso/saml2?iFrame=true`;
     } else {
       window.location.href = `${window.location.origin}/api/sso/saml2`;
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center h-screen">
