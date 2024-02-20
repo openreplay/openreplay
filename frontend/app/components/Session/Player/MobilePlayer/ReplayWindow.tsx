@@ -22,7 +22,8 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
   React.useEffect(() => {
     if (videoRef.current) {
       const timeSecs = time / 1000
-      if (videoRef.current.duration >= timeSecs) {
+      const delta = videoRef.current.currentTime - timeSecs
+      if (videoRef.current.duration >= timeSecs && Math.abs(delta) > 0.1) {
         videoRef.current.currentTime = timeSecs
       }
     }
