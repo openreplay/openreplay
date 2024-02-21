@@ -85,11 +85,13 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 func (v *VideoStorage) packScreenshots(sessID uint64, filesPath string) error {
 	start := time.Now()
 	sessionID := strconv.FormatUint(sessID, 10)
+	archName := fmt.Sprintf("%sreplay.tar", filesPath)
 	selector := fmt.Sprintf("%s*.jpeg", filesPath)
 	archPath := filesPath + "replay.tar.zst"
 
 	// tar cf - ./*.jpeg | zstd -o replay.tar.zst
-	cmd := exec.Command("tar", "cf", "-", selector, "|", "zstd", "-o", archPath)
+	// Try to split into 2 commands
+	cmd := exec.Command("tar", "cf", archName, selector)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -99,6 +101,19 @@ func (v *VideoStorage) packScreenshots(sessID uint64, filesPath string) error {
 		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 		return err
 	}
+
+	cmd = exec.Command("zstd", archName, "-o", archPath)
+	stdout.Reset()
+	stderr.Reset()
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+	if err != nil {
+		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return err
+	}
+
 	log.Printf("packed replay in %v", time.Since(start))
 
 	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: archPath}
