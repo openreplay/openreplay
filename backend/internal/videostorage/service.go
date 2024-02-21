@@ -82,6 +82,29 @@ func (v *VideoStorage) makeVideo(sessID uint64, filesPath string) error {
 	return nil
 }
 
+func (v *VideoStorage) packScreenshots(sessID uint64, filesPath string) error {
+	start := time.Now()
+	sessionID := strconv.FormatUint(sessID, 10)
+	selector := fmt.Sprintf("%s*.jpeg", filesPath)
+	archPath := filesPath + "replay.tar.zst"
+
+	// tar cf - ./*.jpeg | zstd -o replay.tar.zst
+	cmd := exec.Command("tar", "cf", "-", selector, "|", "zstd", "-o", archPath)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return err
+	}
+	log.Printf("packed replay in %v", time.Since(start))
+
+	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: archPath}
+	return nil
+}
+
 func (v *VideoStorage) makeCanvasVideo(sessID uint64, filesPath, canvasMix string) error {
 	name := strings.TrimSuffix(canvasMix, "-list")
 	mixList := fmt.Sprintf("%s%s", filesPath, canvasMix)
@@ -126,7 +149,14 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	} else {
 		key += "/replay.mp4"
 	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), key, "video/mp4", objectstorage.NoCompression); err != nil {
+	// TODO: separate accurately
+	contentType := "video/mp4"
+	compression := objectstorage.NoCompression
+	if strings.HasSuffix(task.path, ".tar.zst") {
+		contentType = "application/octet-stream"
+		compression = objectstorage.Zstd
+	}
+	if err := v.objStorage.Upload(bytes.NewReader(video), key, contentType, compression); err != nil {
 		log.Fatalf("Storage: start upload video replay failed. %s", err)
 	}
 	log.Printf("Video file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
@@ -137,7 +167,8 @@ func (v *VideoStorage) Process(sessID uint64, filesPath string, canvasMix string
 	if canvasMix != "" {
 		return v.makeCanvasVideo(sessID, filesPath, canvasMix)
 	}
-	return v.makeVideo(sessID, filesPath)
+	return v.packScreenshots(sessID, filesPath)
+	//return v.makeVideo(sessID, filesPath)
 }
 
 func (v *VideoStorage) Wait() {
