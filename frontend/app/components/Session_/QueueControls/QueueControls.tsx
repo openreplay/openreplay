@@ -99,11 +99,11 @@ export default connect(
   (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
+    siteId: state.getIn(['site', 'siteId']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
     total: state.getIn(['sessions', 'total']) || 0,
     sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
-    siteId: state.getIn(['site', 'siteId']),
   }),
   { setAutoplayValues, fetchAutoplaySessions }
 )(withRouter(QueueControls));
