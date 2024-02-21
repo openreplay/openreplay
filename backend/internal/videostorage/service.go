@@ -89,7 +89,8 @@ func (v *VideoStorage) packScreenshots(sessID uint64, filesPath string) error {
 	archPath := filesPath + "replay.tar.zst"
 
 	// tar cf - ./*.jpeg | zstd -o replay.tar.zst
-	cmd := exec.Command("tar", "cf", "-", selector, "|", "zstd", "-o", archPath)
+	fullCmd := fmt.Sprintf("tar cf - %s | zstd -o %s", selector, archPath)
+	cmd := exec.Command("sh", "-c", fullCmd)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
