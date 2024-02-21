@@ -15261,6 +15261,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-untar@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "js-untar@npm:2.0.0"
+  checksum: d84138561b2ed12870ba07ff62c55dfb0f9884cd1eb32044ba6272eacbed4ec476e08cc62226f5824d8bda3de3597a506582ff9bdf0845f221d3e092f9d8b025
+  languageName: node
+  linkType: hard
+
 "js-yaml@npm:^3.13.1":
   version: 3.14.1
   resolution: "js-yaml@npm:3.14.1"
@@ -18152,6 +18159,7 @@ __metadata:
     immutable: ^4.0.0-rc.12
     jest: ^29.5.0
     jest-environment-jsdom: ^29.5.0
+    js-untar: ^2.0.0
     jsbi: ^4.1.0
     jshint: ^2.11.1
     jspdf: ^2.5.1

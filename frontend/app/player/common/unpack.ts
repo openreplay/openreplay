@@ -1,39 +1,40 @@
 import * as fzstd from 'fzstd';
-import { gunzipSync } from 'fflate'
+import { gunzipSync } from 'fflate';
 
 const unpack = (b: Uint8Array): Uint8Array => {
   // zstd magical numbers 40 181 47 253
-  const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd
-  const isGzip = b[0] === 0x1F && b[1] === 0x8B && b[2] === 0x08;
+  const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd;
+  const isGzip = b[0] === 0x1f && b[1] === 0x8b && b[2] === 0x08;
+  let data = b;
   if (isGzip) {
-    const now = performance.now()
-    const data = gunzipSync(b)
+    const now = performance.now();
+    const uData = gunzipSync(b);
     console.debug(
-      "Gunzip time",
+      'Gunzip time',
       Math.floor(performance.now() - now) + 'ms',
       'size',
       Math.floor(b.byteLength / 1024),
       '->',
       Math.floor(data.byteLength / 1024),
       'kb'
-    )
-    return data
+    );
+    data = uData;
   }
   if (isZstd) {
-    const now = performance.now()
-    const data = fzstd.decompress(b)
+    const now = performance.now();
+    const uData = fzstd.decompress(b);
     console.debug(
-      "Zstd unpack time",
+      'Zstd unpack time',
       Math.floor(performance.now() - now) + 'ms',
       'size',
       Math.floor(b.byteLength / 1024),
       '->',
       Math.floor(data.byteLength / 1024),
       'kb'
-    )
-    return data
+    );
+    data = uData;
   }
-  return b
-}
+  return data;
+};
 
-export default unpack
+export default unpack;
