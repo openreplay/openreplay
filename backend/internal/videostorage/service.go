@@ -153,7 +153,7 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	// TODO: separate accurately
 	contentType := "video/mp4"
 	compression := objectstorage.NoCompression
-	if strings.HasSuffix(task.path, ".tar.zst") {
+	if !strings.HasSuffix(task.path, ".tar.zst") {
 		contentType = "application/octet-stream"
 		compression = objectstorage.Zstd
 	}
