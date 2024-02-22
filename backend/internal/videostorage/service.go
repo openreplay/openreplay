@@ -102,7 +102,7 @@ func (v *VideoStorage) packScreenshots(sessID uint64, filesPath string) error {
 	}
 	log.Printf("packed replay in %v", time.Since(start))
 
-	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: archPath}
+	v.sendToS3Tasks <- &Task{sessionID: sessionID, path: archPath, name: "/replay.tar.zst"}
 	return nil
 }
 
@@ -150,17 +150,18 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	} else {
 		key += "/replay.mp4"
 	}
-	// TODO: separate accurately
 	contentType := "video/mp4"
 	compression := objectstorage.NoCompression
-	if !strings.HasSuffix(task.path, ".tar.zst") {
+
+	// Check if the file is a tar.zst archive
+	if strings.HasSuffix(key, ".tar.zst") {
 		contentType = "application/octet-stream"
 		compression = objectstorage.Zstd
 	}
 	if err := v.objStorage.Upload(bytes.NewReader(video), key, contentType, compression); err != nil {
-		log.Fatalf("Storage: start upload video replay failed. %s", err)
+		log.Fatalf("Storage: start uploading replay failed. %s", err)
 	}
-	log.Printf("Video file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
+	log.Printf("Replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
 }
 
