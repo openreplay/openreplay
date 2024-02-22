@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { mapIphoneModel } from 'Player/mobile/utils';
 
 interface Props {
-  videoURL: string;
+  videoURL: string[];
   userDevice: string;
 }
 
@@ -18,62 +18,67 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
   const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>();
   const imageRef = React.useRef<HTMLImageElement>();
-  const { time, currentSnapshot } = playerContext.store.get();
+  const containerRef = React.useRef<HTMLDivElement>();
+
+  const { time, currentSnapshot, mode } = playerContext.store.get();
 
   React.useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && mode === PlayerMode.VIDEO) {
       const timeSecs = time / 1000;
       const delta = videoRef.current.currentTime - timeSecs;
       if (videoRef.current.duration >= timeSecs && Math.abs(delta) > 0.1) {
         videoRef.current.currentTime = timeSecs;
       }
     }
-  }, [time]);
+  }, [time, mode]);
   React.useEffect(() => {
-    if (currentSnapshot) {
+    if (currentSnapshot && mode === PlayerMode.SNAPS) {
       const blob = currentSnapshot.getBlobUrl();
       if (imageRef.current) {
         imageRef.current.src = blob;
       }
     }
-  }, [currentSnapshot]);
+  }, [currentSnapshot, mode]);
 
   React.useEffect(() => {
     playerContext.player.pause();
     const { svg, styles } = mapIphoneModel(userDevice);
+    if (!containerRef.current && mode) {
+      const host = document.createElement('div');
+      const shell = document.createElement('div');
+      const icon = document.createElement('div');
+      const videoContainer = document.createElement('div');
 
-    const host = document.createElement('div');
-    const shell = document.createElement('div');
-    const icon = document.createElement('div');
-    const videoContainer = document.createElement('div');
+      videoContainer.style.borderRadius = '10px';
+      videoContainer.style.overflow = 'hidden';
+      videoContainer.style.margin = styles.margin;
+      videoContainer.style.display = 'none';
+      videoContainer.style.width = styles.screen.width + 'px';
+      videoContainer.style.height = styles.screen.height + 'px';
 
-    videoContainer.style.borderRadius = '10px';
-    videoContainer.style.overflow = 'hidden'
-    videoContainer.style.margin = styles.margin;
-    videoContainer.style.display = 'none';
-    videoContainer.style.width = styles.screen.width + 'px';
-    videoContainer.style.height = styles.screen.height + 'px';
+      shell.innerHTML = svg;
+      Object.assign(icon.style, mobileIconStyle(styles));
+      const spacer = document.createElement('div');
+      spacer.style.width = '60px';
+      spacer.style.height = '60px';
 
-    host.appendChild(videoContainer);
-    shell.innerHTML = svg;
-    Object.assign(icon.style, mobileIconStyle(styles));
-    const spacer = document.createElement('div');
-    spacer.style.width = '60px';
-    spacer.style.height = '60px';
+      const loadingBar = document.createElement('div');
 
-    const loadingBar = document.createElement('div');
+      Object.assign(loadingBar.style, mobileLoadingBarStyle(styles));
+      icon.innerHTML = appleIcon;
 
-    Object.assign(loadingBar.style, mobileLoadingBarStyle(styles));
-    icon.innerHTML = appleIcon;
-    icon.appendChild(spacer);
-    icon.appendChild(loadingBar);
+      shell.style.position = 'absolute';
+      shell.style.top = '0';
 
-    shell.style.position = 'absolute';
-    shell.style.top = '0';
-    host.appendChild(shell);
-    host.appendChild(icon);
+      host.appendChild(videoContainer);
+      host.appendChild(shell);
 
-    const createShell = () => {
+      icon.appendChild(spacer);
+      icon.appendChild(loadingBar);
+      host.appendChild(icon);
+
+      containerRef.current = host;
+
       playerContext.player.injectPlayer(host);
       playerContext.player.customScale(styles.shell.width, styles.shell.height);
       playerContext.player.updateDimensions({
@@ -85,52 +90,52 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
         width: styles.screen.width + 'px',
         height: styles.screen.height + 'px',
       });
-    };
-    if (playerContext.player.mode === PlayerMode.SNAPS) {
-      const imagePlayer = document.createElement('img');
-      imagePlayer.style.width = styles.screen.width + 'px';
-      imagePlayer.style.height = styles.screen.height + 'px';
-      imagePlayer.style.backgroundColor = '#333';
 
-      videoContainer.appendChild(imagePlayer);
-      const removeLoader = () => {
-        videoContainer.style.display = 'block';
-        icon.style.display = 'none';
-        host.removeChild(icon);
-        playerContext.player.play();
-        imagePlayer.removeEventListener('load', removeLoader);
-      };
-      imagePlayer.addEventListener('load', removeLoader);
-      imageRef.current = imagePlayer;
+      if (mode === PlayerMode.SNAPS) {
+        const imagePlayer = document.createElement('img');
+        imagePlayer.style.width = styles.screen.width + 'px';
+        imagePlayer.style.height = styles.screen.height + 'px';
+        imagePlayer.style.backgroundColor = '#333';
 
-      createShell();
-    } else {
-      if (playerContext.player.screen.document && videoURL) {
-        const videoEl = document.createElement('video');
-        const sourceEl = document.createElement('source');
-
-        videoContainer.appendChild(videoEl);
-
-        videoEl.width = styles.screen.width;
-        videoEl.height = styles.screen.height;
-        videoEl.style.backgroundColor = '#333';
-
-        sourceEl.setAttribute('src', videoURL);
-        sourceEl.setAttribute('type', 'video/mp4');
-        videoEl.appendChild(sourceEl);
-
-        videoEl.addEventListener('loadeddata', () => {
+        videoContainer.appendChild(imagePlayer);
+        const removeLoader = () => {
           videoContainer.style.display = 'block';
           icon.style.display = 'none';
           host.removeChild(icon);
           playerContext.player.play();
-        });
+          imagePlayer.removeEventListener('load', removeLoader);
+        };
+        imagePlayer.addEventListener('load', removeLoader);
+        imageRef.current = imagePlayer;
+      }
+      if (mode === PlayerMode.VIDEO) {
+        const mp4URL = videoURL.find((url) => url.includes('.mp4'));
+        if (mp4URL) {
+          const videoEl = document.createElement('video');
+          const sourceEl = document.createElement('source');
 
-        videoRef.current = videoEl;
-        createShell();
+          videoContainer.appendChild(videoEl);
+
+          videoEl.width = styles.screen.width;
+          videoEl.height = styles.screen.height;
+          videoEl.style.backgroundColor = '#333';
+
+          sourceEl.setAttribute('src', mp4URL);
+          sourceEl.setAttribute('type', 'video/mp4');
+          videoEl.appendChild(sourceEl);
+
+          videoEl.addEventListener('loadeddata', () => {
+            videoContainer.style.display = 'block';
+            icon.style.display = 'none';
+            host.removeChild(icon);
+            playerContext.player.play();
+          });
+
+          videoRef.current = videoEl;
+        }
       }
     }
-  }, [videoURL, playerContext.player.screen.document]);
+  }, [videoURL, playerContext.player.screen.document, mode]);
   return <div />;
 }
 

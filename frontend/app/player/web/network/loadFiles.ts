@@ -50,8 +50,12 @@ export async function requestEFSDevtools(sessionId: string) {
 
 export async function requestTarball(url: string) {
   const res = await window.fetch(url)
-  const buf = await res.arrayBuffer()
-  return new Uint8Array(buf)
+  if (res.ok) {
+    const buf = await res.arrayBuffer()
+    return new Uint8Array(buf)
+  } else {
+    throw new Error(res.status.toString())
+  }
 }
 
 async function requestEFSMobFile(filename: string) {

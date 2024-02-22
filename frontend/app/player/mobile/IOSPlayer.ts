@@ -17,8 +17,8 @@ export default class IOSPlayer extends Player {
     ...MessageLoader.INITIAL_STATE,
     ...IOSMessageManager.INITIAL_STATE,
     scale: 1,
+    mode: null,
   };
-  public mode = PlayerMode.SNAPS;
   public screen: Screen;
   protected messageManager: IOSMessageManager;
   protected readonly messageLoader: MessageLoader;
@@ -28,10 +28,7 @@ export default class IOSPlayer extends Player {
     session: SessionFilesInfo,
     public readonly uiErrorHandler?: { error: (msg: string) => void }
   ) {
-    const mode = session.videoURL.some((url) => url.includes('.tar.'))
-      ? PlayerMode.SNAPS
-      : PlayerMode.VIDEO;
-    console.log(session, mode);
+    const hasTar = session.videoURL.some((url) => url.includes('.tar.'));
     const screen = new Screen(true, ScaleMode.Embed);
     const messageManager = new IOSMessageManager(session, wpState, screen, uiErrorHandler);
     const messageLoader = new MessageLoader(
@@ -42,22 +39,25 @@ export default class IOSPlayer extends Player {
       uiErrorHandler
     );
     super(wpState, messageManager);
-    this.mode = mode;
     this.screen = screen;
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
 
-    void messageLoader.loadFiles();
-    if (mode === PlayerMode.SNAPS) {
+    if (hasTar) {
       messageLoader
         .loadTarball(session.videoURL.find((url) => url.includes('.tar.'))!)
         .then((files) => {
           if (files) {
-            this.messageManager.snapshotManager.mapToSnapshots(files)
-            this.play()
+            this.wpState.update({ mode: PlayerMode.SNAPS });
+            this.messageManager.snapshotManager.mapToSnapshots(files);
+            this.play();
           }
+        })
+        .catch((e) => {
+          this.wpState.update({ mode: PlayerMode.VIDEO });
         });
     }
+    void messageLoader.loadFiles();
     const endTime = session.duration?.valueOf() || 0;
 
     wpState.update({

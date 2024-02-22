@@ -85,12 +85,10 @@ export default class MessageLoader {
       const tarBufferZstd = await requestTarball(url);
       if (tarBufferZstd) {
         const tar = unpack(tarBufferZstd);
-        const files = await unpackTar(tar);
-        return files;
+        return await unpackTar(tar);
       }
     } catch (e) {
-      console.error(e);
-      this.uiErrorHandler?.error('Error loading replay snapshots: ' + e.message);
+      throw e
     }
   }
 
