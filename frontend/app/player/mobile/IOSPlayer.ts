@@ -18,6 +18,7 @@ export default class IOSPlayer extends Player {
     ...IOSMessageManager.INITIAL_STATE,
     scale: 1,
     mode: null,
+    autoplay: false,
   };
   public screen: Screen;
   protected messageManager: IOSMessageManager;
@@ -39,6 +40,7 @@ export default class IOSPlayer extends Player {
       uiErrorHandler
     );
     super(wpState, messageManager);
+    this.pause()
     this.screen = screen;
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
@@ -50,7 +52,6 @@ export default class IOSPlayer extends Player {
           if (files) {
             this.wpState.update({ mode: PlayerMode.SNAPS });
             this.messageManager.snapshotManager.mapToSnapshots(files);
-            this.play();
           }
         })
         .catch((e) => {

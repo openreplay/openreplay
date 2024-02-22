@@ -41,9 +41,9 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
   }, [currentSnapshot, mode]);
 
   React.useEffect(() => {
-    playerContext.player.pause();
+    playerContext.player.pause()
     const { svg, styles } = mapIphoneModel(userDevice);
-    if (!containerRef.current && mode) {
+    if (!containerRef.current && playerContext.player.screen.document) {
       const host = document.createElement('div');
       const shell = document.createElement('div');
       const icon = document.createElement('div');
@@ -78,6 +78,9 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
       host.appendChild(icon);
 
       containerRef.current = host;
+      videoContainer.id = '___or_replay-video';
+      icon.id = '___or_ios-icon';
+      host.id = '___or_ios-player';
 
       playerContext.player.injectPlayer(host);
       playerContext.player.customScale(styles.shell.width, styles.shell.height);
@@ -90,48 +93,57 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
         width: styles.screen.width + 'px',
         height: styles.screen.height + 'px',
       });
+    }
+  }, [playerContext.player.screen.document]);
 
-      if (mode === PlayerMode.SNAPS) {
-        const imagePlayer = document.createElement('img');
-        imagePlayer.style.width = styles.screen.width + 'px';
-        imagePlayer.style.height = styles.screen.height + 'px';
-        imagePlayer.style.backgroundColor = '#333';
+  React.useEffect(() => {
+    const { styles } = mapIphoneModel(userDevice);
+    if (mode) {
+      const host = containerRef.current;
+      const videoContainer =
+        playerContext.player.screen.document?.getElementById('___or_replay-video');
+      const icon = playerContext.player.screen.document?.getElementById('___or_ios-icon');
+      if (host && videoContainer && icon) {
+        if (mode === PlayerMode.SNAPS) {
+          const imagePlayer = document.createElement('img');
+          imagePlayer.style.width = styles.screen.width + 'px';
+          imagePlayer.style.height = styles.screen.height + 'px';
+          imagePlayer.style.backgroundColor = '#333';
 
-        videoContainer.appendChild(imagePlayer);
-        const removeLoader = () => {
-          videoContainer.style.display = 'block';
-          icon.style.display = 'none';
-          host.removeChild(icon);
-          playerContext.player.play();
-          imagePlayer.removeEventListener('load', removeLoader);
-        };
-        imagePlayer.addEventListener('load', removeLoader);
-        imageRef.current = imagePlayer;
-      }
-      if (mode === PlayerMode.VIDEO) {
-        const mp4URL = videoURL.find((url) => url.includes('.mp4'));
-        if (mp4URL) {
-          const videoEl = document.createElement('video');
-          const sourceEl = document.createElement('source');
-
-          videoContainer.appendChild(videoEl);
-
-          videoEl.width = styles.screen.width;
-          videoEl.height = styles.screen.height;
-          videoEl.style.backgroundColor = '#333';
-
-          sourceEl.setAttribute('src', mp4URL);
-          sourceEl.setAttribute('type', 'video/mp4');
-          videoEl.appendChild(sourceEl);
-
-          videoEl.addEventListener('loadeddata', () => {
-            videoContainer.style.display = 'block';
-            icon.style.display = 'none';
+          videoContainer.appendChild(imagePlayer);
+          const removeLoader = () => {
             host.removeChild(icon);
-            playerContext.player.play();
-          });
+            videoContainer.style.display = 'block';
+            imagePlayer.removeEventListener('load', removeLoader);
+          };
+          imagePlayer.addEventListener('load', removeLoader);
+          imageRef.current = imagePlayer;
+          playerContext.player.play();
+        }
+        if (mode === PlayerMode.VIDEO) {
+          const mp4URL = videoURL.find((url) => url.includes('.mp4'));
+          if (mp4URL) {
+            const videoEl = document.createElement('video');
+            const sourceEl = document.createElement('source');
 
-          videoRef.current = videoEl;
+            videoContainer.appendChild(videoEl);
+
+            videoEl.width = styles.screen.width;
+            videoEl.height = styles.screen.height;
+            videoEl.style.backgroundColor = '#333';
+
+            sourceEl.setAttribute('src', mp4URL);
+            sourceEl.setAttribute('type', 'video/mp4');
+            videoEl.appendChild(sourceEl);
+
+            videoEl.addEventListener('loadeddata', () => {
+              host.removeChild(icon);
+              videoContainer.style.display = 'block';
+              playerContext.player.play();
+            });
+
+            videoRef.current = videoEl;
+          }
         }
       }
     }
