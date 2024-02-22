@@ -292,6 +292,7 @@ export default class IOSMessageManager implements IMessageManager {
 
   // TODO: clean managers?
   clean() {
+    this.snapshotManager?.clean();
     this.state.update(IOSMessageManager.INITIAL_STATE);
   }
 }

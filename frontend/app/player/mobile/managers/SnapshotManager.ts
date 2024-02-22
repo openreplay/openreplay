@@ -32,4 +32,9 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
       return this.snapshots[msg.time]
     }
   }
+
+  public clean() {
+    this.snapshots = {}
+    this.reset()
+  }
 }
