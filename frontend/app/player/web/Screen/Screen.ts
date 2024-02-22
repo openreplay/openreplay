@@ -114,6 +114,8 @@ export default class Screen {
     if (this.document) {
       this.document.body.style.margin = '0';
       this.document.body.appendChild(el);
+    } else {
+      console.error('Attempt to add to player screen without document');
     }
   }
 
