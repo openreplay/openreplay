@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/objectstorage/store"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -24,13 +26,18 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := imagestorage.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
+
+	srv, err := imagestorage.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
 	}
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	workDir := cfg.FSDir
 
 	consumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
@@ -55,16 +62,13 @@ func main() {
 			}
 
 			if msg, err := checkSessionEnd(data); err == nil {
+				// Pack all screenshots from mobile session, compress and upload to object storage
 				sessEnd := msg.(*messages.IOSSessionEnd)
-				// Received session end
-				if err := srv.Prepare(sessID); err != nil {
-					log.Printf("can't prepare mobile session: %s", err)
-				} else {
-					if err := producer.Produce(cfg.TopicReplayTrigger, sessID, sessEnd.Encode()); err != nil {
-						log.Printf("can't send session end signal to video service: %s", err)
-					}
+				if err := srv.PackScreenshots(sessEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sessEnd.SessionID(), 10)+"/"); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 				}
 			} else {
+				// Unpack new screenshots package from mobile session
 				if err := srv.Process(sessID, data); err != nil {
 					log.Printf("can't process mobile screenshots: %s", err)
 				}

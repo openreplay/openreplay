@@ -24,7 +24,7 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := imagestorage.New(cfg)
+	srv, err := imagestorage.New(cfg, nil)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
