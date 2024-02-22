@@ -53,7 +53,8 @@ export default class IOSPlayer extends Player {
         .loadTarball(session.videoURL.find((url) => url.includes('.tar.'))!)
         .then((files) => {
           if (files) {
-            this.messageManager.snapshotManager.mapToSnapshots(files);
+            this.messageManager.snapshotManager.mapToSnapshots(files)
+            this.play()
           }
         });
     }

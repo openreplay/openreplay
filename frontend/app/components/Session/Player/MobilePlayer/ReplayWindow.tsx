@@ -48,7 +48,7 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
     const videoContainer = document.createElement('div');
 
     videoContainer.style.borderRadius = '10px';
-    // videoContainer.style.overflow = 'hidden'
+    videoContainer.style.overflow = 'hidden'
     videoContainer.style.margin = styles.margin;
     videoContainer.style.display = 'none';
     videoContainer.style.width = styles.screen.width + 'px';
