@@ -133,6 +133,7 @@ export interface ISession {
   userUUID: string;
   userEvents: any[];
   timezone?: string;
+  videoURL?: string[]
 }
 
 const emptyValues = {
@@ -240,6 +241,7 @@ export default class Session {
       notes = [],
       canvasURL = [],
       uxtVideo = [],
+      videoURL = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -332,6 +334,7 @@ export default class Session {
       devtoolsURL,
       notes,
       canvasURL,
+      videoURL: Array.isArray(videoURL) ? videoURL : [videoURL],
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
       uxtVideo: uxtVideo[0],
