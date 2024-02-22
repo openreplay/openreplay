@@ -6,6 +6,7 @@ const unpack = (b: Uint8Array): Uint8Array => {
   const isZstd = b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd;
   const isGzip = b[0] === 0x1f && b[1] === 0x8b && b[2] === 0x08;
   let data = b;
+  console.log(isGzip, isZstd)
   if (isGzip) {
     const now = performance.now();
     const uData = gunzipSync(b);

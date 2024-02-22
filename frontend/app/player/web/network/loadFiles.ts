@@ -48,6 +48,12 @@ export async function requestEFSDevtools(sessionId: string) {
   return await requestEFSMobFile(sessionId + "/devtools.mob")
 }
 
+export async function requestTarball(url: string) {
+  const res = await window.fetch(url)
+  const buf = await res.arrayBuffer()
+  return new Uint8Array(buf)
+}
+
 async function requestEFSMobFile(filename: string) {
   const api = new APIClient()
   const res = await api.fetch('/unprocessed/' + filename)
@@ -58,13 +64,13 @@ async function requestEFSMobFile(filename: string) {
 }
 
 const processAPIStreamResponse = (response: Response, skippable: boolean) => {
-  return new Promise<Blob>((res, rej) => {
+  return new Promise<ArrayBuffer>((res, rej) => {
     if (response.status === 404 && skippable) {
       return rej(ALLOWED_404)
     }
     if (response.status >= 400) {
       return rej(`Bad file status code ${response.status}. Url: ${response.url}`)
     }
-    res(response.blob())
-  }).then(async blob => new Uint8Array(await blob.arrayBuffer()))
+    res(response.arrayBuffer())
+  }).then(async buf => new Uint8Array(buf))
 }
