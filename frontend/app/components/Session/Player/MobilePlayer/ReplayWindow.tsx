@@ -38,6 +38,11 @@ function ReplayWindow({ videoURL, userDevice }: Props) {
         imageRef.current.src = blob;
       }
     }
+    return () => {
+      if (imageRef.current) {
+        URL.revokeObjectURL(imageRef.current.src)
+      }
+    }
   }, [currentSnapshot, mode]);
 
   React.useEffect(() => {
