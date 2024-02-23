@@ -55,6 +55,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStor
 		cfg:                  cfg,
 		objStorage:           objStorage,
 		writeToDiskTasks:     make(chan *Task, 1),
+		sendToS3Tasks:        make(chan *UploadTask, 1),
 		imageWorkerStopped:   make(chan struct{}),
 		uploadWorkersStopped: make(chan struct{}),
 	}
