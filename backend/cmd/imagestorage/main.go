@@ -62,11 +62,11 @@ func main() {
 				return msg, nil
 			}
 
-			if msg, err := checkSessionEnd(data); err == nil {
+			if _, err := checkSessionEnd(data); err == nil {
 				// Pack all screenshots from mobile session, compress and upload to object storage
-				sessEnd := msg.(*messages.IOSSessionEnd)
-				if err := srv.PackScreenshots(sessEnd.SessionID(), workDir+"/screenshots/"+strconv.FormatUint(sessEnd.SessionID(), 10)+"/"); err != nil {
-					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
+				//sessEnd := msg.(*messages.IOSSessionEnd)
+				if err := srv.PackScreenshots(sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, sessID)
 				}
 			} else {
 				// Unpack new screenshots package from mobile session
