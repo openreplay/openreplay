@@ -3,6 +3,8 @@
   &nbsp;|&nbsp;
   <a href="/README_ESP.md">Español</a>
   &nbsp;|&nbsp;
+  <a href="/README_PTBR.md">Português do Brasil</a>
+  &nbsp;|&nbsp;
   <a href="/README.md">English</a>
   &nbsp;|&nbsp;
   <a href="/README_RU.md">العربية</a>
