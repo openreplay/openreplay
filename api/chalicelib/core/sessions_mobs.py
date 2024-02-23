@@ -21,7 +21,6 @@ def __get_ios_video_keys(project_id, session_id):
     }
     return [
         config("SESSION_IOS_VIDEO_PATTERN") % params,
-        config("SESSION_IOS_SCREENSHOTS_PATTERN") % params,
     ]
 
 
