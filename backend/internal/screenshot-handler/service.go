@@ -16,17 +16,9 @@ import (
 	config "openreplay/backend/internal/config/imagestorage"
 )
 
-type ImageType uint8
-
-const (
-	screenshot ImageType = iota
-	canvas
-)
-
 type Task struct {
 	sessionID   uint64 // to generate path
 	images      map[string]*bytes.Buffer
-	imageType   ImageType
 	isBreakTask bool
 }
 
@@ -82,19 +74,6 @@ func (v *ImageStorage) Wait() {
 
 func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 	start := time.Now()
-	if err := v.extract(sessID, data); err != nil {
-		return err
-	}
-	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
-	return nil
-}
-
-type ScreenshotMessage struct {
-	Name string
-	Data []byte
-}
-
-func (v *ImageStorage) extract(sessID uint64, data []byte) error {
 	images := make(map[string]*bytes.Buffer)
 	uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
@@ -122,21 +101,16 @@ func (v *ImageStorage) extract(sessID uint64, data []byte) error {
 		}
 	}
 
-	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images, imageType: screenshot}
+	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images}
+	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
 	return nil
 }
 
 func (v *ImageStorage) writeToDisk(task *Task) {
 	// Build the directory path
 	path := v.cfg.FSDir + "/"
-	if task.imageType == screenshot {
-		if v.cfg.ScreenshotsDir != "" {
-			path += v.cfg.ScreenshotsDir + "/"
-		}
-	} else {
-		if v.cfg.CanvasDir != "" {
-			path += v.cfg.CanvasDir + "/"
-		}
+	if v.cfg.ScreenshotsDir != "" {
+		path += v.cfg.ScreenshotsDir + "/"
 	}
 
 	path += strconv.FormatUint(task.sessionID, 10) + "/"

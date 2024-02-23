@@ -57,7 +57,7 @@ func main() {
 			if msg, err := checkSessionEnd(data); err == nil {
 				sessEnd := msg.(*messages.SessionEnd)
 				// Received session end
-				if list, err := srv.PrepareCanvas(sessID); err != nil {
+				if list, err := srv.PrepareCanvasList(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
 				} else {
 					for _, name := range list {
@@ -68,7 +68,7 @@ func main() {
 					}
 				}
 			} else {
-				if err := srv.ProcessCanvas(sessID, data); err != nil {
+				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {
 					log.Printf("can't process canvas image: %s", err)
 				}
 			}

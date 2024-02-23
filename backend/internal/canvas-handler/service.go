@@ -1,34 +1,23 @@
 package canvas_handler
 
 import (
-	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
-	gzip "github.com/klauspost/pgzip"
 	config "openreplay/backend/internal/config/imagestorage"
-)
-
-type ImageType uint8
-
-const (
-	screenshot ImageType = iota
-	canvas
 )
 
 type Task struct {
 	sessionID   uint64 // to generate path
-	images      map[string]*bytes.Buffer
-	imageType   ImageType
+	name        string
+	image       *bytes.Buffer
 	isBreakTask bool
 }
 
@@ -38,6 +27,7 @@ func NewBreakTask() *Task {
 
 type ImageStorage struct {
 	cfg                *config.Config
+	basePath           string
 	writeToDiskTasks   chan *Task
 	imageWorkerStopped chan struct{}
 }
@@ -47,8 +37,13 @@ func New(cfg *config.Config) (*ImageStorage, error) {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	}
+	path := cfg.FSDir + "/"
+	if cfg.CanvasDir != "" {
+		path += cfg.CanvasDir + "/"
+	}
 	newStorage := &ImageStorage{
 		cfg:                cfg,
+		basePath:           path,
 		writeToDiskTasks:   make(chan *Task, 1),
 		imageWorkerStopped: make(chan struct{}),
 	}
@@ -64,30 +59,11 @@ func (v *ImageStorage) Wait() {
 	<-v.imageWorkerStopped
 }
 
-func (v *ImageStorage) Process(sessID uint64, data []byte) error {
-	start := time.Now()
-	if err := v.extract(sessID, data); err != nil {
-		return err
-	}
-	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
-	return nil
-}
-
-type ScreenshotMessage struct {
-	Name string
-	Data []byte
-}
-
-func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
-	// Build the directory path to session's canvas images
-	path := v.cfg.FSDir + "/"
-	if v.cfg.CanvasDir != "" {
-		path += v.cfg.CanvasDir + "/"
-	}
-	path += strconv.FormatUint(sessID, 10) + "/"
+func (v *ImageStorage) PrepareCanvasList(sessID uint64) ([]string, error) {
+	path := fmt.Sprintf("%s/%d/", v.basePath, sessID)
 
 	// Check that the directory exists
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -154,63 +130,22 @@ func (v *ImageStorage) PrepareCanvas(sessID uint64) ([]string, error) {
 	return namesList, nil
 }
 
-func (v *ImageStorage) ProcessCanvas(sessID uint64, data []byte) error {
-	var msg = &ScreenshotMessage{}
+func (v *ImageStorage) SaveCanvasToDisk(sessID uint64, data []byte) error {
+	type canvasData struct {
+		Name string
+		Data []byte
+	}
+	var msg = &canvasData{}
 	if err := json.Unmarshal(data, msg); err != nil {
 		log.Printf("can't parse canvas message, err: %s", err)
 	}
 	// Use the same workflow
-	v.writeToDiskTasks <- &Task{sessionID: sessID, images: map[string]*bytes.Buffer{msg.Name: bytes.NewBuffer(msg.Data)}, imageType: canvas}
-	log.Printf("new canvas image, sessID: %d, name: %s, size: %3.3f mb", sessID, msg.Name, float64(len(msg.Data))/1024.0/1024.0)
-	return nil
-}
-
-func (v *ImageStorage) extract(sessID uint64, data []byte) error {
-	images := make(map[string]*bytes.Buffer)
-	uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("can't create gzip reader: %s", err.Error())
-	}
-	tarReader := tar.NewReader(uncompressedStream)
-
-	for {
-		header, err := tarReader.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return fmt.Errorf("can't read tar header: %s", err.Error())
-		}
-
-		if header.Typeflag == tar.TypeReg {
-			var buf bytes.Buffer
-			if _, err := buf.ReadFrom(tarReader); err != nil {
-				return fmt.Errorf("can't copy file: %s", err.Error())
-			}
-			images[header.Name] = &buf
-		} else {
-			log.Printf("ExtractTarGz: uknown type: %d in %s", header.Typeflag, header.Name)
-		}
-	}
-
-	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images, imageType: screenshot}
+	v.writeToDiskTasks <- &Task{sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)}
 	return nil
 }
 
 func (v *ImageStorage) writeToDisk(task *Task) {
-	// Build the directory path
-	path := v.cfg.FSDir + "/"
-	if task.imageType == screenshot {
-		if v.cfg.ScreenshotsDir != "" {
-			path += v.cfg.ScreenshotsDir + "/"
-		}
-	} else {
-		if v.cfg.CanvasDir != "" {
-			path += v.cfg.CanvasDir + "/"
-		}
-	}
-
-	path += strconv.FormatUint(task.sessionID, 10) + "/"
+	path := fmt.Sprintf("%s/%d/", v.basePath, task.sessionID)
 
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
@@ -218,19 +153,16 @@ func (v *ImageStorage) writeToDisk(task *Task) {
 	}
 
 	// Write images to disk
-	saved := 0
-	for name, img := range task.images {
-		outFile, err := os.Create(path + name) // or open file in rewrite mode
-		if err != nil {
-			log.Printf("can't create file: %s", err.Error())
-		}
-		if _, err := io.Copy(outFile, img); err != nil {
-			log.Printf("can't copy file: %s", err.Error())
-		}
-		outFile.Close()
-		saved++
+	outFile, err := os.Create(path + task.name) // or open file in rewrite mode
+	if err != nil {
+		log.Printf("can't create file: %s", err.Error())
 	}
-	log.Printf("saved %d images to disk", saved)
+	if _, err := io.Copy(outFile, task.image); err != nil {
+		log.Printf("can't copy file: %s", err.Error())
+	}
+	outFile.Close()
+
+	log.Printf("new canvas image, sessID: %d, name: %s, size: %3.3f mb", task.sessionID, task.name, float64(task.image.Len())/1024.0/1024.0)
 	return
 }
 
