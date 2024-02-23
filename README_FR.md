@@ -7,7 +7,7 @@
   &nbsp;|&nbsp;
   <a href="/README_RU.md">Русский</a>
   &nbsp;|&nbsp;
-  <a href="/README_RU.md">العربية</a>
+  <a href="/README_AR.md">العربية</a>
 </p>
 
 <p align="center">
