@@ -11,7 +11,7 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
+	"openreplay/backend/internal/screenshot-handler"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
@@ -31,7 +31,7 @@ func main() {
 		log.Fatalf("can't init object storage: %s", err)
 	}
 
-	srv, err := imagestorage.New(cfg, objStore)
+	srv, err := screenshot_handler.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return

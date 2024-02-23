@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"openreplay/backend/internal/canvas-handler"
 	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
@@ -24,7 +24,7 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := imagestorage.New(cfg, nil)
+	srv, err := canvas_handler.New(cfg)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
