@@ -45,6 +45,7 @@ func main() {
 			cfg.TopicRawImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			log.Printf("Received message for session %d\n", sessID)
 			checkSessionEnd := func(data []byte) (messages.Message, error) {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
