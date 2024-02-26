@@ -1,5 +1,5 @@
+import httpx
 from chalicelib.utils import pg_client
-import requests
 from chalicelib.core import license
 
 
@@ -19,9 +19,9 @@ def process_data(data):
     }
 
 
-def compute():
-    with pg_client.PostgresClient(long_query=True) as cur:
-        cur.execute(
+async def compute():
+    async with pg_client.cursor(long_query=True) as cur:
+        await cur.execute(
             f"""UPDATE public.tenants
                 SET t_integrations = COALESCE((SELECT COUNT(DISTINCT provider) FROM public.integrations) +
                                               (SELECT COUNT(*) FROM public.webhooks WHERE type = 'slack') +
@@ -36,17 +36,19 @@ def compute():
                 RETURNING name,t_integrations,t_projects,t_sessions,t_users,tenant_key,opt_out,
                     (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
-        data = cur.fetchone()
+        data = await cur.fetchone()
         if len(data) > 0:
-            requests.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
+            async with httpx.AsyncClient() as client:
+                await client.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
 
 
-def new_client():
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def new_client():
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             f"""SELECT *, openreplay_version() AS version_number,
                 (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email
                 FROM public.tenants
                 LIMIT 1;""")
-        data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/signup', json=process_data(data))
+        data = await cur.fetchone()
+        async with httpx.AsyncClient() as client:
+            await client.post('https://api.openreplay.com/os/signup', json=process_data(data))

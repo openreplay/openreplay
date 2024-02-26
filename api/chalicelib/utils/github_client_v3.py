@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-import requests
+import httpx
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -116,12 +116,13 @@ class githubV3Request:
     def __get_request_header(self):
         return {"Accept": "application/vnd.github.v3+json", 'Authorization': f'token {self.__token}'}
 
-    def get(self, url, params={}):
+    async def get(self, url, params={}):
         results = []
         params = {"per_page": 100, **params}
         pages = {"next": f"{self.__base}{url}", "last": ""}
         while len(pages.keys()) > 0 and pages["next"] != pages["last"]:
-            response = requests.get(pages["next"], headers=self.__get_request_header(), params=params)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(pages["next"], headers=self.__get_request_header(), params=params)
             pages = get_response_links(response)
             result = response.json()
             if response.status_code != 200:
@@ -133,6 +134,7 @@ class githubV3Request:
             results += result
         return results
 
-    def post(self, url, body):
-        response = requests.post(f"{self.__base}{url}", headers=self.__get_request_header(), json=body)
+    async def post(self, url, body):
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f"{self.__base}{url}", headers=self.__get_request_header(), json=body)
         return response.json()

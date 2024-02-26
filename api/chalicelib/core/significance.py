@@ -28,7 +28,7 @@ T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.36
             30: 2.042}
 
 
-def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
+async def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) -> List[RealDictRow]:
     """
     Add minimal timestamp
     :param filter_d: dict contains events&filters&...
@@ -96,7 +96,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = await metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 # op = sessions.__get_sql_operator(f["operator"])
                 if f.source in meta_keys.keys():
@@ -232,14 +232,14 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
               "endTimestamp": filter_d.endTimestamp,
               "issueTypes": tuple(filter_issues), **values}
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify(n_stages_query, params)
         logging.debug("---------------------------------------------------")
         logging.debug(query)
         logging.debug("---------------------------------------------------")
         try:
-            cur.execute(query)
-            rows = cur.fetchall()
+            await cur.execute(query)
+            rows = await cur.fetchall()
         except Exception as err:
             logging.warning("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
             logging.warning(query.decode('UTF-8'))
@@ -550,7 +550,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
+async def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     output = []
     stages = filter_d.events
     # TODO: handle 1 stage alone
@@ -577,13 +577,13 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
         # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
         #                                   project_id=project_id, user_id=None, count_only=True)
         # last change
-        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
+        counts = await sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
                                           project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         return get_stages(stages, []), 0
     # Obtain the first part of the output
@@ -596,11 +596,11 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     return stages_list, total_drop_due_to_issues
 
 
-def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
+async def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
     output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
     stages = filter_d.events
     # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
+    rows = await get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
         return output
         # Obtain the second part of the output

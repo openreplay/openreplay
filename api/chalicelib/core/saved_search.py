@@ -5,26 +5,26 @@ from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def create(project_id, user_id, data: schemas.SavedSearchSchema):
-    with pg_client.PostgresClient() as cur:
+async def create(project_id, user_id, data: schemas.SavedSearchSchema):
+    async with pg_client.cursor() as cur:
         data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify("""\
             INSERT INTO public.searches (project_id, user_id, name, filter,is_public) 
             VALUES (%(project_id)s, %(user_id)s, %(name)s, %(filter)s::jsonb,%(is_public)s)
             RETURNING *;""", {"user_id": user_id, "project_id": project_id, **data})
-        cur.execute(
+        await cur.execute(
             query
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
         return {"data": r}
 
 
-def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
-    with pg_client.PostgresClient() as cur:
+async def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
+    async with pg_client.cursor() as cur:
         data = data.model_dump()
         data["filter"] = json.dumps(data["filter"])
         query = cur.mogrify(f"""\
@@ -36,19 +36,19 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
                 AND project_id= %(project_id)s
                 AND (user_id = %(user_id)s OR is_public)
             RETURNING *;""", {"search_id": search_id, "project_id": project_id, "user_id": user_id, **data})
-        cur.execute(
+        await cur.execute(
             query
         )
-        r = cur.fetchone()
+        r = await cur.fetchone()
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
         return r
 
 
-def get_all(project_id, user_id, details=False):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_all(project_id, user_id, details=False):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(
                 f"""\
                 SELECT search_id, project_id, user_id, name, created_at, deleted_at, is_public
@@ -61,7 +61,7 @@ def get_all(project_id, user_id, details=False):
             )
         )
 
-        rows = cur.fetchall()
+        rows = await cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
@@ -72,9 +72,9 @@ def get_all(project_id, user_id, details=False):
     return rows
 
 
-def delete(project_id, search_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def delete(project_id, search_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
             UPDATE public.searches 
             SET deleted_at = timezone('utc'::text, now()) 
@@ -87,9 +87,9 @@ def delete(project_id, search_id, user_id):
     return {"state": "success"}
 
 
-def get(search_id, project_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get(search_id, project_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(
                 """SELECT
                       *
@@ -102,7 +102,7 @@ def get(search_id, project_id, user_id):
             )
         )
 
-        f = helper.dict_to_camel_case(cur.fetchone())
+        f = helper.dict_to_camel_case(await cur.fetchone())
     if f is None:
         return None
 

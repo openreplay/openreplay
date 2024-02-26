@@ -11,20 +11,25 @@ def obfuscate_string(string):
 
 
 class JIRAIntegration(integration_base.BaseIntegration):
+
     def __init__(self, tenant_id, user_id):
         self.__tenant_id = tenant_id
         # TODO: enable super-constructor when OAuth is done
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._issue_handler = None
         self._user_id = user_id
-        self.integration = self.get()
+        self.integeration = None
 
+    async def init(self):
+        if self.integration is not None:
+            return
+        self.integration = await self.get()
         if self.integration is None:
             return
         self.integration["valid"] = True
         if not self.integration["url"].endswith('atlassian.net'):
             self.integration["valid"] = False
-
+            
     @property
     def provider(self):
         return PROVIDER
@@ -42,16 +47,16 @@ class JIRAIntegration(integration_base.BaseIntegration):
         return self._issue_handler
 
     # TODO: remove this once jira-oauth is done
-    def get(self):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
+    async def get(self):
+        async with pg_client.cursor() as cur:
+            await cur.execute(
                 cur.mogrify(
                     """SELECT username, token, url
                         FROM public.jira_cloud 
                         WHERE user_id=%(user_id)s;""",
                     {"user_id": self._user_id})
             )
-            data = helper.dict_to_camel_case(cur.fetchone())
+            data = helper.dict_to_camel_case(await cur.fetchone())
 
         if data is None:
             return
@@ -68,10 +73,10 @@ class JIRAIntegration(integration_base.BaseIntegration):
         integration["provider"] = self.provider.lower()
         return integration
 
-    def update(self, changes, obfuscate=False):
-        with pg_client.PostgresClient() as cur:
+    async def update(self, changes, obfuscate=False):
+        async with pg_client.cursor() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""\
                         UPDATE public.jira_cloud
                         SET {','.join(sub_query)}
@@ -80,19 +85,19 @@ class JIRAIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id,
                              **changes})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = helper.dict_to_camel_case(await cur.fetchone())
             if obfuscate:
                 w["token"] = obfuscate_string(w["token"])
-        return self.get()
+        return await self.get()
 
     # TODO: make this generic for all issue tracking integrations
     def _add(self, data):
         print("a pretty defined abstract method")
         return
 
-    def add(self, username, token, url):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
+    async def add(self, username, token, url):
+        async with pg_client.cursor() as cur:
+            await cur.execute(
                 cur.mogrify("""\
                         INSERT INTO public.jira_cloud(username, token, user_id,url)
                         VALUES (%(username)s, %(token)s, %(user_id)s,%(url)s)
@@ -100,12 +105,12 @@ class JIRAIntegration(integration_base.BaseIntegration):
                             {"user_id": self._user_id, "username": username,
                              "token": token, "url": url})
             )
-            w = helper.dict_to_camel_case(cur.fetchone())
+            w = helper.dict_to_camel_case(await cur.fetchone())
         return self.get()
 
-    def delete(self):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
+    async def delete(self):
+        async with pg_client.cursor() as cur:
+            await cur.execute(
                 cur.mogrify("""\
                         DELETE FROM public.jira_cloud
                         WHERE user_id=%(user_id)s;""",
@@ -113,9 +118,9 @@ class JIRAIntegration(integration_base.BaseIntegration):
             )
             return {"state": "success"}
 
-    def add_edit(self, data: schemas.IssueTrackingJiraSchema):
+    async def add_edit(self, data: schemas.IssueTrackingJiraSchema):
         if self.integration is not None:
-            return self.update(
+            return await self.update(
                 changes={
                     "username": data.username,
                     "token": data.token if len(data.token) > 0 and data.token.find("***") == -1 \
@@ -125,7 +130,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
                 obfuscate=True
             )
         else:
-            return self.add(
+            return await self.add(
                 username=data.username,
                 token=data.token,
                 url=str(data.url)

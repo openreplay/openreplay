@@ -27,7 +27,7 @@ COALESCE((SELECT TRUE
    AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
 
 
-def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id, include_mobs: bool = True):
+async def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id, include_mobs: bool = True):
     no_platform = True
     for f in data.filters:
         if f.type == schemas.FilterType.platform:
@@ -38,11 +38,11 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                                                               value=[schemas.PlatformType.desktop],
                                                               operator=schemas.SearchEventOperator._is))
 
-    full_args, query_part = sessions_search.search_query_parts(data=data, error_status=None, errors_only=False,
+    full_args, query_part = await sessions_search.search_query_parts(data=data, error_status=None, errors_only=False,
                                                                favorite_only=data.bookmarked, issue=None,
                                                                project_id=project_id, user_id=user_id)
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         data.order = schemas.SortOrderType.desc
         data.sort = 'duration'
 
@@ -57,7 +57,7 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
         # print(main_query)
         # print("--------------------")
         try:
-            cur.execute(main_query)
+            await cur.execute(main_query)
         except Exception as err:
             print("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION -----------")
             print(main_query.decode('UTF-8'))
@@ -66,12 +66,12 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
             print("--------------------")
             raise err
 
-        session = cur.fetchone()
+        session = await cur.fetchone()
     if session:
         if include_mobs:
-            session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
-            session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
-        session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
+            session['domURL'] = await sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
+            session['mobsUrl'] = await sessions_mobs.get_urls_depercated(session_id=session["session_id"])
+        session['events'] = await events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
                                                      event_type=schemas.EventType.location)
 
     return helper.dict_to_camel_case(session)

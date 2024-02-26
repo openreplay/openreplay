@@ -74,7 +74,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                    data['devtoolsURL'] = await sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     context=context, check_existence=False)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"], duration=data["duration"])
@@ -135,7 +135,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                                                                     check_existence=False)
                 else:
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                    data['devtoolsURL'] = await sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     context=context, check_existence=False)
                     data['canvasURL'] = canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
                     if user_testing.has_test_signals(session_id=session_id, project_id=project_id):

@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     ap_logger.setLevel(loglevel)
 
     app.schedule = AsyncIOScheduler()
-    await pg_client.init()
+    pg_client.init()
     app.schedule.start()
 
     for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:

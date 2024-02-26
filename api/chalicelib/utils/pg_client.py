@@ -6,6 +6,8 @@ import psycopg2
 import psycopg2.extras
 from decouple import config
 from psycopg2 import pool
+import contextlib
+
 
 logger = logging.getLogger(__name__)
 
@@ -165,13 +167,13 @@ class PostgresClient:
         return self.__enter__()
 
 
-async def init():
+def init():
     logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
     if config('PG_POOL', cast=bool, default=True):
         make_pool()
 
 
-async def terminate():
+def terminate():
     global postgreSQL_pool
     if postgreSQL_pool is not None:
         try:
@@ -179,3 +181,12 @@ async def terminate():
             logging.info("Closed all connexions to PostgreSQL")
         except (Exception, psycopg2.DatabaseError) as error:
             logging.error("Error while closing all connexions to PostgreSQL", error)
+
+
+@contextlib.asynccontextmanager
+async def cursor():
+    from app import app
+    import psycopg
+    async with app.state.postgresql.connection() as cnx:
+        async with psycopg.AsyncClientCursor(cnx) as cur:
+            yield cur

@@ -102,7 +102,7 @@ def can_check(a) -> bool:
         and ((now - a["createdAt"]) % (TimeInterval[repetitionBase] * 60 * 1000)) < 60 * 1000
 
 
-def Build(a):
+async def Build(a):
     now = TimeUTC.now()
     params = {"project_id": a["projectId"], "now": now}
     full_args = {}
@@ -120,7 +120,7 @@ def Build(a):
             logging.warning(a["filter"])
             raise
 
-        full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
+        full_args, query_part = await sessions.search_query_parts(data=data, error_status=None, errors_only=False,
                                                             issue=None, project_id=a["projectId"], user_id=None,
                                                             favorite_only=False)
         subQ = f"""SELECT COUNT(session_id) AS value 
@@ -187,12 +187,17 @@ def Build(a):
 
 
 def process():
+    import asyncio
+    asyncio.run(_process())
+
+
+async def _process():
     notifications = []
     all_alerts = alerts_listener.get_all_alerts()
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         for alert in all_alerts:
             if can_check(alert):
-                query, params = Build(alert)
+                query, params = await Build(alert)
                 try:
                     query = cur.mogrify(query, params)
                 except Exception as e:
@@ -203,8 +208,8 @@ def process():
                 logging.debug(alert)
                 logging.debug(query)
                 try:
-                    cur.execute(query)
-                    result = cur.fetchone()
+                    await cur.execute(query)
+                    result = await cur.fetchone()
                     if result["valid"]:
                         logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
@@ -213,14 +218,13 @@ def process():
                         f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
                     logging.error(query)
                     logging.error(e)
-                    cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
-            cur.execute(
+            await cur.execute(
                 cur.mogrify(f"""UPDATE public.alerts 
                                 SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
-        alerts.process_notifications(notifications)
+        await alerts.process_notificationsq(notifications)
 
 
 def __format_value(x):

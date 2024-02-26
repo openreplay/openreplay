@@ -25,7 +25,7 @@ class AmazonS3Storage(ObjectStorage):
                                   region_name=config("sessions_region"),
                                   verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
 
-    def exists(self, bucket, key):
+    async def exists(self, bucket, key):
         try:
             self.resource.Object(bucket, key).load()
         except botocore.exceptions.ClientError as e:
@@ -36,8 +36,8 @@ class AmazonS3Storage(ObjectStorage):
                 raise
         return True
 
-    def get_presigned_url_for_sharing(self, bucket, expires_in, key, check_exists=False):
-        if check_exists and not self.exists(bucket, key):
+    async def get_presigned_url_for_sharing(self, bucket, expires_in, key, check_exists=False):
+        if check_exists and not await self.exists(bucket, key):
             return None
 
         return self.client.generate_presigned_url(
@@ -79,7 +79,7 @@ class AmazonS3Storage(ObjectStorage):
             f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
         return req.url
 
-    def get_file(self, source_bucket, source_key):
+    async def get_file(self, source_bucket, source_key):
         try:
             result = self.client.get_object(
                 Bucket=source_bucket,
@@ -92,7 +92,7 @@ class AmazonS3Storage(ObjectStorage):
                 raise ex
         return result["Body"].read().decode()
 
-    def tag_for_deletion(self, bucket, key):
+    async def tag_for_deletion(self, bucket, key):
         if not self.exists(bucket, key):
             return False
         # Copy the file to change the creation date, so it can be deleted X days after the tag's creation
@@ -103,10 +103,10 @@ class AmazonS3Storage(ObjectStorage):
             TaggingDirective='COPY'
         )
 
-        self.tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days',
+        await self.tag_file(bucket=bucket, file_key=key, tag_key='to_delete_in_days',
                       tag_value=config("SCH_DELETE_DAYS", default='7'))
 
-    def tag_file(self, file_key, bucket, tag_key, tag_value):
+    async def tag_file(self, file_key, bucket, tag_key, tag_value):
         return self.client.put_object_tagging(
             Bucket=bucket,
             Key=file_key,

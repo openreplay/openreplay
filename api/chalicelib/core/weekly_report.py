@@ -5,41 +5,41 @@ from chalicelib.utils.helper import get_issue_title
 LOWEST_BAR_VALUE = 3
 
 
-def get_config(user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+async def get_config(user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify("""\
             SELECT users.weekly_report
             FROM public.users
             WHERE users.deleted_at ISNULL AND users.user_id=%(user_id)s 
             LIMIT 1;""", {"user_id": user_id}))
-        result = cur.fetchone()
+        result = await cur.fetchone()
     return helper.dict_to_camel_case(result)
 
 
-def edit_config(user_id, weekly_report):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
+async def edit_config(user_id, weekly_report):
+    async with pg_client.cursor() as cur:
+        await cur.execute(cur.mogrify("""\
             UPDATE public.users
             SET weekly_report= %(weekly_report)s
             WHERE users.deleted_at ISNULL 
                 AND users.user_id=%(user_id)s
             RETURNING weekly_report;""", {"user_id": user_id, "weekly_report": weekly_report}))
-        result = cur.fetchone()
+        result = await cur.fetchone()
     return helper.dict_to_camel_case(result)
 
 
-def cron():
+async def cron():
     if not smtp.has_smtp():
         print("!!! No SMTP configuration found, ignoring weekly report")
         return
     _now = TimeUTC.now()
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
+    async with pg_client.cursor(unlimited_query=True) as cur:
         params = {"tomorrow": TimeUTC.midnight(delta_days=1),
                   "3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
                   "2_week_ago": TimeUTC.midnight(delta_days=-14),
                   "5_week_ago": TimeUTC.midnight(delta_days=-35)}
-        cur.execute(cur.mogrify("""\
+        await cur.execute(cur.mogrify("""\
             SELECT project_id,
                name                                                                     AS project_name,
                users.emails                                                             AS emails,
@@ -86,7 +86,7 @@ def cron():
                               AND issues.timestamp <= %(1_week_ago)s
                               AND issues.timestamp >= %(5_week_ago)s
                      ) AS month_1_issues ON (TRUE);"""), params)
-        projects_data = cur.fetchall()
+        projects_data = await cur.fetchall()
         _now2 = TimeUTC.now()
         print(f">> Weekly report query: {_now2 - _now} ms")
         _now = _now2
@@ -103,7 +103,7 @@ def cron():
                 helper.__progress(p["this_week_issues_count"], p["past_week_issues_count"]), 1)
             p["past_month_issues_evolution"] = helper.__decimal_limit(
                 helper.__progress(p["this_week_issues_count"], p["past_month_issues_count"]), 1)
-            cur.execute(cur.mogrify("""
+            await cur.execute(cur.mogrify("""
                 SELECT LEFT(TO_CHAR(timestamp_i, 'Dy'),1) AS day_short,
                        TO_CHAR(timestamp_i, 'Mon. DD, YYYY') AS day_long,
                        (
@@ -119,7 +119,7 @@ def cron():
                              '1 day'::INTERVAL
                          ) AS timestamp_i
                 ORDER BY timestamp_i;""", params))
-            days_partition = cur.fetchall()
+            days_partition = await cur.fetchall()
             _now2 = TimeUTC.now()
             print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
@@ -130,7 +130,7 @@ def cron():
                 else:
                     d["value"] = d["issues_count"] * 100 / max_days_partition
                     d["value"] = d["value"] if d["value"] > LOWEST_BAR_VALUE else LOWEST_BAR_VALUE
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
             SELECT type, COUNT(*) AS count
             FROM events_common.issues INNER JOIN public.issues USING (issue_id)
             WHERE project_id = %(project_id)s
@@ -138,7 +138,7 @@ def cron():
             GROUP BY type
             ORDER BY count DESC, type
             LIMIT 4;""", params))
-            issues_by_type = cur.fetchall()
+            issues_by_type = await cur.fetchall()
             _now2 = TimeUTC.now()
             print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
@@ -149,7 +149,7 @@ def cron():
                     i["value"] = LOWEST_BAR_VALUE
                 else:
                     i["value"] = i["count"] * 100 / max_issues_by_type
-            cur.execute(cur.mogrify("""\
+            await cur.execute(cur.mogrify("""\
                 SELECT TO_CHAR(timestamp_i, 'Dy')             AS day_short,
                        TO_CHAR(timestamp_i, 'Mon. DD, YYYY')  AS day_long,
                        COALESCE((SELECT JSONB_AGG(sub)
@@ -170,7 +170,7 @@ def cron():
                          ) AS timestamp_i
                 GROUP BY timestamp_i
                 ORDER BY timestamp_i;""", params))
-            issues_breakdown_by_day = cur.fetchall()
+            issues_breakdown_by_day = await cur.fetchall()
             _now2 = TimeUTC.now()
             print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
@@ -186,7 +186,7 @@ def cron():
                     else:
                         j["value"] = j["count"] * 100 / max_days_partition
                         j["value"] = j["value"] if j["value"] > LOWEST_BAR_VALUE else LOWEST_BAR_VALUE
-            cur.execute(cur.mogrify("""
+            await cur.execute(cur.mogrify("""
                 SELECT type,
                        COUNT(*)                   AS issue_count,
                        COUNT(DISTINCT session_id) AS sessions_count,
@@ -219,7 +219,7 @@ def cron():
                     AND sessions.start_ts >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
                 GROUP BY type
                 ORDER BY issue_count DESC;""", params))
-            issues_breakdown_list = cur.fetchall()
+            issues_breakdown_list = await cur.fetchall()
             _now2 = TimeUTC.now()
             print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2

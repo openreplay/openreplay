@@ -8,10 +8,10 @@ public_app, app, app_apikey = get_routers()
 
 
 @app.get('/healthz', tags=["health-check"])
-def get_global_health_status():
+async def get_global_health_status():
     if config("LOCAL_DEV", cast=bool, default=False):
         return {"data": ""}
-    return {"data": health.get_health()}
+    return {"data": await health.get_health()}
 
 
 if not tenants.tenants_exists_sync(use_pool=False):
@@ -20,4 +20,4 @@ if not tenants.tenants_exists_sync(use_pool=False):
         if await tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
 
-        return {"data": health.get_health()}
+        return {"data": await health.get_health()}

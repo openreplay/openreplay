@@ -63,4 +63,4 @@ if config("LOCAL_DEV", default=False, cast=bool):
     @app.get('/trigger', tags=["private"])
     async def trigger_main_cron():
         logging.info("Triggering main cron")
-        alerts_processor.process()
+        await alerts_processor.process()

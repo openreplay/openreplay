@@ -13,21 +13,21 @@ from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get(id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get(id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     SELECT *
                     FROM public.alerts 
                     WHERE alert_id =%(id)s;""",
                         {"id": id})
         )
-        a = helper.dict_to_camel_case(cur.fetchone())
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return helper.custom_alert_to_front(__process_circular(a))
 
 
-def get_all(project_id):
-    with pg_client.PostgresClient() as cur:
+async def get_all(project_id):
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""\
                     SELECT alerts.*,
                            COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
@@ -39,8 +39,8 @@ def get_all(project_id):
                         AND alerts.deleted_at ISNULL
                     ORDER BY alerts.created_at;""",
                             {"project_id": project_id})
-        cur.execute(query=query)
-        all = helper.list_to_camel_case(cur.fetchall())
+        await cur.execute(query=query)
+        all = helper.list_to_camel_case(await cur.fetchall())
     for i in range(len(all)):
         all[i] = helper.custom_alert_to_front(__process_circular(all[i]))
     return all
@@ -54,29 +54,29 @@ def __process_circular(alert):
     return alert
 
 
-def create(project_id, data: schemas.AlertSchema):
+async def create(project_id, data: schemas.AlertSchema):
     data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id, change)
                     VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s, %(options)s::jsonb, %(series_id)s, %(change)s)
                     RETURNING *;""",
                         {"project_id": project_id, **data})
         )
-        a = helper.dict_to_camel_case(cur.fetchone())
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return {"data": helper.custom_alert_to_front(helper.dict_to_camel_case(__process_circular(a)))}
 
 
-def update(id, data: schemas.AlertSchema):
+async def update(id, data: schemas.AlertSchema):
     data = data.model_dump()
     data["query"] = json.dumps(data["query"])
     data["options"] = json.dumps(data["options"])
 
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         query = cur.mogrify("""\
                     UPDATE public.alerts
                     SET name = %(name)s,
@@ -90,12 +90,12 @@ def update(id, data: schemas.AlertSchema):
                     WHERE alert_id =%(id)s AND deleted_at ISNULL
                     RETURNING *;""",
                             {"id": id, **data})
-        cur.execute(query=query)
-        a = helper.dict_to_camel_case(cur.fetchone())
+        await cur.execute(query=query)
+        a = helper.dict_to_camel_case(await cur.fetchone())
     return {"data": helper.custom_alert_to_front(__process_circular(a))}
 
 
-def process_notifications(data):
+async def process_notifications(data):
     full = {}
     for n in data:
         if "message" in n["options"]:
@@ -112,7 +112,7 @@ def process_notifications(data):
                     })
                 elif c["type"] in ["webhook"]:
                     full[c["type"]].append({"data": webhook_data, "destination": c["value"]})
-    notifications.create(data)
+    await notifications.create(data)
     BATCH_SIZE = 200
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
@@ -122,52 +122,51 @@ def process_notifications(data):
 
             if t == "slack":
                 try:
-                    send_to_slack_batch(notifications_list=notifications_list)
+                    await send_to_slack_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending slack notifications batch")
                     logging.error(str(e))
             elif t == "msteams":
                 try:
-                    send_to_msteams_batch(notifications_list=notifications_list)
+                    await send_to_msteams_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending msteams notifications batch")
                     logging.error(str(e))
             elif t == "email":
                 try:
-                    send_by_email_batch(notifications_list=notifications_list)
+                    await send_by_email_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending email notifications batch")
                     logging.error(str(e))
             elif t == "webhook":
                 try:
-                    webhook.trigger_batch(data_list=notifications_list)
+                    await webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending webhook notifications batch")
                     logging.error(str(e))
 
 
-def send_by_email(notification, destination):
+async def send_by_email(notification, destination):
     if notification is None:
         return
-    email_helper.alert_email(recipients=destination,
+    await email_helper.alert_email(recipients=destination,
                              subject=f'"{notification["title"]}" has been triggered',
                              data={
                                  "message": f'"{notification["title"]}" {notification["description"]}',
                                  "project_id": notification["options"]["projectId"]})
 
 
-def send_by_email_batch(notifications_list):
+async def send_by_email_batch(notifications_list):
     if not smtp.has_smtp():
         logging.info("no SMTP configuration for email notifications")
     if notifications_list is None or len(notifications_list) == 0:
         logging.info("no email notifications")
         return
     for n in notifications_list:
-        send_by_email(notification=n.get("notification"), destination=n.get("destination"))
-        time.sleep(1)
+        await send_by_email(notification=n.get("notification"), destination=n.get("destination"))
 
 
-def send_to_slack_batch(notifications_list):
+async def send_to_slack_batch(notifications_list):
     webhookId_map = {}
     for n in notifications_list:
         if n.get("destination") not in webhookId_map:
@@ -178,11 +177,11 @@ def send_to_slack_batch(notifications_list):
                                                              "title_link": n["notification"]["buttonUrl"],
                                                              "ts": datetime.now().timestamp()})
     for batch in webhookId_map.keys():
-        Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+        await Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                          attachments=webhookId_map[batch]["batch"])
 
 
-def send_to_msteams_batch(notifications_list):
+async def send_to_msteams_batch(notifications_list):
     webhookId_map = {}
     for n in notifications_list:
         if n.get("destination") not in webhookId_map:
@@ -207,13 +206,13 @@ def send_to_msteams_batch(notifications_list):
             }
         )
     for batch in webhookId_map.keys():
-        MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+        await MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
                            attachments=webhookId_map[batch]["batch"])
 
 
-def delete(project_id, alert_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def delete(project_id, alert_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify(""" UPDATE public.alerts 
                             SET deleted_at = timezone('utc'::text, now()),
                                 active = FALSE

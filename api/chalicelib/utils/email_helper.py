@@ -27,9 +27,9 @@ def send_assign_session(recipient, message, link):
     send_html(BODY_HTML, SUBJECT, recipient)
 
 
-def alert_email(recipients, subject, data):
+async def alert_email(recipients, subject, data):
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/alert_notification.html", formatting_variables=data)
-    send_html(BODY_HTML=BODY_HTML, SUBJECT=subject, recipient=recipients)
+    await send_html(BODY_HTML=BODY_HTML, SUBJECT=subject, recipient=recipients)
 
 
 def __get_color(idx):

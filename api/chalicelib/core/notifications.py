@@ -4,9 +4,9 @@ from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get_all(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_all(tenant_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     SELECT notifications.*,
                            user_viewed_notifications.notification_id NOTNULL AS viewed
@@ -19,15 +19,15 @@ def get_all(tenant_id, user_id):
                     LIMIT 100;""",
                         {"user_id": user_id})
         )
-        rows = helper.list_to_camel_case(cur.fetchall())
+        rows = helper.list_to_camel_case(await cur.fetchall())
     for r in rows:
         r["createdAt"] = TimeUTC.datetime_to_timestamp(r["createdAt"])
     return rows
 
 
-def get_all_count(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
+async def get_all_count(tenant_id, user_id):
+    async with pg_client.cursor() as cur:
+        await cur.execute(
             cur.mogrify("""\
                     SELECT COALESCE(COUNT(notifications.*),0) AS count
                     FROM public.notifications
@@ -37,19 +37,19 @@ def get_all_count(tenant_id, user_id):
                     WHERE (notifications.user_id IS NULL OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
                         {"user_id": user_id})
         )
-        row = cur.fetchone()
+        row = await cur.fetchone()
     return row
 
 
-def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
+async def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
     if len(notification_ids) == 0 and endTimestamp is None:
         return False
     if startTimestamp is None:
         startTimestamp = 0
     notification_ids = [(user_id, id) for id in notification_ids]
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         if len(notification_ids) > 0:
-            cur.executemany(
+            await cur.executemany(
                 "INSERT INTO public.user_viewed_notifications(user_id, notification_id) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
                 notification_ids)
         else:
@@ -64,14 +64,14 @@ def view_notification(user_id, notification_ids=[], tenant_id=None, startTimesta
                       "endTimestamp": endTimestamp}
             # print('-------------------')
             # print(cur.mogrify(query, params))
-            cur.execute(cur.mogrify(query, params))
+            await cur.execute(cur.mogrify(query, params))
     return True
 
 
-def create(notifications):
+async def create(notifications):
     if len(notifications) == 0:
         return []
-    with pg_client.PostgresClient() as cur:
+    async with pg_client.cursor() as cur:
         values = []
         for n in notifications:
             clone = dict(n)
@@ -86,10 +86,10 @@ def create(notifications):
                     "(%(userId)s, %(title)s, %(description)s, %(buttonText)s, %(buttonUrl)s, %(imageUrl)s,%(options)s)",
                     clone).decode('UTF-8')
             )
-        cur.execute(
+        await cur.execute(
             f"""INSERT INTO public.notifications(user_id, title, description, button_text, button_url, image_url, options) 
                 VALUES {",".join(values)} RETURNING *;""")
-        rows = helper.list_to_camel_case(cur.fetchall())
+        rows = helper.list_to_camel_case(await cur.fetchall())
         for r in rows:
             r["createdAt"] = TimeUTC.datetime_to_timestamp(r["createdAt"])
             r["viewed"] = False
