@@ -41,7 +41,7 @@ const withOnboarding = <P extends RouteComponentProps>(
 
     const skip = () => {
       props.setOnboarding(true);
-      props.history.push(sessions());
+      props.history.push(withSiteId(sessions(), siteId));
     };
     
     const navTo = (tab: string) => {
