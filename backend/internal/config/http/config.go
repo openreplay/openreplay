@@ -34,6 +34,8 @@ type Config struct {
 	RecordCanvas            bool          `env:"RECORD_CANVAS,default=false"`
 	CanvasQuality           string        `env:"CANVAS_QUALITY,default=low"`
 	CanvasFps               int           `env:"CANVAS_FPS,default=1"`
+	MobileQuality           string        `env:"MOBILE_QUALITY,default=low"` // (low, standard, high)
+	MobileFps               int           `env:"MOBILE_FPS,default=1"`
 	WorkerID                uint16
 }
 
