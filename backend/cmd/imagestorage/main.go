@@ -64,7 +64,6 @@ func main() {
 
 			if _, err := checkSessionEnd(data); err == nil {
 				// Pack all screenshots from mobile session, compress and upload to object storage
-				//sessEnd := msg.(*messages.IOSSessionEnd)
 				if err := srv.PackScreenshots(sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {
 					log.Printf("upload session err: %s, sessID: %d", err, sessID)
 				}
