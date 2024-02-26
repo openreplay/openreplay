@@ -10,7 +10,7 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/videostorage"
-	"openreplay/backend/internal/videostorage"
+	"openreplay/backend/internal/video-maker"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/videostorage"
@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't init object storage: %s", err)
 	}
-	srv, err := videostorage.New(cfg, objStore)
+	srv, err := video_maker.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return

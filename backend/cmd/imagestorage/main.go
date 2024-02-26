@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/objectstorage/store"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
+	"openreplay/backend/internal/screenshot-handler"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
@@ -24,13 +26,18 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := imagestorage.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
+
+	srv, err := screenshot_handler.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
 	}
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	workDir := cfg.FSDir
 
 	consumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
@@ -38,6 +45,7 @@ func main() {
 			cfg.TopicRawImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
+			log.Printf("Received message for session %d\n", sessID)
 			checkSessionEnd := func(data []byte) (messages.Message, error) {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
@@ -54,17 +62,13 @@ func main() {
 				return msg, nil
 			}
 
-			if msg, err := checkSessionEnd(data); err == nil {
-				sessEnd := msg.(*messages.IOSSessionEnd)
-				// Received session end
-				if err := srv.Prepare(sessID); err != nil {
-					log.Printf("can't prepare mobile session: %s", err)
-				} else {
-					if err := producer.Produce(cfg.TopicReplayTrigger, sessID, sessEnd.Encode()); err != nil {
-						log.Printf("can't send session end signal to video service: %s", err)
-					}
+			if _, err := checkSessionEnd(data); err == nil {
+				// Pack all screenshots from mobile session, compress and upload to object storage
+				if err := srv.PackScreenshots(sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, sessID)
 				}
 			} else {
+				// Unpack new screenshots package from mobile session
 				if err := srv.Process(sessID, data); err != nil {
 					log.Printf("can't process mobile screenshots: %s", err)
 				}

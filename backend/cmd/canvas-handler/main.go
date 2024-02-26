@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"openreplay/backend/internal/canvas-handler"
 	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
@@ -24,7 +24,7 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := imagestorage.New(cfg)
+	srv, err := canvas_handler.New(cfg)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
@@ -57,7 +57,7 @@ func main() {
 			if msg, err := checkSessionEnd(data); err == nil {
 				sessEnd := msg.(*messages.SessionEnd)
 				// Received session end
-				if list, err := srv.PrepareCanvas(sessID); err != nil {
+				if list, err := srv.PrepareCanvasList(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
 				} else {
 					for _, name := range list {
@@ -68,7 +68,7 @@ func main() {
 					}
 				}
 			} else {
-				if err := srv.ProcessCanvas(sessID, data); err != nil {
+				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {
 					log.Printf("can't process canvas image: %s", err)
 				}
 			}
