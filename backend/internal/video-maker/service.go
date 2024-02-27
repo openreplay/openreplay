@@ -84,3 +84,7 @@ func (v *VideoStorage) sendToS3(payload interface{}) {
 	log.Printf("Viode file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
 }
+
+func (v *VideoStorage) Wait() {
+	v.uploaderPool.Pause()
+}
