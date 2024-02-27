@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/pool"
 	"os"
 	"os/exec"
 	"strconv"
@@ -30,8 +31,8 @@ type uploadTask struct {
 type ImageStorage struct {
 	cfg          *config.Config
 	objStorage   objectstorage.ObjectStorage
-	saverPool    WorkerPool
-	uploaderPool WorkerPool
+	saverPool    pool.WorkerPool
+	uploaderPool pool.WorkerPool
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
@@ -43,8 +44,8 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStor
 		cfg:        cfg,
 		objStorage: objStorage,
 	}
-	s.saverPool = NewPool(4, 4, s.writeToDisk)
-	s.uploaderPool = NewPool(4, 4, s.sendToS3)
+	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
+	s.uploaderPool = pool.NewPool(4, 4, s.sendToS3)
 	return s, nil
 }
 

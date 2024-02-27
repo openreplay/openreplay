@@ -1,4 +1,4 @@
-package screenshot_handler
+package pool
 
 import "sync"
 
