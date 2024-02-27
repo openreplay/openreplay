@@ -294,6 +294,14 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Add sessionID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	info, err := e.services.Sessions.Get(sessionData.ID)
+	if err != nil {
+		// Add projectID to context
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	// Check request body
 	if r.Body == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
