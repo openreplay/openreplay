@@ -15,9 +15,9 @@ def reset(data: schemas.ForgetPasswordPayloadSchema, background_tasks: Backgroun
         return {"errors": ["Invalid captcha."]}
     if not smtp.has_smtp():
         return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
-    a_users = users.get_by_email_only(data.email)
-    if a_users:
-        invitation_link = users.generate_new_invitation(user_id=a_users["userId"])
+    a_user = users.get_by_email_only(data.email)
+    if a_user:
+        invitation_link = users.generate_new_invitation(user_id=a_user["userId"])
         background_tasks.add_task(email_helper.send_forgot_password,
                                   recipient=data.email,
                                   invitation_link=invitation_link)
