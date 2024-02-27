@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/pool"
 	"os"
 	"os/exec"
 	"strconv"
@@ -16,34 +17,22 @@ import (
 	config "openreplay/backend/internal/config/imagestorage"
 )
 
-type Task struct {
-	sessionID   uint64 // to generate path
-	images      map[string]*bytes.Buffer
-	isBreakTask bool
+type saveTask struct {
+	sessionID uint64
+	images    map[string]*bytes.Buffer
 }
 
-func NewBreakTask() *Task {
-	return &Task{isBreakTask: true}
-}
-
-type UploadTask struct {
-	sessionID   string
-	path        string
-	name        string
-	isBreakTask bool
-}
-
-func NewBreakUploadTask() *UploadTask {
-	return &UploadTask{isBreakTask: true}
+type uploadTask struct {
+	sessionID string
+	path      string
+	name      string
 }
 
 type ImageStorage struct {
-	cfg                  *config.Config
-	objStorage           objectstorage.ObjectStorage
-	writeToDiskTasks     chan *Task
-	sendToS3Tasks        chan *UploadTask
-	imageWorkerStopped   chan struct{}
-	uploadWorkersStopped chan struct{}
+	cfg          *config.Config
+	objStorage   objectstorage.ObjectStorage
+	saverPool    pool.WorkerPool
+	uploaderPool pool.WorkerPool
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
@@ -51,26 +40,18 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStor
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	}
-	newStorage := &ImageStorage{
-		cfg:                  cfg,
-		objStorage:           objStorage,
-		writeToDiskTasks:     make(chan *Task, 1),
-		sendToS3Tasks:        make(chan *UploadTask, 1),
-		imageWorkerStopped:   make(chan struct{}),
-		uploadWorkersStopped: make(chan struct{}),
+	s := &ImageStorage{
+		cfg:        cfg,
+		objStorage: objStorage,
 	}
-	go newStorage.runWorker()
-	return newStorage, nil
+	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
+	s.uploaderPool = pool.NewPool(4, 4, s.sendToS3)
+	return s, nil
 }
 
 func (v *ImageStorage) Wait() {
-	// send stop signal
-	v.writeToDiskTasks <- NewBreakTask()
-	v.sendToS3Tasks <- NewBreakUploadTask()
-
-	// wait for workers to stop
-	<-v.imageWorkerStopped
-	<-v.uploadWorkersStopped
+	v.saverPool.Pause()
+	v.uploaderPool.Pause()
 }
 
 func (v *ImageStorage) Process(sessID uint64, data []byte) error {
@@ -102,12 +83,13 @@ func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 		}
 	}
 
-	v.writeToDiskTasks <- &Task{sessionID: sessID, images: images}
 	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
+	v.saverPool.Submit(&saveTask{sessionID: sessID, images: images})
 	return nil
 }
 
-func (v *ImageStorage) writeToDisk(task *Task) {
+func (v *ImageStorage) writeToDisk(payload interface{}) {
+	task := payload.(*saveTask)
 	// Build the directory path
 	path := v.cfg.FSDir + "/"
 	if v.cfg.ScreenshotsDir != "" {
@@ -162,11 +144,12 @@ func (v *ImageStorage) PackScreenshots(sessID uint64, filesPath string) error {
 	}
 	log.Printf("packed replay in %v", time.Since(start))
 
-	v.sendToS3Tasks <- &UploadTask{sessionID: sessionID, path: archPath, name: sessionID + "/replay.tar.zst"}
+	v.uploaderPool.Submit(&uploadTask{sessionID: sessionID, path: archPath, name: sessionID + "/replay.tar.zst"})
 	return nil
 }
 
-func (v *ImageStorage) sendToS3(task *UploadTask) {
+func (v *ImageStorage) sendToS3(payload interface{}) {
+	task := payload.(*uploadTask)
 	start := time.Now()
 	video, err := os.ReadFile(task.path)
 	if err != nil {
@@ -177,23 +160,4 @@ func (v *ImageStorage) sendToS3(task *UploadTask) {
 	}
 	log.Printf("Replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
-}
-
-func (v *ImageStorage) runWorker() {
-	for {
-		select {
-		case task := <-v.writeToDiskTasks:
-			if task.isBreakTask {
-				v.imageWorkerStopped <- struct{}{}
-				continue
-			}
-			v.writeToDisk(task)
-		case task := <-v.sendToS3Tasks:
-			if task.isBreakTask {
-				v.uploadWorkersStopped <- struct{}{}
-				continue
-			}
-			v.sendToS3(task)
-		}
-	}
 }

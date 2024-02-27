@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"openreplay/backend/pkg/pool"
 	"os"
 	"sort"
 	"strconv"
@@ -14,22 +15,16 @@ import (
 	config "openreplay/backend/internal/config/imagestorage"
 )
 
-type Task struct {
-	sessionID   uint64 // to generate path
-	name        string
-	image       *bytes.Buffer
-	isBreakTask bool
-}
-
-func NewBreakTask() *Task {
-	return &Task{isBreakTask: true}
+type saveTask struct {
+	sessionID uint64
+	name      string
+	image     *bytes.Buffer
 }
 
 type ImageStorage struct {
-	cfg                *config.Config
-	basePath           string
-	writeToDiskTasks   chan *Task
-	imageWorkerStopped chan struct{}
+	cfg       *config.Config
+	basePath  string
+	saverPool pool.WorkerPool
 }
 
 func New(cfg *config.Config) (*ImageStorage, error) {
@@ -41,22 +36,16 @@ func New(cfg *config.Config) (*ImageStorage, error) {
 	if cfg.CanvasDir != "" {
 		path += cfg.CanvasDir + "/"
 	}
-	newStorage := &ImageStorage{
-		cfg:                cfg,
-		basePath:           path,
-		writeToDiskTasks:   make(chan *Task, 1),
-		imageWorkerStopped: make(chan struct{}),
+	s := &ImageStorage{
+		cfg:      cfg,
+		basePath: path,
 	}
-	go newStorage.runWorker()
-	return newStorage, nil
+	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
+	return s, nil
 }
 
 func (v *ImageStorage) Wait() {
-	// send stop signal
-	v.writeToDiskTasks <- NewBreakTask()
-
-	// wait for workers to stop
-	<-v.imageWorkerStopped
+	v.saverPool.Pause()
 }
 
 func (v *ImageStorage) PrepareCanvasList(sessID uint64) ([]string, error) {
@@ -140,11 +129,12 @@ func (v *ImageStorage) SaveCanvasToDisk(sessID uint64, data []byte) error {
 		log.Printf("can't parse canvas message, err: %s", err)
 	}
 	// Use the same workflow
-	v.writeToDiskTasks <- &Task{sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)}
+	v.saverPool.Submit(&saveTask{sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)})
 	return nil
 }
 
-func (v *ImageStorage) writeToDisk(task *Task) {
+func (v *ImageStorage) writeToDisk(payload interface{}) {
+	task := payload.(*saveTask)
 	path := fmt.Sprintf("%s/%d/", v.basePath, task.sessionID)
 
 	// Ensure the directory exists
@@ -164,17 +154,4 @@ func (v *ImageStorage) writeToDisk(task *Task) {
 
 	log.Printf("new canvas image, sessID: %d, name: %s, size: %3.3f mb", task.sessionID, task.name, float64(task.image.Len())/1024.0/1024.0)
 	return
-}
-
-func (v *ImageStorage) runWorker() {
-	for {
-		select {
-		case task := <-v.writeToDiskTasks:
-			if task.isBreakTask {
-				v.imageWorkerStopped <- struct{}{}
-				continue
-			}
-			v.writeToDisk(task)
-		}
-	}
 }
