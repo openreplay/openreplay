@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/pool"
 	"os"
 	"os/exec"
 	"strconv"
@@ -14,21 +15,15 @@ import (
 	"openreplay/backend/pkg/objectstorage"
 )
 
-type Task struct {
-	path        string
-	name        string
-	isBreakTask bool
-}
-
-func NewBreakTask() *Task {
-	return &Task{isBreakTask: true}
+type uploadTask struct {
+	path string
+	name string
 }
 
 type VideoStorage struct {
-	cfg            *config.Config
-	objStorage     objectstorage.ObjectStorage
-	sendToS3Tasks  chan *Task
-	workersStopped chan struct{}
+	cfg          *config.Config
+	objStorage   objectstorage.ObjectStorage
+	uploaderPool pool.WorkerPool
 }
 
 func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStorage, error) {
@@ -38,14 +33,12 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*VideoStor
 	case objStorage == nil:
 		return nil, fmt.Errorf("object storage is empty")
 	}
-	newStorage := &VideoStorage{
-		cfg:            cfg,
-		objStorage:     objStorage,
-		sendToS3Tasks:  make(chan *Task, 1),
-		workersStopped: make(chan struct{}),
+	s := &VideoStorage{
+		cfg:        cfg,
+		objStorage: objStorage,
 	}
-	go newStorage.runWorker()
-	return newStorage, nil
+	s.uploaderPool = pool.NewPool(4, 4, s.sendToS3)
+	return s, nil
 }
 
 func (v *VideoStorage) Process(sessID uint64, filesPath, canvasMix string) error {
@@ -74,11 +67,12 @@ func (v *VideoStorage) Process(sessID uint64, filesPath, canvasMix string) error
 		return err
 	}
 	log.Printf("made video replay in %v", time.Since(start))
-	v.sendToS3Tasks <- &Task{path: videoPath, name: sessionID + "/" + name + ".mp4"}
+	v.uploaderPool.Submit(&uploadTask{path: videoPath, name: sessionID + "/" + name + ".mp4"})
 	return nil
 }
 
-func (v *VideoStorage) sendToS3(task *Task) {
+func (v *VideoStorage) sendToS3(payload interface{}) {
+	task := payload.(*uploadTask)
 	start := time.Now()
 	video, err := os.ReadFile(task.path)
 	if err != nil {
@@ -89,22 +83,4 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	}
 	log.Printf("Viode file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
-}
-
-func (v *VideoStorage) Wait() {
-	v.sendToS3Tasks <- NewBreakTask()
-	<-v.workersStopped
-}
-
-func (v *VideoStorage) runWorker() {
-	for {
-		select {
-		case task := <-v.sendToS3Tasks:
-			if task.isBreakTask {
-				v.workersStopped <- struct{}{}
-				continue
-			}
-			v.sendToS3(task)
-		}
-	}
 }
