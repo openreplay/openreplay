@@ -1,4 +1,3 @@
-import base64
 import logging
 import re
 from email.header import Header
