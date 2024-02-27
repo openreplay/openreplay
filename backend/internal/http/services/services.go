@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
@@ -40,7 +39,7 @@ func New(cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *red
 	// ObjectStorage client to generate pre-signed upload urls
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
-		log.Fatalf("can't init object storage: %s", err)
+		return nil, err
 	}
 	return &ServicesBuilder{
 		Projects:     projs,

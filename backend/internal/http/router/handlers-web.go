@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -110,14 +111,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -125,37 +126,43 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Parse request body
 	req := &StartSessionRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
+	// Add tracker version to context
+	r = r.WithContext(context.WithValue(r.Context(), "trackerVersion", req.TrackerVersion))
+
 	// Handler's logic
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			ResponseWithError(w, http.StatusNotFound,
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound,
 				errors.New("project doesn't exist or capture limit has been reached"), startTime, r.URL.Path, bodySize)
 		} else {
 			log.Printf("can't get project by key: %s", err)
-			ResponseWithError(w, http.StatusInternalServerError, errors.New("can't get project by key"), startTime, r.URL.Path, bodySize)
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't get project by key"), startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
 
+	// Add projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", p.ProjectID)))
+
 	// Check if the project supports mobile sessions
 	if !p.IsWeb() {
-		ResponseWithError(w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	ua := e.services.UaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -177,14 +184,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			log.Printf("project sample rate: %d", p.SampleRate)
 		}
 		if dice >= p.SampleRate {
-			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, bodySize)
+			e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("capture rate miss"), startTime, r.URL.Path, bodySize)
 			return
 		}
 
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
 		if err != nil {
-			ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
@@ -194,6 +201,9 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			Delay:   startTimeMili - req.Timestamp,
 			ExpTime: expTime.UnixMilli(),
 		}
+
+		// Add sessionID to context
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
 		if !req.DoNotRecord {
 			sessionStart := &SessionStart{
@@ -252,7 +262,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Save information about session beacon size
 	e.addBeaconSize(tokenData.ID, p.BeaconSize)
 
-	ResponseWithJSON(w, &StartSessionResponse{
+	e.ResponseWithJSON(r.Context(), w, &StartSessionResponse{
 		Token:                e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:             userUUID,
 		UserOS:               ua.OS,
@@ -280,20 +290,20 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.getBeaconSize(sessionData.ID))
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -305,7 +315,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		log.Printf("can't send processed messages to queue: %s", err)
 	}
 
-	ResponseOK(w, startTime, r.URL.Path, bodySize)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -314,14 +324,14 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -330,18 +340,18 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	req := &NotStartedRequest{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	ua := e.services.UaParser.ParseFromHTTPRequest(r) // TODO?: insert anyway
 	if ua == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	geoInfo := e.ExtractGeoData(r)
@@ -365,7 +375,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Unable to insert Unstarted Session: %v\n", err)
 	}
 
-	ResponseOK(w, startTime, r.URL.Path, bodySize)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -375,20 +385,20 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Check authorization
 	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -397,20 +407,20 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	req := &featureflags.FeatureFlagsRequest{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	computedFlags, err := e.services.FeatureFlags.ComputeFlagsForSession(req)
 	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	resp := &featureflags.FeatureFlagsResponse{
 		Flags: computedFlags,
 	}
-	ResponseWithJSON(w, resp, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +430,7 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	sessInfo, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -431,22 +441,22 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	// Get task info
 	info, err := e.services.UXTesting.GetInfo(id)
 	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	sess, err := e.services.Sessions.Get(sessInfo.ID)
 	if err != nil {
-		ResponseWithError(w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	if sess.ProjectID != info.ProjectID {
-		ResponseWithError(w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	type TaskInfoResponse struct {
 		Task *uxtesting.UXTestInfo `json:"test"`
 	}
-	ResponseWithJSON(w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
@@ -456,14 +466,14 @@ func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -472,17 +482,17 @@ func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
 	req := &uxtesting.TestSignal{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	req.SessionID = sessionData.ID
 
 	// Save test signal
 	if err := e.services.UXTesting.SetTestSignal(req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	ResponseOK(w, startTime, r.URL.Path, bodySize)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
@@ -492,14 +502,14 @@ func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -508,17 +518,17 @@ func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
 	req := &uxtesting.TaskSignal{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	req.SessionID = sessionData.ID
 
 	// Save test signal
 	if err := e.services.UXTesting.SetTaskSignal(req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	ResponseOK(w, startTime, r.URL.Path, bodySize)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
@@ -528,20 +538,20 @@ func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
 	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
 	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	type UrlResponse struct {
 		URL string `json:"url"`
 	}
-	ResponseWithJSON(w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
 }
 
 type ScreenshotMessage struct {
@@ -554,12 +564,12 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
@@ -568,10 +578,10 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 	// Parse the multipart form
 	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
-		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		e.ResponseWithError(r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 
@@ -613,7 +623,7 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 			}
 		}
 	}
-	ResponseOK(w, startTime, r.URL.Path, 0)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, 0)
 }
 
 func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
@@ -623,23 +633,23 @@ func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	sessInfo, err := e.services.Sessions.Get(sessionData.ID)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Get tags
 	tags, err := e.services.Tags.Get(sessInfo.ProjectID)
 	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	type UrlResponse struct {
 		Tags interface{} `json:"tags"`
 	}
-	ResponseWithJSON(w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
 }

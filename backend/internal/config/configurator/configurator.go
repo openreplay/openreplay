@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"log"
 	"os"
@@ -112,7 +113,7 @@ func parseFile(a interface{}, path string) {
 
 func Process(cfg common.Configer) {
 	if err := envconfig.Process(context.Background(), cfg); err != nil {
-		log.Fatalf("error while processing env vars: %s", err)
+		zap.L().Fatal("error while processing env vars", zap.Error(err))
 	}
 	parseFile(cfg, cfg.GetConfigPath())
 }

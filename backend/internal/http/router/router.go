@@ -2,11 +2,12 @@ package router
 
 import (
 	"fmt"
+	"github.com/docker/distribution/context"
 	"github.com/tomasen/realip"
-	"log"
 	"net"
 	"net/http"
 	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/logger"
 	"sync"
 	"time"
 
@@ -22,25 +23,29 @@ type BeaconSize struct {
 }
 
 type Router struct {
-	router               *mux.Router
+	log                  logger.Logger
 	cfg                  *http3.Config
-	services             *http2.ServicesBuilder
+	router               *mux.Router
 	mutex                *sync.RWMutex
+	services             *http2.ServicesBuilder
 	beaconSizeCache      map[uint64]*BeaconSize // Cache for session's beaconSize
 	compressionThreshold int64
 }
 
-func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case services == nil:
 		return nil, fmt.Errorf("services is empty")
+	case log == nil:
+		return nil, fmt.Errorf("logger is empty")
 	}
 	e := &Router{
+		log:                  log,
 		cfg:                  cfg,
-		services:             services,
 		mutex:                &sync.RWMutex{},
+		services:             services,
 		beaconSizeCache:      make(map[uint64]*BeaconSize),
 		compressionThreshold: cfg.CompressionThreshold,
 	}
@@ -152,8 +157,7 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-
-		log.Printf("Request: %v  -  %v  ", r.Method, util.SafeString(r.URL.Path))
+		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "urlPath": util.SafeString(r.URL.Path)}))
 
 		// Serve request
 		next.ServeHTTP(w, r)
