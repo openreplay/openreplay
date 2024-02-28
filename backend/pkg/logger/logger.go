@@ -19,11 +19,12 @@ type loggerImpl struct {
 }
 
 func New() Logger {
-	l, err := zap.NewProduction()
+	baseLogger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("can't init zap logger: %s", err)
 	}
-	return &loggerImpl{l: l}
+	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
+	return &loggerImpl{l: logger}
 }
 
 func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logger {
