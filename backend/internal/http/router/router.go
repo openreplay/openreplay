@@ -157,7 +157,7 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "urlPath": util.SafeString(r.URL.Path)}))
+		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "url": util.SafeString(r.URL.Path)}))
 
 		// Serve request
 		next.ServeHTTP(w, r)

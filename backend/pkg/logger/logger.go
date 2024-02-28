@@ -34,14 +34,17 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 	if pID, ok := ctx.Value("projectID").(string); ok {
 		logger = logger.With(zap.String("projectID", pID))
 	}
-	if tVer, ok := ctx.Value("trackerVersion").(string); ok {
-		logger = logger.With(zap.String("trackerVersion", tVer))
+	if tVer, ok := ctx.Value("tracker").(string); ok {
+		logger = logger.With(zap.String("tracker", tVer))
 	}
 	if httpMethod, ok := ctx.Value("httpMethod").(string); ok {
 		logger = logger.With(zap.String("httpMethod", httpMethod))
 	}
-	if urlPath, ok := ctx.Value("urlPath").(string); ok {
-		logger = logger.With(zap.String("urlPath", urlPath))
+	if urlPath, ok := ctx.Value("url").(string); ok {
+		logger = logger.With(zap.String("url", urlPath))
+	}
+	if batch, ok := ctx.Value("batch").(string); ok {
+		logger = logger.With(zap.String("batch", batch))
 	}
 	return logger
 }

@@ -117,7 +117,6 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -131,7 +130,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Add tracker version to context
-	r = r.WithContext(context.WithValue(r.Context(), "trackerVersion", req.TrackerVersion))
+	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
 
 	// Handler's logic
 	if req.ProjectKey == nil {
@@ -142,11 +141,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound,
-				errors.New("project doesn't exist or capture limit has been reached"), startTime, r.URL.Path, bodySize)
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist"), startTime, r.URL.Path, bodySize)
 		} else {
-			log.Printf("can't get project by key: %s", err)
-			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't get project by key"), startTime, r.URL.Path, bodySize)
+			e.log.Error(r.Context(), "can't find a project: %s", err)
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
@@ -171,17 +169,15 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.services.Tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
-		dice := byte(rand.Intn(100)) // [0, 100)
+		dice := byte(rand.Intn(100))
 		// Use condition rate if it's set
 		if req.Condition != "" {
 			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
 			if err != nil {
-				log.Printf("can't get condition rate: %s", err)
+				e.log.Warn(r.Context(), "can't get condition rate, condition: %s, err: %s", req.Condition, err)
 			} else {
 				p.SampleRate = byte(rate)
 			}
-		} else {
-			log.Printf("project sample rate: %d", p.SampleRate)
 		}
 		if dice >= p.SampleRate {
 			e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("capture rate miss"), startTime, r.URL.Path, bodySize)
@@ -194,7 +190,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 			return
 		}
-		// TODO: if EXPIRED => send message for two sessions association
+
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{
 			ID:      sessionID,
@@ -249,12 +245,12 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 				UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
 				UserID:               &sessionStart.UserID,
 			}); err != nil {
-				log.Printf("can't insert session start: %s", err)
+				e.log.Warn(r.Context(), "can't insert sessionStart to db: %s", err)
 			}
 
 			// Send sessionStart message to kafka
 			if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
-				log.Printf("can't send session start: %s", err)
+				e.log.Error(r.Context(), "can't send sessionStart to queue: %s", err)
 			}
 		}
 	}
@@ -294,11 +290,9 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Add sessionID to context
+	// Add sessionID and projectID to context
 	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
-	info, err := e.services.Sessions.Get(sessionData.ID)
-	if err != nil {
-		// Add projectID to context
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -310,17 +304,17 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	bodyBytes, err := e.readBody(w, r, e.getBeaconSize(sessionData.ID))
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	// Send processed messages to queue as array of bytes
-	// TODO: check bytes for nonsense crap
 	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
 	if err != nil {
-		log.Printf("can't send processed messages to queue: %s", err)
+		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
+		return
 	}
 
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
@@ -330,34 +324,46 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	// Check request body
 	if r.Body == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
-
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
-	// Parse request body
 	req := &NotStartedRequest{}
-
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+
+	// Add tracker version to context
+	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
 
 	// Handler's logic
 	if req.ProjectKey == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	ua := e.services.UaParser.ParseFromHTTPRequest(r) // TODO?: insert anyway
+	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
+	if err != nil {
+		if postgres.IsNoRowsErr(err) {
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist"), startTime, r.URL.Path, bodySize)
+		} else {
+			e.log.Error(r.Context(), "can't find a project: %s", err)
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
+		}
+		return
+	}
+
+	// Add projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", p.ProjectID)))
+
+	ua := e.services.UaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 		return
@@ -380,9 +386,9 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		UserCity:           geoInfo.City,
 	})
 	if err != nil {
-		log.Printf("Unable to insert Unstarted Session: %v\n", err)
+		e.log.Warn(r.Context(), "can't insert un-started session: %s", err)
 	}
-
+	// response ok anyway
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
@@ -391,21 +397,24 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Check authorization
-	_, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	info, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	// Check request body
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", info.ID)))
+	if info, err := e.services.Sessions.Get(info.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	if r.Body == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
-
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -413,7 +422,6 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Parse request body
 	req := &featureflags.FeatureFlagsRequest{}
-
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -442,6 +450,18 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessInfo.ID)))
+
+	sess, err := e.services.Sessions.Get(sessInfo.ID)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Add projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", sess.ProjectID)))
+
 	// Get taskID
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -450,11 +470,6 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := e.services.UXTesting.GetInfo(id)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	sess, err := e.services.Sessions.Get(sessInfo.ID)
-	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	if sess.ProjectID != info.ProjectID {
@@ -478,9 +493,14 @@ func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -514,9 +534,14 @@ func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		log.Printf("error while reading request body: %s", err)
 		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -550,6 +575,12 @@ func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
 	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
 	if err != nil {
@@ -576,6 +607,12 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
+	}
+
 	if r.Body == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
@@ -589,7 +626,7 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 		e.ResponseWithError(r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -598,7 +635,7 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 		for _, fileHeader := range fileHeaderList {
 			file, err := fileHeader.Open()
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 				return
 			}
 
@@ -606,13 +643,12 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 			fileBytes, err := io.ReadAll(file)
 			if err != nil {
 				file.Close()
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 				return
 			}
 			file.Close()
 
 			fileName := util.SafeString(fileHeader.Filename)
-			log.Printf("fileName: %s, fileSize: %d", fileName, len(fileBytes))
 
 			// Create a message to send to Kafka
 			msg := ScreenshotMessage{
@@ -621,13 +657,13 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 			}
 			data, err := json.Marshal(&msg)
 			if err != nil {
-				log.Printf("can't marshal screenshot message, err: %s", err)
+				e.log.Warn(r.Context(), "can't marshal screenshot message, err: %s", err)
 				continue
 			}
 
 			// Send the message to queue
 			if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
-				log.Printf("failed to produce canvas image message: %v", err)
+				e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
 			}
 		}
 	}
@@ -649,6 +685,10 @@ func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+
+	// Add sessionID and projectID to context
+	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", sessInfo.ProjectID)))
 
 	// Get tags
 	tags, err := e.services.Tags.Get(sessInfo.ProjectID)
