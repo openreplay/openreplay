@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"openreplay/backend/internal/canvas-handler"
-	config "openreplay/backend/internal/config/imagestorage"
+	config "openreplay/backend/internal/config/canvas-handler"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"

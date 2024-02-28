@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	config "openreplay/backend/internal/config/imagestorage"
+	config "openreplay/backend/internal/config/canvas-handler"
 )
 
 type saveTask struct {
