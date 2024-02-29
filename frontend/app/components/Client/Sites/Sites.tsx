@@ -173,6 +173,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
         setShowCaptureRate={setShowCaptureRate}
         showCaptureRate={showCaptureRate}
         projectId={activeProject?.id}
+        isMobile={activeProject?.platform !== 'web'}
         open={showCaptureRate && !!activeProject}
       />
     </Loader>
