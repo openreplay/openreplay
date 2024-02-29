@@ -652,7 +652,7 @@ export const mobileConditionalFilters = [
   {
     key: FilterKey.FETCH,
     type: FilterType.SUB_FILTERS,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
     operator: 'is',
     label: 'Network Request',
     filters: [
@@ -704,7 +704,7 @@ export const mobileConditionalFilters = [
   {
     key: FilterKey.CUSTOM,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
@@ -712,7 +712,86 @@ export const mobileConditionalFilters = [
     icon: 'filters/custom',
     isEvent: true
   },
+  {
+    key: 'thermalState',
+    type: FilterType.MULTIPLE_DROPDOWN,
+    category: FilterCategory.PERFORMANCE,
+    label: 'Device Thermal State',
+    placeholder: 'Pick an option',
+    operator: 'is',
+    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    icon: 'filters/cpu-load',
+    isEvent: true,
+    options: [
+      { label: 'nominal', value: 0 },
+      { label: 'warm', value: 1 },
+      { label: 'hot', value: 2 },
+      { label: 'critical', value: 3 }
+    ],
+  },
+  {
+    key: 'mainThreadCPU',
+    type: FilterType.STRING,
+    category: FilterCategory.PERFORMANCE,
+    label: 'Main CPU Load %',
+    placeholder: '0 .. 100',
+    operator: '=',
+    operatorOptions: filterOptions.customOperators,
+    icon: 'filters/cpu-load',
+  },
+  {
+    key: 'viewComponent',
+    type: FilterType.STRING,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
+    label: 'View on screen',
+    placeholder: 'View Name',
+    operator: 'is',
+    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    icon: 'filters/view',
+  },
+  {
+    key: FilterKey.USERID,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.USER,
+    label: 'User Id',
+    operator: 'isUndefined',
+    operatorOptions: [
+      {
+        key: 'isUndefined',
+        label: 'is undefined',
+        value: 'isUndefined'
+      },
+      {
+        key: 'isAny',
+        label: 'is any',
+        value: 'isAny'
+      }
+    ],
+    icon: 'filters/userid'
+  },
+  {
+    key: 'logEvent',
+    type: FilterType.STRING,
+    category: FilterCategory.RECORDING_ATTRIBUTES,
+    label: 'Log in console',
+    placeholder: 'logged value',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/console',
+  },
+  {
+    key: 'clickEvent',
+    type: FilterType.STRING,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Tap on view',
+    placeholder: 'View Name',
+    operator: 'is',
+    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    icon: 'filters/click'
+  }
 ]
+
+// "memoryUsage": Used memory in bytes
 
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {
@@ -765,7 +844,7 @@ const mapLiveFilters = (list) => {
   return obj;
 };
 
-export const filterLabelMap = filters.reduce((acc, filter) => {ј
+export const filterLabelMap = filters.reduce((acc, filter) => {
   acc[filter.key] = filter.label;
   return acc;
 }, {});
