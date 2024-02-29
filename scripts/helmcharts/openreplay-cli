@@ -474,14 +474,14 @@ while :; do
               Or ${BWHITE}helm upgrade openreplay -n app openreplay/scripts/helmcharts/openreplay -f openreplay/scripts/helmcharts/vars.yaml --debug --atomic"
             exit 100
         }
-        /var/lib/openreplay/busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
+        busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
         sudo vim -n ${OR_DIR}/vars.yaml
         /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml &>/dev/null || {
             log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue in config file."
             clean_tmp_dir
             exit 100
         }
-        if /var/lib/openreplay/busybox md5sum -c "${tmp_dir}/var.yaml.md5" &>/dev/null; then
+        if busybox md5sum -c "${tmp_dir}/var.yaml.md5" &>/dev/null; then
             log info "No change detected in ${BWHITE}${OR_DIR}/vars.yaml${GREEN}. Not reloading"
         else
             reload
