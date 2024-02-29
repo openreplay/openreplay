@@ -58,6 +58,7 @@ interface Options {
   performances?: boolean;
   logs?: boolean;
   screen?: boolean;
+  debugLogs?: boolean;
 }
 
 interface IORTrackerConnector {
