@@ -143,7 +143,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		if postgres.IsNoRowsErr(err) {
 			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist"), startTime, r.URL.Path, bodySize)
 		} else {
-			e.log.Error(r.Context(), "can't find a project: %s", err)
+			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
 		}
 		return
@@ -245,7 +245,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 				UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
 				UserID:               &sessionStart.UserID,
 			}); err != nil {
-				e.log.Warn(r.Context(), "can't insert sessionStart to db: %s", err)
+				e.log.Warn(r.Context(), "can't insert sessionStart to DB: %s", err)
 			}
 
 			// Send sessionStart message to kafka
