@@ -111,6 +111,8 @@ RUN if [ "$SERVICE_NAME" = "http" ]; then \
       wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
     elif [ "$SERVICE_NAME" = "imagestorage" ]; then \
       apk add --no-cache zstd; \
+    elif [ "$SERVICE_NAME" = "canvas-handler" ]; then \
+          apk add --no-cache zstd; \
     elif [ "$SERVICE_NAME" = "canvas-maker" ]; then \
           apk add --no-cache ffmpeg; \
     fi
