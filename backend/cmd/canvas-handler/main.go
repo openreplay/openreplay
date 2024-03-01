@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/objectstorage/store"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,13 +25,18 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := canvas_handler.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
+
+	srv, err := canvas_handler.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
 	}
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	//producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupCanvasImage,
@@ -54,19 +60,20 @@ func main() {
 				return msg, nil
 			}
 
-			if msg, err := checkSessionEnd(data); err == nil {
-				sessEnd := msg.(*messages.SessionEnd)
+			if _, err := checkSessionEnd(data); err == nil {
+				//sessEnd := msg.(*messages.SessionEnd)
 				// Received session end
-				if list, err := srv.PrepareCanvasList(sessID); err != nil {
+				if _, err := srv.PrepareCanvasList(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
-				} else {
-					for _, name := range list {
-						sessEnd.EncryptionKey = name
-						if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
-							log.Printf("can't send session end signal to video service: %s", err)
-						}
-					}
 				}
+				//} else {
+				//	for _, name := range list {
+				//		sessEnd.EncryptionKey = name
+				//		if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
+				//			log.Printf("can't send session end signal to video service: %s", err)
+				//		}
+				//	}
+				//}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {
 					log.Printf("can't process canvas image: %s", err)

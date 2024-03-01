@@ -3,10 +3,12 @@ package canvas_handler
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/internal/config/objectstorage"
 )
 
 type Config struct {
 	common.Config
+	objectstorage.ObjectsConfig
 	FSDir              string `env:"FS_DIR,required"`
 	CanvasDir          string `env:"CANVAS_DIR,default=canvas"`
 	TopicCanvasImages  string `env:"TOPIC_CANVAS_IMAGES,required"`
