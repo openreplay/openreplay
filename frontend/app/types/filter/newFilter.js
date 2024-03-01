@@ -763,7 +763,7 @@ export const mobileConditionalFilters = [
       },
       {
         key: 'isAny',
-        label: 'is any',
+        label: 'is present',
         value: 'isAny'
       }
     ],
