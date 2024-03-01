@@ -83,7 +83,7 @@ func (v *ImageStorage) saveToArchivesAndUploadToS3(sessID uint64) error {
 	for name := range names {
 		// Save to archives
 		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
-		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' -print0 | tar --null -cvf - --files-from=- | zstd -o %s",
+		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' | tar -cf - --files-from=- | zstd -o %s",
 			path, name, archPath)
 		log.Printf("Executing command: %s", fullCmd)
 		cmd := exec.Command("sh", "-c", fullCmd)
