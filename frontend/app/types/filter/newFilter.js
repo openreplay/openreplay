@@ -788,10 +788,17 @@ export const mobileConditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/click'
+  },
+  {
+    key: 'memoryUsage',
+    type: FilterType.STRING,
+    category: FilterCategory.PERFORMANCE,
+    label: 'Memory usage %',
+    placeholder: '0 .. 100',
+    operatorOptions: filterOptions.customOperators,
+    icon: 'filters/memory-load'
   }
 ]
-
-// "memoryUsage": Used memory in bytes
 
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {
