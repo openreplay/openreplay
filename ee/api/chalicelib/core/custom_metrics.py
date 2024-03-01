@@ -277,11 +277,11 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
 
 def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
     if len(data.series) == 0:
-        return {"data": []}
+        return []
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
     data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    return {"data": data}
+    return data
 
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
