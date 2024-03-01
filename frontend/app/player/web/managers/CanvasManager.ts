@@ -1,5 +1,5 @@
 import { TarFile } from 'js-untar';
-import ListWalker  from "Player/common/ListWalker";
+import ListWalker from 'Player/common/ListWalker';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import unpack from 'Player/common/unpack';
 import unpackTar from 'Player/common/tarball';
@@ -12,7 +12,7 @@ const playMode = {
 const TAR_MISSING = 'TAR_404';
 const MP4_MISSING = 'MP4_404';
 
-type Timestamp = { time: number }
+type Timestamp = { time: number };
 
 export default class CanvasManager extends ListWalker<Timestamp> {
   private fileData: string | undefined;
@@ -20,7 +20,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   private snapImage = document.createElement('img');
   private lastTs = 0;
   private playMode: string = playMode.snaps;
-  private snapshots: Record<number, TarFile> = {}
+  private snapshots: Record<number, TarFile> = {};
 
   constructor(
     /**
@@ -38,7 +38,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     // first we try to grab tar, then fallback to mp4
     this.loadTar()
       .then((fileArr) => {
-        this.mapToSnapshots(fileArr)
+        this.mapToSnapshots(fileArr);
       })
       .catch((e) => {
         if (e === TAR_MISSING && this.links[1]) {
@@ -58,17 +58,23 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   }
 
   public mapToSnapshots(files: TarFile[]) {
-    const filenameRegexp = /(\d+)_1_(\d+)\.jpeg$/;
+    const tempArr: Timestamp[] = []
+    const filenameRegexp = /(\d+)_(\d+)_(\d+)\.jpeg$/;
     const firstPair = files[0].name.match(filenameRegexp);
     const sessionStart = firstPair ? parseInt(firstPair[1], 10) : 0;
     files.forEach((file) => {
-      const [_, _2, imageTimestamp] = file.name
-                                        .match(filenameRegexp)
-                                        ?.map((n) => parseInt(n, 10)) ?? [0, 0, 0];
+      const [_, _1, _2, imageTimestampStr] = file.name.match(filenameRegexp) ?? [0,0,0,'0']
+
+      const imageTimestamp = parseInt(imageTimestampStr, 10)
+
       const messageTime = imageTimestamp - sessionStart;
       this.snapshots[messageTime] = file;
-      this.append({ time: messageTime });
-    });
+      tempArr.push({ time: messageTime });
+    })
+
+    tempArr.sort((a, b) => a.time - b.time).forEach(msg => {
+      this.append(msg);
+    })
   }
 
   loadTar = async () => {
@@ -103,7 +109,19 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   };
 
   startVideo = () => {
-    if (!this.fileData || this.playMode !== playMode.video) return;
+    if (this.playMode === playMode.snaps) {
+      this.snapImage.onload = () => {
+        const node = this.getNode(parseInt(this.nodeId, 10));
+        if (node && node.node) {
+          const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
+          const canvasEl = node.node as HTMLVideoElement;
+          canvasCtx?.drawImage(this.snapImage, 0, 0, canvasEl.width, canvasEl.height);
+        } else {
+          console.error(`CanvasManager: Node ${this.nodeId} not found`);
+        }
+      }
+    }
+    if (!this.fileData) return;
     this.videoTag.setAttribute('autoplay', 'true');
     this.videoTag.setAttribute('muted', 'true');
     this.videoTag.setAttribute('playsinline', 'true');
@@ -138,24 +156,15 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         console.error(`CanvasManager: Node ${this.nodeId} not found`);
       }
     }
-  }
+  };
 
   moveReadySnap = (t: number) => {
-    const msg = this.moveGetLast(t)
+    const msg = this.moveGetLast(t);
     if (msg) {
-      const file = this.snapshots[msg.time]
+      const file = this.snapshots[msg.time];
       if (file) {
         this.snapImage.src = file.getBlobUrl();
-
-        const node = this.getNode(parseInt(this.nodeId, 10));
-        if (node && node.node) {
-          const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
-          const canvasEl = node.node as HTMLVideoElement;
-          canvasCtx?.drawImage(this.snapImage, 0, 0, canvasEl.width, canvasEl.height);
-        } else {
-          console.error(`CanvasManager: Node ${this.nodeId} not found`);
-        }
       }
     }
-  }
+  };
 }
