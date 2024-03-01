@@ -147,6 +147,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
 		ImageQuality:    e.cfg.MobileQuality,
 		FrameRate:       e.cfg.MobileFps,
+		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
 	}, startTime, r.URL.Path, 0)
 }
 

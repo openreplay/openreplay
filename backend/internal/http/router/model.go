@@ -69,4 +69,5 @@ type StartIOSSessionResponse struct {
 	SessionID       string   `json:"sessionID"`
 	ImageQuality    string   `json:"quality"`
 	FrameRate       int      `json:"fps"`
+	ProjectID       string   `json:"projectID"`
 }
