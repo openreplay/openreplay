@@ -85,6 +85,7 @@ func (v *ImageStorage) saveToArchivesAndUploadToS3(sessID uint64) error {
 		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
 		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' -print0 | tar --null -cvf - --files-from=- | zstd -o %s",
 			path, name, archPath)
+		log.Printf("Executing command: %s", fullCmd)
 		cmd := exec.Command("sh", "-c", fullCmd)
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -95,7 +96,7 @@ func (v *ImageStorage) saveToArchivesAndUploadToS3(sessID uint64) error {
 			log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
 			return err
 		}
-		
+
 		// Deploy to S3
 		video, err := os.ReadFile(archPath)
 		if err != nil {
