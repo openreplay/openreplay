@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"context"
+	"openreplay/backend/pkg/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,20 +19,20 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New()
+
 	m := metrics.New()
 	m.Register(assetsMetrics.List())
 
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := config.New()
-
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
-		log.Fatalf("Error on object storage creation: %v", err)
+		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 	cacher, err := cacher.NewCacher(cfg, objStore)
 	if err != nil {
-		log.Fatalf("Error on cacher creation: %v", err)
+		log.Fatal(ctx, "can't init cacher: %s", err)
 	}
 
 	msgHandler := func(msg messages.Message) {
@@ -39,11 +40,10 @@ func main() {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
 			assetsMetrics.IncreaseProcessesSessions()
-		// TODO: connect to "raw" topic in order to listen for JSException
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)
 			if err != nil {
-				log.Printf("Error on source extraction: %v", err)
+				log.Error(ctx, "Error on source extraction: %s", err)
 				return
 			}
 			for _, source := range sourceList {
@@ -60,7 +60,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Cacher service started\n")
+	log.Info(ctx, "Cacher service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -69,22 +69,22 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Error(ctx, "Caught signal %v: terminating", sig)
 			cacher.Stop()
 			msgConsumer.Close()
 			os.Exit(0)
 		case err := <-cacher.Errors:
-			log.Printf("Error while caching: %v", err)
+			log.Error(ctx, "Error while caching: %s", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
 		case msg := <-msgConsumer.Rebalanced():
-			log.Println(msg)
+			log.Info(ctx, "Rebalanced: %v", msg)
 		default:
 			if !cacher.CanCache() {
 				continue
 			}
 			if err := msgConsumer.ConsumeNext(); err != nil {
-				log.Fatalf("Error on consumption: %v", err)
+				log.Fatal(ctx, "Error on consumption: %v", err)
 			}
 		}
 	}
