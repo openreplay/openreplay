@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"openreplay/backend/pkg/objectstorage/store"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +12,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -36,44 +35,32 @@ func main() {
 		return
 	}
 
-	//producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupCanvasImage,
 		[]string{
 			cfg.TopicCanvasImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			checkSessionEnd := func(data []byte) (messages.Message, error) {
+			isSessionEnd := func(data []byte) bool {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
 				if err != nil {
-					return nil, err
+					return false
 				}
 				if msgType != messages.MsgSessionEnd {
-					return nil, fmt.Errorf("not a session end message")
+					return false
 				}
-				msg, err := messages.ReadMessage(msgType, reader)
+				_, err = messages.ReadMessage(msgType, reader)
 				if err != nil {
-					return nil, fmt.Errorf("read message err: %s", err)
+					return false
 				}
-				return msg, nil
+				return true
 			}
 
-			if _, err := checkSessionEnd(data); err == nil {
-				//sessEnd := msg.(*messages.SessionEnd)
-				// Received session end
-				if _, err := srv.PrepareCanvasList(sessID); err != nil {
+			if isSessionEnd(data) {
+				if err := srv.PackSessionCanvases(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
 				}
-				//} else {
-				//	for _, name := range list {
-				//		sessEnd.EncryptionKey = name
-				//		if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
-				//			log.Printf("can't send session end signal to video service: %s", err)
-				//		}
-				//	}
-				//}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {
 					log.Printf("can't process canvas image: %s", err)
