@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"go.uber.org/zap"
-	"log"
+	"go.uber.org/zap/zapcore"
+	"os"
 )
 
 type Logger interface {
@@ -19,10 +20,11 @@ type loggerImpl struct {
 }
 
 func New() Logger {
-	baseLogger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("can't init zap logger: %s", err)
-	}
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
+	jsonEncoder := zapcore.NewJSONEncoder(encoderConfig)
+	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel)
+	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
 	return &loggerImpl{l: logger}
 }

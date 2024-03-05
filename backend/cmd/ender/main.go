@@ -1,9 +1,11 @@
 package main
 
 import (
-	"log"
+	"context"
+	"fmt"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
@@ -26,26 +28,23 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+	log := logger.New()
+	cfg := ender.New()
+
 	m := metrics.New()
 	m.Register(enderMetrics.List())
 	m.Register(databaseMetrics.List())
 
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := ender.New()
-
-	// Init postgres connection
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
-		log.Printf("can't init postgres connection: %s", err)
-		return
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
-	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
-		log.Printf("can't init redis connection: %s", err)
+		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisClient.Close()
 
@@ -54,8 +53,7 @@ func main() {
 
 	sessionEndGenerator, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
-		log.Printf("can't init ender service: %s", err)
-		return
+		log.Fatal(ctx, "can't init ender service: %s", err)
 	}
 
 	mobileMessages := []int{90, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 110, 111}
@@ -77,11 +75,10 @@ func main() {
 
 	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
-		log.Printf("can't init memory manager: %s", err)
-		return
+		log.Fatal(ctx, "can't init memory manager: %s", err)
 	}
 
-	log.Printf("Ender service started\n")
+	log.Info(ctx, "Ender service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -90,10 +87,10 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Info(ctx, "Caught signal %v: terminating", sig)
 			producer.Close(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
-				log.Printf("can't commit messages with offset: %s", err)
+				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 			consumer.Close()
 			os.Exit(0)
@@ -120,14 +117,15 @@ func main() {
 
 			// Find ended sessions and send notification to other services
 			sessionEndGenerator.HandleEndedSessions(func(sessionID uint64, timestamp uint64) (bool, int) {
+				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
 				msg := &messages.SessionEnd{Timestamp: timestamp}
 				currDuration, err := sessManager.GetDuration(sessionID)
 				if err != nil {
-					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
+					log.Error(sessCtx, "getSessionDuration failed, err: %s", err)
 				}
 				sess, err := sessManager.Get(sessionID)
 				if err != nil {
-					log.Printf("can't get session from database to compare durations, sessID: %d, err: %s", sessionID, err)
+					log.Error(sessCtx, "can't get session from database to compare durations, err: %s", err)
 				} else {
 					newDur := timestamp - sess.Timestamp
 					// Skip if session was ended before with same duration
@@ -156,7 +154,7 @@ func main() {
 						noSessionInDB[sessionID] = timestamp
 						return true, int(NoSessionInDB)
 					}
-					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
+					log.Error(sessCtx, "can't update session duration, err: %s", err)
 					return false, 0
 				}
 				// Check one more time just in case
@@ -167,7 +165,7 @@ func main() {
 				if cfg.UseEncryption {
 					if key := storage.GenerateEncryptionKey(); key != nil {
 						if err := sessManager.UpdateEncryptionKey(sessionID, key); err != nil {
-							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
+							log.Warn(sessCtx, "can't save session encryption key: %s, session will not be encrypted", err)
 						} else {
 							msg.EncryptionKey = string(key)
 						}
@@ -176,21 +174,21 @@ func main() {
 				if sess != nil && sess.Platform == "ios" {
 					msg := &messages.IOSSessionEnd{Timestamp: timestamp}
 					if err := producer.Produce(cfg.TopicRawIOS, sessionID, msg.Encode()); err != nil {
-						log.Printf("can't send iOSSessionEnd to topic: %s; sessID: %d", err, sessionID)
+						log.Error(sessCtx, "can't send iOSSessionEnd to mobile topic: %s", err)
 						return false, 0
 					}
 					// Inform canvas service about session end
 					if err := producer.Produce(cfg.TopicRawImages, sessionID, msg.Encode()); err != nil {
-						log.Printf("can't send sessionEnd signal to mobile images topic: %s; sessID: %d", err, sessionID)
+						log.Error(sessCtx, "can't send iOSSessionEnd signal to canvas topic: %s", err)
 					}
 				} else {
 					if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
-						log.Printf("can't send sessionEnd to raw topic: %s; sessID: %d", err, sessionID)
+						log.Error(sessCtx, "can't send sessionEnd to raw topic: %s", err)
 						return false, 0
 					}
 					// Inform canvas service about session end
 					if err := producer.Produce(cfg.TopicCanvasImages, sessionID, msg.Encode()); err != nil {
-						log.Printf("can't send sessionEnd signal to canvas topic: %s; sessID: %d", err, sessionID)
+						log.Error(sessCtx, "can't send sessionEnd signal to canvas topic: %s", err)
 					}
 				}
 
@@ -203,23 +201,22 @@ func main() {
 				return true, int(NewSessionEnd)
 			})
 			if n := len(failedSessionEnds); n > 0 {
-				log.Println("sessions with wrong duration:", n, failedSessionEnds)
+				log.Info(ctx, "sessions with wrong duration: %d, %v", n, failedSessionEnds)
 			}
 			if n := len(negativeDuration); n > 0 {
-				log.Println("sessions with negative duration:", n, negativeDuration)
+				log.Info(ctx, "sessions with negative duration: %d, %v", n, negativeDuration)
 			}
 			if n := len(noSessionInDB); n > 0 {
-				log.Printf("sessions without info in DB: %d, %v", n, noSessionInDB)
+				log.Info(ctx, "sessions without info in DB: %d, %v", n, noSessionInDB)
 			}
-			log.Printf("[INFO] failed: %d, negative: %d, shorter: %d, same: %d, updated: %d, new: %d, not found: %d",
+			log.Info(ctx, "failed: %d, negative: %d, shorter: %d, same: %d, updated: %d, new: %d, not found: %d",
 				len(failedSessionEnds), len(negativeDuration), len(shorterDuration), len(duplicatedSessionEnds),
 				updatedDurations, newSessionEnds, len(noSessionInDB))
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
-				log.Printf("can't commit messages with offset: %s", err)
+				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 		case msg := <-consumer.Rebalanced():
-			log.Printf("Rebalanced event, type: %s, partitions: %+v", msg.Type, msg.Partitions)
 			if msg.Type == types.RebalanceTypeRevoke {
 				sessionEndGenerator.Disable()
 			} else {
@@ -231,7 +228,7 @@ func main() {
 				continue
 			}
 			if err := consumer.ConsumeNext(); err != nil {
-				log.Fatalf("Error on consuming: %v", err)
+				log.Fatal(ctx, "error on consuming: %s", err)
 			}
 		}
 	}
