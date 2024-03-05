@@ -170,6 +170,7 @@ function status() {
     log info OpenReplay Version
     # awk '(NR<2)' < "$OR_DIR/vars.yaml"
     awk '/fromVersion/{print $2}' <"${OR_DIR}/vars.yaml"
+    yq .config.version /var/lib/openreplay/vars.yaml || true
     log info Disk
     df -h /var
     log info Memory
@@ -369,7 +370,9 @@ function upgrade() {
 
     # Update the version
     busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
-    sudo mv ./openreplay-cli /bin/
+    patch_version
+    sudo mv ./openreplay-cli /bin/openreplay
+    sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
     sudo cp -rf ../../../openreplay $OR_DIR/
     log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
@@ -377,6 +380,18 @@ function upgrade() {
 
     err_cd -
     return
+}
+
+function patch_version() {
+    # Patching config version for console
+    version=$(/var/lib/openreplay/yq '.fromVersion' /var/lib/openreplay/vars.yaml)-$(sudo git rev-parse --short HEAD)
+    # Create a temporary YAML file with the generated version
+    cat <<EOF >/tmp/version_snippet.yaml
+config:
+  version: $version
+EOF
+    sudo /var/lib/openreplay/yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
+    rm /tmp/version_snippet.yaml
 }
 
 function reload() {
