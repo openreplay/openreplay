@@ -15,5 +15,6 @@ async def assist_events_aggregates_cron() -> None:
 ee_cron_jobs = [
     {"func": pg_events_queue, "trigger": IntervalTrigger(minutes=5), "misfire_grace_time": 20, "max_instances": 1},
     {"func": assist_events_aggregates_cron,
-     "trigger": IntervalTrigger(hours=1, start_date="2023-04-01 0:0:0", jitter=10), }
+     "trigger": IntervalTrigger(hours=1, start_date="2023-04-01 0:0:0", jitter=10), "misfire_grace_time": 20,
+     "max_instances": 1}
 ]
