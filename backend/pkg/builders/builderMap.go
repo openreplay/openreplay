@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -87,9 +86,6 @@ func (m *builderMap) checkSessions() {
 		}
 	}
 	m.mutex.Unlock()
-	if deleted > 0 {
-		log.Printf("deleted %d sessions from message builder", deleted)
-	}
 }
 
 func (m *builderMap) Stop() {

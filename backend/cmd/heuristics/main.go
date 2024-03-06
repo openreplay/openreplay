@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"context"
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/heuristics"
 	"openreplay/backend/pkg/builders"
@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/ios"
 	"openreplay/backend/pkg/handlers/web"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -18,11 +19,12 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New()
+
 	m := metrics.New()
 	m.Register(heuristicsMetrics.List())
-
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	cfg := config.New()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
@@ -56,13 +58,12 @@ func main() {
 	// Init memory manager
 	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
-		log.Printf("can't init memory manager: %s", err)
+		log.Fatal(ctx, "can't init memory manager: %s", err)
 		return
 	}
 
 	// Run service and wait for TERM signal
 	service := heuristics.New(cfg, producer, consumer, eventBuilder, memoryManager)
-	log.Printf("Heuristics service started\n")
+	log.Info(ctx, "Heuristics service started")
 	terminator.Wait(service)
-	log.Printf("Heuristics service stopped\n")
 }
