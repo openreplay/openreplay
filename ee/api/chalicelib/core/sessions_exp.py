@@ -1,10 +1,10 @@
 import ast
+import logging
 from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-import logging
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -522,6 +522,12 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                           project_id, user_id, platform="web", extra_event=None, extra_deduplication=[]):
+    if issue:
+        data.filters.append(
+            schemas.SessionSearchFilterSchema(value=[issue['type']],
+                                              type=schemas.FilterType.issue.value,
+                                              operator='is')
+        )
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
@@ -1446,12 +1452,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     extra_join = ""
     if issue is not None:
         extra_join = """
-                INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
-                WHERE issues.session_id=f.session_id 
-                    AND p_issues.type=%(issue_type)s 
-                    AND p_issues.context_string=%(issue_contextString)s
-                    AND timestamp >= f.first_event_ts
-                    AND timestamp <= f.last_event_ts) AS issues ON(TRUE)
+                INNER JOIN (SELECT session_id
+                           FROM experimental.issues
+                                    INNER JOIN experimental.events USING (issue_id)
+                           WHERE issues.type = %(issue_type)s
+                             AND issues.context_string = %(issue_contextString)s
+                             AND issues.project_id = %(projectId)s
+                             AND events.project_id = %(projectId)s
+                             AND events.issue_type = %(issue_type)s
+                             AND events.datetime >= toDateTime(%(startDate)s/1000)
+                             AND events.datetime <= toDateTime(%(endDate)s/1000)
+                             ) AS issues ON (s.session_id = issues.session_id)
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
