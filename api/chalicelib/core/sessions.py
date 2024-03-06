@@ -401,6 +401,13 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                        project_id, user_id, platform="web", extra_event=None):
+    if issue:
+        data.filters.append(
+            schemas.SessionSearchFilterSchema(value=[issue['type']],
+                                              type=schemas.FilterType.issue.value,
+                                              operator='is')
+        )
+
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
