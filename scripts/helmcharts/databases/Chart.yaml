@@ -24,10 +24,6 @@ version: 0.1.0
 appVersion: "1.16.0"
 
 dependencies:
-  - name: minio
-    repository: file://charts/minio
-    version: 3.7.4
-    condition: minio.enabled
   - name: kafka
     repository: file://charts/kafka
     version: 11.8.6
