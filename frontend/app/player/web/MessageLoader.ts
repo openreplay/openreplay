@@ -4,9 +4,9 @@ import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools, requestTarball } from './network/loadFiles';
 import logger from 'App/logger';
 import unpack from 'Player/common/unpack';
+import unpackTar from 'Player/common/tarball';
 import MessageManager from 'Player/web/MessageManager';
 import IOSMessageManager from 'Player/mobile/IOSMessageManager';
-import unpackTar from 'Player/common/tarball';
 
 interface State {
   firstFileLoading: boolean;
