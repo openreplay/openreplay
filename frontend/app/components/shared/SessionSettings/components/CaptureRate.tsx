@@ -42,7 +42,7 @@ function CaptureRate(props: Props) {
   }, [projectId]);
 
   React.useEffect(() => {
-    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true, isMobile)));
+    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true)));
   }, [captureConditions]);
 
   const onCaptureRateChange = (input: string) => {
