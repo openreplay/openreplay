@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -24,13 +24,16 @@ func main() {
 
 	cfg := config.New()
 
-	srv, err := canvas_handler.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatalf("can't init object storage: %s", err)
+	}
+
+	srv, err := canvas_handler.New(cfg, objStore)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
 	}
-
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupCanvasImage,
@@ -38,34 +41,25 @@ func main() {
 			cfg.TopicCanvasImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			checkSessionEnd := func(data []byte) (messages.Message, error) {
+			isSessionEnd := func(data []byte) bool {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
 				if err != nil {
-					return nil, err
+					return false
 				}
 				if msgType != messages.MsgSessionEnd {
-					return nil, fmt.Errorf("not a session end message")
+					return false
 				}
-				msg, err := messages.ReadMessage(msgType, reader)
+				_, err = messages.ReadMessage(msgType, reader)
 				if err != nil {
-					return nil, fmt.Errorf("read message err: %s", err)
+					return false
 				}
-				return msg, nil
+				return true
 			}
 
-			if msg, err := checkSessionEnd(data); err == nil {
-				sessEnd := msg.(*messages.SessionEnd)
-				// Received session end
-				if list, err := srv.PrepareCanvasList(sessID); err != nil {
+			if isSessionEnd(data) {
+				if err := srv.PackSessionCanvases(sessID); err != nil {
 					log.Printf("can't prepare canvas: %s", err)
-				} else {
-					for _, name := range list {
-						sessEnd.EncryptionKey = name
-						if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
-							log.Printf("can't send session end signal to video service: %s", err)
-						}
-					}
 				}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {

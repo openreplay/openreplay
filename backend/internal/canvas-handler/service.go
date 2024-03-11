@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
 	"os"
-	"sort"
+	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	config "openreplay/backend/internal/config/canvas-handler"
 )
@@ -21,13 +23,20 @@ type saveTask struct {
 	image     *bytes.Buffer
 }
 
-type ImageStorage struct {
-	cfg       *config.Config
-	basePath  string
-	saverPool pool.WorkerPool
+type uploadTask struct {
+	path string
+	name string
 }
 
-func New(cfg *config.Config) (*ImageStorage, error) {
+type ImageStorage struct {
+	cfg          *config.Config
+	basePath     string
+	saverPool    pool.WorkerPool
+	uploaderPool pool.WorkerPool
+	objStorage   objectstorage.ObjectStorage
+}
+
+func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -37,10 +46,12 @@ func New(cfg *config.Config) (*ImageStorage, error) {
 		path += cfg.CanvasDir + "/"
 	}
 	s := &ImageStorage{
-		cfg:      cfg,
-		basePath: path,
+		cfg:        cfg,
+		basePath:   path,
+		objStorage: objStorage,
 	}
 	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
+	s.uploaderPool = pool.NewPool(4, 8, s.sendToS3)
 	return s, nil
 }
 
@@ -48,23 +59,33 @@ func (v *ImageStorage) Wait() {
 	v.saverPool.Pause()
 }
 
-func (v *ImageStorage) PrepareCanvasList(sessID uint64) ([]string, error) {
+func (v *ImageStorage) sendToS3(payload interface{}) {
+	task := payload.(*uploadTask)
+	start := time.Now()
+	video, err := os.ReadFile(task.path)
+	if err != nil {
+		log.Fatalf("Failed to read video file: %v", err)
+	}
+	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
+		log.Fatalf("Storage: start uploading replay failed. %s", err)
+	}
+	log.Printf("Replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
+	return
+}
+
+func (v *ImageStorage) PackSessionCanvases(sessID uint64) error {
 	path := fmt.Sprintf("%s/%d/", v.basePath, sessID)
 
 	// Check that the directory exists
 	files, err := os.ReadDir(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(files) == 0 {
-		return []string{}, nil
+		return nil
 	}
 
-	type canvasData struct {
-		files map[int]string
-		times []int
-	}
-	images := make(map[string]*canvasData)
+	names := make(map[string]bool)
 
 	// Build the list of canvas images sets
 	for _, file := range files {
@@ -75,48 +96,31 @@ func (v *ImageStorage) PrepareCanvasList(sessID uint64) ([]string, error) {
 			continue
 		}
 		canvasID := fmt.Sprintf("%s_%s", parts[0], parts[1])
-		canvasTS, _ := strconv.Atoi(parts[2])
-		if _, ok := images[canvasID]; !ok {
-			images[canvasID] = &canvasData{
-				files: make(map[int]string),
-				times: make([]int, 0),
-			}
-		}
-		images[canvasID].files[canvasTS] = file.Name()
-		images[canvasID].times = append(images[canvasID].times, canvasTS)
+		names[canvasID] = true
 	}
 
-	// Prepare screenshot lists for ffmpeg
-	namesList := make([]string, 0)
-	for name, cData := range images {
-		// Write to file
-		mixName := fmt.Sprintf("%s-list", name)
-		mixList := path + mixName
-		outputFile, err := os.Create(mixList)
+	sessionID := strconv.FormatUint(sessID, 10)
+	//
+	for name := range names {
+		// Save to archives
+		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
+		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' | tar -cf - --files-from=- | zstd -o %s",
+			path, name, archPath)
+		log.Printf("Executing command: %s", fullCmd)
+		cmd := exec.Command("sh", "-c", fullCmd)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		err := cmd.Run()
 		if err != nil {
-			log.Printf("can't create mix list, err: %s", err)
-			continue
+			log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
+			return err
 		}
 
-		sort.Ints(cData.times)
-		count := 0
-		for i := 0; i < len(cData.times)-1; i++ {
-			dur := float64(cData.times[i+1]-cData.times[i]) / 1000.0
-			line := fmt.Sprintf("file %s\nduration %.3f\n", cData.files[cData.times[i]], dur)
-			_, err := outputFile.WriteString(line)
-			if err != nil {
-				outputFile.Close()
-				log.Printf("%s", err)
-				continue
-			}
-			count++
-		}
-		outputFile.Close()
-		log.Printf("new canvas mix %s with %d images", mixList, count)
-		namesList = append(namesList, mixName)
+		v.uploaderPool.Submit(&uploadTask{path: archPath, name: sessionID + "/" + name + ".tar.zst"})
 	}
-	log.Printf("prepared %d canvas mixes for session %d", len(namesList), sessID)
-	return namesList, nil
+	return nil
 }
 
 func (v *ImageStorage) SaveCanvasToDisk(sessID uint64, data []byte) error {
