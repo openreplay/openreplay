@@ -31,7 +31,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
      * time between node creation and session start
      */
     private readonly delta: number,
-    private readonly links: [tar: string, mp4: string],
+    private readonly links: [tar?: string, mp4?: string],
     private readonly getNode: (id: number) => VElement | undefined
   ) {
     super();
@@ -98,6 +98,9 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   };
 
   loadMp4 = async () => {
+    if (!this.links[1]) {
+      return Promise.reject(MP4_MISSING);
+    }
     return fetch(this.links[1])
       .then((r) => {
         if (r.status === 200) {
