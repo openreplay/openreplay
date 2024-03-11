@@ -35,7 +35,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     private readonly getNode: (id: number) => VElement | undefined
   ) {
     super();
-    console.log(links)
+    console.log(links);
     // first we try to grab tar, then fallback to mp4
     this.loadTar()
       .then((fileArr) => {
@@ -59,23 +59,29 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   }
 
   public mapToSnapshots(files: TarFile[]) {
-    const tempArr: Timestamp[] = []
+    const tempArr: Timestamp[] = [];
     const filenameRegexp = /(\d+)_(\d+)_(\d+)\.jpeg$/;
     const firstPair = files[0].name.match(filenameRegexp);
+    if (!firstPair) {
+      console.error('Invalid file name format', files[0].name);
+      return;
+    }
     const sessionStart = firstPair ? parseInt(firstPair[1], 10) : 0;
     files.forEach((file) => {
-      const [_, _1, _2, imageTimestampStr] = file.name.match(filenameRegexp) ?? [0,0,0,'0']
+      const [_, _1, _2, imageTimestampStr] = file.name.match(filenameRegexp) ?? [0, 0, 0, '0'];
 
-      const imageTimestamp = parseInt(imageTimestampStr, 10)
+      const imageTimestamp = parseInt(imageTimestampStr, 10);
 
       const messageTime = imageTimestamp - sessionStart;
       this.snapshots[messageTime] = file;
       tempArr.push({ time: messageTime });
-    })
+    });
 
-    tempArr.sort((a, b) => a.time - b.time).forEach(msg => {
-      this.append(msg);
-    })
+    tempArr
+      .sort((a, b) => a.time - b.time)
+      .forEach((msg) => {
+        this.append(msg);
+      });
   }
 
   loadTar = async () => {
@@ -126,7 +132,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         } else {
           console.error(`CanvasManager: Node ${this.nodeId} not found`);
         }
-      }
+      };
     }
     if (!this.fileData) return;
     this.videoTag.setAttribute('autoplay', 'true');

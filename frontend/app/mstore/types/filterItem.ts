@@ -81,7 +81,6 @@ export default class FilterItem {
       // @ts-ignore
       _filter = subFilterMap[json.type];
     }
-    console.log(_filter, json, filtersMap)
     this.type = _filter.type;
     this.key = _filter.key;
     this.label = _filter.label;
