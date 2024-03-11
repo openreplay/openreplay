@@ -35,6 +35,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
     private readonly getNode: (id: number) => VElement | undefined
   ) {
     super();
+    console.log(links)
     // first we try to grab tar, then fallback to mp4
     this.loadTar()
       .then((fileArr) => {
@@ -78,6 +79,9 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   }
 
   loadTar = async () => {
+    if (!this.links[0]) {
+      return Promise.reject(TAR_MISSING);
+    }
     return fetch(this.links[0])
       .then((r) => {
         if (r.status === 200) {
