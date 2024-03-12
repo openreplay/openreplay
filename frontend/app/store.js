@@ -28,8 +28,24 @@ store.subscribe(() => {
   });
 });
 
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    console.log('Copied to clipboard');
+  } catch (err) {
+    console.error('Could not copy text: ', err);
+  }
+}
+
+
 window.getJWT = () => {
-  console.log(JSON.stringify(storage.state().user?.jwt  || 'not logged in'));
+  const jwtToken = storage.state().user?.jwt ? JSON.stringify(storage.state().user?.jwt) : null
+  if (jwtToken) {
+    console.log(jwtToken);
+    void copyToClipboard(jwtToken)
+  } else {
+    console.log('not logged in')
+  }
 }
 window.setJWT = (jwt) => {
   store.dispatch({ type: UPDATE_JWT, data: jwt })
