@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import type { Socket, } from 'socket.io-client'
-import { connect, } from 'socket.io-client'
-import Peer, { MediaConnection, } from 'peerjs'
-import type { Properties, } from 'csstype'
+import { connect, }                               from 'socket.io-client'
+import Peer, { DataConnection, MediaConnection, } from 'peerjs'
+import type { Properties, }                       from 'csstype'
 import { App, } from '@openreplay/tracker'
 
 import RequestLocalStream, { LocalStream, } from './LocalStream.js'
@@ -79,7 +79,7 @@ export default class Assist {
 
   private socket: Socket | null = null
   private peer: Peer | null = null
-  private canvasPeer: Peer | null = null
+  private canvasPeers: Record<number, Peer | null> = {}
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
   private remoteControl: RemoteControl | null = null;
@@ -590,32 +590,51 @@ export default class Assist {
       })
     })
 
+
+    const startCanvasStream = (stream: MediaStream, id: number) => {
+      if (this.canvasPeers[id]) return
+
+      const canvasPID = `${app.getProjectKey()}-${sessionId}-${id}`
+      this.canvasPeers[id] = new safeCastedPeer(canvasPID, peerOptions) as Peer
+      this.canvasPeers[id]?.on('error', (e) => console.error(e))
+
+      console.log('601', 'canvasPeer', this.canvasPeers[id], canvasPID, this.agents)
+      Object.values(this.agents).forEach(agent => {
+        if (agent.agentInfo) {
+          const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`
+          const connection = this.canvasPeers[id]?.connect(target)
+          console.log('606', target, this.canvasPeers, this.canvasPeers[id], connection)
+          connection?.on('open', () => {
+            console.log('609', agent, target, this.canvasPeers, stream)
+            if (agent.agentInfo) {
+              const call = this.canvasPeers[id]?.call(target, stream)
+              call?.on('error', app.debug.error)
+            }
+          })
+          //app.debug.error(e)
+          connection?.on('error',  (e) => console.error(e))
+        } else {
+          app.debug.error('Assist: cant establish canvas peer to agent, no agent info')
+        }
+      })
+    }
+
     app.nodes.attachNodeCallback((node) => {
       const id = app.nodes.getID(node)
       if (id && hasTag(node, 'canvas')) {
-        const canvasPId = `${app.getProjectKey()}-${sessionId}-${id}`
-        if (!this.canvasPeer) this.canvasPeer = new safeCastedPeer(canvasPId, peerOptions) as Peer
+        app.debug.log(`Creating stream for canvas ${id}`)
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
           id,
           30,
           (stream: MediaStream) => {
-            Object.values(this.agents).forEach(agent => {
-              if (agent.agentInfo) {
-                const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`
-                const connection = this.canvasPeer?.connect(target)
-                connection?.on('open', () => {
-                  if (agent.agentInfo) {
-                    const pCall = this.canvasPeer?.call(target, stream)
-                    pCall?.on('error', app.debug.error)
-                  }
-                })
-                connection?.on('error', app.debug.error)
-                this.canvasPeer?.on('error', app.debug.error)
-              } else {
-                app.debug.error('Assist: cant establish canvas peer to agent, no agent info')
-              }
-            })
+            if (this.canvasPeers[id]) {
+              this.canvasPeers[id]?.disconnect()
+              this.canvasPeers[id] = null
+              startCanvasStream(stream, id)
+            } else {
+              startCanvasStream(stream, id)
+            }
           },
           app.debug.error,
         )
@@ -648,6 +667,14 @@ export default class Assist {
     if (this.socket) {
       this.socket.disconnect()
       this.app.debug.log('Socket disconnected')
+    }
+    if (Object.values(this.canvasPeers).length) {
+      Object.values(this.canvasPeers).forEach(peer => {
+        if (peer) {
+          peer.destroy()
+        }
+      })
+      this.canvasPeers = {}
     }
   }
 }
