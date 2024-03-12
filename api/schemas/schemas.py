@@ -658,6 +658,18 @@ class SessionSearchFilterSchema(BaseModel):
     _transform = model_validator(mode='before')(transform_old_filter_type)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
+    @model_validator(mode='before')
+    def _transform_data(cls, values):
+        if values.get("source") is not None:
+            if isinstance(values["source"], list):
+                if len(values["source"]) == 0:
+                    values["source"] = None
+                elif len(values["source"]) == 1:
+                    values["source"] = values["source"][0]
+                else:
+                    raise ValueError(f"Unsupported multi-values source")
+        return values
+
     @model_validator(mode='after')
     def filter_validator(cls, values):
         if values.type == FilterType.metadata:
