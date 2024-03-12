@@ -112,7 +112,7 @@ export default class FilterItem {
     const json = {
       type: isMetadata ? FilterKey.METADATA : this.key,
       isEvent: Boolean(this.isEvent),
-      value: this.value,
+      value: this.value.map((i: any) => i && i.toString()),
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,
