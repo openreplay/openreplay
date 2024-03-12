@@ -119,7 +119,11 @@ func (conn *Conn) InsertWebPageEvent(sess *sessions.Session, e *messages.PageEve
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
 	// Add new value set to autocomplete bulk
-	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", path)
+	location := path
+	if query != "" {
+		location += "?" + query
+	}
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", location)
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	return nil
 }
