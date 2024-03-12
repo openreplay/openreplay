@@ -517,6 +517,13 @@ class FilterType(str, Enum):
     utm_source = "utmSource"
     utm_medium = "utmMedium"
     utm_campaign = "utmCampaign"
+    # Mobile conditions
+    thermal_state = "thermalState"
+    main_thread_cpu = "mainThreadCPU"
+    view_component = "viewComponent"
+    log_event = "logEvent"
+    click_event = "clickEvent"
+    memory_usage = "memoryUsage"
 
 
 class SearchEventOperator(str, Enum):
