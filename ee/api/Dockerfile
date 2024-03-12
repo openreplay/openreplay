@@ -11,6 +11,8 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
+# Caching the source build
+RUN pip install --no-cache-dir --upgrade python3-saml==1.16.0 --no-binary=lxml
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
