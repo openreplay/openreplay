@@ -213,10 +213,10 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
 
-    if len(data.filters) > 0:
-        for s in metric.series:
-            s.filter.filters += data.filters
-    metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
+    # if len(data.filters) > 0:
+    #     for s in metric.series:
+    #         s.filter.filters += data.filters
+    # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
     return metric
 
 
