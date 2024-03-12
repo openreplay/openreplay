@@ -721,7 +721,6 @@ export const mobileConditionalFilters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/cpu-load',
-    isEvent: true,
     options: [
       { label: 'nominal', value: 0 },
       { label: 'warm', value: 1 },
