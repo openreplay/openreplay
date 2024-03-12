@@ -49,10 +49,6 @@ export default class CanvasReceiver {
     const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
     const canvasPeer = new Peer(id, peerOpts);
     this.peer = canvasPeer;
-    console.log(id)
-    canvasPeer.on('connection', (conn) => {
-      console.log('got canvas conn', conn);
-    })
     canvasPeer.on('error', (err) => console.error('canvas peer error', err));
     canvasPeer.on('call', (call) => {
       call.answer();
@@ -73,7 +69,7 @@ export default class CanvasReceiver {
               (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
             );
           }
-        }, 250);
+        }, 500);
       });
       call.on('error', (err) => console.error('canvas call error', err));
     });
