@@ -28,13 +28,28 @@ store.subscribe(() => {
   });
 });
 
-async function copyToClipboard(text) {
+function copyToClipboard(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+
+  // Avoid scrolling to bottom
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  textArea.style.position = "fixed";
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
   try {
-    await navigator.clipboard.writeText(text);
-    console.log('Copied to clipboard');
+    const successful = document.execCommand('copy');
+    const msg = successful ? 'successful' : 'unsuccessful';
+    console.log('Token copy ' + msg);
   } catch (err) {
-    console.error('Could not copy text: ', err);
+    console.error('unable to copy', err);
   }
+
+  document.body.removeChild(textArea);
 }
 
 
@@ -42,7 +57,7 @@ window.getJWT = () => {
   const jwtToken = storage.state().user?.jwt ? JSON.stringify(storage.state().user?.jwt) : null
   if (jwtToken) {
     console.log(jwtToken);
-    void copyToClipboard(jwtToken)
+    copyToClipboard(jwtToken)
   } else {
     console.log('not logged in')
   }
