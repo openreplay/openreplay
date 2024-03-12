@@ -52,7 +52,6 @@ export default class CanvasReceiver {
     canvasPeer.on('error', (err) => console.error('canvas peer error', err));
     canvasPeer.on('call', (call) => {
       call.answer();
-      console.log('got canvas call', call, call.peer);
       const canvasId = call.peer.split('-')[2];
       call.on('stream', (stream) => {
         this.streams.set(canvasId, stream);
