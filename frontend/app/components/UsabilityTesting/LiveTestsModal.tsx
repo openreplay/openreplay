@@ -33,7 +33,7 @@ function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: ()
         <div className={'w-3/4 font-semibold text-xl'}>Live Participants</div>
         <Input.Search
           allowClear
-          placeholder="Search by participant ID or name"
+          placeholder="Filter by participant ID or name"
           onChange={(e) => setUserId(e.target.value)}
           onSearch={() => refreshData(page)}
         />
