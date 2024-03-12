@@ -16,6 +16,7 @@ exit_err() {
 }
 
 source ../scripts/lib/_docker.sh
+ARCH=${ARCH:-'amd64'}
 
 environment=$1
 git_sha=$(git rev-parse --short HEAD)
@@ -68,7 +69,7 @@ function build_api() {
         tag="ee-"
     }
     mv Dockerfile.dockerignore .dockerignore
-    docker build -f ./Dockerfile --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/${IMAGE_NAME:-'chalice'}:${image_tag} .
+    docker build -f ./Dockerfile --platform linux/${ARCH} --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/${IMAGE_NAME:-'chalice'}:${image_tag} .
     cd ../api || exit_err 100
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
