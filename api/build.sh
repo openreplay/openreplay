@@ -15,6 +15,8 @@ exit_err() {
     fi
 }
 
+source ../scripts/lib/_docker.sh
+
 environment=$1
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
