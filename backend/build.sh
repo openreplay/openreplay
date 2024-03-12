@@ -9,23 +9,13 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 set -e
 
+source ../scripts/lib/_docker.sh
+
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-$git_sha}
 ee="false"
 # Possible values: amd64, arm64
 arch="${ARCH:-"amd64"}"
-docker() {
-    local docker_cmd=${DOCKER_RUNTIME}
-    [[ $docker_cmd == "docker" ]] && docker_cmd=$(which docker)
-    if [[ "$1" == "build" ]]; then
-        shift
-        # Reconstruct command with DOCKER_ARGS before the '.'
-        $docker_cmd build "${DOCKER_BUILD_ARGS}" "$@"
-    else
-        $docker_cmd "$@"
-    fi
-}
-
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
