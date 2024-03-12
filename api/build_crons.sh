@@ -9,6 +9,7 @@
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
+source ../scripts/lib/_docker.sh
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
@@ -17,7 +18,7 @@ check_prereq() {
     [[ exit -eq 1 ]] && exit 1
 }
 
-function build_crons(){
+function build_crons() {
     destination="_crons_ee"
     cp -R ../api ../${destination}
     cd ../${destination}
@@ -46,7 +47,6 @@ check_prereq
 [[ $1 == "ee" ]] && {
     build_crons $1
 } || {
-echo -e "Crons is only for ee. Rerun the script using \n bash $0 ee"
-exit 100
+    echo -e "Crons is only for ee. Rerun the script using \n bash $0 ee"
+    exit 100
 }
-

@@ -92,4 +92,4 @@ function build_api() {
 }
 
 check_prereq
-build_api $1 $2
+build_api i1 i2
