@@ -69,6 +69,12 @@ function install_tools() {
         sudo /usr/local/bin/eget -q --to /usr/local/bin stern/stern
     }
 
+    ## installing stern, log viewer for K8s
+    exists templater || {
+        info "$install_status templater"
+        sudo /usr/local/bin/eget -q --to /usr/local/bin rjshrjndrn/templater
+    }
+
     ## installing k9s, TUI K8s
     exists k9s || {
         info "$install_status K9s"
@@ -127,12 +133,7 @@ function create_passwords() {
     }
 
     info "Creating dynamic passwords"
-    sed_i_wrapper -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/assistKey: \"SetARandomStringHere\"/assistKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/assistJWTSecret: \"SetARandomStringHere\"/assistJWTSecret: \"$(randomPass)\"/g" vars.yaml
+    templater -i vars.yaml -o vars.yaml
     sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 }
 
