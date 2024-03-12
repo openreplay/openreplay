@@ -1,13 +1,15 @@
 package main
 
 import (
-	"log"
+	"context"
+
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -20,18 +22,16 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New()
 
 	m := metrics.New()
 	m.Register(databaseMetrics.List())
 
-	cfg := config.New()
-
-	// Init postgres connection
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
-		log.Printf("can't init postgres connection: %s", err)
-		return
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
@@ -42,7 +42,7 @@ func main() {
 	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
-		log.Printf("can't init redis connection: %s", err)
+		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisClient.Close()
 
@@ -51,7 +51,7 @@ func main() {
 	tagsManager := tags.New(pgConn)
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessManager, tagsManager)
+	saver := datasaver.New(log, cfg, pg, sessManager, tagsManager)
 
 	// Message filter
 	msgFilter := []int{
@@ -86,13 +86,11 @@ func main() {
 	// Init memory manager
 	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
-		log.Printf("can't init memory manager: %s", err)
-		return
+		log.Fatal(ctx, "can't init memory manager: %s", err)
 	}
 
 	// Run service and wait for TERM signal
 	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
-	log.Printf("Db service started\n")
+	log.Info(ctx, "Db service started")
 	terminator.Wait(service)
-	log.Printf("Db service stopped\n")
 }

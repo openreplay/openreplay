@@ -45,7 +45,6 @@ func main() {
 			cfg.TopicRawImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 			checkSessionEnd := func(data []byte) (messages.Message, error) {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
@@ -61,14 +60,13 @@ func main() {
 				}
 				return msg, nil
 			}
+			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 
 			if _, err := checkSessionEnd(data); err == nil {
-				// Pack all screenshots from mobile session, compress and upload to object storage
 				if err := srv.PackScreenshots(sessCtx, sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {
 					log.Error(sessCtx, "can't pack screenshots: %s", err)
 				}
 			} else {
-				// Unpack new screenshots package from mobile session
 				if err := srv.Process(sessCtx, sessID, data); err != nil {
 					log.Error(sessCtx, "can't process screenshots: %s", err)
 				}

@@ -2,12 +2,10 @@ package canvas_handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
-	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/pool"
 	"os"
 	"os/exec"
 	"strconv"
@@ -15,28 +13,34 @@ import (
 	"time"
 
 	config "openreplay/backend/internal/config/canvas-handler"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/pool"
 )
-
-type saveTask struct {
-	sessionID uint64
-	name      string
-	image     *bytes.Buffer
-}
-
-type uploadTask struct {
-	path string
-	name string
-}
 
 type ImageStorage struct {
 	cfg          *config.Config
+	log          logger.Logger
 	basePath     string
 	saverPool    pool.WorkerPool
 	uploaderPool pool.WorkerPool
 	objStorage   objectstorage.ObjectStorage
 }
 
-func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
+type saveTask struct {
+	ctx       context.Context
+	sessionID uint64
+	name      string
+	image     *bytes.Buffer
+}
+
+type uploadTask struct {
+	ctx  context.Context
+	path string
+	name string
+}
+
+func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -47,6 +51,7 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStor
 	}
 	s := &ImageStorage{
 		cfg:        cfg,
+		log:        log,
 		basePath:   path,
 		objStorage: objStorage,
 	}
@@ -57,23 +62,46 @@ func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStor
 
 func (v *ImageStorage) Wait() {
 	v.saverPool.Pause()
+	v.uploaderPool.Pause()
 }
 
-func (v *ImageStorage) sendToS3(payload interface{}) {
-	task := payload.(*uploadTask)
-	start := time.Now()
-	video, err := os.ReadFile(task.path)
+func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data []byte) error {
+	type canvasData struct {
+		Name string
+		Data []byte
+	}
+	var msg = &canvasData{}
+	if err := json.Unmarshal(data, msg); err != nil {
+		return fmt.Errorf("can't parse canvas message, err: %s", err)
+	}
+	v.saverPool.Submit(&saveTask{ctx: ctx, sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)})
+	return nil
+}
+
+func (v *ImageStorage) writeToDisk(payload interface{}) {
+	task := payload.(*saveTask)
+	path := fmt.Sprintf("%s/%d/", v.basePath, task.sessionID)
+
+	// Ensure the directory exists
+	if err := os.MkdirAll(path, 0755); err != nil {
+		v.log.Fatal(task.ctx, "can't create a dir, err: %s", err)
+	}
+
+	// Write images to disk
+	outFile, err := os.Create(path + task.name)
 	if err != nil {
-		log.Fatalf("Failed to read video file: %v", err)
+		v.log.Fatal(task.ctx, "can't create an image: %s", err)
 	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
-		log.Fatalf("Storage: start uploading replay failed. %s", err)
+	if _, err := io.Copy(outFile, task.image); err != nil {
+		v.log.Fatal(task.ctx, "can't copy data to image: %s", err)
 	}
-	log.Printf("Replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
+	outFile.Close()
+
+	v.log.Info(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(task.image.Len())/1024.0/1024.0)
 	return
 }
 
-func (v *ImageStorage) PackSessionCanvases(sessID uint64) error {
+func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) error {
 	path := fmt.Sprintf("%s/%d/", v.basePath, sessID)
 
 	// Check that the directory exists
@@ -92,7 +120,7 @@ func (v *ImageStorage) PackSessionCanvases(sessID uint64) error {
 		name := strings.Split(file.Name(), ".")
 		parts := strings.Split(name[0], "_")
 		if len(name) != 2 || len(parts) != 3 {
-			log.Printf("unknown file name: %s, skipping", file.Name())
+			v.log.Warn(ctx, "unknown file name: %s, skipping", file.Name())
 			continue
 		}
 		canvasID := fmt.Sprintf("%s_%s", parts[0], parts[1])
@@ -100,13 +128,11 @@ func (v *ImageStorage) PackSessionCanvases(sessID uint64) error {
 	}
 
 	sessionID := strconv.FormatUint(sessID, 10)
-	//
 	for name := range names {
 		// Save to archives
 		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
 		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' | tar -cf - --files-from=- | zstd -o %s",
 			path, name, archPath)
-		log.Printf("Executing command: %s", fullCmd)
 		cmd := exec.Command("sh", "-c", fullCmd)
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -114,48 +140,23 @@ func (v *ImageStorage) PackSessionCanvases(sessID uint64) error {
 
 		err := cmd.Run()
 		if err != nil {
-			log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
-			return err
+			return fmt.Errorf("failed to execute command, err: %s, stderr: %v", err, stderr.String())
 		}
-
-		v.uploaderPool.Submit(&uploadTask{path: archPath, name: sessionID + "/" + name + ".tar.zst"})
+		v.uploaderPool.Submit(&uploadTask{ctx: ctx, path: archPath, name: sessionID + "/" + name + ".tar.zst"})
 	}
 	return nil
 }
 
-func (v *ImageStorage) SaveCanvasToDisk(sessID uint64, data []byte) error {
-	type canvasData struct {
-		Name string
-		Data []byte
-	}
-	var msg = &canvasData{}
-	if err := json.Unmarshal(data, msg); err != nil {
-		log.Printf("can't parse canvas message, err: %s", err)
-	}
-	// Use the same workflow
-	v.saverPool.Submit(&saveTask{sessionID: sessID, name: msg.Name, image: bytes.NewBuffer(msg.Data)})
-	return nil
-}
-
-func (v *ImageStorage) writeToDisk(payload interface{}) {
-	task := payload.(*saveTask)
-	path := fmt.Sprintf("%s/%d/", v.basePath, task.sessionID)
-
-	// Ensure the directory exists
-	if err := os.MkdirAll(path, 0755); err != nil {
-		log.Fatalf("Error creating directories: %v", err)
-	}
-
-	// Write images to disk
-	outFile, err := os.Create(path + task.name) // or open file in rewrite mode
+func (v *ImageStorage) sendToS3(payload interface{}) {
+	task := payload.(*uploadTask)
+	start := time.Now()
+	video, err := os.ReadFile(task.path)
 	if err != nil {
-		log.Printf("can't create file: %s", err.Error())
+		v.log.Fatal(task.ctx, "failed to read canvas archive: %s", err)
 	}
-	if _, err := io.Copy(outFile, task.image); err != nil {
-		log.Printf("can't copy file: %s", err.Error())
+	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
+		v.log.Fatal(task.ctx, "failed to upload canvas to storage: %s", err)
 	}
-	outFile.Close()
-
-	log.Printf("new canvas image, sessID: %d, name: %s, size: %3.3f mb", task.sessionID, task.name, float64(task.image.Len())/1024.0/1024.0)
+	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
 }
