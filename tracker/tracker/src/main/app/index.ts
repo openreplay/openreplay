@@ -123,6 +123,7 @@ type AppOptions = {
   forceSingleTab?: boolean
   disableStringDict?: boolean
   assistSocketHost?: string
+  disableCanvas?: boolean
 
   /** @deprecated */
   onStart?: StartCallback
@@ -213,6 +214,7 @@ export default class App {
         forceSingleTab: false,
         assistSocketHost: '',
         fixedCanvasScaling: false,
+        disableCanvas: false,
       },
       options,
     )
@@ -1058,7 +1060,7 @@ export default class App {
         await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
         this.activityState = ActivityState.Active
 
-        if (canvasEnabled) {
+        if (canvasEnabled && !this.options.disableCanvas) {
           this.canvasRecorder =
             this.canvasRecorder ??
             new CanvasRecorder(this, {
