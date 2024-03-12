@@ -8,7 +8,8 @@ export default class AiService extends BaseService {
     const r = await this.client.post(
       `/sessions/${sessionId}/intelligent/summary`,
     );
-    return r.body;
+
+    return r.json()
   }
 
   async getSearchFilters(query: string): Promise<string> {

@@ -15,6 +15,7 @@ describe('AnnotationCanvas', () => {
       style: {},
       getContext: jest.fn(() => contextMock as unknown as HTMLCanvasElement),
       parentNode: document,
+      setAttribute: jest.fn()
     }
 
     contextMock = {

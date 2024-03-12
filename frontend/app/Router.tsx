@@ -59,7 +59,7 @@ const Router: React.FC<RouterProps> = (props) => {
 
   const handleJwtFromUrl = () => {
     const urlJWT = new URLSearchParams(location.search).get('jwt');
-    if (urlJWT && !isLoggedIn) {
+    if (urlJWT) {
       props.setJwt(urlJWT);
     }
   };

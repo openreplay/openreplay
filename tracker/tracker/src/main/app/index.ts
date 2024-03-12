@@ -117,11 +117,13 @@ type AppOptions = {
   __debug_report_edp: string | null
   __debug__?: ILogLevel
   __save_canvas_locally?: boolean
+  fixedCanvasScaling?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
   disableStringDict?: boolean
   assistSocketHost?: string
+  disableCanvas?: boolean
 
   /** @deprecated */
   onStart?: StartCallback
@@ -211,6 +213,8 @@ export default class App {
         disableStringDict: false,
         forceSingleTab: false,
         assistSocketHost: '',
+        fixedCanvasScaling: false,
+        disableCanvas: false,
       },
       options,
     )
@@ -1056,13 +1060,14 @@ export default class App {
         await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
         this.activityState = ActivityState.Active
 
-        if (canvasEnabled) {
+        if (canvasEnabled && !this.options.disableCanvas) {
           this.canvasRecorder =
             this.canvasRecorder ??
             new CanvasRecorder(this, {
               fps: canvasFPS,
               quality: canvasQuality,
               isDebug: this.options.__save_canvas_locally,
+              fixedScaling: this.options.fixedCanvasScaling,
             })
           this.canvasRecorder.startTracking()
         }

@@ -1,5 +1,5 @@
 import { makeAutoObservable, observable, action } from 'mobx';
-import { FilterKey, FilterType, FilterCategory } from 'Types/filter/filterType';
+import { FilterKey, FilterType, FilterCategory }                          from 'Types/filter/filterType';
 import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
 
 export default class FilterItem {
@@ -21,7 +21,11 @@ export default class FilterItem {
   completed: number = 0;
   dropped: number = 0;
 
-  constructor(data: any = {}, private readonly isConditional?: boolean) {
+  constructor(
+    data: any = {},
+    private readonly isConditional?: boolean,
+    private readonly isMobile?: boolean
+) {
     makeAutoObservable(this, {
       type: observable,
       key: observable,

@@ -16,7 +16,7 @@ export default class Filter {
     page: number = 1
     limit: number = 10
 
-    constructor(private readonly isConditional = false) {
+    constructor(private readonly isConditional = false, private readonly isMobile = false) {
         makeAutoObservable(this, {
             filters: observable,
             eventsOrder: observable,
@@ -64,7 +64,7 @@ export default class Filter {
     fromJson(json: any) {
         this.name = json.name
         this.filters = json.filters.map((i: Record<string, any>) =>
-          new FilterItem(undefined, this.isConditional).fromJson(i)
+          new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i)
         );
         this.eventsOrder = json.eventsOrder
         return this

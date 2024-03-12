@@ -38,7 +38,7 @@ interface IProps {
   sessionId: string;
   activeTab: string;
   updateLastPlayedSession: (id: string) => void
-  videoURL: string;
+  videoURL: string[];
   userDevice: string;
 }
 

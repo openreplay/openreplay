@@ -57,6 +57,8 @@ type StartIOSSessionRequest struct {
 	Timestamp      uint64  `json:"timestamp"`
 	Timezone       string  `json:"timezone"`
 	DeviceMemory   uint64  `json:"deviceMemory"`
+	DoNotRecord    bool    `json:"doNotRecord"` // start record session or not
+	Condition      string  `json:"condition"`   // condition for start record session
 }
 
 type StartIOSSessionResponse struct {
@@ -67,4 +69,5 @@ type StartIOSSessionResponse struct {
 	SessionID       string   `json:"sessionID"`
 	ImageQuality    string   `json:"quality"`
 	FrameRate       int      `json:"fps"`
+	ProjectID       string   `json:"projectID"`
 }

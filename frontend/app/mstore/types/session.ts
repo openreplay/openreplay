@@ -49,7 +49,7 @@ export default class Session {
             this.sessionId = session.sessionId
             this.viewed = session.viewed
             this.duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
-            this.metadata = Map(session.metadata)
+            this.metadata = session.metadata
             this.startedAt = startedAt
             this.userBrowser = session.userBrowser
             this.userOs = session.userOs

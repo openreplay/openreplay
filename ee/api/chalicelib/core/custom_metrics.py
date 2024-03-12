@@ -213,10 +213,10 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
 
-    if len(data.filters) > 0:
-        for s in metric.series:
-            s.filter.filters += data.filters
-    metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
+    # if len(data.filters) > 0:
+    #     for s in metric.series:
+    #         s.filter.filters += data.filters
+    # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
     return metric
 
 
@@ -277,11 +277,11 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
 
 def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
     if len(data.series) == 0:
-        return {"data": []}
+        return []
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
     data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    return {"data": data}
+    return data
 
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):

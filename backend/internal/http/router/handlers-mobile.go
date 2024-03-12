@@ -65,6 +65,17 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
+		// Use condition rate if it's set
+		if req.Condition != "" {
+			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
+			if err != nil {
+				log.Printf("can't get condition rate: %s", err)
+			} else {
+				p.SampleRate = byte(rate)
+			}
+		} else {
+			log.Printf("project sample rate: %d", p.SampleRate)
+		}
 		if dice >= p.SampleRate {
 			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, 0)
 			return
@@ -86,44 +97,46 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 		geoInfo := e.ExtractGeoData(r)
 
-		if err := e.services.Sessions.Add(&sessions.Session{
-			SessionID:            sessionID,
-			Platform:             "ios",
-			Timestamp:            req.Timestamp,
-			Timezone:             req.Timezone,
-			ProjectID:            p.ProjectID,
-			TrackerVersion:       req.TrackerVersion,
-			RevID:                req.RevID,
-			UserUUID:             userUUID,
-			UserOS:               "IOS",
-			UserOSVersion:        req.UserOSVersion,
-			UserDevice:           ios.MapIOSDevice(req.UserDevice),
-			UserDeviceType:       ios.GetIOSDeviceType(req.UserDevice),
-			UserCountry:          geoInfo.Country,
-			UserState:            geoInfo.State,
-			UserCity:             geoInfo.City,
-			UserDeviceMemorySize: req.DeviceMemory,
-			UserDeviceHeapSize:   req.DeviceMemory,
-		}); err != nil {
-			log.Printf("failed to add mobile session to DB: %v", err)
-		}
+		if !req.DoNotRecord {
+			if err := e.services.Sessions.Add(&sessions.Session{
+				SessionID:            sessionID,
+				Platform:             "ios",
+				Timestamp:            req.Timestamp,
+				Timezone:             req.Timezone,
+				ProjectID:            p.ProjectID,
+				TrackerVersion:       req.TrackerVersion,
+				RevID:                req.RevID,
+				UserUUID:             userUUID,
+				UserOS:               "IOS",
+				UserOSVersion:        req.UserOSVersion,
+				UserDevice:           ios.MapIOSDevice(req.UserDevice),
+				UserDeviceType:       ios.GetIOSDeviceType(req.UserDevice),
+				UserCountry:          geoInfo.Country,
+				UserState:            geoInfo.State,
+				UserCity:             geoInfo.City,
+				UserDeviceMemorySize: req.DeviceMemory,
+				UserDeviceHeapSize:   req.DeviceMemory,
+			}); err != nil {
+				log.Printf("failed to add mobile session to DB: %v", err)
+			}
 
-		sessStart := &messages.IOSSessionStart{
-			Timestamp:      req.Timestamp,
-			ProjectID:      uint64(p.ProjectID),
-			TrackerVersion: req.TrackerVersion,
-			RevID:          req.RevID,
-			UserUUID:       userUUID,
-			UserOS:         "IOS",
-			UserOSVersion:  req.UserOSVersion,
-			UserDevice:     ios.MapIOSDevice(req.UserDevice),
-			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
-			UserCountry:    geoInfo.Pack(),
-		}
-		log.Printf("mobile session start: %+v", sessStart)
+			sessStart := &messages.IOSSessionStart{
+				Timestamp:      req.Timestamp,
+				ProjectID:      uint64(p.ProjectID),
+				TrackerVersion: req.TrackerVersion,
+				RevID:          req.RevID,
+				UserUUID:       userUUID,
+				UserOS:         "IOS",
+				UserOSVersion:  req.UserOSVersion,
+				UserDevice:     ios.MapIOSDevice(req.UserDevice),
+				UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
+				UserCountry:    geoInfo.Pack(),
+			}
+			log.Printf("mobile session start: %+v", sessStart)
 
-		if err := e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode()); err != nil {
-			log.Printf("failed to produce mobile session start message: %v", err)
+			if err := e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode()); err != nil {
+				log.Printf("failed to produce mobile session start message: %v", err)
+			}
 		}
 	}
 
@@ -132,8 +145,9 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
-		ImageQuality:    "standard", // Pull from project settings (low, standard, high)
-		FrameRate:       3,          // Pull from project settings
+		ImageQuality:    e.cfg.MobileQuality,
+		FrameRate:       e.cfg.MobileFps,
+		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
 	}, startTime, r.URL.Path, 0)
 }
 

@@ -39,6 +39,7 @@ export interface SessionFilesInfo {
     milliseconds: number
     valueOf: () => number
   }
+  videoURL: string[]
   domURL: string[]
   devtoolsURL: string[]
   /** deprecated */

@@ -52,7 +52,7 @@ export default function (app: App | null) {
       }
       const nowOwning: number[] = []
       const styleSheets = root.adoptedStyleSheets
-      if (Symbol.iterator in styleSheets) {
+      if (styleSheets && Symbol.iterator in styleSheets) {
         for (const s of styleSheets) {
           let sheetID = styleSheetIDMap.get(s)
           const init = !sheetID

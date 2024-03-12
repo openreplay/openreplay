@@ -18,9 +18,18 @@ OR_REPO="${OR_REPO:-'https://github.com/openreplay/openreplay'}"
     sudo mkdir $OR_DIR
 }
 export PATH=/var/lib/openreplay:$PATH
-function xargs() {
-    /var/lib/openreplay/busybox xargs
-}
+
+# Check arch
+architecture=$(uname -m)
+pkg_type="amd64"
+if [[ "$architecture" == "x86_64" ]]; then
+    echo "This machine is AMD (x86_64) architecture."
+elif [[ "$architecture" == "aarch64" ]]; then
+    pkg_type="arm64"
+    echo "This machine is ARM architecture."
+else
+    echo "This machine has another architecture: $architecture"
+fi
 
 [[ $(awk '/enterpriseEditionLicense/{print $2}' <"/var/lib/openreplay/vars.yaml") != "" ]] && EE=true
 
@@ -114,11 +123,13 @@ function install_packages() {
     log info Installing yq
     sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" mikefarah/yq --asset=^tar.gz
     log info Installing helm
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-${pkg_type}.tar.gz -f helm
     log info Installing kubectl
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/amd64/kubectl
-    log info Installing Busybox
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.25.0/bin/linux/${pkg_type}/kubectl
+    [[ $pkg_type != "arm64" ]] && {
+        log info Installing Busybox
+        sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+    }
     date | sudo tee $OR_DIR/packages.lock &>/dev/null
 }
 
@@ -159,6 +170,7 @@ function status() {
     log info OpenReplay Version
     # awk '(NR<2)' < "$OR_DIR/vars.yaml"
     awk '/fromVersion/{print $2}' <"${OR_DIR}/vars.yaml"
+    yq .config.version /var/lib/openreplay/vars.yaml || true
     log info Disk
     df -h /var
     log info Memory
@@ -358,7 +370,9 @@ function upgrade() {
 
     # Update the version
     busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
-    sudo mv ./openreplay-cli /bin/
+    patch_version
+    sudo mv ./openreplay-cli /bin/openreplay
+    sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
     sudo cp -rf ../../../openreplay $OR_DIR/
     log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
@@ -366,6 +380,18 @@ function upgrade() {
 
     err_cd -
     return
+}
+
+function patch_version() {
+    # Patching config version for console
+    version=$(/var/lib/openreplay/yq '.fromVersion' /var/lib/openreplay/vars.yaml)-$(sudo git rev-parse --short HEAD)
+    # Create a temporary YAML file with the generated version
+    cat <<EOF >/tmp/version_snippet.yaml
+config:
+  version: $version
+EOF
+    sudo /var/lib/openreplay/yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
+    rm /tmp/version_snippet.yaml
 }
 
 function reload() {
@@ -463,14 +489,14 @@ while :; do
               Or ${BWHITE}helm upgrade openreplay -n app openreplay/scripts/helmcharts/openreplay -f openreplay/scripts/helmcharts/vars.yaml --debug --atomic"
             exit 100
         }
-        /var/lib/openreplay/busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
+        busybox md5sum /var/lib/openreplay/vars.yaml >"${tmp_dir}/var.yaml.md5"
         sudo vim -n ${OR_DIR}/vars.yaml
         /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml &>/dev/null || {
             log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue in config file."
             clean_tmp_dir
             exit 100
         }
-        if /var/lib/openreplay/busybox md5sum -c "${tmp_dir}/var.yaml.md5" &>/dev/null; then
+        if busybox md5sum -c "${tmp_dir}/var.yaml.md5" &>/dev/null; then
             log info "No change detected in ${BWHITE}${OR_DIR}/vars.yaml${GREEN}. Not reloading"
         else
             reload

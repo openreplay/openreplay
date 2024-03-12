@@ -30,12 +30,12 @@ const error_log = process.env.ERROR === "1";
 const findSessionSocketId = async (io, roomId, tabId) => {
     let pickFirstSession = tabId === undefined;
     const connected_sockets = await io.in(roomId).fetchSockets();
-    for (let item of connected_sockets) {
-        if (item.handshake.query.identity === IDENTITIES.session) {
+    for (let socket of connected_sockets) {
+        if (socket.handshake.query.identity === IDENTITIES.session) {
             if (pickFirstSession) {
-                return item.id;
-            } else if (item.tabId === tabId) {
-                return item.id;
+                return socket.id;
+            } else if (socket.handshake.query.tabId === tabId) {
+                return socket.id;
             }
         }
     }
@@ -46,13 +46,13 @@ async function getRoomData(io, roomID) {
     let tabsCount = 0, agentsCount = 0, tabIDs = [], agentIDs = [];
     const connected_sockets = await io.in(roomID).fetchSockets();
     if (connected_sockets.length > 0) {
-        for (let sock of connected_sockets) {
-            if (sock.handshake.query.identity === IDENTITIES.session) {
+        for (let socket of connected_sockets) {
+            if (socket.handshake.query.identity === IDENTITIES.session) {
                 tabsCount++;
-                tabIDs.push(sock.tabId);
+                tabIDs.push(socket.handshake.query.tabId);
             } else {
                 agentsCount++;
-                agentIDs.push(sock.id);
+                agentIDs.push(socket.id);
             }
         }
     } else {
@@ -220,7 +220,7 @@ async function onAny(socket, eventName, ...args) {
 // Back compatibility (add top layer with meta information)
 function updateSessionData(socket, sessionData) {
     if (sessionData?.meta === undefined && socket.handshake.query.identity === IDENTITIES.session) {
-        sessionData = {meta: {tabId: socket.tabId, version: 1}, data: sessionData};
+        sessionData = {meta: {tabId: socket.handshake.query.tabId, version: 1}, data: sessionData};
     }
     return sessionData
 }

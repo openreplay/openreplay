@@ -517,6 +517,13 @@ class FilterType(str, Enum):
     utm_source = "utmSource"
     utm_medium = "utmMedium"
     utm_campaign = "utmCampaign"
+    # Mobile conditions
+    thermal_state = "thermalState"
+    main_thread_cpu = "mainThreadCPU"
+    view_component = "viewComponent"
+    log_event = "logEvent"
+    click_event = "clickEvent"
+    memory_usage = "memoryUsage"
 
 
 class SearchEventOperator(str, Enum):
@@ -657,6 +664,18 @@ class SessionSearchFilterSchema(BaseModel):
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _transform = model_validator(mode='before')(transform_old_filter_type)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
+
+    @model_validator(mode='before')
+    def _transform_data(cls, values):
+        if values.get("source") is not None:
+            if isinstance(values["source"], list):
+                if len(values["source"]) == 0:
+                    values["source"] = None
+                elif len(values["source"]) == 1:
+                    values["source"] = values["source"][0]
+                else:
+                    raise ValueError(f"Unsupported multi-values source")
+        return values
 
     @model_validator(mode='after')
     def filter_validator(cls, values):
