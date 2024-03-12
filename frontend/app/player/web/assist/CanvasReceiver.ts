@@ -33,10 +33,10 @@ export default class CanvasReceiver {
       path: '/assist',
       port:
         urlObject.port === ''
-          ? location.protocol === 'https:'
-            ? 443
-            : 80
-          : parseInt(urlObject.port),
+        ? location.protocol === 'https:'
+          ? 443
+          : 80
+        : parseInt(urlObject.port),
     };
     if (this.config) {
       peerOpts['config'] = {
@@ -69,7 +69,7 @@ export default class CanvasReceiver {
               (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
             );
           }
-        }, 500);
+        }, 250);
       });
       call.on('error', (err) => console.error('canvas call error', err));
     });
@@ -94,7 +94,28 @@ function spawnVideo(stream: MediaStream, node: VElement) {
   videoEl.setAttribute('muted', 'true');
   videoEl.setAttribute('playsinline', 'true');
   videoEl.setAttribute('crossorigin', 'anonymous');
-  void videoEl.play();
+
+  videoEl.play()
+    .then(() => true)
+    .catch(() => {
+      // we allow that if user just reloaded the page
+    })
+
+  const clearListeners = () => {
+    document.removeEventListener('click', startStream)
+    videoEl.removeEventListener('playing', clearListeners)
+  }
+  videoEl.addEventListener('playing', clearListeners)
+
+  const startStream = () => {
+    videoEl.play()
+      .then(() => console.log('unpaused'))
+      .catch(() => {
+        // we allow that if user just reloaded the page
+      })
+    document.removeEventListener('click', startStream)
+  }
+  document.addEventListener('click', startStream)
 
   return videoEl;
 }

@@ -1,3 +1,7 @@
+## 8.0.4
+
+- fix for multiple canvas streaming
+
 ## 8.0.3
 
 - make assist canvas layer hidden from canvas capturer

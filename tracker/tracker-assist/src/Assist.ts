@@ -5,7 +5,7 @@ import Peer, { MediaConnection, } from 'peerjs'
 import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
-import RequestLocalStream, { LocalStream, } from './LocalStream.js'
+import RequestLocalStream, { LocalStream } from './LocalStream.js';
 import {hasTag,} from './guards.js'
 import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
@@ -618,29 +618,13 @@ export default class Assist {
     app.nodes.attachNodeCallback((node) => {
       const id = app.nodes.getID(node)
       if (id && hasTag(node, 'canvas')) {
-        const canvasPId = `${app.getProjectKey()}-${sessionId}-${id}`
-        if (!this.canvasPeer) this.canvasPeer = new safeCastedPeer(canvasPId, peerOptions) as Peer
+        app.debug.log(`Creating stream for canvas ${id}`)
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
           id,
           30,
           (stream: MediaStream) => {
-            Object.values(this.agents).forEach(agent => {
-              if (agent.agentInfo) {
-                const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`
-                const connection = this.canvasPeer?.connect(target)
-                connection?.on('open', () => {
-                  if (agent.agentInfo) {
-                    const pCall = this.canvasPeer?.call(target, stream)
-                    pCall?.on('error', app.debug.error)
-                  }
-                })
-                connection?.on('error', app.debug.error)
-                this.canvasPeer?.on('error', app.debug.error)
-              } else {
-                app.debug.error('Assist: cant establish canvas peer to agent, no agent info')
-              }
-            })
+            startCanvasStream(stream, id)
           },
           app.debug.error,
         )
@@ -652,10 +636,10 @@ export default class Assist {
   private playNotificationSound() {
     if ('Audio' in window) {
       new Audio('https://static.openreplay.com/tracker-assist/notification.mp3')
-      .play()
-      .catch(e => {
-        this.app.debug.warn(e)
-      })
+        .play()
+        .catch(e => {
+          this.app.debug.warn(e)
+        })
     }
   }
 
