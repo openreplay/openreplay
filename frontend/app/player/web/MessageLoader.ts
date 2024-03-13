@@ -7,6 +7,7 @@ import unpack from 'Player/common/unpack';
 import unpackTar from 'Player/common/tarball';
 import MessageManager from 'Player/web/MessageManager';
 import IOSMessageManager from 'Player/mobile/IOSMessageManager';
+import { MType } from 'Player/web/messages';
 
 interface State {
   firstFileLoading: boolean;
@@ -59,9 +60,61 @@ export default class MessageLoader {
           }
         }
 
-        const sortedMsgs = msgs.sort((m1, m2) => {
-          return m1.time - m2.time;
+        let artificialStartTime = Infinity;
+        let startTimeSet = false;
+        msgs.forEach((msg) => {
+          if (
+            msg.tp === MType.CreateDocument &&
+            msg.time !== undefined &&
+            msg.time < artificialStartTime
+          ) {
+            artificialStartTime = msg.time;
+            startTimeSet = true;
+          }
         });
+
+        if (!startTimeSet) {
+          artificialStartTime = 0;
+        }
+
+        let brokenMessages = 0;
+        msgs.forEach((msg) => {
+          if (!msg.time) {
+            msg.time = artificialStartTime;
+            brokenMessages += 1;
+          }
+        });
+
+        const DOMMessages = [
+          MType.CreateElementNode,
+          MType.CreateTextNode,
+          MType.MoveNode,
+          MType.RemoveNode,
+        ];
+        const sortedMsgs = msgs.sort((m1, m2) => {
+          if (m1.time !== m2.time) return m1.time - m2.time;
+
+          if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument) return -1;
+          if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument) return 1;
+
+          const m1IsDOM = DOMMessages.includes(m1.tp);
+          const m2IsDOM = DOMMessages.includes(m2.tp);
+          if (m1IsDOM && m2IsDOM) {
+            // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
+            if (m1.id !== m2.id) return m1.id - m2.id;
+            return m1.tp - m2.tp;
+          }
+
+          if (m1IsDOM && !m2IsDOM) return -1;
+          if (!m1IsDOM && m2IsDOM) return 1;
+
+          return 0;
+        });
+
+        if (brokenMessages > 0) {
+          console.warn('Broken timestamp messages', brokenMessages);
+        }
+
         onMessagesDone(sortedMsgs, file);
       } catch (e) {
         console.error(e);
@@ -88,7 +141,7 @@ export default class MessageLoader {
         return await unpackTar(tar);
       }
     } catch (e) {
-      throw e
+      throw e;
     }
   }
 
