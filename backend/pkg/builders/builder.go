@@ -1,10 +1,10 @@
 package builders
 
 import (
-	"log"
-	"openreplay/backend/pkg/handlers"
+	"fmt"
 	"time"
 
+	"openreplay/backend/pkg/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -35,20 +35,19 @@ func (b *builder) checkSessionEnd(message Message) {
 	}
 }
 
-func (b *builder) handleMessage(m Message) {
+func (b *builder) handleMessage(m Message) error {
 	if m.MsgID() < b.lastMessageID {
 		// May happen in case of duplicated messages in kafka (if  `idempotence: false`)
-		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, m.MsgID(), b.lastMessageID)
-		return
+		return fmt.Errorf("skip message with wrong msgID: %d, lastID: %d", m.MsgID(), b.lastMessageID)
 	}
 	if m.Time() <= 0 {
 		switch m.(type) {
 		case *IssueEvent, *PerformanceTrackAggr:
 			break
 		default:
-			log.Printf("skip message with incorrect timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MsgID(), m.TypeID())
+			return fmt.Errorf("skip message with incorrect timestamp, msgID: %d, msgType: %d", m.MsgID(), m.TypeID())
 		}
-		return
+		return nil
 	}
 	if m.Time() > b.timestamp {
 		b.timestamp = m.Time()
@@ -62,4 +61,5 @@ func (b *builder) handleMessage(m Message) {
 		}
 	}
 	b.checkSessionEnd(m)
+	return nil
 }

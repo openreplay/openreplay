@@ -24,10 +24,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := config.New()
-
-	m := metrics.New()
-	m.Register(databaseMetrics.List())
+	cfg := config.New(log)
+	metrics.New(log, databaseMetrics.List())
 
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
@@ -36,7 +34,7 @@ func main() {
 	defer pgConn.Close()
 
 	// Init events module
-	pg := postgres.NewConn(pgConn)
+	pg := postgres.NewConn(log, pgConn)
 	defer pg.Close()
 
 	// Init redis connection
@@ -48,7 +46,7 @@ func main() {
 
 	projManager := projects.New(pgConn, redisClient)
 	sessManager := sessions.New(pgConn, projManager, redisClient)
-	tagsManager := tags.New(pgConn)
+	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver
 	saver := datasaver.New(log, cfg, pg, sessManager, tagsManager)
@@ -78,19 +76,19 @@ func main() {
 			cfg.TopicRawIOS,
 			cfg.TopicAnalytics,
 		},
-		messages.NewMessageIterator(saver.Handle, msgFilter, true),
+		messages.NewMessageIterator(log, saver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
 
 	// Init memory manager
-	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
+	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
 		log.Fatal(ctx, "can't init memory manager: %s", err)
 	}
 
 	// Run service and wait for TERM signal
-	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
+	service := db.New(log, cfg, consumer, saver, memoryManager, sessManager)
 	log.Info(ctx, "Db service started")
-	terminator.Wait(service)
+	terminator.Wait(log, service)
 }

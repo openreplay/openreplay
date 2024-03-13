@@ -21,10 +21,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := config.New()
-
-	m := metrics.New()
-	m.Register(storageMetrics.List())
+	cfg := config.New(log)
+	metrics.New(log, storageMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -47,6 +45,7 @@ func main() {
 			cfg.TopicTrigger,
 		},
 		messages.NewMessageIterator(
+			log,
 			func(msg messages.Message) {
 				// Convert IOSSessionEnd to SessionEnd
 				if msg.TypeID() == messages.MsgIOSSessionEnd {
@@ -88,7 +87,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
-			go counter.Print()
+			go log.Info(ctx, "%s", counter.Log())
 			srv.Wait()
 			if err := consumer.Commit(); err != nil {
 				log.Error(ctx, "can't commit messages: %s", err)

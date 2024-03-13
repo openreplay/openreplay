@@ -96,7 +96,11 @@ func (e *Router) clearBeaconSizes() {
 
 func (e *Router) ExtractGeoData(r *http.Request) *geoip.GeoRecord {
 	ip := net.ParseIP(realip.FromRequest(r))
-	return e.services.GeoIP.Parse(ip)
+	geoRec, err := e.services.GeoIP.Parse(ip)
+	if err != nil {
+		e.log.Warn(r.Context(), "failed to parse geo data: %v", err)
+	}
+	return geoRec
 }
 
 func (e *Router) init() {

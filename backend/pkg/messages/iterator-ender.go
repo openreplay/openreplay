@@ -1,16 +1,18 @@
 package messages
 
+import "openreplay/backend/pkg/logger"
+
 type enderIteratorImpl struct {
 	coreIterator MessageIterator
 	handler      MessageHandler
 	lastMessage  Message
 }
 
-func NewEnderMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
+func NewEnderMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	enderIter := &enderIteratorImpl{
 		handler: messageHandler,
 	}
-	enderIter.coreIterator = NewMessageIterator(enderIter.handle, messageFilter, autoDecode)
+	enderIter.coreIterator = NewMessageIterator(log, enderIter.handle, messageFilter, autoDecode)
 	return enderIter
 }
 

@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
-	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -14,7 +12,9 @@ import (
 	"time"
 
 	"github.com/sethvargo/go-envconfig"
+
 	"openreplay/backend/internal/config/common"
+	"openreplay/backend/pkg/logger"
 )
 
 func readFile(path string) (map[string]string, error) {
@@ -27,7 +27,7 @@ func readFile(path string) (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't read file: %s", err)
 	}
-	log.Println(data)
+
 	res := make(map[string]string)
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
@@ -43,14 +43,15 @@ func readFile(path string) (map[string]string, error) {
 	return res, nil
 }
 
-func parseFile(a interface{}, path string) {
+func parseFile(log logger.Logger, a interface{}, path string) {
+	ctx := context.Background()
 	// Skip parsing process without logs if we don't have path to config file
 	if path == "" {
 		return
 	}
 	envs, err := readFile(path)
 	if err != nil {
-		log.Printf("can't parse config file: %s", err)
+		log.Error(ctx, "can't read config file, err: %s", err)
 		return
 	}
 
@@ -72,48 +73,48 @@ func parseFile(a interface{}, path string) {
 			case "int", "int8", "int16", "int32", "int64":
 				intValue, err := strconv.Atoi(value)
 				if err != nil {
-					log.Printf("can't parse int value: %s", err)
+					log.Error(ctx, "can't parse int value: %s", err)
 					continue
 				}
 				val.Field(i).SetInt(int64(intValue))
 			case "uint", "uint8", "uint16", "uint32", "uint64":
 				uintValue, err := strconv.Atoi(value)
 				if err != nil {
-					log.Printf("can't parse uint value: %s", err)
+					log.Error(ctx, "can't parse uint value: %s", err)
 					continue
 				}
 				val.Field(i).SetUint(uint64(uintValue))
 			case "bool":
 				boolValue, err := strconv.ParseBool(value)
 				if err != nil {
-					log.Printf("can't parse bool value: %s", err)
+					log.Error(ctx, "can't parse bool value: %s", err)
 					continue
 				}
 				val.Field(i).SetBool(boolValue)
 			case "time.Duration":
 				d, err := time.ParseDuration(value)
 				if err != nil {
-					log.Printf("can't parse time.Duration value: %s", err)
+					log.Error(ctx, "can't parse time.Duration value: %s", err)
 					continue
 				}
 				val.Field(i).SetInt(int64(d))
 			case "map[string]string":
 				var stringMap map[string]string
 				if err := json.Unmarshal([]byte(value), &stringMap); err != nil {
-					log.Printf("can't parse map[string]string value: %s", err)
+					log.Error(ctx, "can't parse map[string]string value: %s", err)
 					continue
 				}
 				val.Field(i).Set(reflect.ValueOf(stringMap))
 			default:
-				log.Println("unknown config type: ", val.Type().Field(i).Type.String())
+				log.Error(ctx, "unknown config type: ", val.Type().Field(i).Type.String())
 			}
 		}
 	}
 }
 
-func Process(cfg common.Configer) {
+func Process(log logger.Logger, cfg common.Configer) {
 	if err := envconfig.Process(context.Background(), cfg); err != nil {
-		zap.L().Fatal("error while processing env vars", zap.Error(err))
+		log.Fatal(context.Background(), "error while processing env vars, err: %s", err)
 	}
-	parseFile(cfg, cfg.GetConfigPath())
+	parseFile(log, cfg, cfg.GetConfigPath())
 }

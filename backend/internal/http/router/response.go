@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -27,7 +26,7 @@ func (e *Router) ResponseOK(ctx context.Context, w http.ResponseWriter, requestS
 func (e *Router) ResponseWithJSON(ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
 	body, err := json.Marshal(res)
 	if err != nil {
-		log.Println(err)
+		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
@@ -42,7 +41,7 @@ type response struct {
 func (e *Router) ResponseWithError(ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
 	body, err := json.Marshal(&response{err.Error()})
 	if err != nil {
-		log.Println(err)
+		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.WriteHeader(code)
 	w.Write(body)

@@ -21,10 +21,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := config.New()
-
-	m := metrics.New()
-	m.Register(assetsMetrics.List())
+	cfg := config.New(log)
+	metrics.New(log, assetsMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -55,7 +53,7 @@ func main() {
 	msgConsumer := queue.NewConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
-		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
+		messages.NewMessageIterator(log, msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
 		true,
 		cfg.MessageSizeLimit,
 	)

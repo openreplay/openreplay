@@ -4,6 +4,7 @@ import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/redis"
+	"openreplay/backend/pkg/logger"
 	"time"
 )
 
@@ -24,8 +25,8 @@ type Config struct {
 	UseProfiler       bool          `env:"PROFILER_ENABLED,default=false"`
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

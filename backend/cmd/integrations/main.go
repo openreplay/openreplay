@@ -20,10 +20,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := config.New()
-
-	m := metrics.New()
-	m.Register(databaseMetrics.List())
+	cfg := config.New(log)
+	metrics.New(log, databaseMetrics.List())
 
 	pgConn, err := pgx.Connect(context.Background(), cfg.Postgres.String())
 	if err != nil {
@@ -39,7 +37,7 @@ func main() {
 		log.Fatal(ctx, "can't init storage listener: %s", err)
 	}
 
-	listener, err := integrations.New(cfg, storage, producer, integrations.NewManager(), token.NewTokenizer(cfg.TokenSecret))
+	listener, err := integrations.New(log, cfg, storage, producer, integrations.NewManager(log), token.NewTokenizer(cfg.TokenSecret))
 	if err != nil {
 		log.Fatal(ctx, "can't init service: %s", err)
 	}

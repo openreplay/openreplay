@@ -3,9 +3,10 @@ package sessionwriter
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/logger"
 	"sync"
 	"time"
+
+	"openreplay/backend/pkg/logger"
 )
 
 type SessionWriter struct {
@@ -51,8 +52,8 @@ func (w *SessionWriter) Write(sid uint64, domBuffer, devBuffer []byte) (err erro
 		// Check opened sessions limit and close extra session if you need to
 		if extraSessID := w.meta.GetExtra(); extraSessID != 0 {
 			if err := w.Close(extraSessID); err != nil {
-				w.log.Error(context.WithValue(context.Background(), "sessionID", extraSessID),
-					"can't close session: %s", err)
+				ctx := context.WithValue(context.Background(), "sessionID", extraSessID)
+				w.log.Error(ctx, "can't close session: %s", err)
 			}
 		}
 
@@ -99,8 +100,8 @@ func (w *SessionWriter) Info() string {
 func (w *SessionWriter) Sync() {
 	w.sessions.Range(func(sid, lockObj any) bool {
 		if err := w.sync(sid.(uint64)); err != nil {
-			w.log.Error(context.WithValue(context.Background(), "sessionID", sid),
-				"can't sync session: %s", err)
+			ctx := context.WithValue(context.Background(), "sessionID", sid)
+			w.log.Error(ctx, "can't sync session: %s", err)
 		}
 		return true
 	})
@@ -115,8 +116,8 @@ func (w *SessionWriter) synchronizer() {
 		case <-w.done:
 			w.sessions.Range(func(sid, lockObj any) bool {
 				if err := w.Close(sid.(uint64)); err != nil {
-					w.log.Error(context.WithValue(context.Background(), "sessionID", sid),
-						"can't close session: %s", err)
+					ctx := context.WithValue(context.Background(), "sessionID", sid)
+					w.log.Error(ctx, "can't close session: %s", err)
 				}
 				return true
 			})

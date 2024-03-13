@@ -20,10 +20,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := config.New()
-
-	m := metrics.New()
-	m.Register(storageMetrics.List())
+	cfg := config.New(log)
+	metrics.New(log, storageMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {

@@ -3,6 +3,7 @@ package heuristics
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/pprof"
 )
 
@@ -17,9 +18,9 @@ type Config struct {
 	UseProfiler     bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	if cfg.UseProfiler {
 		pprof.StartProfilingServer()
 	}

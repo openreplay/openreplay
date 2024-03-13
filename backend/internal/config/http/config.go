@@ -6,6 +6,7 @@ import (
 	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/logger"
 	"time"
 )
 
@@ -39,8 +40,8 @@ type Config struct {
 	WorkerID                uint16
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{WorkerID: env.WorkerID()}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

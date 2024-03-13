@@ -30,11 +30,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := ender.New()
-
-	m := metrics.New()
-	m.Register(enderMetrics.List())
-	m.Register(databaseMetrics.List())
+	cfg := ender.New(log)
+	metrics.New(log, append(enderMetrics.List(), databaseMetrics.List()...))
 
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
@@ -66,6 +63,7 @@ func main() {
 			cfg.TopicRawIOS,
 		},
 		messages.NewEnderMessageIterator(
+			log,
 			func(msg messages.Message) { sessionEndGenerator.UpdateSession(msg) },
 			append([]int{messages.MsgTimestamp}, mobileMessages...),
 			false),
@@ -73,7 +71,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
+	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
 		log.Fatal(ctx, "can't init memory manager: %s", err)
 	}

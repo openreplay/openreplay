@@ -45,7 +45,10 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 		return nil, errors.New("object storage is nil")
 	}
 
-	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
+	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create rewriter")
+	}
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,

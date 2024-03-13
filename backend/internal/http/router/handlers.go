@@ -1,11 +1,11 @@
 package router
 
 import (
-	gzip "github.com/klauspost/pgzip"
 	"io"
-	"log"
 	"net/http"
 	"time"
+
+	gzip "github.com/klauspost/pgzip"
 )
 
 func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
@@ -18,25 +18,20 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 
 	switch r.Header.Get("Content-Encoding") {
 	case "gzip":
-		log.Println("Gzip", reader)
-
 		reader, err = gzip.NewReader(body)
 		if err != nil {
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 			return
 		}
-		log.Println("Gzip reader init", reader)
 		defer reader.Close()
 	default:
 		reader = body
 	}
-	log.Println("Reader after switch:", reader)
 	buf, err := io.ReadAll(reader)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return
 	}
-	log.Println("Produce message: ", buf, string(buf))
 	if err := e.services.Producer.Produce(topicName, sessionID, buf); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return

@@ -22,11 +22,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := http.New()
-
-	m := metrics.New()
-	m.Register(httpMetrics.List())
-	m.Register(databaseMetrics.List())
+	cfg := http.New(log)
+	metrics.New(log, append(httpMetrics.List(), databaseMetrics.List()...))
 
 	// Connect to queue
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
@@ -44,7 +41,7 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	services, err := services.New(cfg, producer, pgConn, redisClient)
+	services, err := services.New(log, cfg, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}

@@ -23,19 +23,19 @@ type CachedAsset struct {
 }
 
 type AssetsCache struct {
+	log       logger.Logger
 	mutex     sync.RWMutex
 	cfg       *sink.Config
-	log       logger.Logger
 	rewriter  *assets.Rewriter
 	producer  types.Producer
 	cache     map[string]*CachedAsset
 	blackList []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
 }
 
-func New(cfg *sink.Config, log logger.Logger, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
+func New(log logger.Logger, cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	assetsCache := &AssetsCache{
-		cfg:       cfg,
 		log:       log,
+		cfg:       cfg,
 		rewriter:  rewriter,
 		producer:  producer,
 		cache:     make(map[string]*CachedAsset, 64),
@@ -80,7 +80,6 @@ func (e *AssetsCache) clearCache() {
 		}
 	}
 	e.log.Info(context.Background(), "cache cleaner: deleted %d/%d assets", deleted, cacheSize)
-
 }
 
 func (e *AssetsCache) shouldSkipAsset(baseURL string) bool {
@@ -176,8 +175,8 @@ func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relati
 			sessionID,
 			assetMessage.Encode(),
 		); err != nil {
-			e.log.Error(context.WithValue(context.Background(), "sessionID", sessionID),
-				"can't send asset to cache topic, err: %s", err)
+			ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+			e.log.Error(ctx, "can't send asset to cache topic, sessID: %d, err: %s", sessionID, err)
 		}
 	}
 }
@@ -212,8 +211,8 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	// Cut first part of url (scheme + host)
 	justUrl, err := parseHost(baseURL)
 	if err != nil {
-		e.log.Error(context.WithValue(context.Background(), "sessionID", sessionID),
-			"can't parse url: %s, err: %s", baseURL, err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		e.log.Error(ctx, "can't parse url: %s, err: %s", baseURL, err)
 		if e.cfg.CacheAssets {
 			e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
 		}

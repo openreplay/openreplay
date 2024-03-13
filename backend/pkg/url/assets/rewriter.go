@@ -1,7 +1,6 @@
 package assets
 
 import (
-	"log"
 	"net/url"
 )
 
@@ -9,13 +8,13 @@ type Rewriter struct {
 	assetsURL *url.URL
 }
 
-func NewRewriter(baseOrigin string) *Rewriter {
+func NewRewriter(baseOrigin string) (*Rewriter, error) {
 	assetsURL, err := url.Parse(baseOrigin)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return &Rewriter{
 		assetsURL: assetsURL,
-	}
+	}, nil
 
 }

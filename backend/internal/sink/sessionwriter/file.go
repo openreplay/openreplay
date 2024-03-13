@@ -3,7 +3,6 @@ package sessionwriter
 import (
 	"bufio"
 	"io"
-	"log"
 	"os"
 )
 
@@ -34,7 +33,6 @@ func (f *File) Write(data []byte) error {
 			if err == nil {
 				break
 			}
-			log.Printf("can't flush buffer: %s", err)
 		}
 		// Write big message directly to file
 		return f.write(f.file, data)

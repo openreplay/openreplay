@@ -24,10 +24,8 @@ import (
 func main() {
 	ctx := context.Background()
 	log := logger.New()
-	cfg := sink.New()
-
-	m := metrics.New()
-	m.Register(sinkMetrics.List())
+	cfg := sink.New(log)
+	metrics.New(log, sinkMetrics.List())
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatal(ctx, "%v doesn't exist. %v", cfg.FsDir, err)
@@ -37,8 +35,11 @@ func main() {
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
-	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	assetMessageHandler := assetscache.New(cfg, log, rewriter, producer)
+	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	if err != nil {
+		log.Fatal(ctx, "can't init rewriter: %s", err)
+	}
+	assetMessageHandler := assetscache.New(log, cfg, rewriter, producer)
 	counter := storage.NewLogCounter()
 
 	var (
@@ -189,7 +190,7 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
 		},
-		messages.NewSinkMessageIterator(msgHandler, nil, false),
+		messages.NewSinkMessageIterator(log, msgHandler, nil, false),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -217,7 +218,7 @@ func main() {
 				log.Error(ctx, "can't commit messages: %s", err)
 			}
 		case <-tickInfo:
-			counter.Print()
+			log.Info(ctx, "%s", counter.Log())
 			log.Info(ctx, "writer: %s", writer.Info())
 		case <-consumer.Rebalanced():
 			s := time.Now()

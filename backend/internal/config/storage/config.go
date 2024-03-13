@@ -4,6 +4,7 @@ import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/objectstorage"
+	"openreplay/backend/pkg/logger"
 	"time"
 )
 
@@ -26,8 +27,8 @@ type Config struct {
 	CompressionAlgo      string        `env:"COMPRESSION_ALGO,default=gzip"` // none, gzip, brotli, zstd
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

@@ -1,6 +1,8 @@
 package builders
 
 import (
+	"context"
+	"openreplay/backend/pkg/logger"
 	"sync"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 const ForceDeleteTimeout = 30 * time.Minute
 
 type builderMap struct {
+	log            logger.Logger
 	handlersFabric func() []handlers.MessageProcessor
 	sessions       map[uint64]*builder
 	mutex          *sync.Mutex
@@ -24,8 +27,9 @@ type EventBuilder interface {
 	Stop()
 }
 
-func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuilder {
+func NewBuilderMap(log logger.Logger, handlersFabric func() []handlers.MessageProcessor) EventBuilder {
 	b := &builderMap{
+		log:            log,
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
 		mutex:          &sync.Mutex{},
@@ -52,7 +56,10 @@ func (m *builderMap) Events() chan Message {
 }
 
 func (m *builderMap) HandleMessage(msg Message) {
-	m.getBuilder(msg.SessionID()).handleMessage(msg)
+	if err := m.getBuilder(msg.SessionID()).handleMessage(msg); err != nil {
+		ctx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
+		m.log.Error(ctx, "can't handle message: %s", err)
+	}
 }
 
 func (m *builderMap) worker() {

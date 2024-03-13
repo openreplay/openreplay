@@ -1,20 +1,23 @@
 package heuristics
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"openreplay/backend/pkg/memory"
-	"openreplay/backend/pkg/messages"
-	metrics "openreplay/backend/pkg/metrics/heuristics"
 	"time"
 
 	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/service"
 	"openreplay/backend/pkg/builders"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/memory"
+	"openreplay/backend/pkg/messages"
+	metrics "openreplay/backend/pkg/metrics/heuristics"
 	"openreplay/backend/pkg/queue/types"
 )
 
 type heuristicsImpl struct {
+	log      logger.Logger
+	ctx      context.Context
 	cfg      *heuristics.Config
 	producer types.Producer
 	consumer types.Consumer
@@ -24,8 +27,10 @@ type heuristicsImpl struct {
 	finished chan struct{}
 }
 
-func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager) service.Interface {
+func New(log logger.Logger, cfg *heuristics.Config, p types.Producer, c types.Consumer, e builders.EventBuilder, mm memory.Manager) service.Interface {
 	s := &heuristicsImpl{
+		log:      log,
+		ctx:      context.Background(),
 		cfg:      cfg,
 		producer: p,
 		consumer: c,
@@ -44,7 +49,7 @@ func (h *heuristicsImpl) run() {
 		select {
 		case evt := <-h.events.Events():
 			if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
-				log.Printf("can't send new event to queue: %s", err)
+				h.log.Error(h.ctx, "can't send new event to queue: %s", err)
 			} else {
 				metrics.IncreaseTotalEvents(messageTypeName(evt))
 			}
@@ -52,14 +57,14 @@ func (h *heuristicsImpl) run() {
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
 		case msg := <-h.consumer.Rebalanced():
-			log.Println(msg)
+			h.log.Info(h.ctx, "rebalanced: %v", msg)
 		case <-h.done:
 			// Stop event builder and flush all events
-			log.Println("stopping heuristics service")
+			h.log.Info(h.ctx, "stopping heuristics service")
 			h.events.Stop()
 			for evt := range h.events.Events() {
 				if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
-					log.Printf("can't send new event to queue: %s", err)
+					h.log.Error(h.ctx, "can't send new event to queue: %s", err)
 				}
 			}
 			h.producer.Close(h.cfg.ProducerTimeout)
@@ -71,7 +76,7 @@ func (h *heuristicsImpl) run() {
 				continue
 			}
 			if err := h.consumer.ConsumeNext(); err != nil {
-				log.Fatalf("Error on consuming: %v", err)
+				h.log.Fatal(h.ctx, "error on consumption: %v", err)
 			}
 		}
 	}

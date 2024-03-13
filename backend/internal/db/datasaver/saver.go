@@ -77,10 +77,6 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		return err
 	}
 	switch m := msg.(type) {
-	case *IOSSessionStart:
-		return s.pg.InsertIOSSessionStart(m.SessionID(), m)
-	case *IOSSessionEnd:
-		return s.pg.InsertIOSSessionEnd(m.SessionID(), m)
 	case *IOSUserID:
 		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
@@ -128,6 +124,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	if err != nil {
 		return err
 	}
+	sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
 	switch m := msg.(type) {
 	case *SessionStart:
 		return s.pg.HandleStartEvent(m)
@@ -189,7 +186,11 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *GraphQL:
 		return s.pg.InsertWebGraphQL(session, m)
 	case *JSException:
-		if err = s.pg.InsertWebErrorEvent(session, types.WrapJSException(m)); err != nil {
+		wrapper, err := types.WrapJSException(m)
+		if err != nil {
+			s.log.Warn(sessCtx, "error on wrapping JSException: %v", err)
+		}
+		if err = s.pg.InsertWebErrorEvent(session, wrapper); err != nil {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)

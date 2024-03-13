@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"log"
 
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/messages/performance"
@@ -32,7 +31,7 @@ func (f *CpuIssueDetector) createPayload() string {
 		Rate     uint64
 	}{f.duration(), f.maxRate})
 	if err != nil {
-		log.Printf("can't marshal CpuIssue payload to json: %s", err)
+		return ""
 	}
 	return string(p)
 }

@@ -1,10 +1,12 @@
 package tags
 
 import (
-	"log"
+	"context"
+	"time"
+
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
-	"time"
+	"openreplay/backend/pkg/logger"
 )
 
 type Tag struct {
@@ -20,12 +22,14 @@ type Tags interface {
 }
 
 type tagsImpl struct {
+	log   logger.Logger
 	db    pool.Pool
 	cache cache.Cache
 }
 
-func New(db pool.Pool) Tags {
+func New(log logger.Logger, db pool.Pool) Tags {
 	return &tagsImpl{
+		log:   log,
 		db:    db,
 		cache: cache.New(time.Minute*5, time.Minute*10),
 	}
@@ -49,7 +53,8 @@ func (t *tagsImpl) Get(projectID uint32) ([]Tag, error) {
 	)
 	for rows.Next() {
 		if err := rows.Scan(&id, &selector, &ignoreClickRage, &ignoreDeadClick); err != nil {
-			log.Printf("can't scan tag: %s", err)
+			ctx := context.WithValue(context.Background(), "projectID", projectID)
+			t.log.Error(ctx, "can't scan tag: %s", err)
 			continue
 		}
 		tags = append(tags, Tag{
@@ -76,7 +81,8 @@ func (t *tagsImpl) ShouldIgnoreTag(projectID uint32, selector string) bool {
 		// Try to load from DB and update cache
 		tagsData, err = t.Get(projectID)
 		if err != nil {
-			log.Printf("can't get tags info: %s", err)
+			ctx := context.WithValue(context.Background(), "projectID", projectID)
+			t.log.Error(ctx, "can't get tags info: %s", err)
 			return false
 		}
 		needToUpdateCache = true

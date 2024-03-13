@@ -5,26 +5,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
-	"log"
 	"math/rand"
 	"net/http"
-	"openreplay/backend/internal/http/util"
-	"openreplay/backend/pkg/featureflags"
-	"openreplay/backend/pkg/sessions"
-	"openreplay/backend/pkg/uxtesting"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/Masterminds/semver"
 	"github.com/klauspost/compress/gzip"
+	"openreplay/backend/internal/http/util"
 	"openreplay/backend/internal/http/uuid"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/flakeid"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/token"
+	"openreplay/backend/pkg/uxtesting"
 )
 
 func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
@@ -45,7 +45,7 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 			return nil, fmt.Errorf("can't read gzip body: %s", err)
 		}
 		if err := reader.Close(); err != nil {
-			log.Printf("can't close gzip reader: %s", err)
+			e.log.Warn(r.Context(), "can't close gzip reader: %s", err)
 		}
 	} else {
 		bodyBytes, err = io.ReadAll(body)
@@ -53,7 +53,7 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 
 	// Close body
 	if closeErr := body.Close(); closeErr != nil {
-		log.Printf("error while closing request body: %s", closeErr)
+		e.log.Warn(r.Context(), "error while closing request body: %s", closeErr)
 	}
 	if err != nil {
 		return nil, err
