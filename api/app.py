@@ -56,7 +56,9 @@ async def lifespan(app: FastAPI):
         "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
 
-    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection)
+    database = psycopg_pool.AsyncConnectionPool(kwargs=database, connection_class=ORPYAsyncConnection,
+                                                min_size=config("PG_AIO_MINCONN", cast=int, default=1),
+                                                max_size=config("PG_AIO_MAXCONN", cast=int, default=5), )
     app.state.postgresql = database
 
     # App listening

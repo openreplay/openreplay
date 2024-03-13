@@ -278,11 +278,7 @@ export default class App {
             gzip(data.batch, { mtime: 0 }, (err, result) => {
               if (err) {
                 this.debug.error('Openreplay compression error:', err)
-                this.stop(false)
-                if (this.restartAttempts < 3) {
-                  this.restartAttempts += 1
-                  void this.start({}, true)
-                }
+                this.worker?.postMessage({ type: 'uncompressed', batch: batch })
               } else {
                 this.worker?.postMessage({ type: 'compressed', batch: result })
               }
