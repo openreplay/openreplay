@@ -157,22 +157,22 @@ function install_openreplay() {
 }
 
 function main() {
-    [[ x$SKIP_K8S_INSTALL == "x1" ]] && {
+    [[ $SKIP_K8S_INSTALL == "1" ]] && {
         info "Skipping Kuberntes installation"
     } || {
         install_k8s
     }
-    [[ x$SKIP_K8S_TOOLS == "x1" ]] && {
+    [[ $SKIP_K8S_TOOLS == "1" ]] && {
         info "Skipping Kuberntes tools installation"
     } || {
         install_tools
     }
-    [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
+    [[ $SKIP_ROTATE_SECRETS == "1" ]] && {
         info "Skipping random password generation"
     } || {
         create_passwords
     }
-    [[ x$SKIP_OR_INSTALL == "x1" ]] && {
+    [[ $SKIP_OR_INSTALL == "1" ]] && {
         info "Skipping OpenReplay installation"
     } || {
         set_permissions
