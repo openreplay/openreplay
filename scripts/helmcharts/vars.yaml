@@ -61,8 +61,8 @@ minio:
     minio:
       # For generating passwords
       # `openssl rand -hex 20`
-      accessKey: "{{ randAlphaNum 20 }}"
-      secretKey: "{{ randAlphaNum 20 }}"
+      accessKey: &accessKey "{{ randAlphaNum 20 }}"
+      secretKey: &secretKey "{{ randAlphaNum 20 }}"
 
 ingress-nginx: &ingress-nginx
   # If you're using an external proxy in front of OpenReplay, update the proxy ports below.
@@ -135,8 +135,8 @@ global:
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
-    accessKey: "{{ randAlphaNum 20 }}"
-    secretKey: "{{ randAlphaNum 20}}"
+    accessKey: *accessKey
+    secretKey: *secretKey
   email:
     emailHost: ''
     emailPort: '587'
