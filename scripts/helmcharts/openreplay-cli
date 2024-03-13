@@ -37,6 +37,7 @@ tools=(
     zyedidia/eget
     stern/stern
     hidetatz/kubecolor
+    rjshrjndrn/templater
 )
 
 # Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
