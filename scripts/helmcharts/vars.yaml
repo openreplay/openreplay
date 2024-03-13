@@ -83,8 +83,7 @@ ingress-nginx: &ingress-nginx
       X-Content-Type-Options: "nosniff"
       Referrer-Policy: "same-origin"
     service:
-      type: ClusterIP
-      # externalTrafficPolicy: "Local"
+      externalTrafficPolicy: "Local"
       ports:
         http: 80
         https: 443
