@@ -16,7 +16,7 @@ export default class QueueSender {
     private readonly onUnauthorised: () => any,
     private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
-    private readonly ATTEMPT_TIMEOUT = 1000,
+    private readonly ATTEMPT_TIMEOUT = 250,
     private readonly onCompress?: (batch: Uint8Array) => any,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
