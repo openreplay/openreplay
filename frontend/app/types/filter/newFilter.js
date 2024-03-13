@@ -923,3 +923,4 @@ export const generateLiveFilterOptions = (map) => {
   });
   return filterSection;
 };
+      console.log(mainFilter, subFilter)

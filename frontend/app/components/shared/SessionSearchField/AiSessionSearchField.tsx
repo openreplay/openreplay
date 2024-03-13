@@ -4,7 +4,7 @@ import { Input, Icon } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
 import { debounce } from 'App/utils';
 import { assist as assistRoute, isRoute } from 'App/routes';
-import { addFilterByKeyAndValue, fetchFilterSearch } from 'Duck/search';
+import { addFilterByKeyAndValue, fetchFilterSearch, edit } from 'Duck/search';
 import {
   addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
   fetchFilterSearch as liveFetchFilterSearch,
@@ -21,6 +21,7 @@ interface Props {
   addFilterByKeyAndValue: (key: string, value: string) => void;
   liveAddFilterByKeyAndValue: (key: string, value: string) => void;
   liveFetchFilterSearch: any;
+  edit: typeof edit;
 }
 
 function SessionSearchField(props: Props) {
@@ -81,7 +82,7 @@ function SessionSearchField(props: Props) {
   );
 }
 
-function AiSearchField() {
+const AiSearchField = observer(({ edit }: Props) => {
   const { aiFiltersStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const debounceAiFetch = React.useCallback(debounce(aiFiltersStore.getSearchFilters, 1000), []);
@@ -92,6 +93,13 @@ function AiSearchField() {
       debounceAiFetch(value);
     }
   };
+
+  React.useEffect(() => {
+    if (aiFiltersStore.filtersSetKey !== 0) {
+      console.log('updating filters', aiFiltersStore.filters, aiFiltersStore.filtersSetKey);
+      edit(aiFiltersStore.filters)
+    }
+  }, [aiFiltersStore.filters, aiFiltersStore.filtersSetKey])
 
   return (
     <div className={'w-full'}>
@@ -106,7 +114,7 @@ function AiSearchField() {
       />
     </div>
   );
-}
+})
 
 function AiSessionSearchField(props: Props) {
   const [tab, setTab] = useState('search');
@@ -144,7 +152,7 @@ function AiSessionSearchField(props: Props) {
             },
           ]}
         />
-        {tab === 'ask' ? <AiSearchField /> : <SessionSearchField {...props} />}
+        {tab === 'ask' ? <AiSearchField {...props} /> : <SessionSearchField {...props} />}
       </div>
     </OutsideClickDetectingDiv>
   );
@@ -178,4 +186,5 @@ export default connect(null, {
   fetchFilterSearch,
   liveFetchFilterSearch,
   liveAddFilterByKeyAndValue,
+  edit,
 })(observer(AiSessionSearchField));

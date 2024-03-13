@@ -12,11 +12,11 @@ export default class AiService extends BaseService {
     return r.json()
   }
 
-  async getSearchFilters(query: string): Promise<string> {
+  async getSearchFilters(query: string): Promise<Record<string, any>> {
     const r = await this.client.post('/intelligent/search', {
       question: query
     })
     const { data } = await r.json();
-    return data.content as string
+    return data
   }
 }
