@@ -89,19 +89,6 @@ function install_tools() {
     }
 }
 
-# ## Installing openssl
-# sudo apt update &> /dev/null
-# sudo apt install openssl -y &> /dev/null
-
-randomPass() {
-    ## Installing openssl
-    exists openssl || {
-        sudo apt update &>/dev/null
-        sudo apt install openssl -y &>/dev/null
-    }
-    openssl rand -hex 10
-}
-
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
@@ -156,44 +143,45 @@ function install_openreplay() {
     helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS}
 }
 
+function conditional_step() {
+    local skip_var=$1
+    local action=$2
+    local message=$3
+
+    if [[ ${!skip_var} == "1" ]]; then
+        echo "$message"
+    else
+        $action
+    fi
+}
+
+function install_openreplay_actions() {
+    set_permissions
+    sudo mkdir -p /var/lib/openreplay
+    sudo cp -f openreplay-cli /bin/openreplay
+    install_openreplay
+
+    local openreplay_dir="/var/lib/openreplay/openreplay"
+    if [[ -d $openreplay_dir ]]; then
+        local versions_file="/var/lib/openreplay/or_versions.txt"
+        date +%m-%d-%Y-%H%M%S | sudo tee -a $versions_file
+        sudo git log -1 2>&1 | sudo tee -a $versions_file
+        sudo rm -rf $openreplay_dir
+    fi
+    sudo mkdir -p $openreplay_dir
+    sudo cp -rfb ./vars.yaml $openreplay_dir/
+    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_dir
+}
+
 function main() {
-    [[ $SKIP_K8S_INSTALL == "1" ]] && {
-        info "Skipping Kuberntes installation"
-    } || {
-        install_k8s
-    }
-    [[ $SKIP_K8S_TOOLS == "1" ]] && {
-        info "Skipping Kuberntes tools installation"
-    } || {
-        install_tools
-    }
-    [[ $SKIP_ROTATE_SECRETS == "1" ]] && {
-        info "Skipping random password generation"
-    } || {
-        create_passwords
-    }
-    [[ $SKIP_OR_INSTALL == "1" ]] && {
-        info "Skipping OpenReplay installation"
-    } || {
-        set_permissions
-        sudo mkdir -p /var/lib/openreplay
-        sudo cp -f openreplay-cli /bin/openreplay
-        install_openreplay
-        # If you install multiple times using init.sh, Only keep the latest installation
-        if [[ -d /var/lib/openreplay/openreplay ]]; then
-            cd /var/lib/openreplay/openreplay
-            date +%m-%d-%Y-%H%M%S | sudo tee -a /var/lib/openreplay/or_versions.txt
-            sudo git log -1 2>&1 | sudo tee -a /var/lib/openreplay/or_versions.txt
-            sudo rm -rf /var/lib/openreplay/openreplay
-            cd -
-        fi
-        sudo cp -rf $(cd ../.. && pwd) /var/lib/openreplay/openreplay
-        sudo cp -rf ./vars.yaml /var/lib/openreplay/
-    }
+    conditional_step "SKIP_K8S_INSTALL" install_k8s "Skipping Kubernetes installation."
+    conditional_step "SKIP_K8S_TOOLS" install_tools "Skipping Kubernetes tools installation."
+    conditional_step "SKIP_ROTATE_SECRETS" create_passwords "Skipping secrets rotation."
+    conditional_step "SKIP_OR_INSTALL" install_openreplay_actions "Skipping OpenReplay installation."
 }
 
 main
 
 info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
-info "You can delete the directory $(echo $(cd ../.. && pwd)). Backup stored in /var/lib/openreplay"
+info "You can delete the directory $(cd ../.. && pwd). Backup stored in /var/lib/openreplay"
 info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
