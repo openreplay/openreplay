@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"log"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -35,9 +35,9 @@ func (c *logCounter) Update(sessID uint64, ts time.Time) {
 	c.mu.Unlock()
 }
 
-func (c *logCounter) Print() {
+func (c *logCounter) Log() string {
 	c.mu.Lock()
-	log.Printf("count: %d, dur: %ds, msgTS: %s, sessID: %d, part: %d",
+	res := fmt.Sprintf("count: %d, dur: %ds, msgTS: %s, sessID: %d, part: %d",
 		c.counter,
 		int(time.Now().Sub(c.timestamp).Seconds()),
 		c.lastTS.String(),
@@ -46,4 +46,5 @@ func (c *logCounter) Print() {
 	)
 	c.mu.Unlock()
 	c.init()
+	return res
 }

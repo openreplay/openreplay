@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +9,7 @@ import (
 
 	"openreplay/backend/internal/canvas-handler"
 	config "openreplay/backend/internal/config/canvas-handler"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
@@ -17,22 +18,19 @@ import (
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(storageMetrics.List())
-
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := config.New()
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, storageMetrics.List())
 
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
-		log.Fatalf("can't init object storage: %s", err)
+		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	srv, err := canvas_handler.New(cfg, objStore)
+	srv, err := canvas_handler.New(cfg, log, objStore)
 	if err != nil {
-		log.Printf("can't init storage service: %s", err)
-		return
+		log.Fatal(ctx, "can't init canvas service: %s", err)
 	}
 
 	canvasConsumer := queue.NewConsumer(
@@ -56,14 +54,15 @@ func main() {
 				}
 				return true
 			}
+			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 
 			if isSessionEnd(data) {
-				if err := srv.PackSessionCanvases(sessID); err != nil {
-					log.Printf("can't prepare canvas: %s", err)
+				if err := srv.PackSessionCanvases(sessCtx, sessID); err != nil {
+					log.Error(sessCtx, "can't pack session's canvases: %s", err)
 				}
 			} else {
-				if err := srv.SaveCanvasToDisk(sessID, data); err != nil {
-					log.Printf("can't process canvas image: %s", err)
+				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {
+					log.Error(sessCtx, "can't process canvas image: %s", err)
 				}
 			}
 		}, nil, true),
@@ -71,7 +70,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Canvas handler service started\n")
+	log.Info(ctx, "canvas handler service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -80,21 +79,21 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Info(ctx, "caught signal %v: terminating", sig)
 			srv.Wait()
 			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
 			if err := canvasConsumer.Commit(); err != nil {
-				log.Printf("can't commit messages: %s", err)
+				log.Error(ctx, "can't commit messages: %s", err)
 			}
 		case msg := <-canvasConsumer.Rebalanced():
-			log.Println(msg)
+			log.Info(ctx, "consumer group rebalanced: %+v", msg)
 		default:
 			err = canvasConsumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on images consumption: %v", err)
+				log.Fatal(ctx, "can't consume next message: %s", err)
 			}
 		}
 	}

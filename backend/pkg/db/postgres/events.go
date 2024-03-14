@@ -1,8 +1,8 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"openreplay/backend/internal/http/geoip"
@@ -68,6 +68,7 @@ func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index ui
 }
 
 func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEvent) error {
+	ctx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 	issueID := hashid.IssueID(sess.ProjectID, e)
 	payload := &e.Payload
 	if *payload == "" || *payload == "{}" {
@@ -75,19 +76,19 @@ func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEven
 	}
 
 	if e.Type == "app_crash" {
-		log.Printf("app crash event: %+v", e)
+		conn.log.Warn(ctx, "app crash event: %+v", e)
 		return nil
 	}
 
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
-		log.Printf("insert web issue err: %s", err)
+		conn.log.Error(ctx, "insert web issue err: %s", err)
 	}
 	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
-		log.Printf("insert web issue event err: %s", err)
+		conn.log.Error(ctx, "insert web issue event err: %s", err)
 	}
 	if e.Type == "custom" {
 		if err := conn.bulks.Get("webCustomEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
-			log.Printf("insert web custom event err: %s", err)
+			conn.log.Error(ctx, "insert web custom event err: %s", err)
 		}
 	}
 	return nil
@@ -116,7 +117,8 @@ func (conn *Conn) InsertWebPageEvent(sess *sessions.Session, e *messages.PageEve
 	if err = conn.bulks.Get("webPageEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
-		log.Printf("insert web page event in bulk err: %s", err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert web page event in bulk err: %s", err)
 	}
 	// Add new value set to autocomplete bulk
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "LOCATION", url.DiscardURLQuery(path))
@@ -131,7 +133,8 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
 	if err := conn.bulks.Get("webClickEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
-		log.Printf("insert web click err: %s", err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert web click event in bulk err: %s", err)
 	}
 	// Add new value set to autocomplete bulk
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK", e.Label)
@@ -149,23 +152,28 @@ func (conn *Conn) InsertInputChangeEvent(sess *sessions.Session, e *messages.Inp
 		e.InputDuration = 0
 	}
 	if err := conn.bulks.Get("webInputDurations").Append(sess.SessionID, truncSqIdx(e.ID), e.Timestamp, e.Label, e.HesitationTime, e.InputDuration); err != nil {
-		log.Printf("insert web input event err: %s", err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert web input duration in bulk err: %s", err)
 	}
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT", e.Label)
 	return nil
 }
 
 func (conn *Conn) InsertWebErrorEvent(sess *sessions.Session, e *types.ErrorEvent) error {
-	errorID := e.ID(sess.ProjectID)
+	sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+	errorID, err := e.ID(sess.ProjectID)
+	if err != nil {
+		conn.log.Warn(sessCtx, "id generation failed: %s", err)
+	}
 	if err := conn.bulks.Get("webErrors").Append(errorID, sess.ProjectID, e.Source, e.Name, e.Message, e.Payload); err != nil {
-		log.Printf("insert web error err: %s", err)
+		conn.log.Error(sessCtx, "insert web error err: %s", err)
 	}
 	if err := conn.bulks.Get("webErrorEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID); err != nil {
-		log.Printf("insert web error event err: %s", err)
+		conn.log.Error(sessCtx, "insert web error event err: %s", err)
 	}
 	for key, value := range e.Tags {
 		if err := conn.bulks.Get("webErrorTags").Append(sess.SessionID, truncSqIdx(e.MessageID), errorID, key, value); err != nil {
-			log.Printf("insert web error token err: %s", err)
+			conn.log.Error(sessCtx, "insert web error token err: %s", err)
 		}
 	}
 	return nil
@@ -194,19 +202,21 @@ func (conn *Conn) InsertWebGraphQL(sess *sessions.Session, e *messages.GraphQL) 
 		response = &e.Response
 	}
 	if err := conn.bulks.Get("webGraphQL").Append(sess.SessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.OperationName, request, response); err != nil {
-		log.Printf("insert web graphQL event err: %s", err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert web graphQL in bulk err: %s", err)
 	}
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "GRAPHQL", e.OperationName)
 	return nil
 }
 
 func (conn *Conn) InsertMouseThrashing(sess *sessions.Session, e *messages.MouseThrashing) error {
+	sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 	issueID := hashid.MouseThrashingID(sess.ProjectID, sess.SessionID, e.Timestamp)
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, "mouse_thrashing", e.Url); err != nil {
-		log.Printf("insert web issue err: %s", err)
+		conn.log.Error(sessCtx, "insert mouse thrashing issue err: %s", err)
 	}
 	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
-		log.Printf("insert web issue event err: %s", err)
+		conn.log.Error(sessCtx, "insert mouse thrashing issue event err: %s", err)
 	}
 	return nil
 }
@@ -214,14 +224,16 @@ func (conn *Conn) InsertMouseThrashing(sess *sessions.Session, e *messages.Mouse
 func (conn *Conn) InsertCanvasNode(sess *sessions.Session, m *messages.CanvasNode) error {
 	canvasID := fmt.Sprintf("%d_%s", m.Timestamp, m.NodeId)
 	if err := conn.bulks.Get("canvasNodes").Append(sess.SessionID, canvasID, m.Timestamp); err != nil {
-		log.Printf("insert canvas node %s to db, err: %s", canvasID, err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert canvas node in bulk err: %s", err)
 	}
 	return nil
 }
 
 func (conn *Conn) InsertTagTrigger(sess *sessions.Session, m *messages.TagTrigger) error {
 	if err := conn.bulks.Get("tagTriggers").Append(sess.SessionID, m.Timestamp, truncSqIdx(m.Index), m.TagId); err != nil {
-		log.Printf("insert tag trigger %d to db, err: %s", m.TagId, err)
+		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+		conn.log.Error(sessCtx, "insert tag trigger %d to db, err: %s", m.TagId, err)
 	}
 	return nil
 }

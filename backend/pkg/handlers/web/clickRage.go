@@ -2,8 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"log"
-
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -33,7 +31,6 @@ func (crd *ClickRageDetector) reset() {
 func (crd *ClickRageDetector) createPayload() string {
 	p, err := json.Marshal(struct{ Count int }{crd.countsInARow})
 	if err != nil {
-		log.Printf("can't marshal ClickRage payload to json: %s", err)
 		return ""
 	}
 	return string(p)

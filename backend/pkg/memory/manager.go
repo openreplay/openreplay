@@ -1,11 +1,13 @@
 package memory
 
 import (
+	"context"
 	"errors"
-	"log"
 	"runtime"
 	"sync"
 	"time"
+
+	"openreplay/backend/pkg/logger"
 )
 
 type Manager interface {
@@ -13,6 +15,7 @@ type Manager interface {
 }
 
 type managerImpl struct {
+	log       logger.Logger
 	mutex     *sync.RWMutex
 	current   uint64
 	maximum   uint64
@@ -21,12 +24,15 @@ type managerImpl struct {
 	total     uint64
 }
 
-func NewManager(maximumMemory, thresholdValue uint64) (Manager, error) {
+func NewManager(log logger.Logger, maximumMemory, thresholdValue uint64) (Manager, error) {
+	ctx := context.Background()
 	if maximumMemory < 1 {
-		log.Println("maximumMemory is not defined, try to parse memory limit from system")
+		log.Info(ctx, "maximumMemory is not defined, try to parse memory limit from system")
 		memLimit, err := parseMemoryLimit()
 		if err != nil {
-			log.Println("can't parse system memory limit, err: ", err)
+			log.Error(ctx, "can't parse system memory limit, err: ", err)
+		} else {
+			log.Info(ctx, "memory limit is defined: %d MiB", memLimit)
 		}
 		if memLimit > 0 {
 			maximumMemory = uint64(memLimit)
@@ -36,6 +42,7 @@ func NewManager(maximumMemory, thresholdValue uint64) (Manager, error) {
 		return nil, errors.New("threshold must be less than 100")
 	}
 	m := &managerImpl{
+		log:       log,
 		mutex:     &sync.RWMutex{},
 		threshold: thresholdValue,
 		maximum:   maximumMemory,
@@ -57,7 +64,7 @@ func (m *managerImpl) calcMemoryUsage() {
 	allocated := rtm.Alloc / 1024 / 1024
 	total := rtm.Sys / 1024 / 1024
 	if allocated > m.maximum && m.HasFreeMemory() {
-		log.Println("memory consumption is greater than maximum memory, current: ", allocated, "maximum: ", m.maximum)
+		m.log.Warn(context.Background(), "memory consumption is greater than maximum memory, current: %d, maximum: %d", allocated, m.maximum)
 	}
 	current := uint64(float64(allocated*100) / float64(m.maximum))
 	m.mutex.Lock()
@@ -68,7 +75,7 @@ func (m *managerImpl) calcMemoryUsage() {
 }
 
 func (m *managerImpl) printStat() {
-	log.Printf("current memory consumption: %d, allocated: %d, maximum: %d, current usage: %d, threshold: %d",
+	m.log.Info(context.Background(), "current memory consumption: %d, allocated: %d, maximum: %d, current usage: %d, threshold: %d",
 		m.total, m.allocated, m.maximum, m.current, m.threshold)
 }
 

@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -46,7 +45,10 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 		return nil, errors.New("object storage is nil")
 	}
 
-	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
+	rewriter, err := assets.NewRewriter(cfg.AssetsOrigin)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't create rewriter")
+	}
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -59,12 +61,13 @@ func NewCacher(cfg *config.Config, store objectstorage.ObjectStorage) (*cacher, 
 
 		cert, err = tls.LoadX509KeyPair(cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
 		if err != nil {
-			log.Fatalf("Error creating x509 keypair from the client cert file %s and client key file %s , Error: %s", err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
+			return nil, fmt.Errorf("error creating x509 keypair from the client cert file %s and client key file %s , Error: %s",
+				err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
 		}
 
 		caCert, err := os.ReadFile(cfg.CaCertFilePath)
 		if err != nil {
-			log.Fatalf("Error opening cert file %s, Error: %s", cfg.CaCertFilePath, err)
+			return nil, fmt.Errorf("error opening cert file %s, Error: %s", cfg.CaCertFilePath, err)
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)

@@ -1,7 +1,6 @@
 package cacher
 
 import (
-	"log"
 	"sync"
 )
 
@@ -71,10 +70,8 @@ func (p *WorkerPool) AddTask(task *Task) {
 }
 
 func (p *WorkerPool) Stop() {
-	log.Printf("stopping workers")
 	p.term.Do(func() {
 		close(p.done)
 	})
 	p.wg.Wait()
-	log.Printf("all workers have been stopped")
 }
