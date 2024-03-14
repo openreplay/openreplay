@@ -70,7 +70,7 @@ create_passwords() {
 
     info "Creating dynamic passwords"
     templater -i vars.yaml -o vars.yaml
-    yq e -i '.domainName = strenv(DOMAIN_NAME)' vars.yaml
+    yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
 }
 
 function set_permissions() {
