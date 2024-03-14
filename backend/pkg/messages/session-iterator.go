@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"sort"
 )
 
@@ -21,27 +20,28 @@ func (m *msgInfo) Print() string {
 	return fmt.Sprintf("index: %d, start: %d, end: %d, type: %d, body: %s", m.index, m.start, m.end, m.msgType, m.body)
 }
 
-func SplitMessages(sessID string, data []byte) ([]*msgInfo, error) {
+func SplitMessages(data []byte) ([]*msgInfo, error) {
 	messages := make([]*msgInfo, 0)
 	indexes := make(map[uint64]bool)
 	hadDuplicates := false
 	var lastTimestamp uint64
 	reader := NewBytesReader(data)
+	var err error = nil
 	for {
 		// Get message start
 		msgStart := reader.Pointer()
 		if int(msgStart) >= len(data) {
-			return messages, nil
+			return messages, err
 		}
 
 		// Read message index
 		msgIndex, err := reader.ReadIndex()
 		if err != nil {
 			if err != io.EOF {
-				log.Println(reader.Pointer(), msgStart)
-				return messages, fmt.Errorf("read message index err: %s", err)
+				return messages, fmt.Errorf("can't read message's index, msgStart: %d, pointer: %d, err: %s",
+					msgStart, reader.Pointer(), err)
 			}
-			return messages, nil
+			return messages, err
 		}
 
 		// Read message type
@@ -58,7 +58,6 @@ func SplitMessages(sessID string, data []byte) ([]*msgInfo, error) {
 
 		if _, ok := indexes[msgIndex]; ok && !hadDuplicates {
 			hadDuplicates = true
-			log.Printf("Session %s has duplicate messages", sessID)
 			continue
 		}
 		indexes[msgIndex] = true
@@ -67,6 +66,7 @@ func SplitMessages(sessID string, data []byte) ([]*msgInfo, error) {
 		if msgType == MsgTimestamp {
 			msgBody := body.(*Timestamp)
 			lastTimestamp = msgBody.Timestamp
+			err = fmt.Errorf("session has duplicate messages")
 		}
 
 		// Add new message info to messages slice

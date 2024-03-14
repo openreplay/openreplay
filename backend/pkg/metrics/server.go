@@ -1,24 +1,29 @@
 package metrics
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
-	"net/http"
+
+	"openreplay/backend/pkg/logger"
 )
 
 type MetricServer struct {
 	registry *prometheus.Registry
 }
 
-func New() *MetricServer {
+func New(log logger.Logger, cs []prometheus.Collector) {
 	registry := prometheus.NewRegistry()
 	// Add go runtime metrics and process collectors.
 	registry.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
+	// Add extra metrics
+	registry.MustRegister(cs...)
 	// Expose /metrics HTTP endpoint using the created custom registry.
 	http.Handle(
 		"/metrics", promhttp.HandlerFor(
@@ -28,13 +33,6 @@ func New() *MetricServer {
 			}),
 	)
 	go func() {
-		log.Println(http.ListenAndServe(":8888", nil))
+		log.Error(context.Background(), "%v", http.ListenAndServe(":8888", nil))
 	}()
-	return &MetricServer{
-		registry: registry,
-	}
-}
-
-func (s *MetricServer) Register(cs []prometheus.Collector) {
-	s.registry.MustRegister(cs...)
 }

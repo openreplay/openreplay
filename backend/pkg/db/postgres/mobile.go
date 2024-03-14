@@ -1,22 +1,13 @@
 package postgres
 
 import (
-	"log"
+	"context"
+
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 )
-
-func (conn *Conn) InsertIOSSessionStart(sessionID uint64, e *messages.IOSSessionStart) error {
-	log.Printf("handle ios session %d start: %v", sessionID, e)
-	return nil
-}
-
-func (conn *Conn) InsertIOSSessionEnd(sessionID uint64, e *messages.IOSSessionEnd) error {
-	log.Printf("handle ios session %d end: %v", sessionID, e)
-	return nil
-}
 
 func (conn *Conn) InsertIOSEvent(session *sessions.Session, e *messages.IOSEvent) error {
 	if err := conn.InsertCustomEvent(session.SessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload); err != nil {
@@ -112,11 +103,12 @@ func (conn *Conn) InsertIOSIssueEvent(sess *sessions.Session, e *messages.IOSIss
 		payload = nil
 	}
 
+	ctx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
-		log.Printf("insert web issue err: %s", err)
+		conn.log.Error(ctx, "can't add web issue to PG, err: %s", err)
 	}
 	if err := conn.bulks.Get("webIssueEvents").Append(sess.SessionID, issueID, e.Timestamp, truncSqIdx(e.Index), payload); err != nil {
-		log.Printf("insert web issue event err: %s", err)
+		conn.log.Error(ctx, "can't add web issue event to PG, err: %s", err)
 	}
 	return nil
 }

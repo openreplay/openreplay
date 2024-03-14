@@ -3,7 +3,6 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -24,7 +23,6 @@ func parseMemoryLimit() (int, error) {
 		if strings.Contains(line, Limit) {
 			lineParts := strings.Split(line, " ")
 			if len(lineParts) != 2 {
-				log.Println("can't parse memory limit")
 				return 0, fmt.Errorf("can't split string with memory limit, str: %s", line)
 			}
 			value, err := strconv.Atoi(lineParts[1])
@@ -36,7 +34,6 @@ func parseMemoryLimit() (int, error) {
 			}
 			// DEBUG_LOG
 			value /= 1024 * 1024
-			log.Printf("memory limit is defined: %d MiB", value)
 			return value, nil
 		}
 	}

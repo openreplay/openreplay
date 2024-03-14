@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/http2"
-	"log"
 	"net/http"
 	"time"
 )
@@ -29,9 +28,7 @@ func New(handler http.Handler, host, port string, timeout time.Duration) (*Serve
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
 	}
-	if err := http2.ConfigureServer(server, nil); err != nil {
-		log.Printf("can't configure http server: %s", err)
-	}
+	http2.ConfigureServer(server, nil)
 	return &Server{
 		server: server,
 	}, nil

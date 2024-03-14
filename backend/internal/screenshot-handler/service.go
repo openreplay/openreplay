@@ -3,9 +3,10 @@ package screenshot_handler
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
-	"log"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/pool"
 	"os"
@@ -18,11 +19,13 @@ import (
 )
 
 type saveTask struct {
+	ctx       context.Context
 	sessionID uint64
 	images    map[string]*bytes.Buffer
 }
 
 type uploadTask struct {
+	ctx       context.Context
 	sessionID string
 	path      string
 	name      string
@@ -30,18 +33,20 @@ type uploadTask struct {
 
 type ImageStorage struct {
 	cfg          *config.Config
+	log          logger.Logger
 	objStorage   objectstorage.ObjectStorage
 	saverPool    pool.WorkerPool
 	uploaderPool pool.WorkerPool
 }
 
-func New(cfg *config.Config, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
+func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*ImageStorage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	}
 	s := &ImageStorage{
 		cfg:        cfg,
+		log:        log,
 		objStorage: objStorage,
 	}
 	s.saverPool = pool.NewPool(4, 8, s.writeToDisk)
@@ -54,7 +59,7 @@ func (v *ImageStorage) Wait() {
 	v.uploaderPool.Pause()
 }
 
-func (v *ImageStorage) Process(sessID uint64, data []byte) error {
+func (v *ImageStorage) Process(ctx context.Context, sessID uint64, data []byte) error {
 	start := time.Now()
 	images := make(map[string]*bytes.Buffer)
 	uncompressedStream, err := gzip.NewReader(bytes.NewReader(data))
@@ -79,12 +84,12 @@ func (v *ImageStorage) Process(sessID uint64, data []byte) error {
 			}
 			images[header.Name] = &buf
 		} else {
-			log.Printf("ExtractTarGz: uknown type: %d in %s", header.Typeflag, header.Name)
+			v.log.Error(ctx, "ExtractTarGz: unknown type: %d in %s", header.Typeflag, header.Name)
 		}
 	}
 
-	log.Printf("sessID: %d, arch size: %d, extracted archive in: %s", sessID, len(data), time.Since(start))
-	v.saverPool.Submit(&saveTask{sessionID: sessID, images: images})
+	v.log.Info(ctx, "arch size: %d, extracted archive in: %s", len(data), time.Since(start))
+	v.saverPool.Submit(&saveTask{ctx: ctx, sessionID: sessID, images: images})
 	return nil
 }
 
@@ -100,7 +105,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
-		log.Fatalf("Error creating directories: %v", err)
+		v.log.Fatal(task.ctx, "Error creating directories: %v", err)
 	}
 
 	// Write images to disk
@@ -108,19 +113,19 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	for name, img := range task.images {
 		outFile, err := os.Create(path + name) // or open file in rewrite mode
 		if err != nil {
-			log.Printf("can't create file: %s", err.Error())
+			v.log.Error(task.ctx, "can't create file: %s", err.Error())
 		}
 		if _, err := io.Copy(outFile, img); err != nil {
-			log.Printf("can't copy file: %s", err.Error())
+			v.log.Error(task.ctx, "can't copy file: %s", err.Error())
 		}
 		outFile.Close()
 		saved++
 	}
-	log.Printf("saved %d images to disk", saved)
+	v.log.Info(task.ctx, "saved %d images to disk", saved)
 	return
 }
 
-func (v *ImageStorage) PackScreenshots(sessID uint64, filesPath string) error {
+func (v *ImageStorage) PackScreenshots(ctx context.Context, sessID uint64, filesPath string) error {
 	// Temporarily disabled for tests
 	if v.objStorage == nil {
 		return fmt.Errorf("object storage is empty")
@@ -139,12 +144,11 @@ func (v *ImageStorage) PackScreenshots(sessID uint64, filesPath string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		log.Printf("Failed to execute command: %v, stderr: %v", err, stderr.String())
-		return err
+		return fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
-	log.Printf("packed replay in %v", time.Since(start))
+	v.log.Info(ctx, "packed replay in %v", time.Since(start))
 
-	v.uploaderPool.Submit(&uploadTask{sessionID: sessionID, path: archPath, name: sessionID + "/replay.tar.zst"})
+	v.uploaderPool.Submit(&uploadTask{ctx: ctx, sessionID: sessionID, path: archPath, name: sessionID + "/replay.tar.zst"})
 	return nil
 }
 
@@ -153,11 +157,11 @@ func (v *ImageStorage) sendToS3(payload interface{}) {
 	start := time.Now()
 	video, err := os.ReadFile(task.path)
 	if err != nil {
-		log.Fatalf("Failed to read video file: %v", err)
+		v.log.Fatal(task.ctx, "failed to read replay file: %s", err)
 	}
 	if err := v.objStorage.Upload(bytes.NewReader(video), task.name, "application/octet-stream", objectstorage.Zstd); err != nil {
-		log.Fatalf("Storage: start uploading replay failed. %s", err)
+		v.log.Fatal(task.ctx, "failed to upload replay file: %s", err)
 	}
-	log.Printf("Replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
+	v.log.Info(task.ctx, "replay file (size: %d) uploaded successfully in %v", len(video), time.Since(start))
 	return
 }

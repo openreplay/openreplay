@@ -2,8 +2,9 @@ package sessions
 
 import (
 	"fmt"
+
 	"github.com/jackc/pgtype"
-	"log"
+
 	"openreplay/backend/pkg/db/postgres/pool"
 )
 
@@ -134,9 +135,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	if revID != nil {
 		sess.RevID = *revID
 	}
-	if err := issueTypes.AssignTo(&sess.IssueTypes); err != nil {
-		log.Printf("can't scan IssueTypes, err: %s", err)
-	}
+	issueTypes.AssignTo(&sess.IssueTypes)
 	if userState != nil {
 		sess.UserState = *userState
 	}

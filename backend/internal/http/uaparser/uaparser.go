@@ -1,7 +1,6 @@
 package uaparser
 
 import (
-	"log"
 	"strings"
 
 	"github.com/ua-parser/uap-go/uaparser"
@@ -11,12 +10,12 @@ type UAParser struct {
 	p *uaparser.Parser
 }
 
-func NewUAParser(regexFile string) *UAParser {
+func NewUAParser(regexFile string) (*UAParser, error) {
 	p, err := uaparser.New(regexFile)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
-	return &UAParser{p}
+	return &UAParser{p}, nil
 }
 
 type UA struct {

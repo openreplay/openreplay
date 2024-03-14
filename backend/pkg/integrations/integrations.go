@@ -1,18 +1,20 @@
 package integrations
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/intervals"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/token"
 )
 
 type Listener struct {
+	log       logger.Logger
 	cfg       *config.Config
 	storage   Storage
 	producer  types.Producer
@@ -21,8 +23,9 @@ type Listener struct {
 	Errors    chan error
 }
 
-func New(cfg *config.Config, storage Storage, producer types.Producer, manager *Manager, tokenizer *token.Tokenizer) (*Listener, error) {
+func New(log logger.Logger, cfg *config.Config, storage Storage, producer types.Producer, manager *Manager, tokenizer *token.Tokenizer) (*Listener, error) {
 	listener := &Listener{
+		log:       log,
 		cfg:       cfg,
 		storage:   storage,
 		Errors:    make(chan error),
@@ -37,7 +40,7 @@ func New(cfg *config.Config, storage Storage, producer types.Producer, manager *
 	for _, i := range ints {
 		// Add new integration to manager
 		if err = manager.Update(i); err != nil {
-			log.Printf("Integration parse error: %v | Integration: %v\n", err, *i)
+			log.Error(context.Background(), "integration parse error: %v | integration: %v", err, *i)
 		}
 	}
 	manager.RequestAll()
@@ -53,12 +56,12 @@ func (l *Listener) worker() {
 		case <-clientsCheckTick:
 			l.manager.RequestAll()
 		case event := <-l.manager.Events:
-			log.Printf("New integration event: %+v\n", *event.IntegrationEvent)
+			l.log.Info(context.Background(), "new integration event: %+v", *event.IntegrationEvent)
 			sessionID := event.SessionID
 			if sessionID == 0 {
 				sessData, err := l.tokenizer.Parse(event.Token)
 				if err != nil && err != token.EXPIRED {
-					log.Printf("Error on token parsing: %v; Token: %v", err, event.Token)
+					l.log.Error(context.Background(), "error on token parsing: %v; token: %v", err, event.Token)
 					continue
 				}
 				sessionID = sessData.ID
@@ -66,10 +69,10 @@ func (l *Listener) worker() {
 			// Why do we produce integration events to analytics topic
 			l.producer.Produce(l.cfg.TopicAnalytics, sessionID, event.IntegrationEvent.Encode())
 		case err := <-l.manager.Errors:
-			log.Printf("Integration error: %v\n", err)
+			l.log.Error(context.Background(), "integration error: %v", err)
 		case i := <-l.manager.RequestDataUpdates:
 			if err := l.storage.Update(&i); err != nil {
-				log.Printf("Postgres Update request_data error: %v\n", err)
+				l.log.Error(context.Background(), "Postgres update request_data error: %v", err)
 			}
 		default:
 			newNotification, err := l.storage.CheckNew()
@@ -80,10 +83,10 @@ func (l *Listener) worker() {
 				l.Errors <- fmt.Errorf("Integration storage error: %v", err)
 				continue
 			}
-			log.Printf("Integration update: %v\n", *newNotification)
+			l.log.Info(context.Background(), "integration update: %v", *newNotification)
 			err = l.manager.Update(newNotification)
 			if err != nil {
-				log.Printf("Integration parse error: %v | Integration: %v\n", err, *newNotification)
+				l.log.Error(context.Background(), "integration parse error: %v | integration: %v", err, *newNotification)
 			}
 		}
 	}

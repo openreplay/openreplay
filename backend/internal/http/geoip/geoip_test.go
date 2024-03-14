@@ -48,7 +48,7 @@ func TestGeoIP(t *testing.T) {
 	LoadGeoLiteDB()
 	defer DeleteGeoLiteDB()
 
-	geoIP := New("geo.mmdb")
+	geoIP, _ := New("geo.mmdb")
 
 	ip := net.ParseIP("92.151.113.120")
 	correctResult := &GeoRecord{

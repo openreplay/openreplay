@@ -2,7 +2,7 @@ package ios
 
 import (
 	"encoding/json"
-	"log"
+
 	"openreplay/backend/pkg/handlers"
 	. "openreplay/backend/pkg/messages"
 )
@@ -22,7 +22,6 @@ type TapRageDetector struct {
 func (h *TapRageDetector) createPayload() string {
 	p, err := json.Marshal(struct{ Count int }{h.countsInARow})
 	if err != nil {
-		log.Printf("can't marshal TapRage payload to json: %s", err)
 		return ""
 	}
 	return string(p)

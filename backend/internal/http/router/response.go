@@ -1,8 +1,8 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -17,18 +17,20 @@ func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
 	metrics.RecordRequestDuration(float64(time.Now().Sub(requestStart).Milliseconds()), url, code)
 }
 
-func ResponseOK(w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
+func (e *Router) ResponseOK(ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
 	w.WriteHeader(http.StatusOK)
+	e.log.Info(ctx, "response ok")
 	recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
-func ResponseWithJSON(w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
+func (e *Router) ResponseWithJSON(ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
 	body, err := json.Marshal(res)
 	if err != nil {
-		log.Println(err)
+		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
+	e.log.Info(ctx, "response ok")
 	recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
@@ -36,12 +38,13 @@ type response struct {
 	Error string `json:"error"`
 }
 
-func ResponseWithError(w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
+func (e *Router) ResponseWithError(ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
 	body, err := json.Marshal(&response{err.Error()})
 	if err != nil {
-		log.Println(err)
+		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.WriteHeader(code)
 	w.Write(body)
+	e.log.Error(ctx, "response error, code: %d, error: %s", code, err)
 	recordMetrics(requestStart, url, code, bodySize)
 }

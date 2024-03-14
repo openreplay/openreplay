@@ -1,10 +1,12 @@
 package sessions
 
 import (
-	"log"
+	"context"
+	"fmt"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/url"
 )
@@ -29,25 +31,28 @@ type Sessions interface {
 }
 
 type sessionsImpl struct {
+	log      logger.Logger
 	cache    Cache
 	storage  Storage
 	updates  Updates
 	projects projects.Projects
 }
 
-func New(db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
+func New(log logger.Logger, db pool.Pool, proj projects.Projects, redis *redis.Client) Sessions {
 	return &sessionsImpl{
-		cache:    NewInMemoryCache(NewCache(redis)),
+		log:      log,
+		cache:    NewInMemoryCache(log, NewCache(redis)),
 		storage:  NewStorage(db),
-		updates:  NewSessionUpdates(db),
+		updates:  NewSessionUpdates(log, db),
 		projects: proj,
 	}
 }
 
 // Add usage: /start endpoint in http service
 func (s *sessionsImpl) Add(session *Session) error {
+	ctx := context.WithValue(context.Background(), "sessionID", session.SessionID)
 	if cachedSession, err := s.cache.Get(session.SessionID); err == nil {
-		log.Printf("[!] Session %d already exists in cache, new: %+v, cached: %+v", session.SessionID, session, cachedSession)
+		s.log.Info(ctx, "[!] Session already exists in cache, new: %+v, cached: %+v", session, cachedSession)
 	}
 	err := s.storage.Add(session)
 	if err != nil {
@@ -59,7 +64,7 @@ func (s *sessionsImpl) Add(session *Session) error {
 	}
 	session.SaveRequestPayload = proj.SaveRequestPayloads
 	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
+		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return nil
 }
@@ -72,8 +77,7 @@ func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
 func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	session, err := s.storage.Get(sessionID)
 	if err != nil {
-		log.Printf("Failed to get session from postgres: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to get session from postgres: %s", err)
 	}
 	proj, err := s.projects.GetProject(session.ProjectID)
 	if err != nil {
@@ -105,7 +109,8 @@ func (s *sessionsImpl) GetUpdated(sessionID uint64) (*Session, error) {
 		return nil, err
 	}
 	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return session, nil
 }
@@ -131,7 +136,8 @@ func (s *sessionsImpl) GetDuration(sessionID uint64) (uint64, error) {
 		return 0, err
 	}
 	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	if session.Duration != nil {
 		return *session.Duration, nil
@@ -153,30 +159,32 @@ func (s *sessionsImpl) UpdateDuration(sessionID uint64, timestamp uint64) (uint6
 
 	session.Duration = &newDuration
 	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return newDuration, nil
 }
 
 // UpdateEncryptionKey usage: in ender to update session encryption key if encryption is enabled
 func (s *sessionsImpl) UpdateEncryptionKey(sessionID uint64, key []byte) error {
+	ctx := context.WithValue(context.Background(), "sessionID", sessionID)
 	if err := s.storage.InsertEncryptionKey(sessionID, key); err != nil {
 		return err
 	}
 	if session, err := s.cache.Get(sessionID); err != nil {
 		session.EncryptionKey = string(key)
 		if err := s.cache.Set(session); err != nil {
-			log.Printf("Failed to cache session: %v", err)
+			s.log.Warn(ctx, "failed to cache session: %s", err)
 		}
 		return nil
 	}
 	session, err := s.getFromDB(sessionID)
 	if err != nil {
-		log.Printf("Failed to get session from postgres: %v", err)
+		s.log.Error(ctx, "failed to get session from postgres: %s", err)
 		return nil
 	}
 	if err := s.cache.Set(session); err != nil {
-		log.Printf("Failed to cache session: %v", err)
+		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return nil
 }

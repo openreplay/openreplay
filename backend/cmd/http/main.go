@@ -1,9 +1,7 @@
 package main
 
 import (
-	"log"
-	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/db/redis"
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +10,9 @@ import (
 	"openreplay/backend/internal/http/router"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/internal/http/services"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	httpMetrics "openreplay/backend/pkg/metrics/http"
@@ -19,64 +20,55 @@ import (
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(httpMetrics.List())
-	m.Register(databaseMetrics.List())
-
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := http.New()
+	ctx := context.Background()
+	log := logger.New()
+	cfg := http.New(log)
+	metrics.New(log, append(httpMetrics.List(), databaseMetrics.List()...))
 
 	// Connect to queue
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	// Init postgres connection
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
-		log.Printf("can't init postgres connection: %s", err)
-		return
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
-	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
-		log.Printf("can't init redis connection: %s", err)
+		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisClient.Close()
 
-	// Build all services
-	services, err := services.New(cfg, producer, pgConn, redisClient)
+	services, err := services.New(log, cfg, producer, pgConn, redisClient)
 	if err != nil {
-		log.Fatalf("failed while creating services: %s", err)
+		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
 
-	// Init server's routes
-	router, err := router.NewRouter(cfg, services)
+	router, err := router.NewRouter(cfg, log, services)
 	if err != nil {
-		log.Fatalf("failed while creating engine: %s", err)
+		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 
-	// Init server
 	server, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
-		log.Fatalf("failed while creating server: %s", err)
+		log.Fatal(ctx, "failed while creating server: %s", err)
 	}
 
 	// Run server
 	go func() {
 		if err := server.Start(); err != nil {
-			log.Fatalf("Server error: %v\n", err)
+			log.Fatal(ctx, "http server error: %s", err)
 		}
 	}()
 
-	log.Printf("Server successfully started on port %v\n", cfg.HTTPPort)
+	log.Info(ctx, "server successfully started on port %s", cfg.HTTPPort)
 
 	// Wait stop signal to shut down server gracefully
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigchan
-	log.Printf("Shutting down the server\n")
+	log.Info(ctx, "shutting down the server")
 	server.Stop()
 }

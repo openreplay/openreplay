@@ -7,5 +7,5 @@ import (
 )
 
 func (e *Router) getConditions(w http.ResponseWriter, r *http.Request) {
-	ResponseWithError(w, http.StatusNotImplemented, errors.New("no support"), time.Now(), r.URL.Path, 0)
+	e.ResponseWithError(r.Context(), w, http.StatusNotImplemented, errors.New("no support"), time.Now(), r.URL.Path, 0)
 }

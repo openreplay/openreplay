@@ -1,10 +1,12 @@
 package terminator
 
 import (
-	"log"
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"openreplay/backend/pkg/logger"
 )
 
 // ServiceStopper is a common interface for all services
@@ -12,11 +14,11 @@ type ServiceStopper interface {
 	Stop()
 }
 
-func Wait(s ServiceStopper) {
+func Wait(log logger.Logger, s ServiceStopper) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigChan
-	log.Printf("Caught signal %v: terminating\n", sig)
+	log.Info(context.Background(), "caught signal %v: terminating", sig)
 	s.Stop()
 	os.Exit(0)
 }

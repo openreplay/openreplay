@@ -1,17 +1,18 @@
 package assetscache
 
 import (
+	"context"
 	"crypto/md5"
 	"io"
-	"log"
 	"net/url"
-	metrics "openreplay/backend/pkg/metrics/sink"
 	"strings"
 	"sync"
 	"time"
 
 	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	metrics "openreplay/backend/pkg/metrics/sink"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -22,6 +23,7 @@ type CachedAsset struct {
 }
 
 type AssetsCache struct {
+	log       logger.Logger
 	mutex     sync.RWMutex
 	cfg       *sink.Config
 	rewriter  *assets.Rewriter
@@ -30,8 +32,9 @@ type AssetsCache struct {
 	blackList []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
 }
 
-func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
+func New(log logger.Logger, cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	assetsCache := &AssetsCache{
+		log:       log,
 		cfg:       cfg,
 		rewriter:  rewriter,
 		producer:  producer,
@@ -76,7 +79,7 @@ func (e *AssetsCache) clearCache() {
 			metrics.DecreaseCachedAssets()
 		}
 	}
-	log.Printf("cache cleaner: deleted %d/%d assets", deleted, cacheSize)
+	e.log.Info(context.Background(), "cache cleaner: deleted %d/%d assets", deleted, cacheSize)
 }
 
 func (e *AssetsCache) shouldSkipAsset(baseURL string) bool {
@@ -172,7 +175,8 @@ func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relati
 			sessionID,
 			assetMessage.Encode(),
 		); err != nil {
-			log.Printf("can't send asset to cache topic, sessID: %d, err: %s", sessionID, err)
+			ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+			e.log.Error(ctx, "can't send asset to cache topic, sessID: %d, err: %s", sessionID, err)
 		}
 	}
 }
@@ -207,7 +211,8 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	// Cut first part of url (scheme + host)
 	justUrl, err := parseHost(baseURL)
 	if err != nil {
-		log.Printf("can't parse url: %s, err: %s", baseURL, err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		e.log.Error(ctx, "can't parse url: %s, err: %s", baseURL, err)
 		if e.cfg.CacheAssets {
 			e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
 		}
