@@ -2,6 +2,7 @@ package redisstream
 
 import (
 	"github.com/go-redis/redis"
+	"log"
 
 	"openreplay/backend/pkg/env"
 )
@@ -12,8 +13,12 @@ type Producer struct {
 }
 
 func NewProducer() *Producer {
+	redClient, err := getRedisClient()
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &Producer{
-		redis:        getRedisClient(),
+		redis:        redClient,
 		maxLenApprox: int64(env.Uint64("REDIS_STREAMS_MAX_LEN")),
 	}
 }

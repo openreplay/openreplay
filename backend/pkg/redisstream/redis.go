@@ -1,7 +1,6 @@
 package redisstream
 
 import (
-	"log"
 	"regexp"
 
 	"github.com/go-redis/redis"
@@ -11,9 +10,9 @@ import (
 
 var redisClient *redis.Client
 
-func getRedisClient() *redis.Client {
+func getRedisClient() (*redis.Client, error) {
 	if redisClient != nil {
-		return redisClient
+		return redisClient, nil
 	}
 
 	connectionString := env.String("REDIS_STRING")
@@ -25,12 +24,12 @@ func getRedisClient() *redis.Client {
 
 	options, err := redis.ParseURL(connectionString)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	redisClient = redis.NewClient(options)
 	if _, err := redisClient.Ping().Result(); err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
-	return redisClient
+	return redisClient, nil
 }

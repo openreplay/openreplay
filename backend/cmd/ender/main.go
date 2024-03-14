@@ -45,8 +45,8 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(pgConn, redisClient)
-	sessManager := sessions.New(pgConn, projManager, redisClient)
+	projManager := projects.New(log, pgConn, redisClient)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient)
 
 	sessionEndGenerator, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {

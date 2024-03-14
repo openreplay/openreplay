@@ -1,7 +1,5 @@
 package projects
 
-import "log"
-
 type Project struct {
 	ProjectID           uint32
 	ProjectKey          string
@@ -24,7 +22,6 @@ type Project struct {
 
 func (p *Project) GetMetadataNo(key string) uint {
 	if p == nil {
-		log.Printf("GetMetadataNo: Project is nil")
 		return 0
 	}
 	if p.Metadata1 != nil && *(p.Metadata1) == key {

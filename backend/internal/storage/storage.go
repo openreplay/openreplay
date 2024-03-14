@@ -181,10 +181,14 @@ func (s *Storage) openSession(ctx context.Context, sessID, filePath string, tp F
 
 func (s *Storage) sortSessionMessages(ctx context.Context, sessID string, raw []byte) ([]byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
-	unsortedMessages, err := messages.SplitMessages(sessID, raw)
+	unsortedMessages, err := messages.SplitMessages(raw)
 	if err != nil {
-		s.log.Error(ctx, "can't split session messages: %s", err)
-		return raw, nil
+		if err.Error() == "session has duplicate messages" {
+			s.log.Warn(ctx, err.Error())
+		} else {
+			s.log.Error(ctx, "can't split session messages: %s", err)
+			return raw, nil
+		}
 	}
 	return messages.MergeMessages(raw, messages.SortMessages(unsortedMessages)), nil
 }

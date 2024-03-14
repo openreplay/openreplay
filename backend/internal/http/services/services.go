@@ -36,7 +36,7 @@ type ServicesBuilder struct {
 }
 
 func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
-	projs := projects.New(pgconn, redis)
+	projs := projects.New(log, pgconn, redis)
 	// ObjectStorage client to generate pre-signed upload urls
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -52,7 +52,7 @@ func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn po
 	}
 	return &ServicesBuilder{
 		Projects:     projs,
-		Sessions:     sessions.New(pgconn, projs, redis),
+		Sessions:     sessions.New(log, pgconn, projs, redis),
 		FeatureFlags: featureflags.New(pgconn),
 		Producer:     producer,
 		Tokenizer:    token.NewTokenizer(cfg.TokenSecret),

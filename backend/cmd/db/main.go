@@ -44,8 +44,8 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(pgConn, redisClient)
-	sessManager := sessions.New(pgConn, projManager, redisClient)
+	projManager := projects.New(log, pgConn, redisClient)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient)
 	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver

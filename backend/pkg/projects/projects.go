@@ -1,13 +1,14 @@
 package projects
 
 import (
+	"context"
 	"errors"
-	"log"
 	"time"
 
 	"openreplay/backend/pkg/cache"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 )
 
 type Projects interface {
@@ -16,15 +17,17 @@ type Projects interface {
 }
 
 type projectsImpl struct {
+	log            logger.Logger
 	db             pool.Pool
 	cache          Cache
 	projectsByID   cache.Cache
 	projectsByKeys cache.Cache
 }
 
-func New(db pool.Pool, redis *redis.Client) Projects {
+func New(log logger.Logger, db pool.Pool, redis *redis.Client) Projects {
 	cl := NewCache(redis)
 	return &projectsImpl{
+		log:            log,
 		db:             db,
 		cache:          cl,
 		projectsByID:   cache.New(time.Minute*5, time.Minute*10),
@@ -46,7 +49,8 @@ func (c *projectsImpl) GetProject(projectID uint32) (*Project, error) {
 	}
 	c.projectsByID.Set(projectID, p)
 	if err = c.cache.Set(p); err != nil && !errors.Is(err, ErrDisabledCache) {
-		log.Printf("Failed to cache project: %v", err)
+		ctx := context.WithValue(context.Background(), "projectID", projectID)
+		c.log.Error(ctx, "failed to cache project: %s", err)
 	}
 	return p, nil
 }
@@ -65,7 +69,8 @@ func (c *projectsImpl) GetProjectByKey(projectKey string) (*Project, error) {
 	}
 	c.projectsByKeys.Set(projectKey, p)
 	if err := c.cache.Set(p); err != nil && !errors.Is(err, ErrDisabledCache) {
-		log.Printf("Failed to cache project: %v", err)
+		ctx := context.WithValue(context.Background(), "projectKey", projectKey)
+		c.log.Error(ctx, "failed to cache project: %s", err)
 	}
 	return p, nil
 }

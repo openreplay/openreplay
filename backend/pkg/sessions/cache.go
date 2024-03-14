@@ -1,11 +1,12 @@
 package sessions
 
 import (
+	"context"
 	"errors"
-	"log"
 	"time"
 
 	"openreplay/backend/pkg/cache"
+	"openreplay/backend/pkg/logger"
 )
 
 type Cache interface {
@@ -18,13 +19,23 @@ type Cache interface {
 var ErrSessionNotFound = errors.New("session not found")
 
 type inMemoryCacheImpl struct {
+	log      logger.Logger
 	sessions cache.Cache
 	redis    Cache
 }
 
+func NewInMemoryCache(log logger.Logger, redisCache Cache) Cache {
+	return &inMemoryCacheImpl{
+		log:      log,
+		sessions: cache.New(time.Minute*3, time.Minute*10),
+		redis:    redisCache,
+	}
+}
+
 func (i *inMemoryCacheImpl) SetCache(sessID uint64, data map[string]string) error {
 	if err := i.redis.SetCache(sessID, data); err != nil && !errors.Is(err, ErrDisabledCache) {
-		log.Printf("Failed to cache session: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessID)
+		i.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return nil
 }
@@ -35,7 +46,8 @@ func (i *inMemoryCacheImpl) GetCache(sessID uint64) (map[string]string, error) {
 		return session, nil
 	}
 	if !errors.Is(err, ErrDisabledCache) && err.Error() != "redis: nil" {
-		log.Printf("Failed to get session from cache: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessID)
+		i.log.Warn(ctx, "failed to get session from cache: %s", err)
 	}
 	return nil, ErrSessionNotFound
 }
@@ -43,7 +55,8 @@ func (i *inMemoryCacheImpl) GetCache(sessID uint64) (map[string]string, error) {
 func (i *inMemoryCacheImpl) Set(session *Session) error {
 	i.sessions.Set(session.SessionID, session)
 	if err := i.redis.Set(session); err != nil && !errors.Is(err, ErrDisabledCache) {
-		log.Printf("Failed to cache session: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", session.SessionID)
+		i.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return nil
 }
@@ -58,14 +71,8 @@ func (i *inMemoryCacheImpl) Get(sessionID uint64) (*Session, error) {
 		return session, nil
 	}
 	if !errors.Is(err, ErrDisabledCache) && err.Error() != "redis: nil" {
-		log.Printf("Failed to get session from cache: %v", err)
+		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+		i.log.Warn(ctx, "failed to get session from cache: %s", err)
 	}
 	return nil, ErrSessionNotFound
-}
-
-func NewInMemoryCache(redisCache Cache) Cache {
-	return &inMemoryCacheImpl{
-		sessions: cache.New(time.Minute*3, time.Minute*10),
-		redis:    redisCache,
-	}
 }
