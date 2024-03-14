@@ -96,7 +96,7 @@ func (s *sessionFinderImpl) worker() {
 func (s *sessionFinderImpl) findSession(sessionID, timestamp, partition uint64) {
 	sessEnd := &messages.SessionEnd{Timestamp: timestamp}
 	sessEnd.SetSessionID(sessionID)
-	ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+	ctx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
 	err := s.storage.Process(ctx, sessEnd)
 	if err == nil {
 		s.log.Info(ctx, "found session in partition: %d, original: %d",
