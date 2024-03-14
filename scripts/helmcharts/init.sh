@@ -8,14 +8,10 @@ YELLOW='\033[0;33m'
 BWHITE='\033[1;37m'
 NC='\033[0m' # No Color
 # --- helper functions for logs ---
-info() {
-    echo -e "${GREEN}[INFO] " "$@" "$NC"
-}
-warn() {
-    echo -e "${YELLOW}[INFO] " "$@" "$NC"
-}
+info() { echo -e "${GREEN}[INFO] $*${NC}"; }
+warn() { echo -e "${YELLOW}[WARN] $*${NC}"; }
 fatal() {
-    echo -e "${RED}[INFO] " "$@" "$NC"
+    echo -e "${RED}[FATAL] $*${NC}"
     exit 1
 }
 
@@ -44,51 +40,6 @@ function exists() {
     return $?
 }
 
-# Instal the toolings needed for installation/maintaining k8s
-function install_tools() {
-    ## installing kubectl
-    exists kubectl || {
-        info "$install_status kubectl"
-        sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
-        sudo chmod +x /usr/local/bin/kubectl
-    }
-
-    ## $install_status GH package manager
-    exists eget || {
-        info "$install_status eget"
-        download_url=$(curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4)
-        curl -SsL ${download_url} -o /tmp/eget.tar.gz
-        tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
-        sudo mv /tmp/eget /usr/local/bin/eget
-        sudo chmod +x /usr/local/bin/eget
-    }
-
-    ## installing stern, log viewer for K8s
-    exists stern || {
-        info "$install_status Stern"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin stern/stern
-    }
-
-    ## installing stern, log viewer for K8s
-    exists templater || {
-        info "$install_status templater"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin rjshrjndrn/templater
-    }
-
-    ## installing k9s, TUI K8s
-    exists k9s || {
-        info "$install_status K9s"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin derailed/k9s
-        sudo /usr/local/bin/eget -q --upgrade-only --to "$OR_DIR" derailed/k9s --asset=tar.gz --asset=^sbom
-    }
-
-    ## installing helm, package manager for K8s
-    exists helm || {
-        info "$install_status Helm"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
-    }
-}
-
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
@@ -110,18 +61,16 @@ function sed_i_wrapper() {
     fi
 }
 
-function create_passwords() {
-    # Error out only if the domain name is empty in vars.yaml
-    existing_domain_name=$(awk '/domainName/ {print $2}' vars.yaml | xargs)
-    [[ -z $existing_domain_name ]] && {
-        [[ -z $DOMAIN_NAME ]] && {
-            fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
-        }
-    }
+# Create dynamic passwords and update domain
+create_passwords() {
+    local domain_name=${DOMAIN_NAME:-$(yq e '.domainName' vars.yaml)}
+    if [[ -z $domain_name ]]; then
+        fatal 'DOMAIN_NAME variable is empty. Rerun the script with `DOMAIN_NAME=openreplay.mycomp.org bash init.sh`'
+    fi
 
     info "Creating dynamic passwords"
     templater -i vars.yaml -o vars.yaml
-    sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+    yq e -i '.domainName = strenv(DOMAIN_NAME)' vars.yaml
 }
 
 function set_permissions() {
@@ -169,7 +118,7 @@ function install_openreplay_actions() {
         sudo rm -rf $openreplay_dir
     fi
     sudo mkdir -p $openreplay_dir
-    sudo cp -rfb ./vars.yaml $openreplay_dir/
+    sudo cp -rfb ./vars.yaml $openreplay_dir/../
     sudo cp -rf "$(cd ../.. && pwd)" $openreplay_dir
 }
 
