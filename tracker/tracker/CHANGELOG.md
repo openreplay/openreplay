@@ -1,3 +1,10 @@
+# 12.0.4
+
+- patch for email sanitizer (supports + now)
+- update fflate version for better compression
+- `disableCanvas` option to disable canvas capture
+- better check for adopted stylesheets in doc (old browser support)
+
 # 12.0.3
 
 - fixed scaling option for canvas (to ignore window.devicePixelRatio and always render the canvas as 1)
