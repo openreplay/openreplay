@@ -24,13 +24,13 @@ func (e *Router) ResponseOK(ctx context.Context, w http.ResponseWriter, requestS
 }
 
 func (e *Router) ResponseWithJSON(ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
+	e.log.Info(ctx, "response ok")
 	body, err := json.Marshal(res)
 	if err != nil {
 		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
-	e.log.Info(ctx, "response ok")
 	recordMetrics(requestStart, url, http.StatusOK, bodySize)
 }
 
@@ -39,12 +39,12 @@ type response struct {
 }
 
 func (e *Router) ResponseWithError(ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
+	e.log.Error(ctx, "response error, code: %d, error: %s", code, err)
 	body, err := json.Marshal(&response{err.Error()})
 	if err != nil {
 		e.log.Error(ctx, "can't marshal response: %s", err)
 	}
 	w.WriteHeader(code)
 	w.Write(body)
-	e.log.Error(ctx, "response error, code: %d, error: %s", code, err)
 	recordMetrics(requestStart, url, code, bodySize)
 }
