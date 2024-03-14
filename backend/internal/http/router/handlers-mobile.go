@@ -45,7 +45,8 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist or is not active"), startTime, r.URL.Path, 0)
+			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, 0)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, 0)
@@ -82,13 +83,13 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		if dice >= p.SampleRate {
-			e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("capture rate miss"), startTime, r.URL.Path, 0)
+			e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, 0)
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, 0)
+			e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, 0)
 			return
 		}
 		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
@@ -161,13 +162,15 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -178,6 +181,10 @@ func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) 
 func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
+
 	if err != nil && err != token.EXPIRED {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
@@ -190,13 +197,15 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
