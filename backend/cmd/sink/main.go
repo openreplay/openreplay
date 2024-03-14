@@ -54,7 +54,7 @@ func main() {
 	devBuffer.Reset()
 
 	msgHandler := func(msg messages.Message) {
-		sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
+
 		// Check batchEnd signal (nil message)
 		if msg == nil {
 			// Skip empty buffers
@@ -66,6 +66,7 @@ func main() {
 
 			// Write buffered batches to the session
 			if err := writer.Write(sessionID, domBuffer.Bytes(), devBuffer.Bytes()); err != nil {
+				sessCtx := context.WithValue(context.Background(), "sessionID", sessionID)
 				log.Error(sessCtx, "writer error: %s", err)
 			}
 
@@ -77,6 +78,7 @@ func main() {
 		}
 
 		sinkMetrics.IncreaseTotalMessages()
+		sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
 
 		// Send SessionEnd trigger to storage service
 		if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgIOSSessionEnd {

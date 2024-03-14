@@ -42,6 +42,7 @@ func NewManager(log logger.Logger, maximumMemory, thresholdValue uint64) (Manage
 		return nil, errors.New("threshold must be less than 100")
 	}
 	m := &managerImpl{
+		log:       log,
 		mutex:     &sync.RWMutex{},
 		threshold: thresholdValue,
 		maximum:   maximumMemory,
