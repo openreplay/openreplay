@@ -34,7 +34,7 @@ func main() {
 	}
 
 	counter := storage.NewLogCounter()
-	sessionFinder, err := failover.NewSessionFinder(cfg, srv)
+	sessionFinder, err := failover.NewSessionFinder(log, cfg, srv)
 	if err != nil {
 		log.Fatal(ctx, "can't init sessionFinder module: %s", err)
 	}
