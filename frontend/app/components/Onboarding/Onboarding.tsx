@@ -20,6 +20,13 @@ interface Props {
   history: RouteComponentProps['history'];
 }
 
+
+const platformMap = {
+  'ios': 'mobile',
+  'web': 'web',
+}
+
+
 const Onboarding = (props: Props) => {
   const platforms = [
     {
@@ -70,6 +77,7 @@ const Onboarding = (props: Props) => {
                 platforms={platforms}
                 platform={platform}
                 setPlatform={setPlatform}
+                platformMap={platformMap}
               />
             </Route>
             <Route exact strict path={route(OB_TABS.IDENTIFY_USERS)}>
@@ -77,6 +85,7 @@ const Onboarding = (props: Props) => {
                 platforms={platforms}
                 platform={platform}
                 setPlatform={setPlatform}
+                platformMap={platformMap}
               />
             </Route>
             <Route exact strict path={route(OB_TABS.MANAGE_USERS)} component={ManageUsersTab} />
