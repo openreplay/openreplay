@@ -18,14 +18,15 @@ interface Props extends WithOnboardingProps {
     value: string;
   };
   setPlatform: (val: { label: string; value: string }) => void;
+  platformMap: Record<string, any>;
 }
 
 function IdentifyUsersTab(props: Props) {
-  const { site, platforms, platform, setPlatform } = props;
+  const { site, platforms, platform, setPlatform, platformMap } = props;
 
   React.useEffect(() => {
     if (site.platform)
-      setPlatform(platforms.find(({ value }) => value === site.platform) || platforms[0]);
+      setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) ?? platform ?? platforms[0]);
   }, [site]);
 
   return (
@@ -37,7 +38,7 @@ function IdentifyUsersTab(props: Props) {
         </div>
 
         <a
-          href="https://docs.openreplay.com/en/v1.10.0/installation/identify-user/"
+          href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
           target="_blank"
         >
           <Button variant="text-primary" icon="question-circle" className="ml-2">
@@ -68,7 +69,10 @@ function IdentifyUsersTab(props: Props) {
           {platform.value === 'web' ? (
             <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
           ) : (
-            <HighlightCode className="swift" text={`OpenReplay.shared.setUserID('john@doe.com');`} />
+            <HighlightCode
+              className="swift"
+              text={`OpenReplay.shared.setUserID('john@doe.com');`}
+            />
           )}
           {platform.value === 'web' ? (
             <div className="flex items-center my-2">

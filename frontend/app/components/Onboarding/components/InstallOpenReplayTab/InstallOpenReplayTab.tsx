@@ -19,14 +19,15 @@ interface Props extends WithOnboardingProps {
     value: string;
   };
   setPlatform: (val: { label: string; value: string }) => void;
+  platformMap: Record<string, any>
 }
 
 function InstallOpenReplayTab(props: Props) {
-  const { site, platforms, platform, setPlatform } = props;
+  const { site, platforms, platform, setPlatform, platformMap } = props;
 
   React.useEffect(() => {
     if (site.platform)
-      setPlatform(platforms.find(({ value }) => value === site.platform) || platforms[0]);
+      setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) || platforms[0]);
   }, [site]);
   return (
     <>
@@ -38,7 +39,7 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href="https://docs.openreplay.com/en/sdk/" target="_blank">
+        <a href={platform.value === 'web' ? 'https://docs.openreplay.com/en/sdk/' : 'https://docs.openreplay.com/en/ios-sdk/'} target="_blank">
           <Button variant="text-primary" icon="question-circle" className="ml-2">
             See Documentation
           </Button>
