@@ -44,8 +44,8 @@ function SubHeader(props: any) {
 
   const location =
     currentLocation && currentLocation.length > 70
-      ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
-      : currentLocation;
+    ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
+    : currentLocation;
 
   const showReportModal = () => {
     const { tabStates, currentTab } = store.get();
@@ -114,6 +114,7 @@ function SubHeader(props: any) {
     },
     {
       key: 4,
+      autoclose: true,
       component: (
         <SharePopup
           entity="sessions"
@@ -189,11 +190,11 @@ function SubHeader(props: any) {
               defaultChecked={!uxtestingStore.hideDevtools}
             />
           ) : (
-            <div>
-              {/* @ts-ignore */}
-              <QueueControls />
-            </div>
-          )}
+             <div>
+               {/* @ts-ignore */}
+               <QueueControls />
+             </div>
+           )}
         </div>
       </div>
       {location && (

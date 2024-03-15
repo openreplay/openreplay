@@ -6,6 +6,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 interface MenuItem {
   key: number;
+  autoclose?: boolean;
   component?: React.ReactElement;
 }
 
@@ -53,6 +54,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
               item.component ? (
                 <div
                   key={item.key}
+                  onClick={item.autoclose ? this.closeMenu : undefined}
                   role="menuitem"
                   className="hover:bg-gray-light-shade cursor-pointer flex items-center w-full"
                 >
