@@ -122,7 +122,7 @@ function CardIssues() {
 
         <Pagination
           page={filter.page}
-          totalPages={Math.ceil(data.total / pageSize)}
+          total={data.total}
           onPageChange={(page: any) => filter.updateKey('page', page)}
           limit={pageSize}
           debounceRequest={500}

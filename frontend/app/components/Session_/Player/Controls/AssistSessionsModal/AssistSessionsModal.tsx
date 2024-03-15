@@ -147,7 +147,7 @@ function AssistSessionsModal(props: Props) {
         <div className="w-full flex items-center justify-center py-6">
           <Pagination
             page={currentPage}
-            totalPages={Math.ceil(total / PER_PAGE)}
+            total={total}
             onPageChange={(page: any) => props.updateCurrentPage(page)}
             limit={PER_PAGE}
           />
