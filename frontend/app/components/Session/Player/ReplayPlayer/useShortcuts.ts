@@ -10,6 +10,7 @@ function useShortcuts({
   toggleBottomBlock,
   openNextSession,
   openPrevSession,
+  setActiveTab,
 }: {
   skipInterval: keyof typeof SKIP_INTERVALS;
   fullScreenOn: () => void;
@@ -17,6 +18,7 @@ function useShortcuts({
   toggleBottomBlock: (blockName: (typeof blockValues)[number]) => void;
   openNextSession: () => void;
   openPrevSession: () => void;
+  setActiveTab: (tab: string) => void;
 }) {
   const { player } = useContext(PlayerContext);
 
@@ -38,19 +40,19 @@ function useShortcuts({
       if (e.shiftKey) {
         player.toggleInspectorMode(false)
         switch (e.key) {
-          case 'f':
+          case 'F':
             return fullScreenOn();
-          case 'x':
+          case 'X':
             return toggleBottomBlock(blocks.overview);
-          case 'p':
+          case 'P':
             return toggleBottomBlock(blocks.performance);
-          case 'n':
+          case 'N':
             return toggleBottomBlock(blocks.network);
-          case 'c':
+          case 'C':
             return toggleBottomBlock(blocks.console);
-          case 'r':
+          case 'R':
             return toggleBottomBlock(blocks.storage);
-          case 'e':
+          case 'E':
             return toggleBottomBlock(blocks.stackEvents);
           case '>':
             return openNextSession();
@@ -62,6 +64,9 @@ function useShortcuts({
           // return previousSessionId
           //   ? history.push(withSiteId(sessionRoute(previousSessionId), siteId))
           //   : null;
+          case 'A':
+            player.pause();
+            return setActiveTab('EVENTS');
           default:
             break;
         }

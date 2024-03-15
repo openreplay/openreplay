@@ -2,6 +2,24 @@ import React from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import stl from './controlButton.module.css';
+import {Popover} from 'antd'
+
+
+interface IProps {
+  label: string;
+  icon?: string;
+  disabled?: boolean;
+  onClick?: () => void;
+  count?: number;
+  hasErrors?: boolean;
+  active?: boolean;
+  size?: number;
+  noLabel?: boolean;
+  labelClassName?: string;
+  containerClassName?: string;
+  noIcon?: boolean;
+  popover?: React.ReactNode
+}
 
 const ControlButton = ({
   label,
@@ -16,7 +34,9 @@ const ControlButton = ({
   labelClassName,
   containerClassName,
   noIcon,
-}) => (
+  popover = undefined,
+}: IProps) => (
+  <Popover content={popover} open={popover ? undefined : false}>
   <button
     className={cn(
       stl.controlButton,
@@ -40,6 +60,7 @@ const ControlButton = ({
       </span>
     )}
   </button>
+  </Popover>
 );
 
 ControlButton.displayName = 'ControlButton';

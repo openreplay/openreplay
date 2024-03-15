@@ -1,12 +1,21 @@
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
+import KeyboardHelp, {
+  LaunchConsoleShortcut,
+  LaunchEventsShortcut,
+  LaunchNetworkShortcut,
+  LaunchPerformanceShortcut,
+  LaunchStateShortcut,
+  PlayPauseSessionShortcut,
+  PlaySessionInFullscreenShortcut,
+} from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
+import { Popover } from 'antd';
 
-import { Tooltip } from 'UI';
 import {
   CONSOLE,
   fullscreenOff,
@@ -59,6 +68,8 @@ function getStorageName(type: any) {
       return 'ZUSTAND';
     case STORAGE_TYPES.NONE:
       return 'STATE';
+    default:
+      return 'STATE';
   }
 }
 
@@ -81,6 +92,7 @@ function Controls(props: any) {
     previousSessionId,
     nextSessionId,
     siteId,
+    setActiveTab,
   } = props;
 
   const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
@@ -101,6 +113,7 @@ function Controls(props: any) {
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
+    setActiveTab,
   });
 
   const forthTenSeconds = () => {
@@ -151,6 +164,7 @@ function Controls(props: any) {
               isActive={bottomBlock === OVERVIEW && !inspectorMode}
               onClick={() => toggleBottomTools(OVERVIEW)}
             />
+            <KeyboardHelp />
           </div>
 
           <div className="flex items-center h-full">
@@ -162,13 +176,12 @@ function Controls(props: any) {
                 disabled={disabled}
               />
             )}
-            <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
-              <FullScreenButton
-                size={16}
-                onClick={props.fullscreenOn}
-                customClasses={'rounded hover:bg-gray-light-shade color-gray-medium'}
-              />
-            </Tooltip>
+
+            <FullScreenButton
+              size={16}
+              onClick={props.fullscreenOn}
+              customClasses={'rounded hover:bg-gray-light-shade color-gray-medium'}
+            />
           </div>
         </div>
       )}
@@ -210,6 +223,12 @@ const DevtoolsButtons = observer(
     return (
       <>
         <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchConsoleShortcut />
+              <div>Launch Console</div>
+            </div>
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(CONSOLE)}
           active={bottomBlock === CONSOLE && !inspectorMode}
@@ -221,6 +240,12 @@ const DevtoolsButtons = observer(
         />
 
         <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchNetworkShortcut />
+              <div>Launch Network</div>
+            </div>
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK && !inspectorMode}
@@ -232,6 +257,12 @@ const DevtoolsButtons = observer(
         />
 
         <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchPerformanceShortcut />
+              <div>Launch Performance</div>
+            </div>
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
@@ -255,16 +286,28 @@ const DevtoolsButtons = observer(
 
         {showStorage && (
           <ControlButton
+            popover={
+              <div className={'flex gap-2 items-center'}>
+                <LaunchStateShortcut />
+                <div>Launch State</div>
+              </div>
+            }
             disabled={disableButtons}
             onClick={() => toggleBottomTools(STORAGE)}
             active={bottomBlock === STORAGE && !inspectorMode}
-            label={getStorageName(storageType)}
+            label={getStorageName(storageType) as string}
             noIcon
             labelClassName="!text-base font-semibold"
             containerClassName="mx-2"
           />
         )}
         <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchEventsShortcut />
+              <div>Launch Events</div>
+            </div>
+          }
           disabled={disableButtons}
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS && !inspectorMode}

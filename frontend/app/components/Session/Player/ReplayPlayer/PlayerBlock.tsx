@@ -30,7 +30,7 @@ function PlayerBlock(props: IProps) {
         ? <AiSubheader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} activeTab={activeTab} setActiveTab={setActiveTab} />
         : <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
        : null}
-      <Player activeTab={activeTab} fullView={fullView} />
+      <Player setActiveTab={setActiveTab} activeTab={activeTab} fullView={fullView} />
     </div>
   );
 }
