@@ -8,7 +8,8 @@
 
 .wrapper {
   background-color: white;
-  width: 390px;
+  width: 100%;
+  height: 100vh;
   padding: 10px 8px;
   color: $gray-darkest !important;
 }
