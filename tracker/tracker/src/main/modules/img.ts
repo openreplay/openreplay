@@ -44,9 +44,9 @@ export default function (app: App): void {
       return
     }
     const resolvedSrcset = srcset
-      .split(',')
+      .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
       .map((str) => resolveURL(str))
-      .join(',')
+      .join(', ')
     app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
   }
 
