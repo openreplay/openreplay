@@ -1777,8 +1777,8 @@ const SVG = (props: Props) => {
   
     
     case 'sparkles': return <Sparkles width={ width } height={ height } fill={ fill } />;
-  
-    
+
+
     case 'speedometer2': return <Speedometer2 width={ width } height={ height } fill={ fill } />;
   
     

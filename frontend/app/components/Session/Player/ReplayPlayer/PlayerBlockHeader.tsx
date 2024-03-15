@@ -90,7 +90,7 @@ function PlayerBlockHeader(props: any) {
                 <div className={stl.divider} />
           </div>
         )}
-        <UserCard className="" width={width} height={height} />
+        <UserCard width={width} height={height} />
 
         <div className={cn('ml-auto flex items-center h-full', { hidden: closedLive })}>
           {live && !hideBack && !uxtestingStore.isUxt() && (

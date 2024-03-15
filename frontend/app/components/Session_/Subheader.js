@@ -142,6 +142,7 @@ function SubHeader(props) {
             }
           />
           <ItemMenu
+            useSc
             items={[
               {
                 key: 1,

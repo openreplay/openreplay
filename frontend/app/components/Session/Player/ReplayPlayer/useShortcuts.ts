@@ -56,14 +56,8 @@ function useShortcuts({
             return toggleBottomBlock(blocks.stackEvents);
           case '>':
             return openNextSession();
-          // return nextSessionId
-          //   ? history.push(withSiteId(sessionRoute(nextSessionId), siteId))
-          //   : null;
           case '<':
             return openPrevSession();
-          // return previousSessionId
-          //   ? history.push(withSiteId(sessionRoute(previousSessionId), siteId))
-          //   : null;
           case 'A':
             player.pause();
             return setActiveTab('EVENTS');

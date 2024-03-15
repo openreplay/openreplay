@@ -181,7 +181,7 @@ function SubHeader(props: any) {
         >
           <SummaryButton onClick={showSummary} />
           <NotePopup />
-          <ItemMenu items={additionalMenu} />
+          <ItemMenu items={additionalMenu} useSc />
           {uxtestingStore.isUxt() ? (
             <Switch
               checkedChildren={'DevTools'}
