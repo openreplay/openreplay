@@ -1,8 +1,7 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
-import cn from 'classnames';
+import { Pagination as AntPagination } from 'antd';
 import { debounce } from 'App/utils';
-import { numberWithCommas } from 'App/utils';
+
 interface Props {
   page: number;
   totalPages: number;
@@ -24,41 +23,16 @@ export default function Pagination(props: Props) {
     }
   };
 
-  const isFirstPage = currentPage <= 1;
-  const isLastPage = currentPage === totalPages;
   return (
-    <div className="flex items-center">
-      <Tooltip title="Previous Page">
-        <button
-          className={cn('py-2 px-3', { 'opacity-50 cursor-default': isFirstPage })}
-          disabled={isFirstPage}
-          onClick={() => changePage(currentPage - 1)}
-        >
-          <Icon name="chevron-left" size="18" color={isFirstPage ? 'gray-medium' : 'teal'} />
-        </button>
-      </Tooltip>
-      <span className="mr-2 color-gray-medium">Page</span>
-      <input
-        type="number"
-        className={cn('py-1 px-2 bg-white border border-gray-light rounded w-16', {
-          'opacity-50 cursor-default': totalPages === 1,
-        })}
-        value={currentPage}
-        min={1}
-        max={totalPages ? totalPages : 1}
-        onChange={(e) => changePage(parseInt(e.target.value))}
+    <>
+      <AntPagination
+        simple
+        current={currentPage}
+        total={totalPages}
+        pageSize={limit}
+        onChange={changePage}
+        showSizeChanger={false}
       />
-      <span className="mx-3 color-gray-medium">of</span>
-      <span>{numberWithCommas(totalPages)}</span>
-      <Tooltip title="Next Page">
-        <button
-          className={cn('py-2 px-3', { 'opacity-50 cursor-default': isLastPage })}
-          disabled={isLastPage}
-          onClick={() => changePage(currentPage + 1)}
-        >
-          <Icon name="chevron-right" size="18" color={isLastPage ? 'gray-medium' : 'teal'} />
-        </button>
-      </Tooltip>
-    </div>
-  );
+    </>
+  )
 }

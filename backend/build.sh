@@ -9,7 +9,8 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 set -e
 
-source ../scripts/lib/_docker.sh
+GIT_ROOT=$(git rev-parse --show-toplevel)
+source $GIT_ROOT/scripts/lib/_docker.sh
 
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-$git_sha}
@@ -92,4 +93,4 @@ function build_api() {
 }
 
 check_prereq
-build_api i1 i2
+build_api "$1" "$2"

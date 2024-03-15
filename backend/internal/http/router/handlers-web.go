@@ -141,7 +141,8 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist"), startTime, r.URL.Path, bodySize)
+			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
@@ -160,7 +161,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	ua := e.services.UaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -180,7 +181,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		if dice >= p.SampleRate {
-			e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("capture rate miss"), startTime, r.URL.Path, bodySize)
+			e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, bodySize)
 			return
 		}
 
@@ -285,13 +286,15 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -352,7 +355,8 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound, errors.New("project doesn't exist"), startTime, r.URL.Path, bodySize)
+			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
 		} else {
 			e.log.Error(r.Context(), "can't find a project: %s", err)
 			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
@@ -365,7 +369,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	ua := e.services.UaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
+		e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
 	geoInfo := e.ExtractGeoData(r)
@@ -397,15 +401,17 @@ func (e *Router) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Check authorization
-	info, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", info.ID)))
-	if info, err := e.services.Sessions.Get(info.ID); err == nil {
+	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -444,16 +450,16 @@ func (e *Router) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// Check authorization
-	sessInfo, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessInfo.ID)))
-
-	sess, err := e.services.Sessions.Get(sessInfo.ID)
+	sess, err := e.services.Sessions.Get(sessionData.ID)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
 		return
@@ -488,13 +494,15 @@ func (e *Router) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -529,13 +537,15 @@ func (e *Router) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -570,13 +580,15 @@ func (e *Router) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -602,13 +614,15 @@ func (e *Router) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil { // Should accept expired token?
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	// Add sessionID and projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
@@ -676,6 +690,9 @@ func (e *Router) getTags(w http.ResponseWriter, r *http.Request) {
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	if sessionData != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
+	}
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return

@@ -2089,5 +2089,5 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 111:
 		return DecodeIOSIssueEvent(reader)
 	}
-	return nil, fmt.Errorf("Unknown message code: %v", t)
+	return nil, fmt.Errorf("unknown message code: %v", t)
 }
