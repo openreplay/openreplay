@@ -43,10 +43,8 @@ export default function (app: App): void {
     if (!srcset) {
       return
     }
-
-    const hasWhitespace = srcset.match(/,\s+/)
     const resolvedSrcset = srcset
-      .split(hasWhitespace ? /,\s+/ : ',')
+      .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
       .map((str) => resolveURL(str))
       .join(', ')
     app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
