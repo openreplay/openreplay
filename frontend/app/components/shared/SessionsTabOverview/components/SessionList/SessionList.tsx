@@ -266,7 +266,7 @@ function SessionList(props: Props) {
               </div>
               <Pagination
                 page={currentPage}
-                totalPages={Math.ceil(total / pageSize)}
+                total={total}
                 onPageChange={(page) => props.updateCurrentPage(page)}
                 limit={pageSize}
                 debounceRequest={1000}

@@ -54,7 +54,7 @@ function DashboardList() {
         </div>
         <Pagination
           page={dashboardStore.page}
-          totalPages={Math.ceil(lenth / dashboardStore.pageSize)}
+          total={lenth}
           onPageChange={(page) => dashboardStore.updateKey('page', page)}
           limit={dashboardStore.pageSize}
           debounceRequest={100}

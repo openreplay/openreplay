@@ -93,7 +93,7 @@ function MetricsList({
           </div>
           <Pagination
             page={metricStore.page}
-            totalPages={Math.ceil(lenth / metricStore.pageSize)}
+            total={lenth}
             onPageChange={(page) => metricStore.updateKey('page', page)}
             limit={metricStore.pageSize}
             debounceRequest={100}

@@ -84,7 +84,7 @@ function UserSessionsModal(props: Props) {
                         </div>
                         <Pagination
                             page={filter.page}
-                            totalPages={Math.ceil(data.total / PER_PAGE)}
+                            total={data.total}
                             onPageChange={(page) => filter.update('page', page)}
                             limit={PER_PAGE}
                             debounceRequest={1000}

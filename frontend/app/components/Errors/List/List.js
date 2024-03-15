@@ -245,7 +245,7 @@ export default class List extends React.PureComponent {
 						<div className="w-full flex items-center justify-center mt-4">
 							<Pagination
 								page={currentPage}
-								totalPages={Math.ceil(total / limit)}
+								total={total}
 								onPageChange={(page) => this.props.updateCurrentPage(page)}
 								limit={limit}
 								debounceRequest={500}
