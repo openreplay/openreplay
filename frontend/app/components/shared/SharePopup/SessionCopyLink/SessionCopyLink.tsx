@@ -9,7 +9,8 @@ import { DateTime } from 'luxon';
 function SessionCopyLink({ startedAt }: any) {
   const [copied, setCopied] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const time = store.get().time;
+  console.log(store)
+  const time = store?.get().time;
 
   const copyHandler = () => {
     setCopied(true);
