@@ -171,7 +171,7 @@ function TestsTable() {
               </div>
               <Pagination
                 page={uxtestingStore.page}
-                totalPages={Math.ceil(uxtestingStore.total / 10)}
+                total={uxtestingStore.total}
                 onPageChange={onPageChange}
                 limit={10}
                 debounceRequest={200}

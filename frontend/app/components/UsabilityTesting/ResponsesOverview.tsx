@@ -144,7 +144,7 @@ const ResponsesOverview = observer(() => {
             </div>
             <Pagination
               page={page}
-              totalPages={Math.ceil(uxtestingStore.responses[taskId!]?.total / 10)}
+              total={uxtestingStore.responses[taskId!]?.total ?? 0}
               onPageChange={(p) => setPage(p)}
             />
           </div>

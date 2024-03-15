@@ -63,7 +63,7 @@ function RecordingsList() {
         </div>
         <Pagination
           page={page}
-          totalPages={Math.ceil(total / pageSize)}
+          total={total}
           onPageChange={(page) => recordingsStore.updatePage(page)}
           limit={pageSize}
           debounceRequest={100}

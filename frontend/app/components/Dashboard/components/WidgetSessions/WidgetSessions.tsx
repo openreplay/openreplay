@@ -174,7 +174,7 @@ function WidgetSessions(props: Props) {
               </div>
               <Pagination
                 page={metricStore.sessionsPage}
-                totalPages={Math.ceil(filteredSessions.total / metricStore.sessionsPageSize)}
+                total={filteredSessions.total}
                 onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
                 limit={metricStore.sessionsPageSize}
                 debounceRequest={500}

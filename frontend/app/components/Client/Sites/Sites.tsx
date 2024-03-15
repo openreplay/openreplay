@@ -160,7 +160,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
             <div className="w-full flex items-center justify-center py-10">
               <Pagination
                 page={page}
-                totalPages={Math.ceil(filteredSites.size / pageSize)}
+                total={filteredSites.size}
                 onPageChange={(page) => updatePage(page)}
                 limit={pageSize}
               />

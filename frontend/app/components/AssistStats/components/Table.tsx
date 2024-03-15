@@ -113,7 +113,7 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         )}
         <Pagination
           page={sessions.total > 0 ? page : 0}
-          totalPages={Math.ceil(sessions.total / PER_PAGE)}
+          total={sessions.total}
           onPageChange={onPageChange}
           limit={10}
           debounceRequest={200}

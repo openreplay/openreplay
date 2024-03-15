@@ -65,7 +65,7 @@ function AlertsList({ siteId }: Props) {
           </div>
           <Pagination
             page={page}
-            totalPages={Math.ceil(list.length / pageSize)}
+            total={list.length}
             onPageChange={(page) => alertsStore.updateKey('page', page)}
             limit={pageSize}
             debounceRequest={100}
