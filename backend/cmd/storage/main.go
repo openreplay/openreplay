@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	counter := storage.NewLogCounter()
-	sessionFinder, err := failover.NewSessionFinder(cfg, srv)
+	sessionFinder, err := failover.NewSessionFinder(log, cfg, srv)
 	if err != nil {
 		log.Fatal(ctx, "can't init sessionFinder module: %s", err)
 	}
@@ -55,7 +56,7 @@ func main() {
 					}
 					msg.Meta().SetMeta(oldMeta)
 				}
-				sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
+				sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", msg.SessionID()))
 				// Process session to save mob files to s3
 				sesEnd := msg.(*messages.SessionEnd)
 				if err := srv.Process(sessCtx, sesEnd); err != nil {

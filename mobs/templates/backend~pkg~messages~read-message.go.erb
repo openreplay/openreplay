@@ -20,5 +20,5 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case <%= msg.id %>:
 		return Decode<%= msg.name %>(reader)<% end %>
 	}
-	return nil, fmt.Errorf("Unknown message code: %v", t)
+	return nil, fmt.Errorf("unknown message code: %v", t)
 }
