@@ -172,7 +172,7 @@ function LiveSessionList(props: Props) {
               </div>
               <Pagination
                 page={currentPage}
-                totalPages={Math.ceil(total / PER_PAGE)}
+                total={total}
                 onPageChange={(page: any) => props.updateCurrentPage(page)}
                 limit={PER_PAGE}
                 debounceRequest={500}

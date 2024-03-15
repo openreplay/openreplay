@@ -56,7 +56,7 @@ function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: ()
           </div>
           <Pagination
             page={page}
-            totalPages={Math.ceil(uxtestingStore.testAssistSessions.total / 10)}
+            total={uxtestingStore.testAssistSessions.total}
             onPageChange={refreshData}
             limit={10}
             debounceRequest={200}

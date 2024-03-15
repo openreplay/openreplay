@@ -65,9 +65,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
                     <div className="my-6 flex items-center justify-center">
                         <Pagination
                             page={metric.page}
-                            totalPages={Math.ceil(
-                                data.total / metric.limit
-                            )}
+                            total={data.total}
                             onPageChange={(page: any) =>
                                 metric.updateKey("page", page)
                             }
