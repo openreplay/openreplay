@@ -94,7 +94,7 @@ export function isObject(item: any): boolean {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
-const updateFilters = (defaultFilters: typeof defaultFetchFilter['filters'], backendFilters: typeof defaultFetchFilter['filters']): typeof defaultFetchFilter['filters'] => {
+const updateFilters = (defaultFilters: typeof defaultFetchFilter['filters'], backendFilters: Record<string, any>): typeof defaultFetchFilter['filters'] => {
   const updatedFilters = [...defaultFilters]; // Clone the default filters
 
   backendFilters.forEach(backendFilter => {
