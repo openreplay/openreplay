@@ -88,8 +88,8 @@ const AiSearchField = observer(({ edit }: Props) => {
   const debounceAiFetch = React.useCallback(debounce(aiFiltersStore.getSearchFilters, 1000), []);
 
   const onSearchChange = ({ target: { value } }: any) => {
+    setSearchQuery(value);
     if (value !== '' && value !== searchQuery) {
-      setSearchQuery(value);
       debounceAiFetch(value);
     }
   };
