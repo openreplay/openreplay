@@ -69,8 +69,7 @@ function useShortcuts({
         fullScreenOff();
       }
       if (e.key === ' ') {
-        // @ts-ignore
-        document.activeElement?.blur();
+        (document.activeElement as HTMLInputElement | null)?.blur?.();
         player.togglePlay();
       }
       if (e.key === 'ArrowRight') {
@@ -91,7 +90,7 @@ function useShortcuts({
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [skipInterval]);
+  }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
 }
 
 export default useShortcuts;
