@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
+import AnimatedSVG, { ICONS } from "Shared/AnimatedSVG/AnimatedSVG";
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import { addOptionsToFilter } from 'Types/filter/newFilter';
-import { Button } from 'UI';
+import { Button, Loader } from 'UI';
 import { edit, addFilter, fetchSessions, updateFilter } from 'Duck/search';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -27,7 +28,7 @@ interface Props {
 }
 
 function SessionSearch(props: Props) {
-  const { tagWatchStore } = useStore();
+  const { tagWatchStore, aiFiltersStore } = useStore();
   const { appliedFilter, saveRequestPayloads = false, metaLoading = false } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
@@ -43,7 +44,7 @@ function SessionSearch(props: Props) {
           FilterKey.TAGGED_ELEMENT,
           tags.map((tag) => ({
             label: tag.name,
-            value: tag.tagId.toString()
+            value: tag.tagId.toString(),
           }))
         );
         props.refreshFilterOptions();
@@ -96,32 +97,43 @@ function SessionSearch(props: Props) {
     debounceFetch();
   };
 
+  const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <>
-      {hasEvents || hasFilters ? (
+      {showPanel ? (
         <div className="border bg-white rounded mt-4">
           <div className="p-5">
-            <FilterList
-              filter={appliedFilter}
-              onUpdateFilter={onUpdateFilter}
-              onRemoveFilter={onRemoveFilter}
-              onChangeEventsOrder={onChangeEventsOrder}
-              saveRequestPayloads={saveRequestPayloads}
-            />
+            {aiFiltersStore.isLoading ? (
+              <div className={'font-semibold flex items-center gap-2'}>
+                <AnimatedSVG name={ICONS.LOADER} size={18} />
+                <span>Translating your query into search steps...</span>
+              </div>
+            ) : null}
+            {hasEvents || hasFilters ? (
+              <FilterList
+                filter={appliedFilter}
+                onUpdateFilter={onUpdateFilter}
+                onRemoveFilter={onRemoveFilter}
+                onChangeEventsOrder={onChangeEventsOrder}
+                saveRequestPayloads={saveRequestPayloads}
+              />
+            ) : null}
           </div>
 
-          <div className="border-t px-5 py-1 flex items-center -mx-2">
-            <div>
-              <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
-                <Button variant="text-primary" className="mr-2" icon="plus">
-                  ADD STEP
-                </Button>
-              </FilterSelection>
+          {hasEvents || hasFilters ? (
+            <div className="border-t px-5 py-1 flex items-center -mx-2">
+              <div>
+                <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
+                  <Button variant="text-primary" className="mr-2" icon="plus">
+                    ADD STEP
+                  </Button>
+                </FilterSelection>
+              </div>
+              <div className="ml-auto flex items-center">
+                <SaveFilterButton />
+              </div>
             </div>
-            <div className="ml-auto flex items-center">
-              <SaveFilterButton />
-            </div>
-          </div>
+          ) : null}
         </div>
       ) : (
         <></>

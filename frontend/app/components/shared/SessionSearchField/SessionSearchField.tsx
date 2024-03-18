@@ -9,7 +9,9 @@ import {
   addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
   fetchFilterSearch as liveFetchFilterSearch,
 } from 'Duck/liveSearch';
+
 const ASSIST_ROUTE = assistRoute();
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   fetchFilterSearch: (query: any) => void;
@@ -17,6 +19,7 @@ interface Props {
   liveAddFilterByKeyAndValue: (key: string, value: string) => void;
   liveFetchFilterSearch: any;
 }
+
 function SessionSearchField(props: Props) {
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
@@ -72,4 +75,4 @@ export default connect(null, {
   fetchFilterSearch,
   liveFetchFilterSearch,
   liveAddFilterByKeyAndValue,
-})(SessionSearchField);
+})(observer(SessionSearchField));
