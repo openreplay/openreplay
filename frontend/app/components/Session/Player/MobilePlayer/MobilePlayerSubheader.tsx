@@ -61,6 +61,7 @@ function SubHeader(props: any) {
             }
           />
           <ItemMenu
+            useSc
             items={menuItems}
           />
 

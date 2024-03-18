@@ -325,6 +325,7 @@ export { default as Integrations_vuejs } from './integrations_vuejs';
 export { default as Integrations_zustand } from './integrations_zustand';
 export { default as Journal_code } from './journal_code';
 export { default as Key } from './key';
+export { default as Keyboard } from './keyboard';
 export { default as Layer_group } from './layer_group';
 export { default as Layers_half } from './layers_half';
 export { default as Lightbulb_on } from './lightbulb_on';

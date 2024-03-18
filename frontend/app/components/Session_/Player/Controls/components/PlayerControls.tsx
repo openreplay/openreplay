@@ -1,13 +1,20 @@
-import * as constants from "constants";
+import {
+  PlaybackSpeedShortcut,
+  SkipBackwardShortcut,
+  SkipForwardShortcut,
+  SkipIntervalChangeShortcut
+} from "Components/Session_/Player/Controls/components/KeyboardHelp";
+import * as constants from 'constants';
 import React from 'react';
-import { Icon, Tooltip, Popover } from 'UI';
+import { Icon, Popover } from 'UI';
+import { Popover as AntPopover } from 'antd';
 import cn from 'classnames';
 import { RealReplayTimeConnected, ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
 import { SkipButton } from 'App/player-ui';
 import { SPEED_OPTIONS } from 'App/player/player/Player';
-import PlayingTime from './PlayingTime'
+import PlayingTime from './PlayingTime';
 
 interface Props {
   skip: boolean;
@@ -29,8 +36,8 @@ export const TimeMode = {
   Real: 'real',
   UserReal: 'user_real',
   Timestamp: 'current',
-} as const
-export type ITimeMode = typeof TimeMode[keyof typeof TimeMode]
+} as const;
+export type ITimeMode = (typeof TimeMode)[keyof typeof TimeMode];
 
 function PlayerControls(props: Props) {
   const {
@@ -49,7 +56,9 @@ function PlayerControls(props: Props) {
     sessionTz,
   } = props;
   const [showTooltip, setShowTooltip] = React.useState(false);
-  const [timeMode, setTimeMode] = React.useState<ITimeMode>(localStorage.getItem('__or_player_time_mode') as ITimeMode);
+  const [timeMode, setTimeMode] = React.useState<ITimeMode>(
+    localStorage.getItem('__or_player_time_mode') as ITimeMode
+  );
   const speedRef = React.useRef<HTMLButtonElement>(null);
   const arrowBackRef = React.useRef<HTMLButtonElement>(null);
   const arrowForwardRef = React.useRef<HTMLButtonElement>(null);
@@ -58,7 +67,7 @@ function PlayerControls(props: Props) {
   const saveTimeMode = (mode: ITimeMode) => {
     localStorage.setItem('__or_player_time_mode', mode);
     setTimeMode(mode);
-  }
+  };
 
   React.useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -91,19 +100,27 @@ function PlayerControls(props: Props) {
       {playButton}
       <div className="mx-1" />
 
-
       <button className={cn(styles.speedButton, 'focus:border focus:border-blue')}>
-        <PlayingTime timeMode={timeMode} setTimeMode={saveTimeMode} startedAt={startedAt} sessionTz={sessionTz} />
+        <PlayingTime
+          timeMode={timeMode}
+          setTimeMode={saveTimeMode}
+          startedAt={startedAt}
+          sessionTz={sessionTz}
+        />
       </button>
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
-        <Tooltip
-          anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
-          title={`← Rewind ${currentInterval}s`}
+        <AntPopover
+          content={
+            <div className={'flex gap-2 items-center'}>
+              <SkipBackwardShortcut />
+              <div>{`Rewind ${currentInterval}s`}</div>
+            </div>
+          }
           placement="top"
         >
-          <button ref={arrowBackRef} className="h-full  bg-transparent">
+          <button style={{ height: 32, background: 'transparent', border: 0 }} ref={arrowBackRef}>
             <SkipButton
               size={18}
               onClick={backTenSeconds}
@@ -111,7 +128,7 @@ function PlayerControls(props: Props) {
               customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
             />
           </button>
-        </Tooltip>
+        </AntPopover>
 
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
           <Popover
@@ -146,27 +163,30 @@ function PlayerControls(props: Props) {
             )}
           >
             <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-              <Tooltip disabled={showTooltip} title="Set default skip duration">
-                {/* @ts-ignore */}
+              <AntPopover content={<div>Set default skip duration</div>}>
                 {currentInterval}s
-              </Tooltip>
+              </AntPopover>
             </div>
           </Popover>
         </div>
 
-        <Tooltip
-          anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
-          title={`Forward ${currentInterval}s →`}
+        <AntPopover
+          content={
+            <div className={'flex gap-2 items-center'}>
+              <SkipForwardShortcut />
+              <div>{`Forward ${currentInterval}s`}</div>
+            </div>
+          }
           placement="top"
         >
-          <button ref={arrowForwardRef} className="h-full bg-transparent">
+          <button ref={arrowForwardRef} style={{ height: 32, background: 'transparent', border: 0 }}>
             <SkipButton
               size={18}
               onClick={forthTenSeconds}
               customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
             />
           </button>
-        </Tooltip>
+        </AntPopover>
       </div>
 
       <div className="flex items-center">
@@ -181,9 +201,7 @@ function PlayerControls(props: Props) {
           distance={20}
           render={({ close }: any) => (
             <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-              <div className="font-semibold py-2 px-4 w-full text-left">
-                Playback speed
-              </div>
+              <div className="font-semibold py-2 px-4 w-full text-left">Playback speed</div>
               {Object.keys(SPEED_OPTIONS).map((index: any) => (
                 <div
                   key={SPEED_OPTIONS[index]}
@@ -204,7 +222,10 @@ function PlayerControls(props: Props) {
           )}
         >
           <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-            <Tooltip disabled={showTooltip} title="Playback speed (↑↓)">
+            <AntPopover content={<div className={'flex gap-2 items-center'}>
+              <PlaybackSpeedShortcut />
+              <div>Change playback speed</div>
+            </div>}>
               <button
                 ref={speedRef}
                 className={cn(styles.speedButton, 'focus:border focus:border-blue')}
@@ -212,7 +233,7 @@ function PlayerControls(props: Props) {
               >
                 <div>{speed + 'x'}</div>
               </button>
-            </Tooltip>
+            </AntPopover>
           </div>
         </Popover>
         <div className="mx-2" />
