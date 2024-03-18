@@ -65,6 +65,7 @@ function SessionSearchField(props: Props) {
         onBlur={onBlur}
         onChange={onSearchChange}
         placeholder={'Search sessions using any captured event (click, input, page, error...)'}
+        style={{ minWidth: 360 }}
         id="search"
         type="search"
         autoComplete="off"

@@ -50,6 +50,7 @@ function SessionSearchField(props: Props) {
         onBlur={() => setTimeout(setShowModal, 200, false)}
         onChange={onSearchChange}
         placeholder={'Search sessions using any captured event (click, input, page, error...)'}
+        style={{ minWidth: 360 }}
         id="search"
         type="search"
         autoComplete="off"
