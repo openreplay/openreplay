@@ -19,6 +19,8 @@ $fn_def$, :'next_version')
 
 --
 DROP FUNCTION IF EXISTS events.funnel(steps integer[], m integer);
+ALTER TABLE public.assist_records
+    ALTER COLUMN session_id DROP NOT NULL;
 
 COMMIT;
 
