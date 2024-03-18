@@ -150,7 +150,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <Controls
-          setActiveTab={props.setActiveTab}
+          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
