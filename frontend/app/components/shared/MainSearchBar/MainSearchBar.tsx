@@ -23,11 +23,11 @@ const MainSearchBar = (props: Props) => {
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
-    <div className="flex items-center">
-      <div style={{ width: '60%', marginRight: '10px' }}>
+    <div className="flex items-center flex-wrap">
+      <div style={{ flex: 3, marginRight: '10px' }}>
         {isSaas ? <AiSessionSearchField /> : <SessionSearchField />}
       </div>
-      <div className="flex items-center gap-2" style={{ width: '40%' }}>
+      <div className="flex items-center gap-2" style={{ flex: 2 }}>
         <TagList />
         <SavedSearch />
         <Button
