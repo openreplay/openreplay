@@ -94,24 +94,19 @@ export function isObject(item: any): boolean {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
-export function mergeDeep(target: Record<string, any>, ...sources: any[]): Record<string, any> {
-  if (!sources.length) return target;
-  const source = sources.shift();
+const updateFilters = (defaultFilters: typeof defaultFetchFilter['filters'], backendFilters: Record<string, any>): typeof defaultFetchFilter['filters'] => {
+  const updatedFilters = [...defaultFilters]; // Clone the default filters
 
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        mergeDeep(target[key], source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
-      }
+  backendFilters.forEach(backendFilter => {
+    const index = updatedFilters.findIndex(f => f.type === backendFilter.key);
+    if (index > -1) {
+      updatedFilters[index] = { ...updatedFilters[index], ...backendFilter, type: updatedFilters[index].type };
     }
-  }
+  });
 
-  return mergeDeep(target, ...sources);
-}
+  return updatedFilters;
+};
 
 const mapFetch = (filter: Record<string, any>): Record<string, any> => {
-  return mergeDeep(filter, defaultFetchFilter);
+  return { ...defaultFetchFilter, filters: updateFilters(defaultFetchFilter.filters, filter.filters) }
 };
