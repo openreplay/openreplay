@@ -78,30 +78,15 @@ function AlertFormModal(props: Props) {
     };
 
     return (
-        <SlideModal
-            title={
-                <div className="flex items-center">
-                    <span className="m-3">{'Create Alert'}</span>
-                </div>
-            }
-            isDisplayed={showModal}
+        <AlertForm
+            metricId={metricId}
+            edit={alertsStore.edit}
+            slackChannels={slackChannels}
+            msTeamsChannels={msTeamsChannels}
+            webhooks={hooks}
+            onSubmit={saveAlert}
             onClose={props.onClose}
-            size="medium"
-            content={
-                showModal && (
-                    <AlertForm
-                        metricId={metricId}
-                        edit={alertsStore.edit}
-                        slackChannels={slackChannels}
-                        msTeamsChannels={msTeamsChannels}
-                        webhooks={hooks}
-                        onSubmit={saveAlert}
-                        onClose={props.onClose}
-                        onDelete={onDelete}
-                        style={{ width: '580px', height: '100vh - 200px' }}
-                    />
-                )
-            }
+            onDelete={onDelete}
         />
     );
 }
