@@ -31,7 +31,7 @@ function useShortcuts({
   };
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
+    const handleShortcuts = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -86,9 +86,9 @@ function useShortcuts({
       }
     };
 
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', handleShortcuts, true);
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', handleShortcuts, true);
     };
   }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
 }
