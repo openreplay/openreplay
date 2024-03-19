@@ -30,17 +30,14 @@ export default class AiFiltersStore {
           if (f.key === 'graphql') {
             return mapGraphql(f)
           }
-          if (f.key === 'metadata') {
-            const matchingFilter = Object.keys(filtersMap).find(k => '_' + f.source === k)
-            if (matchingFilter) {
-              return { ...filtersMap[matchingFilter], ...f }
-            }
-          }
+
+          const matchingFilter = Object.keys(filtersMap).find(k => f.key === 'metadata' ? `_${f.source}` === k : f.key === k)
+
           if (f.key === 'duration') {
-            return { ...f, value: f ? f.value.map((i: number) => i*60*1000) : null };
+            const filter = matchingFilter ? { ...filtersMap[matchingFilter], ...f } : { ...f, value: f.value ?? [] };
+            return { ...filter, value: filter.value ? filter.value.map((i: string) => parseInt(i, 10) * 60 * 1000) : null };
           }
 
-          const matchingFilter = Object.keys(filtersMap).find(k => f.key === k)
           return matchingFilter ? { ...filtersMap[matchingFilter], ...f } : { ...f, value: f.value ?? [] };
         }),
         eventsOrder: r.eventsOrder.toLowerCase(),
@@ -172,33 +169,3 @@ const mapGraphql = (filter: Record<string, any>) => {
     filters: updateFilters(defaultGraphqlFilter.filters, filter.filters),
   }
 }
-
-//
-// [
-//   {
-//     "key": "userOs",
-//     "operator": "is",
-//     "value": [
-//       "Windows"
-//     ]
-//   },
-//   {
-//     "key": "platform",
-//     "operator": "is",
-//     "value": [
-//       "Desktop"
-//     ]
-//   }
-// ]
-
-// {
-//   "value": [
-//   "desktop"
-// ],
-//   "type": "platform",
-//   "operator": "is",
-//   "source": [],
-//   "sourceOperator": "=",
-//   "isEvent": false,
-//   "filters": []
-// }
