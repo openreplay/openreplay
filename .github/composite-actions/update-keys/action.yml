@@ -37,11 +37,13 @@ runs:
       run: |
         cd scripts/helmcharts/
         yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
+        yq e -i '.global.assistKey = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.global.assistJWTSecret = strenv(JWT_SECRET)' vars.yaml
         yq e -i '.chalice.env.jwt_secret = strenv(JWT_SECRET)' vars.yaml
         yq e -i '.global.enterpriseEditionLicense = strenv(LICENSE_KEY)' vars.yaml
         yq e -i '.global.s3.accessKey = strenv(MINIO_ACCESS_KEY)' vars.yaml
         yq e -i '.global.s3.secretKey = strenv(MINIO_SECRET_KEY)' vars.yaml
-        yq e -i '.global.postgresql.password = strenv(PG_PASSWORD)' vars.yaml
+        yq e -i '.postgresql.postgresqlPassword = strenv(PG_PASSWORD)' vars.yaml
         yq e -i '.global.openReplayContainerRegistry = strenv(REGISTRY_URL)' vars.yaml
       shell: bash
       env:
