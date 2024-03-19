@@ -3,7 +3,6 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
@@ -406,6 +405,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 	default:
 		return fmt.Errorf("unknown error source: %s", msg.Source)
 	}
+	msgID, _ := msg.ID(session.ProjectID)
 	// Insert event to batch
 	if err := c.batches["errors"].Append(
 		session.SessionID,
@@ -415,7 +415,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		msg.Source,
 		nullableString(msg.Name),
 		msg.Message,
-		msg.ID(session.ProjectID),
+		msgID,
 		"ERROR",
 		keys,
 		values,
