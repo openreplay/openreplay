@@ -1,8 +1,9 @@
 import React from 'react';
-import { Button } from 'UI';
 import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { Button, Popover } from 'antd';
+import { MessageOutlined } from '@ant-design/icons';
 
 function NotePopup({
   setCreateNoteTooltip,
@@ -24,9 +25,16 @@ function NotePopup({
   }, []);
 
   return (
-    <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>
-      Add Note
-    </Button>
+    <Popover content={'Add Note'}>
+      <Button
+        size={'small'}
+        className={'flex items-center justify-center'}
+        onClick={toggleNotePopup}
+        disabled={tooltipActive}
+      >
+        <MessageOutlined />
+      </Button>
+    </Popover>
   );
 }
 

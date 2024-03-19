@@ -1,5 +1,6 @@
-import { useStore } from "App/mstore";
 import React, { useMemo } from 'react';
+import { useStore } from "App/mstore";
+import KeyboardHelp from "Components/Session_/Player/Controls/components/KeyboardHelp";
 import { Icon, Tooltip, Button } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
@@ -16,7 +17,8 @@ import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
-import { Switch } from 'antd';
+import { Switch, Button as AntButton, Popover } from 'antd';
+import { BugOutlined, SaveOutlined, ShareAltOutlined } from '@ant-design/icons'
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -124,9 +126,13 @@ function SubHeader(props) {
           })}
           style={{ width: 'max-content' }}
         >
-          <Button icon="file-pdf" variant="text" onClick={showReportModal}>
-            Create Bug Report
-          </Button>
+          <KeyboardHelp />
+          <Popover content={'Create Bug Report'}>
+            <AntButton size={'small'} className={'flex items-center justify-center'} onClick={showReportModal}>
+              <BugOutlined />
+            </AntButton>
+          </Popover>
+          <Bookmark sessionId={props.sessionId} />
           <NotePopup />
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
           <SharePopup
@@ -135,24 +141,13 @@ function SubHeader(props) {
             showCopyLink={true}
             trigger={
               <div className="relative">
-                <Button icon="share-alt" variant="text" className="relative">
-                  Share
-                </Button>
+                <Popover content={'Share Session'}>
+                  <AntButton size={'small'} className="flex items-center justify-center">
+                    <ShareAltOutlined />
+                  </AntButton>
+                </Popover>
               </div>
             }
-          />
-          <ItemMenu
-            useSc
-            items={[
-              {
-                key: 1,
-                component: <AutoplayToggle />,
-              },
-              {
-                key: 2,
-                component: <Bookmark noMargin sessionId={props.sessionId} />,
-              },
-            ]}
           />
 
           {uxtestingStore.isUxt() ? (

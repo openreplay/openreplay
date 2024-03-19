@@ -154,21 +154,15 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(CONSOLE)}
         active={bottomBlock === CONSOLE}
-        label="LOGS"
-        noIcon
-        labelClassName="!text-base font-semibold"
+        label="Logs"
         hasErrors={logMarkedCountNow > 0 || showExceptions}
-        containerClassName="mx-2"
       />
       <ControlButton
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(NETWORK)}
         active={bottomBlock === NETWORK}
-        label="NETWORK"
+        label="Network"
         hasErrors={resourceMarkedCountNow > 0}
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
       />
       {showExceptions ?
         <ControlButton
@@ -176,29 +170,20 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
           onClick={() => toggleBottomTools(EXCEPTIONS)}
           active={bottomBlock === EXCEPTIONS}
           hasErrors={showExceptions}
-          label="EXCEPTIONS"
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
+          label="Exceptions"
         />
       : null}
       <ControlButton
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(STACKEVENTS)}
         active={bottomBlock === STACKEVENTS}
-        label="EVENTS"
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
+        label="Events"
       />
       <ControlButton
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(PERFORMANCE)}
         active={bottomBlock === PERFORMANCE}
-        label="PERFORMANCE"
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
+        label="Performance"
       />
     </>
   );

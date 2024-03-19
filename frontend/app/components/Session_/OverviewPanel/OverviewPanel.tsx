@@ -124,7 +124,7 @@ function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, 
       <React.Fragment>
         <BottomBlock style={{ height: '100%' }}>
           <BottomBlock.Header>
-            <span className="font-semibold color-gray-medium mr-4">X-RAY</span>
+            <span className="font-semibold text-black mr-4">X-Ray</span>
             <div className="flex items-center h-20">
               <FeatureSelection list={selectedFeatures} updateList={setSelectedFeatures} />
             </div>
@@ -133,7 +133,6 @@ function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, 
             <OverviewPanelContainer endTime={endTime}>
               <TimelineScale endTime={endTime} />
               <div
-                // style={{ width: '100%', height: '187px', overflow: 'hidden' }}
                 style={{ width: 'calc(100% - 1rem)', margin: '0 auto' }}
                 className="transition relative"
               >
@@ -168,7 +167,7 @@ function PanelComponent({ selectedFeatures, endTime, resources, fetchPresented, 
                         message={HELP_MESSAGE[feature]}
                       />
                       {isMobile && feature === 'PERFORMANCE' ? (
-                        <div className={"absolute top-0 left-0 py-2 flex items-center py-4 w-full"}>
+                        <div className={"absolute top-0 left-0 flex items-center py-4 w-full"}>
                           <EventRow
                             isGraph={false}
                             title={''}

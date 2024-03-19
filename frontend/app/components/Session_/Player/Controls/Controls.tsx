@@ -1,20 +1,20 @@
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
-import KeyboardHelp, {
+import { useModal } from 'Components/Modal';
+import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
+import {
   LaunchConsoleShortcut,
   LaunchEventsShortcut,
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
   LaunchStateShortcut,
-  PlayPauseSessionShortcut,
-  PlaySessionInFullscreenShortcut,
+  LaunchXRaShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
-import { Popover } from 'antd';
 
 import {
   CONSOLE,
@@ -34,13 +34,13 @@ import {
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
+import { Icon } from 'UI';
 
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls';
 
 import styles from './controls.module.css';
-import XRayButton from 'Shared/XRayButton';
 import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
 
@@ -57,19 +57,19 @@ export const SKIP_INTERVALS = {
 function getStorageName(type: any) {
   switch (type) {
     case STORAGE_TYPES.REDUX:
-      return 'REDUX';
+      return 'Redux';
     case STORAGE_TYPES.MOBX:
-      return 'MOBX';
+      return 'Mobx';
     case STORAGE_TYPES.VUEX:
-      return 'VUEX';
+      return 'Vuex';
     case STORAGE_TYPES.NGRX:
-      return 'NGRX';
+      return 'NgRx';
     case STORAGE_TYPES.ZUSTAND:
-      return 'ZUSTAND';
+      return 'Zustand';
     case STORAGE_TYPES.NONE:
-      return 'STATE';
+      return 'State';
     default:
-      return 'STATE';
+      return 'State';
   }
 }
 
@@ -93,6 +93,7 @@ function Controls(props: any) {
     nextSessionId,
     siteId,
     setActiveTab,
+    sessionId,
   } = props;
 
   const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
@@ -160,20 +161,16 @@ function Controls(props: any) {
               startedAt={session.startedAt}
             />
             <div className={cn('mx-2')} />
-            <XRayButton
-              isActive={bottomBlock === OVERVIEW && !inspectorMode}
-              onClick={() => toggleBottomTools(OVERVIEW)}
-            />
-            <KeyboardHelp />
           </div>
 
-          <div className="flex items-center h-full">
+          <div className="flex items-center h-full gap-2">
             {uxtestingStore.hideDevtools && uxtestingStore.isUxt() ? null : (
               <DevtoolsButtons
                 showStorageRedux={showStorageRedux}
                 toggleBottomTools={toggleBottomTools}
                 bottomBlock={bottomBlock}
                 disabled={disabled}
+                sessionId={sessionId}
               />
             )}
 
@@ -194,11 +191,16 @@ interface IDevtoolsButtons {
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
   disabled: boolean;
+  sessionId: string;
 }
 
 const DevtoolsButtons = observer(
-  ({ showStorageRedux, toggleBottomTools, bottomBlock, disabled }: IDevtoolsButtons) => {
-    const { store } = React.useContext(PlayerContext);
+  ({ showStorageRedux, toggleBottomTools, bottomBlock, disabled, sessionId }: IDevtoolsButtons) => {
+    const { store, player } = React.useContext(PlayerContext);
+    const { showModal } = useModal();
+
+    const originStr = window.env.ORIGIN || window.location.origin;
+    const isSaas = /app\.openreplay\.com/.test(originStr);
 
     const { inspectorMode, currentTab, tabStates } = store.get();
 
@@ -220,8 +222,26 @@ const DevtoolsButtons = observer(
     const showProfiler = profilesCount > 0;
     const showExceptions = exceptionsList.length > 0;
     const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
+
+    const showSummary = () => {
+      player.pause();
+      showModal(<SummaryBlock sessionId={sessionId} />, { right: true, width: 330 });
+    };
     return (
       <>
+        {isSaas ? <SummaryButton onClick={showSummary} /> : null}
+        <ControlButton
+          popover={
+            <div className={'flex items-center gap-2'}>
+              <LaunchXRaShortcut />
+              <div>Get a quick overview on the issues in this session.</div>
+            </div>
+          }
+          label={'X-Ray'}
+          onClick={() => toggleBottomTools(OVERVIEW)}
+          active={bottomBlock === OVERVIEW && !inspectorMode}
+        />
+
         <ControlButton
           popover={
             <div className={'flex gap-2 items-center'}>
@@ -232,11 +252,8 @@ const DevtoolsButtons = observer(
           disabled={disableButtons}
           onClick={() => toggleBottomTools(CONSOLE)}
           active={bottomBlock === CONSOLE && !inspectorMode}
-          label="CONSOLE"
-          noIcon
-          labelClassName="!text-base font-semibold"
+          label="Console"
           hasErrors={logRedCount > 0 || showExceptions}
-          containerClassName="mx-2"
         />
 
         <ControlButton
@@ -249,11 +266,8 @@ const DevtoolsButtons = observer(
           disabled={disableButtons}
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK && !inspectorMode}
-          label="NETWORK"
+          label="Network"
           hasErrors={resourceRedCount > 0}
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
         />
 
         <ControlButton
@@ -266,10 +280,7 @@ const DevtoolsButtons = observer(
           disabled={disableButtons}
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
-          label="PERFORMANCE"
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
+          label="Performance"
         />
 
         {showGraphql && (
@@ -277,10 +288,7 @@ const DevtoolsButtons = observer(
             disabled={disableButtons}
             onClick={() => toggleBottomTools(GRAPHQL)}
             active={bottomBlock === GRAPHQL && !inspectorMode}
-            label="GRAPHQL"
-            noIcon
-            labelClassName="!text-base font-semibold"
-            containerClassName="mx-2"
+            label="Graphql"
           />
         )}
 
@@ -296,9 +304,6 @@ const DevtoolsButtons = observer(
             onClick={() => toggleBottomTools(STORAGE)}
             active={bottomBlock === STORAGE && !inspectorMode}
             label={getStorageName(storageType) as string}
-            noIcon
-            labelClassName="!text-base font-semibold"
-            containerClassName="mx-2"
           />
         )}
         <ControlButton
@@ -311,10 +316,7 @@ const DevtoolsButtons = observer(
           disabled={disableButtons}
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS && !inspectorMode}
-          label="EVENTS"
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
+          label="Events"
           hasErrors={stackRedCount > 0}
         />
         {showProfiler && (
@@ -322,16 +324,59 @@ const DevtoolsButtons = observer(
             disabled={disableButtons}
             onClick={() => toggleBottomTools(PROFILER)}
             active={bottomBlock === PROFILER && !inspectorMode}
-            label="PROFILER"
-            noIcon
-            labelClassName="!text-base font-semibold"
-            containerClassName="mx-2"
+            label="Profiler"
           />
         )}
       </>
     );
   }
 );
+
+function SummaryButton({ onClick }: { onClick?: () => void }) {
+  const [isHovered, setHovered] = React.useState(false);
+
+  return (
+    <div style={gradientButton} onClick={onClick}>
+      <div
+        style={isHovered ? onHoverFillStyle : fillStyle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <Icon name={'sparkles'} size={16} />
+        <div className={'font-semibold text-main'}>Summary AI</div>
+      </div>
+    </div>
+  );
+}
+
+const gradientButton = {
+  border: 'double 1px transparent',
+  borderRadius: '60px',
+  background:
+    'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',
+  backgroundOrigin: 'border-box',
+  backgroundClip: 'content-box, border-box',
+  cursor: 'pointer',
+};
+const onHoverFillStyle = {
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  borderRadius: '60px',
+  gap: 2,
+  alignItems: 'center',
+  padding: '2px 8px',
+  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
+};
+const fillStyle = {
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  borderRadius: '60px',
+  gap: 2,
+  alignItems: 'center',
+  padding: '2px 8px',
+};
 
 const ControlPlayer = observer(Controls);
 
@@ -351,6 +396,7 @@ export default connect(
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
       siteId: state.getIn(['site', 'siteId']),
+      sessionId: state.getIn(['sessions', 'current']).sessionId,
     };
   },
   {

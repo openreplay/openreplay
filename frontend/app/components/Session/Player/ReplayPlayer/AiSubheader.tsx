@@ -213,52 +213,6 @@ function SubHeader(props: any) {
   );
 }
 
-function SummaryButton({ onClick }: { onClick?: () => void }) {
-  const [isHovered, setHovered] = React.useState(false);
-
-  return (
-    <div
-      style={gradientButton}
-      onClick={onClick}
-    >
-      <div style={isHovered ? onHoverFillStyle : fillStyle} onMouseEnter={() => setHovered(true)}
-           onMouseLeave={() => setHovered(false)}>
-        <Icon name={'sparkles'} size={16} />
-        <div className={'font-semibold text-main'}>AI Summary</div>
-      </div>
-    </div>
-  );
-}
-
-const gradientButton = {
-  border: 'double 1px transparent',
-  borderRadius: '60px',
-  background:
-    'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',
-  backgroundOrigin: 'border-box',
-  backgroundClip: 'content-box, border-box',
-  cursor: 'pointer',
-};
-const onHoverFillStyle = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  borderRadius: '60px',
-  gap: 2,
-  alignItems: 'center',
-  padding: '4px 8px',
-  background:
-    'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
-};
-const fillStyle = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  borderRadius: '60px',
-  gap: 2,
-  alignItems: 'center',
-  padding: '4px 8px',
-}
 
 export default connect((state: Record<string, any>) => ({
   siteId: state.getIn(['site', 'siteId']),
