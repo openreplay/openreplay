@@ -1,5 +1,5 @@
-name: 'Update OSS Keys'
-description: 'Updates OSS keys'
+name: 'Update Keys'
+description: 'Updates keys'
 inputs:
   domain_name:
     required: true
