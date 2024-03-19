@@ -1,3 +1,7 @@
+# 12.0.5
+
+- patch for img.ts srcset detector
+
 # 12.0.4
 
 - patch for email sanitizer (supports + now)
