@@ -130,6 +130,8 @@ jobs:
         done
 
     - name: Deploying to kuberntes
+      env:
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
       run: |
         #
         # Deploying image to environment.
