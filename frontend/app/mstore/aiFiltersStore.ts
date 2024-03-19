@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { aiService } from 'App/services';
 import Filter from 'Types/filter';
 import { FilterKey } from 'Types/filter/filterType';
+import { filtersMap }         from "Types/filter/newFilter";
 
 export default class AiFiltersStore {
   filters: Record<string, any> = { filters: [] };
@@ -25,9 +26,19 @@ export default class AiFiltersStore {
         filters: r.filters.map((f: Record<string, any>) => {
           if (f.key === 'fetch') {
             return mapFetch(f);
-          } else {
-            return { ...f, value: f.value ?? [] };
           }
+          if (f.key === 'graphql') {
+            return mapGraphql(f)
+          }
+
+          const matchingFilter = Object.keys(filtersMap).find(k => f.key === 'metadata' ? `_${f.source}` === k : f.key === k)
+
+          if (f.key === 'duration') {
+            const filter = matchingFilter ? { ...filtersMap[matchingFilter], ...f } : { ...f, value: f.value ?? [] };
+            return { ...filter, value: filter.value ? filter.value.map((i: string) => parseInt(i, 10) * 60 * 1000) : null };
+          }
+
+          return matchingFilter ? { ...filtersMap[matchingFilter], ...f } : { ...f, value: f.value ?? [] };
         }),
         eventsOrder: r.eventsOrder.toLowerCase(),
       });
@@ -41,8 +52,6 @@ export default class AiFiltersStore {
     }
   };
 }
-
-
 
 const defaultFetchFilter = {
   value: [],
@@ -90,17 +99,57 @@ const defaultFetchFilter = {
   ],
 };
 
+const defaultGraphqlFilter = {
+  filters: [
+    {
+      filters: [],
+      operator: 'is',
+      type: 'graphqlName',
+      value: [],
+    },
+    {
+      filters: [],
+      operator: 'is',
+      type: 'graphqlMethod',
+      value: [],
+    },
+    {
+      filters: [],
+      operator: 'is',
+      type: 'graphqlRequestBody',
+      value: [],
+    },
+    {
+      filters: [],
+      operator: 'is',
+      type: 'graphqlResponseBody',
+      value: [],
+    },
+  ],
+  isEvent: true,
+  operator: 'is',
+  type: 'graphql',
+  value: [],
+};
+
 export function isObject(item: any): boolean {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
-const updateFilters = (defaultFilters: typeof defaultFetchFilter['filters'], backendFilters: Record<string, any>): typeof defaultFetchFilter['filters'] => {
+const updateFilters = (
+  defaultFilters: (typeof defaultFetchFilter)['filters'],
+  backendFilters: Record<string, any>
+): (typeof defaultFetchFilter)['filters'] => {
   const updatedFilters = [...defaultFilters]; // Clone the default filters
 
-  backendFilters.forEach(backendFilter => {
-    const index = updatedFilters.findIndex(f => f.type === backendFilter.key);
+  backendFilters.forEach((backendFilter) => {
+    const index = updatedFilters.findIndex((f) => f.type === backendFilter.key);
     if (index > -1) {
-      updatedFilters[index] = { ...updatedFilters[index], ...backendFilter, type: updatedFilters[index].type };
+      updatedFilters[index] = {
+        ...updatedFilters[index],
+        ...backendFilter,
+        type: updatedFilters[index].type,
+      };
     }
   });
 
@@ -108,5 +157,15 @@ const updateFilters = (defaultFilters: typeof defaultFetchFilter['filters'], bac
 };
 
 const mapFetch = (filter: Record<string, any>): Record<string, any> => {
-  return { ...defaultFetchFilter, filters: updateFilters(defaultFetchFilter.filters, filter.filters) }
+  return {
+    ...defaultFetchFilter,
+    filters: updateFilters(defaultFetchFilter.filters, filter.filters),
+  };
 };
+
+const mapGraphql = (filter: Record<string, any>) => {
+  return {
+    ...defaultGraphqlFilter,
+    filters: updateFilters(defaultGraphqlFilter.filters, filter.filters),
+  }
+}
