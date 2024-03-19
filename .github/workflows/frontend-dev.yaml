@@ -21,6 +21,17 @@ jobs:
           ${{ runner.OS }}-build-
           ${{ runner.OS }}-
 
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.DEV_DOMAIN_NAME }}
+        license_key: ${{ secrets.DEV_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.DEV_JWT_SECRET }}
+        minio_access_key: ${{ secrets.DEV_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.DEV_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.DEV_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Docker login
       run: |
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
@@ -58,14 +69,6 @@ jobs:
           image:
             tag: ${IMAGE_TAG}
         EOF
-
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.DEV_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.DEV_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.DEV_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.DEV_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.DEV_DOMAIN_NAME }}\"/g" vars.yaml
 
         # Update changed image tag
         sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
