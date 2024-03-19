@@ -1,24 +1,22 @@
 import React, { useMemo } from 'react';
-import { useStore } from "App/mstore";
-import KeyboardHelp from "Components/Session_/Player/Controls/components/KeyboardHelp";
-import { Icon, Tooltip, Button } from 'UI';
+import { useStore } from 'App/mstore';
+import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { Icon, Tooltip } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
-import ItemMenu from './components/HeaderMenu';
 import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
 import { Switch, Button as AntButton, Popover } from 'antd';
-import { BugOutlined, SaveOutlined, ShareAltOutlined } from '@ant-design/icons'
+import { BugOutlined, ShareAltOutlined } from '@ant-design/icons';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -91,7 +89,9 @@ function SubHeader(props) {
     <>
       <div
         className="w-full px-4 flex items-center border-b relative"
-        style={{ background: uxtestingStore.isUxt() ? props.live ? '#F6FFED' : '#EBF4F5' : undefined }}
+        style={{
+          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined,
+        }}
       >
         {showWarning ? (
           <div
@@ -128,7 +128,11 @@ function SubHeader(props) {
         >
           <KeyboardHelp />
           <Popover content={'Create Bug Report'}>
-            <AntButton size={'small'} className={'flex items-center justify-center'} onClick={showReportModal}>
+            <AntButton
+              size={'small'}
+              className={'flex items-center justify-center'}
+              onClick={showReportModal}
+            >
               <BugOutlined />
             </AntButton>
           </Popover>
