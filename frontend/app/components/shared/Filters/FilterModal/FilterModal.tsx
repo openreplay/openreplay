@@ -3,7 +3,7 @@ import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.module.css';
-import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
+import { filtersMap } from 'Types/filter/newFilter';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function filterJson(
@@ -54,21 +54,23 @@ export const getMatchingEntries = (searchQuery: string, filters: Record<string, 
 interface Props {
   filters: any;
   conditionalFilters: any;
+  mobileConditionalFilters: any;
   onFilterClick?: (filter: any) => void;
   filterSearchList: any;
-  // metaOptions: any,
   isMainSearch?: boolean;
   fetchingFilterSearchList: boolean;
   searchQuery?: string;
   excludeFilterKeys?: Array<string>;
   allowedFilterKeys?: Array<string>;
   isConditional?: boolean;
+  isMobile?: boolean;
 }
 
 function FilterModal(props: Props) {
   const {
     filters,
     conditionalFilters,
+    mobileConditionalFilters,
     onFilterClick = () => null,
     filterSearchList,
     isMainSearch = false,
@@ -77,6 +79,7 @@ function FilterModal(props: Props) {
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
+    isMobile,
   } = props;
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
@@ -86,9 +89,12 @@ function FilterModal(props: Props) {
     onFilterClick(_filter);
   };
 
+  const filterJsonObj = isConditional
+                        ? isMobile ? mobileConditionalFilters : conditionalFilters
+                        : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(isConditional ? conditionalFilters : filters, excludeFilterKeys, allowedFilterKeys)
+    filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys)
   );
 
   const isResultEmpty =
@@ -181,6 +187,7 @@ export default connect((state: any, props: any) => {
       ? state.getIn(['search', 'filterListLive'])
       : state.getIn(['search', 'filterList']),
     conditionalFilters: state.getIn(['search', 'filterListConditional']),
+    mobileConditionalFilters: state.getIn(['search', 'filterListMobileConditional']),
     filterSearchList: props.isLive
       ? state.getIn(['liveSearch', 'filterSearchList'])
       : state.getIn(['search', 'filterSearchList']),

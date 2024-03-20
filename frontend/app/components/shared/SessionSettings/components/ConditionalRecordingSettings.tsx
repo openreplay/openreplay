@@ -8,10 +8,12 @@ function ConditionalRecordingSettings({
   conditions,
   setConditions,
   setChanged,
+  isMobile,
 }: {
   setChanged: (changed: boolean) => void;
   conditions: Conditions[];
   setConditions: (conditions: Conditions[]) => void;
+  isMobile?: boolean;
 }) {
   const addConditionSet = () => {
     setChanged(true);
@@ -60,6 +62,7 @@ function ConditionalRecordingSettings({
               setChanged={setChanged}
               excludeFilterKeys={nonConditionalFlagFilters}
               isConditional
+              isMobile={isMobile}
             />
             {index !== conditions.length - 1 ? (
               <div className={'text-disabled-text flex justify-center w-full'}>

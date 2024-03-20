@@ -6,6 +6,7 @@ import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import {
   addElementToConditionalFiltersMap,
+  addElementToMobileConditionalFiltersMap,
   addElementToFiltersMap,
   addElementToFlagConditionsMap,
   addElementToLiveFiltersMap,
@@ -54,6 +55,7 @@ const reducer = (state = initialState, action = {}) => {
         addElementToLiveFiltersMap(FilterCategory.METADATA, '_' + item.key);
         addElementToFlagConditionsMap(FilterCategory.METADATA, '_' + item.key)
         addElementToConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key)
+        addElementToMobileConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key)
       });
       return state.set('list', List(action.data).map(CustomField)).set('fetchedMetadata', true)
 

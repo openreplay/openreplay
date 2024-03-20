@@ -1,6 +1,6 @@
 import { makeAutoObservable, observable, action } from 'mobx';
 import { FilterKey, FilterType, FilterCategory }                          from 'Types/filter/filterType';
-import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
+import { filtersMap, conditionalFiltersMap, mobileConditionalFiltersMap } from 'Types/filter/newFilter';
 
 export default class FilterItem {
   type: string = '';
@@ -65,7 +65,11 @@ export default class FilterItem {
     const isMetadata = json.type === FilterKey.METADATA;
     let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
     if (this.isConditional) {
-      _filter = conditionalFiltersMap[json.type] || conditionalFiltersMap[json.source];
+      if (this.isMobile) {
+        _filter = mobileConditionalFiltersMap[json.type] || mobileConditionalFiltersMap[json.source];
+      } else {
+        _filter = conditionalFiltersMap[json.type] || conditionalFiltersMap[json.source];
+      }
     }
     if (mainFilterKey) {
       const mainFilter = filtersMap[mainFilterKey];
@@ -108,7 +112,7 @@ export default class FilterItem {
     const json = {
       type: isMetadata ? FilterKey.METADATA : this.key,
       isEvent: Boolean(this.isEvent),
-      value: this.value,
+      value: this.value.map((i: any) => i && i.toString()),
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,
