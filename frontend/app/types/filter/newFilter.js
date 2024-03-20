@@ -849,7 +849,7 @@ export default Record({
       _filter = subFilterMap[type];
     } else {
       if (type === FilterKey.METADATA) {
-        _filter = filtersMap[filter.source];
+        _filter = filtersMap[`_${filter.source}`];
       } else {
         if (filtersMap[filter.key]) {
           _filter = filtersMap[filter.key]
