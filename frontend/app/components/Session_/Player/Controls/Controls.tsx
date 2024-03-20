@@ -1,7 +1,5 @@
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
-import { useModal } from 'Components/Modal';
-import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import {
   LaunchConsoleShortcut,
   LaunchEventsShortcut,
@@ -140,7 +138,6 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       <Timeline />
-      <CreateNote />
       {!fullscreen && (
         <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
@@ -196,6 +193,7 @@ const DevtoolsButtons = observer(
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
+    // @ts-ignore
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /app\.openreplay\.com/.test(originStr);
 

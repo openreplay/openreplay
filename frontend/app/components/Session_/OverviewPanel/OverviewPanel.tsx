@@ -171,7 +171,7 @@ function PanelComponent({
               <SummaryButton withToggle onClick={toggleSummary} toggleValue={summaryChecked} />
             ) : null}
           </div>
-          <div className="flex items-center h-20">
+          <div className="flex items-center h-20 mr-4">
             <FeatureSelection list={selectedFeatures} updateList={setSelectedFeatures} />
           </div>
         </BottomBlock.Header>

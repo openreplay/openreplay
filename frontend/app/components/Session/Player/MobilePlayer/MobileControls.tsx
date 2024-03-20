@@ -100,7 +100,6 @@ function Controls(props: any) {
   return (
     <div className={styles.controls}>
       <Timeline isMobile />
-      <CreateNote />
       {!fullscreen && (
         <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">

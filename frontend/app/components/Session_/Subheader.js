@@ -121,9 +121,10 @@ function SubHeader(props) {
         ) : null}
         <SessionTabs />
         <div
-          className={cn('ml-auto text-sm flex items-center color-gray-medium gap-2', {
-            'opacity-50 pointer-events-none': hasIframe,
-          })}
+          className={cn(
+            'ml-auto text-sm flex items-center color-gray-medium gap-2',
+            hasIframe ? 'opacity-50 pointer-events-none' : ''
+          )}
           style={{ width: 'max-content' }}
         >
           <KeyboardHelp />

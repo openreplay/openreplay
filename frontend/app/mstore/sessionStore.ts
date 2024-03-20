@@ -354,10 +354,6 @@ export default class SessionStore {
     this.timeLineTooltip = tp
   }
 
-  setEditNoteTooltip(tp: { time: number, isVisible: boolean, isEdit: boolean, note: any }) {
-    this.createNoteTooltip = tp
-  }
-
   filterOutNote(noteId: string) {
     const current = this.current
 
