@@ -1,6 +1,11 @@
-import React from 'react';
-import cn from 'classnames';
-import { connect } from 'react-redux';
+import {
+  LaunchConsoleShortcut, LaunchEventsShortcut,
+  LaunchNetworkShortcut, LaunchPerformanceShortcut,
+  LaunchXRaShortcut
+} from "Components/Session_/Player/Controls/components/KeyboardHelp";
+import React                                        from 'react';
+import cn                                             from 'classnames';
+import { connect }                                    from 'react-redux';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
 
 import { Tooltip } from 'UI';
@@ -115,13 +120,9 @@ function Controls(props: any) {
               startedAt={session.startedAt}
             />
             <div className={cn('mx-2')} />
-            <XRayButton
-                isActive={bottomBlock === OVERVIEW}
-                onClick={() => toggleBottomTools(OVERVIEW)}
-            />
             </div>
 
-          <div className="flex items-center h-full">
+          <div className="flex items-center h-full gap-2">
             <DevtoolsButtons toggleBottomTools={toggleBottomTools} bottomBlock={bottomBlock} />
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
@@ -151,6 +152,23 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
   return (
     <>
       <ControlButton
+        popover={
+          <div className={'flex items-center gap-2'}>
+            <LaunchXRaShortcut />
+            <div>Get a quick overview on the issues in this session.</div>
+          </div>
+        }
+        label={'X-Ray'}
+        onClick={() => toggleBottomTools(OVERVIEW)}
+        active={bottomBlock === OVERVIEW}
+      />
+      <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchConsoleShortcut />
+            <div>Launch Logs</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(CONSOLE)}
         active={bottomBlock === CONSOLE}
@@ -158,6 +176,12 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         hasErrors={logMarkedCountNow > 0 || showExceptions}
       />
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchNetworkShortcut />
+            <div>Launch Network</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(NETWORK)}
         active={bottomBlock === NETWORK}
@@ -174,12 +198,24 @@ function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProp
         />
       : null}
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchEventsShortcut />
+            <div>Launch Events</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(STACKEVENTS)}
         active={bottomBlock === STACKEVENTS}
         label="Events"
       />
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchPerformanceShortcut />
+            <div>Launch Performance</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(PERFORMANCE)}
         active={bottomBlock === PERFORMANCE}
