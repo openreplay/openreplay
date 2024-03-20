@@ -15,7 +15,7 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import { selectStorageType, STORAGE_TYPES, StorageType } from 'Player';
 import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
-
+import { Switch } from 'antd'
 import {
   CONSOLE,
   fullscreenOff,
@@ -93,7 +93,6 @@ function Controls(props: any) {
     nextSessionId,
     siteId,
     setActiveTab,
-    sessionId,
   } = props;
 
   const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
@@ -170,7 +169,6 @@ function Controls(props: any) {
                 toggleBottomTools={toggleBottomTools}
                 bottomBlock={bottomBlock}
                 disabled={disabled}
-                sessionId={sessionId}
               />
             )}
 
@@ -191,13 +189,12 @@ interface IDevtoolsButtons {
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
   disabled: boolean;
-  sessionId: string;
 }
 
 const DevtoolsButtons = observer(
-  ({ showStorageRedux, toggleBottomTools, bottomBlock, disabled, sessionId }: IDevtoolsButtons) => {
+  ({ showStorageRedux, toggleBottomTools, bottomBlock, disabled }: IDevtoolsButtons) => {
+    const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
-    const { showModal } = useModal();
 
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /app\.openreplay\.com/.test(originStr);
@@ -225,7 +222,11 @@ const DevtoolsButtons = observer(
 
     const showSummary = () => {
       player.pause();
-      showModal(<SummaryBlock sessionId={sessionId} />, { right: true, width: 330 });
+      if (bottomBlock !== OVERVIEW) {
+        toggleBottomTools(OVERVIEW)
+      }
+      aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
+      // showModal(<SummaryBlock sessionId={sessionId} />, { right: true, width: 330 });
     };
     return (
       <>
@@ -332,7 +333,17 @@ const DevtoolsButtons = observer(
   }
 );
 
-function SummaryButton({ onClick }: { onClick?: () => void }) {
+export function SummaryButton({
+  onClick,
+  withToggle,
+  onToggle,
+  toggleValue,
+}: {
+  onClick?: () => void,
+  withToggle?: boolean,
+  onToggle?: () => void,
+  toggleValue?: boolean
+}) {
   const [isHovered, setHovered] = React.useState(false);
 
   return (
@@ -342,6 +353,12 @@ function SummaryButton({ onClick }: { onClick?: () => void }) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
+        {withToggle ? (
+          <Switch
+            checked={toggleValue}
+            onChange={onToggle}
+          />
+        ) : null}
         <Icon name={'sparkles'} size={16} />
         <div className={'font-semibold text-main'}>Summary AI</div>
       </div>
@@ -396,7 +413,6 @@ export default connect(
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
       siteId: state.getIn(['site', 'siteId']),
-      sessionId: state.getIn(['sessions', 'current']).sessionId,
     };
   },
   {

@@ -1,5 +1,4 @@
 import React from 'react';
-import Icon from 'UI/Icon';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
@@ -29,16 +28,12 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
 
   return (
     <div style={summaryBlockStyle}>
-      <div className={'flex items-center gap-2'}>
-        <Icon name={'sparkles'} size={18} />
-        <div className={'font-semibold text-xl'}>AI Summary</div>
+      <div className={'flex items-center gap-2 px-2 py-1 rounded border border-gray-light bg-white w-fit'}>
+        User Behavior Analysis
       </div>
 
       {aiSummaryStore.text ? (
         <div className={'rounded p-4 bg-white whitespace-pre-wrap flex flex-col'}>
-          <div>
-            Here’s the AI breakdown of the session, covering user behavior and technical insights.
-          </div>
           <>{formattedText.map((v) => v)}</>
         </div>
       ) : (
@@ -72,9 +67,9 @@ function TextPlaceholder() {
 }
 
 const summaryBlockStyle: React.CSSProperties = {
-  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
+  background: 'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
   width: '100%',
-  height: '100vh',
+  height: '25vh',
   overflow: 'auto',
   display: 'flex',
   flexDirection: 'column',
