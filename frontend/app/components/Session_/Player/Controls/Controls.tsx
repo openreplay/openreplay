@@ -162,7 +162,7 @@ function Controls(props: any) {
             <div className={cn('mx-2')} />
           </div>
 
-          <div className="flex items-center h-full gap-2">
+          <div className="flex gap-2 items-center h-full">
             {uxtestingStore.hideDevtools && uxtestingStore.isUxt() ? null : (
               <DevtoolsButtons
                 showStorageRedux={showStorageRedux}
