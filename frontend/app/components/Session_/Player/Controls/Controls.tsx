@@ -75,8 +75,15 @@ function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
   const { uxtestingStore } = useStore();
 
-  const { playing, completed, skip, speed, messagesLoading, markedTargets, inspectorMode } =
-    store.get();
+  const {
+    playing,
+    completed,
+    skip,
+    speed,
+    messagesLoading,
+    markedTargets,
+    inspectorMode,
+  } = store.get();
 
   const {
     bottomBlock,
