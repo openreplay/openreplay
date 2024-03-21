@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Tooltip, Button, Icon } from 'UI';
 import { toggleFavorite } from 'Duck/sessions';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
+import { Button, Popover } from 'antd'
+import { SaveOutlined } from '@ant-design/icons';
 
 interface Props {
   toggleFavorite: (sessionId: string) => Promise<void>;
@@ -21,9 +22,6 @@ function Bookmark(props: Props) {
   const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to bookmarks';
   const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from bookmarks';
 
-  const ACTIVE_ICON = isEnterprise ? 'safe-fill' : 'star-solid';
-  const INACTIVE_ICON = isEnterprise ? 'safe' : 'star';
-
   useEffect(() => {
     setIsFavorite(favorite);
   }, [favorite]);
@@ -37,27 +35,11 @@ function Bookmark(props: Props) {
 
   return (
     <div onClick={toggleFavorite} className="w-full">
-      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
-        {noMargin ? (
-          <div className="flex items-center cursor-pointer h-full w-full p-3">
-            <Icon
-              name={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
-              color={isFavorite ? 'teal' : undefined}
-              size="16"
-            />
-            <span className="ml-2 text-black">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
-          </div>
-        ) : (
-          <Button data-favourite={isFavorite}>
-            <Icon
-              name={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
-              color={isFavorite ? 'teal' : undefined}
-              size="16"
-            />
-            <span className="ml-2 text-black">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+      <Popover content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
+          <Button type={isFavorite ? 'primary' : undefined} ghost={isFavorite} size={'small'} className={'flex items-center justify-center'}>
+            <SaveOutlined />
           </Button>
-        )}
-      </Tooltip>
+      </Popover>
     </div>
   );
 }

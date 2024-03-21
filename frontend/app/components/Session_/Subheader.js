@@ -1,22 +1,22 @@
-import { useStore } from "App/mstore";
 import React, { useMemo } from 'react';
-import { Icon, Tooltip, Button } from 'UI';
+import { useStore } from 'App/mstore';
+import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { Icon, Tooltip } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
-import ItemMenu from './components/HeaderMenu';
 import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import AutoplayToggle from 'Shared/AutoplayToggle';
 import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
-import { Switch } from 'antd';
+import { Switch, Button as AntButton, Popover } from 'antd';
+import { BugOutlined, ShareAltOutlined } from '@ant-design/icons';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -89,7 +89,9 @@ function SubHeader(props) {
     <>
       <div
         className="w-full px-4 flex items-center border-b relative"
-        style={{ background: uxtestingStore.isUxt() ? props.live ? '#F6FFED' : '#EBF4F5' : undefined }}
+        style={{
+          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined,
+        }}
       >
         {showWarning ? (
           <div
@@ -119,14 +121,23 @@ function SubHeader(props) {
         ) : null}
         <SessionTabs />
         <div
-          className={cn('ml-auto text-sm flex items-center color-gray-medium gap-2', {
-            'opacity-50 pointer-events-none': hasIframe,
-          })}
+          className={cn(
+            'ml-auto text-sm flex items-center color-gray-medium gap-2',
+            hasIframe ? 'opacity-50 pointer-events-none' : ''
+          )}
           style={{ width: 'max-content' }}
         >
-          <Button icon="file-pdf" variant="text" onClick={showReportModal}>
-            Create Bug Report
-          </Button>
+          <KeyboardHelp />
+          <Popover content={'Create Bug Report'}>
+            <AntButton
+              size={'small'}
+              className={'flex items-center justify-center'}
+              onClick={showReportModal}
+            >
+              <BugOutlined />
+            </AntButton>
+          </Popover>
+          <Bookmark sessionId={props.sessionId} />
           <NotePopup />
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
           <SharePopup
@@ -135,24 +146,13 @@ function SubHeader(props) {
             showCopyLink={true}
             trigger={
               <div className="relative">
-                <Button icon="share-alt" variant="text" className="relative">
-                  Share
-                </Button>
+                <Popover content={'Share Session'}>
+                  <AntButton size={'small'} className="flex items-center justify-center">
+                    <ShareAltOutlined />
+                  </AntButton>
+                </Popover>
               </div>
             }
-          />
-          <ItemMenu
-            useSc
-            items={[
-              {
-                key: 1,
-                component: <AutoplayToggle />,
-              },
-              {
-                key: 2,
-                component: <Bookmark noMargin sessionId={props.sessionId} />,
-              },
-            ]}
           />
 
           {uxtestingStore.isUxt() ? (

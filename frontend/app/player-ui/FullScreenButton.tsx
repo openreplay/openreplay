@@ -1,16 +1,15 @@
-import { PlaySessionInFullscreenShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import React from 'react';
-import { Icon } from 'UI';
-import cn from 'classnames';
-import { Popover } from 'antd';
+import { Popover, Button } from 'antd';
+import { FullscreenOutlined } from '@ant-design/icons';
+import { PlaySessionInFullscreenShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 
 interface IProps {
   size: number;
   onClick: () => void;
   customClasses: string;
 }
-export function FullScreenButton({ size = 18, onClick, customClasses }: IProps) {
 
+export function FullScreenButton({ size = 18, onClick }: IProps) {
   return (
     <Popover
       content={
@@ -21,12 +20,13 @@ export function FullScreenButton({ size = 18, onClick, customClasses }: IProps) 
       }
       placement={"topRight"}
     >
-      <div
+      <Button
         onClick={onClick}
-        className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', customClasses)}
-      >
-        <Icon name="arrows-angle-extend" size={size} color="inherit" />
-      </div>
+        shape="circle"
+        size={'small'}
+        className={'flex items-center justify-center'}
+        icon={<FullscreenOutlined />}
+      />
     </Popover>
   );
 }

@@ -1,3 +1,5 @@
+import { useModal } from 'Components/Modal';
+import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 import React from 'react';
 import { Icon } from 'UI';
 import { tagProps, Note } from 'App/services/NotesService';
@@ -15,34 +17,40 @@ interface Props {
   note: Note;
   noEdit: boolean;
   filterOutNote: (id: number) => void;
-  onEdit: (noteTooltipObj: Record<string, any>) => void;
 }
 
 function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
+  const { showModal, hideModal } = useModal();
 
   const onEdit = () => {
-    props.onEdit({
-      isVisible: true,
-      isEdit: true,
-      time: props.note.timestamp,
-      note: {
-        timestamp: props.note.timestamp,
-        tag: props.note.tag,
-        isPublic: props.note.isPublic,
-        message: props.note.message,
-        sessionId: props.note.sessionId,
-        noteId: props.note.noteId,
-      },
-    });
+    showModal(
+      <CreateNote
+        hideModal={hideModal}
+        isEdit
+        time={props.note.timestamp}
+        editNote={{
+          timestamp: props.note.timestamp,
+          tag: props.note.tag,
+          isPublic: props.note.isPublic,
+          message: props.note.message,
+          noteId: props.note.noteId.toString(),
+        }}
+      />,
+      { right: true, width: 380 }
+    );
   };
 
   const onCopy = () => {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
+      )}${
+        props.note.timestamp > 0
+          ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
+          : `?note=${props.note.noteId}`
+      }`
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -67,10 +75,7 @@ function NoteEvent(props: Props) {
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
   return (
-    <div
-      className="flex items-start flex-col p-2 border rounded"
-      style={{ background: '#FFFEF5' }}
-    >
+    <div className="flex items-start flex-col p-2 border rounded" style={{ background: '#FFFEF5' }}>
       <div className="flex items-center w-full relative">
         <div className="p-3 bg-gray-light rounded-full">
           <Icon name="quotes" color="main" />

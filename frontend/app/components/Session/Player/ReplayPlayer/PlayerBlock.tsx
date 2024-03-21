@@ -19,16 +19,11 @@ interface IProps {
 function PlayerBlock(props: IProps) {
   const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, setActiveTab } = props;
 
-  const originStr = window.env.ORIGIN || window.location.origin
-  const isSaas = /app\.openreplay\.com/.test(originStr)
-
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
     <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}>
-      {shouldShowSubHeader ?
-        isSaas
-        ? <AiSubheader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} activeTab={activeTab} setActiveTab={setActiveTab} />
-        : <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
+      {shouldShowSubHeader
+       ? <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
        : null}
       <Player setActiveTab={setActiveTab} activeTab={activeTab} fullView={fullView} />
     </div>

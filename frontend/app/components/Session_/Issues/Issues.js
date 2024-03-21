@@ -1,8 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Popover, Button, Icon } from 'UI';
+import { Popover, Icon } from 'UI';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
+import { Popover as AntPopover, Button } from 'antd';
 
 @connect(
   (state) => ({
@@ -53,7 +54,7 @@ class Issues extends React.Component {
   };
 
   render() {
-    const { sessionId, issuesIntegration, isInline } = this.props;
+    const { sessionId, issuesIntegration } = this.props;
     const provider = issuesIntegration.first()?.provider || '';
 
     return (
@@ -65,18 +66,13 @@ class Issues extends React.Component {
           </div>
         )}
       >
-        {isInline ? (
-          <div className={'flex items-center gap-2 p-3 text-black'}>
-            <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size={16} />
-            <div>Create Issue</div>
-          </div>
-        ) : (
-          <div className="relative">
-            <Button icon={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} variant="text">
-              Create Issue
+        <div>
+          <AntPopover content={'Create Issue'}>
+            <Button size={'small'} className={'flex items-center justify-center'}>
+              <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} />
             </Button>
-          </div>
-        )}
+          </AntPopover>
+        </div>
       </Popover>
     );
   }

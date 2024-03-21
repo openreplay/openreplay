@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { Popover } from 'antd';
+import { Popover, Button } from 'antd';
 
 const Key = ({ label }: { label: string }) => <div style={{ minWidth: 52 }} className="whitespace-nowrap font-bold bg-gray-lightest rounded shadow px-2 py-1 text-figmaColors-text-primary text-center">{label}</div>;
 function Cell({ shortcut, text }: any) {
@@ -60,13 +60,12 @@ function KeyboardHelp() {
       title={<div className={'w-full text-center font-semibold'}>Keyboard Shortcuts</div>}
       content={<ShortcutGrid />}
     >
-      <div
-        className={
-          'py-1 px-2 rounded cursor-help bg-gray-lightest hover:bg-active-blue-border mx-2'
-        }
+      <Button
+        size={'small'}
+        className={'flex items-center justify-center'}
       >
         <Icon name={'keyboard'} size={21} color={'black'} />
-      </div>
+      </Button>
     </Popover>
   );
 }

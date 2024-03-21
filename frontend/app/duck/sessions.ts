@@ -552,20 +552,6 @@ export function setTimelineHoverTime(timeLineTooltip) {
     };
 }
 
-export function setCreateNoteTooltip(noteTooltip) {
-    return {
-        type: SET_CREATE_NOTE_TOOLTIP,
-        noteTooltip
-    }
-}
-
-export function setEditNoteTooltip(noteTooltip) {
-    return {
-        type: SET_EDIT_NOTE_TOOLTIP,
-        noteTooltip
-    }
-}
-
 export function filterOutNote(noteId) {
     return {
         type: FILTER_OUT_NOTE,

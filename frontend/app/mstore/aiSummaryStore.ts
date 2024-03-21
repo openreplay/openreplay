@@ -3,6 +3,7 @@ import { makeAutoObservable } from 'mobx';
 
 export default class AiSummaryStore {
   text = '';
+  toggleSummary = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -10,6 +11,10 @@ export default class AiSummaryStore {
 
   setText(text: string) {
     this.text = text;
+  }
+
+  setToggleSummary(toggleSummary: boolean) {
+    this.toggleSummary = toggleSummary;
   }
 
   getSummary = async (sessionId: string) => {

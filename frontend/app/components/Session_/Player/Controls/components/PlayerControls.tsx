@@ -1,20 +1,8 @@
-import {
-  PlaybackSpeedShortcut,
-  SkipBackwardShortcut,
-  SkipForwardShortcut,
-  SkipIntervalChangeShortcut
-} from "Components/Session_/Player/Controls/components/KeyboardHelp";
-import * as constants from 'constants';
 import React from 'react';
-import { Icon, Popover } from 'UI';
-import { Popover as AntPopover } from 'antd';
-import cn from 'classnames';
-import { RealReplayTimeConnected, ReduxTime } from '../Time';
-// @ts-ignore
-import styles from '../controls.module.css';
-import { SkipButton } from 'App/player-ui';
-import { SPEED_OPTIONS } from 'App/player/player/Player';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import PlayingTime from './PlayingTime';
+import { JumpBack, IntervalSelector, JumpForward, SpeedOptions } from './ControlsComponents';
 
 interface Props {
   skip: boolean;
@@ -59,37 +47,11 @@ function PlayerControls(props: Props) {
   const [timeMode, setTimeMode] = React.useState<ITimeMode>(
     localStorage.getItem('__or_player_time_mode') as ITimeMode
   );
-  const speedRef = React.useRef<HTMLButtonElement>(null);
-  const arrowBackRef = React.useRef<HTMLButtonElement>(null);
-  const arrowForwardRef = React.useRef<HTMLButtonElement>(null);
-  const skipRef = React.useRef<HTMLDivElement>(null);
 
   const saveTimeMode = (mode: ITimeMode) => {
     localStorage.setItem('__or_player_time_mode', mode);
     setTimeMode(mode);
   };
-
-  React.useEffect(() => {
-    const handleKeyboard = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        arrowForwardRef.current?.focus();
-      }
-      if (e.key === 'ArrowLeft') {
-        arrowBackRef.current?.focus();
-      }
-      if (e.key === 'ArrowDown') {
-        speedRef.current?.focus();
-      }
-      if (e.key === 'ArrowUp') {
-        speedRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyboard);
-    return () => document.removeEventListener('keydown', handleKeyboard);
-  }, [speedRef, arrowBackRef, arrowForwardRef]);
 
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
@@ -100,154 +62,42 @@ function PlayerControls(props: Props) {
       {playButton}
       <div className="mx-1" />
 
-      <button className={cn(styles.speedButton, 'focus:border focus:border-blue')}>
-        <PlayingTime
-          timeMode={timeMode}
-          setTimeMode={saveTimeMode}
-          startedAt={startedAt}
-          sessionTz={sessionTz}
+      <PlayingTime
+        timeMode={timeMode}
+        setTimeMode={saveTimeMode}
+        startedAt={startedAt}
+        sessionTz={sessionTz}
+      />
+
+      <div className="rounded ml-2 bg-white border-gray-light flex items-center" style={{ gap: 1 }}>
+        <JumpBack backTenSeconds={backTenSeconds} currentInterval={currentInterval} />
+        <IntervalSelector
+          skipIntervals={skipIntervals}
+          setSkipInterval={setSkipInterval}
+          toggleTooltip={toggleTooltip}
+          currentInterval={currentInterval}
         />
-      </button>
-
-      <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-        {/* @ts-ignore */}
-        <AntPopover
-          content={
-            <div className={'flex gap-2 items-center'}>
-              <SkipBackwardShortcut />
-              <div>{`Rewind ${currentInterval}s`}</div>
-            </div>
-          }
-          placement="top"
-        >
-          <button style={{ height: 32, background: 'transparent', border: 0 }} ref={arrowBackRef}>
-            <SkipButton
-              size={18}
-              onClick={backTenSeconds}
-              isBackwards={true}
-              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
-            />
-          </button>
-        </AntPopover>
-
-        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
-          <Popover
-            // @ts-ignore
-            theme="nopadding"
-            animation="none"
-            duration={0}
-            className="cursor-pointer select-none"
-            distance={20}
-            render={({ close }: any) => (
-              <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-                <div className="font-semibold py-2 px-4 w-full text-left">
-                  Jump <span className="text-disabled-text">(Secs)</span>
-                </div>
-                {Object.keys(skipIntervals).map((interval) => (
-                  <div
-                    key={interval}
-                    onClick={() => {
-                      close();
-                      setSkipInterval(parseInt(interval, 10));
-                    }}
-                    className={cn(
-                      'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                      'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
-                    )}
-                  >
-                    {interval}
-                    <span className="text-disabled-text">s</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          >
-            <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-              <AntPopover content={<div>Set default skip duration</div>}>
-                {currentInterval}s
-              </AntPopover>
-            </div>
-          </Popover>
-        </div>
-
-        <AntPopover
-          content={
-            <div className={'flex gap-2 items-center'}>
-              <SkipForwardShortcut />
-              <div>{`Forward ${currentInterval}s`}</div>
-            </div>
-          }
-          placement="top"
-        >
-          <button ref={arrowForwardRef} style={{ height: 32, background: 'transparent', border: 0 }}>
-            <SkipButton
-              size={18}
-              onClick={forthTenSeconds}
-              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
-            />
-          </button>
-        </AntPopover>
+        <JumpForward forthTenSeconds={forthTenSeconds} currentInterval={currentInterval} />
       </div>
 
       <div className="flex items-center">
-        <div className="mx-2" />
-        {/* @ts-ignore */}
-        <Popover
-          // @ts-ignore
-          theme="nopadding"
-          animation="none"
-          duration={0}
-          className="cursor-pointer select-none"
-          distance={20}
-          render={({ close }: any) => (
-            <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-              <div className="font-semibold py-2 px-4 w-full text-left">Playback speed</div>
-              {Object.keys(SPEED_OPTIONS).map((index: any) => (
-                <div
-                  key={SPEED_OPTIONS[index]}
-                  onClick={() => {
-                    close();
-                    toggleSpeed(index);
-                  }}
-                  className={cn(
-                    'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                    'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
-                  )}
-                >
-                  {SPEED_OPTIONS[index]}
-                  <span className="text-disabled-text">x</span>
-                </div>
-              ))}
-            </div>
-          )}
-        >
-          <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-            <AntPopover content={<div className={'flex gap-2 items-center'}>
-              <PlaybackSpeedShortcut />
-              <div>Change playback speed</div>
-            </div>}>
-              <button
-                ref={speedRef}
-                className={cn(styles.speedButton, 'focus:border focus:border-blue')}
-                data-disabled={disabled}
-              >
-                <div>{speed + 'x'}</div>
-              </button>
-            </AntPopover>
-          </div>
-        </Popover>
-        <div className="mx-2" />
-        <button
-          className={cn(styles.skipIntervalButton, {
-            [styles.withCheckIcon]: skip,
-            [styles.active]: skip,
-          })}
+        <div className="mx-1" />
+        <SpeedOptions
+          toggleSpeed={toggleSpeed}
+          disabled={disabled}
+          toggleTooltip={toggleTooltip}
+          speed={speed}
+        />
+        <div className="mx-1" />
+        <Button
           onClick={toggleSkip}
-          data-disabled={disabled}
+          disabled={disabled}
+          size={'small'}
+          className={'flex items-center font-semibold'}
         >
-          {skip && <Icon name="check" size="24" className="mr-1" />}
-          {'Skip Inactivity'}
-        </button>
+          {skip && <Icon name="check" size="24" />}
+          <span>Skip Inactivity</span>
+        </Button>
       </div>
     </div>
   );
