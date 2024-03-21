@@ -11,8 +11,9 @@ import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
-import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
+import { connect } from 'react-redux';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -25,13 +26,17 @@ const LEVEL_TAB = {
   [LogLevel.WARN]: WARNINGS,
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
-} as const
+} as const;
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
 
 function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
-  return s.split('\n').map((line, i) => <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>{line}</div>);
+  return s.split('\n').map((line, i) => (
+    <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
+      {line}
+    </div>
+  ));
 }
 
 const getIconProps = (level: any) => {
@@ -56,62 +61,80 @@ const getIconProps = (level: any) => {
   return null;
 };
 
-
 const INDEX_KEY = 'console';
 
-function ConsolePanel({ isLive }: { isLive?: boolean }) {
+function ConsolePanel({
+  isLive,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
+}: {
+  isLive?: boolean;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
+}) {
   const {
     sessionStore: { devTools },
-  } = useStore()
+  } = useStore();
 
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
-  const [ isDetailsModalActive, setIsDetailsModalActive ] = useState(false);
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } = React.useContext(PlayerContext)
-  const jump = (t: number) => player.jump(t)
+  const { player, store } = React.useContext(PlayerContext);
+  const jump = (t: number) => player.jump(t);
 
-  const { currentTab, tabStates } = store.get()
-  const { logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [] } = tabStates[currentTab]
+  const { currentTab, tabStates } = store.get();
+  const {
+    logList = [],
+    exceptionsList = [],
+    logListNow = [],
+    exceptionsListNow = [],
+  } = tabStates[currentTab];
 
-  const list = isLive ?
-    useMemo(() => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
-      [logListNow.length, exceptionsListNow.length]
-    ) as ILog[]
-    : useMemo(() => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-    [ logList.length, exceptionsList.length ],
-    ) as ILog[]
-  let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
-  filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
+  const list = isLive
+    ? (useMemo(
+        () => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
+        [logListNow.length, exceptionsListNow.length]
+      ) as ILog[])
+    : (useMemo(
+        () => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
+        [logList.length, exceptionsList.length]
+      ).filter((l) =>
+        zoomEnabled ? l.time >= zoomStartTs && l.time <= zoomEndTs : true
+      ) as ILog[]);
+  let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
+  filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
   React.useEffect(() => {
     setTimeout(() => {
       cache.clearAll();
       _list.current?.recomputeRowHeights();
-    }, 0)
-  }, [activeTab, filter])
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
-  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
+    }, 0);
+  }, [activeTab, filter]);
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) =>
+    devTools.update(INDEX_KEY, { filter: value });
 
-  // AutoScroll 
-  const [
-    timeoutStartAutoscroll,
-    stopAutoscroll,
-  ] = useAutoscroll(
+  // AutoScroll
+  const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
     getLastItemTime(logListNow, exceptionsListNow),
     activeIndex,
-    index => devTools.update(INDEX_KEY, { index })
-  )
-  const onMouseEnter = stopAutoscroll
+    (index) => devTools.update(INDEX_KEY, { index })
+  );
+  const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
-    if (isDetailsModalActive) { return }
-    timeoutStartAutoscroll()
-  }
-  
+    if (isDetailsModalActive) {
+      return;
+    }
+    timeoutStartAutoscroll();
+  };
+
   const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
@@ -120,51 +143,45 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
     }
   }, [activeIndex]);
 
-  const cache = useCellMeasurerCache()
+  const cache = useCellMeasurerCache();
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
-    showModal(
-      <ErrorDetailsModal errorId={log.errorId} />, 
-      { 
-        right: true,
-        width: 1200,
-        onClose: () => {
-          setIsDetailsModalActive(false)
-          timeoutStartAutoscroll()
-        }
-      });
+    showModal(<ErrorDetailsModal errorId={log.errorId} />, {
+      right: true,
+      width: 1200,
+      onClose: () => {
+        setIsDetailsModalActive(false);
+        timeoutStartAutoscroll();
+      },
+    });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
-    stopAutoscroll()
-  }
+    stopAutoscroll();
+  };
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
     return (
-        // @ts-ignore
-        <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-          {({ measure, registerChild }) => (
-            <div ref={registerChild} style={style}>
-              <ConsoleRow
-                log={item}
-                jump={jump}
-                iconProps={getIconProps(item.level)}
-                renderWithNL={renderWithNL}
-                onClick={() => showDetails(item)}
-                recalcHeight={measure}
-              />
-            </div>
-          )}
-        </CellMeasurer>
-    )
-  }
+      // @ts-ignore
+      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
+        {({ measure, registerChild }) => (
+          <div ref={registerChild} style={style}>
+            <ConsoleRow
+              log={item}
+              jump={jump}
+              iconProps={getIconProps(item.level)}
+              renderWithNL={renderWithNL}
+              onClick={() => showDetails(item)}
+              recalcHeight={measure}
+            />
+          </div>
+        )}
+      </CellMeasurer>
+    );
+  };
 
   return (
-    <BottomBlock
-      style={{ height: '100%' }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
+    <BottomBlock style={{ height: '100%' }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       {/* @ts-ignore */}
       <BottomBlock.Header>
         <div className="flex items-center">
@@ -220,4 +237,8 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
   );
 }
 
-export default observer(ConsolePanel);
+export default connect((state: Record<string, any>) => ({
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+}))(observer(ConsolePanel));

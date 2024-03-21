@@ -3,9 +3,6 @@ import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTime
 import { connect } from 'react-redux';
 import { toggleZoom } from 'Duck/components/player';
 
-//  perc = ts * scale
-// ts = perc / scale
-
 interface Props {
   timelineZoomStartTs: number;
   timelineZoomEndTs: number;
@@ -25,41 +22,49 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
   }, []);
 
   const startDrag = useCallback(
-    (marker: 'start' | 'end') => () => {
+    (marker: 'start' | 'end' | 'body') => (event: React.MouseEvent) => {
+      event.stopPropagation();
       setDragging(marker);
     },
-    []
+    [convertToPercentage, startPos]
   );
 
-  const minDistance = 1
-
+  const minDistance = 1.5;
   const onDrag = useCallback(
     (event: any) => {
       event.stopPropagation();
       if (dragging && event.clientX !== 0) {
         const newPos = convertToPercentage(event.clientX, event.currentTarget);
         if (dragging === 'start') {
-          let startTs = newPos / scale;
-          let endTs = endPos / scale;
           setStartPos(newPos);
           if (endPos - newPos <= minDistance) {
             setEndPos(newPos + minDistance);
-            endTs = (newPos + minDistance) / scale;
           }
-          toggleZoom({ enabled: true, range: [startTs, endTs] });
-        } else if (dragging === 'end' && newPos > startPos) {
-          let endTs = newPos / scale;
-          let startTs = startPos / scale;
+          toggleZoom({ enabled: true, range: [newPos / scale, endPos / scale] });
+        } else if (dragging === 'end') {
           setEndPos(newPos);
           if (newPos - startPos <= minDistance) {
             setStartPos(newPos - minDistance);
-            startTs = (newPos - minDistance) / scale;
           }
-          toggleZoom({ enabled: true, range: [startTs, endTs] });
+          toggleZoom({ enabled: true, range: [startPos / scale, newPos / scale] });
+        } else if (dragging === 'body') {
+          const offset = (endPos - startPos) / 2;
+          let newStartPos = newPos - offset;
+          let newEndPos = newStartPos + (endPos - startPos);
+          if (newStartPos < 0) {
+            newStartPos = 0;
+            newEndPos = endPos - startPos;
+          } else if (newEndPos > 100) {
+            newEndPos = 100;
+            newStartPos = 100 - (endPos - startPos);
+          }
+          setStartPos(newStartPos);
+          setEndPos(newEndPos);
+          toggleZoom({ enabled: true, range: [newStartPos / scale, newEndPos / scale] });
         }
       }
     },
-    [dragging, startPos, endPos, convertToPercentage]
+    [dragging, startPos, endPos, scale, toggleZoom]
   );
 
   const endDrag = useCallback(() => {
@@ -71,7 +76,14 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
       onMouseMove={onDrag}
       onMouseLeave={endDrag}
       onMouseUp={endDrag}
-      style={{ position: 'absolute', width: '100%', height: '24px', left: 0, top: '-4px', zIndex: 99 }}
+      style={{
+        position: 'absolute',
+        width: '100%',
+        height: '24px',
+        left: 0,
+        top: '-4px',
+        zIndex: 100,
+      }}
     >
       <div
         className="marker start"
@@ -82,7 +94,25 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
           width: '6px',
           height: '100%',
           background: '#FCC100',
+          cursor: 'ew-resize',
+          borderTopLeftRadius: 6,
+          borderBottomLeftRadius: 6,
+          zIndex: 100,
+        }}
+      />
+      <div
+        className="slider-body"
+        onMouseDown={startDrag('body')}
+        style={{
+          position: 'absolute',
+          left: `calc(${startPos}% + 6px)`,
+          width: `calc(${endPos - startPos}% - 6px)`,
+          height: '100%',
+          background: 'rgba(252, 193, 0, 0.10)',
+          borderTop: '2px solid #FCC100',
+          borderBottom: '2px solid #FCC100',
           cursor: 'grab',
+          zIndex: 100,
         }}
       />
       <div
@@ -94,7 +124,10 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
           width: '6px',
           height: '100%',
           background: '#FCC100',
-          cursor: 'grab',
+          cursor: 'ew-resize',
+          borderTopRightRadius: 6,
+          borderBottomRightRadius: 6,
+          zIndex: 100,
         }}
       />
     </div>
@@ -108,19 +141,3 @@ export default connect(
   }),
   { toggleZoom }
 )(DraggableMarkers);
-
-// <div
-//   style={{
-//     position: 'absolute',
-//     top: '-4px',
-//     left: `${getTimelinePosition(timelineZoomStartTs, scale)}%`,
-//     width: `${(timelineZoomEndTs - timelineZoomStartTs) * scale}%`,
-//     border: '2px solid #FCC100',
-//     background: 'rgba(252, 193, 0, 0.10)',
-//     display: 'flex',
-//     justifyContent: 'space-between',
-//     borderRadius: 6,
-//     height: 24,
-//     zIndex: 3,
-//   }}
-// >

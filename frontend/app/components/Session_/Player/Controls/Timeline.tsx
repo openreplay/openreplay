@@ -1,10 +1,8 @@
 import DraggableMarkers from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
 import { connect } from 'react-redux';
-import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
-import DraggableCircle from './components/DraggableCircle';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import { debounce } from 'App/utils';
 import TooltipContainer from './components/TooltipContainer';
@@ -28,7 +26,6 @@ interface IProps {
   timelineZoomEnabled: boolean;
   timelineZoomStartTs: number;
   timelineZoomEndTs: number;
-  toggleZoom: typeof toggleZoom;
 }
 
 function Timeline(props: IProps) {
@@ -36,11 +33,7 @@ function Timeline(props: IProps) {
   const [wasPlaying, setWasPlaying] = useState(false);
   const { settingsStore } = useStore();
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
-  const {
-    issues,
-    timezone,
-    timelineZoomEnabled,
-  } = props;
+  const { issues, timezone, timelineZoomEnabled } = props;
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -142,9 +135,7 @@ function Timeline(props: IProps) {
         left: '0.5rem',
       }}
     >
-      {timelineZoomEnabled ? (
-        <DraggableMarkers scale={scale} />
-      ) : null}
+      {timelineZoomEnabled ? <DraggableMarkers scale={scale} /> : null}
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
@@ -169,7 +160,6 @@ function Timeline(props: IProps) {
         {props.isMobile ? <MobEventsList scale={scale} /> : <WebEventsList scale={scale} />}
         <NotesList scale={scale} />
         <SkipIntervalsList scale={scale} />
-
 
         {/* TODO: refactor and make any sense out of this */}
 

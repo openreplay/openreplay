@@ -12,19 +12,22 @@ interface Props {
   toggleZoom: typeof toggleZoom;
 }
 
-function TimelineZoomButton({ enabled, startTs, endTs, toggleZoom }: Props) {
+function TimelineZoomButton({ enabled, toggleZoom }: Props) {
   const { store } = React.useContext(PlayerContext);
 
   const onClickHandler = () => {
-    console.log(store.get().time)
-    toggleZoom({ enabled: !enabled, range: [Math.max(store.get().time - 500, 0), Math.min(store.get().time + 500, store.get().endTime)] });
-  }
+    // 2% of the timeline * 2 as initial zoom range
+    const distance = store.get().endTime / 50;
+    toggleZoom({
+      enabled: !enabled,
+      range: [
+        Math.max(store.get().time - distance, 0),
+        Math.min(store.get().time + distance, store.get().endTime),
+      ],
+    });
+  };
   return (
-    <Button
-      onClick={onClickHandler}
-      size={'small'}
-      className={'flex items-center font-semibold'}
-    >
+    <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-semibold'}>
       Timeline Zoom {enabled ? 'On' : 'Off'}
     </Button>
   );

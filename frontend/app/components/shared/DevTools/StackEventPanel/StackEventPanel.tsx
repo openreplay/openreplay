@@ -14,45 +14,102 @@ import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
+import { connect } from 'react-redux';
 
 const mapNames = (type: string) => {
   if (type === 'openreplay') return 'OpenReplay';
-  return type
-}
+  return type;
+};
 
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
 const TAB_KEYS = [ALL, ...typeList] as const;
 const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 
-type EventsList = Array<Timed & { name: string; source: string, key: string }>
+type EventsList = Array<Timed & { name: string; source: string; key: string }>;
 
-export const WebStackEventPanel = observer(() => {
-  const { player, store } = React.useContext(PlayerContext);
-  const jump = (t: number) => player.jump(t);
-  const { currentTab, tabStates } = store.get();
+const WebStackEventPanelComp = observer(
+  ({
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
+  }: {
+    zoomEnabled: boolean;
+    zoomStartTs: number;
+    zoomEndTs: number;
+  }) => {
+    const { player, store } = React.useContext(PlayerContext);
+    const jump = (t: number) => player.jump(t);
+    const { currentTab, tabStates } = store.get();
 
-  const { stackList: list = [], stackListNow: listNow = [] } = tabStates[currentTab];
+    const { stackList: list = [], stackListNow: listNow = [] } = tabStates[currentTab];
 
-  return <EventsPanel list={list as EventsList} listNow={listNow as EventsList} jump={jump} />;
-});
+    return (
+      <EventsPanel
+        list={list as EventsList}
+        listNow={listNow as EventsList}
+        jump={jump}
+        zoomEnabled={zoomEnabled}
+        zoomStartTs={zoomStartTs}
+        zoomEndTs={zoomEndTs}
+      />
+    );
+  }
+);
 
-export const MobileStackEventPanel = observer(() => {
-  const { player, store } = React.useContext(MobilePlayerContext);
-  const jump = (t: number) => player.jump(t);
-  const { eventList: list = [], eventListNow: listNow = [] } = store.get();
+export const WebStackEventPanel = connect((state: Record<string, any>) => ({
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+}))(WebStackEventPanelComp);
 
-  return <EventsPanel list={list as EventsList} listNow={listNow as EventsList} jump={jump} />;
-});
+const MobileStackEventPanelComp = observer(
+  ({
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
+  }: {
+    zoomEnabled: boolean;
+    zoomStartTs: number;
+    zoomEndTs: number;
+  }) => {
+    const { player, store } = React.useContext(MobilePlayerContext);
+    const jump = (t: number) => player.jump(t);
+    const { eventList: list = [], eventListNow: listNow = [] } = store.get();
+
+    return (
+      <EventsPanel
+        list={list as EventsList}
+        listNow={listNow as EventsList}
+        jump={jump}
+        zoomEnabled={zoomEnabled}
+        zoomStartTs={zoomStartTs}
+        zoomEndTs={zoomEndTs}
+      />
+    );
+  }
+);
+
+export const MobileStackEventPanel = connect((state: Record<string, any>) => ({
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+}))(MobileStackEventPanelComp);
 
 function EventsPanel({
   list,
   listNow,
   jump,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
 }: {
   list: EventsList;
   listNow: EventsList;
   jump: (t: number) => void;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
 }) {
   const {
     sessionStore: { devTools },
@@ -63,7 +120,14 @@ function EventsPanel({
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
 
-  let filteredList = useRegExListFilterMemo(list, (it) => it.name, filter);
+  const inZoomRangeList = list.filter(({ time }) =>
+    zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true
+  );
+  const inZoomRangeListNow = listNow.filter(({ time }) =>
+    zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true
+  );
+
+  let filteredList = useRegExListFilterMemo(inZoomRangeList, (it) => it.name, filter);
   filteredList = useTabListFilterMemo(filteredList, (it) => it.source, ALL, activeTab);
 
   const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) =>
@@ -71,13 +135,13 @@ function EventsPanel({
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
     devTools.update(INDEX_KEY, { filter: value });
   const tabs = useMemo(
-    () => TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)),
-    [list.length]
+    () => TABS.filter(({ key }) => key === ALL || inZoomRangeList.some(({ source }) => key === source)),
+    [inZoomRangeList.length]
   );
 
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
-    getLastItemTime(listNow),
+    getLastItemTime(inZoomRangeListNow),
     activeIndex,
     (index) => devTools.update(INDEX_KEY, { index })
   );
@@ -138,15 +202,17 @@ function EventsPanel({
   };
 
   return (
-    <BottomBlock
-      style={{ height: '100%' }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
+    <BottomBlock style={{ height: '100%' }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <BottomBlock.Header>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Stack Events</span>
-          <Tabs renameTab={mapNames} tabs={tabs} active={activeTab} onClick={onTabClick} border={false} />
+          <Tabs
+            renameTab={mapNames}
+            tabs={tabs}
+            active={activeTab}
+            onClick={onTabClick}
+            border={false}
+          />
         </div>
         <Input
           className="input-small h-8"

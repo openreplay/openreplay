@@ -26,6 +26,9 @@ interface IProps {
   filterOutNote: (id: string) => void;
   eventsIndex: number[];
   uxtVideo: string;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
 }
 
 function EventsBlock(props: IProps) {
@@ -82,8 +85,21 @@ function EventsBlock(props: IProps) {
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents
+    ).filter((e) =>
+      props.zoomEnabled
+        ? 'time' in e
+          ? e.time >= props.zoomStartTs && e.time <= props.zoomEndTs
+          : false
+        : true
     );
-  }, [filteredLength, notesWithEvtsLength, notesLength]);
+  }, [
+    filteredLength,
+    notesWithEvtsLength,
+    notesLength,
+    props.zoomEnabled,
+    props.zoomStartTs,
+    props.zoomEndTs,
+  ]);
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
@@ -180,8 +196,20 @@ function EventsBlock(props: IProps) {
       <div className={cn(styles.header, 'p-4')}>
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
-            <video className={'z-20 fixed'} muted autoPlay controls src={props.uxtVideo} width={240} />
-            <div style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }} className={'absolute z-10'}>No video</div>
+            <video
+              className={'z-20 fixed'}
+              muted
+              autoPlay
+              controls
+              src={props.uxtVideo}
+              width={240}
+            />
+            <div
+              style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              className={'absolute z-10'}
+            >
+              No video
+            </div>
           </div>
         ) : null}
         <div className={cn(styles.hAndProgress, 'mt-3')}>
@@ -233,6 +261,9 @@ export default connect(
     filteredEvents: state.getIn(['sessions', 'filteredEvents']),
     query: state.getIn(['sessions', 'eventsQuery']),
     eventsIndex: state.getIn(['sessions', 'eventsIndex']),
+    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
   }),
   {
     setEventFilter,
