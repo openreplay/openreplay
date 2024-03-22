@@ -3,7 +3,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
-import { debounce } from 'App/utils';
+import { debounce }                          from 'App/utils';
+import { IResourceRequest, IResourceTiming } from "../../../../../player";
+import { WsChannel }                         from "../../../../../player/web/messages";
+import { PlayerContext } from "../../../playerContext";
 
 let debounceUpdate: any = () => {};
 
@@ -29,6 +32,8 @@ function SummaryBlock({
   zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
   duration: any;
 }) {
+  const { store } = React.useContext(PlayerContext)
+  const { tabStates } = store.get();
   const { aiSummaryStore } = useStore();
 
   React.useEffect(() => {
@@ -48,8 +53,25 @@ function SummaryBlock({
     if (zoomTab === 'overview') {
       void aiSummaryStore.getSummary(sessionId);
     } else {
-      const range = zoomEnabled ? [0, duration] : [zoomStartTs, zoomEndTs];
-      void debounceUpdate(sessionId, [], zoomTab, range[0], range[1]);
+        const totalFetchList: IResourceRequest[] = [];
+        const totalResourceList: IResourceTiming[] = [];
+        const totalWebsocketList: WsChannel[] = [];
+      Object.values(tabStates).forEach(({
+        fetchList,
+        resourceList,
+        websocketList,
+      }) => {
+        totalFetchList.push(...fetchList);
+        totalResourceList.push(...resourceList);
+        totalWebsocketList.push(...websocketList);
+      })
+      const resultingEvents = [
+        ...totalFetchList,
+        ...totalResourceList,
+        ...totalWebsocketList,
+      ]
+      const range = !zoomEnabled ? [0, duration] : [zoomStartTs, zoomEndTs];
+      void debounceUpdate(sessionId, resultingEvents, zoomTab, range[0], range[1]);
     }
   }, [zoomTab]);
 
@@ -59,10 +81,8 @@ function SummaryBlock({
     }
     if (line.startsWith('*')) {
       return (
-        <li className={'ml-1 marker:mr-1'}>
-          <div className={'flex items-center gap-1'}>
+        <li className={'ml-1 marker:mr-1 flex items-center gap-1'}>
             <CodeStringFormatter text={line.replace('* ', '')} />
-          </div>
         </li>
       );
     }
@@ -120,7 +140,7 @@ function TextPlaceholder() {
 const CodeStringFormatter = ({ text }: { text: string }) => {
   const parts = text.split(/(`[^`]*`)/).map((part, index) =>
     part.startsWith('`') && part.endsWith('`') ? (
-      <div key={index} className="bg-gray-lightest font-mono mx-1 px-1 border">
+      <div key={index} className="whitespace-nowrap bg-gray-lightest font-mono mx-1 px-1 border">
         {part.substring(1, part.length - 1)}
       </div>
     ) : (

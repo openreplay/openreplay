@@ -42,6 +42,9 @@ export const playerSlice = createSlice({
     toggleBottomBlock: (state, action: PayloadAction<number>) => {
       state.bottomBlock = state.bottomBlock !== action.payload && action.payload !== 0 ? action.payload : 0;
     },
+    closeBottomBlock: (state) => {
+      state.bottomBlock = 0;
+    },
     changeSkipInterval: (state, action: PayloadAction<number>) => {
       const skipInterval = action.payload;
       localStorage.setItem('CHANGE_SKIP_INTERVAL', skipInterval.toString());
@@ -69,7 +72,7 @@ export const playerSlice = createSlice({
 
 interface ToggleZoomPayload { enabled: boolean, range?: [number, number]}
 
-export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom, setZoomTab } = playerSlice.actions;
+export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom, setZoomTab, closeBottomBlock } = playerSlice.actions;
 
 export default playerSlice.reducer;
 
