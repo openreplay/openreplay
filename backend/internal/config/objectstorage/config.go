@@ -13,6 +13,7 @@ type ObjectsConfig struct {
 	AWSSkipSSLValidation bool   `env:"AWS_SKIP_SSL_VALIDATION"`
 	AzureAccountName     string `env:"AZURE_ACCOUNT_NAME"`
 	AzureAccountKey      string `env:"AZURE_ACCOUNT_KEY"`
+	UseS3Tags            bool   `env:"USE_S3_TAGS,default=true"`
 }
 
 func (c *ObjectsConfig) UseFileTags() bool {
