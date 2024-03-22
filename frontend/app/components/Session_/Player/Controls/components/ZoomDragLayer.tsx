@@ -1,7 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
+import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
+
+
+
+import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
 import { toggleZoom } from 'Duck/components/player';
+
 
 interface Props {
   timelineZoomStartTs: number;
@@ -87,26 +91,33 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
     >
       <div
         className="marker start"
-        onMouseDown={startDrag('start')}
+        onMouseDown={startDrag("start")}
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: `${startPos}%`,
-          width: '6px',
-          height: '100%',
-          background: '#FCC100',
-          cursor: 'ew-resize',
-          borderTopLeftRadius: 6,
-          borderBottomLeftRadius: 6,
+          height: "100%",
+          background: "#FCC100",
+          cursor: "ew-resize",
+          borderTopLeftRadius: 3,
+          borderBottomLeftRadius: 3,
           zIndex: 100,
+          display: "flex",
+          alignItems: "center",
+          paddingRight: 3,
+          paddingLeft: 6,
+          width: 18,
         }}
-      />
+      >
+        <div className={"bg-black rounded-xl"} style={{ zIndex: 101, height: 18, width: 2, marginRight: 3, overflow: "hidden" }} />
+        <div className={"bg-black rounded-xl"} style={{ zIndex: 101, height: 18, width: 2, overflow: "hidden" }} />
+      </div>
       <div
         className="slider-body"
-        onMouseDown={startDrag('body')}
+        onMouseDown={startDrag("body")}
         style={{
-          position: 'absolute',
-          left: `calc(${startPos}% + 6px)`,
-          width: `calc(${endPos - startPos}% - 6px)`,
+          position: "absolute",
+          left: `calc(${startPos}% + 18px)`,
+          width: `calc(${endPos - startPos}% - 18px)`,
           height: '100%',
           background: 'rgba(252, 193, 0, 0.10)',
           borderTop: '2px solid #FCC100',
@@ -121,15 +132,22 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
         style={{
           position: 'absolute',
           left: `${endPos}%`,
-          width: '6px',
           height: '100%',
           background: '#FCC100',
           cursor: 'ew-resize',
-          borderTopRightRadius: 6,
-          borderBottomRightRadius: 6,
+          borderTopRightRadius: 3,
+          borderBottomRightRadius: 3,
           zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: 3,
+          paddingRight: 6,
+          width: 18,
         }}
-      />
+      >
+        <div className={'bg-black rounded-xl'} style={{ zIndex: 101, height: 18, width: 2, marginRight: 3, overflow: 'hidden' }} />
+        <div className={'bg-black rounded-xl'} style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }} />
+      </div>
     </div>
   );
 };

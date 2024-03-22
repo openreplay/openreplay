@@ -23,13 +23,13 @@ export default class AiSummaryStore {
     this.isLoading = loading;
   }
 
-  getSummary = async (sessionId: string, startTs?: number, endTs?: number) => {
+  getSummary = async (sessionId: string) => {
     if (this.isLoading) return;
 
     this.setLoading(true);
     this.setText('');
     try {
-      const respText = await aiService.getSummary(sessionId, startTs, endTs);
+      const respText = await aiService.getSummary(sessionId);
       if (!respText) return;
 
       this.setText(respText);
@@ -39,4 +39,21 @@ export default class AiSummaryStore {
       this.setLoading(false);
     }
   };
+
+  getDetailedSummary = async (sessionId: string, networkEvents: any[], feat: 'errors' | 'issues' | 'journey', startTs: number, endTs: number) => {
+    if (this.isLoading) return;
+
+    this.setLoading(true);
+    this.setText('');
+    try {
+      const respText = await aiService.getDetailedSummary(sessionId, networkEvents,feat, startTs, endTs);
+      if (!respText) return;
+
+      this.setText(respText);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  }
 }

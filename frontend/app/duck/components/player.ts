@@ -13,6 +13,7 @@ interface PlayerState {
     startTs: number;
     endTs: number;
   }
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors',
 }
 
 const initialState: PlayerState = {
@@ -27,7 +28,8 @@ const initialState: PlayerState = {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  }
+  },
+  zoomTab: 'overview',
 };
 
 export const playerSlice = createSlice({
@@ -58,13 +60,16 @@ export const playerSlice = createSlice({
         startTs: range?.[0] || 0,
         endTs: range?.[1] || 0,
       };
+    },
+    setZoomTab: (state, action: PayloadAction<'overview' | 'journey' | 'issues' | 'errors'>) => {
+      state.zoomTab = action.payload;
     }
   },
 });
 
 interface ToggleZoomPayload { enabled: boolean, range?: [number, number]}
 
-export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom } = playerSlice.actions;
+export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom, setZoomTab } = playerSlice.actions;
 
 export default playerSlice.reducer;
 
