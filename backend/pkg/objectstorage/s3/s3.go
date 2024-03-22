@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"sort"
 	"strconv"
@@ -28,7 +27,7 @@ type storageImpl struct {
 	uploader *s3manager.Uploader
 	svc      *s3.S3
 	bucket   *string
-	fileTag  string
+	fileTag  *string
 }
 
 func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
@@ -60,12 +59,8 @@ func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
 		uploader: s3manager.NewUploader(sess),
 		svc:      s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
 		bucket:   &cfg.BucketName,
-		fileTag:  loadFileTag(),
+		fileTag:  tagging(cfg.UseS3Tags),
 	}, nil
-}
-
-func (s *storageImpl) tagging() *string {
-	return &s.fileTag
 }
 
 func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
@@ -89,7 +84,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		ContentType:     &contentType,
 		CacheControl:    &cacheControl,
 		ContentEncoding: contentEncoding,
-		Tagging:         s.tagging(),
+		Tagging:         s.fileTag,
 	})
 	return err
 }
@@ -206,17 +201,4 @@ func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
 		return "", err
 	}
 	return urlStr, nil
-}
-
-func loadFileTag() string {
-	// Load file tag from env
-	key := "retention"
-	value := os.Getenv("RETENTION")
-	if value == "" {
-		value = "default"
-	}
-	// Create URL encoded tag set for file
-	params := url.Values{}
-	params.Add(key, value)
-	return params.Encode()
 }
