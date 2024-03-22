@@ -18,7 +18,7 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import WSModal from './WSModal'
+import WSModal from './WSModal';
 
 const INDEX_KEY = 'network';
 
@@ -150,7 +150,19 @@ function renderStatus({ status, cached }: { status: string; cached: boolean }) {
   );
 }
 
-function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panelHeight: number }) {
+function NetworkPanelCont({
+  startedAt,
+  panelHeight,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
+}: {
+  startedAt: number;
+  panelHeight: number;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
+}) {
   const { player, store } = React.useContext(PlayerContext);
 
   const { domContentLoadedTime, loadTime, domBuildingTime, tabStates, currentTab } = store.get();
@@ -184,9 +196,15 @@ function NetworkPanelCont({ startedAt, panelHeight }: { startedAt: number; panel
 function MobileNetworkPanelCont({
   startedAt,
   panelHeight,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
 }: {
   startedAt: number;
   panelHeight: number;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
 }) {
   const { player, store } = React.useContext(MobilePlayerContext);
 
@@ -219,6 +237,9 @@ function MobileNetworkPanelCont({
       websocketList={websocketList}
       // @ts-ignore
       websocketListNow={websocketListNow}
+      zoomEnabled={zoomEnabled}
+      zoomStartTs={zoomStartTs}
+      zoomEndTs={zoomEndTs}
     />
   );
 }
@@ -229,7 +250,7 @@ type WSMessage = Timed & {
   timestamp: number;
   dir: 'up' | 'down';
   messageType: string;
-}
+};
 
 interface Props {
   domContentLoadedTime?: {
@@ -250,6 +271,9 @@ interface Props {
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
   panelHeight: number;
 }
 
@@ -267,6 +291,9 @@ const NetworkPanelComp = observer(
     isMobile,
     panelHeight,
     websocketList,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -333,6 +360,7 @@ const NetworkPanelComp = observer(
               transferredBodySize: 0,
             }))
           )
+          .filter((req) => (zoomEnabled ? req.time >= zoomStartTs && req.time <= zoomEndTs : true))
           .sort((a, b) => a.time - b.time),
       [resourceList.length, fetchList.length, socketList]
     );
@@ -407,13 +435,10 @@ const NetworkPanelComp = observer(
       if (item.type === 'websocket') {
         const socketMsgList = websocketList.filter((ws) => ws.channelName === item.channelName);
 
-        return showModal(
-          <WSModal
-            socketMsgList={socketMsgList}
-          />, {
-            right: true, width: 700,
-          }
-        )
+        return showModal(<WSModal socketMsgList={socketMsgList} />, {
+          right: true,
+          width: 700,
+        });
       }
       setIsDetailsModalActive(true);
       showModal(
@@ -583,10 +608,16 @@ const NetworkPanelComp = observer(
 
 const WebNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
 }))(observer(NetworkPanelCont));
 
 const MobileNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
 }))(observer(MobileNetworkPanelCont));
 
 export { WebNetworkPanel, MobileNetworkPanel };

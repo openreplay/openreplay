@@ -1,4 +1,80 @@
-import { Map } from 'immutable';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+interface PlayerState {
+  fullscreen: boolean;
+  bottomBlock: number;
+  hiddenHints: {
+    storage?: string;
+    stack?: string;
+  };
+  skipInterval: number;
+  timelineZoom: {
+    enabled: boolean;
+    startTs: number;
+    endTs: number;
+  }
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors',
+}
+
+const initialState: PlayerState = {
+  fullscreen: false,
+  bottomBlock: 0,
+  hiddenHints: {
+    storage: localStorage.getItem('storageHideHint') || undefined,
+    stack: localStorage.getItem('stackHideHint') || undefined,
+  },
+  skipInterval: parseInt(localStorage.getItem('CHANGE_SKIP_INTERVAL') || '10', 10),
+  timelineZoom: {
+    enabled: false,
+    startTs: 0,
+    endTs: 0,
+  },
+  zoomTab: 'overview',
+};
+
+export const playerSlice = createSlice({
+  name: 'player',
+  initialState,
+  reducers: {
+    toggleFullscreen: (state, action: PayloadAction<boolean | undefined>) => {
+      state.fullscreen = action.payload !== undefined ? action.payload : !state.fullscreen;
+    },
+    toggleBottomBlock: (state, action: PayloadAction<number>) => {
+      state.bottomBlock = state.bottomBlock !== action.payload && action.payload !== 0 ? action.payload : 0;
+    },
+    closeBottomBlock: (state) => {
+      state.bottomBlock = 0;
+    },
+    changeSkipInterval: (state, action: PayloadAction<number>) => {
+      const skipInterval = action.payload;
+      localStorage.setItem('CHANGE_SKIP_INTERVAL', skipInterval.toString());
+      state.skipInterval = skipInterval;
+    },
+    hideHint: (state, action: PayloadAction<'storage' | 'stack'>) => {
+      const name = action.payload;
+      localStorage.setItem(`${name}HideHint`, 'true');
+      state.hiddenHints[name] = 'true';
+      state.bottomBlock = 0;
+    },
+    toggleZoom: (state, action: PayloadAction<ToggleZoomPayload>) => {
+      const { enabled, range } = action.payload;
+      state.timelineZoom = {
+        enabled,
+        startTs: range?.[0] || 0,
+        endTs: range?.[1] || 0,
+      };
+    },
+    setZoomTab: (state, action: PayloadAction<'overview' | 'journey' | 'issues' | 'errors'>) => {
+      state.zoomTab = action.payload;
+    }
+  },
+});
+
+interface ToggleZoomPayload { enabled: boolean, range?: [number, number]}
+
+export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom, setZoomTab, closeBottomBlock } = playerSlice.actions;
+
+export default playerSlice.reducer;
 
 export const NONE = 0;
 export const CONSOLE = 1;
@@ -26,7 +102,7 @@ export const blocks = {
   exceptions: EXCEPTIONS,
   inspector: INSPECTOR,
   overview: OVERVIEW,
-} as const
+} as const;
 
 export const blockValues = [
   NONE,
@@ -41,84 +117,4 @@ export const blockValues = [
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-] as const
-
-const TOGGLE_FULLSCREEN = 'player/TOGGLE_FS';
-const TOGGLE_BOTTOM_BLOCK = 'player/SET_BOTTOM_BLOCK';
-const HIDE_HINT = 'player/HIDE_HINT';
-const CHANGE_INTERVAL = 'player/CHANGE_SKIP_INTERVAL'
-
-const initialState = Map({
-  fullscreen: false,
-  bottomBlock: NONE,
-  hiddenHints: Map({
-    storage: localStorage.getItem('storageHideHint'),
-    stack: localStorage.getItem('stackHideHint')
-  }),
-  skipInterval: localStorage.getItem(CHANGE_INTERVAL) || 10,
-});
-
-const reducer = (state = initialState, action: any = {}) => {
-  switch (action.type) {
-    case TOGGLE_FULLSCREEN:
-      const { flag } = action
-      return state.update('fullscreen', fs => typeof flag === 'boolean' ? flag : !fs);
-    case TOGGLE_BOTTOM_BLOCK:
-      const { bottomBlock } = action;
-      if (state.get('bottomBlock') !== bottomBlock && bottomBlock !== NONE) {
-      }
-      return state.update('bottomBlock', bb => bb === bottomBlock ? NONE : bottomBlock);
-    case CHANGE_INTERVAL:
-      const { skipInterval } = action;
-        localStorage.setItem(CHANGE_INTERVAL, skipInterval);
-        return state.update('skipInterval', () => skipInterval);
-    case HIDE_HINT:
-      const { name } = action;
-      localStorage.setItem(`${name}HideHint`, 'true');
-      return state
-        .setIn([ "hiddenHints", name ], true)
-        .set('bottomBlock', NONE);
-
-  }
-  return state;
-};
-
-export default reducer;
-
-export function toggleFullscreen(flag: any) {
-  return {
-    type: TOGGLE_FULLSCREEN,
-    flag,
-  };
-}
-export function fullscreenOff() {
-  return toggleFullscreen(false);
-}
-export function fullscreenOn() {
-  return toggleFullscreen(true);
-}
-
-export function toggleBottomBlock(bottomBlock = NONE) {
-  return {
-    bottomBlock,
-    type: TOGGLE_BOTTOM_BLOCK,
-  };
-}
-
-export function closeBottomBlock() {
-  return toggleBottomBlock();
-}
-
-export function changeSkipInterval(skipInterval: number) {
-  return {
-    skipInterval,
-    type: CHANGE_INTERVAL,
-  };
-}
-
-export function hideHint(name: string) {
-  return {
-    name,
-    type: HIDE_HINT,
-  }
-}
+] as const;

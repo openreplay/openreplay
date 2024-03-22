@@ -1,27 +1,40 @@
-import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
-import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
-import React, { useEffect } from 'react';
-import { toggleBottomBlock } from 'Duck/components/player';
-import BottomBlock from '../BottomBlock';
-import EventRow from './components/EventRow';
-import { connect } from 'react-redux';
-import TimelineScale from './components/TimelineScale';
-import FeatureSelection, { HELP_MESSAGE } from './components/FeatureSelection/FeatureSelection';
-import TimelinePointer from './components/TimelinePointer';
-import VerticalPointerLine from './components/VerticalPointerLine';
 import cn from 'classnames';
-import OverviewPanelContainer from './components/OverviewPanelContainer';
-import { NoContent, Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
+import { Segmented } from 'antd'
+
 import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
+import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
+import { toggleBottomBlock, setZoomTab } from 'Duck/components/player';
+import { Icon, NoContent } from 'UI';
+
+import BottomBlock from '../BottomBlock';
+import EventRow from './components/EventRow';
+import FeatureSelection, { HELP_MESSAGE } from './components/FeatureSelection/FeatureSelection';
+import OverviewPanelContainer from './components/OverviewPanelContainer';
+import TimelinePointer from './components/TimelinePointer';
+import TimelineScale from './components/TimelineScale';
+import VerticalPointerLine from './components/VerticalPointerLine';
 
 function MobileOverviewPanelCont({
   issuesList,
   sessionId,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
+  setZoomTab,
+  zoomTab
 }: {
   issuesList: Record<string, any>[];
   sessionId: string;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
+  setZoomTab: (tab: string) => void;
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors'
 }) {
   const { aiSummaryStore } = useStore();
   const { store, player } = React.useContext(MobilePlayerContext);
@@ -45,12 +58,18 @@ function MobileOverviewPanelCont({
 
   const fetchPresented = fetchList.length > 0;
 
+  const checkInZoomRange = (list: any[]) => {
+    return list.filter((i) => (zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true));
+  };
+
   const resources = {
-    NETWORK: fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow),
-    ERRORS: exceptionsList,
-    EVENTS: eventsList,
-    PERFORMANCE: performanceChartData,
-    FRUSTRATIONS: frustrationsList,
+    NETWORK: checkInZoomRange(
+      fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow)
+    ),
+    ERRORS: checkInZoomRange(exceptionsList),
+    EVENTS: checkInZoomRange(eventsList),
+    PERFORMANCE: checkInZoomRange(performanceChartData),
+    FRUSTRATIONS: checkInZoomRange(frustrationsList),
   };
 
   useEffect(() => {
@@ -88,11 +107,27 @@ function MobileOverviewPanelCont({
       showSummary={isSaas}
       toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
       summaryChecked={aiSummaryStore.toggleSummary}
+      setZoomTab={setZoomTab}
+      zoomTab={zoomTab}
     />
   );
 }
 
-function WebOverviewPanelCont({ sessionId }: { sessionId: string }) {
+function WebOverviewPanelCont({
+  sessionId,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
+  setZoomTab,
+  zoomTab,
+}: {
+  sessionId: string;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
+  setZoomTab: (tab: string) => void;
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors'
+}) {
   const { aiSummaryStore } = useStore();
   const { store } = React.useContext(PlayerContext);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
@@ -121,15 +156,19 @@ function WebOverviewPanelCont({ sessionId }: { sessionId: string }) {
     .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
     .filter((i: any) => i.type === 'fetch');
 
+  const checkInZoomRange = (list: any[]) => {
+    return list.filter((i) => (zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true));
+  };
+
   const resources: any = React.useMemo(() => {
     return {
-      NETWORK: resourceList,
-      ERRORS: exceptionsList,
-      EVENTS: stackEventList,
-      PERFORMANCE: performanceChartData,
-      FRUSTRATIONS: frustrationsList,
+      NETWORK: checkInZoomRange(resourceList),
+      ERRORS: checkInZoomRange(exceptionsList),
+      EVENTS: checkInZoomRange(stackEventList),
+      PERFORMANCE: checkInZoomRange(performanceChartData),
+      FRUSTRATIONS: checkInZoomRange(frustrationsList),
     };
-  }, [tabStates, currentTab]);
+  }, [tabStates, currentTab, zoomEnabled, zoomStartTs, zoomEndTs]);
 
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
@@ -144,6 +183,8 @@ function WebOverviewPanelCont({ sessionId }: { sessionId: string }) {
       toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
       summaryChecked={aiSummaryStore.toggleSummary}
       sessionId={sessionId}
+      setZoomTab={setZoomTab}
+      zoomTab={zoomTab}
     />
   );
 }
@@ -160,6 +201,8 @@ function PanelComponent({
   toggleSummary,
   summaryChecked,
   sessionId,
+  zoomTab,
+  setZoomTab,
 }: any) {
   return (
     <React.Fragment>
@@ -168,7 +211,31 @@ function PanelComponent({
           <div className="mr-4 flex items-center gap-2">
             <span className={'font-semibold text-black'}>X-Ray</span>
             {showSummary ? (
-              <SummaryButton withToggle onClick={toggleSummary} toggleValue={summaryChecked} />
+              <>
+                <SummaryButton withToggle onClick={toggleSummary} toggleValue={summaryChecked} />
+                <Segmented
+                  value={zoomTab}
+                  onChange={(val) => setZoomTab(val)}
+                  options={[
+                    {
+                      label: 'Overview',
+                      value: 'overview',
+                    },
+                    {
+                      label: 'User Journey',
+                      value: 'journey',
+                    },
+                    {
+                      label: 'Issues',
+                      value: 'issues',
+                    },
+                    {
+                      label: 'Suggestions',
+                      value: 'errors',
+                    }
+                  ]}
+                />
+              </>
             ) : null}
           </div>
           <div className="flex items-center h-20 mr-4">
@@ -247,9 +314,12 @@ export const OverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
+    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
   }),
   {
-    toggleBottomBlock,
+    toggleBottomBlock, setZoomTab
   }
 )(observer(WebOverviewPanelCont));
 
@@ -257,8 +327,12 @@ export const MobileOverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
+    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+    zoomTab: state.getIn(['components', 'player']).zoomTab
   }),
   {
-    toggleBottomBlock,
+    toggleBottomBlock, setZoomTab,
   }
 )(observer(MobileOverviewPanelCont));
