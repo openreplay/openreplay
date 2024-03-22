@@ -107,7 +107,7 @@ function MobileOverviewPanelCont({
       showSummary={isSaas}
       toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
       summaryChecked={aiSummaryStore.toggleSummary}
-      setZoomTab={(tab: string) => setZoomTab(tab)}
+      setZoomTab={setZoomTab}
       zoomTab={zoomTab}
     />
   );
@@ -183,7 +183,7 @@ function WebOverviewPanelCont({
       toggleSummary={() => aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary)}
       summaryChecked={aiSummaryStore.toggleSummary}
       sessionId={sessionId}
-      setZoomTab={(tab: string) => setZoomTab(tab)}
+      setZoomTab={setZoomTab}
       zoomTab={zoomTab}
     />
   );
@@ -204,7 +204,6 @@ function PanelComponent({
   zoomTab,
   setZoomTab,
 }: any) {
-  console.log(setZoomTab)
   return (
     <React.Fragment>
       <BottomBlock style={{ height: '100%' }}>
