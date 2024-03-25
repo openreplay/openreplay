@@ -1,7 +1,7 @@
 {
   "tabWidth": 2,
   "useTabs": false,
-  "printWidth": 100,
+  "printWidth": 80,
   "singleQuote": true,
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,

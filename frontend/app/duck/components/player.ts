@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 interface PlayerState {
   fullscreen: boolean;
@@ -12,8 +12,8 @@ interface PlayerState {
     enabled: boolean;
     startTs: number;
     endTs: number;
-  }
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors',
+  };
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
 }
 
 const initialState: PlayerState = {
@@ -39,8 +39,15 @@ export const playerSlice = createSlice({
     toggleFullscreen: (state, action: PayloadAction<boolean | undefined>) => {
       state.fullscreen = action.payload !== undefined ? action.payload : !state.fullscreen;
     },
+    fullscreenOff: (state) => {
+      state.fullscreen = false;
+    },
+    fullscreenOn: (state) => {
+      state.fullscreen = true;
+    },
     toggleBottomBlock: (state, action: PayloadAction<number>) => {
-      state.bottomBlock = state.bottomBlock !== action.payload && action.payload !== 0 ? action.payload : 0;
+      state.bottomBlock =
+        state.bottomBlock !== action.payload && action.payload !== 0 ? action.payload : 0;
     },
     closeBottomBlock: (state) => {
       state.bottomBlock = 0;
@@ -66,13 +73,26 @@ export const playerSlice = createSlice({
     },
     setZoomTab: (state, action: PayloadAction<'overview' | 'journey' | 'issues' | 'errors'>) => {
       state.zoomTab = action.payload;
-    }
+    },
   },
 });
 
-interface ToggleZoomPayload { enabled: boolean, range?: [number, number]}
+interface ToggleZoomPayload {
+  enabled: boolean;
+  range?: [number, number];
+}
 
-export const { toggleFullscreen, toggleBottomBlock, changeSkipInterval, hideHint, toggleZoom, setZoomTab, closeBottomBlock } = playerSlice.actions;
+export const {
+  toggleFullscreen,
+  toggleBottomBlock,
+  changeSkipInterval,
+  hideHint,
+  toggleZoom,
+  setZoomTab,
+  closeBottomBlock,
+  fullscreenOff,
+  fullscreenOn,
+} = playerSlice.actions;
 
 export default playerSlice.reducer;
 
