@@ -43,8 +43,36 @@ function MyApp() {
       <div className="font-bold my-2">Options</div>
       <Highlight className="js">
         {`trackerAssist({
-  confirmText: string;
-})`}
+  onAgentConnect: StartEndCallback;
+  onCallStart: StartEndCallback;
+  onRemoteControlStart: StartEndCallback;
+  onRecordingRequest?: (agentInfo: Record<string, any>) => any;
+  onCallDeny?: () => any;
+  onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
+  onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  session_calling_peer_key: string;
+  session_control_peer_key: string;
+  callConfirm: ConfirmOptions;
+  controlConfirm: ConfirmOptions;
+  recordingConfirm: ConfirmOptions;
+  socketHost?: string;
+  config: RTCConfiguration;
+  serverURL: string
+  callUITemplate?: string;
+})
+
+type ConfirmOptions = {
+  text?:string,
+  style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
+  confirmBtn?: ButtonOptions,
+  declineBtn?: ButtonOptions
+}
+
+type ButtonOptions = HTMLButtonElement | string | {
+  innerHTML?: string, // to pass an svg string or text
+  style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
+}
+`}
       </Highlight>
     </div>
   );

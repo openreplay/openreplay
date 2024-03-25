@@ -7,6 +7,7 @@ import DocCard from 'Shared/DocCard/DocCard';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
+import { Button as AntButton } from 'antd'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -41,13 +42,14 @@ function IdentifyUsersTab(props: Props) {
           href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
           target="_blank"
         >
-          <Button variant="text-primary" icon="question-circle" className="ml-2">
-            See Documentation
-          </Button>
+          <AntButton size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
+            <Icon name={'question-circle'} />
+            <div className={'text-main'}>See Documentation</div>
+          </AntButton>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
-        <span className="font-medium">Your platform</span>
+        <span className="font-medium">Project Type</span>
         <Segmented
           options={platforms}
           value={platform.value}
@@ -69,11 +71,11 @@ function IdentifyUsersTab(props: Props) {
           {platform.value === 'web' ? (
             <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
           ) : (
-            <HighlightCode
-              className="swift"
-              text={`OpenReplay.shared.setUserID('john@doe.com');`}
-            />
-          )}
+             <HighlightCode
+               className="swift"
+               text={`OpenReplay.shared.setUserID('john@doe.com');`}
+             />
+           )}
           {platform.value === 'web' ? (
             <div className="flex items-center my-2">
               <Icon name="info-circle" color="gray-darkest" />
@@ -121,11 +123,11 @@ function IdentifyUsersTab(props: Props) {
                 {platform.value === 'web' ? (
                   <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
                 ) : (
-                  <HighlightCode
-                    className="swift"
-                    text={`OpenReplay.shared.setMetadata('plan', 'premium');`}
-                  />
-                )}
+                   <HighlightCode
+                     className="swift"
+                     text={`OpenReplay.shared.setMetadata('plan', 'premium');`}
+                   />
+                 )}
               </div>
             </div>
           </div>
