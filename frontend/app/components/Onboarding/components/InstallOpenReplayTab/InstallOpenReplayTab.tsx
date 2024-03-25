@@ -8,6 +8,7 @@ import { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
 import { Segmented } from 'antd';
+import { Button as AntButton } from 'antd'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{

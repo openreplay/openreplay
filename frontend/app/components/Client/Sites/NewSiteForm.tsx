@@ -1,16 +1,19 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
-import { Form, Input, Button, Icon, SegmentSelection } from 'UI';
-import { save, edit, update, fetchList, remove } from 'Duck/site';
-import { pushNewSite } from 'Duck/user';
-import { setSiteId } from 'Duck/site';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
-import styles from './siteForm.module.css';
-import { confirm } from 'UI';
-import { clearSearch } from 'Duck/search';
-import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { withStore } from 'App/mstore';
+import { Segmented } from 'antd';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { ConnectedProps, connect } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
+
+import { withStore } from 'App/mstore';
+import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
+import { clearSearch } from 'Duck/search';
+import { edit, fetchList, remove, save, update } from 'Duck/site';
+import { setSiteId } from 'Duck/site';
+import { pushNewSite } from 'Duck/user';
+import { Button, Form, Icon, Input, SegmentSelection } from 'UI';
+import { confirm } from 'UI';
+
+import styles from './siteForm.module.css';
 
 type OwnProps = {
   onClose: (arg: any) => void;
@@ -81,8 +84,10 @@ const NewSiteForm = ({
   const handleRemove = async () => {
     if (
       await confirm({
-        header: 'Projects',
-        confirmation: `Are you sure you want to delete this Project? We won't be able to record anymore sessions.`,
+        header: 'Project Deletion Alert',
+        confirmation: `Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.`,
+        confirmButton: 'Yes, delete',
+        cancelButton: 'Cancel',
       })
     ) {
       remove(site.id).then(() => {
@@ -94,15 +99,25 @@ const NewSiteForm = ({
     }
   };
 
-  const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
+  const handleEdit = ({
+    target: { name, value },
+  }: ChangeEvent<HTMLInputElement>) => {
     setExistsError(false);
     edit({ [name]: value });
   };
 
   return (
-    <div className="bg-white h-screen overflow-y-auto" style={{ width: '350px' }}>
-      <h3 className="p-5 text-2xl">{site.exists() ? 'Edit Project' : 'New Project'}</h3>
-      <Form className={styles.formWrapper} onSubmit={site.validate() && onSubmit}>
+    <div
+      className="bg-white h-screen overflow-y-auto"
+      style={{ width: '350px' }}
+    >
+      <h3 className="p-5 text-2xl">
+        {site.exists() ? 'Edit Project' : 'New Project'}
+      </h3>
+      <Form
+        className={styles.formWrapper}
+        onSubmit={site.validate() && onSubmit}
+      >
         <div className={styles.content}>
           <Form.Field>
             <label>{'Name'}</label>
@@ -117,17 +132,24 @@ const NewSiteForm = ({
           </Form.Field>
           <Form.Field>
             <label>Project Type</label>
-            <SegmentSelection
-              name={"platform"}
-              value={{ name: site.platform, value: site.platform }}
-              list={[
-                { name: 'Web', value: 'web' },
-                { name: 'iOS', value: 'ios' },
-              ]}
-              onSelect={(_, { value }) => {
-                edit({ platform: value });
-              }}
-            />
+            <div>
+              <Segmented
+                options={[
+                  {
+                    value: 'web',
+                    label: 'Web',
+                  },
+                  {
+                    value: 'ios',
+                    label: 'iOS',
+                  },
+                ]}
+                value={site.platform}
+                onChange={(value) => {
+                  edit({ platform: value });
+                }}
+              />
+            </div>
           </Form.Field>
           <div className="mt-6 flex justify-between">
             <Button
@@ -140,12 +162,21 @@ const NewSiteForm = ({
               {site.exists() ? 'Update' : 'Add'}
             </Button>
             {site.exists() && (
-              <Button variant="text" type="button" onClick={handleRemove} disabled={!canDelete}>
+              <Button
+                variant="text"
+                type="button"
+                onClick={handleRemove}
+                disabled={!canDelete}
+              >
                 <Icon name="trash" size="16" />
               </Button>
             )}
           </div>
-          {existsError && <div className={styles.errorMessage}>{'Project exists already.'}</div>}
+          {existsError && (
+            <div className={styles.errorMessage}>
+              {'Project exists already.'}
+            </div>
+          )}
         </div>
       </Form>
     </div>
@@ -156,7 +187,9 @@ const mapStateToProps = (state: any) => ({
   activeSiteId: state.getIn(['site', 'active', 'id']),
   site: state.getIn(['site', 'instance']),
   siteList: state.getIn(['site', 'list']),
-  loading: state.getIn(['site', 'save', 'loading']) || state.getIn(['site', 'remove', 'loading']),
+  loading:
+    state.getIn(['site', 'save', 'loading']) ||
+    state.getIn(['site', 'remove', 'loading']),
   canDelete: state.getIn(['site', 'list']).size > 1,
 });
 

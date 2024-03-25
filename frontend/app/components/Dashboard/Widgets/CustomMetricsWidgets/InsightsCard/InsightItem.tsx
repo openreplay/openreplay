@@ -11,7 +11,7 @@ interface Props {
 function InsightItem(props: Props) {
   const { item, onClick = () => {} } = props;
   const className =
-    'whitespace-nowrap flex items-center py-4 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer';
+    'flex items-start flex-wrap py-4 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer';
 
   switch (item.category) {
     case IssueCategory.RAGE:

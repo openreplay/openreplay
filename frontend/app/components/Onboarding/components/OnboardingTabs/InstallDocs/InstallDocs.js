@@ -36,7 +36,7 @@ function InstallDocs({ site }) {
   const [isSpa, setIsSpa] = useState(true);
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="font-semibold mb-2 flex items-center">
           <CircleNumber text="1" />
           Install the npm package.
@@ -48,7 +48,7 @@ function InstallDocs({ site }) {
           <Highlight className="cli">{installationCommand}</Highlight>
         </div>
       </div>
-      <div>
+      <div className={'mb-6'}>
         <div className="font-semibold mb-2 flex items-center">
           <CircleNumber text="2" />
           Continue with one of the following options.
