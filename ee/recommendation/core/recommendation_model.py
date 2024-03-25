@@ -57,6 +57,17 @@ def preprocess(X):
     return x, transform
 
 
+class RecommendationSystem(mlflow.pyfunc.PythonModel):
+    def __init__(self):
+        ...
+
+    def fit(self, X, y):
+        ...
+
+    def predict(self, X):
+        return None
+
+
 class SVM_recommendation(mlflow.pyfunc.PythonModel):
 
     def __init__(self, test=False, **params):

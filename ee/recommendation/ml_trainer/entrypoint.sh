@@ -7,6 +7,7 @@ find airflow/ -type f -name "*.cfg" -exec sed -i "s/{{pg_dbname_airflow}}/${pg_d
 find airflow/ -type f -name "*.cfg" -exec sed -i "s#{{airflow_secret_key}}#${airflow_secret_key}#g" {} \;
 export MLFLOW_TRACKING_URI=postgresql+psycopg2://${pg_user_ml}:${pg_password_ml}@${pg_host_ml}:${pg_port_ml}/${pg_dbname_ml}
 git init airflow/dags
+airflow db upgrade
 # Airflow setup
 # airflow db init
 # airflow users create \
