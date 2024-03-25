@@ -35,9 +35,9 @@ function useShortcuts({
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-      e.preventDefault();
       // shift + f = fullscreenOn
       if (e.shiftKey) {
+        e.preventDefault();
         player.toggleInspectorMode(false)
         switch (e.key) {
           case 'F':
