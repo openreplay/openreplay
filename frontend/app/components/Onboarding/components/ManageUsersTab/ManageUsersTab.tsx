@@ -22,9 +22,10 @@ function ManageUsersTab(props: Props) {
           href="https://docs.openreplay.com/en/tutorials/adding-users/"
           target="_blank"
         >
-          <Button variant="text-primary" icon="question-circle" className="ml-2">
-            See Documentation
-          </Button>
+          <AntButton size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
+            <Icon name={'question-circle'} />
+            <div className={'text-main'}>See Documentation</div>
+          </AntButton>
         </a>
       </h1>
       <div className="grid grid-cols-6 gap-4 p-4">

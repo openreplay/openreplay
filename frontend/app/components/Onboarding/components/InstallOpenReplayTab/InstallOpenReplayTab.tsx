@@ -40,14 +40,15 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href={platform.value === 'web' ? 'https://docs.openreplay.com/en/sdk/' : 'https://docs.openreplay.com/en/ios-sdk/'} target="_blank">
-          <Button variant="text-primary" icon="question-circle" className="ml-2">
-            See Documentation
-          </Button>
+        <a href={"https://docs.openreplay.com/en/using-or/"} target="_blank">
+          <AntButton size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
+            <Icon name={"question-circle"} />
+            <div className={"text-main"}>See Documentation</div>
+          </AntButton>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
-        <span className="font-medium">Your platform</span>
+        <span className="font-medium">Project Type</span>
         <Segmented
           options={platforms}
           value={platform.value}

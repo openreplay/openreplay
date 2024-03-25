@@ -87,7 +87,9 @@ function InstallDocs({ site }) {
               <div>
                 <div className="mb-2 text-sm">
                   Otherwise, if your web app is <strong>Server-Side-Rendered (SSR)</strong> (i.e.
-                  NextJS, NuxtJS) use this snippet:
+                  NextJS, NuxtJS),{' '}
+                  <a href={'https://docs.openreplay.com/en/using-or/next/'}>consider async imports</a>
+                  or cjs version of the library:
                 </div>
                 <div className={cn(stl.snippetWrapper)}>
                   <div className="absolute mt-1 mr-2 right-0">
@@ -97,6 +99,42 @@ function InstallDocs({ site }) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="font-semibold mb-2 flex items-center">
+          <CircleNumber text="3" />
+          Enable Assist (Optional)
+        </div>
+        <div className="flex ml-10 mt-4">
+          <div className="w-full">
+            <div>
+              <div className="mb-2">
+                Install the plugin via npm:
+              </div>
+              <div className={cn(stl.snippetWrapper)}>
+                <div className="absolute mt-1 mr-2 right-0">
+                  <CopyButton content={`npm i @openreplay/tracker-assist`} />
+                </div>
+                <Highlight className="js">{`$ npm i @openreplay/tracker-assist`}</Highlight>
+              </div>
+            </div>
+            <div>
+              <div className={'mb-2'}>
+                Then enable it with your tracker:
+              </div>
+              <div className={cn(stl.snippetWrapper)}>
+                <div className="absolute mt-1 mr-2 right-0">
+                  <CopyButton content={`tracker.use(trackerAssist(options));`} />
+                </div>
+                <Highlight className="js">{`tracker.use(trackerAssist(options));`}</Highlight>
+              </div>
+              <div className={'text-sm'}>Read more about available options <a
+                href={'https://github.com/openreplay/openreplay/blob/main/tracker/tracker-assist/README.md'}>here</a>.
+              </div>
+            </div>
           </div>
         </div>
       </div>
