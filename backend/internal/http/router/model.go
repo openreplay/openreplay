@@ -46,7 +46,7 @@ type NotStartedRequest struct {
 	DoNotTrack     bool    `json:"DoNotTrack"`
 }
 
-type StartIOSSessionRequest struct {
+type StartMobileSessionRequest struct {
 	Token          string  `json:"token"`
 	ProjectKey     *string `json:"projectKey"`
 	TrackerVersion string  `json:"trackerVersion"`
@@ -59,9 +59,12 @@ type StartIOSSessionRequest struct {
 	DeviceMemory   uint64  `json:"deviceMemory"`
 	DoNotRecord    bool    `json:"doNotRecord"` // start record session or not
 	Condition      string  `json:"condition"`   // condition for start record session
+	Platform       string  `json:"platform"`
+	Width          int     `json:"width"`
+	Height         int     `json:"height"`
 }
 
-type StartIOSSessionResponse struct {
+type StartMobileSessionResponse struct {
 	Token           string   `json:"token"`
 	ImagesHashList  []string `json:"imagesHashList"`
 	UserUUID        string   `json:"userUUID"`

@@ -28,7 +28,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 
-	req := &StartIOSSessionRequest{}
+	req := &StartMobileSessionRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, 0)
 		return
@@ -105,18 +105,24 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
 		geoInfo := e.ExtractGeoData(r)
+		platform, os, screen := "ios", "IOS", ""
+		if req.Platform != "" && req.Platform != "ios" {
+			platform = req.Platform
+			os = "Android"
+			screen = fmt.Sprintf("%d:%d", req.Width, req.Height)
+		}
 
 		if !req.DoNotRecord {
 			if err := e.services.Sessions.Add(&sessions.Session{
 				SessionID:            sessionID,
-				Platform:             "ios",
+				Platform:             platform,
 				Timestamp:            req.Timestamp,
 				Timezone:             req.Timezone,
 				ProjectID:            p.ProjectID,
 				TrackerVersion:       req.TrackerVersion,
 				RevID:                req.RevID,
 				UserUUID:             userUUID,
-				UserOS:               "IOS",
+				UserOS:               os,
 				UserOSVersion:        req.UserOSVersion,
 				UserDevice:           ios.MapIOSDevice(req.UserDevice),
 				UserDeviceType:       ios.GetIOSDeviceType(req.UserDevice),
@@ -125,6 +131,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				UserCity:             geoInfo.City,
 				UserDeviceMemorySize: req.DeviceMemory,
 				UserDeviceHeapSize:   req.DeviceMemory,
+				UserBrowser:          screen,
 			}); err != nil {
 				e.log.Warn(r.Context(), "failed to add mobile session to DB: %s", err)
 			}
@@ -148,7 +155,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	e.ResponseWithJSON(r.Context(), w, &StartIOSSessionResponse{
+	e.ResponseWithJSON(r.Context(), w, &StartMobileSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
