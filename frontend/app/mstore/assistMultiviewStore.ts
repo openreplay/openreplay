@@ -16,8 +16,8 @@ export interface LiveSessionListItem extends Record<string, any> {
 
 export default class AssistMultiviewStore {
   sessions: MultiSessions = [];
-  activeSession: LiveSessionListItem = null;
-  onChangeCb: (sessions: MultiSessions) => void;
+  activeSession: LiveSessionListItem | undefined = undefined;
+  onChangeCb?: (sessions: MultiSessions) => void;
 
   constructor() {
     makeAutoObservable(this);
@@ -31,7 +31,7 @@ export default class AssistMultiviewStore {
     this.onChangeCb = cb;
   }
 
-  get sortedSessions() {
+  get sortedSessions(): LiveSessionListItem[] {
     // @ts-ignore ???
     return this.sessions.slice().sort((a, b) => a.key - b.key);
   }
@@ -43,32 +43,32 @@ export default class AssistMultiviewStore {
   addSession(session: Record<string, any>) {
     if (
       this.sessions.length < 4 &&
-      this.sessions.findIndex((s) => s.sessionId === session.sessionId) === -1
+      this.sessions.findIndex((s) => s && s.sessionId === session.sessionId) === -1
     ) {
       const plainSession = session.toJS ? session.toJS() : session;
       this.sessions.push({ ...plainSession, key: this.sessions.length });
-      return this.onChangeCb(this.sessions);
+      return this.onChangeCb?.(this.sessions);
     }
   }
 
   replaceSession(targetId: string, session: Record<string, any>) {
-    const targetIndex = this.sessions.findIndex((s) => s.sessionId === targetId);
+    const targetIndex = this.sessions.findIndex((s) => s && s.sessionId === targetId);
     if (targetIndex !== -1) {
       const plainSession = session.toJS ? session.toJS() : session;
       this.sessions[targetIndex] = { ...plainSession, key: targetIndex };
-      return this.onChangeCb(this.sessions);
+      return this.onChangeCb?.(this.sessions);
     }
   }
 
   removeSession(sessionId: string) {
     this.sessions = this.sessions.filter(
-      (session) => session.sessionId !== sessionId
+      (session) => session && session.sessionId !== sessionId
     ) as MultiSessions;
-    return this.onChangeCb(this.sessions);
+    return this.onChangeCb?.(this.sessions);
   }
 
   setActiveSession(sessionId: string) {
-    this.activeSession = this.sessions.find((session) => session.sessionId === sessionId);
+    this.activeSession = this.sessions.find((session) => session && session.sessionId === sessionId);
   }
 
   setDefault(session: Record<string, any>) {
@@ -106,15 +106,17 @@ export default class AssistMultiviewStore {
 
   setToken(sessionId: string, token: string) {
     const sessions = this.sessions;
-    const targetIndex = sessions.findIndex((s) => s.sessionId === sessionId);
-    sessions[targetIndex].agentToken = token;
+    const targetIndex = sessions.findIndex((s) => s && s.sessionId === sessionId);
+    if (sessions[targetIndex] !== undefined) {
+      sessions[targetIndex]!.agentToken = token;
+    }
 
     return (this.sessions = sessions);
   }
 
   reset() {
     this.sessions = [];
-    this.activeSession = null;
+    this.activeSession = undefined;
     this.onChangeCb = undefined
   }
 }
