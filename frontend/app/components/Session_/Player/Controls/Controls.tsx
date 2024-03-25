@@ -1,15 +1,15 @@
-import { STORAGE_TYPES, StorageType, selectStorageType } from "Player";
-import { Switch } from "antd";
-import cn from "classnames";
-import { observer } from "mobx-react-lite";
-import React from "react";
-import { connect } from "react-redux";
+import { STORAGE_TYPES, StorageType, selectStorageType } from 'Player';
+import { Switch } from 'antd';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { connect } from 'react-redux';
 
-import { PlayerContext } from "App/components/Session/playerContext";
-import { useStore } from "App/mstore";
-import { FullScreenButton, PlayButton, PlayingState } from "App/player-ui";
-import { session as sessionRoute, withSiteId } from "App/routes";
-import useShortcuts from "Components/Session/Player/ReplayPlayer/useShortcuts";
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
+import { session as sessionRoute, withSiteId } from 'App/routes';
+import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
 import {
   LaunchConsoleShortcut,
   LaunchEventsShortcut,
@@ -33,14 +33,13 @@ import {
   fullscreenOn,
   toggleBottomBlock,
 } from 'Duck/components/player';
-import { fetchSessions } from "Duck/liveSearch";
-import { Icon } from "UI";
+import { fetchSessions } from 'Duck/liveSearch';
+import { Icon } from 'UI';
 
-import ControlButton from "./ControlButton";
-import Timeline from "./Timeline";
-import PlayerControls from "./components/PlayerControls";
-import styles from "./controls.module.css";
-
+import ControlButton from './ControlButton';
+import Timeline from './Timeline';
+import PlayerControls from './components/PlayerControls';
+import styles from './controls.module.css';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -49,25 +48,25 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4
+  60: 6e4,
 };
 
 function getStorageName(type: any) {
   switch (type) {
     case STORAGE_TYPES.REDUX:
-      return "Redux";
+      return 'Redux';
     case STORAGE_TYPES.MOBX:
-      return "Mobx";
+      return 'Mobx';
     case STORAGE_TYPES.VUEX:
-      return "Vuex";
+      return 'Vuex';
     case STORAGE_TYPES.NGRX:
-      return "NgRx";
+      return 'NgRx';
     case STORAGE_TYPES.ZUSTAND:
-      return "Zustand";
+      return 'Zustand';
     case STORAGE_TYPES.NONE:
-      return "State";
+      return 'State';
     default:
-      return "State";
+      return 'State';
   }
 }
 
@@ -82,7 +81,7 @@ function Controls(props: any) {
     speed,
     messagesLoading,
     markedTargets,
-    inspectorMode
+    inspectorMode,
   } = store.get();
 
   const {
@@ -97,10 +96,11 @@ function Controls(props: any) {
     previousSessionId,
     nextSessionId,
     siteId,
-    setActiveTab
+    setActiveTab,
   } = props;
 
-  const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
+  const disabled =
+    disabledRedux || messagesLoading || inspectorMode || markedTargets;
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
@@ -118,7 +118,7 @@ function Controls(props: any) {
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
-    setActiveTab
+    setActiveTab,
   });
 
   const forthTenSeconds = () => {
@@ -137,16 +137,16 @@ function Controls(props: any) {
   };
 
   const state = completed
-                ? PlayingState.Completed
-                : playing
-                  ? PlayingState.Playing
-                  : PlayingState.Paused;
+    ? PlayingState.Completed
+    : playing
+    ? PlayingState.Playing
+    : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
       <Timeline />
       {!fullscreen && (
-        <div className={cn(styles.buttons, "!px-2")}>
+        <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
             <PlayerControls
               skip={skip}
@@ -157,13 +157,19 @@ function Controls(props: any) {
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
               toggleSkip={() => player.toggleSkip()}
-              playButton={<PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />}
+              playButton={
+                <PlayButton
+                  state={state}
+                  togglePlay={player.togglePlay}
+                  iconSize={36}
+                />
+              }
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
               startedAt={session.startedAt}
             />
-            <div className={cn("mx-2")} />
+            <div className={cn('mx-2')} />
           </div>
 
           <div className="flex gap-2 items-center h-full">
@@ -179,7 +185,9 @@ function Controls(props: any) {
             <FullScreenButton
               size={16}
               onClick={props.fullscreenOn}
-              customClasses={"rounded hover:bg-gray-light-shade color-gray-medium"}
+              customClasses={
+                'rounded hover:bg-gray-light-shade color-gray-medium'
+              }
             />
           </div>
         </div>
@@ -196,7 +204,12 @@ interface IDevtoolsButtons {
 }
 
 const DevtoolsButtons = observer(
-  ({ showStorageRedux, toggleBottomTools, bottomBlock, disabled }: IDevtoolsButtons) => {
+  ({
+    showStorageRedux,
+    toggleBottomTools,
+    bottomBlock,
+    disabled,
+  }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
@@ -216,8 +229,8 @@ const DevtoolsButtons = observer(
     const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
 
     const storageType = store.get().tabStates[currentTab]
-                        ? selectStorageType(store.get().tabStates[currentTab])
-                        : StorageType.NONE;
+      ? selectStorageType(store.get().tabStates[currentTab])
+      : StorageType.NONE;
     const profilesCount = profilesList.length;
     const graphqlCount = graphqlList.length;
     const showGraphql = graphqlCount > 0;
@@ -243,19 +256,19 @@ const DevtoolsButtons = observer(
         ) : null}
         <ControlButton
           popover={
-            <div className={"flex items-center gap-2"}>
+            <div className={'flex items-center gap-2'}>
               <LaunchXRaShortcut />
               <div>Get a quick overview on the issues in this session.</div>
             </div>
           }
-          label={"X-Ray"}
+          label={'X-Ray'}
           onClick={() => toggleBottomTools(OVERVIEW)}
           active={bottomBlock === OVERVIEW && !inspectorMode}
         />
 
         <ControlButton
           popover={
-            <div className={"flex gap-2 items-center"}>
+            <div className={'flex gap-2 items-center'}>
               <LaunchConsoleShortcut />
               <div>Launch Console</div>
             </div>
@@ -269,7 +282,7 @@ const DevtoolsButtons = observer(
 
         <ControlButton
           popover={
-            <div className={"flex gap-2 items-center"}>
+            <div className={'flex gap-2 items-center'}>
               <LaunchNetworkShortcut />
               <div>Launch Network</div>
             </div>
@@ -283,7 +296,7 @@ const DevtoolsButtons = observer(
 
         <ControlButton
           popover={
-            <div className={"flex gap-2 items-center"}>
+            <div className={'flex gap-2 items-center'}>
               <LaunchPerformanceShortcut />
               <div>Launch Performance</div>
             </div>
@@ -306,7 +319,7 @@ const DevtoolsButtons = observer(
         {showStorage && (
           <ControlButton
             popover={
-              <div className={"flex gap-2 items-center"}>
+              <div className={'flex gap-2 items-center'}>
                 <LaunchStateShortcut />
                 <div>Launch State</div>
               </div>
@@ -319,7 +332,7 @@ const DevtoolsButtons = observer(
         )}
         <ControlButton
           popover={
-            <div className={"flex gap-2 items-center"}>
+            <div className={'flex gap-2 items-center'}>
               <LaunchEventsShortcut />
               <div>Launch Events</div>
             </div>
@@ -347,12 +360,12 @@ export function SummaryButton({
   onClick,
   withToggle,
   onToggle,
-  toggleValue
+  toggleValue,
 }: {
-  onClick?: () => void,
-  withToggle?: boolean,
-  onToggle?: () => void,
-  toggleValue?: boolean
+  onClick?: () => void;
+  withToggle?: boolean;
+  onToggle?: () => void;
+  toggleValue?: boolean;
 }) {
   const [isHovered, setHovered] = React.useState(false);
 
@@ -364,66 +377,72 @@ export function SummaryButton({
         onMouseLeave={() => setHovered(false)}
       >
         {withToggle ? (
-          <Switch
-            size={"small"}
-            checked={toggleValue}
-            onChange={onToggle}
-          />
+          <Switch size={'small'} checked={toggleValue} onChange={onToggle} />
         ) : null}
-        <Icon name={"sparkles"} size={16} />
-        <div className={"font-semibold text-main"}>Summary AI</div>
+        <Icon name={'sparkles'} size={16} />
+        <div className={'font-semibold text-main'}>Summary AI</div>
       </div>
     </div>
   );
 }
 
 const gradientButton = {
-  border: "double 1px transparent",
-  borderRadius: "60px",
+  border: 'double 1px transparent',
+  borderRadius: '60px',
   background:
-    "linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)",
-  backgroundOrigin: "border-box",
-  backgroundClip: "content-box, border-box",
-  cursor: "pointer"
+    'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',
+  backgroundOrigin: 'border-box',
+  backgroundClip: 'content-box, border-box',
+  cursor: 'pointer',
 };
 const onHoverFillStyle = {
-  width: "100%",
-  height: "100%",
-  display: "flex",
-  borderRadius: "60px",
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  borderRadius: '60px',
   gap: 2,
-  alignItems: "center",
-  padding: "2px 8px",
-  background: "linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)"
+  alignItems: 'center',
+  padding: '2px 8px',
+  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
 };
 const fillStyle = {
-  width: "100%",
-  height: "100%",
-  display: "flex",
-  borderRadius: "60px",
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  borderRadius: '60px',
   gap: 2,
-  alignItems: "center",
-  padding: "2px 8px"
+  alignItems: 'center',
+  padding: '2px 8px',
 };
 
 const ControlPlayer = observer(Controls);
 
 export default connect(
   (state: any) => {
-    const permissions = state.getIn(["user", "account", "permissions"]) || [];
-    const isEnterprise = state.getIn(["user", "account", "edition"]) === "ee";
+    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
+    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
     return {
-      disabledRedux: isEnterprise && !permissions.includes("DEV_TOOLS"),
-      fullscreen: state.getIn(["components", "player", "fullscreen"]),
-      bottomBlock: state.getIn(["components", "player", "bottomBlock"]),
-      showStorageRedux: !state.getIn(["components", "player", "hiddenHints", "storage"]),
-      showStackRedux: !state.getIn(["components", "player", "hiddenHints", "stack"]),
-      session: state.getIn(["sessions", "current"]),
-      totalAssistSessions: state.getIn(["liveSearch", "total"]),
-      skipInterval: state.getIn(["components", "player", "skipInterval"]),
-      previousSessionId: state.getIn(["sessions", "previousId"]),
-      nextSessionId: state.getIn(["sessions", "nextId"]),
-      siteId: state.getIn(["site", "siteId"])
+      disabledRedux: isEnterprise && !permissions.includes('DEV_TOOLS'),
+      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+      showStorageRedux: !state.getIn([
+        'components',
+        'player',
+        'hiddenHints',
+        'storage',
+      ]),
+      showStackRedux: !state.getIn([
+        'components',
+        'player',
+        'hiddenHints',
+        'stack',
+      ]),
+      session: state.getIn(['sessions', 'current']),
+      totalAssistSessions: state.getIn(['liveSearch', 'total']),
+      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+      previousSessionId: state.getIn(['sessions', 'previousId']),
+      nextSessionId: state.getIn(['sessions', 'nextId']),
+      siteId: state.getIn(['site', 'siteId']),
     };
   },
   {
@@ -431,7 +450,7 @@ export default connect(
     fullscreenOff,
     toggleBottomBlock,
     fetchSessions,
-    changeSkipInterval
+    changeSkipInterval,
   }
 )(ControlPlayer);
 

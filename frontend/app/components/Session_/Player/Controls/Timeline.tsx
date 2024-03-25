@@ -182,6 +182,8 @@ export default connect(
     timezone: state.getIn(['sessions', 'current']).timezone,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
     timelineZoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+    timelineZoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
   }),
   { setTimelinePointer, setTimelineHoverTime }
 )(observer(Timeline));
