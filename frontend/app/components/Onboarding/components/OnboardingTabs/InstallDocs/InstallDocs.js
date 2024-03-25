@@ -88,7 +88,7 @@ function InstallDocs({ site }) {
                 <div className="mb-2 text-sm">
                   Otherwise, if your web app is <strong>Server-Side-Rendered (SSR)</strong> (i.e.
                   NextJS, NuxtJS),{' '}
-                  <a href={'https://docs.openreplay.com/en/using-or/next/'}>consider async imports</a>
+                  <a className={'text-main'} href={'https://docs.openreplay.com/en/using-or/next/'}>consider async imports</a>
                   or cjs version of the library:
                 </div>
                 <div className={cn(stl.snippetWrapper)}>
@@ -132,6 +132,7 @@ function InstallDocs({ site }) {
                 <Highlight className="js">{`tracker.use(trackerAssist(options));`}</Highlight>
               </div>
               <div className={'text-sm'}>Read more about available options <a
+                className={'text-main'}
                 href={'https://github.com/openreplay/openreplay/blob/main/tracker/tracker-assist/README.md'}>here</a>.
               </div>
             </div>
