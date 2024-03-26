@@ -28,7 +28,7 @@ export function JumpBack({
       placement="top"
     >
       <button
-        style={{ height: 24, background: 'transparent', border: 0 }}
+        style={{ height: 22, background: 'transparent', border: 0 }}
         className={'hover:shadow-border-main hover:text-main rounded-l '}
       >
         <SkipButton
@@ -55,7 +55,7 @@ export function IntervalSelector({
 }) {
   return (
     <div
-      style={{ height: 24 }}
+      style={{ height: 22 }}
       className="border-l border-r flex items-center justify-center px-1 hover:shadow-border-main hover:text-main"
     >
       <Popover
@@ -121,7 +121,7 @@ export function JumpForward({
       placement="top"
     >
       <button
-        style={{ height: 24, background: 'transparent', border: 0 }}
+        style={{ height: 22, background: 'transparent', border: 0 }}
         className={'hover:text-main hover:shadow-border-main rounded-r '}
       >
         <SkipButton
