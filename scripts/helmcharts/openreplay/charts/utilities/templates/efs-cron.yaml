@@ -35,7 +35,11 @@ spec:
               set -x
               echo "Cleaning NFS strorage for data older than {{.Values.efsCleaner.retention}} days"
               storage=`du -sh /mnt/efs`
-              find /mnt/efs -type f -mtime +{{.Values.efsCleaner.retention}} -exec /bin/bash -c "ls -lah {}; rm {}" \;
+              {{- $time := mul .Values.efsCleaner.retention 1440 }}
+              {{- if .Values.efsCleaner.retentionHours }}
+              {{- $time = mul .Values.efsCleaner.retentionHours 60 }} 
+              {{- end}}
+              find /mnt/efs -type f -mmin +{{ $time }} -exec /bin/bash -c "ls -lah {}; rm {}" \;
               echo "Storage before cleaning"
               echo ${storage}
               echo "Storage after cleaning"
