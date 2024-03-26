@@ -95,14 +95,6 @@ function SummaryBlock({
 
   return (
     <div style={summaryBlockStyle}>
-      {/*<div*/}
-      {/*  className={*/}
-      {/*    'flex items-center gap-2 px-2 py-1 rounded border border-gray-light bg-white w-fit'*/}
-      {/*  }*/}
-      {/*>*/}
-      {/*  User Behavior Analysis*/}
-      {/*</div>*/}
-
       {aiSummaryStore.text ? (
         <div className={'rounded p-4 bg-white whitespace-pre-wrap flex flex-col'}>
           <>{formattedText.map((v) => v)}</>
@@ -154,7 +146,7 @@ const CodeStringFormatter = ({ text }: { text: string }) => {
 const summaryBlockStyle: React.CSSProperties = {
   background: 'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
   width: '100%',
-  height: '25vh',
+  maxHeight: '25vh',
   overflow: 'auto',
   display: 'flex',
   flexDirection: 'column',
