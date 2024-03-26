@@ -57,10 +57,10 @@ def get_urls_depercated(session_id, check_existence: bool = True):
 def get_ios_videos(session_id, project_id, check_existence=False):
     results = []
     for k in __get_ios_video_keys(project_id=project_id, session_id=session_id):
-        if check_existence and not StorageClient.exists(bucket=config("IOS_VIDEO_BUCKET"), key=k):
+        if check_existence and not StorageClient.exists(bucket=config("sessions_bucket"), key=k):
             continue
         results.append(StorageClient.get_presigned_url_for_sharing(
-            bucket=config("IOS_VIDEO_BUCKET"),
+            bucket=config("sessions_bucket"),
             expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900),
             key=k
         ))
