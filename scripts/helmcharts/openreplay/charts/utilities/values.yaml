@@ -6,6 +6,8 @@ replicaCount: 1
 
 efsCleaner:
   retention: 1
+  # This value is the new convention, and has priority.
+  # retentionHours: 12
   pvc:
     # This can be either persistentVolumeClaim or hostPath.
     # In case of pvc, you'll have to provide the pvc name.
