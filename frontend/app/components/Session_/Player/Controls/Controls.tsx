@@ -250,8 +250,6 @@ const DevtoolsButtons = observer(
         {isSaas ? (
           <SummaryButton
             onClick={showSummary}
-            withToggle={bottomBlock === OVERVIEW}
-            toggleValue={aiSummaryStore.toggleSummary}
           />
         ) : null}
         <ControlButton
@@ -394,6 +392,10 @@ export const gradientButton = {
   backgroundOrigin: 'border-box',
   backgroundClip: 'content-box, border-box',
   cursor: 'pointer',
+  height: 24,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 const onHoverFillStyle = {
   width: '100%',
@@ -402,7 +404,7 @@ const onHoverFillStyle = {
   borderRadius: '60px',
   gap: 2,
   alignItems: 'center',
-  padding: '2px 8px',
+  padding: '1px 8px',
   background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
 };
 const fillStyle = {
@@ -412,7 +414,7 @@ const fillStyle = {
   borderRadius: '60px',
   gap: 2,
   alignItems: 'center',
-  padding: '2px 8px',
+  padding: '1px 8px',
 };
 
 const ControlPlayer = observer(Controls);
