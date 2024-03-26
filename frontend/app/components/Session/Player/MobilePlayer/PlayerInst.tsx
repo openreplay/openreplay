@@ -39,6 +39,7 @@ interface IProps {
   activeTab: string;
   updateLastPlayedSession: (id: string) => void
   videoURL: string[];
+  setActiveTab: (tab: string) => void;
   userDevice: string;
 }
 
@@ -142,6 +143,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <MobileControls
+          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

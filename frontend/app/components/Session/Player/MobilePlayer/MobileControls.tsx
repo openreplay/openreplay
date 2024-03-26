@@ -2,6 +2,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
+import { useHistory } from 'react-router';
 
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -31,9 +32,10 @@ import {
 import { fetchSessions } from 'Duck/liveSearch';
 import { Tooltip } from 'UI';
 
-import XRayButton from 'Shared/XRayButton';
-import { useStore } from "../../../../mstore";
-import { SummaryButton } from "../../../Session_/Player/Controls/Controls";
+import { useStore } from '../../../../mstore';
+import { session as sessionRoute, withSiteId } from '../../../../routes';
+import { SummaryButton } from '../../../Session_/Player/Controls/Controls';
+import useShortcuts from '../ReplayPlayer/useShortcuts';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -47,7 +49,7 @@ export const SKIP_INTERVALS = {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(MobilePlayerContext);
-
+  const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
 
   const {
@@ -57,40 +59,32 @@ function Controls(props: any) {
     changeSkipInterval,
     skipInterval,
     session,
+    setActiveTab,
+    previousSessionId,
+    nextSessionId,
+    siteId,
   } = props;
 
   const disabled = messagesLoading;
   const sessionTz = session?.timezone;
-  const onKeyDown = (e: any) => {
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    ) {
-      return;
-    }
-    if (e.key === 'Esc' || e.key === 'Escape') {
-      props.fullscreenOff();
-    }
-    if (e.key === 'ArrowRight') {
-      forthTenSeconds();
-    }
-    if (e.key === 'ArrowLeft') {
-      backTenSeconds();
-    }
-    if (e.key === 'ArrowDown') {
-      player.speedDown();
-    }
-    if (e.key === 'ArrowUp') {
-      player.speedUp();
-    }
+
+  const nextHandler = () => {
+    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
-  React.useEffect(() => {
-    document.addEventListener('keydown', onKeyDown.bind(this));
-    return () => {
-      document.removeEventListener('keydown', onKeyDown.bind(this));
-    };
-  }, []);
+  const prevHandler = () => {
+    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+  };
+
+  useShortcuts({
+    skipInterval,
+    fullScreenOn: props.fullscreenOn,
+    fullScreenOff: props.fullscreenOff,
+    toggleBottomBlock,
+    openNextSession: nextHandler,
+    openPrevSession: prevHandler,
+    setActiveTab,
+  });
 
   const forthTenSeconds = () => {
     // @ts-ignore
@@ -107,10 +101,10 @@ function Controls(props: any) {
   };
 
   const state = completed
-    ? PlayingState.Completed
-    : playing
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+                ? PlayingState.Completed
+                : playing
+                  ? PlayingState.Playing
+                  : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
@@ -308,6 +302,9 @@ export default connect(
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+      previousSessionId: state.getIn(['sessions', 'previousId']),
+      nextSessionId: state.getIn(['sessions', 'nextId']),
+      siteId: state.getIn(['site', 'siteId']),
     };
   },
   {
