@@ -386,7 +386,7 @@ export function SummaryButton({
   );
 }
 
-const gradientButton = {
+export const gradientButton = {
   border: 'double 1px transparent',
   borderRadius: '60px',
   background:

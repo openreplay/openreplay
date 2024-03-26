@@ -1,19 +1,28 @@
+import { CloseOutlined, EnterOutlined } from '@ant-design/icons';
+import { Tour } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Input, Icon } from 'UI';
-import FilterModal from 'Shared/Filters/FilterModal';
-import { debounce } from 'App/utils';
+
+import { useStore } from 'App/mstore';
 import { assist as assistRoute, isRoute } from 'App/routes';
-import { addFilterByKeyAndValue, fetchFilterSearch, edit, clearSearch } from 'Duck/search';
+import { debounce } from 'App/utils';
 import {
   addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
   fetchFilterSearch as liveFetchFilterSearch,
 } from 'Duck/liveSearch';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { Segmented } from 'antd';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
-import { EnterOutlined, CloseOutlined } from '@ant-design/icons';
+import {
+  addFilterByKeyAndValue,
+  clearSearch,
+  edit,
+  fetchFilterSearch,
+} from 'Duck/search';
+import { Icon, Input, Toggler as Switch } from 'UI';
+
+import FilterModal from 'Shared/Filters/FilterModal';
+
+import { SwitchToggle } from '../../ui/Toggler/Toggler';
+import OutsideClickDetectingDiv from '../OutsideClickDetectingDiv';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -32,7 +41,10 @@ function SessionSearchField(props: Props) {
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
   const debounceFetchFilterSearch = React.useCallback(
-    debounce(isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch, 1000),
+    debounce(
+      isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch,
+      1000
+    ),
     []
   );
 
@@ -64,12 +76,14 @@ function SessionSearchField(props: Props) {
         onFocus={onFocus}
         onBlur={onBlur}
         onChange={onSearchChange}
-        placeholder={'Search sessions using any captured event (click, input, page, error...)'}
-        style={{ minWidth: 360 }}
+        placeholder={
+          'Search sessions using any captured event (click, input, page, error...)'
+        }
+        style={{ minWidth: 360, height: 33 }}
         id="search"
         type="search"
         autoComplete="off"
-        className="text-lg placeholder-lg !border-0 w-full rounded-r-lg focus:!border-0 focus:ring-0"
+        className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg focus:!border-0 focus:ring-0"
       />
 
       {showModal && (
@@ -86,126 +100,217 @@ function SessionSearchField(props: Props) {
   );
 }
 
-const AiSearchField = observer(({ edit, appliedFilter, clearSearch }: Props) => {
-  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
-  const { aiFiltersStore } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const debounceAiFetch = React.useCallback(debounce(aiFiltersStore.getSearchFilters, 1000), []);
+const AiSearchField = observer(
+  ({ edit, appliedFilter, clearSearch }: Props) => {
+    const hasFilters =
+      appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+    const { aiFiltersStore } = useStore();
+    const [searchQuery, setSearchQuery] = useState('');
+    const debounceAiFetch = React.useCallback(
+      debounce(aiFiltersStore.getSearchFilters, 1000),
+      []
+    );
 
-  const onSearchChange = ({ target: { value } }: any) => {
-    setSearchQuery(value);
-  };
+    const onSearchChange = ({ target: { value } }: any) => {
+      setSearchQuery(value);
+    };
 
-  const fetchResults = () => {
-    if (searchQuery) {
-      debounceAiFetch(searchQuery);
-    }
-  };
+    const fetchResults = () => {
+      if (searchQuery) {
+        debounceAiFetch(searchQuery);
+      }
+    };
 
-  const handleKeyDown = (event: any) => {
-    if (event.key === 'Enter') {
-      fetchResults();
-    }
-  };
+    const handleKeyDown = (event: any) => {
+      if (event.key === 'Enter') {
+        fetchResults();
+      }
+    };
 
-  const clearAll = () => {
-    clearSearch();
-    setSearchQuery('');
-  };
+    const clearAll = () => {
+      clearSearch();
+      setSearchQuery('');
+    };
 
-  React.useEffect(() => {
-    if (aiFiltersStore.filtersSetKey !== 0) {
-      console.log('updating filters', aiFiltersStore.filters, aiFiltersStore.filtersSetKey);
-      edit(aiFiltersStore.filters);
-    }
-  }, [aiFiltersStore.filters, aiFiltersStore.filtersSetKey]);
+    React.useEffect(() => {
+      if (aiFiltersStore.filtersSetKey !== 0) {
+        edit(aiFiltersStore.filters);
+      }
+    }, [aiFiltersStore.filters, aiFiltersStore.filtersSetKey]);
 
-  return (
-    <div className={'w-full'}>
-      <Input
-        onChange={onSearchChange}
-        placeholder={'E.g., "Sessions with login issues this week"'}
-        id="search"
-        onKeyDown={handleKeyDown}
-        value={searchQuery}
-        autoComplete="off"
-        className="text-lg placeholder-lg !border-0 rounded-r-lg focus:!border-0 focus:ring-0"
-        leadingButton={
-          searchQuery !== '' ? (
-            <div
-              className={'h-full flex items-center cursor-pointer'}
-              onClick={hasFilters ? clearAll : fetchResults}
-            >
-              <div className={'px-2 py-1 hover:bg-active-blue rounded mr-2'}>
-                {hasFilters ? <CloseOutlined /> : <EnterOutlined />}
+    return (
+      <div className={'w-full'}>
+        <Input
+          onChange={onSearchChange}
+          placeholder={'E.g., "Sessions with login issues this week"'}
+          id="search"
+          onKeyDown={handleKeyDown}
+          value={searchQuery}
+          style={{ minWidth: 360, height: 33 }}
+          autoComplete="off"
+          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg focus:!border-0 focus:ring-0"
+          leadingButton={
+            searchQuery !== '' ? (
+              <div
+                className={'h-full flex items-center cursor-pointer'}
+                onClick={hasFilters ? clearAll : fetchResults}
+              >
+                <div className={'px-2 py-1 hover:bg-active-blue rounded mr-2'}>
+                  {hasFilters ? <CloseOutlined /> : <EnterOutlined />}
+                </div>
               </div>
-            </div>
-          ) : null
-        }
-      />
-    </div>
-  );
-});
+            ) : null
+          }
+        />
+      </div>
+    );
+  }
+);
 
 function AiSessionSearchField(props: Props) {
-  const [tab, setTab] = useState('search');
-  const [isFocused, setIsFocused] = useState(false);
+  const askTourKey = '__or__ask-tour';
+  const tabKey = '__or__tab';
+  const { aiFiltersStore } = useStore();
+  const isTourShown = localStorage.getItem(askTourKey) !== null;
+  const [tab, setTab] = useState(localStorage.getItem(tabKey) || 'search');
+  const [touring, setTouring] = useState(!isTourShown);
+  const askAiRef = React.useRef(null);
 
-  const boxStyle = isFocused ? gradientBox : gradientBoxUnfocused;
+  const closeTour = () => {
+    setTouring(false);
+    localStorage.setItem(askTourKey, 'true');
+  };
+  const changeValue = (v?: string) => {
+    const newTab = v ? v : tab !== 'ask' ? 'ask' : 'search';
+    setTab(newTab);
+    localStorage.setItem(tabKey, newTab);
+  };
   return (
-    <OutsideClickDetectingDiv
-      onClickOutside={() => setIsFocused(false)}
-      className={'bg-white rounded-lg'}
-    >
-      <div style={boxStyle} onClick={() => setIsFocused(true)}>
-        <Segmented
-          value={tab}
-          // className={'bg-figmaColors-divider'}
-          onChange={(value) => setTab(value as string)}
-          options={[
+    <div className={'bg-white rounded-lg'}>
+      <div style={gradientBoxUnfocused}>
+        <div ref={askAiRef} className={'px-2'}>
+          <AskAiSwitchToggle
+            enabled={tab === 'ask'}
+            setEnabled={changeValue}
+            loading={aiFiltersStore.isLoading}
+          />
+        </div>
+        {tab === 'ask' ? (
+          <AiSearchField {...props} />
+        ) : (
+          <SessionSearchField {...props} />
+        )}
+        <Tour
+          open={touring}
+          onClose={closeTour}
+          steps={[
             {
-              label: (
-                <div className={'flex items-center gap-2'}>
-                  <Icon name={'search'} size={16} />
-                  <span>Search</span>
-                </div>
-              ),
-              value: 'search',
-            },
-            {
-              label: (
-                <div className={'flex items-center gap-2'}>
-                  <Icon name={'sparkles'} size={16} />
+              title: (
+                <div
+                  className={'text-xl font-semibold flex items-center gap-2'}
+                >
+                  <span>Introducing</span>
+                  <Icon name={'sparkles'} size={18} />
                   <span>Ask AI</span>
                 </div>
               ),
-              value: 'ask',
+              target: () => askAiRef.current,
+              description:
+                'Easily find sessions with our AI search. Just enable Ask AI, type in your query naturally, and the AI will swiftly and precisely display relevant sessions.',
+              nextButtonProps: {
+                children: (
+                  <OutsideClickDetectingDiv
+                    onClickOutside={closeTour}
+                    className={
+                      'w-full h-full text-white flex items-center gap-2'
+                    }
+                  >
+                    <span>Ask AI</span>
+                    <Icon
+                      name={'arrow-right-short'}
+                      size={16}
+                      color={'white'}
+                    />
+                  </OutsideClickDetectingDiv>
+                ),
+                onClick: () => {
+                  changeValue('tab');
+                  closeTour();
+                },
+              },
             },
           ]}
         />
-        {tab === 'ask' ? <AiSearchField {...props} /> : <SessionSearchField {...props} />}
       </div>
-    </OutsideClickDetectingDiv>
+    </div>
   );
 }
 
-const gradientBox = {
-  border: 'double 1px transparent',
-  borderRadius: '6px',
-  background:
-    'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',
-  backgroundOrigin: 'border-box',
-  backgroundClip: 'content-box, border-box',
-  display: 'flex',
-  gap: '0.25rem',
-  alignItems: 'center',
-  width: '100%',
+export const AskAiSwitchToggle = ({
+  enabled,
+  setEnabled,
+  loading,
+}: {
+  enabled: boolean;
+  loading: boolean;
+  setEnabled: () => void;
+}) => {
+  return (
+    <div
+      role="switch"
+      aria-checked={enabled}
+      onClick={() => setEnabled()}
+      className={loading ? 'animate-bg-spin' : ''}
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        height: 24,
+        background: enabled
+          ? 'linear-gradient(-25deg, #394eff, #3EAAAf, #3ccf65)'
+          : 'rgb(170 170 170)',
+        backgroundSize: loading ? '200% 200%' : 'unset',
+        borderRadius: 100,
+        cursor: 'pointer',
+        transition: 'all 0.2s ease-in-out',
+        border: 0,
+        verticalAlign: 'middle',
+      }}
+    >
+      <div
+        style={{
+          display: 'inline-block',
+          insetInlineStart: enabled ? 'calc(100% - 21px)' : '3px',
+          position: 'absolute',
+          top: 3,
+          width: 18,
+          height: 18,
+          transition: 'all 0.2s ease-in-out',
+          background: '#fff',
+          borderRadius: 100,
+          verticalAlign: 'middle',
+        }}
+      />
+      <div
+        style={{
+          display: 'inline-block',
+          overflow: 'hidden',
+          borderRadius: 100,
+          height: '100%',
+          transition: 'all 0.2s ease-in-out',
+          paddingInline: !enabled ? '30px 0px' : '10px 24px',
+          width: 88,
+        }}
+      >
+        <div style={{ color: 'white', fontSize: 16 }}>Ask AI</div>
+      </div>
+    </div>
+  );
 };
 
 const gradientBoxUnfocused = {
   borderRadius: '6px',
   border: 'double 1px transparent',
-  background: '#f6f6f6',
+  background: 'white',
   display: 'flex',
   gap: '0.25rem',
   alignItems: 'center',

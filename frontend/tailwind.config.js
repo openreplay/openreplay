@@ -22,10 +22,22 @@ module.exports = {
             opacity: '1'
             // transform: 'translateY(0)'
           }
+        },
+        'bg-spin': {
+          '0%': {
+            backgroundPosition: '0 50%',
+          },
+          '50%': {
+            backgroundPosition: '100% 50%',
+          },
+          '100%': {
+            backgroundPosition: '0 50%',
+          }
         }
       },
       animation: {
-        'fade-in': 'fade-in 0.2s ease-out'
+        'fade-in': 'fade-in 0.2s ease-out',
+        'bg-spin': 'bg-spin 1s ease infinite'
       },
       colors: {
         'disabled-text': 'rgba(0,0,0, 0.38)'
