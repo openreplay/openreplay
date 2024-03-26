@@ -194,11 +194,14 @@ function CreateNote({
           ref={inputRef}
           name="message"
           id="message"
-          placeholder="Add Messave"
+          placeholder="Enter your note here..."
           rows={3}
           value={text}
           autoFocus
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            console.log(e, e.target.value)
+            setText(e.target.value)}
+          }
           className="text-area"
         />
 

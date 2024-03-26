@@ -1,6 +1,7 @@
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
-import { useEffect, useContext } from 'react';
+import { useContext, useEffect } from 'react';
+
 import { PlayerContext } from 'Components/Session/playerContext';
+import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 import { blockValues, blocks } from 'Duck/components/player';
 
 function useShortcuts({
@@ -32,63 +33,67 @@ function useShortcuts({
 
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      // shift + f = fullscreenOn
-      if (e.shiftKey) {
-        e.preventDefault();
-        player.toggleInspectorMode(false)
-        switch (e.key) {
-          case 'F':
-            return fullScreenOn();
-          case 'X':
-            return toggleBottomBlock(blocks.overview);
-          case 'P':
-            return toggleBottomBlock(blocks.performance);
-          case 'N':
-            return toggleBottomBlock(blocks.network);
-          case 'C':
-            return toggleBottomBlock(blocks.console);
-          case 'R':
-            return toggleBottomBlock(blocks.storage);
-          case 'E':
-            return toggleBottomBlock(blocks.stackEvents);
-          case '>':
-            return openNextSession();
-          case '<':
-            return openPrevSession();
-          case 'A':
-            player.pause();
-            return setActiveTab('EVENTS');
-          default:
-            break;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return false;
+      } else {
+        // shift + f = fullscreenOn
+        if (e.shiftKey) {
+          e.preventDefault();
+          player.toggleInspectorMode(false);
+          switch (e.key) {
+            case 'F':
+              return fullScreenOn();
+            case 'X':
+              return toggleBottomBlock(blocks.overview);
+            case 'P':
+              return toggleBottomBlock(blocks.performance);
+            case 'N':
+              return toggleBottomBlock(blocks.network);
+            case 'C':
+              return toggleBottomBlock(blocks.console);
+            case 'R':
+              return toggleBottomBlock(blocks.storage);
+            case 'E':
+              return toggleBottomBlock(blocks.stackEvents);
+            case '>':
+              return openNextSession();
+            case '<':
+              return openPrevSession();
+            case 'A':
+              player.pause();
+              return setActiveTab('EVENTS');
+            default:
+              break;
+          }
         }
-      }
-      if (e.key === 'Esc' || e.key === 'Escape') {
-        fullScreenOff();
-      }
-      if (e.key === ' ') {
-        (document.activeElement as HTMLInputElement | null)?.blur?.();
-        player.togglePlay();
-      }
-      if (e.key === 'ArrowRight') {
-        forthTenSeconds();
-      }
-      if (e.key === 'ArrowLeft') {
-        backTenSeconds();
-      }
-      if (e.key === 'ArrowDown') {
-        player.speedDown();
-      }
-      if (e.key === 'ArrowUp') {
-        player.speedUp();
+        if (e.key === 'Esc' || e.key === 'Escape') {
+          fullScreenOff();
+        }
+        if (e.key === ' ') {
+          (document.activeElement as HTMLInputElement | null)?.blur?.();
+          player.togglePlay();
+        }
+        if (e.key === 'ArrowRight') {
+          forthTenSeconds();
+        }
+        if (e.key === 'ArrowLeft') {
+          backTenSeconds();
+        }
+        if (e.key === 'ArrowDown') {
+          player.speedDown();
+        }
+        if (e.key === 'ArrowUp') {
+          player.speedUp();
+        }
       }
     };
 
-    document.addEventListener('keydown', handleShortcuts, true);
+    document.addEventListener('keydown', handleShortcuts);
     return () => {
-      document.removeEventListener('keydown', handleShortcuts, true);
+      document.removeEventListener('keydown', handleShortcuts);
     };
   }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
 }

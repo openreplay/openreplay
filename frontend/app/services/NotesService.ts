@@ -3,7 +3,7 @@ import APIClient from 'App/api_client';
 
 export const tagProps = {
   'ISSUE': 'red',
-  'QUERY': 'green',
+  'QUERY': 'geekblue',
   'TASK': 'cyan',
   'OTHER': 'rgba(0, 0, 0, 0.6)',
 }
