@@ -48,7 +48,7 @@ spec:
           - name: datadir
             hostPath:
               # Ensure the file directory is created.
-              path: {{ .Values.efsCleaner.pvc.hostMountPath }}
+              path: {{ tpl .Values.efsCleaner.pvc.hostMountPath . }}
               type: DirectoryOrCreate
           {{- else }}
           volumes:
