@@ -12,7 +12,7 @@ efsCleaner:
     # For example
     # name: openreplay-efs
     name: "{{ .Values.global.pvcRWXName }}"
-    hostMountPath: /openreplay/storage/nfs
+    hostMountPath: "{{ .Values.global.orTmpDir }}"
 
 telemetry:
   # https://crontab.guru/#5_12_*_*_*

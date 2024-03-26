@@ -134,7 +134,7 @@ pvc:
   # For example
   # name: openreplay-efs
   name: "{{ .Values.global.pvcRWXName }}"
-  hostMountPath: /openreplay/storage/nfs
+  hostMountPath: "{{ .Values.global.orTmpDir }}"
 
 persistence: {}
   # # Spec of spec.template.spec.containers[*].volumeMounts
