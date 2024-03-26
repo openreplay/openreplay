@@ -31,6 +31,16 @@ export const options = [
   { key: 'onComponent', label: 'on component', value: 'onComponent' }
 ];
 
+export const tagElementOperators = [{
+  key: 'is',
+  label: 'is displayed',
+  value: 'is',
+}, {
+  key: 'isNot',
+  label: 'is not displayed',
+  value: 'isNot',
+}]
+
 const filterKeys = ['is', 'isNot'];
 const stringFilterKeysLimited = ['is', 'isAny', 'isNot'];
 const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
@@ -160,5 +170,6 @@ export default {
   methodOptions,
   pageUrlOperators,
   targetConditional,
-  stringConditional
+  stringConditional,
+  tagElementOperators
 };
