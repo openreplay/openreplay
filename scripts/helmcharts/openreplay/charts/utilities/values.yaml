@@ -5,7 +5,7 @@
 replicaCount: 1
 
 efsCleaner:
-  retention: 2
+  retention: 1
   pvc:
     # This can be either persistentVolumeClaim or hostPath.
     # In case of pvc, you'll have to provide the pvc name.
