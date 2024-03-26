@@ -1,4 +1,4 @@
-import { stringConditional, targetConditional } from "App/constants/filterOptions";
+import { stringConditional, tagElementOperators, targetConditional } from "App/constants/filterOptions";
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -270,7 +270,7 @@ export const filters = [
     operator: 'is',
     isEvent: true,
     icon: 'filters/tag-element',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    operatorOptions: filterOptions.tagElementOperators,
     options: [],
   },
   {
