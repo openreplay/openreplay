@@ -1,11 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
 
-
-
 import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
 import { toggleZoom } from 'Duck/components/player';
-
 
 interface Props {
   timelineZoomStartTs: number;
@@ -14,16 +11,28 @@ interface Props {
   toggleZoom: typeof toggleZoom;
 }
 
-const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggleZoom }: Props) => {
-  const [startPos, setStartPos] = useState(getTimelinePosition(timelineZoomStartTs, scale));
-  const [endPos, setEndPos] = useState(getTimelinePosition(timelineZoomEndTs, scale));
+const DraggableMarkers = ({
+  timelineZoomStartTs,
+  timelineZoomEndTs,
+  scale,
+  toggleZoom,
+}: Props) => {
+  const [startPos, setStartPos] = useState(
+    getTimelinePosition(timelineZoomStartTs, scale)
+  );
+  const [endPos, setEndPos] = useState(
+    getTimelinePosition(timelineZoomEndTs, scale)
+  );
   const [dragging, setDragging] = useState<string | null>(null);
 
-  const convertToPercentage = useCallback((clientX: number, element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = clientX - rect.left;
-    return (x / rect.width) * 100;
-  }, []);
+  const convertToPercentage = useCallback(
+    (clientX: number, element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const x = clientX - rect.left;
+      return (x / rect.width) * 100;
+    },
+    []
+  );
 
   const startDrag = useCallback(
     (marker: 'start' | 'end' | 'body') => (event: React.MouseEvent) => {
@@ -44,13 +53,19 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
           if (endPos - newPos <= minDistance) {
             setEndPos(newPos + minDistance);
           }
-          toggleZoom({ enabled: true, range: [newPos / scale, endPos / scale] });
+          toggleZoom({
+            enabled: true,
+            range: [newPos / scale, endPos / scale],
+          });
         } else if (dragging === 'end') {
           setEndPos(newPos);
           if (newPos - startPos <= minDistance) {
             setStartPos(newPos - minDistance);
           }
-          toggleZoom({ enabled: true, range: [startPos / scale, newPos / scale] });
+          toggleZoom({
+            enabled: true,
+            range: [startPos / scale, newPos / scale],
+          });
         } else if (dragging === 'body') {
           const offset = (endPos - startPos) / 2;
           let newStartPos = newPos - offset;
@@ -64,7 +79,10 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
           }
           setStartPos(newStartPos);
           setEndPos(newEndPos);
-          toggleZoom({ enabled: true, range: [newStartPos / scale, newEndPos / scale] });
+          toggleZoom({
+            enabled: true,
+            range: [newStartPos / scale, newEndPos / scale],
+          });
         }
       }
     },
@@ -91,31 +109,43 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
     >
       <div
         className="marker start"
-        onMouseDown={startDrag("start")}
+        onMouseDown={startDrag('start')}
         style={{
-          position: "absolute",
+          position: 'absolute',
           left: `${startPos}%`,
-          height: "100%",
-          background: "#FCC100",
-          cursor: "ew-resize",
+          height: '100%',
+          background: '#FCC100',
+          cursor: 'ew-resize',
           borderTopLeftRadius: 3,
           borderBottomLeftRadius: 3,
           zIndex: 100,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           paddingRight: 3,
           paddingLeft: 6,
           width: 18,
         }}
       >
-        <div className={"bg-black rounded-xl"} style={{ zIndex: 101, height: 18, width: 2, marginRight: 3, overflow: "hidden" }} />
-        <div className={"bg-black rounded-xl"} style={{ zIndex: 101, height: 18, width: 2, overflow: "hidden" }} />
+        <div
+          className={'bg-black rounded-xl'}
+          style={{
+            zIndex: 101,
+            height: 18,
+            width: 2,
+            marginRight: 3,
+            overflow: 'hidden',
+          }}
+        />
+        <div
+          className={'bg-black rounded-xl'}
+          style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }}
+        />
       </div>
       <div
         className="slider-body"
-        onMouseDown={startDrag("body")}
+        onMouseDown={startDrag('body')}
         style={{
-          position: "absolute",
+          position: 'absolute',
           left: `calc(${startPos}% + 18px)`,
           width: `calc(${endPos - startPos}% - 18px)`,
           height: '100%',
@@ -145,8 +175,21 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
           width: 18,
         }}
       >
-        <div className={'bg-black rounded-xl'} style={{ zIndex: 101, height: 18, width: 2, marginRight: 3, overflow: 'hidden' }} />
-        <div className={'bg-black rounded-xl'} style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }} />
+        <div
+          className={'bg-black rounded-xl'}
+          style={{
+            zIndex: 101,
+            height: 18,
+            width: 2,
+            marginRight: 3,
+            marginLeft: 2,
+            overflow: 'hidden',
+          }}
+        />
+        <div
+          className={'bg-black rounded-xl'}
+          style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }}
+        />
       </div>
     </div>
   );
@@ -154,7 +197,8 @@ const DraggableMarkers = ({ timelineZoomStartTs, timelineZoomEndTs, scale, toggl
 
 export default connect(
   (state: Record<string, any>) => ({
-    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom
+      .startTs,
     timelineZoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
   }),
   { toggleZoom }
