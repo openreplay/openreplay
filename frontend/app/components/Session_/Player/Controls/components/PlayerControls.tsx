@@ -70,7 +70,7 @@ function PlayerControls(props: Props) {
         sessionTz={sessionTz}
       />
 
-      <div className="rounded ml-2 bg-white border-gray-light flex items-center" style={{ gap: 1 }}>
+      <div className="rounded ml-2 bg-white border-gray-lighter flex items-center" style={{ gap: 1 }}>
         <JumpBack backTenSeconds={backTenSeconds} currentInterval={currentInterval} />
         <IntervalSelector
           skipIntervals={skipIntervals}

@@ -10,6 +10,8 @@ import Select from 'Shared/Select';
 import { fetchList as fetchSlack, sendSlackMsg } from 'Duck/integrations/slack';
 import { fetchList as fetchTeams, sendMsTeamsMsg } from 'Duck/integrations/teams';
 import { Button, Segmented } from 'antd';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 interface Msg {
   integrationId: string;
@@ -25,6 +27,7 @@ const SharePopup = ({
   trigger: string;
   showCopyLink?: boolean;
 }) => {
+  const { store } = React.useContext(PlayerContext);
   const { showModal, hideModal } = useModal();
 
   const openModal = () => {
@@ -32,6 +35,7 @@ const SharePopup = ({
       <ShareModal
         hideModal={hideModal}
         showCopyLink={showCopyLink}
+        time={store?.get().time}
       />,
       { right: true, width: 300 }
     );
@@ -58,6 +62,7 @@ interface Props {
   sendMsTeamsMsg: (msg: Msg) => any;
   showCopyLink?: boolean;
   hideModal: () => void;
+  time: number;
 }
 
 function ShareModalComp({
@@ -72,6 +77,7 @@ function ShareModalComp({
   fetchSlack,
   fetchTeams,
   hideModal,
+  time,
 }: Props) {
   const [shareTo, setShareTo] = useState('slack');
   const [comment, setComment] = useState('');
@@ -240,7 +246,7 @@ function ShareModalComp({
                 </div>
               </div>
               <div className={'mt-4'}>
-                <SessionCopyLink />
+                <SessionCopyLink time={time} />
                 <div className={'flex items-center gap-2 pt-8 mt-4 border-t'}>
                   <Button type={'primary'} onClick={sendMsg}>Send</Button>
                   <Button type={'primary'} ghost onClick={hideModal}>
@@ -258,7 +264,7 @@ function ShareModalComp({
                 <>
                   <div className="border-t -mx-2" />
                   <div>
-                    <SessionCopyLink />
+                    <SessionCopyLink time={time} />
                   </div>
                 </>
               )}
@@ -286,4 +292,4 @@ const ShareModal = connect(mapStateToProps, {
   sendMsTeamsMsg,
 })(ShareModalComp);
 
-export default SharePopup;
+export default observer(SharePopup);

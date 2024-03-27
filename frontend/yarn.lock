@@ -16429,6 +16429,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^0.363.0":
+  version: 0.363.0
+  resolution: "lucide-react@npm:0.363.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0
+  checksum: e18d3710e619f86d9f6686aa6975bba8a20a48c70ef2da231b61b29fe56eff85df463d38d6885345597a0942c940971cd4e81e8e777583c7db2fd8d62160bf20
+  languageName: node
+  linkType: hard
+
 "luxon@npm:^1.24.1":
   version: 1.28.1
   resolution: "luxon@npm:1.28.1"
@@ -18319,6 +18328,7 @@ __metadata:
     jshint: ^2.11.1
     jspdf: ^2.5.1
     jsx-runtime: ^1.2.0
+    lucide-react: ^0.363.0
     luxon: ^1.24.1
     mini-css-extract-plugin: ^2.6.0
     minio: ^7.1.3

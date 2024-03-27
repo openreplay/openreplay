@@ -105,13 +105,13 @@ function PlayerBlockHeader(props: any) {
           )}
 
           {_metaList.length > 0 && (
-            <div className="border-l h-full flex items-center px-2">
+            <div className="border-l border-l-gray-lighter h-full flex items-center px-2">
               <SessionMetaList className="" metaList={_metaList} maxLength={2} />
             </div>
           )}
         </div>
       </div>
-        <div className="relative border-l" style={{ minWidth: '270px' }}>
+        <div className="relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
           <Tabs
             tabs={TABS}
             active={activeTab}

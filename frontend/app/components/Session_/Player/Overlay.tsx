@@ -3,6 +3,9 @@ import type { MenuProps } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
+import { Link2 } from 'lucide-react';
+import copy from 'copy-to-clipboard';
+import { toast } from 'react-toastify';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import {
@@ -36,9 +39,16 @@ enum ItemKey {
   Events = '4',
   State = '5',
   AddNote = '6',
+  CopySessionUrl = '7',
+  CopySessionUrlTs = '8',
 }
 
 const menuItems: MenuProps['items'] = [
+  {
+    key: ItemKey.Console,
+    label: 'Console',
+    icon: <Icon name={'terminal'} size={14} />,
+  },
   {
     key: ItemKey.Console,
     label: 'Console',
@@ -69,6 +79,16 @@ const menuItems: MenuProps['items'] = [
     key: ItemKey.AddNote,
     label: 'Add Note',
     icon: <Icon name={'quotes'} size={14} />,
+  },
+  {
+    key: ItemKey.CopySessionUrl,
+    label: 'Copy Session URL',
+    icon: <Link2 />,
+  },
+  {
+    key: ItemKey.CopySessionUrlTs,
+    label: 'Copy Session URL At Current Time',
+    icon: <Link2 />,
   },
 ];
 
@@ -126,6 +146,17 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
           />,
           { right: true, width: 380 }
         );
+        break;
+      case ItemKey.CopySessionUrl:
+        copy(window.location.origin + window.location.pathname);
+        toast.success('Session URL copied to clipboard');
+        break;
+      case ItemKey.CopySessionUrlTs:
+        copy(window.location.origin
+             + window.location.pathname
+             + '?jumpto='
+             + String(Math.round(store.get().time)));
+        toast.success('Session URL at current time copied to clipboard');
         break;
       default:
         return;

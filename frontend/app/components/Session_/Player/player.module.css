@@ -18,8 +18,7 @@
 }
 
 .checkers {
-  background: repeating-conic-gradient($gray-lightest 0% 25%, transparent 0% 50%)
-      50% / 10px 10px;
+  background: repeating-linear-gradient(135deg, #f3f3f3, #f3f3f3 1px, #f6f6f6 1px, #FFF 4px);
 }
 .solidBg {
   background: $gray-lightest;
