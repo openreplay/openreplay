@@ -187,7 +187,7 @@ function AiSessionSearchField(props: Props) {
   };
   return (
     <div className={'bg-white rounded-lg'}>
-      <div style={gradientBoxUnfocused}>
+      <div className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''} style={tab === 'ask' ? gradientBox : gradientBoxUnfocused}>
         <div ref={askAiRef} className={'px-2'}>
           <AskAiSwitchToggle
             enabled={tab === 'ask'}
@@ -307,10 +307,23 @@ export const AskAiSwitchToggle = ({
   );
 };
 
+const gradientBox = {
+  border: 'double 1.5px transparent',
+  borderRadius: '6px',
+  background: 'linear-gradient(#ffffff, #ffffff), linear-gradient(-45deg, #394eff, #3eaaaf, #3ccf65)',
+  backgroundOrigin: 'border-box',
+  backgroundSize: '200% 200%',
+  backgroundClip: 'content-box, border-box',
+  display: 'flex',
+  gap: '0.25rem',
+  alignItems: 'center',
+  width: '100%',
+};
+
 const gradientBoxUnfocused = {
   borderRadius: '6px',
-  border: 'double 1px transparent',
-  background: 'white',
+  border: 'solid 1.5px #BFBFBF',
+  background: '#fffff',
   display: 'flex',
   gap: '0.25rem',
   alignItems: 'center',
