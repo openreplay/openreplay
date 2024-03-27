@@ -11,10 +11,12 @@ interface Props {
   clearSearch: () => void;
   appliedFilter: any;
   savedSearch: any;
+  site: any;
 }
 
 const MainSearchBar = (props: Props) => {
-  const { appliedFilter } = props;
+  const { appliedFilter, site } = props;
+  const currSite = React.useRef(site)
   const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
   const hasSavedSearch = props.savedSearch && props.savedSearch.exists();
   const hasSearch = hasFilters || hasSavedSearch;
@@ -22,6 +24,14 @@ const MainSearchBar = (props: Props) => {
   // @ts-ignore
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
+
+  React.useEffect(() => {
+    if (site !== currSite.current && currSite.current !== undefined) {
+      console.debug('clearing filters due to project change')
+      props.clearSearch();
+      currSite.current = site
+    }
+  }, [site])
   return (
     <div className="flex items-center flex-wrap">
       <div style={{ flex: 3, marginRight: '10px' }}>
@@ -47,6 +57,7 @@ export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['search', 'instance']),
     savedSearch: state.getIn(['search', 'savedSearch']),
+    site: state.getIn(['site', 'siteId']),
   }),
   {
     clearSearch,
