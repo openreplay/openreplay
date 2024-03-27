@@ -17,11 +17,10 @@ import {
   edit,
   fetchFilterSearch,
 } from 'Duck/search';
-import { Icon, Input, Toggler as Switch } from 'UI';
+import { Icon, Input } from 'UI';
 
 import FilterModal from 'Shared/Filters/FilterModal';
 
-import { SwitchToggle } from '../../ui/Toggler/Toggler';
 import OutsideClickDetectingDiv from '../OutsideClickDetectingDiv';
 
 const ASSIST_ROUTE = assistRoute();
@@ -187,7 +186,10 @@ function AiSessionSearchField(props: Props) {
   };
   return (
     <div className={'bg-white rounded-lg'}>
-      <div className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''} style={tab === 'ask' ? gradientBox : gradientBoxUnfocused}>
+      <div
+        className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''}
+        style={tab === 'ask' ? gradientBox : gradientBoxUnfocused}
+      >
         <div ref={askAiRef} className={'px-2'}>
           <AskAiSwitchToggle
             enabled={tab === 'ask'}
@@ -310,7 +312,8 @@ export const AskAiSwitchToggle = ({
 const gradientBox = {
   border: 'double 1.5px transparent',
   borderRadius: '6px',
-  background: 'linear-gradient(#ffffff, #ffffff), linear-gradient(-45deg, #394eff, #3eaaaf, #3ccf65)',
+  background:
+    'linear-gradient(#ffffff, #ffffff), linear-gradient(-45deg, #394eff, #3eaaaf, #3ccf65)',
   backgroundOrigin: 'border-box',
   backgroundSize: '200% 200%',
   backgroundClip: 'content-box, border-box',
