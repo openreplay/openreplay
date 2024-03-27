@@ -26,6 +26,12 @@ function TimelineZoomButton({ enabled, toggleZoom }: Props) {
       ],
     });
   };
+
+  React.useEffect(() => {
+    return () => {
+      toggleZoom({ enabled: false, range: [0, 0] });
+    }
+  }, [])
   return (
     <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-semibold'}>
       Timeline Zoom {enabled ? 'On' : 'Off'}
