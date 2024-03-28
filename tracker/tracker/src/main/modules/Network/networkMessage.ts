@@ -44,7 +44,7 @@ export default class NetworkMessage {
   constructor(
     private readonly ignoredHeaders: boolean | string[] = [],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
+    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
   ) {}
 
   getMessage() {
@@ -62,6 +62,8 @@ export default class NetworkMessage {
       request,
       response,
     })
+
+    if (!messageInfo) return
 
     return NetworkRequest(
       this.requestType,
