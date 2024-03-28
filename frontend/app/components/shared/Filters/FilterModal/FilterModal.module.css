@@ -14,9 +14,6 @@
   &:hover {
     background-color: $active-blue;
     color: $teal !important;
-    & svg {
-      fill: $teal !important;
-    }
   }
 }
 
