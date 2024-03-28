@@ -177,10 +177,13 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     return (<ReturnType<T>>target.apply(window, argsList))
       .then(this.afterFetch(item))
       .catch((e) => {
-        // mock finally
-        item.endTime = performance.now()
-        item.duration = item.endTime - (item.startTime || item.endTime)
-        throw e
+        if (e.name !== 'AbortError') {
+          item.endTime = performance.now()
+          item.duration = item.endTime - (item.startTime || item.endTime)
+          throw e
+        } else {
+          // ignore AbortError
+        }
       })
   }
 
@@ -261,7 +264,6 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
         // Otherwise, not chunked, the response is not a stream,
         // so it's completed and can be cloned for `text()` calling.
         item.readyState = 4
-
         void this.handleResponseBody(resp.clone(), item).then(
           (responseValue: string | ArrayBuffer) => {
             item.responseSize =
