@@ -199,7 +199,6 @@ function CreateNote({
           value={text}
           autoFocus
           onChange={(e) => {
-            console.log(e, e.target.value)
             setText(e.target.value)}
           }
           className="text-area"
