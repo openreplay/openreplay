@@ -1,3 +1,0 @@
-[submodule "ee/intelligent_search/llama"]
-	path = ee/intelligent_search/llama
-	url = https://github.com/facebookresearch/llama.git
