@@ -15,6 +15,7 @@ const {
     socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
+const {logger} = require('./logger');
 
 const wsRouter = express.Router();
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete); // autocomplete
@@ -32,7 +33,7 @@ module.exports = {
         io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', (socket) => onConnect(socket));
 
-        console.log("WS server started");
+        logger.info("WS server started");
         socketConnexionTimeout(io);
     },
     handlers: {

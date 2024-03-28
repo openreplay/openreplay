@@ -1,5 +1,5 @@
 let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
-let debug = process.env.debug === "1" || false;
+const {logger} = require('./logger');
 
 const extractRoomId = (peerId) => {
     let {projectKey, sessionId, tabId} = extractPeerId(peerId);
@@ -20,11 +20,11 @@ const extractTabId = (peerId) => {
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
     if (splited.length < 2 || splited.length > 3) {
-        debug && console.error(`cannot split peerId: ${peerId}`);
+        logger.debug(`cannot split peerId: ${peerId}`);
         return {};
     }
     if (PROJECT_KEY_LENGTH > 0 && splited[0].length !== PROJECT_KEY_LENGTH) {
-        debug && console.error(`wrong project key length for peerId: ${peerId}`);
+        logger.debug(`wrong project key length for peerId: ${peerId}`);
         return {};
     }
     if (splited.length === 2) {
@@ -35,11 +35,13 @@ const extractPeerId = (peerId) => {
 
 const request_logger = (identity) => {
     return (req, res, next) => {
-        debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
+        logger.debug(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
         req.startTs = performance.now(); // track request's start timestamp
         res.on('finish', function () {
-            if (this.statusCode !== 200 || debug) {
-                console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+            if (this.statusCode !== 200) {
+                logger.info(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+            } else {
+                logger.debug(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
             }
         })
 
@@ -49,7 +51,7 @@ const request_logger = (identity) => {
 
 const extractProjectKeyFromRequest = function (req) {
     if (req.params.projectKey) {
-        debug && console.log(`[WS]where projectKey=${req.params.projectKey}`);
+        logger.debug(`[WS]where projectKey=${req.params.projectKey}`);
         return req.params.projectKey;
     }
     return undefined;
@@ -57,7 +59,7 @@ const extractProjectKeyFromRequest = function (req) {
 
 const extractSessionIdFromRequest = function (req) {
     if (req.params.sessionId) {
-        debug && console.log(`[WS]where sessionId=${req.params.sessionId}`);
+        logger.debug(`[WS]where sessionId=${req.params.sessionId}`);
         return req.params.sessionId;
     }
     return undefined;
@@ -146,13 +148,13 @@ const transformFilters = function (filter) {
     for (let key of Object.keys(filter)) {
         //To support old v1.7.0 payload
         if (Array.isArray(filter[key]) || filter[key] === undefined || filter[key] === null) {
-            debug && console.log(`[WS]old format for key=${key}`);
+            logger.debug(`[WS]old format for key=${key}`);
             filter[key] = {"values": filter[key]};
         }
         if (filter[key].operator) {
-            debug && console.log(`[WS]where operator=${filter[key].operator}`);
+            logger.debug(`[WS]where operator=${filter[key].operator}`);
         } else {
-            debug && console.log(`[WS]where operator=DEFAULT-contains`);
+            logger.debug(`[WS]where operator=DEFAULT-contains`);
             filter[key].operator = "contains";
         }
     }
@@ -173,21 +175,21 @@ const extractPayloadFromRequest = async function (req, res) {
         }
     };
     if (req.query.q) {
-        debug && console.log(`[WS]where q=${req.query.q}`);
+        logger.debug(`[WS]where q=${req.query.q}`);
         filters.query.value = req.query.q;
     }
     if (req.query.key) {
-        debug && console.log(`[WS]where key=${req.query.key}`);
+        logger.debug(`[WS]where key=${req.query.key}`);
         filters.query.key = req.query.key;
     }
     if (req.query.userId) {
-        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        logger.debug(`[WS]where userId=${req.query.userId}`);
         filters.filter.userID = [req.query.userId];
     }
     filters.filter = objectToObjectOfArrays(filters.filter);
     filters.filter = {...filters.filter, ...(req.body.filter || {})};
     filters.filter = transformFilters(filters.filter);
-    debug && console.log("payload/filters:" + JSON.stringify(filters))
+    logger.debug("payload/filters:" + JSON.stringify(filters))
     return filters;
 }
 
@@ -262,7 +264,7 @@ const getCompressionConfig = function () {
     // WS: The theoretical overhead per socket is 19KB (11KB for compressor and 8KB for decompressor)
     let perMessageDeflate = false;
     if (process.env.COMPRESSION === "true") {
-        console.log(`WS compression: enabled`);
+        logger.info(`WS compression: enabled`);
         perMessageDeflate = {
             zlibDeflateOptions: {
                 windowBits: 10,
@@ -273,7 +275,7 @@ const getCompressionConfig = function () {
             }
         }
     } else {
-        console.log(`WS compression: disabled`);
+        logger.info(`WS compression: disabled`);
     }
     return {
         perMessageDeflate: perMessageDeflate,

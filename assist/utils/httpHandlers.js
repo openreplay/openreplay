@@ -17,11 +17,10 @@ const {
 } = require('../utils/metrics');
 const {fetchSockets} = require("./wsServer");
 const {IDENTITIES} = require("./assistHelper");
-
-const debug_log = process.env.debug === "1";
+const {logger} = require('./logger');
 
 const respond = function (req, res, data) {
-    debug_log && console.log("responding with data: ", JSON.stringify(data))
+    logger.debug("responding with data: ", JSON.stringify(data))
     let result = {data}
     if (process.env.uws !== "true") {
         res.statusCode = 200;
@@ -99,7 +98,7 @@ const getAllSessions = async  function (projectKey, filters, onlineOnly= false) 
 
 // Sort by projectKey
 const socketsListByProject = async function (req, res) {
-    debug_log && console.log("[WS]looking for available sessions");
+    logger.debug("[WS]looking for available sessions");
     res.handlerName = 'socketsListByProject';
 
     const _projectKey = extractProjectKeyFromRequest(req);
@@ -121,7 +120,7 @@ const socketsListByProject = async function (req, res) {
 
 // Sort by projectKey
 const socketsLiveByProject = async function (req, res) {
-    debug_log && console.log("[WS]looking for available LIVE sessions");
+    logger.debug("[WS]looking for available LIVE sessions");
     res.handlerName = 'socketsLiveByProject';
 
     const _projectKey = extractProjectKeyFromRequest(req);
@@ -143,7 +142,7 @@ const socketsLiveByProject = async function (req, res) {
 
 // Sort by roomID (projectKey+sessionId)
 const socketsLiveBySession = async function (req, res) {
-    debug_log && console.log("[WS]looking for LIVE session");
+    logger.debug("[WS]looking for LIVE session");
     res.handlerName = 'socketsLiveBySession';
 
     const _projectKey = extractProjectKeyFromRequest(req);
@@ -160,7 +159,7 @@ const socketsLiveBySession = async function (req, res) {
 
 // Sort by projectKey
 const autocomplete = async function (req, res) {
-    debug_log && console.log("[WS]autocomplete");
+    logger.debug("[WS]autocomplete");
     res.handlerName = 'autocomplete';
 
     const _projectKey = extractProjectKeyFromRequest(req);

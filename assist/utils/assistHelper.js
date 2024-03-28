@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken');
 const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 const {extractPeerId} = require('./helper');
+const {logger} = require('./logger');
 
-let debug = process.env.debug === "1";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
     listen: {
@@ -58,7 +58,7 @@ const BASE_sessionInfo = {
  * */
 const extractSessionInfo = function (socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
-        debug && console.log(`received headers: ${socket.handshake.headers}`);
+        logger.debug(`received headers: ${socket.handshake.headers}`);
 
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = {...BASE_sessionInfo, ...socket.handshake.query.sessionInfo};
@@ -73,7 +73,7 @@ const extractSessionInfo = function (socket) {
         socket.handshake.query.sessionInfo.userState = null;
         socket.handshake.query.sessionInfo.userCity = null;
         if (geoip() !== null) {
-            debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
+            logger.debug(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
             try {
                 let ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
                 ip = ip.split(",")[0];
@@ -82,8 +82,7 @@ const extractSessionInfo = function (socket) {
                 socket.handshake.query.sessionInfo.userCity = info.city.names.en;
                 socket.handshake.query.sessionInfo.userState = info.subdivisions.length > 0 ? info.subdivisions[0].names.en : null;
             } catch (e) {
-                debug && console.log("geoip-country failed");
-                debug && console.log(e);
+                logger.debug(`geoip-country failed: ${e}`);
             }
         }
     }
@@ -92,28 +91,28 @@ const extractSessionInfo = function (socket) {
 function socketConnexionTimeout(io) {
     if (process.env.CLEAR_SOCKET_TIME !== undefined && parseFloat(process.env.CLEAR_SOCKET_TIME) > 0) {
         const CLEAR_SOCKET_TIME = parseFloat(process.env.CLEAR_SOCKET_TIME);
-        console.log(`WS manually disconnecting sockets after ${CLEAR_SOCKET_TIME} min`);
+        logger.info(`WS manually disconnecting sockets after ${CLEAR_SOCKET_TIME} min`);
         setInterval(async (io) => {
             try {
                 const now = new Date();
                 let allSockets = await io.fetchSockets();
                 for (let socket of allSockets) {
                     if (socket._connectedAt !== undefined && ((now - socket._connectedAt) / 1000) / 60 > CLEAR_SOCKET_TIME) {
-                        debug && console.log(`disconnecting ${socket.id} after more than ${CLEAR_SOCKET_TIME} of connexion.`);
+                        logger.debug(`disconnecting ${socket.id} after more than ${CLEAR_SOCKET_TIME} of connexion.`);
                         socket.disconnect();
                     }
                 }
             } catch (e) {
-                console.error(e);
+                logger.error(`Error while disconnecting sockets: ${e}`);
             }
         }, 0.5 * 60 * 1000, io);
     } else {
-        debug && console.log(`WS no manually disconnecting sockets.`);
+        logger.info(`WS no manually disconnecting sockets.`);
     }
 }
 
 function errorHandler(listenerName, error) {
-    console.error(`Error detected from ${listenerName}\n${error}`);
+    logger.error(`Error detected from ${listenerName}\n${error}`);
 }
 
 function generateAccessToken(payload) {
@@ -132,29 +131,26 @@ function check(socket, next) {
             token = token.substring(JWT_TOKEN_PREFIX.length);
         }
         jwt.verify(token, process.env.ASSIST_JWT_SECRET, (err, decoded) => {
-            debug && console.log("JWT payload:");
-            debug && console.log(decoded);
+            logger.debug(`JWT payload: ${decoded}`);
             if (err) {
-                debug && console.error(err);
+                logger.debug(err);
                 return next(new Error('Authentication error'));
             }
             const {projectKey, sessionId} = extractPeerId(socket.handshake.query.peerId);
             if (!projectKey || !sessionId) {
-                debug && console.error("Missing attribute:");
-                debug && console.error(`projectKey:${projectKey}, sessionId:${sessionId}`);
+                logger.debug(`Missing attribute: projectKey:${projectKey}, sessionId:${sessionId}`);
                 return next(new Error('Authentication error'));
             }
             if (String(projectKey) !== String(decoded.projectKey) || String(sessionId) !== String(decoded.sessionId)) {
-                debug && console.error(`Trying to access projectKey:${projectKey} instead of ${decoded.projectKey}\nor`);
-                debug && console.error(`Trying to access sessionId:${sessionId} instead of ${decoded.sessionId}`);
+                logger.debug(`Trying to access projectKey:${projectKey} instead of ${decoded.projectKey} or
+                 to sessionId:${sessionId} instead of ${decoded.sessionId}`);
                 return next(new Error('Authorization error'));
             }
             socket.decoded = decoded;
             return next();
         });
     } else {
-        debug && console.error("something missing in:");
-        debug && console.error(socket.handshake);
+        logger.debug(`something missing in handshake: ${socket.handshake}`);
         return next(new Error('Authentication error'));
     }
 }

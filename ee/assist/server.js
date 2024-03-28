@@ -4,6 +4,13 @@ const express = require('express');
 const health = require("./utils/health");
 const assert = require('assert').strict;
 const register = require('./utils/metrics').register;
+let socket;
+if (process.env.redis === "true") {
+    socket = require("./servers/websocket-cluster");
+} else {
+    socket = require("./servers/websocket");
+}
+const {logger} = require('./logger');
 
 health.healthApp.get('/metrics', async (req, res) => {
     try {
@@ -14,20 +21,12 @@ health.healthApp.get('/metrics', async (req, res) => {
     }
 });
 
-let socket;
-if (process.env.redis === "true") {
-    socket = require("./servers/websocket-cluster");
-} else {
-    socket = require("./servers/websocket");
-}
-
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
 assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
 const P_KEY = process.env.ASSIST_KEY;
 const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`;
 
-let debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";
 
 if (process.env.uws !== "true") {
@@ -45,14 +44,14 @@ if (process.env.uws !== "true") {
 
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
-        console.log(`WS App listening on http://${HOST}:${PORT}`);
+        logger.info(`WS App listening on http://${HOST}:${PORT}`);
         health.healthApp.listen(health.PORT, HOST, health.listen_cb);
     });
 
     socket.start(wsserver);
     module.exports = {wsserver};
 } else {
-    console.log("Using uWebSocket");
+    logger.info("Using uWebSocket");
     const {App} = require("uWebSockets.js");
 
 
@@ -72,9 +71,9 @@ if (process.env.uws !== "true") {
     const onAbortedOrFinishedResponse = function (res) {
 
         if (res.id === -1) {
-            debug && console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
+            logger.debug("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
         } else {
-            debug && console.log('Stream was closed');
+            logger.debug('Stream was closed');
         }
 
         /* Mark this response already accounted for */
@@ -104,17 +103,15 @@ if (process.env.uws !== "true") {
 
     uapp.listen(HOST, PORT, (token) => {
         if (!token) {
-            console.warn("port already in use");
+            logger.error("port already in use");
         }
-        console.log(`WS App listening on http://${HOST}:${PORT}`);
+        logger.info(`WS App listening on http://${HOST}:${PORT}`);
         health.healthApp.listen(health.PORT, HOST, health.listen_cb);
     });
 
 
     process.on('uncaughtException', err => {
-        console.log(`Uncaught Exception: ${err.message}`);
-        debug && console.log(err.stack);
-        // process.exit(1);
+        logger.error(`Uncaught Exception: ${err}`);
     });
     module.exports = {uapp};
 }

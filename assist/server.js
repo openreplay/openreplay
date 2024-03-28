@@ -5,6 +5,7 @@ const {request_logger} = require("./utils/helper");
 const health = require("./utils/health");
 const assert = require('assert').strict
 const register = require('./utils/metrics').register;
+const {logger} = require('./utils/logger');
 
 health.healthApp.get('/metrics', async (req, res) => {
     try {
@@ -15,7 +16,6 @@ health.healthApp.get('/metrics', async (req, res) => {
     }
 });
 
-const debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
@@ -37,7 +37,7 @@ wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
 heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
 
 const wsserver = wsapp.listen(PORT, HOST, () => {
-    console.log(`WS App listening on http://${HOST}:${PORT}`);
+    logger.info(`WS App listening on http://${HOST}:${PORT}`);
     health.healthApp.listen(health.PORT, HOST, health.listen_cb);
 });
 
