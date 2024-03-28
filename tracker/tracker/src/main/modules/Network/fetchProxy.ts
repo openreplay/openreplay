@@ -262,8 +262,8 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
         // so it's completed and can be cloned for `text()` calling.
         item.readyState = 4
 
-        void this.handleResponseBody(resp.clone(), item).then(
-          (responseValue: string | ArrayBuffer) => {
+        void this.handleResponseBody(resp.clone(), item)
+          .then((responseValue: string | ArrayBuffer) => {
             item.responseSize =
               typeof responseValue === 'string' ? responseValue.length : responseValue.byteLength
             item.responseSizeText = formatByteSize(item.responseSize)
@@ -273,8 +273,14 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
             if (msg) {
               this.sendMessage(msg)
             }
-          },
-        )
+          })
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              throw e
+            } else {
+              // ignore AbortError
+            }
+          })
       }
 
       return new Proxy(resp, new ResponseProxyHandler(resp, item))
