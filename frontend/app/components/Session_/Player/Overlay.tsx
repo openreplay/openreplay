@@ -50,11 +50,6 @@ const menuItems: MenuProps['items'] = [
     icon: <Icon name={'terminal'} size={14} />,
   },
   {
-    key: ItemKey.Console,
-    label: 'Console',
-    icon: <Icon name={'terminal'} size={14} />,
-  },
-  {
     key: ItemKey.Network,
     label: 'Network',
     icon: <Icon name={'arrow-down-up'} size={14} />,
