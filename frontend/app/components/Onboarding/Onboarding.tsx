@@ -1,14 +1,16 @@
 import React from 'react';
-import { Icon } from 'UI';
-import SideMenu from './components/SideMenu';
+import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
 import { withRouter } from 'react-router-dom';
-import { Switch, Route, Redirect, RouteComponentProps } from 'react-router';
+
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import InstallOpenReplayTab from './components/InstallOpenReplayTab';
+import { withSiteId } from 'App/routes';
+import { Icon } from 'UI';
+
 import IdentifyUsersTab from './components/IdentifyUsersTab';
+import InstallOpenReplayTab from './components/InstallOpenReplayTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import ManageUsersTab from './components/ManageUsersTab';
-import { withSiteId } from 'App/routes';
+import SideMenu from './components/SideMenu';
 
 interface Props {
   match: {
@@ -20,12 +22,10 @@ interface Props {
   history: RouteComponentProps['history'];
 }
 
-
 const platformMap = {
-  'ios': 'mobile',
-  'web': 'web',
-}
-
+  ios: 'mobile',
+  web: 'web',
+};
 
 const Onboarding = (props: Props) => {
   const platforms = [
@@ -62,11 +62,9 @@ const Onboarding = (props: Props) => {
   };
 
   return (
-    <div className="container-90 flex relative">
-      <div className="side-menu">
-        <SideMenu activeTab={activeTab} onClick={onMenuItemClick} />
-      </div>
-      <div className="side-menu-margined w-full">
+    <div className="flex relative">
+      <SideMenu activeTab={activeTab} onClick={onMenuItemClick} />
+      <div className="w-full">
         <div
           className="bg-white w-full rounded-lg mx-auto mb-8 border"
           style={{ maxWidth: '1360px' }}
@@ -88,8 +86,18 @@ const Onboarding = (props: Props) => {
                 platformMap={platformMap}
               />
             </Route>
-            <Route exact strict path={route(OB_TABS.MANAGE_USERS)} component={ManageUsersTab} />
-            <Route exact strict path={route(OB_TABS.INTEGRATIONS)} component={IntegrationsTab} />
+            <Route
+              exact
+              strict
+              path={route(OB_TABS.MANAGE_USERS)}
+              component={ManageUsersTab}
+            />
+            <Route
+              exact
+              strict
+              path={route(OB_TABS.INTEGRATIONS)}
+              component={IntegrationsTab}
+            />
             <Redirect to={route(OB_TABS.INSTALLING)} />
           </Switch>
         </div>

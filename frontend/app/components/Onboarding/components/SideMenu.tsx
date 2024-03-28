@@ -1,71 +1,128 @@
+import { Divider, Layout, Menu } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import stl from './sideMenu.module.css';
-import cn from 'classnames';
-import { SideMenuitem } from 'UI';
-import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import OnboardingMenu from './OnboardingMenu/OnboardingMenu';
-import { withRouter } from 'react-router';
+
+import { OB_TABS } from 'App/routes';
+import { Icon } from 'UI';
+
+import SupportModal from '../../../layout/SupportModal';
+import { useStore } from '../../../mstore';
 
 interface Props {
   activeTab: string;
   onClick: (tab: string) => void;
 }
 function SideMenu(props: Props) {
+  const [supportOpen, setSupportOpen] = React.useState(false);
+  const { settingsStore } = useStore();
   const { activeTab } = props;
+
+  const handleClick = (item: any) => {
+    if (item.key === 'support') {
+      return setSupportOpen(true);
+    }
+    props.onClick(item.key);
+  };
   return (
-    <div className="w-full">
-      <div className={cn(stl.header, 'flex items-center')}>
-        <div className={stl.label}>
-          <span>PROJECT SETUP</span>
-        </div>
+    <Layout.Sider
+      style={{
+        position: 'sticky',
+        top: 70, // Height of the Header
+        // backgroundColor: '#f6f6f6',
+        height: 'calc(100vh - 70px)', // Adjust the height to accommodate the Header
+        overflow: 'auto', // Enable scrolling for the Sider content if needed
+      }}
+      collapsed={settingsStore.menuCollapsed}
+      width={250}
+    >
+      <div className="w-full">
+        <Menu
+          mode="inline"
+          onClick={handleClick}
+          style={{ marginTop: '8px', border: 'none' }}
+          selectedKeys={activeTab ? [activeTab] : []}
+        >
+          <Menu.Item
+            key={OB_TABS.INSTALLING}
+            style={{ paddingLeft: 0 }}
+            icon={
+              <Icon
+                name="tools"
+                size={16}
+                color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray'}
+              />
+            }
+            className={'!rounded hover-fill-teal'}
+          >
+            Setup OpenReplay
+          </Menu.Item>
+          <Menu.Item
+            key={OB_TABS.IDENTIFY_USERS}
+            style={{ paddingLeft: 0 }}
+            icon={
+              <Icon
+                name="person-border"
+                size={16}
+                color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray'}
+              />
+            }
+            className={'!rounded hover-fill-teal'}
+          >
+            Identify Users
+          </Menu.Item>
+          <Menu.Item
+            key={OB_TABS.MANAGE_USERS}
+            style={{ paddingLeft: 0 }}
+            icon={
+              <Icon
+                name="people"
+                size={16}
+                color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray'}
+              />
+            }
+            className={'!rounded hover-fill-teal'}
+          >
+            Invite Collaborators
+          </Menu.Item>
+          <Menu.Item
+            key={OB_TABS.INTEGRATIONS}
+            style={{ paddingLeft: 0 }}
+            icon={
+              <Icon
+                name="plug"
+                size={16}
+                color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray'}
+              />
+            }
+            className={'!rounded hover-fill-teal'}
+          >
+            Integrations
+          </Menu.Item>
+          <Divider style={{ margin: '6px 0' }} />
+          <Menu.Item
+            key={'support'}
+            style={{ paddingLeft: 0 }}
+            icon={
+              <Icon
+                name="question-circle"
+                size={16}
+                color={activeTab === 'support' ? 'teal' : 'gray'}
+              />
+            }
+            className={'!rounded hover-fill-teal'}
+          >
+            Support
+          </Menu.Item>
+        </Menu>
       </div>
-
-      <SideMenuitem
-        title="Setup OpenReplay"
-        iconName="tools"
-        active={activeTab === OB_TABS.INSTALLING}
-        onClick={() => props.onClick(OB_TABS.INSTALLING)}
+      <SupportModal
+        onClose={() => {
+          setSupportOpen(false);
+        }}
+        open={supportOpen}
       />
-      <SideMenuitem
-        title="Identify Users"
-        iconName="person-border"
-        active={activeTab === OB_TABS.IDENTIFY_USERS}
-        onClick={() => props.onClick(OB_TABS.IDENTIFY_USERS)}
-      />
-      <SideMenuitem
-        title="Invite Collaborators"
-        iconName="people"
-        active={activeTab === OB_TABS.MANAGE_USERS}
-        onClick={() => props.onClick(OB_TABS.MANAGE_USERS)}
-      />
-      <SideMenuitem
-        title="Integrations"
-        iconName="plug"
-        active={activeTab === OB_TABS.INTEGRATIONS}
-        onClick={() => props.onClick(OB_TABS.INTEGRATIONS)}
-      />
-
-      <div className={cn(stl.divider, 'my-4')} />
-
-      <div className={cn(stl.header, 'flex items-center')}>
-        <div className={stl.label}>
-          <span>Help</span>
-        </div>
-      </div>
-
-      <SideMenuitem
-        title="Documentation"
-        iconName="journal-code"
-        onClick={() => window.open('https://docs.openreplay.com', '_blank')}
-      />
-
-      <SideMenuitem
-        title="Report Issue"
-        iconName="github"
-        onClick={() => window.open('https://github.com/openreplay/openreplay/issues', '_blank')}
-      />
-    </div>
+    </Layout.Sider>
   );
 }
 
-export default SideMenu;
+export default observer(SideMenu);

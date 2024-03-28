@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Tooltip, Typography } from 'antd';
+import { Divider, Menu, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
