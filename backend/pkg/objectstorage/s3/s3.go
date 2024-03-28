@@ -34,9 +34,13 @@ func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("s3 config is nil")
 	}
+	creds := credentials.NewStaticCredentials(cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, "")
+	if cfg.AWSAccessKeyID == "" || cfg.AWSSecretAccessKey == "" {
+		creds = nil
+	}
 	config := &aws.Config{
 		Region:      aws.String(cfg.AWSRegion),
-		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, ""),
+		Credentials: creds,
 	}
 	if cfg.AWSEndpoint != "" {
 		config.Endpoint = aws.String(cfg.AWSEndpoint)
