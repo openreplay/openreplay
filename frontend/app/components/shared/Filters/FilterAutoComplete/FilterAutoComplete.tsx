@@ -12,6 +12,8 @@ const dropdownStyles = {
     option: (provided: any, state: any) => ({
         ...provided,
         whiteSpace: 'nowrap',
+        width: '100%',
+        minWidth: 150,
         transition: 'all 0.3s',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -197,6 +199,8 @@ function FilterAutoComplete(props: Props) {
 
     const selected = value ? options.find((i: any) => i.value === query) : null;
 
+    const uniqueOptions = options.filter((i: Record<string, string>) => i.value !== query)
+    const selectOptionsArr = query.length ? [{ value: query, label: query }, ...uniqueOptions] : options;
     return (
         <div className="relative flex items-center">
             <div className={cn(stl.wrapper, 'relative')}>
@@ -224,12 +228,11 @@ function FilterAutoComplete(props: Props) {
                     ref={(ref: any) => {
                         selectRef = ref;
                     }}
-                    options={options}
+                    options={selectOptionsArr}
                     value={selected}
                     onChange={(e: any) => onChange(e.value)}
-                    menuIsOpen={initialFocus && menuIsOpen}
+                    menuIsOpen={initialFocus && menuIsOpen && query !== ''}
                     menuPlacement="auto"
-                    noOptionsMessage={() => loading ? 'Loading...' : 'No results found'}
                     styles={dropdownStyles}
                     components={{
                         Control: ({ children, ...props }: any) => <></>,

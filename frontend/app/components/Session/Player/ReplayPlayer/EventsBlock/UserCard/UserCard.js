@@ -57,6 +57,12 @@ function UserCard({ className, request, session, width, height, similarSessions,
     React.useEffect(() => {
       const handler = (e) => {
         if (e.shiftKey) {
+          if (
+            e.target instanceof HTMLInputElement ||
+            e.target instanceof HTMLTextAreaElement
+          ) {
+            return false;
+          }
           e.preventDefault()
           if (e.key === 'I') {
             setShowMore(!showMore)

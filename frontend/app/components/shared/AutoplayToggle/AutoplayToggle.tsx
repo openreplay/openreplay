@@ -8,7 +8,7 @@ function AutoplayToggle() {
   const { autoplay } = store.get()
 
   return (
-      <Switch onChange={() => player.toggleAutoplay()} checked={autoplay} checkedChildren="Auto" />
+      <Switch onChange={() => player.toggleAutoplay()} checked={autoplay} unCheckedChildren="Auto" checkedChildren="Auto" />
   );
 }
 
