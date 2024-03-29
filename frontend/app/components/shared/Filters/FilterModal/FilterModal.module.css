@@ -21,10 +21,6 @@
   &:hover {
     background-color: $active-blue;
     color: $teal;
-
-    & svg {
-      fill: $teal;
-    }
   }
 
   & div {
