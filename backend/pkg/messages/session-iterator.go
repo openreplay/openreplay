@@ -95,7 +95,7 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 	return messages
 }
 
-func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, []byte) {
+func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, int) {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
 	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
@@ -128,18 +128,8 @@ func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, []by
 		// Write current message
 		sortedSession.Write(data[info.start:info.end])
 	}
-	res := sortedSession.Bytes()
-	if !doSplit || splitIndex < 0 {
-		return res, nil
+	if !doSplit {
+		splitIndex = -1
 	}
-
-	// test a new approach to avoid memory corruption
-	firstPart := make([]byte, splitIndex)
-	secondPart := make([]byte, len(res)-splitIndex)
-
-	// Copy the data from the original slice to the new slices.
-	copy(firstPart, res[:splitIndex])
-	copy(secondPart, res[splitIndex:])
-
-	return firstPart, secondPart
+	return sortedSession.Bytes(), splitIndex
 }
