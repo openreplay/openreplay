@@ -262,7 +262,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
         // so it's completed and can be cloned for `text()` calling.
         item.readyState = 4
 
-        void this.handleResponseBody(resp.clone(), item)
+        this.handleResponseBody(resp.clone(), item)
           .then((responseValue: string | ArrayBuffer) => {
             item.responseSize =
               typeof responseValue === 'string' ? responseValue.length : responseValue.byteLength
