@@ -37,34 +37,36 @@ func (t FileType) String() string {
 }
 
 type Task struct {
-	ctx         context.Context
-	id          string
-	key         string
-	domRaw      []byte
-	devRaw      []byte
-	domsRawSize float64
-	domeRawSize float64
-	devRawSize  float64
-	doms        *bytes.Buffer
-	dome        *bytes.Buffer
-	dev         *bytes.Buffer
-	isBreakTask bool
-	compression objectstorage.CompressionType
+	ctx          context.Context
+	id           string
+	key          string
+	domRawFirst  []byte
+	domRawSecond []byte
+	devRaw       []byte
+	domsRawSize  float64
+	domeRawSize  float64
+	devRawSize   float64
+	doms         *bytes.Buffer
+	dome         *bytes.Buffer
+	dev          *bytes.Buffer
+	isBreakTask  bool
+	compression  objectstorage.CompressionType
 }
 
-func (t *Task) SetMob(mob []byte, tp FileType) {
+func (t *Task) SetMob(first, second []byte, tp FileType) {
 	if tp == DOM {
-		t.domRaw = mob
+		t.domRawFirst = first
+		t.domRawSecond = second
 	} else {
-		t.devRaw = mob
+		t.devRaw = first
 	}
 }
 
-func (t *Task) Mob(tp FileType) []byte {
+func (t *Task) Mobs(tp FileType) ([]byte, []byte) {
 	if tp == DOM {
-		return t.domRaw
+		return t.domRawFirst, t.domRawSecond
 	}
-	return t.devRaw
+	return t.devRaw, nil
 }
 
 func NewBreakTask() *Task {
@@ -152,7 +154,24 @@ func (s *Storage) Process(ctx context.Context, msg *messages.SessionEnd) (err er
 	return nil
 }
 
-func (s *Storage) openSession(ctx context.Context, sessID, filePath string, tp FileType) ([]byte, error) {
+func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
+	// Open session file
+	startRead := time.Now()
+	first, second, err := s.openSession(task.ctx, task.id, path, tp)
+	if err != nil {
+		return err
+	}
+	if tp == DOM {
+		metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+		metrics.RecordSessionSize(float64(len(first)+len(second)), tp.String())
+	}
+
+	// Put opened session file into task struct
+	task.SetMob(first, second, tp)
+	return nil
+}
+
+func (s *Storage) openSession(ctx context.Context, sessID, filePath string, tp FileType) ([]byte, []byte, error) {
 	if tp == DEV {
 		filePath += "devtools"
 	}
@@ -160,26 +179,26 @@ func (s *Storage) openSession(ctx context.Context, sessID, filePath string, tp F
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
 		metrics.RecordSkippedSessionSize(float64(info.Size()), tp.String())
-		return nil, fmt.Errorf("big file, size: %d", info.Size())
+		return nil, nil, fmt.Errorf("big file, size: %d", info.Size())
 	}
 	// Read file into memory
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if !s.cfg.UseSort {
-		return raw, nil
+		return raw, nil, nil
 	}
 	start := time.Now()
-	res, err := s.sortSessionMessages(ctx, sessID, raw)
+	first, second, err := s.sortSessionMessages(ctx, tp, raw)
 	if err != nil {
-		return nil, fmt.Errorf("can't sort session, err: %s", err)
+		return nil, nil, fmt.Errorf("can't sort session, err: %s", err)
 	}
 	metrics.RecordSessionSortDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
-	return res, nil
+	return first, second, nil
 }
 
-func (s *Storage) sortSessionMessages(ctx context.Context, sessID string, raw []byte) ([]byte, error) {
+func (s *Storage) sortSessionMessages(ctx context.Context, tp FileType, raw []byte) ([]byte, []byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
 	unsortedMessages, err := messages.SplitMessages(raw)
 	if err != nil {
@@ -187,25 +206,11 @@ func (s *Storage) sortSessionMessages(ctx context.Context, sessID string, raw []
 			s.log.Warn(ctx, err.Error())
 		} else {
 			s.log.Error(ctx, "can't split session messages: %s", err)
-			return raw, nil
+			return raw, nil, nil
 		}
 	}
-	return messages.MergeMessages(raw, messages.SortMessages(unsortedMessages)), nil
-}
-
-func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
-	// Open session file
-	startRead := time.Now()
-	mob, err := s.openSession(task.ctx, task.id, path, tp)
-	if err != nil {
-		return err
-	}
-	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
-	metrics.RecordSessionSize(float64(len(mob)), tp.String())
-
-	// Put opened session file into task struct
-	task.SetMob(mob, tp)
-	return nil
+	first, second := messages.MergeMessages(raw, tp, messages.SortMessages(unsortedMessages))
+	return first, second, nil
 }
 
 func (s *Storage) setTaskCompression(ctx context.Context) objectstorage.CompressionType {
@@ -226,13 +231,13 @@ func (s *Storage) setTaskCompression(ctx context.Context) objectstorage.Compress
 
 func (s *Storage) packSession(task *Task, tp FileType) {
 	// Prepare mob file
-	mob := task.Mob(tp)
+	mobFirst, mobSecond := task.Mobs(tp)
 
 	// For devtools of small dom file
-	if tp == DEV || len(mob) <= s.cfg.FileSplitSize {
+	if tp == DEV || mobSecond == nil { //|| len(mob) <= s.cfg.FileSplitSize {
 		// Compression
 		start := time.Now()
-		data := s.compress(task.ctx, mob, task.compression)
+		data := s.compress(task.ctx, mobFirst, task.compression)
 		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 
 		// Encryption
@@ -242,10 +247,10 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 
 		if tp == DOM {
 			task.doms = bytes.NewBuffer(result)
-			task.domsRawSize = float64(len(mob))
+			task.domsRawSize = float64(len(mobFirst))
 		} else {
 			task.dev = bytes.NewBuffer(result)
-			task.devRawSize = float64(len(mob))
+			task.devRawSize = float64(len(mobFirst))
 		}
 		return
 	}
@@ -259,7 +264,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compress(task.ctx, mob[:s.cfg.FileSplitSize], task.compression)
+		data := s.compress(task.ctx, mobFirst, task.compression) //mob[:s.cfg.FileSplitSize], task.compression)
 		firstPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -278,7 +283,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compress(task.ctx, mob[s.cfg.FileSplitSize:], task.compression)
+		data := s.compress(task.ctx, mobSecond, task.compression) //mob[s.cfg.FileSplitSize:], task.compression)
 		secondPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -287,7 +292,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		secondEncrypt = time.Since(start).Milliseconds()
 
 		// Record dom end raw size
-		task.domeRawSize = float64(len(mob) - s.cfg.FileSplitSize)
+		task.domeRawSize = float64(len(mobSecond)) //(len(mob) - s.cfg.FileSplitSize)
 
 		// Finish task
 		wg.Done()

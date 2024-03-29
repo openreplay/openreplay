@@ -13,6 +13,7 @@ type Config struct {
 	objectstorage.ObjectsConfig
 	FSDir                string        `env:"FS_DIR,required"`
 	FileSplitSize        int           `env:"FILE_SPLIT_SIZE,required"`
+	FileSplitTime        time.Duration `env:"FILE_SPLIT_TIME,default=15s"`
 	RetryTimeout         time.Duration `env:"RETRY_TIMEOUT,default=2m"`
 	GroupStorage         string        `env:"GROUP_STORAGE,required"`
 	TopicTrigger         string        `env:"TOPIC_TRIGGER,required"`

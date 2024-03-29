@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"openreplay/backend/internal/storage"
 	"sort"
 )
 
@@ -95,17 +96,27 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 	return messages
 }
 
-func MergeMessages(data []byte, messages []*msgInfo) []byte {
+func MergeMessages(data []byte, tp storage.FileType, messages []*msgInfo) ([]byte, []byte) {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
 	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 
+	var splitDuration uint64 = 15 * 1000 // 15 seconds
+	var splitIndex int = -1
 	var lastTsIndex int = -1 // not set
+	var firstTimestamp uint64 = 0
 	for i, info := range messages {
 		if info.msgType == MsgTimestamp {
+			if firstTimestamp == 0 {
+				firstTimestamp = info.timestamp
+			}
 			// Save index of last timestamp message and continue to read next message
 			lastTsIndex = i
 			continue
+		}
+
+		if splitIndex < 0 && info.timestamp-firstTimestamp > splitDuration {
+			splitIndex = sortedSession.Len()
 		}
 
 		// Write last timestamp message if it exists
@@ -118,5 +129,9 @@ func MergeMessages(data []byte, messages []*msgInfo) []byte {
 		// Write current message
 		sortedSession.Write(data[info.start:info.end])
 	}
-	return sortedSession.Bytes()
+	res := sortedSession.Bytes()
+	if tp == storage.DEV {
+		return res, nil
+	}
+	return res[:splitIndex], res[splitIndex:]
 }
