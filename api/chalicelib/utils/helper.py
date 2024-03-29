@@ -249,7 +249,8 @@ def get_issue_title(issue_type):
             'custom': "Custom Event",
             'js_exception': "Error",
             'custom_event_error': "Custom Error",
-            'js_error': "Error"}.get(issue_type, issue_type)
+            'js_error': "Error",
+            "mouse_thrashing": "Mouse Thrashing"}.get(issue_type, issue_type)
 
 
 def __progress(old_val, new_val):
