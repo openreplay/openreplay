@@ -67,8 +67,8 @@ export const playerSlice = createSlice({
       const { enabled, range } = action.payload;
       state.timelineZoom = {
         enabled,
-        startTs: range?.[0] || 0,
-        endTs: range?.[1] || 0,
+        startTs: Math.round(range?.[0] ?? 0),
+        endTs: Math.round(range?.[1] ?? 0),
       };
     },
     setZoomTab: (state, action: PayloadAction<'overview' | 'journey' | 'issues' | 'errors'>) => {
