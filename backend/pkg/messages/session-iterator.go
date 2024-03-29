@@ -132,5 +132,14 @@ func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, []by
 	if !doSplit || splitIndex < 0 {
 		return res, nil
 	}
-	return res[:splitIndex], res[splitIndex:]
+
+	// test a new approach to avoid memory corruption
+	firstPart := make([]byte, splitIndex)
+	secondPart := make([]byte, len(res)-splitIndex)
+
+	// Copy the data from the original slice to the new slices.
+	copy(firstPart, res[:splitIndex])
+	copy(secondPart, res[splitIndex:])
+
+	return firstPart, secondPart
 }
