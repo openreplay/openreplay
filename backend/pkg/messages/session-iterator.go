@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"openreplay/backend/internal/storage"
 	"sort"
 )
 
@@ -96,7 +95,7 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 	return messages
 }
 
-func MergeMessages(data []byte, tp storage.FileType, messages []*msgInfo) ([]byte, []byte) {
+func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, []byte) {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
 	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
@@ -130,7 +129,7 @@ func MergeMessages(data []byte, tp storage.FileType, messages []*msgInfo) ([]byt
 		sortedSession.Write(data[info.start:info.end])
 	}
 	res := sortedSession.Bytes()
-	if tp == storage.DEV {
+	if !doSplit || splitIndex < 0 {
 		return res, nil
 	}
 	return res[:splitIndex], res[splitIndex:]

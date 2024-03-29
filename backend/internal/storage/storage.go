@@ -209,7 +209,7 @@ func (s *Storage) sortSessionMessages(ctx context.Context, tp FileType, raw []by
 			return raw, nil, nil
 		}
 	}
-	first, second := messages.MergeMessages(raw, tp, messages.SortMessages(unsortedMessages))
+	first, second := messages.MergeMessages(raw, tp == DOM, messages.SortMessages(unsortedMessages))
 	return first, second, nil
 }
 
