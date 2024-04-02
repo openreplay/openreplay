@@ -161,10 +161,9 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	if err != nil {
 		return err
 	}
-	if tp == DOM {
-		metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
-		metrics.RecordSessionSize(float64(len(mob)), tp.String())
-	}
+
+	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+	metrics.RecordSessionSize(float64(len(mob)), tp.String())
 
 	// Put opened session file into task struct
 	task.SetMob(mob, index, tp)
@@ -232,6 +231,10 @@ func (s *Storage) setTaskCompression(ctx context.Context) objectstorage.Compress
 func (s *Storage) packSession(task *Task, tp FileType) {
 	// Prepare mob file
 	mob, index := task.Mob(tp)
+	if s.cfg.FileSplitSize < index {
+		s.log.Warn(task.ctx, "index is bigger than file split size: %d vs %d", index, s.cfg.FileSplitSize)
+		index = s.cfg.FileSplitSize
+	}
 
 	// For devtools of small dom file
 	if tp == DEV || index == -1 { //|| len(mob) <= s.cfg.FileSplitSize {
