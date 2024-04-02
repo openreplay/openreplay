@@ -1,5 +1,5 @@
 import { App, Messages } from "@openreplay/tracker";
-import { Encoder, murmur } from "./syncod-v2/src/index.js";
+import { Encoder, murmur } from "./syncod-v2/index.js";
 import { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 export type StateLogger = <
