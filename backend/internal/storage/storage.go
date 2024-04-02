@@ -381,7 +381,7 @@ func (s *Storage) compressZstd(ctx context.Context, data []byte) *bytes.Buffer {
 
 func (s *Storage) uploadSession(task *Task) {
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4) //3)
 	var (
 		uploadDoms int64 = 0
 		uploadDome int64 = 0
@@ -423,6 +423,13 @@ func (s *Storage) uploadSession(task *Task) {
 				s.log.Fatal(task.ctx, "failed to upload mob file, err: %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()
+		}
+		wg.Done()
+	}()
+	// TEST
+	go func() {
+		if err := s.objStorage.Upload(bytes.NewBuffer(task.domRaw), task.id+string(DOM)+"full", "application/octet-stream", task.compression); err != nil {
+			s.log.Fatal(task.ctx, "failed to upload full mob file, err: %s", err)
 		}
 		wg.Done()
 	}()
