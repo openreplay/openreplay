@@ -386,6 +386,19 @@ export function millisToMinutesAndSeconds(millis: any) {
   return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
 }
 
+export function simpleThrottle(func: (...args: any[]) => void, limit: number): (...args: any[]) => void {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
 export function throttle(func, wait, options) {
   var context, args, result;
   var timeout = null;

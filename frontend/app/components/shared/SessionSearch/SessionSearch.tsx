@@ -77,6 +77,15 @@ function SessionSearch(props: Props) {
     debounceFetch();
   };
 
+  const onFilterMove = (newFilters: any) => {
+    props.updateFilter({
+      ...appliedFilter,
+      filters: newFilters,
+    });
+
+    debounceFetch();
+  }
+
   const onRemoveFilter = (filterIndex: any) => {
     const newFilters = appliedFilter.filters.filter((_filter: any, i: any) => {
       return i !== filterIndex;
@@ -115,6 +124,7 @@ function SessionSearch(props: Props) {
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
+                onFilterMove={onFilterMove}
                 saveRequestPayloads={saveRequestPayloads}
               />
             ) : null}
