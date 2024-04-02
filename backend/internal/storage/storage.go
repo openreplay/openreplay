@@ -92,6 +92,8 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 	case objStorage == nil:
 		return nil, fmt.Errorf("object storage is empty")
 	}
+	// TODO: del after tests
+	cfg.FileSplitSize = 100000
 	newStorage := &Storage{
 		cfg:              cfg,
 		log:              log,
