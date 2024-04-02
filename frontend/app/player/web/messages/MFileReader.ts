@@ -23,7 +23,6 @@ export default class MFileReader extends RawMessageReader {
     const skipIndexes = this.readCustomIndex(this.buf.slice(0, 8)) === 72057594037927940
       || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
 
-    console.log(skipIndexes)
     if (skipIndexes) {
       if (!this.noIndexes) {
         this.skip(8)
