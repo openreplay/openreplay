@@ -105,10 +105,6 @@ const AiSearchField = observer(
       appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
     const { aiFiltersStore } = useStore();
     const [searchQuery, setSearchQuery] = useState('');
-    const debounceAiFetch = React.useCallback(
-      debounce(aiFiltersStore.getSearchFilters, 1000),
-      []
-    );
 
     const onSearchChange = ({ target: { value } }: any) => {
       setSearchQuery(value);
@@ -116,7 +112,7 @@ const AiSearchField = observer(
 
     const fetchResults = () => {
       if (searchQuery) {
-        debounceAiFetch(searchQuery);
+        void aiFiltersStore.getSearchFilters(searchQuery);
       }
     };
 
