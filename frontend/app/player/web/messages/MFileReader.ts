@@ -24,8 +24,10 @@ export default class MFileReader extends RawMessageReader {
       || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
 
     if (skipIndexes) {
+      if (!this.noIndexes) {
+        this.skip(8)
+      }
       this.noIndexes = true
-      this.skip(8)
       return true
     }
     return false
