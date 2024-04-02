@@ -109,7 +109,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		if req.Platform != "" && req.Platform != "ios" {
 			platform = req.Platform
 			os = "Android"
-			screen = fmt.Sprintf("%d:%d", req.Width, req.Height)
+			screen = fmt.Sprintf("%d.%d", req.Width, req.Height)
 		}
 
 		if !req.DoNotRecord {
@@ -131,7 +131,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				UserCity:             geoInfo.City,
 				UserDeviceMemorySize: req.DeviceMemory,
 				UserDeviceHeapSize:   req.DeviceMemory,
-				UserBrowser:          screen,
+				UserBrowserVersion:   screen,
 			}); err != nil {
 				e.log.Warn(r.Context(), "failed to add mobile session to DB: %s", err)
 			}
