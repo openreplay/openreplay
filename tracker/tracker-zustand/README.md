@@ -10,28 +10,32 @@ npm i @openreplay/tracker-zustand
 Initialize the `@openreplay/tracker` package as usual and load the plugin into it.
 Then put the generated plugin into your `plugins` field of your store.
 
-```js
+```ts
 import create from "zustand";
 import Tracker from '@openreplay/tracker';
-import trackerZustand from '@openreplay/tracker-zustand';
+import trackerZustand, { StateLogger } from '@openreplay/tracker-zustand';
 
 
 const tracker = new Tracker({
   projectKey: YOUR_PROJECT_KEY,
 });
 
-const zustandPlugin = tracker.use(trackerZustand())
-// store name, optional
-// randomly generated if undefined
-const bearStoreLogger = zustandPlugin('bear_store')
+// as per https://docs.pmnd.rs/zustand/guides/typescript#middleware-that-doesn't-change-the-store-type
+// cast type to new one
+// but this seems to not be required and everything is working as is
+const zustandPlugin = tracker.use(trackerZustand()) as unknown as StateLogger
 
 
 const useBearStore = create(
-  bearStoreLogger((set: any) => ({
+  zustandPlugin((set: any) => ({
     bears: 0,
     increasePopulation: () => set((state: any) => ({ bears: state.bears + 1 })),
     removeAllBears: () => set({ bears: 0 }),
-  }))
+  }),
+    // store name is optional
+    // and is randomly generated if undefined
+  'bear_store'
+  )
 )
 
 ```
