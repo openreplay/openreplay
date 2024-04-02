@@ -1,4 +1,4 @@
-const chars = {};
+const chars: Record<string, string> = {};
 
 [
   "DEL",
