@@ -114,15 +114,15 @@ func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, int)
 			continue
 		}
 
-		if splitIndex < 0 && info.timestamp-firstTimestamp > splitDuration {
-			splitIndex = sortedSession.Len()
-		}
-
 		// Write last timestamp message if it exists
 		if lastTsIndex != -1 {
 			tsInfo := messages[lastTsIndex]
 			sortedSession.Write(data[tsInfo.start:tsInfo.end])
 			lastTsIndex = -1
+			// Try to split after timestamp message
+			if splitIndex < 0 && info.timestamp-firstTimestamp > splitDuration {
+				splitIndex = sortedSession.Len()
+			}
 		}
 
 		// Write current message
