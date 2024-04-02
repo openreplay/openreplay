@@ -124,6 +124,7 @@ export default class MessageLoader {
   }
 
   processMessages = (msgs: PlayerMsg[], file?: string) => {
+    console.log(msgs, file)
     msgs.forEach((msg) => {
       this.messageManager.distributeMessage(msg);
     });
