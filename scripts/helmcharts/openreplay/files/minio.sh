@@ -41,7 +41,8 @@ EOF
     for bucket in ${buckets[*]}; do
         mc mb minio/${bucket} || true
     done
-    mc ilm import minio/mobs </tmp/lifecycle.json || true
+    # eg: How to setup the lifecycle policy
+    # mc ilm import minio/mobs </tmp/lifecycle.json || true
 
     #####################################################
     # Creating public bucket; Do not change this block!
