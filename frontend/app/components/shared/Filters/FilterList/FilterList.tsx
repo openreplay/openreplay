@@ -81,7 +81,6 @@ function FilterList(props: Props) {
     ev.dataTransfer.setData("text/plain", index.toString());
     setDraggedItem(index);
     const el = document.getElementById(elId);
-    console.log(el, ev);
     if (el) {
       ev.dataTransfer.setDragImage(el, 0, 0);
     }
@@ -90,7 +89,6 @@ function FilterList(props: Props) {
   const handleDrop = React.useCallback(
     (event: Record<string, any>) => {
       event.preventDefault();
-      console.log(draggedInd)
       if (draggedInd === null) return;
       const newItems = filters.toArray();
       const newPosition = calculateNewPosition(

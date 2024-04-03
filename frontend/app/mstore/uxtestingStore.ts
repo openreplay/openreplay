@@ -107,7 +107,6 @@ export default class UxtestingStore {
         ...this.instance!,
         status,
       };
-      console.log(test);
       this.updateInstStatus(status);
       await this.client.updateTest(this.instance.testId!, test);
     } catch (e) {

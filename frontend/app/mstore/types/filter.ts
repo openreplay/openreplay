@@ -51,7 +51,6 @@ export default class Filter {
     }
 
     replaceFilters(filters: any) {
-        console.log(filters, this.filters)
         this.filters = filters;
     }
 
