@@ -95,15 +95,21 @@ func SortMessages(messages []*msgInfo) []*msgInfo {
 	return messages
 }
 
-func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, int) {
+func MergeMessages(data []byte, messages []*msgInfo, doSplit bool, splitDuration uint64) ([]byte, int) {
 	sortedSession := bytes.NewBuffer(make([]byte, 0, len(data)))
 	// Add maximum possible index value to the start of the session to inform player about new version of mob file
 	sortedSession.Write([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 
-	var splitDuration uint64 = 15 * 1000 // 15 seconds
-	var splitIndex int = -1
-	var lastTsIndex int = -1 // not set
-	var firstTimestamp uint64 = 0
+	var (
+		firstTimestamp uint64 = 0
+		lastTsIndex           = -1
+		splitIndex            = -1
+	)
+
+	if splitDuration == 0 {
+		doSplit = false
+	}
+
 	for i, info := range messages {
 		if info.msgType == MsgTimestamp {
 			if firstTimestamp == 0 {
@@ -114,13 +120,12 @@ func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, int)
 			continue
 		}
 
-		// Try to split after timestamp message
-		if splitIndex < 0 && info.timestamp-firstTimestamp > splitDuration {
-			splitIndex = sortedSession.Len()
-		}
-
-		// Write last timestamp message if it exists
 		if lastTsIndex != -1 {
+			// Try to split mob file just before timestamp message
+			if splitIndex < 0 && info.timestamp-firstTimestamp > splitDuration {
+				splitIndex = sortedSession.Len()
+			}
+			// Write last timestamp message to mob file
 			tsInfo := messages[lastTsIndex]
 			sortedSession.Write(data[tsInfo.start:tsInfo.end])
 			lastTsIndex = -1
@@ -129,6 +134,7 @@ func MergeMessages(data []byte, doSplit bool, messages []*msgInfo) ([]byte, int)
 		// Write current message
 		sortedSession.Write(data[info.start:info.end])
 	}
+
 	if !doSplit {
 		splitIndex = -1
 	}

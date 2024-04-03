@@ -20,6 +20,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	metrics "openreplay/backend/pkg/metrics/storage"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/pool"
 )
 
 type FileType string
@@ -41,15 +42,14 @@ type Task struct {
 	id          string
 	key         string
 	domRaw      []byte
-	index       int
 	devRaw      []byte
+	index       int
 	domsRawSize float64
 	domeRawSize float64
 	devRawSize  float64
 	doms        *bytes.Buffer
 	dome        *bytes.Buffer
 	dev         *bytes.Buffer
-	isBreakTask bool
 	compression objectstorage.CompressionType
 }
 
@@ -69,20 +69,14 @@ func (t *Task) Mob(tp FileType) ([]byte, int) {
 	return t.devRaw, -1
 }
 
-func NewBreakTask() *Task {
-	return &Task{
-		isBreakTask: true,
-	}
-}
-
 type Storage struct {
-	cfg              *config.Config
-	log              logger.Logger
-	objStorage       objectstorage.ObjectStorage
-	startBytes       []byte
-	compressionTasks chan *Task // brotli compression or gzip compression with encryption
-	uploadingTasks   chan *Task // upload to s3
-	workersStopped   chan struct{}
+	cfg           *config.Config
+	log           logger.Logger
+	objStorage    objectstorage.ObjectStorage
+	startBytes    []byte
+	splitTime     uint64
+	processorPool pool.WorkerPool
+	uploaderPool  pool.WorkerPool
 }
 
 func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) (*Storage, error) {
@@ -92,27 +86,29 @@ func New(cfg *config.Config, log logger.Logger, objStorage objectstorage.ObjectS
 	case objStorage == nil:
 		return nil, fmt.Errorf("object storage is empty")
 	}
-	// TODO: del after tests
-	cfg.FileSplitSize = 100000
-	newStorage := &Storage{
-		cfg:              cfg,
-		log:              log,
-		objStorage:       objStorage,
-		startBytes:       make([]byte, cfg.FileSplitSize),
-		compressionTasks: make(chan *Task, 1),
-		uploadingTasks:   make(chan *Task, 1),
-		workersStopped:   make(chan struct{}),
+	s := &Storage{
+		cfg:        cfg,
+		log:        log,
+		objStorage: objStorage,
+		startBytes: make([]byte, cfg.FileSplitSize),
+		splitTime:  parseSplitTime(cfg.FileSplitTime),
 	}
-	go newStorage.compressionWorker()
-	go newStorage.uploadingWorker()
-	return newStorage, nil
+	s.processorPool = pool.NewPool(1, 1, s.doCompression)
+	s.uploaderPool = pool.NewPool(1, 1, s.uploadSession)
+	return s, nil
+}
+
+func parseSplitTime(splitTime time.Duration) uint64 {
+	dur := splitTime.Milliseconds()
+	if dur < 0 {
+		return 0
+	}
+	return uint64(dur)
 }
 
 func (s *Storage) Wait() {
-	// Send stop signal to the first worker
-	s.compressionTasks <- NewBreakTask()
-	// Wait stopped signal from the last workers
-	<-s.workersStopped
+	s.processorPool.Pause()
+	s.uploaderPool.Pause()
 }
 
 func (s *Storage) Process(ctx context.Context, msg *messages.SessionEnd) (err error) {
@@ -151,15 +147,14 @@ func (s *Storage) Process(ctx context.Context, msg *messages.SessionEnd) (err er
 		return err
 	}
 
-	// Send new task to compression worker
-	s.compressionTasks <- newTask
+	s.processorPool.Submit(newTask)
 	return nil
 }
 
 func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	// Open session file
 	startRead := time.Now()
-	mob, index, err := s.openSession(task.ctx, task.id, path, tp)
+	mob, index, err := s.openSession(task.ctx, path, tp)
 	if err != nil {
 		return err
 	}
@@ -172,7 +167,7 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	return nil
 }
 
-func (s *Storage) openSession(ctx context.Context, sessID, filePath string, tp FileType) ([]byte, int, error) {
+func (s *Storage) openSession(ctx context.Context, filePath string, tp FileType) ([]byte, int, error) {
 	if tp == DEV {
 		filePath += "devtools"
 	}
@@ -210,7 +205,7 @@ func (s *Storage) sortSessionMessages(ctx context.Context, tp FileType, raw []by
 			return raw, -1, nil
 		}
 	}
-	mob, index := messages.MergeMessages(raw, tp == DOM, messages.SortMessages(unsortedMessages))
+	mob, index := messages.MergeMessages(raw, messages.SortMessages(unsortedMessages), tp == DOM, s.splitTime)
 	return mob, index, nil
 }
 
@@ -233,13 +228,9 @@ func (s *Storage) setTaskCompression(ctx context.Context) objectstorage.Compress
 func (s *Storage) packSession(task *Task, tp FileType) {
 	// Prepare mob file
 	mob, index := task.Mob(tp)
-	//if s.cfg.FileSplitSize < index {
-	//	s.log.Warn(task.ctx, "index is bigger than file split size: %d vs %d", index, s.cfg.FileSplitSize)
-	//	index = s.cfg.FileSplitSize
-	//}
 
-	// For devtools of small dom file
-	if tp == DEV || index == -1 { //|| len(mob) <= s.cfg.FileSplitSize {
+	// For devtools of short sessions
+	if tp == DEV || index == -1 {
 		// Compression
 		start := time.Now()
 		data := s.compress(task.ctx, mob, task.compression)
@@ -269,7 +260,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compress(task.ctx, mob[:index], task.compression) //mob[:s.cfg.FileSplitSize], task.compression)
+		data := s.compress(task.ctx, mob[:index], task.compression)
 		firstPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -288,7 +279,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 	go func() {
 		// Compression
 		start := time.Now()
-		data := s.compress(task.ctx, mob[index:], task.compression) //mob[s.cfg.FileSplitSize:], task.compression)
+		data := s.compress(task.ctx, mob[index:], task.compression)
 		secondPart = time.Since(start).Milliseconds()
 
 		// Encryption
@@ -297,7 +288,7 @@ func (s *Storage) packSession(task *Task, tp FileType) {
 		secondEncrypt = time.Since(start).Milliseconds()
 
 		// Record dom end raw size
-		task.domeRawSize = float64(len(mob) - index) //(len(mob) - s.cfg.FileSplitSize)
+		task.domeRawSize = float64(len(mob) - index)
 
 		// Finish task
 		wg.Done()
@@ -379,9 +370,10 @@ func (s *Storage) compressZstd(ctx context.Context, data []byte) *bytes.Buffer {
 	return &out
 }
 
-func (s *Storage) uploadSession(task *Task) {
+func (s *Storage) uploadSession(payload interface{}) {
+	task := payload.(*Task)
 	wg := &sync.WaitGroup{}
-	wg.Add(4) //3)
+	wg.Add(3)
 	var (
 		uploadDoms int64 = 0
 		uploadDome int64 = 0
@@ -426,20 +418,14 @@ func (s *Storage) uploadSession(task *Task) {
 		}
 		wg.Done()
 	}()
-	// TEST
-	go func() {
-		if err := s.objStorage.Upload(bytes.NewBuffer(task.domRaw), task.id+string(DOM)+"full", "application/octet-stream", task.compression); err != nil {
-			s.log.Fatal(task.ctx, "failed to upload full mob file, err: %s", err)
-		}
-		wg.Done()
-	}()
 	wg.Wait()
 	metrics.RecordSessionUploadDuration(float64(uploadDoms+uploadDome), DOM.String())
 	metrics.RecordSessionUploadDuration(float64(uploadDev), DEV.String())
 	metrics.IncreaseStorageTotalSessions()
 }
 
-func (s *Storage) doCompression(task *Task) {
+func (s *Storage) doCompression(payload interface{}) {
+	task := payload.(*Task)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
@@ -451,31 +437,5 @@ func (s *Storage) doCompression(task *Task) {
 		wg.Done()
 	}()
 	wg.Wait()
-	s.uploadingTasks <- task
-}
-
-func (s *Storage) compressionWorker() {
-	for {
-		select {
-		case task := <-s.compressionTasks:
-			if task.isBreakTask {
-				s.uploadingTasks <- task
-				continue
-			}
-			s.doCompression(task)
-		}
-	}
-}
-
-func (s *Storage) uploadingWorker() {
-	for {
-		select {
-		case task := <-s.uploadingTasks:
-			if task.isBreakTask {
-				s.workersStopped <- struct{}{}
-				continue
-			}
-			s.uploadSession(task)
-		}
-	}
+	s.uploaderPool.Submit(task)
 }
