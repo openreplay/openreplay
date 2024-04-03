@@ -124,8 +124,8 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
       const method = args[0]
       const url = args[1]
       this.item.method = method ? method.toUpperCase() : 'GET'
-      this.item.url = url || ''
-      this.item.name = this.item.url.replace(new RegExp('/*$'), '').split('/').pop() || ''
+      this.item.url = url.toString?.() || ''
+      this.item.name = this.item.url?.replace(new RegExp('/*$'), '').split('/').pop() ?? ''
       this.item.getData = genGetDataByUrl(this.item.url, {})
       return targetFunction.apply(target, args)
     }
