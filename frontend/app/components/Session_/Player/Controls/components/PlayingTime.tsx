@@ -98,7 +98,7 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
         </div>
       )}
     >
-      <Button type={'text'}>
+      <Button type={'text'} style={{ padding: '4px 0.5rem'}}>
         <div className={'flex items-center gap-2'}>
           <div
             className="flex items-center font-semibold text-center"

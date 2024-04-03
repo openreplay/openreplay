@@ -169,7 +169,7 @@ function Controls(props: any) {
               currentInterval={skipInterval}
               startedAt={session.startedAt}
             />
-            <div className={cn('mx-2')} />
+            <div className={cn('mx-1')} />
           </div>
 
           <div className="flex gap-2 items-center h-full">
