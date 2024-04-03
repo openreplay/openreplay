@@ -42,8 +42,10 @@ export default class MessageLoader {
       ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
       : (b: Uint8Array) => Promise.resolve(b);
     const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt);
+    let fileNum = 0;
     return async (b: Uint8Array) => {
       try {
+        fileNum += 1;
         const mobBytes = await decrypt(b);
         const data = unpack(mobBytes);
         fileReader.append(data);
@@ -115,7 +117,7 @@ export default class MessageLoader {
           console.warn('Broken timestamp messages', brokenMessages);
         }
 
-        onMessagesDone(sortedMsgs, file);
+        onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
       } catch (e) {
         console.error(e);
         this.uiErrorHandler?.error('Error parsing file: ' + e.message);
