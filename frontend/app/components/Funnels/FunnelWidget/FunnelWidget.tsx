@@ -3,7 +3,7 @@ import Widget from 'App/mstore/types/widget';
 import Funnelbar, { UxTFunnelBar } from "./FunnelBar";
 import cn from 'classnames';
 import stl from './FunnelWidget.module.css';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { NoContent, Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
 
@@ -13,7 +13,8 @@ interface Props {
     data: any;
 }
 function FunnelWidget(props: Props) {
-    const { metric, isWidget = false, data } = props;
+    const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
+    const { isWidget = false, data } = props;
     const funnel = data.funnel || { stages: [] };
     const totalSteps = funnel.stages.length;
     const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
@@ -29,7 +30,24 @@ function FunnelWidget(props: Props) {
         }
     }, []);
 
-    return useObserver(() => (
+    const focusStage = (index: number) => {
+        funnel.stages.forEach((s, i) => {
+            // turning on all filters if one was focused already
+            if (focusedFilter === index) {
+                s.updateKey('isActive', true)
+                setFocusedFilter(null)
+            } else {
+                setFocusedFilter(index)
+                if (i === index) {
+                    s.updateKey('isActive', true)
+                } else {
+                    s.updateKey('isActive', false)
+                }
+            }
+        })
+    }
+
+    return (
         <NoContent
             style={{ minHeight: 220 }}
             title={
@@ -43,7 +61,14 @@ function FunnelWidget(props: Props) {
             <div className="w-full">
                 { !isWidget && (
                     stages.map((filter: any, index: any) => (
-                        <Stage key={index} index={index + 1} isWidget={isWidget} stage={filter} />
+                        <Stage
+                          key={index}
+                          index={index + 1}
+                          isWidget={isWidget}
+                          stage={filter}
+                          focusStage={focusStage}
+                          focusedFilter={focusedFilter}
+                        />
                     ))
                 )}
 
@@ -82,11 +107,11 @@ function FunnelWidget(props: Props) {
             </div>
             {funnel.totalDropDueToIssues > 0 && <div className="flex items-center mb-2"><Icon name="magic" /> <span className="ml-2">{funnel.totalDropDueToIssues} sessions dropped due to issues.</span></div>}
         </NoContent>
-    ));
+    );
 }
 
-export function EmptyStage({ total }: any) {
-    return useObserver( () => (
+export const EmptyStage = observer(({ total }: any) => {
+    return (
         <div className={cn("flex items-center mb-4 pb-3", stl.step)}>
             <IndexNumber index={0} />
             <div className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal" style={{ width: '100px'}}>
@@ -94,42 +119,40 @@ export function EmptyStage({ total }: any) {
             </div>
             <div className="border-b w-full border-dashed"></div>
         </div>
-    ))
-}
+    )
+})
 
-export function Stage({ stage, index, isWidget, uxt }: any) {
-    return useObserver(() =>
-      stage ? (
+export const Stage = observer(({ stage, index, isWidget, uxt, focusStage, focusedFilter }: any) => {
+    return stage ? (
         <div
           className={cn('flex items-start', stl.step, { [stl['step-disabled']]: !stage.isActive })}
         >
           <IndexNumber index={index} />
-          {!uxt ? <Funnelbar filter={stage} /> : <UxTFunnelBar filter={stage} />}
+          {!uxt ? <Funnelbar index={index} filter={stage} focusStage={focusStage} focusedFilter={focusedFilter} /> : <UxTFunnelBar filter={stage} />}
           {!isWidget && !uxt && <BarActions bar={stage} />}
         </div>
       ) : (
         <></>
       )
-    );
-}
+})
 
-export function IndexNumber({ index }: any) {
+export const IndexNumber = observer(({ index }: any) => {
     return (
         <div className="z-10 w-6 h-6 border shrink-0 mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
             {index === 0 ? <Icon size="14" color="gray-dark" name="list" /> : index}
         </div>
     );
-}
+})
 
 
-function BarActions({ bar }: any) {
-    return useObserver(() => (
+const BarActions = observer(({ bar }: any) => {
+    return (
         <div className="self-end flex items-center justify-center ml-4" style={{ marginBottom: '49px'}}>
             <button onClick={() => bar.updateKey('isActive', !bar.isActive)}>
                 <Icon name="eye-slash-fill" color={bar.isActive ? "gray-light" : "gray-darkest"} size="22" />
             </button>
         </div>
-    ))
-}
+    )
+})
 
-export default FunnelWidget;
+export default observer(FunnelWidget);
