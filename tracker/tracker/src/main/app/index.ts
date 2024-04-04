@@ -1132,8 +1132,9 @@ export default class App {
         }
 
         this._debug('session_start', reason)
-        this.signalError(reason.toString?.() || reason, [])
-        return UnsuccessfulStart(reason.toString?.() || reason)
+        const errorMessage = reason instanceof Error ? reason.message : reason.toString()
+        this.signalError(errorMessage, [])
+        return UnsuccessfulStart(errorMessage)
       })
   }
 
