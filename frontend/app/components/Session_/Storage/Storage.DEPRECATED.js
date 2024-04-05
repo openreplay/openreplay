@@ -194,7 +194,6 @@ export default class Storage extends React.PureComponent {
                 src={src}
                 collapsed
                 collapseStringsAfterLength={7}
-                onSelect={() => console.log('test')}
               />
             </div>
           </>
