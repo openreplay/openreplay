@@ -88,7 +88,9 @@ jobs:
           version=$(image_version $SERVICE)
           IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $foss_build_args
           IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+          if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+          fi
           cd $working_dir
           chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
           git add $chart_path
