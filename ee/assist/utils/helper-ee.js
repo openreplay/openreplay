@@ -1,6 +1,7 @@
 const uWS = require("uWebSockets.js");
 const helper = require('./helper');
-let debug = process.env.debug === "1";
+const {logger} = require('./logger');
+
 const getBodyFromUWSResponse = async function (res) {
     return new Promise(((resolve, reject) => {
         let buffer;

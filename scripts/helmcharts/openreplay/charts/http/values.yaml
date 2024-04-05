@@ -71,7 +71,7 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/cors-allow-methods: POST
-    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type,Authorization,Content-Encoding
+    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type,Authorization,Content-Encoding,X-Openreplay-Batch
     nginx.ingress.kubernetes.io/cors-allow-origin: '*'
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length"

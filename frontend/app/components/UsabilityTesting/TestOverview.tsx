@@ -213,7 +213,7 @@ function TestOverview() {
                 </div>
                 <Pagination
                   page={uxtestingStore.testSessions.page}
-                  totalPages={Math.ceil(uxtestingStore.testSessions.total / 10)}
+                  total={uxtestingStore.testSessions.total}
                   onPageChange={onPageChange}
                   limit={10}
                   debounceRequest={200}

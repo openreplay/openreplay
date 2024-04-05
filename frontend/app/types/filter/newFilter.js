@@ -1,4 +1,4 @@
-import { stringConditional, targetConditional } from "App/constants/filterOptions";
+import { stringConditional, tagElementOperators, targetConditional } from "App/constants/filterOptions";
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -7,6 +7,14 @@ import { capitalize } from 'App/utils';
 
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }];
+
+const filterOrder = {
+  [FilterCategory.INTERACTIONS]: 0,
+  [FilterCategory.TECHNICAL]: 1,
+  [FilterCategory.PERFORMANCE]: 2,
+  [FilterCategory.USER]: 3,
+  [FilterCategory.GEAR]: 4,
+}
 
 export const filters = [
   {
@@ -44,7 +52,7 @@ export const filters = [
   {
     key: FilterKey.CUSTOM,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
@@ -56,7 +64,7 @@ export const filters = [
   {
     key: FilterKey.FETCH,
     type: FilterType.SUB_FILTERS,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     operator: 'is',
     label: 'Network Request',
     filters: [
@@ -126,7 +134,7 @@ export const filters = [
   {
     key: FilterKey.GRAPHQL,
     type: FilterType.SUB_FILTERS,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'GraphQL',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
@@ -175,7 +183,7 @@ export const filters = [
   {
     key: FilterKey.STATEACTION,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'State Action',
     placeholder: 'E.g. 12',
     operator: 'is',
@@ -186,7 +194,7 @@ export const filters = [
   {
     key: FilterKey.ERROR,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'Error Message',
     placeholder: 'E.g. Uncaught SyntaxError',
     operator: 'is',
@@ -197,53 +205,6 @@ export const filters = [
   // { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
 
   // FILTERS
-  {
-    key: FilterKey.USER_OS,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.GEAR,
-    label: 'User OS',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/os'
-  },
-  {
-    key: FilterKey.USER_BROWSER,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.GEAR,
-    label: 'User Browser',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/browser'
-  },
-  {
-    key: FilterKey.USER_DEVICE,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.GEAR,
-    label: 'User Device',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/device'
-  },
-  {
-    key: FilterKey.PLATFORM,
-    type: FilterType.MULTIPLE_DROPDOWN,
-    category: FilterCategory.GEAR,
-    label: 'Platform',
-    operator: 'is',
-    operatorOptions: filterOptions.baseOperators,
-    icon: 'filters/platform',
-    options: platformOptions
-  },
-  {
-    key: FilterKey.REVID,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.GEAR,
-    label: 'Version ID',
-    placeholder: 'E.g. v1.0.8',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'collection'
-  },
   {
     key: FilterKey.REFERRER,
     type: FilterType.MULTIPLE,
@@ -270,7 +231,7 @@ export const filters = [
     operator: 'is',
     isEvent: true,
     icon: 'filters/tag-element',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is']),
+    operatorOptions: filterOptions.tagElementOperators,
     options: [],
   },
   {
@@ -297,7 +258,7 @@ export const filters = [
     key: FilterKey.USER_STATE,
     type: FilterType.MULTIPLE,
     category: FilterCategory.USER,
-    label: 'User State',
+    label: 'State / Province',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
@@ -429,15 +390,66 @@ export const filters = [
   {
     key: FilterKey.ISSUE,
     type: FilterType.ISSUE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'Issue',
     placeholder: 'Select an issue',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/click',
     options: filterOptions.issueOptions
-  }
-];
+  },
+  {
+    key: FilterKey.USER_OS,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.GEAR,
+    label: 'User OS',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/os'
+  },
+  {
+    key: FilterKey.USER_BROWSER,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.GEAR,
+    label: 'User Browser',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/browser'
+  },
+  {
+    key: FilterKey.USER_DEVICE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.GEAR,
+    label: 'User Device',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/device'
+  },
+  {
+    key: FilterKey.PLATFORM,
+    type: FilterType.MULTIPLE_DROPDOWN,
+    category: FilterCategory.GEAR,
+    label: 'Platform',
+    operator: 'is',
+    operatorOptions: filterOptions.baseOperators,
+    icon: 'filters/platform',
+    options: platformOptions
+  },
+  {
+    key: FilterKey.REVID,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.GEAR,
+    label: 'Version ID',
+    placeholder: 'E.g. v1.0.8',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'collection'
+  },
+].sort((a, b) => {
+  const aOrder = filterOrder[a.category] ?? 9
+  const bOrder = filterOrder[b.category] ?? 9
+  return aOrder - bOrder
+})
 
 export const flagConditionFilters = [
   {
@@ -500,7 +512,7 @@ export const flagConditionFilters = [
     key: FilterKey.USER_STATE,
     type: FilterType.MULTIPLE,
     category: FilterCategory.USER,
-    label: 'User State',
+    label: 'State / Province',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
     icon: 'filters/country',
@@ -519,7 +531,11 @@ export const flagConditionFilters = [
     }],
     icon: 'filters/userid'
   }
-];
+].sort((a, b) => {
+  const aOrder = filterOrder[a.category] ?? 9
+  const bOrder = filterOrder[b.category] ?? 9
+  return aOrder - bOrder
+})
 
 export const conditionalFilters = [
   {
@@ -546,7 +562,7 @@ export const conditionalFilters = [
   {
     key: FilterKey.CUSTOM,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
@@ -557,7 +573,7 @@ export const conditionalFilters = [
   {
     key: FilterKey.FETCH,
     type: FilterType.SUB_FILTERS,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     operator: 'is',
     label: 'Network Request',
     filters: [
@@ -609,7 +625,7 @@ export const conditionalFilters = [
   {
     key: FilterKey.ERROR,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.JAVASCRIPT,
+    category: FilterCategory.TECHNICAL,
     label: 'Error Message',
     placeholder: 'E.g. Uncaught SyntaxError',
     operator: 'is',
@@ -636,7 +652,11 @@ export const conditionalFilters = [
     operatorOptions: filterOptions.stringConditional,
     isEvent: false
   },
-];
+].sort((a, b) => {
+  const aOrder = filterOrder[a.category] ?? 9
+  const bOrder = filterOrder[b.category] ?? 9
+  return aOrder - bOrder
+})
 
 export const mobileConditionalFilters = [
   {
@@ -833,7 +853,7 @@ const mapLiveFilters = (list) => {
   list.forEach(filter => {
     if (
       filter.category !== FilterCategory.INTERACTIONS &&
-      filter.category !== FilterCategory.JAVASCRIPT &&
+      filter.category !== FilterCategory.TECHNICAL &&
       filter.category !== FilterCategory.PERFORMANCE &&
       filter.key !== FilterKey.DURATION &&
       filter.key !== FilterKey.REFERRER &&

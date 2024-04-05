@@ -1,6 +1,6 @@
 .header {
   height: 50px;
-  border-bottom: solid thin $gray-light;
+  border-bottom: solid thin $gray-lighter;
   padding-right: 0;
   background-color: white;
 }
@@ -9,7 +9,7 @@
   width: 1px;
   height: 49px;
   margin: 0 10px;
-  background-color: $gray-light;
+  background-color: $gray-lighter;
 }
 
 .liveSwitchButton {

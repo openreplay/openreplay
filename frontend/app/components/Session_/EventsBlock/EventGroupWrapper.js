@@ -8,7 +8,6 @@ import { TYPES } from 'Types/session/event';
 import Event from './Event';
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
-import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle('showLoadInfo', 'toggleLoadInfo')
@@ -17,7 +16,6 @@ import { setEditNoteTooltip } from 'Duck/sessions';
     members: state.getIn(['members', 'list']),
     currentUserId: state.getIn(['user', 'account', 'id'])
   }),
-  { setEditNoteTooltip }
 )
 class EventGroupWrapper extends React.Component {
   toggleLoadInfo = (e) => {
@@ -80,7 +78,6 @@ class EventGroupWrapper extends React.Component {
           <NoteEvent
             note={event}
             filterOutNote={filterOutNote}
-            onEdit={this.props.setEditNoteTooltip}
             noEdit={this.props.currentUserId !== event.userId}
           />
         )

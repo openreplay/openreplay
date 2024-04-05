@@ -69,7 +69,7 @@ function SessionsModal(props: Props) {
         </div>
         <Pagination
           page={page}
-          totalPages={Math.ceil(total / 10)}
+          total={total}
           onPageChange={(page: any) => setPage(page)}
           limit={10}
           debounceRequest={500}

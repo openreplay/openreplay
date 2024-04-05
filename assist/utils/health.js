@@ -1,9 +1,10 @@
 const express = require('express');
+const {logger} = require('./logger');
+const {request_logger} = require("./helper");
+
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.HEALTH_PORT || 8888;
 
-const {request_logger} = require("./helper");
-const debug = process.env.debug === "1";
 const respond = function (res, data) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -11,7 +12,7 @@ const respond = function (res, data) {
 }
 
 const check_health = async function (req, res) {
-    debug && console.log("[WS]looking for all available sessions");
+    logger.debug("[WS]looking for all available sessions");
     respond(res, {
         "health": true,
         "details": {
@@ -31,7 +32,7 @@ healthApp.get(['/'], (req, res) => {
 );
 healthApp.get('/health', check_health);
 healthApp.get('/shutdown', (req, res) => {
-        console.log("Requested shutdown");
+        logger.info("Requested shutdown");
         res.statusCode = 200;
         res.end("ok!");
         process.kill(1, "SIGTERM");
@@ -39,8 +40,7 @@ healthApp.get('/shutdown', (req, res) => {
 );
 
 const listen_cb = async function () {
-    console.log(`Health App listening on http://${HOST}:${PORT}`);
-    console.log('Press Ctrl+C to quit.');
+    logger.info(`Health App listening on http://${HOST}:${PORT}`);
 }
 
 module.exports = {

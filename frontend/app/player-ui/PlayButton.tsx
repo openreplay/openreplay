@@ -1,10 +1,12 @@
-import React from 'react'
-import { Icon, Tooltip } from "UI";
+import { PlayPauseSessionShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import React from 'react';
+import { Icon } from 'UI';
+import { Popover } from 'antd';
 
 export enum PlayingState {
   Playing,
   Paused,
-  Completed
+  Completed,
 }
 
 interface IProps {
@@ -16,7 +18,7 @@ interface IProps {
 const Values = {
   [PlayingState.Playing]: {
     icon: 'pause-fill' as const,
-    label: 'Pause'
+    label: 'Pause',
   },
   [PlayingState.Completed]: {
     icon: 'arrow-clockwise' as const,
@@ -24,21 +26,28 @@ const Values = {
   },
   [PlayingState.Paused]: {
     icon: 'play-fill-new' as const,
-    label: 'Play'
-  }
-}
+    label: 'Play',
+  },
+};
 
 export function PlayButton({ togglePlay, iconSize, state }: IProps) {
   const { icon, label } = Values[state];
 
   return (
-    <Tooltip title={label} className="mr-4">
+    <Popover
+      content={
+        <div className={'flex gap-2 items-center'}>
+          <PlayPauseSessionShortcut />
+          <div>{label}</div>
+        </div>
+      }
+    >
       <div
         onClick={togglePlay}
         className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
       >
         <Icon name={icon} size={iconSize} color="inherit" />
       </div>
-    </Tooltip>
-  )
+    </Popover>
+  );
 }

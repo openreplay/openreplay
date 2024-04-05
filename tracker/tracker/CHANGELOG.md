@@ -1,3 +1,11 @@
+# 12.0.6
+
+- allow network sanitizer to return null (will ignore network req)
+
+# 12.0.5
+
+- patch for img.ts srcset detector
+
 # 12.0.4
 
 - patch for email sanitizer (supports + now)

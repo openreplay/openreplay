@@ -61,7 +61,7 @@ function AuditList(props: Props) {
                 <div className="w-full flex items-center justify-center py-10">
                     <Pagination
                         page={auditStore.page}
-                        totalPages={Math.ceil(auditStore.total / auditStore.pageSize)}
+                        total={auditStore.total}
                         onPageChange={(page) => auditStore.updateKey('page', page)}
                         limit={auditStore.pageSize}
                         debounceRequest={200}

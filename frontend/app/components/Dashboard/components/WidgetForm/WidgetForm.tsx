@@ -239,7 +239,7 @@ function WidgetForm(props: Props) {
       )}
 
       {!isPredefined && (
-        <div className='form-group'>
+        <div>
           <div className='flex items-center font-medium py-2'>
             {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
             {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (

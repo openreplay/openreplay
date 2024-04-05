@@ -34,9 +34,26 @@ jobs:
         fetch-depth: 2
         # ref: staging
 
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+        license_key: ${{ secrets.EE_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+        minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.EE_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Docker login
       run: |
         docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+
+    - name: Downloading yq
+      run: |
+        VERSION="v4.42.1"
+        sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
 
     - uses: azure/k8s-set-context@v1
       with:
@@ -114,7 +131,6 @@ jobs:
 
     - name: Deploying to kuberntes
       env:
-        # We're not passing -ee flag, because helm will add that.
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
       run: |
         #
@@ -123,15 +139,6 @@ jobs:
         set -x
         [[ -f /tmp/nothing-to-build-here ]] && exit 0
         cd scripts/helmcharts/
-
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
-        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
 
         set -x
         echo > /tmp/image_override.yaml

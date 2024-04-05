@@ -1,6 +1,6 @@
 const statsHost = process.env.STATS_HOST || 'http://assist-stats-openreplay.app.svc.cluster.local:8000/events';
 const authToken = process.env.STATS_AUTH_TOKEN || '';
-const debug = process.env.debug === "1";
+const {logger} = require('./logger');
 
 class InMemoryCache {
     constructor() {
@@ -42,9 +42,9 @@ async function postData(payload) {
     try {
         const response = await fetch(statsHost, options)
         const jsonResponse = await response.json();
-        debug && console.log('JSON response', JSON.stringify(jsonResponse, null, 4))
+        logger.debug('JSON response', JSON.stringify(jsonResponse, null, 4))
     } catch(err) {
-        debug && console.log('ERROR', err);
+        logger.debug('ERROR', err);
     }
 }
 
@@ -63,13 +63,13 @@ function startAssist(socket, agentID) {
     // Save uniq eventID to cache
     cache.set(`${socket.handshake.query.sessId}_${agentID}_assist`, eventID);
     // Debug log
-    debug && console.log(`assist_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
+    logger.debug(`assist_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
 }
 
 function endAssist(socket, agentID) {
     const eventID = cache.get(`${socket.handshake.query.sessId}_${agentID}_assist`);
     if (eventID === undefined) {
-        debug && console.log(`have to skip assist_ended, no eventID in the cache, agentID: ${socket.handshake.query.agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}`);
+        logger.debug(`have to skip assist_ended, no eventID in the cache, agentID: ${socket.handshake.query.agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}`);
         return
     }
     void postData({
@@ -84,7 +84,7 @@ function endAssist(socket, agentID) {
     // Remove eventID from cache
     cache.delete(`${socket.handshake.query.sessId}_${agentID}_assist`);
     // Debug logs
-    debug && console.log(`assist_ended, agentID: ${socket.handshake.query.agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}`);
+    logger.debug(`assist_ended, agentID: ${socket.handshake.query.agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}`);
 }
 
 function startCall(socket, agentID) {
@@ -102,14 +102,14 @@ function startCall(socket, agentID) {
     // Save uniq eventID to cache
     cache.set(`${socket.handshake.query.sessId}_call`, eventID);
     // Debug logs
-    debug && console.log(`s_call_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
+    logger.debug(`s_call_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
 }
 
 function endCall(socket, agentID) {
     const tsNow = +new Date();
     const eventID = cache.get(`${socket.handshake.query.sessId}_call`);
     if (eventID === undefined) {
-        debug && console.log(`have to skip s_call_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
+        logger.debug(`have to skip s_call_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
         return
     }
     void postData({
@@ -123,7 +123,7 @@ function endCall(socket, agentID) {
     });
     cache.delete(`${socket.handshake.query.sessId}_call`)
     // Debug logs
-    debug && console.log(`s_call_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
+    logger.debug(`s_call_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
 }
 
 function startControl(socket, agentID) {
@@ -140,14 +140,14 @@ function startControl(socket, agentID) {
     });
     cache.set(`${socket.handshake.query.sessId}_control`, eventID)
     // Debug logs
-    debug && console.log(`s_control_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
+    logger.debug(`s_control_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
 }
 
 function endControl(socket, agentID) {
     const tsNow = +new Date();
     const eventID = cache.get(`${socket.handshake.query.sessId}_control`);
     if (eventID === undefined) {
-        debug && console.log(`have to skip s_control_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
+        logger.debug(`have to skip s_control_ended, no eventID in the cache, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${tsNow}`);
         return
     }
     void postData({
@@ -161,7 +161,7 @@ function endControl(socket, agentID) {
     });
     cache.delete(`${socket.handshake.query.sessId}_control`)
     // Debug logs
-    debug && console.log(`s_control_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
+    logger.debug(`s_control_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
 }
 
 function startRecord(socket, agentID) {
@@ -178,7 +178,7 @@ function startRecord(socket, agentID) {
     });
     cache.set(`${socket.handshake.query.sessId}_record`, eventID)
     // Debug logs
-    debug && console.log(`s_recording_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
+    logger.debug(`s_recording_started, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
 }
 
 function endRecord(socket, agentID) {
@@ -195,7 +195,7 @@ function endRecord(socket, agentID) {
     });
     cache.delete(`${socket.handshake.query.sessId}_record`)
     // Debug logs
-    debug && console.log(`s_recording_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
+    logger.debug(`s_recording_ended, agentID: ${agentID}, sessID: ${socket.handshake.query.sessId}, projID: ${socket.handshake.query.projectId}, time: ${+new Date()}`);
 }
 
 function handleEvent(eventName, socket, agentID) {

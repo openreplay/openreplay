@@ -7,7 +7,6 @@ import Logger from 'App/logger'
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
-// which should be probably somehow incapsulated
 export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
   private currentTime: number
@@ -15,20 +14,19 @@ export default class MFileReader extends RawMessageReader {
   private noIndexes: boolean = false
   constructor(data: Uint8Array, private startTime?: number, private logger= console) {
     super(data)
-    // if (noIndexes) this.noIndexes = true
   }
 
   public checkForIndexes() {
-    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes + weird failover (don't ask)
+    // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff = no indexes + weird fail over (don't ask)
     const skipIndexes = this.readCustomIndex(this.buf.slice(0, 8)) === 72057594037927940
       || this.readCustomIndex(this.buf.slice(0, 9)) === 72057594037927940
 
     if (skipIndexes) {
+      if (!this.noIndexes) {
+        this.skip(8)
+      }
       this.noIndexes = true
-      this.skip(8)
-      return true
     }
-    return false
   }
 
   private needSkipMessage(): boolean {
@@ -49,17 +47,19 @@ export default class MFileReader extends RawMessageReader {
     return id
   }
 
+  /** 
+   * Reads the messages from byteArray, returns null if read ended
+   * will reset to last correct pointer if encountered bad read
+   * (i.e mobfile was split in two parts and it encountered partial message)
+   * then will proceed to read next message when next mobfile part will be added
+   * via super.append
+   * */
   private readRawMessage(): RawMessage | null {
-    if (!this.noIndexes) this.skip(8)
     try {
-      const msg = super.readMessage()
-      if (!msg) {
-        this.skip(-8)
-      }
-      return msg
+      return super.readMessage()
     } catch (e) {
-      this.error = true
       this.logger.error("Read message error:", e)
+      this.error = true
       return null
     }
   }
@@ -102,6 +102,7 @@ export default class MFileReader extends RawMessageReader {
 
     const index = this.noIndexes ? 0 : this.getLastMessageID()
     const msg = Object.assign(rewriteMessage(rMsg), {
+      // @ts-ignore
       time: this.currentTime ?? rMsg.timestamp - this.startTime!,
       tabId: this.currentTab,
     }, !this.noIndexes ? { _index: index } : {})

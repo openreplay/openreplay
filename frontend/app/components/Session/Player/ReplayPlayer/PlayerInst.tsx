@@ -45,6 +45,7 @@ interface IProps {
   sessionId: string;
   activeTab: string;
   updateLastPlayedSession: (id: string) => void;
+  setActiveTab: (tab: string) => void;
 }
 
 export const heightKey = 'playerPanelHeight'
@@ -149,6 +150,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <Controls
+          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

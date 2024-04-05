@@ -1,28 +1,41 @@
-import React from 'react';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { connect } from 'react-redux';
-import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui';
+import { useHistory } from 'react-router';
 
-import { Tooltip } from 'UI';
+import { MobilePlayerContext } from 'App/components/Session/playerContext';
+import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
+import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
+import Timeline from 'Components/Session_/Player/Controls/Timeline';
 import {
+  LaunchConsoleShortcut,
+  LaunchEventsShortcut,
+  LaunchNetworkShortcut,
+  LaunchPerformanceShortcut,
+  LaunchXRaShortcut,
+} from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import PlayerControls from 'Components/Session_/Player/Controls/components/PlayerControls';
+import styles from 'Components/Session_/Player/Controls/controls.module.css';
+import {
+  CONSOLE,
+  EXCEPTIONS,
+  NETWORK,
+  OVERVIEW,
+  PERFORMANCE,
+  STACKEVENTS,
+  changeSkipInterval,
   fullscreenOff,
   fullscreenOn,
-  OVERVIEW,
   toggleBottomBlock,
-  changeSkipInterval,
-  CONSOLE, STACKEVENTS, NETWORK, PERFORMANCE, EXCEPTIONS,
 } from 'Duck/components/player';
-import { MobilePlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
+import { Tooltip } from 'UI';
 
-import Timeline from 'Components/Session_/Player/Controls/Timeline';
-import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
-import PlayerControls from 'Components/Session_/Player/Controls/components/PlayerControls';
-
-import styles from 'Components/Session_/Player/Controls/controls.module.css';
-import XRayButton from 'Shared/XRayButton';
-import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
+import { useStore } from '../../../../mstore';
+import { session as sessionRoute, withSiteId } from '../../../../routes';
+import { SummaryButton } from '../../../Session_/Player/Controls/Controls';
+import useShortcuts from '../ReplayPlayer/useShortcuts';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -36,41 +49,42 @@ export const SKIP_INTERVALS = {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(MobilePlayerContext);
-
+  const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
 
-  const { bottomBlock, toggleBottomBlock, fullscreen, changeSkipInterval, skipInterval, session } =
-    props;
+  const {
+    bottomBlock,
+    toggleBottomBlock,
+    fullscreen,
+    changeSkipInterval,
+    skipInterval,
+    session,
+    setActiveTab,
+    previousSessionId,
+    nextSessionId,
+    siteId,
+  } = props;
 
   const disabled = messagesLoading;
   const sessionTz = session?.timezone;
-  const onKeyDown = (e: any) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-      return;
-    }
-    if (e.key === 'Esc' || e.key === 'Escape') {
-      props.fullscreenOff();
-    }
-    if (e.key === 'ArrowRight') {
-      forthTenSeconds();
-    }
-    if (e.key === 'ArrowLeft') {
-      backTenSeconds();
-    }
-    if (e.key === 'ArrowDown') {
-      player.speedDown();
-    }
-    if (e.key === 'ArrowUp') {
-      player.speedUp();
-    }
+
+  const nextHandler = () => {
+    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
-  React.useEffect(() => {
-    document.addEventListener('keydown', onKeyDown.bind(this));
-    return () => {
-      document.removeEventListener('keydown', onKeyDown.bind(this));
-    };
-  }, []);
+  const prevHandler = () => {
+    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+  };
+
+  useShortcuts({
+    skipInterval,
+    fullScreenOn: props.fullscreenOn,
+    fullScreenOff: props.fullscreenOff,
+    toggleBottomBlock,
+    openNextSession: nextHandler,
+    openPrevSession: prevHandler,
+    setActiveTab,
+  });
 
   const forthTenSeconds = () => {
     // @ts-ignore
@@ -87,15 +101,14 @@ function Controls(props: any) {
   };
 
   const state = completed
-    ? PlayingState.Completed
-    : playing
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+                ? PlayingState.Completed
+                : playing
+                  ? PlayingState.Playing
+                  : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
       <Timeline isMobile />
-      <CreateNote />
       {!fullscreen && (
         <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
@@ -108,26 +121,38 @@ function Controls(props: any) {
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
               toggleSkip={() => player.toggleSkip()}
-              playButton={<PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />}
+              playButton={
+                <PlayButton
+                  state={state}
+                  togglePlay={player.togglePlay}
+                  iconSize={36}
+                />
+              }
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
               startedAt={session.startedAt}
             />
             <div className={cn('mx-2')} />
-            <XRayButton
-                isActive={bottomBlock === OVERVIEW}
-                onClick={() => toggleBottomTools(OVERVIEW)}
-            />
-            </div>
+          </div>
 
-          <div className="flex items-center h-full">
-            <DevtoolsButtons toggleBottomTools={toggleBottomTools} bottomBlock={bottomBlock} />
-            <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
+          <div className="flex items-center h-full gap-2">
+            <DevtoolsButtons
+              toggleBottomTools={toggleBottomTools}
+              bottomBlock={bottomBlock}
+            />
+            <Tooltip
+              title="Fullscreen"
+              delay={0}
+              placement="top-start"
+              className="mx-4"
+            >
               <FullScreenButton
                 size={16}
                 onClick={props.fullscreenOn}
-                customClasses={'rounded hover:bg-gray-light-shade color-gray-medium'}
+                customClasses={
+                  'rounded hover:bg-gray-light-shade color-gray-medium'
+                }
               />
             </Tooltip>
           </div>
@@ -142,63 +167,111 @@ interface DevtoolsButtonsProps {
   bottomBlock: number;
 }
 
-function DevtoolsButtons({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProps) {
-  const { store } = React.useContext(MobilePlayerContext);
+function DevtoolsButtons({
+  toggleBottomTools,
+  bottomBlock,
+}: DevtoolsButtonsProps) {
+  const { aiSummaryStore } = useStore();
+  const { store, player } = React.useContext(MobilePlayerContext);
 
-  const { exceptionsList, logMarkedCountNow, messagesLoading, stackMarkedCountNow, resourceMarkedCountNow } = store.get();
+  const {
+    exceptionsList,
+    logMarkedCountNow,
+    messagesLoading,
+    stackMarkedCountNow,
+    resourceMarkedCountNow,
+  } = store.get();
 
   const showExceptions = exceptionsList.length > 0;
+  // @ts-ignore
+  const originStr = window.env.ORIGIN || window.location.origin;
+  const isSaas = /app\.openreplay\.com/.test(originStr);
+
+  const showSummary = () => {
+    player.pause();
+    if (bottomBlock !== OVERVIEW) {
+      toggleBottomTools(OVERVIEW);
+    }
+    aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
+  };
   return (
     <>
+      {isSaas ? (
+        <SummaryButton
+          onClick={showSummary}
+          withToggle={bottomBlock === OVERVIEW}
+          toggleValue={aiSummaryStore.toggleSummary}
+        />
+      ) : null}
       <ControlButton
+        popover={
+          <div className={'flex items-center gap-2'}>
+            <LaunchXRaShortcut />
+            <div>Get a quick overview on the issues in this session.</div>
+          </div>
+        }
+        label={'X-Ray'}
+        onClick={() => toggleBottomTools(OVERVIEW)}
+        active={bottomBlock === OVERVIEW}
+      />
+      <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchConsoleShortcut />
+            <div>Launch Logs</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(CONSOLE)}
         active={bottomBlock === CONSOLE}
-        label="LOGS"
-        noIcon
-        labelClassName="!text-base font-semibold"
+        label="Logs"
         hasErrors={logMarkedCountNow > 0 || showExceptions}
-        containerClassName="mx-2"
       />
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchNetworkShortcut />
+            <div>Launch Network</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(NETWORK)}
         active={bottomBlock === NETWORK}
-        label="NETWORK"
+        label="Network"
         hasErrors={resourceMarkedCountNow > 0}
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
       />
-      {showExceptions ?
+      {showExceptions ? (
         <ControlButton
           disabled={messagesLoading}
           onClick={() => toggleBottomTools(EXCEPTIONS)}
           active={bottomBlock === EXCEPTIONS}
           hasErrors={showExceptions}
-          label="EXCEPTIONS"
-          noIcon
-          labelClassName="!text-base font-semibold"
-          containerClassName="mx-2"
+          label="Exceptions"
         />
-      : null}
+      ) : null}
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchEventsShortcut />
+            <div>Launch Events</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(STACKEVENTS)}
         active={bottomBlock === STACKEVENTS}
-        label="EVENTS"
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
+        label="Events"
       />
       <ControlButton
+        popover={
+          <div className={'flex gap-2 items-center'}>
+            <LaunchPerformanceShortcut />
+            <div>Launch Performance</div>
+          </div>
+        }
         disabled={messagesLoading}
         onClick={() => toggleBottomTools(PERFORMANCE)}
         active={bottomBlock === PERFORMANCE}
-        label="PERFORMANCE"
-        noIcon
-        labelClassName="!text-base font-semibold"
-        containerClassName="mx-2"
+        label="Performance"
       />
     </>
   );
@@ -214,11 +287,24 @@ export default connect(
       disabledRedux: isEnterprise && !permissions.includes('DEV_TOOLS'),
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
       bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
-      showStorageRedux: !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
-      showStackRedux: !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
+      showStorageRedux: !state.getIn([
+        'components',
+        'player',
+        'hiddenHints',
+        'storage',
+      ]),
+      showStackRedux: !state.getIn([
+        'components',
+        'player',
+        'hiddenHints',
+        'stack',
+      ]),
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+      previousSessionId: state.getIn(['sessions', 'previousId']),
+      nextSessionId: state.getIn(['sessions', 'nextId']),
+      siteId: state.getIn(['site', 'siteId']),
     };
   },
   {

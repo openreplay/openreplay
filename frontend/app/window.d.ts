@@ -9,6 +9,7 @@ declare global {
       TRACKER_VERSION: string
       TRACKER_HOST: string
       SOURCEMAP: boolean
+      CRISP_KEY: string
     }
   }
 }

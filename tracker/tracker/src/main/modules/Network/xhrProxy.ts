@@ -19,7 +19,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     XMLReq: XMLHttpRequest,
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
+    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
     private readonly sendMessage: (message: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
@@ -91,7 +91,10 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     }, 0)
 
     if (this.XMLReq.readyState === RequestState.DONE) {
-      this.sendMessage(this.item.getMessage())
+      const msg = this.item.getMessage()
+      if (msg) {
+        this.sendMessage(msg)
+      }
     }
   }
 
@@ -99,14 +102,20 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     this.item.cancelState = 1
     this.item.statusText = 'Abort'
 
-    this.sendMessage(this.item.getMessage())
+    const msg = this.item.getMessage()
+    if (msg) {
+      this.sendMessage(msg)
+    }
   }
 
   public onTimeout() {
     this.item.cancelState = 3
     this.item.statusText = 'Timeout'
 
-    this.sendMessage(this.item.getMessage())
+    const msg = this.item.getMessage()
+    if (msg) {
+      this.sendMessage(msg)
+    }
   }
 
   protected getOpen(target: T) {
@@ -115,8 +124,8 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
       const method = args[0]
       const url = args[1]
       this.item.method = method ? method.toUpperCase() : 'GET'
-      this.item.url = url || ''
-      this.item.name = this.item.url.replace(new RegExp('/*$'), '').split('/').pop() || ''
+      this.item.url = url.toString?.() || ''
+      this.item.name = this.item.url?.replace(new RegExp('/*$'), '').split('/').pop() ?? ''
       this.item.getData = genGetDataByUrl(this.item.url, {})
       return targetFunction.apply(target, args)
     }
@@ -229,7 +238,7 @@ export default class XHRProxy {
   public static create(
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    sanitize: (data: RequestResponseData) => RequestResponseData,
+    sanitize: (data: RequestResponseData) => RequestResponseData | null,
     sendMessage: (data: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,

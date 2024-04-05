@@ -1,5 +1,6 @@
 import React from 'react';
-import { Checkbox, Tooltip } from 'UI';
+import { Popover, Checkbox } from 'antd';
+import { Icon } from 'UI'
 
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
@@ -19,35 +20,73 @@ interface Props {
   list: any[];
   updateList: any;
 }
-function FeatureSelection(props: Props) {
-  const { list } = props;
-  const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
-  const disabled = list.length >= 5;
 
+const sortPriority = {
+  [PERFORMANCE]: 1,
+  [FRUSTRATIONS]: 2,
+  [ERRORS]: 3,
+  [NETWORK]: 4,
+  [EVENTS]: 5,
+};
+const featLabels = {
+  [PERFORMANCE]: 'Performance Overview',
+  [FRUSTRATIONS]: 'User Frustrations',
+  [ERRORS]: 'Session Errors',
+  [NETWORK]: 'Network Events',
+  [EVENTS]: 'Custom Events',
+}
+
+function FeatureSelection(props: Props) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
+
+  const toggleFeatureInList = (feat: string) => {
+    if (props.list.includes(feat)) {
+      props.updateList(props.list.filter((f) => f !== feat));
+    } else {
+      // @ts-ignore
+      props.updateList([...props.list, feat].sort((a, b) => sortPriority[a] - sortPriority[b]));
+    }
+  };
+  const toggleAllFeatures = () => {
+    if (props.list.length === features.length) {
+      props.updateList([]);
+    } else {
+      props.updateList(features);
+    }
+  }
   return (
     <React.Fragment>
-      {features.map((feature, index) => {
-        const checked = list.includes(feature);
-        const _disabled = disabled && !checked;
-        return (
-          <Tooltip key={index} title="X-RAY supports up to 5 views" disabled={!_disabled} delay={0}>
-            <Checkbox
-              key={index}
-              label={feature}
-              checked={checked}
-              className="mx-4"
-              disabled={_disabled}
-              onClick={() => {
-                if (checked) {
-                  props.updateList(list.filter((item: any) => item !== feature));
-                } else {
-                  props.updateList([...list, feature]);
-                }
-              }}
-            />
-          </Tooltip>
-        );
-      })}
+      <Popover
+        open={isOpen}
+        content={
+          <div>
+            <div
+              className={'flex items-center gap-2 cursor-pointer'}
+              onClick={() => toggleAllFeatures()}
+            >
+              <Checkbox checked={props.list.length === features.length}  />
+              <div>All Features</div>
+            </div>
+            {features.map((feat) => (
+              <div
+                key={feat}
+                className={'flex items-center gap-2 cursor-pointer'}
+                onClick={() => toggleFeatureInList(feat)}
+              >
+                <Checkbox checked={props.list.includes(feat)} />
+                {/* @ts-ignore */}
+                <div>{featLabels[feat]}</div>
+              </div>
+            ))}
+          </div>
+        }
+      >
+        <div onClick={() => setIsOpen(!isOpen)} className={'font-semibold flex items-center gap-2 text-main cursor-pointer'}>
+          <Icon size={16} name={'funnel'} color={'main'} />
+          <div>X-Ray Events</div>
+        </div>
+      </Popover>
     </React.Fragment>
   );
 }

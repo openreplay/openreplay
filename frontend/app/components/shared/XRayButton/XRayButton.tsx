@@ -1,13 +1,15 @@
+import { LaunchXRaShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import React, { useEffect } from 'react';
 import stl from './xrayButton.module.css';
 import cn from 'classnames';
-import { Tooltip } from 'UI';
+import { Popover } from 'antd'
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   onClick?: () => void;
   isActive?: boolean;
 }
+
 function XRayButton(props: Props) {
   const { player: Player } = React.useContext(PlayerContext);
 
@@ -41,14 +43,21 @@ function XRayButton(props: Props) {
         ></div>
       )}
       <div className="relative">
-        <Tooltip title="Get a quick overview on the issues in this session." disabled={isActive}>
+        <Popover
+          content={
+            <div className={'flex items-center gap-2'}>
+              <LaunchXRaShortcut />
+              <div>Get a quick overview on the issues in this session.</div>
+            </div>
+          }
+        >
           <button
             className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
             onClick={onClick}
           >
             <span className="z-1">X-RAY</span>
           </button>
-        </Tooltip>
+        </Popover>
       </div>
     </>
   );

@@ -1,6 +1,9 @@
 {
   "tabWidth": 2,
   "useTabs": false,
-  "printWidth": 100,
-  "singleQuote": true
+  "printWidth": 80,
+  "singleQuote": true,
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "importOrder": ["^Components|^App|^UI|^Duck", "^Shared", "^[./]"]
 }

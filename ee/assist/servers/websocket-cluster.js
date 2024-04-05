@@ -15,15 +15,14 @@ const {
     socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
+const {logger} = require('./logger');
 
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
-console.log(`Using Redis: ${REDIS_URL}`);
-
-const debug_log = process.env.debug === "1";
+logger.info(`Using Redis: ${REDIS_URL}`);
 
 const wsRouter = express.Router();
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete); // autocomplete
@@ -41,7 +40,7 @@ module.exports = {
         io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', (socket) => onConnect(socket));
 
-        console.log("WS server started");
+        logger.info("WS server started");
 
         socketConnexionTimeout(io);
 
@@ -49,11 +48,10 @@ module.exports = {
             .then(() => {
                 io.adapter(createAdapter(pubClient, subClient,
                     {requestsTimeout: process.env.REDIS_REQUESTS_TIMEOUT || 5000}));
-                console.log("> redis connected.");
+                logger.info("> redis connected.");
             })
             .catch((err) => {
-                console.log("> redis connection error");
-                debug_log && console.error(err);
+                logger.error(`redis connection error: ${err}`);
                 process.exit(2);
             });
     },

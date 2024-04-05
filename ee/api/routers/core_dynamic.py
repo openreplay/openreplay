@@ -12,6 +12,7 @@ from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
+from chalicelib.core.users import get_user_settings
 from chalicelib.utils import SAML2_helper, smtp
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
@@ -105,15 +106,21 @@ def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
 @app.get('/account', tags=['accounts'])
 def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    if r is None:
+        return {"errors": ["current user not found"]}
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
         t["tenantName"] = t.pop("name")
+    else:
+        return {"errors": ["current tenant not found"]}
+
     return {
         'data': {
             **r,
             **t,
             **license.get_status(context.tenant_id),
+            "settings": get_user_settings(context.user_id)["settings"],
             "smtp": smtp.has_smtp(),
             "saml2": SAML2_helper.is_saml2_available()
         }

@@ -64,7 +64,7 @@ function CardUserList(props: RouteComponentProps<Props>) {
                 </div>
                 <Pagination
                     page={metricStore.sessionsPage}
-                    totalPages={Math.ceil(data.length / metricStore.sessionsPageSize)}
+                    total={data.length}
                     onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
                     limit={metricStore.sessionsPageSize}
                     debounceRequest={500}

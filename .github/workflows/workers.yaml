@@ -33,6 +33,17 @@ jobs:
         fetch-depth: 2
         # ref: staging
 
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
+        license_key: ${{ secrets.OSS_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+        minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.OSS_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Docker login
       run: |
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
@@ -122,14 +133,6 @@ jobs:
         set -x
         [[ -f /tmp/nothing-to-build-here ]] && exit 0
         cd scripts/helmcharts/
-
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
         set -x
         echo > /tmp/image_override.yaml

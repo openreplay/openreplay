@@ -186,7 +186,6 @@ export default class API {
       app.attachStartCallback(() => {
         const tabId = app.getTabId()
         const sessStorage = app.sessionStorage ?? window.sessionStorage
-        // @ts-ignore ?
         window.open = function (...args) {
           if (options.autoResetOnWindowOpen) {
             app.resetNextPageSession(true)
@@ -194,9 +193,9 @@ export default class API {
           if (options.resetTabOnWindowOpen) {
             sessStorage.removeItem(options.session_tabid_key || '__openreplay_tabid')
           }
-          wOpen.call(window, ...args)
           app.resetNextPageSession(false)
           sessStorage.setItem(options.session_tabid_key || '__openreplay_tabid', tabId)
+          return wOpen.call(window, ...args)
         }
       })
       app.attachStopCallback(() => {
@@ -224,8 +223,7 @@ export default class API {
         trackerVersion: 'TRACKER_VERSION',
         projectKey: this.options.projectKey,
         doNotTrack,
-        reason,
-        missingApi,
+        reason: missingApi.length ? `missing api: ${missingApi.join(',')}` : reason,
       }),
     )
   }

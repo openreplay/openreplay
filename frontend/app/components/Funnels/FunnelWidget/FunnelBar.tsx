@@ -5,11 +5,15 @@ import { Icon } from 'UI';
 
 interface Props {
   filter: any;
+  index?: number;
+  focusStage?: (index: number, isFocused: boolean) => void
+  focusedFilter?: number | null
 }
 
 function FunnelBar(props: Props) {
-  const { filter } = props;
+  const { filter, index, focusStage, focusedFilter } = props;
 
+  const isFocused = focusedFilter && index ? focusedFilter === index - 1 : false;
   return (
     <div className="w-full mb-4">
       <FunnelStepText filter={filter} />
@@ -38,6 +42,19 @@ function FunnelBar(props: Props) {
             {filter.completedPercentageTotal}%
           </div>
         </div>
+        <div
+          style={{
+            width: `${100.1 - filter.completedPercentageTotal}%`,
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: isFocused ? 'rgba(204, 0, 0, 0.3)' : '#f5f5f5',
+            cursor: 'pointer',
+          }}
+          onClick={() => focusStage?.(index! - 1, filter.isActive)}
+          className={'hover:border border-red-lightest'}
+        />
       </div>
       <div className="flex justify-between py-2">
         {/* @ts-ignore */}

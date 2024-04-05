@@ -8,30 +8,36 @@ const ModalContext = createContext({
     right: true,
     onClose: () => {},
   },
-  showModal: (component: any, props: any) => {},
+  showModal: (component: any, props: Record<string, any>, onClose?: () => void) => {},
   hideModal: () => {},
 });
 
 export class ModalProvider extends Component {
+  onCloseCb = () => null;
+
   handleKeyDown = (e: any) => {
     if (e.keyCode === 27) {
       this.hideModal();
     }
   };
 
-  showModal = (component, props = { right: true }) => {
+  showModal = (component, props = { right: true }, onClose?: () => void) => {
     this.setState({
       component,
       props,
     });
     document.addEventListener('keydown', this.handleKeyDown);
     document.querySelector('body').style.overflow = 'hidden';
+    this.onCloseCb = onClose || this.onCloseCb;
   };
 
   hideModal = () => {
     document.removeEventListener('keydown', this.handleKeyDown);
     document.querySelector('body').style.overflow = 'visible';
     const { props } = this.state;
+    if (this.onCloseCb) {
+      this.onCloseCb();
+    }
     if (props.onClose) {
       props.onClose();
     }

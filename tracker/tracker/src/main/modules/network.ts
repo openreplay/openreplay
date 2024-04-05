@@ -45,7 +45,7 @@ function strMethod(method?: string) {
   return typeof method === 'string' ? method.toUpperCase() : 'GET'
 }
 
-type Sanitizer = (data: RequestResponseData) => RequestResponseData
+type Sanitizer = (data: RequestResponseData) => RequestResponseData | null
 
 export interface Options {
   sessionTokenHeader: string | boolean

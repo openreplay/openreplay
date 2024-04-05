@@ -28,6 +28,8 @@ export default class Filter {
             updateKey: action,
             merge: action,
             addExcludeFilter: action,
+            updateFilter: action,
+            replaceFilters: action,
         })
     }
 
@@ -46,6 +48,10 @@ export default class Filter {
             })
         }
         this.filters.push(new FilterItem(filter))
+    }
+
+    replaceFilters(filters: any) {
+        this.filters = filters;
     }
 
     updateFilter(index: number, filter: any) {

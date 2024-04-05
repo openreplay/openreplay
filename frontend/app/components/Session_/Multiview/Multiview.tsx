@@ -16,14 +16,14 @@ function Multiview({
   total,
   fetchSessions,
   siteId,
-  assistCredendials,
+  assistCredentials,
   customSetSessions,
 }: {
   total: number;
   customSetSessions: (data: any) => void;
   fetchSessions: (filter: any) => void;
   siteId: string;
-  assistCredendials: any;
+  assistCredentials: any;
   list: Record<string, any>[];
 }) {
   const { showModal, hideModal } = useModal();
@@ -33,8 +33,8 @@ function Multiview({
   // @ts-ignore
   const { sessionsquery } = useParams();
 
-  const onSessionsChange = (sessions: Record<string, any>[]) => {
-    const sessionIdQuery = encodeURIComponent(sessions.map((s) => s.sessionId).join(','));
+  const onSessionsChange = (sessions: Array<Record<string, any> | undefined>) => {
+    const sessionIdQuery = encodeURIComponent(sessions.map((s) => s && s.sessionId).join(','));
     return history.replace(withSiteId(multiview(sessionIdQuery), siteId));
   };
 
@@ -82,7 +82,7 @@ function Multiview({
   const placeholder = emptySpace > 0 ? new Array(emptySpace).fill(0) : []
 
   return (
-    <div className="w-screen h-screen flex flex-col">
+    <div style={{ height: '95vh' }} className="full flex flex-col">
       <div className="w-full p-4 flex justify-between items-center">
         <div>
           {/* @ts-ignore */}
@@ -101,7 +101,7 @@ function Multiview({
                 <LivePlayer
                   isMultiview
                   customSession={session}
-                  customAssistCredendials={assistCredendials}
+                  customAssistCredentials={assistCredentials}
                 />
               ) : (
                 <div>Loading session</div>

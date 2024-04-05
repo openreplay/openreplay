@@ -23,9 +23,7 @@ const {
     IncreaseOnlineRooms,
     DecreaseOnlineRooms,
 } = require('../utils/metrics');
-
-const debug_log = process.env.debug === "1";
-const error_log = process.env.ERROR === "1";
+const {logger} = require('./logger');
 
 const findSessionSocketId = async (io, roomId, tabId) => {
     let pickFirstSession = tabId === undefined;
@@ -69,11 +67,11 @@ function processNewSocket(socket) {
     socket.handshake.query.projectKey = connProjectKey;
     socket.handshake.query.sessId = connSessionId;
     socket.handshake.query.tabId = connTabId;
-    debug_log && console.log(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.handshake.query.roomId}`);
+    logger.debug(`connProjectKey:${connProjectKey}, connSessionId:${connSessionId}, connTabId:${connTabId}, roomId:${socket.handshake.query.roomId}`);
 }
 
 async function onConnect(socket) {
-    debug_log && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+    logger.debug(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
     processNewSocket(socket);
     IncreaseTotalWSConnections(socket.handshake.query.identity);
     IncreaseOnlineConnections(socket.handshake.query.identity);
@@ -86,7 +84,7 @@ async function onConnect(socket) {
         if (tabsCount > 0) {
             for (let tab of tabIDs) {
                 if (tab === socket.handshake.query.tabId) {
-                    error_log && console.log(`session already connected, refusing new connexion, peerId: ${socket.handshake.query.peerId}`);
+                    logger.debug(`session already connected, refusing new connexion, peerId: ${socket.handshake.query.peerId}`);
                     io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
                 }
@@ -100,22 +98,17 @@ async function onConnect(socket) {
         }
         // Inform all connected agents about reconnected session
         if (agentsCount > 0) {
-            debug_log && console.log(`notifying new session about agent-existence`);
+            logger.debug(`notifying new session about agent-existence`);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agentIDs);
             socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
         }
     } else if (tabsCount <= 0) {
-        debug_log && console.log(`notifying new agent about no SESSIONS with peerId:${socket.handshake.query.peerId}`);
+        logger.debug(`notifying new agent about no SESSIONS with peerId:${socket.handshake.query.peerId}`);
         io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
     await socket.join(socket.handshake.query.roomId);
 
-    if (debug_log) {
-        let connectedSockets = await io.in(socket.handshake.query.roomId).fetchSockets();
-        if (connectedSockets.length > 0) {
-            console.log(`${socket.id} joined room:${socket.handshake.query.roomId}, as:${socket.handshake.query.identity}, members:${connectedSockets.length}`);
-        }
-    }
+    logger.debug(`${socket.id} joined room:${socket.handshake.query.roomId}, as:${socket.handshake.query.identity}, connections:${agentsCount + tabsCount + 1}`)
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
         if (socket.handshake.query.agentInfo !== undefined) {
@@ -144,36 +137,36 @@ async function onConnect(socket) {
 
 async function onDisconnect(socket) {
     DecreaseOnlineConnections(socket.handshake.query.identity);
-    debug_log && console.log(`${socket.id} disconnected from ${socket.handshake.query.roomId}`);
+    logger.debug(`${socket.id} disconnected from ${socket.handshake.query.roomId}`);
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
         socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
         // Stats
         endAssist(socket, socket.handshake.query.agentID);
     }
-    debug_log && console.log("checking for number of connected agents and sessions");
+    logger.debug("checking for number of connected agents and sessions");
     const io = getServer();
     let {tabsCount, agentsCount, tabIDs, agentIDs} = await getRoomData(io, socket.handshake.query.roomId);
 
     if (tabsCount === -1 && agentsCount === -1) {
         DecreaseOnlineRooms();
-        debug_log && console.log(`room not found: ${socket.handshake.query.roomId}`);
+        logger.debug(`room not found: ${socket.handshake.query.roomId}`);
         return;
     }
     if (tabsCount === 0) {
-        debug_log && console.log(`notifying everyone in ${socket.handshake.query.roomId} about no SESSIONS`);
+        logger.debug(`notifying everyone in ${socket.handshake.query.roomId} about no SESSIONS`);
         socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
     }
     if (agentsCount === 0) {
-        debug_log && console.log(`notifying everyone in ${socket.handshake.query.roomId} about no AGENTS`);
+        logger.debug(`notifying everyone in ${socket.handshake.query.roomId} about no AGENTS`);
         socket.to(socket.handshake.query.roomId).emit(EVENTS_DEFINITION.emit.NO_AGENTS);
     }
 }
 
 async function onUpdateEvent(socket, ...args) {
-    debug_log && console.log(`${socket.id} sent update event.`);
+    logger.debug(`${socket.id} sent update event.`);
     if (socket.handshake.query.identity !== IDENTITIES.session) {
-        debug_log && console.log('Ignoring update event.');
+        logger.debug('Ignoring update event.');
         return
     }
 
@@ -194,24 +187,24 @@ async function onUpdateEvent(socket, ...args) {
 
 async function onAny(socket, eventName, ...args) {
     if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
-        debug_log && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
+        logger.debug(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
         return
     }
     args[0] = updateSessionData(socket, args[0])
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        debug_log && console.log(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
+        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
         socket.to(socket.handshake.query.roomId).emit(eventName, args[0]);
     } else {
         // Stats
         handleEvent(eventName, socket, args[0]);
-        debug_log && console.log(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
+        logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
         const io = getServer();
         let socketId = await findSessionSocketId(io, socket.handshake.query.roomId, args[0]?.meta?.tabId);
         if (socketId === null) {
-            debug_log && console.log(`session not found for:${socket.handshake.query.roomId}`);
+            logger.debug(`session not found for:${socket.handshake.query.roomId}`);
             io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
         } else {
-            debug_log && console.log("message sent");
+            logger.debug("message sent");
             io.to(socketId).emit(eventName, socket.id, args[0]);
         }
     }

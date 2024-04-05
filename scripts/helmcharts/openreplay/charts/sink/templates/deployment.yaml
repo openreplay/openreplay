@@ -87,7 +87,7 @@ spec:
       - name: datadir
         hostPath:
           # Ensure the file directory is created.
-          path: {{ .Values.pvc.hostMountPath }}
+          path: {{ tpl .Values.pvc.hostMountPath . }}
           type: DirectoryOrCreate
       {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.persistence.volumes  }}

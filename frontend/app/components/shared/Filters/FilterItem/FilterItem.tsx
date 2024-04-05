@@ -68,7 +68,7 @@ function FilterItem(props: Props) {
   };
 
   return (
-    <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
+    <div className="flex items-center w-full">
       <div className="flex items-start w-full">
         {!isFilter && !hideIndex && filterIndex >= 0 && (
           <div

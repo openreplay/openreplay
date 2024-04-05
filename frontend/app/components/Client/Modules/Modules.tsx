@@ -21,18 +21,18 @@ function Modules(props: Props) {
     try {
       const isEnabled = !module.isEnabled;
       module.isEnabled = isEnabled;
-      setModulesState([...modulesState]);
+      setModulesState((prevState) => [...prevState]);
       await userService.saveModules({
         module: module.key,
-        status: isEnabled
+        status: isEnabled,
       });
-      toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
+      toast.success(`Module ${module.label} ${isEnabled ? 'enabled' : 'disabled'}`);
       props.updateModule(module.key);
     } catch (err) {
       console.error(err);
-      toast.error(`Failed to ${module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
+      toast.error(`Failed to ${!module.isEnabled ? 'disable' : 'enable'} module ${module.label}`);
       module.isEnabled = !module.isEnabled;
-      setModulesState([...modulesState]);
+      setModulesState((prevState) => [...prevState]);
     }
   };
 

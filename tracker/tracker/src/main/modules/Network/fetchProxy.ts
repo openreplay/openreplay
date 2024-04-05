@@ -122,7 +122,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
   constructor(
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
+    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
     private readonly sendMessage: (item: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
@@ -262,16 +262,25 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
         // so it's completed and can be cloned for `text()` calling.
         item.readyState = 4
 
-        void this.handleResponseBody(resp.clone(), item).then(
-          (responseValue: string | ArrayBuffer) => {
+        this.handleResponseBody(resp.clone(), item)
+          .then((responseValue: string | ArrayBuffer) => {
             item.responseSize =
               typeof responseValue === 'string' ? responseValue.length : responseValue.byteLength
             item.responseSizeText = formatByteSize(item.responseSize)
             item.response = getStringResponseByType(item.responseType, responseValue)
 
-            this.sendMessage(item.getMessage())
-          },
-        )
+            const msg = item.getMessage()
+            if (msg) {
+              this.sendMessage(msg)
+            }
+          })
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              throw e
+            } else {
+              // ignore AbortError
+            }
+          })
       }
 
       return new Proxy(resp, new ResponseProxyHandler(resp, item))
@@ -301,7 +310,7 @@ export default class FetchProxy {
   public static create(
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    sanitize: (data: RequestResponseData) => RequestResponseData,
+    sanitize: (data: RequestResponseData) => RequestResponseData | null,
     sendMessage: (item: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,

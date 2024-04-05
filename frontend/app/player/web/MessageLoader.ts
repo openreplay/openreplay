@@ -39,11 +39,13 @@ export default class MessageLoader {
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
-        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-        : (b: Uint8Array) => Promise.resolve(b);
+      ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
+      : (b: Uint8Array) => Promise.resolve(b);
     const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt);
+    let fileNum = 0;
     return async (b: Uint8Array) => {
       try {
+        fileNum += 1;
         const mobBytes = await decrypt(b);
         const data = unpack(mobBytes);
         fileReader.append(data);
@@ -115,7 +117,7 @@ export default class MessageLoader {
           console.warn('Broken timestamp messages', brokenMessages);
         }
 
-        onMessagesDone(sortedMsgs, file);
+        onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
       } catch (e) {
         console.error(e);
         this.uiErrorHandler?.error('Error parsing file: ' + e.message);
@@ -190,7 +192,6 @@ export default class MessageLoader {
         this.messageManager.onFileReadFailed(sessionLoadError, unprocessedLoadError);
       }
     } finally {
-      this.messageManager.onFileReadFinally();
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }
   }
@@ -198,14 +199,14 @@ export default class MessageLoader {
   loadMobs = async () => {
     const loadMethod =
       this.session.domURL && this.session.domURL.length > 0
-        ? {
-            mobUrls: this.session.domURL,
-            parser: () => this.createNewParser(true, this.processMessages, 'dom'),
-          }
-        : {
-            mobUrls: this.session.mobsUrl,
-            parser: () => this.createNewParser(false, this.processMessages, 'dom'),
-          };
+      ? {
+          mobUrls: this.session.domURL,
+          parser: () => this.createNewParser(true, this.processMessages, 'dom'),
+        }
+      : {
+          mobUrls: this.session.mobsUrl,
+          parser: () => this.createNewParser(false, this.processMessages, 'dom'),
+        };
 
     const parser = loadMethod.parser();
     const devtoolsParser = this.createNewParser(true, this.processMessages, 'devtools');
@@ -218,6 +219,7 @@ export default class MessageLoader {
      * for the devtools file
      * */
     await loadFiles([loadMethod.mobUrls[0]], parser);
+    this.messageManager.onFileReadFinally();
     const restDomFilesPromise = this.loadDomFiles([...loadMethod.mobUrls.slice(1)], parser);
     const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
 
@@ -238,12 +240,12 @@ export default class MessageLoader {
     const devtoolsParser = this.createNewParser(false, this.processMessages, 'devtoolsEFS');
     const parseDomPromise: Promise<any> =
       domData.status === 'fulfilled'
-        ? domParser(domData.value)
-        : Promise.reject('No dom file in EFS');
+      ? domParser(domData.value)
+      : Promise.reject('No dom file in EFS');
     const parseDevtoolsPromise: Promise<any> =
       devtoolsData.status === 'fulfilled'
-        ? devtoolsParser(devtoolsData.value)
-        : Promise.reject('No devtools file in EFS');
+      ? devtoolsParser(devtoolsData.value)
+      : Promise.reject('No devtools file in EFS');
 
     await Promise.all([parseDomPromise, parseDevtoolsPromise]);
     this.messageManager.onFileReadSuccess();

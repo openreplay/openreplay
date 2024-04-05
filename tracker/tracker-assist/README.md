@@ -61,14 +61,24 @@ function MyApp() {
 
 #### Options
 
-```js
+```ts
 trackerAssist({
-  callConfirm?: string|ConfirmOptions;
-  controlConfirm?: string|ConfirmOptions;
-  config?: object;
-  onAgentConnect?: () => (()=>void | void);
-  onCallStart?: () => (()=>void | void);
-  onRemoteControlStart?: () => (()=>void | void);
+  onAgentConnect: StartEndCallback;
+  onCallStart: StartEndCallback;
+  onRemoteControlStart: StartEndCallback;
+  onRecordingRequest?: (agentInfo: Record<string, any>) => any;
+  onCallDeny?: () => any;
+  onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
+  onRecordingDeny?: (agentInfo: Record<string, any>) => any;
+  session_calling_peer_key: string;
+  session_control_peer_key: string;
+  callConfirm: ConfirmOptions;
+  controlConfirm: ConfirmOptions;
+  recordingConfirm: ConfirmOptions;
+  socketHost?: string;
+  config: RTCConfiguration;
+  serverURL: string
+  callUITemplate?: string;
 })
 ```
 

@@ -3,6 +3,7 @@ module.exports = {
 
   "gray-light-shade": "#EEEEEE",
   "gray-lightest": "#f6f6f6",
+  "gray-lighter": "#f1f1f1",
   "gray-light": "#ddd",
   "gray-bg": "#CCC",
   "gray-medium": "#888",

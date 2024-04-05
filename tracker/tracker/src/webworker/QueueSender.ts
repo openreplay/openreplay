@@ -10,14 +10,16 @@ export default class QueueSender {
   // its actually on #24
   // eslint-disable-next-line
   private isCompressing
+  private lastBatchNum = 0
 
   constructor(
     ingestBaseURL: string,
     private readonly onUnauthorised: () => any,
     private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
-    private readonly ATTEMPT_TIMEOUT = 1000,
+    private readonly ATTEMPT_TIMEOUT = 250,
     private readonly onCompress?: (batch: Uint8Array) => any,
+    private readonly pageNo?: number,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
     if (onCompress !== undefined) {
@@ -47,7 +49,8 @@ export default class QueueSender {
       if (this.isCompressing && this.onCompress) {
         this.onCompress(batch)
       } else {
-        this.sendBatch(batch)
+        const batchNum = ++this.lastBatchNum
+        this.sendBatch(batch, false, batchNum)
       }
     }
   }
@@ -59,29 +62,35 @@ export default class QueueSender {
       if (this.isCompressing && this.onCompress) {
         this.onCompress(nextBatch)
       } else {
-        this.sendBatch(nextBatch)
+        const batchNum = ++this.lastBatchNum
+        this.sendBatch(nextBatch, false, batchNum)
       }
     } else {
       this.busy = false
     }
   }
 
-  private retry(batch: Uint8Array, isCompressed?: boolean): void {
+  private retry(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
       this.onFailure(`Failed to send batch after ${this.attemptsCount} attempts.`)
       // remains this.busy === true
       return
     }
     this.attemptsCount++
-    setTimeout(() => this.sendBatch(batch, isCompressed), this.ATTEMPT_TIMEOUT * this.attemptsCount)
+    setTimeout(
+      () => this.sendBatch(batch, isCompressed, batchNum),
+      this.ATTEMPT_TIMEOUT * this.attemptsCount,
+    )
   }
 
   // would be nice to use Beacon API, but it is not available in WebWorker
-  private sendBatch(batch: Uint8Array, isCompressed?: boolean): void {
+  private sendBatch(batch: Uint8Array, isCompressed?: boolean, batchNum?: string | number): void {
+    const batchNumStr = batchNum?.toString().replace(/^([^_]+)_([^_]+).*/, '$1_$2_$3')
     this.busy = true
 
     const headers = {
       Authorization: `Bearer ${this.token as string}`,
+      'X-Openreplay-Batch': `${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`,
     } as Record<string, string>
 
     if (isCompressed) {
@@ -93,7 +102,7 @@ export default class QueueSender {
      * */
     if (this.token === null) {
       setTimeout(() => {
-        this.sendBatch(batch, isCompressed)
+        this.sendBatch(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_newToken`)
       }, 500)
       return
     }
@@ -111,7 +120,7 @@ export default class QueueSender {
           this.onUnauthorised()
           return
         } else if (r.status >= 400) {
-          this.retry(batch, isCompressed)
+          this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_network:${r.status}`)
           return
         }
 
@@ -119,18 +128,20 @@ export default class QueueSender {
         this.attemptsCount = 0
         this.sendNext()
       })
-      .catch((e: any) => {
+      .catch((e: Error) => {
         console.warn('OpenReplay:', e)
-        this.retry(batch, isCompressed)
+        this.retry(batch, isCompressed, `${batchNum ?? 'noBatchNum'}_reject:${e.message}`)
       })
   }
 
   sendCompressed(batch: Uint8Array) {
-    this.sendBatch(batch, true)
+    const batchNum = ++this.lastBatchNum
+    this.sendBatch(batch, true, batchNum)
   }
 
   sendUncompressed(batch: Uint8Array) {
-    this.sendBatch(batch, false)
+    const batchNum = ++this.lastBatchNum
+    this.sendBatch(batch, false, batchNum)
   }
 
   clean() {

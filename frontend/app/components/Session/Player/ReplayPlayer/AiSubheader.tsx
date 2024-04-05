@@ -147,7 +147,7 @@ function SubHeader(props: any) {
       >
         {showWarning ? (
           <div
-            className="px-3 py-1 border border-gray-light drop-shadow-md rounded bg-active-blue flex items-center justify-between"
+            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
             style={{
               zIndex: 999,
               position: 'absolute',
@@ -181,7 +181,7 @@ function SubHeader(props: any) {
         >
           <SummaryButton onClick={showSummary} />
           <NotePopup />
-          <ItemMenu items={additionalMenu} />
+          <ItemMenu items={additionalMenu} useSc />
           {uxtestingStore.isUxt() ? (
             <Switch
               checkedChildren={'DevTools'}
@@ -198,7 +198,7 @@ function SubHeader(props: any) {
         </div>
       </div>
       {location && (
-        <div className={'w-full bg-white border-b border-gray-light'}>
+        <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Icon size="20" name="event/link" className="mr-1" />
             <Tooltip title="Open in new tab" delay={0}>
@@ -213,52 +213,6 @@ function SubHeader(props: any) {
   );
 }
 
-function SummaryButton({ onClick }: { onClick?: () => void }) {
-  const [isHovered, setHovered] = React.useState(false);
-
-  return (
-    <div
-      style={gradientButton}
-      onClick={onClick}
-    >
-      <div style={isHovered ? onHoverFillStyle : fillStyle} onMouseEnter={() => setHovered(true)}
-           onMouseLeave={() => setHovered(false)}>
-        <Icon name={'sparkles'} size={16} />
-        <div className={'font-semibold text-main'}>AI Summary</div>
-      </div>
-    </div>
-  );
-}
-
-const gradientButton = {
-  border: 'double 1px transparent',
-  borderRadius: '60px',
-  background:
-    'linear-gradient(#f6f6f6, #f6f6f6), linear-gradient(to right, #394EFF 0%, #3EAAAF 100%)',
-  backgroundOrigin: 'border-box',
-  backgroundClip: 'content-box, border-box',
-  cursor: 'pointer',
-};
-const onHoverFillStyle = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  borderRadius: '60px',
-  gap: 2,
-  alignItems: 'center',
-  padding: '4px 8px',
-  background:
-    'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
-};
-const fillStyle = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  borderRadius: '60px',
-  gap: 2,
-  alignItems: 'center',
-  padding: '4px 8px',
-}
 
 export default connect((state: Record<string, any>) => ({
   siteId: state.getIn(['site', 'siteId']),

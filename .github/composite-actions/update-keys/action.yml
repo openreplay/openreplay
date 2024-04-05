@@ -1,0 +1,56 @@
+name: 'Update Keys'
+description: 'Updates keys'
+inputs:
+  domain_name:
+    required: true
+    description: 'Domain Name'
+  license_key:
+    required: true
+    description: 'License Key'
+  jwt_secret:
+    required: true
+    description: 'JWT Secret'
+  minio_access_key:
+    required: true
+    description: 'MinIO Access Key'
+  minio_secret_key:
+    required: true
+    description: 'MinIO Secret Key'
+  pg_password:
+    required: true
+    description: 'PostgreSQL Password'
+  registry_url:
+    required: true
+    description: 'Registry URL'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Downloading yq
+      run: |
+        VERSION="v4.42.1"
+        sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+      shell: bash
+      
+    - name: "Updating OSS secrets"
+      run: |
+        cd scripts/helmcharts/
+        yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
+        yq e -i '.global.assistKey = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.global.assistJWTSecret = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.chalice.env.jwt_secret = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.global.enterpriseEditionLicense = strenv(LICENSE_KEY)' vars.yaml
+        yq e -i '.global.s3.accessKey = strenv(MINIO_ACCESS_KEY)' vars.yaml
+        yq e -i '.global.s3.secretKey = strenv(MINIO_SECRET_KEY)' vars.yaml
+        yq e -i '.postgresql.postgresqlPassword = strenv(PG_PASSWORD)' vars.yaml
+        yq e -i '.global.openReplayContainerRegistry = strenv(REGISTRY_URL)' vars.yaml
+      shell: bash
+      env:
+        DOMAIN_NAME: ${{ inputs.domain_name }}
+        LICENSE_KEY: ${{ inputs.license_key }}
+        JWT_SECRET: ${{ inputs.jwt_secret }}
+        MINIO_ACCESS_KEY: ${{ inputs.minio_access_key }}
+        MINIO_SECRET_KEY: ${{ inputs.minio_secret_key }}
+        PG_PASSWORD: ${{ inputs.pg_password }}
+        REGISTRY_URL: ${{ inputs.registry_url }}

@@ -1,5 +1,6 @@
 const _io = require("socket.io");
 const {getCompressionConfig} = require("./helper");
+const {logger} = require('./logger');
 
 let io;
 
@@ -14,7 +15,7 @@ if (useRedis) {
     const {createClient} = require("redis");
     const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
     redisClient = createClient({url: REDIS_URL});
-    redisClient.on("error", (error) => console.error(`Redis error : ${error}`));
+    redisClient.on("error", (error) => logger.error(`Redis error : ${error}`));
     void redisClient.connect();
 }
 
@@ -39,7 +40,7 @@ const doFetchAllSockets = async function () {
             await redisClient.set('fetchSocketsResult', cachedString, {EX: 5});
             return result;
         } catch (error) {
-            console.error('Error setting value with expiration:', error);
+            logger.error('Error setting value with expiration:', error);
         }
     }
     return await io.fetchSockets();

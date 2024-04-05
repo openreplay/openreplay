@@ -24,7 +24,7 @@ type Props = IProps & RouteComponentProps;
 function DashboardView(props: Props) {
   const { siteId, dashboardId } = props;
   const { dashboardStore } = useStore();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
 
   const showAlertModal = dashboardStore.showAlertModal;
   const loading = dashboardStore.fetchingDashboard;
@@ -39,6 +39,22 @@ function DashboardView(props: Props) {
       search: queryParams.toString(),
     });
   };
+
+  useEffect(() => {
+    if (showAlertModal) {
+      showModal(
+        <AlertFormModal
+          showModal={showAlertModal}
+          onClose={() => {
+            hideModal();
+            dashboardStore.toggleAlertModal(false)
+          }}
+        />,
+        { right: false, width: 580 },
+        () => dashboardStore.toggleAlertModal(false)
+      )
+    }
+  }, [showAlertModal])
 
   const pushQuery = () => {
     if (!queryParams.has('modal')) props.history.push('?modal=addMetric');
@@ -84,10 +100,6 @@ function DashboardView(props: Props) {
           dashboardId={dashboardId}
           onEditHandler={onAddWidgets}
           id="report"
-        />
-        <AlertFormModal
-          showModal={showAlertModal}
-          onClose={() => dashboardStore.toggleAlertModal(false)}
         />
       </div>
     </Loader>

@@ -86,7 +86,7 @@ function UserList(props: Props) {
                 <div className="w-full flex items-center justify-center py-10">
                     <Pagination
                         page={userStore.page}
-                        totalPages={Math.ceil(length / userStore.pageSize)}
+                        total={length}
                         onPageChange={(page) => userStore.updateKey('page', page)}
                         limit={userStore.pageSize}
                         debounceRequest={100}

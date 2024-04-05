@@ -147,6 +147,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
       (batch) => {
         postMessage({ type: 'compress', batch }, [batch.buffer])
       },
+      data.pageNo,
     )
     writer = new BatchWriter(
       data.pageNo,

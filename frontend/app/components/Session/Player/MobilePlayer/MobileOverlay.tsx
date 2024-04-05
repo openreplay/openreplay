@@ -15,7 +15,6 @@ import { observer } from 'mobx-react-lite';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { connect } from 'react-redux';
-import { setCreateNoteTooltip } from 'Duck/sessions';
 import { Icon } from 'UI';
 
 interface Props {
@@ -23,7 +22,6 @@ interface Props {
   closedLive?: boolean;
   isClickmap?: boolean;
   toggleBottomBlock: (block: number) => void;
-  setCreateNoteTooltip: (args: any) => void;
 }
 
 enum ItemKey {
@@ -64,7 +62,7 @@ const menuItems: MenuProps['items'] = [
   },
 ];
 
-function Overlay({ nextId, isClickmap, toggleBottomBlock, setCreateNoteTooltip }: Props) {
+function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
   const { player, store } = React.useContext(PlayerContext);
 
   const togglePlay = () => player.togglePlay();
@@ -93,7 +91,7 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock, setCreateNoteTooltip }
         toggleBottomBlock(STORAGE);
         break;
       case ItemKey.AddNote:
-        setCreateNoteTooltip({ time: store.get().time, isVisible: true });
+        // TODO setCreateNoteTooltip({ time: store.get().time, isVisible: true });
         break;
       default:
         return;
@@ -114,5 +112,4 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock, setCreateNoteTooltip }
 
 export default connect(null, {
   toggleBottomBlock,
-  setCreateNoteTooltip,
 })(observer(Overlay));
