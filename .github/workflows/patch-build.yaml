@@ -7,6 +7,11 @@ on:
       services:
         description: 'Comma separated names of services to build(in small letters).'
         required: true
+        default: 'chalice,frontend'
+  # push:
+  #   branches:
+  #     - gh-actions
+
 
 name: Build patches from main branch, Raise PR to Main, and Push to tag
 
@@ -30,19 +35,19 @@ jobs:
         sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
         sudo chmod +x /usr/bin/yq
 
-    # Configure AWS credentials for the first registry
-    - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
-        aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
-        aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
-    
-    - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
-      id: login-ecr-arm
-      run: |
-        aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
-        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
+    # # Configure AWS credentials for the first registry
+    # - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
+    #   uses: aws-actions/configure-aws-credentials@v1
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
+    #     aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
+    #     aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
+    # 
+    # - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
+    #   id: login-ecr-arm
+    #   run: |
+    #     aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
+    #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
 
     - uses: depot/setup-action@v1
     - name: Define Branch Name
@@ -87,17 +92,17 @@ jobs:
           local version=$2
           echo building managed
           clone_msaas
-          if $service == 'chalice'; then
-            cd $MSAAS_REPO_FOLDER/api
+          if [[ $service == 'chalice' ]]; then
+            cd $MSAAS_REPO_FOLDER/openreplay/api
           else
-            cd $MSAAS_REPO_FOLDER/$service
+            cd $MSAAS_REPO_FOLDER/openreplay/$service
           fi
           IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
         echo Services: "${{ github.event.inputs.services }}"
-        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "chalice,frontend,http"
         # Build FOSS
         for SERVICE in "${SERVICES[@]}"; do
           # Check if service is backend
@@ -106,7 +111,7 @@ jobs:
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
           else 
-            [[ $service == 'chalice' ]] && cd $MSAAS_REPO_FOLDER/api || cd $SERVICE
+            [[ $SERVICE == 'chalice' ]] && cd $working_dir/api || cd $SERVICE
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
@@ -121,7 +126,7 @@ jobs:
           chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
           yq eval ".AppVersion = \"$version\"" -i $chart_path
           git add $chart_path
-          git commit -m "Increment $SERVICE chart version
+          git commit -m "Increment $SERVICE chart version"
           git push --set-upstream origin $BRANCH_NAME
         done
 
