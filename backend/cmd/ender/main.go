@@ -169,7 +169,7 @@ func main() {
 						}
 					}
 				}
-				if sess != nil && sess.Platform == "ios" {
+				if sess != nil && (sess.Platform == "ios" || sess.Platform == "android") {
 					msg := &messages.IOSSessionEnd{Timestamp: timestamp}
 					if err := producer.Produce(cfg.TopicRawIOS, sessionID, msg.Encode()); err != nil {
 						log.Error(sessCtx, "can't send iOSSessionEnd to mobile topic: %s", err)

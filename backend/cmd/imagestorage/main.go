@@ -58,7 +58,7 @@ func main() {
 				}
 				return msg, nil
 			}
-			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
+			sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
 
 			if _, err := checkSessionEnd(data); err == nil {
 				if err := srv.PackScreenshots(sessCtx, sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {

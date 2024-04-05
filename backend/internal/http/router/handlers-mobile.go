@@ -105,8 +105,9 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
 		geoInfo := e.ExtractGeoData(r)
-		platform, os, screen := "ios", "IOS", ""
+		deviceType, platform, os, screen := ios.GetIOSDeviceType(req.UserDevice), "ios", "IOS", ""
 		if req.Platform != "" && req.Platform != "ios" {
+			deviceType = req.UserDeviceType
 			platform = req.Platform
 			os = "Android"
 			screen = fmt.Sprintf("%d:%d", req.Width, req.Height)
@@ -126,7 +127,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				UserOS:               os,
 				UserOSVersion:        req.UserOSVersion,
 				UserDevice:           ios.MapIOSDevice(req.UserDevice),
-				UserDeviceType:       ios.GetIOSDeviceType(req.UserDevice),
+				UserDeviceType:       deviceType,
 				UserCountry:          geoInfo.Country,
 				UserState:            geoInfo.State,
 				UserCity:             geoInfo.City,
@@ -168,6 +169,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
+
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))

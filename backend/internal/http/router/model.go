@@ -54,6 +54,7 @@ type StartMobileSessionRequest struct {
 	UserUUID       *string `json:"userUUID"`
 	UserOSVersion  string  `json:"userOSVersion"`
 	UserDevice     string  `json:"userDevice"`
+	UserDeviceType string  `json:"userDeviceType"`
 	Timestamp      uint64  `json:"timestamp"`
 	Timezone       string  `json:"timezone"`
 	DeviceMemory   uint64  `json:"deviceMemory"`
