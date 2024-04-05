@@ -83,4 +83,4 @@ jobs:
           ]
         }
         EOF
-        aws route53 change-resource-record-sets --hosted-zone-id ${{ secrets.OR_PR_HOSTED_ZONE_ID }} --change-batch file://route53-changes.json
+        iws route53 change-resource-record-sets --hosted-zone-id ${{ secrets.OR_PR_HOSTED_ZONE_ID }} --change-batch file://route53-changes.json
