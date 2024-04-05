@@ -144,8 +144,10 @@ jobs:
       if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
       env:
-        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}
-        ENVIRONMENT: staging
+        DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+        DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+        MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+        MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+        MSAAS_REPO_FOLDER: /tmp/msaas
       with:
         limit-access-to-actor: true
