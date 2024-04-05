@@ -254,6 +254,8 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 				e.log.Error(r.Context(), "can't send sessionStart to queue: %s", err)
 			}
 		}
+	} else {
+		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", tokenData.ID)))
 	}
 
 	// Save information about session beacon size
@@ -283,6 +285,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
+
+	// Get debug header with batch info
+	batch := r.Header.Get("X-Openreplay-Batch")
+	r = r.WithContext(context.WithValue(r.Context(), "batch", batch))
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
