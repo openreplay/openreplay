@@ -61,6 +61,27 @@ export default class FilterItem {
     });
   }
 
+  fromData(data: any) {
+    this.type = data.type
+    this.key = data.key
+    this.label = data.label
+    this.operatorOptions = data.operatorOptions
+    this.hasSource = data.hasSource
+    this.category = data.category
+    this.sourceOperatorOptions = data.sourceOperatorOptions
+    this.value = data.value
+    this.isEvent = Boolean(data.isEvent)
+    this.operator = data.operator
+    this.source = data.source
+    this.sourceOperator = data.sourceOperator
+    this.filters = data.filters
+    this.isActive = Boolean(data.isActive)
+    this.completed = data.completed
+    this.dropped = data.dropped
+
+    return this
+  }
+
   fromJson(json: any, mainFilterKey = '') {
     const isMetadata = json.type === FilterKey.METADATA;
     let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
