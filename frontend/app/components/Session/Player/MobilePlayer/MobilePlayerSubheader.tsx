@@ -41,7 +41,7 @@ function SubHeader(props: any) {
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
-        <Tag color="error">iOS BETA</Tag>
+        <Tag color="error">MOBILE BETA</Tag>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
