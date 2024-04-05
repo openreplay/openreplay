@@ -8,9 +8,9 @@ on:
         description: 'Comma separated names of services to build(in small letters).'
         required: true
         default: 'chalice,frontend'
-  # push:
-  #   branches:
-  #     - gh-actions
+  push:
+    branches:
+      - gh-actions
 
 
 name: Build patches from main branch, Raise PR to Main, and Push to tag
@@ -22,7 +22,6 @@ jobs:
     env:
       DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
       DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -35,27 +34,29 @@ jobs:
         sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
         sudo chmod +x /usr/bin/yq
 
-    # # Configure AWS credentials for the first registry
-    # - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
-    #   uses: aws-actions/configure-aws-credentials@v1
-    #   with:
-    #     aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
-    #     aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
-    #     aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
-    # 
-    # - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
-    #   id: login-ecr-arm
-    #   run: |
-    #     aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
-    #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
+    # Configure AWS credentials for the first registry
+    - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
+      id: login-ecr-arm
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
+        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
 
     - uses: depot/setup-action@v1
-    - name: Define Branch Name
-      run: echo "BRANCH_NAME=patch/main/${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
     - name: Get HEAD Commit ID
       run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+    - name: Define Branch Name
+      run: echo "BRANCH_NAME=patch/main/${HEAD_COMMIT_ID}" >> $GITHUB_ENV
     - name: Set Remote with GITHUB_TOKEN
-      run: git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+      run: |
+        git config --unset http.https://github.com/.extraheader
+        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Build
       id: build-image
@@ -66,7 +67,7 @@ jobs:
         MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
         MSAAS_REPO_FOLDER: /tmp/msaas
       run: |
-        set -ex
+        set -exo pipefail
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git checkout -b $BRANCH_NAME
@@ -97,7 +98,7 @@ jobs:
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
           fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
@@ -133,7 +134,7 @@ jobs:
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.ACTIONS_COMMMIT_TOKEN }}
         source_branch: ${{ env.BRANCH_NAME }}
         destination_branch: "main"
         pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
@@ -147,4 +148,4 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: staging
       with:
-        iimit-access-to-actor: true
+        limit-access-to-actor: true
