@@ -287,8 +287,9 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Get debug header with batch info
-	batch := r.Header.Get("X-Openreplay-Batch")
-	r = r.WithContext(context.WithValue(r.Context(), "batch", batch))
+	if batch := r.URL.Query().Get("batch"); batch != "" {
+		r = r.WithContext(context.WithValue(r.Context(), "batch", batch))
+	}
 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
