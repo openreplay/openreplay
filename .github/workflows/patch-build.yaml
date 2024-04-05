@@ -57,6 +57,9 @@ jobs:
       env:
         DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
         DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+        MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+        MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+        MSAAS_REPO_FOLDER: /tmp/msaas
       run: |
         set -ex
         git config --local user.email "action@github.com"
@@ -71,6 +74,26 @@ jobs:
           echo $new_version
           # yq eval ".AppVersion = \"$new_version\"" -i $chart_path
         }
+        function clone_msaas() {
+          [ -d $MSAAS_REPO_FOLDER ] || {
+          git clone -b dev --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
+          cd $MSAAS_REPO_FOLDER
+          bash git-init.sh
+          git checkout
+          }
+        }
+        function build_managed() {
+          local service=$1
+          local version=$2
+          echo building managed
+          clone_msaas
+          if $service == 'chalice'; then
+            cd $MSAAS_REPO_FOLDER/api
+          else
+            cd $MSAAS_REPO_FOLDER/$service
+          fi
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh
+        }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
         IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
@@ -82,7 +105,11 @@ jobs:
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
           else 
-            cd $SERVICE
+            if $service == 'chalice'; then
+              cd $MSAAS_REPO_FOLDER/api
+            else
+              cd $SERVICE
+            fi
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
@@ -90,13 +117,17 @@ jobs:
           IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
           if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
             IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+          else
+            build_managed $SERVICE $version
           fi
           cd $working_dir
           chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
+          yq eval ".AppVersion = \"$version\"" -i $chart_path
           git add $chart_path
-          git commit -m "Increment $SERVICE chart version to $NEW_VERSION"
+          git commit -m "Increment $SERVICE chart version
           git push --set-upstream origin $BRANCH_NAME
         done
+
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
