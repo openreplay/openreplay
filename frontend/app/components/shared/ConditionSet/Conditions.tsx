@@ -15,6 +15,7 @@ interface Props {
   setChanged?: (changed: boolean) => void;
   excludeFilterKeys?: string[];
   isConditional?: boolean;
+  isMobile?: boolean;
 }
 
 function ConditionSet({
@@ -28,6 +29,7 @@ function ConditionSet({
   setChanged,
   excludeFilterKeys,
   isConditional,
+  isMobile,
 }: Props) {
   const [forceRender, forceRerender] = React.useState(false);
 
@@ -87,6 +89,7 @@ function ConditionSet({
       onRemoveFilter={onRemoveFilter}
       onChangeEventsOrder={onChangeEventsOrder}
       isConditional={isConditional}
+      isMobile={isMobile}
     />
   );
 }

@@ -15,11 +15,12 @@ type Props = {
   setShowCaptureRate: (show: boolean) => void;
   open: boolean;
   showCaptureRate: boolean;
+  isMobile?: boolean;
 };
 
 function CaptureRate(props: Props) {
   const [conditions, setConditions] = React.useState<Conditions[]>([]);
-  const { isAdmin, projectId, isEnterprise } = props;
+  const { isAdmin, projectId, isEnterprise, isMobile } = props;
   const { settingsStore } = useStore();
   const [changed, setChanged] = useState(false);
   const {
@@ -42,7 +43,7 @@ function CaptureRate(props: Props) {
   }, [projectId]);
 
   React.useEffect(() => {
-    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true)));
+    setConditions(captureConditions.map((condition: any) => new Conditions(condition, true, isMobile)));
   }, [captureConditions]);
 
   const onCaptureRateChange = (input: string) => {
@@ -137,6 +138,7 @@ function CaptureRate(props: Props) {
               setChanged={setChanged}
               conditions={conditions}
               setConditions={setConditions}
+              isMobile={isMobile}
             />
           ) : null}
         </Tooltip>
