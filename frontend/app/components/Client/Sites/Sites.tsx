@@ -77,7 +77,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
           </div>
           <span className="ml-2">{project.host}</span>
           <div className={'ml-4 flex items-center gap-2'}>
-            {project.platform === 'web' ? null : <Tag color="error">iOS BETA</Tag>}
+            {project.platform === 'web' ? null : <Tag color="error">MOBILE BETA</Tag>}
           </div>
         </div>
       </div>
