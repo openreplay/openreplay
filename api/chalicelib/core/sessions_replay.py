@@ -165,7 +165,7 @@ def get_events(project_id, session_id):
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
-            if s_data["platform"] == 'ios' or data["platform"] == 'android':
+            if s_data["platform"] == 'ios' or s_data["platform"] == 'android':
                 data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
