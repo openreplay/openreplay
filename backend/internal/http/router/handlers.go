@@ -37,4 +37,5 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	e.log.Info(r.Context(), "response ok")
 }
