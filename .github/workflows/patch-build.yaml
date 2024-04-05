@@ -105,11 +105,7 @@ jobs:
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
           else 
-            if $service == 'chalice'; then
-              cd $MSAAS_REPO_FOLDER/api
-            else
-              cd $SERVICE
-            fi
+            [[ $service == 'chalice' ]] && cd $MSAAS_REPO_FOLDER/api || cd $SERVICE
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
@@ -136,18 +132,6 @@ jobs:
         destination_branch: "main"
         pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
         pr_body: "This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID."
-
-
-    - name: Alert slack
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ee
-        SLACK_TITLE: "Failed ${{ github.workflow }}"
-        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
-        SLACK_USERNAME: "OR Bot"
-        SLACK_MESSAGE: 'Build failed :bomb:'
 
     - name: Debug Job
       if: ${{ failure() }}
