@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     description: 'This workflow will build for patches for latest tag, and will Always use commit from main branch.'
     inputs:
-      build_service:
+      services:
         description: 'Comma separated names of services to build(in small letters).'
         required: true
 
@@ -96,6 +96,7 @@ jobs:
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
+        echo Services: "${{ github.event.inputs.services }}"
         IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
         # Build FOSS
         for SERVICE in "${SERVICES[@]}"; do
