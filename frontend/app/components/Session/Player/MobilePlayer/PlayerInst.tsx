@@ -98,6 +98,7 @@ function Player(props: IProps) {
       const max = diff > window.innerHeight / 2 ? window.innerHeight / 2 : diff;
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
+      playerContext.player.scale();
       debounceUpdate(newHeight)
     };
 

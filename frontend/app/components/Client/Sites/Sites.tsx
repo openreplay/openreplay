@@ -151,10 +151,10 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
             <Divider className="m-0" />
 
             {sliceListPerPage(filteredSites, page - 1, pageSize).map((project: Project) => (
-              <>
+              <React.Fragment key={project.id}>
                 <ProjectItem project={project} />
                 <Divider className="m-0" />
-              </>
+              </React.Fragment>
             ))}
 
             <div className="w-full flex items-center justify-center py-10">

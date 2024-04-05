@@ -652,6 +652,16 @@ export const conditionalFilters = [
     operatorOptions: filterOptions.stringConditional,
     isEvent: false
   },
+  {
+    key: FilterKey.USERID,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.USER,
+    label: 'User Id',
+    placeholder: 'E.g. Alex, or alex@domain.com, or EMP123',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined' }]),
+    icon: 'filters/userid'
+  }
 ].sort((a, b) => {
   const aOrder = filterOrder[a.category] ?? 9
   const bOrder = filterOrder[b.category] ?? 9
