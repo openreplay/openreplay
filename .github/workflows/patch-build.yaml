@@ -45,6 +45,12 @@ jobs:
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
 
     - uses: depot/setup-action@v1
+    - name: Define Branch Name
+      run: echo "BRANCH_NAME=patch/main/${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+    - name: Get HEAD Commit ID
+      run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+    - name: Set Remote with GITHUB_TOKEN
+      run: git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Build
       id: build-image
@@ -53,6 +59,9 @@ jobs:
         DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
       run: |
         set -ex
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b $BRANCH_NAME
         working_dir=$(pwd)
         function image_version(){
           local service=$1
@@ -77,11 +86,24 @@ jobs:
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
-          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $foss_build_args
-          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
-          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $foss_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
           cd $working_dir
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
+          git add $chart_path
+          git commit -m "Increment $SERVICE chart version to $NEW_VERSION"
+          git push --set-upstream origin $BRANCH_NAME
         done
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        source_branch: ${{ env.BRANCH_NAME }}
+        destination_branch: "main"
+        pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
+        pr_body: "This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID."
+
 
     - name: Alert slack
       if: ${{ failure() }}
