@@ -12,7 +12,7 @@ name: Build patches from main branch, Raise PR to Main, and Push to tag
 
 jobs:
   deploy:
-    name: Deploy
+    name: Build Patch from main
     runs-on: ubuntu-latest
     env:
       DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
