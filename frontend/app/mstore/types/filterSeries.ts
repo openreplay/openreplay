@@ -28,6 +28,13 @@ export default class FilterSeries {
         return this
     }
 
+    fromData(data) {
+        this.seriesId = data.seriesId
+        this.name = data.name
+        this.filter = new Filter().fromData(data.filter)
+        return this
+    }
+
     toJson() {
         return {
             seriesId: this.seriesId,

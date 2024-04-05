@@ -76,6 +76,15 @@ export default class Filter {
         return this
     }
 
+    fromData(data) {
+        this.name = data.name
+        this.filters = data.filters.map((i: Record<string, any>) =>
+          new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
+        )
+        this.eventsOrder = data.eventsOrder
+        return this
+    }
+
     toJsonDrilldown() {
         const json = {
             name: this.name,

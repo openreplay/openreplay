@@ -123,10 +123,19 @@ export default class Widget {
     this.series.splice(index, 1);
   }
 
+  setSeries(series: FilterSeries[]) {
+    this.series = series;
+  }
+
   addSeries() {
     const series = new FilterSeries();
     series.name = 'Series ' + (this.series.length + 1);
     this.series.push(series);
+  }
+
+  createSeries(filters: Record<string, any>) {
+    const series = new FilterSeries().fromData({ filter: { filters } , name: 'AI Query', seriesId: 1 })
+    this.setSeries([series])
   }
 
   fromJson(json: any, period?: any) {
