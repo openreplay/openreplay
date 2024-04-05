@@ -49,7 +49,7 @@ function ConditionalRecordingSettings({
       </div>
       <div className={'mt-2 flex flex-col gap-4'}>
         {conditions.map((condition, index) => (
-          <>
+          <React.Fragment key={`${index}_${condition.name}`}>
             <ConditionSet
               key={index}
               set={index + 1}
@@ -69,7 +69,7 @@ function ConditionalRecordingSettings({
                 <span>OR</span>
               </div>
             ) : null}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>

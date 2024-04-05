@@ -161,6 +161,7 @@ function FilterModal(props: Props) {
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
     filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys)
+  );
 
   const isResultEmpty =
     (!filterSearchList || Object.keys(filterSearchList).length === 0) &&
