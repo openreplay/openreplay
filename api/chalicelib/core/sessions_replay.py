@@ -121,7 +121,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
-                if data["platform"] == 'ios':
+                if data["platform"] == 'ios' or data["platform"] == 'android':
                     data['mobsUrl'] = []
                     data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
                                                                     check_existence=False)
