@@ -51,8 +51,8 @@ function Session({
 		clearLogs()
 		sessionStore.resetUserFilter();
 	} ,[])
-
-	const player = session.platform === 'ios' ? <MobilePlayer /> : <WebPlayer />
+	
+	const player = session.isMobileNative ? <MobilePlayer /> : <WebPlayer />
 	return (
 		<NoContent
 			show={ hasErrors }

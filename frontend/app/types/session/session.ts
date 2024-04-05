@@ -134,6 +134,7 @@ export interface ISession {
   userEvents: any[];
   timezone?: string;
   videoURL?: string[]
+  isMobileNative?: boolean
 }
 
 const emptyValues = {
@@ -217,6 +218,7 @@ export default class Session {
   frustrations: Array<IIssue | InjectedEvent>
   timezone?: ISession['timezone'];
   platform: ISession['platform'];
+  isMobileNative?: ISession['isMobileNative'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
@@ -304,7 +306,7 @@ export default class Session {
 
     Object.assign(this, {
       ...session,
-      isIOS: session.platform === 'ios',
+      isMobileNative: ['ios', 'android'].includes(session.platform),
       errors: exceptions,
       siteId: projectId,
       events,
