@@ -99,7 +99,7 @@ jobs:
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
         echo Services: "${{ github.event.inputs.services }}"
-        IFS=',' read -ra SERVICES <<< "chalice,frontend,http"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
         # Build FOSS
         for SERVICE in "${SERVICES[@]}"; do
           # Check if service is backend
