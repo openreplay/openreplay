@@ -28,8 +28,8 @@ jobs:
         git fetch --tags
         git checkout main
         git push origin HEAD:refs/tags/$(git describe --tags `git rev-list --tags --max-count=1`) --force
-    - name: Debug Job
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      with:
-        limit-access-to-actor: true
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   with:
+    #     limit-access-to-actor: true

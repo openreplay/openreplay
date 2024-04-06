@@ -8,10 +8,6 @@ on:
         description: 'Comma separated names of services to build(in small letters).'
         required: true
         default: 'chalice,frontend'
-  push:
-    branches:
-      - gh-actions
-
 
 name: Build patches from main branch, Raise PR to Main, and Push to tag
 
@@ -140,14 +136,14 @@ jobs:
         pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
         pr_body: "This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID."
 
-    - name: Debug Job
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      env:
-        DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
-        DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
-        MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
-        MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
-        MSAAS_REPO_FOLDER: /tmp/msaas
-      with:
-        limit-access-to-actor: true
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+    #     DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+    #     MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+    #     MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+    #     MSAAS_REPO_FOLDER: /tmp/msaas
+    #   with:
+    #     limit-access-to-actor: true
