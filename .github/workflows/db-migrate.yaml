@@ -140,12 +140,13 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: staging
 
-    # - name: Debug Job
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #     AWS_REGION: eu-central-1
-    #     AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+   # - name: Debug Job
+   #   # if: ${{ failure() }}
+   #   uses: mxschmitt/action-tmate@v3
+   #   env:
+   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+   #     IMAGE_TAG: ${{ github.sha }}-ee
+   #     ENVIRONMENT: staging
+   #    with:
+   #      limit-access-to-actor: true
 
