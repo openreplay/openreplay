@@ -133,7 +133,7 @@ jobs:
         github_token: ${{ secrets.ACTIONS_COMMMIT_TOKEN }}
         source_branch: ${{ env.BRANCH_NAME }}
         destination_branch: "main"
-        pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
+        pr_title: "Updated patch build from main ${{ env.HEAD_COMMIT_ID }}"
         pr_body: | 
           This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID.
           Once this PR is merged, To update the latest tag, run the following workflow.
