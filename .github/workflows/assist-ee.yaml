@@ -118,11 +118,12 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
-    # - name: Debug Job
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}
-    #     ENVIRONMENT: staging
-    #
+   # - name: Debug Job
+   #   # if: ${{ failure() }}
+   #   uses: mxschmitt/action-tmate@v3
+   #   env:
+   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+   #     IMAGE_TAG: ${{ github.sha }}-ee
+   #     ENVIRONMENT: staging
+   #    with:
+   #      iimit-access-to-actor: true
