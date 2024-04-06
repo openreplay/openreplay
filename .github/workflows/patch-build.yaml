@@ -134,7 +134,10 @@ jobs:
         source_branch: ${{ env.BRANCH_NAME }}
         destination_branch: "main"
         pr_title: "Updated patch build from main $HEAD_COMMIT_ID"
-        pr_body: "This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID."
+        pr_body: | 
+          This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID.
+          Once this PR is merged, To update the latest tag, run the following workflow.
+          https://github.com/openreplay/openreplay/actions/workflows/update-tag.yaml
 
     # - name: Debug Job
     #   if: ${{ failure() }}
