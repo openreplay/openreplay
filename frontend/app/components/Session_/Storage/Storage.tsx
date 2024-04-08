@@ -5,8 +5,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
-// @ts-ignore
-import { diff } from 'deep-diff';
+import diff from 'microdiff'
 import { STORAGE_TYPES, selectStorageList, selectStorageListNow, selectStorageType } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
@@ -14,7 +13,7 @@ import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
 import logger from "App/logger";
-import ReduxViewer from './Redux'
+import ReduxViewer from './ReduxViewer'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -130,26 +129,12 @@ function Storage(props: Props) {
   };
 
   const renderDiffs = (diff: Record<string, any>, i: number) => {
-    const path = createPath(diff);
+    const path = diff.path.join('.')
     return (
       <React.Fragment key={i}>
         <DiffRow path={path} diff={diff} />
       </React.Fragment>
     );
-  };
-
-  const createPath = (diff: Record<string, any>) => {
-    let path: string[] = [];
-
-    if (diff.path) {
-      path = path.concat(diff.path);
-    }
-    if (typeof diff.index !== 'undefined') {
-      path.push(diff.index);
-    }
-
-    const pathStr = path.length ? path.join('.') : '';
-    return pathStr;
   };
 
   const ensureString = (actionType: string) => {

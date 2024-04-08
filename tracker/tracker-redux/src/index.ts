@@ -1,6 +1,5 @@
 import { App, Messages } from '@openreplay/tracker';
 import { Encoder, murmur } from './syncod-v2/index.js';
-import diff from 'microdiff';
 
 export interface Options {
   actionFilter: (action: any) => boolean;

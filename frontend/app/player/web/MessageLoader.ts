@@ -67,7 +67,7 @@ export default class MessageLoader {
         msgs.forEach((msg) => {
           if (msg.tp === MType.Redux) {
             if (msg.actionTime) {
-              msg.time = msg.actionTime;
+              msg.time = msg.actionTime - this.session.startedAt;
             }
           }
           if (

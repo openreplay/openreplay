@@ -33,10 +33,21 @@ function WebPlayer(props: any) {
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
+  const [windowActive, setWindowActive] = useState(!document.hidden);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
+
+  if (windowActive) {
+    const handleActivation = () => {
+      if (!document.hidden) {
+        setWindowActive(true);
+        document.removeEventListener('visibilitychange', handleActivation);
+      }
+    }
+    document.addEventListener('visibilitychange', handleActivation);
+  }
 
   useEffect(() => {
     playerInst = undefined;
@@ -79,24 +90,32 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (noteItem !== undefined) {
       contextValue.player.pause();
-    }
+    } else {
+      if (activeTab === '' && ready && contextValue.player && windowActive) {
+        const jumpToTime = props.query.get('jumpto');
+        const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
-    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
-      const jumpToTime = props.query.get('jumpto');
-      const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
-
-      if (jumpToTime || shouldAdjustOffset) {
-        if (jumpToTime > visualOffset) {
-          contextValue.player.jump(parseInt(String(jumpToTime - startedAt)));
-        } else {
-          contextValue.player.jump(visualOffset);
-          setAdjusted(true);
+        if (jumpToTime || shouldAdjustOffset) {
+          if (jumpToTime > visualOffset) {
+            contextValue.player.jump(parseInt(String(jumpToTime - startedAt)));
+          } else {
+            contextValue.player.jump(visualOffset);
+            setAdjusted(true);
+          }
         }
-      }
 
-      contextValue.player.play();
+        contextValue.player.play();
+      }
     }
-  }, [activeTab, noteItem, visualOffset, messagesProcessed]);
+  }, [activeTab, noteItem, visualOffset, ready, windowActive]);
+
+  useEffect(() => {
+    if (cssLoading) {
+      contextValue.player?.pause();
+    } else if (ready) {
+      contextValue.player?.play();
+    }
+  }, [cssLoading, ready])
 
   React.useEffect(() => {
     if (activeTab === 'Click Map') {

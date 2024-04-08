@@ -9,7 +9,7 @@ function updateObjectLink(obj: any): any {
 
 interface Props {
   src: any;
-  className: string;
+  className?: string;
   dark?: boolean;
   theme?:
     | 'default'
