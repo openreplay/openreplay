@@ -20,6 +20,10 @@ $fn_def$, :'next_version')
 --
 DROP FUNCTION IF EXISTS events.funnel(steps integer[], m integer);
 
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS screen_width  integer DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS screen_height integer DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next

@@ -442,6 +442,8 @@ CREATE TABLE public.sessions
     base_referrer           text         NULL     DEFAULT NULL,
     file_key                bytea                 DEFAULT NULL,
     has_ut_test             boolean               DEFAULT FALSE,
+    screen_width            integer               DEFAULT NULL,
+    screen_height           integer               DEFAULT NULL,
     metadata_1              text                  DEFAULT NULL,
     metadata_2              text                  DEFAULT NULL,
     metadata_3              text                  DEFAULT NULL,
