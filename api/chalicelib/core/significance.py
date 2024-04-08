@@ -56,23 +56,25 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             filter_type = f.type
             f_k = f"f_value{i}"
             values = {**values,
-                      **sh.multi_values(helper.values_for_operator(value=f.value, op=f.operator),
-                                        value_key=f_k)}
+                      **sh.multi_values(f.value, value_key=f_k)}
+            is_not = False
+            if sh.is_negation_operator(f.operator):
+                is_not = True
             if filter_type == schemas.FilterType.user_browser:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
             elif filter_type == schemas.FilterType.duration:
                 if len(f.value) > 0 and f.value[0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
@@ -84,7 +86,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, value_key=f_k))
+                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -93,20 +95,20 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                     first_stage_extra_constraints.append(
                         sh.multi_conditions(
                             f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
-                            value_key=f_k))
+                            is_not=is_not, value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
     i = -1
     for s in stages:
