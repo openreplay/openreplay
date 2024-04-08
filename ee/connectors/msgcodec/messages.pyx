@@ -548,19 +548,17 @@ cdef class StateAction(PyMessage):
         self.type = type
 
 
-cdef class Redux(PyMessage):
+cdef class ReduxDeprecated(PyMessage):
     cdef public int __id__
     cdef public str action
     cdef public str state
     cdef public unsigned long duration
-    cdef public unsigned long action_time
 
-    def __init__(self, str action, str state, unsigned long duration, unsigned long action_time):
+    def __init__(self, str action, str state, unsigned long duration):
         self.__id__ = 44
         self.action = action
         self.state = state
         self.duration = duration
-        self.action_time = action_time
 
 
 cdef class Vuex(PyMessage):
@@ -1203,6 +1201,21 @@ cdef class TagTrigger(PyMessage):
     def __init__(self, long tag_id):
         self.__id__ = 120
         self.tag_id = tag_id
+
+
+cdef class Redux(PyMessage):
+    cdef public int __id__
+    cdef public str action
+    cdef public str state
+    cdef public unsigned long duration
+    cdef public unsigned long action_time
+
+    def __init__(self, str action, str state, unsigned long duration, unsigned long action_time):
+        self.__id__ = 121
+        self.action = action
+        self.state = state
+        self.duration = duration
+        self.action_time = action_time
 
 
 cdef class IssueEvent(PyMessage):
