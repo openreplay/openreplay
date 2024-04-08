@@ -19,8 +19,12 @@ $fn_def$, :'next_version')
 
 --
 DROP FUNCTION IF EXISTS events.funnel(steps integer[], m integer);
-ALTER TABLE public.assist_records
+ALTER TABLE IF EXISTS public.assist_records
     ALTER COLUMN session_id DROP NOT NULL;
+
+ALTER TABLE IF EXISTS public.sessions
+    ADD COLUMN IF NOT EXISTS screen_width  integer DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS screen_height integer DEFAULT NULL;
 
 COMMIT;
 

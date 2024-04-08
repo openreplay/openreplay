@@ -144,6 +144,12 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     utm_campaign Nullable(String),
     user_id Nullable(String),
     user_anonymous_id Nullable(String),
+    issue_types                    Array(LowCardinality(String)),
+    referrer Nullable(String),
+    base_referrer Nullable(String) MATERIALIZED lower(concat(domain(referrer), path(referrer))),
+    issue_score Nullable(UInt32),
+    screen_width Nullable(Int16),
+    screen_height Nullable(Int16),
     metadata_1 Nullable(String),
     metadata_2 Nullable(String),
     metadata_3 Nullable(String),
@@ -154,10 +160,6 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     metadata_8 Nullable(String),
     metadata_9 Nullable(String),
     metadata_10 Nullable(String),
-    issue_types                    Array(LowCardinality(String)),
-    referrer Nullable(String),
-    base_referrer Nullable(String) MATERIALIZED lower(concat(domain(referrer), path(referrer))),
-    issue_score Nullable(UInt32),
     _timestamp                     DateTime     DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
