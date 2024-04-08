@@ -65,7 +65,10 @@ function WebPlayer(props: any) {
     }
   }, [session.sessionId]);
 
-  const { firstVisualEvent: visualOffset, messagesProcessed } = contextValue.store?.get() || {};
+  const { firstVisualEvent: visualOffset, messagesProcessed, tabStates, ready } = contextValue.store?.get() || {};
+  const cssLoading = ready && tabStates ? Object.values(tabStates).some(
+    ({ cssLoading }) => cssLoading
+  ) : true
 
   React.useEffect(() => {
     if (messagesProcessed && (session.events.length > 0 || session.errors.length > 0)) {

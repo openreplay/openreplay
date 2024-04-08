@@ -282,7 +282,7 @@ export default class IOSMessageManager implements IMessageManager {
   setMessagesLoading = (messagesLoading: boolean) => {
     this.screen.display(!messagesLoading);
     // @ts-ignore idk
-    this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
+    this.state.update({ messagesLoading, ready: !messagesLoading });
   };
 
   private setSize({ height, width }: { height: number; width: number }) {
