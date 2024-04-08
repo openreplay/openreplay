@@ -65,6 +65,11 @@ export default class MessageLoader {
         let artificialStartTime = Infinity;
         let startTimeSet = false;
         msgs.forEach((msg) => {
+          if (msg.tp === MType.Redux) {
+            if (msg.actionTime) {
+              msg.time = msg.actionTime;
+            }
+          }
           if (
             msg.tp === MType.CreateDocument &&
             msg.time !== undefined &&
