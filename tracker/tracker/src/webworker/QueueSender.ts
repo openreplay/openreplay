@@ -90,7 +90,6 @@ export default class QueueSender {
 
     const headers = {
       Authorization: `Bearer ${this.token as string}`,
-      'X-Openreplay-Batch': `${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`,
     } as Record<string, string>
 
     if (isCompressed) {
@@ -107,7 +106,7 @@ export default class QueueSender {
       return
     }
 
-    fetch(this.ingestURL, {
+    fetch(`${this.ingestURL}?batch=${this.pageNo ?? 'noPageNum'}_${batchNumStr ?? 'noBatchNum'}`, {
       body: batch,
       method: 'POST',
       headers,

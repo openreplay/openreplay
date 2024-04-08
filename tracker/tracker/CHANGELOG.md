@@ -1,3 +1,7 @@
+# 12.0.9
+
+- moved logging to query
+
 # 12.0.8
 
 - better logging for network batches
