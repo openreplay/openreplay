@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import styles from 'Components/Session_/session.module.css';
@@ -22,12 +22,18 @@ interface IProps {
 
 function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps) {
   const { store } = React.useContext(PlayerContext)
+  const [fullView, setFullView] = React.useState(false)
 
   const {
     error,
   } = store.get()
 
   const hasError = !!error
+
+  useEffect(() => {
+    const isFullView = new URLSearchParams(location.search).get('fullview')
+    setFullView(isFullView === 'true');
+  }, [session.sessionId]);
 
   const sessionDays = countDaysFrom(session.startedAt);
   return (
@@ -60,7 +66,7 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
             style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)' } : undefined}
           >
             <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
-              <PlayerBlock activeTab={activeTab} />
+              <PlayerBlock activeTab={activeTab} fullView={fullView} />
             </div>
           </div>
           {activeTab !== '' && (
