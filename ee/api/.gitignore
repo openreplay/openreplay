@@ -227,6 +227,7 @@ Pipfile.lock
 /chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_mobs.py
+/chalicelib/core/significance.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
