@@ -1,7 +1,7 @@
 # Keep this version to not have conflicts between requests and boto3
 urllib3==1.26.16
 requests==2.31.0
-boto3==1.34.78
+boto3==1.34.79
 pyjwt==2.8.0
 psycopg2-binary==2.9.9
 psycopg[pool,binary]==3.1.18
