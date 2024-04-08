@@ -221,6 +221,7 @@ type TrRedux = [
   action: string,
   state: string,
   duration: number,
+  actionTime: number,
 ]
 
 type TrVuex = [
@@ -730,6 +731,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
+        actionTime: tMsg[4],
       }
     }
     

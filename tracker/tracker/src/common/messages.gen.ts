@@ -293,6 +293,7 @@ export type Redux = [
   /*action:*/ string,
   /*state:*/ string,
   /*duration:*/ number,
+  /*actionTime:*/ number,
 ]
 
 export type Vuex = [

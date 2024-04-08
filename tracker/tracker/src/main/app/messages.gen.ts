@@ -400,12 +400,14 @@ export function Redux(
   action: string,
   state: string,
   duration: number,
+  actionTime: number,
 ): Messages.Redux {
   return [
     Messages.Type.Redux,
     action,
     state,
     duration,
+    actionTime,
   ]
 }
 

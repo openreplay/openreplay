@@ -244,6 +244,7 @@ export interface RawRedux {
   action: string,
   state: string,
   duration: number,
+  actionTime: number,
 }
 
 export interface RawVuex {

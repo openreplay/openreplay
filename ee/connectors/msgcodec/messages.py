@@ -373,10 +373,11 @@ class StateAction(Message):
 class Redux(Message):
     __id__ = 44
 
-    def __init__(self, action, state, duration):
+    def __init__(self, action, state, duration, action_time):
         self.action = action
         self.state = state
         self.duration = duration
+        self.action_time = action_time
 
 
 class Vuex(Message):

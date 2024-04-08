@@ -665,6 +665,8 @@ export default class App {
           deviceMemory,
           jsHeapSizeLimit,
           timezone: getTimezone(),
+          width: window.innerWidth,
+          height: window.innerHeight,
         }),
       })
       const {

@@ -1106,18 +1106,20 @@ func (msg *StateAction) TypeID() int {
 
 type Redux struct {
 	message
-	Action   string
-	State    string
-	Duration uint64
+	Action     string
+	State      string
+	Duration   uint64
+	ActionTime uint64
 }
 
 func (msg *Redux) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Action)+len(msg.State))
+	buf := make([]byte, 41+len(msg.Action)+len(msg.State))
 	buf[0] = 44
 	p := 1
 	p = WriteString(msg.Action, buf, p)
 	p = WriteString(msg.State, buf, p)
 	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.ActionTime, buf, p)
 	return buf[:p]
 }
 

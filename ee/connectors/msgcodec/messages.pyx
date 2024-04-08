@@ -553,12 +553,14 @@ cdef class Redux(PyMessage):
     cdef public str action
     cdef public str state
     cdef public unsigned long duration
+    cdef public unsigned long action_time
 
-    def __init__(self, str action, str state, unsigned long duration):
+    def __init__(self, str action, str state, unsigned long duration, unsigned long action_time):
         self.__id__ = 44
         self.action = action
         self.state = state
         self.duration = duration
+        self.action_time = action_time
 
 
 cdef class Vuex(PyMessage):

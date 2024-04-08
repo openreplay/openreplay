@@ -651,6 +651,9 @@ func DecodeRedux(reader BytesReader) (Message, error) {
 	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
+	if msg.ActionTime, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
 	return msg, err
 }
 

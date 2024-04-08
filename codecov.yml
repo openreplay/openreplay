@@ -8,3 +8,7 @@ ignore:
   - "**/*/build/**"
   - "**/*/.test.*"
   - "**/*/version.ts"
+review:
+  poem: false
+  review_status: false
+  collapse_walkthrough: true
