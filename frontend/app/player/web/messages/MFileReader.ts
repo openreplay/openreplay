@@ -56,6 +56,9 @@ export default class MFileReader extends RawMessageReader {
    * */
   private readRawMessage(): RawMessage | null {
     try {
+      if (!this.noIndexes) {
+        this.skip(8)
+      }
       return super.readMessage()
     } catch (e) {
       this.logger.error("Read message error:", e)
