@@ -28,7 +28,7 @@ import type {
   RawFetch,
   RawProfiler,
   RawOTable,
-  RawRedux,
+  RawReduxDeprecated,
   RawVuex,
   RawMobX,
   RawNgRx,
@@ -64,6 +64,7 @@ import type {
   RawTabData,
   RawCanvasNode,
   RawTagTrigger,
+  RawRedux,
   RawIosEvent,
   RawIosScreenChanges,
   RawIosClickEvent,
@@ -127,7 +128,7 @@ export type Profiler = RawProfiler & Timed
 
 export type OTable = RawOTable & Timed
 
-export type Redux = RawRedux & Timed
+export type ReduxDeprecated = RawReduxDeprecated & Timed
 
 export type Vuex = RawVuex & Timed
 
@@ -198,6 +199,8 @@ export type TabData = RawTabData & Timed
 export type CanvasNode = RawCanvasNode & Timed
 
 export type TagTrigger = RawTagTrigger & Timed
+
+export type Redux = RawRedux & Timed
 
 export type IosEvent = RawIosEvent & Timed
 

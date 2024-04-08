@@ -134,8 +134,8 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1])
     break
 
-    case Messages.Type.Redux:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
+    case Messages.Type.ReduxDeprecated:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
     case Messages.Type.Vuex:
@@ -296,6 +296,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.TagTrigger:
       return  this.int(msg[1])
+    break
+
+    case Messages.Type.Redux:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
     break
 
     }

@@ -382,11 +382,10 @@ class MessageCodec(Codec):
             )
 
         if message_id == 44:
-            return Redux(
+            return ReduxDeprecated(
                 action=self.read_string(reader),
                 state=self.read_string(reader),
-                duration=self.read_uint(reader),
-                action_time=self.read_uint(reader)
+                duration=self.read_uint(reader)
             )
 
         if message_id == 45:
@@ -731,6 +730,14 @@ class MessageCodec(Codec):
         if message_id == 120:
             return TagTrigger(
                 tag_id=self.read_int(reader)
+            )
+
+        if message_id == 121:
+            return Redux(
+                action=self.read_string(reader),
+                state=self.read_string(reader),
+                duration=self.read_uint(reader),
+                action_time=self.read_uint(reader)
             )
 
         if message_id == 125:

@@ -639,9 +639,9 @@ func DecodeStateAction(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRedux(reader BytesReader) (Message, error) {
+func DecodeReduxDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &Redux{}
+	msg := &ReduxDeprecated{}
 	if msg.Action, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -649,9 +649,6 @@ func DecodeRedux(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.ActionTime, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1413,6 +1410,24 @@ func DecodeTagTrigger(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeRedux(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &Redux{}
+	if msg.Action, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.State, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ActionTime, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1954,7 +1969,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 42:
 		return DecodeStateAction(reader)
 	case 44:
-		return DecodeRedux(reader)
+		return DecodeReduxDeprecated(reader)
 	case 45:
 		return DecodeVuex(reader)
 	case 46:
@@ -2047,6 +2062,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeCanvasNode(reader)
 	case 120:
 		return DecodeTagTrigger(reader)
+	case 121:
+		return DecodeRedux(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:
