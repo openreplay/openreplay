@@ -168,9 +168,10 @@ export default class API {
             if (options.resetTabOnWindowOpen) {
               sessStorage.removeItem(options.session_tabid_key || '__openreplay_tabid')
             }
-            wOpen.call(window, ...args)
+            const result = wOpen.call(window, ...args)
             app.resetNextPageSession(false)
             sessStorage.setItem(options.session_tabid_key || '__openreplay_tabid', tabId)
+            return result
           }
         })
         app.attachStopCallback(() => {

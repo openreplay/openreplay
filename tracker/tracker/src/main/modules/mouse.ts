@@ -168,6 +168,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     mouseTarget = null
     selectorMap = {}
     if (checkIntervalId) {
+      // @ts-ignore
       clearInterval(checkIntervalId)
     }
   })
