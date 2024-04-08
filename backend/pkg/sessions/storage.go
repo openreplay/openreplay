@@ -41,7 +41,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			tracker_version, issue_score,
 			platform,
 			user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
-			user_id, user_state, user_city, timezone
+			user_id, user_state, user_city, timezone, screen_width, screen_height
 		) VALUES (
 			$1, $2, $3,
 			$4, $5, $6, $7, 
@@ -50,7 +50,7 @@ func (s *storageImpl) Add(sess *Session) error {
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, 0), NULLIF($17, 0::bigint),
-			NULLIF(LEFT($18, 8000), ''), NULLIF($19, ''), NULLIF($20, ''), $21
+			NULLIF(LEFT($18, 8000), ''), NULLIF($19, ''), NULLIF($20, ''), $21, $22, $23
 		)`,
 		sess.SessionID, sess.ProjectID, sess.Timestamp,
 		sess.UserUUID, sess.UserDevice, sess.UserDeviceType, sess.UserCountry,
@@ -59,7 +59,7 @@ func (s *storageImpl) Add(sess *Session) error {
 		sess.TrackerVersion, sess.Timestamp/1000,
 		sess.Platform,
 		sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
-		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone,
+		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone, sess.ScreenWidth, sess.ScreenHeight,
 	)
 }
 

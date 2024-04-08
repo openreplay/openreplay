@@ -105,13 +105,11 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
 		geoInfo := e.ExtractGeoData(r)
-		deviceType, platform, os, screen := ios.GetIOSDeviceType(req.UserDevice), "ios", "IOS", ""
+		deviceType, platform, os := ios.GetIOSDeviceType(req.UserDevice), "ios", "IOS"
 		if req.Platform != "" && req.Platform != "ios" {
 			deviceType = req.UserDeviceType
 			platform = req.Platform
 			os = "Android"
-			screen = fmt.Sprintf("%d:%d", req.Width, req.Height)
-			e.log.Info(r.Context(), "mobile screen size: %s", screen)
 		}
 
 		if !req.DoNotRecord {
@@ -133,6 +131,8 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				UserCity:             geoInfo.City,
 				UserDeviceMemorySize: req.DeviceMemory,
 				UserDeviceHeapSize:   req.DeviceMemory,
+				ScreenWidth:          req.Width,
+				ScreenHeight:         req.Height,
 			}); err != nil {
 				e.log.Warn(r.Context(), "failed to add mobile session to DB: %s", err)
 			}
