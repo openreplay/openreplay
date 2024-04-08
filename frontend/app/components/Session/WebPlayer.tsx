@@ -19,11 +19,11 @@ import { toast } from 'react-toastify';
 const TABS = {
   EVENTS: 'Activity',
   CLICKMAP: 'Click Map',
-  INSPECTOR: 'Tag',
+  INSPECTOR: 'Tag'
 };
 const UXTTABS = {
   EVENTS: TABS.EVENTS
-}
+};
 
 let playerInst: IPlayerContext['player'] | undefined;
 
@@ -36,6 +36,7 @@ function WebPlayer(props: any) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
+  const [fullView, setFullView] = useState(false);
 
   useEffect(() => {
     playerInst = undefined;
@@ -115,14 +116,19 @@ function WebPlayer(props: any) {
 
   useEffect(() => {
     if (uxtestingStore.isUxt()) {
-      setActiveTab('EVENTS')
+      setActiveTab('EVENTS');
     }
-  }, [uxtestingStore.isUxt()])
+  }, [uxtestingStore.isUxt()]);
 
   const onNoteClose = () => {
     setNoteItem(undefined);
     contextValue.player.play();
   };
+
+  useEffect(() => {
+    const isFullView = new URLSearchParams(location.search).get('fullview')
+    setFullView(isFullView === 'true');
+  }, [session.sessionId]);
 
   if (!session.sessionId)
     return (
@@ -133,20 +139,22 @@ function WebPlayer(props: any) {
           top: '50%',
           left: '50%',
           transform: 'translateX(-50%)',
-          height: 75,
+          height: 75
         }}
       />
     );
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <PlayerBlockHeader
-        // @ts-ignore TODO?
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        tabs={uxtestingStore.isUxt() ? UXTTABS : TABS}
-        fullscreen={fullscreen}
-      />
+      {!fullView && (
+        <PlayerBlockHeader
+          // @ts-ignore TODO?
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          tabs={uxtestingStore.isUxt() ? UXTTABS : TABS}
+          fullscreen={fullscreen}
+        />
+      )}
       {/* @ts-ignore  */}
       {contextValue.player ? (
         <PlayerContent
@@ -178,11 +186,11 @@ export default connect(
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
     showEvents: state.get('showEvents'),
     members: state.getIn(['members', 'list']),
-    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
+    startedAt: state.getIn(['sessions', 'current']).startedAt || 0
   }),
   {
     toggleFullscreen,
     closeBottomBlock,
-    fetchList,
+    fetchList
   }
 )(withLocationHandlers()(observer(WebPlayer)));
