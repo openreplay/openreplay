@@ -14,6 +14,7 @@ import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
 import logger from "App/logger";
+import ReduxViewer from './Redux'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -239,115 +240,121 @@ function Storage(props: Props) {
 
   const { hintIsHidden } = props;
 
+  if (type === STORAGE_TYPES.REDUX) {
+    return <ReduxViewer />
+  }
   return (
     <BottomBlock>
-      <BottomBlock.Header>
-        {list.length > 0 && (
-          <div className="flex w-full">
-            <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
-              {'STATE'}
-            </h3>
-            {showDiffs ? (
-              <h3 style={{ width: '39%' }} className="font-semibold">
-                DIFFS
+      {/*@ts-ignore*/}
+      <>
+        <BottomBlock.Header>
+          {list.length > 0 && (
+            <div className="flex w-full">
+              <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
+                {'STATE'}
               </h3>
-            ) : null}
-            <h3 style={{ width: '30%' }} className="font-semibold">
-              {getActionsName(type)}
-            </h3>
-            <h3 style={{ paddingRight: 30, marginLeft: 'auto' }} className="font-semibold">
-              <Tooltip title="Time to execute">TTE</Tooltip>
-            </h3>
-          </div>
-        )}
-      </BottomBlock.Header>
-      <BottomBlock.Content className="flex">
-        <NoContent
-          title="Nothing to display yet"
-          subtext={
-            !hintIsHidden ? (
-              <>
-                {
-                  'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '
-                }
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/redux"
-                  target="_blank"
-                >
-                  Redux
-                </a>
-                {', '}
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/vuex"
-                  target="_blank"
-                >
-                  VueX
-                </a>
-                {', '}
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/pinia"
-                  target="_blank"
-                >
-                  Pinia
-                </a>
-                {', '}
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/zustand"
-                  target="_blank"
-                >
-                  Zustand
-                </a>
-                {', '}
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/mobx"
-                  target="_blank"
-                >
-                  MobX
-                </a>
-                {' and '}
-                <a
-                  className="underline color-teal"
-                  href="https://docs.openreplay.com/plugins/ngrx"
-                  target="_blank"
-                >
-                  NgRx
-                </a>
-                .
-                <br />
-                <br />
-                <button className="color-teal" onClick={() => props.hideHint('storage')}>
-                  Got It!
-                </button>
-              </>
-            ) : null
-          }
-          size="small"
-          show={list.length === 0}
-        >
-          <div className="ph-10 scroll-y" style={{ width: '25%' }}>
-            {list.length === 0 ? (
-              <div className="color-gray-light font-size-16 mt-20 text-center">
-                {'Empty state.'}
-              </div>
-            ) : (
-              <JSONTree collapsed={2} src={stateObject}
-              />
-            )}
-          </div>
-          <div className="flex" style={{ width: '75%' }}>
-            <Autoscroll className="ph-10">
-              {decodedList.map((item: Record<string, any>, i: number) =>
-                renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined)
+              {showDiffs ? (
+                <h3 style={{ width: '39%' }} className="font-semibold">
+                  DIFFS
+                </h3>
+              ) : null}
+              <h3 style={{ width: '30%' }} className="font-semibold">
+                {getActionsName(type)}
+              </h3>
+              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }} className="font-semibold">
+                <Tooltip title="Time to execute">TTE</Tooltip>
+              </h3>
+            </div>
+          )}
+        </BottomBlock.Header>
+        <BottomBlock.Content className="flex">
+          <NoContent
+            title="Nothing to display yet"
+            subtext={
+              !hintIsHidden ? (
+                <>
+                  {
+                    'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '
+                  }
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/redux"
+                    target="_blank"
+                  >
+                    Redux
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/vuex"
+                    target="_blank"
+                  >
+                    VueX
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/pinia"
+                    target="_blank"
+                  >
+                    Pinia
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/zustand"
+                    target="_blank"
+                  >
+                    Zustand
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/mobx"
+                    target="_blank"
+                  >
+                    MobX
+                  </a>
+                  {' and '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/ngrx"
+                    target="_blank"
+                  >
+                    NgRx
+                  </a>
+                  .
+                  <br />
+                  <br />
+                  <button className="color-teal" onClick={() => props.hideHint('storage')}>
+                    Got It!
+                  </button>
+                </>
+              ) : null
+            }
+            size="small"
+            show={list.length === 0}
+          >
+            <div className="ph-10 scroll-y" style={{ width: '25%' }}>
+              {list.length === 0 ? (
+                <div className="color-gray-light font-size-16 mt-20 text-center">
+                  {'Empty state.'}
+                </div>
+              ) : (
+                <JSONTree collapsed={2} src={stateObject}
+                />
               )}
-            </Autoscroll>
-          </div>
-        </NoContent>
-      </BottomBlock.Content>
+            </div>
+            <div className="flex" style={{ width: '75%' }}>
+              <Autoscroll className="ph-10">
+                {decodedList.map((item: Record<string, any>, i: number) =>
+                  renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined)
+                )}
+              </Autoscroll>
+            </div>
+          </NoContent>
+        </BottomBlock.Content>
+      </>
     </BottomBlock>
   );
 }
