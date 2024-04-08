@@ -1112,8 +1112,12 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **sh.multi_values(c.value, value_key=e_k)}
-                _extra_or_condition.append(sh.multi_conditions(f"ev.{events.EventType.LOCATION.column} {op} %({e_k})s",
-                                                               c.value, value_key=e_k))
+                if c.type == events.EventType.LOCATION.ui_type:
+                    _extra_or_condition.append(
+                        sh.multi_conditions(f"ev.{events.EventType.LOCATION.column} {op} %({e_k})s",
+                                            c.value, value_key=e_k))
+                else:
+                    logging.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     query_part = f"""\

@@ -44,7 +44,10 @@ class ClickHouseClient:
             logging.error("--------- CH EXCEPTION -----------")
             logging.error(err)
             logging.error("--------- CH QUERY EXCEPTION -----------")
-            logging.error(self.format(query=query, params=params).replace('\n','\\n'))
+            logging.error(self.format(query=query, params=params)
+                          .replace('\n', '\\n')
+                          .replace('    ', ' ')
+                          .replace('        ', ' '))
             logging.error("--------------------")
             raise err
 

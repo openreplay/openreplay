@@ -364,13 +364,30 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.project_id = %(project_id)s
                               AND ev.event_type = 'LOCATION'"""
         extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.location:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
                                                   user_id=None, extra_event=extra_event,
-                                                  extra_deduplication=extra_deduplication)
+                                                  extra_deduplication=extra_deduplication,
+                                                  extra_conditions=extra_conditions)
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
@@ -523,7 +540,8 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[]):
+                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[],
+                          extra_conditions=None):
     if issue:
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
@@ -1489,9 +1507,24 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
     if extra_event:
         extra_event = f"INNER JOIN ({extra_event}) AS extra_event USING(session_id)"
-        # extra_join = f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
-        # extra_constraints.append("ev.timestamp>=%(startDate)s")
-        # extra_constraints.append("ev.timestamp<=%(endDate)s")
+        if extra_conditions and len(extra_conditions) > 0:
+            _extra_or_condition = []
+            for i, c in enumerate(extra_conditions):
+                if _isAny_opreator(c.operator):
+                    continue
+                e_k = f"ec_value{i}"
+                op = __get_sql_operator(c.operator)
+                c.value = helper.values_for_operator(value=c.value, op=c.operator)
+                full_args = {**full_args,
+                             **_multiple_values(c.value, value_key=e_k)}
+                if c.type == events.EventType.LOCATION.ui_type:
+                    _extra_or_condition.append(
+                        _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                             c.value, value_key=e_k))
+                else:
+                    logging.warning(f"unsupported extra_event type:${c.type}")
+            if len(_extra_or_condition) > 0:
+                extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:
         extra_event = ""
     if errors_only:
