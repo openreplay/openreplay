@@ -483,7 +483,8 @@ cdef class MessageCodec:
             return Redux(
                 action=self.read_string(reader),
                 state=self.read_string(reader),
-                duration=self.read_uint(reader)
+                duration=self.read_uint(reader),
+                action_time=self.read_uint(reader)
             )
 
         if message_id == 45:

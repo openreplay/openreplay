@@ -16,19 +16,26 @@
   "main": "./lib/index.js",
   "scripts": {
     "lint": "prettier --write 'src/**/*.ts' README.md && tsc --noEmit",
-    "build": "npm run build-es && npm run build-cjs",
+    "build": "npm run build-es && npm run build-cjs && bun run rollup  && bun run compile",
+    "compile": "node --experimental-modules --experimental-json-modules script/compile.cjs",
     "build-es": "rm -Rf lib && tsc",
+    "rollup": "rollup --config rollup.config.js",
     "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs'",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@openreplay/tracker": ">=12.0.6",
+    "@openreplay/tracker": ">=13.0.0",
     "redux": "^4.0.0"
   },
   "devDependencies": {
     "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
-    "typescript": "^4.6.0-dev.20211126"
+    "typescript": "^4.6.0-dev.20211126",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "replace-in-files": "^3.0.0",
+    "rollup": "^4.14.0",
+    "rollup-plugin-terser": "^7.0.2"
   }
 }

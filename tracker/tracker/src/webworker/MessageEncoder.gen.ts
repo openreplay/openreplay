@@ -135,7 +135,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.Redux:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
+      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
     break
 
     case Messages.Type.Vuex:

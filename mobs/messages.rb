@@ -228,6 +228,7 @@ message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
+  uint 'ActionTime'
 end
 message 45, 'Vuex', :replayer => :devtools do
   string 'Mutation'

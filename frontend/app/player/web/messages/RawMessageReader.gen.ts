@@ -303,11 +303,13 @@ export default class RawMessageReader extends PrimitiveReader {
       const action = this.readString(); if (action === null) { return resetPointer() }
       const state = this.readString(); if (state === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const actionTime = this.readUint(); if (actionTime === null) { return resetPointer() }
       return {
         tp: MType.Redux,
         action,
         state,
         duration,
+        actionTime,
       };
     }
 
