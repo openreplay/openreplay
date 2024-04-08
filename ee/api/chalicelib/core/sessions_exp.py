@@ -356,6 +356,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                    density=density))
     extra_event = None
     extra_deduplication = []
+    extra_conditions = None
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev

@@ -63,6 +63,7 @@ export interface State extends ScreenState {
   currentTab: string;
   tabs: Set<string>;
   tabChangeEvents: TabChangeEvent[];
+  sessionStart: number;
 }
 
 export const visualChanges = [
@@ -90,6 +91,7 @@ export default class MessageManager {
     currentTab: '',
     tabs: new Set(),
     tabChangeEvents: [],
+    sessionStart: 0,
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -116,6 +118,7 @@ export default class MessageManager {
   ) {
     this.mouseMoveManager = new MouseMoveManager(screen);
     this.sessionStart = this.session.startedAt;
+    state.update({ sessionStart: this.sessionStart });
     this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
   }
 
@@ -325,8 +328,9 @@ export default class MessageManager {
       this.updateChangeEvents();
     }
     this.screen.display(!messagesLoading);
-    // @ts-ignore idk
-    this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
+    const cssLoading = Object.values(this.state.get().tabStates).some((tab) => tab.cssLoading);
+    const isReady = !messagesLoading && !cssLoading
+    this.state.update({ messagesLoading, ready: isReady});
   };
 
   decodeMessage(msg: Message) {

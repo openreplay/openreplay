@@ -245,6 +245,8 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 				UserDeviceMemorySize: sessionStart.UserDeviceMemorySize,
 				UserDeviceHeapSize:   sessionStart.UserDeviceHeapSize,
 				UserID:               &sessionStart.UserID,
+				ScreenWidth:          req.Width,
+				ScreenHeight:         req.Height,
 			}); err != nil {
 				e.log.Warn(r.Context(), "can't insert sessionStart to DB: %s", err)
 			}

@@ -43,6 +43,8 @@ type Session struct {
 	UserDeviceHeapSize   uint64
 	SaveRequestPayload   bool
 	EncryptionKey        string
+	ScreenWidth          int
+	ScreenHeight         int
 }
 
 func (s *Session) SetMetadata(keyNo uint, value string) {

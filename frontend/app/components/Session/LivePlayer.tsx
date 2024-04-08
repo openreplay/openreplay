@@ -107,7 +107,7 @@ function LivePlayer({
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     if (
-      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') ||
+      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') || (queryParams.has('fullView') && queryParams.get('fullView') === 'true') ||
       location.pathname.includes('multiview')
     ) {
       setFullView(true);
