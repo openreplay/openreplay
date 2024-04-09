@@ -304,7 +304,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const state = this.readString(); if (state === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: MType.Redux,
+        tp: MType.ReduxDeprecated,
         action,
         state,
         duration,
@@ -746,6 +746,20 @@ export default class RawMessageReader extends PrimitiveReader {
       return {
         tp: MType.TagTrigger,
         tagId,
+      };
+    }
+
+    case 121: {
+      const action = this.readString(); if (action === null) { return resetPointer() }
+      const state = this.readString(); if (state === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const actionTime = this.readUint(); if (actionTime === null) { return resetPointer() }
+      return {
+        tp: MType.Redux,
+        action,
+        state,
+        duration,
+        actionTime,
       };
     }
 

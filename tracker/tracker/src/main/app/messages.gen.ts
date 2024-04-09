@@ -396,13 +396,13 @@ export function StateAction(
   ]
 }
 
-export function Redux(
+export function ReduxDeprecated(
   action: string,
   state: string,
   duration: number,
-): Messages.Redux {
+): Messages.ReduxDeprecated {
   return [
-    Messages.Type.Redux,
+    Messages.Type.ReduxDeprecated,
     action,
     state,
     duration,
@@ -948,6 +948,21 @@ export function TagTrigger(
   return [
     Messages.Type.TagTrigger,
     tagId,
+  ]
+}
+
+export function Redux(
+  action: string,
+  state: string,
+  duration: number,
+  actionTime: number,
+): Messages.Redux {
+  return [
+    Messages.Type.Redux,
+    action,
+    state,
+    duration,
+    actionTime,
   ]
 }
 

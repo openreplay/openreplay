@@ -236,6 +236,7 @@ export default class TabSessionManager {
       case MType.WsChannel:
         this.lists.lists.websocket.insert(msg);
         break;
+      case MType.ReduxDeprecated:
       case MType.Redux:
         this.lists.lists.redux.append(msg);
         break;

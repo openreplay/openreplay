@@ -3,7 +3,6 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import Player from './PlayerInst';
 import SubHeader from 'Components/Session_/Subheader';
-import AiSubheader from 'Components/Session/Player/ReplayPlayer/AiSubheader';
 import styles from 'Components/Session_/playerBlock.module.css';
 
 interface IProps {

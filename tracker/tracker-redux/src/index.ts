@@ -30,6 +30,9 @@ export default function(opts: Partial<Options> = {}) {
     if (app === null) {
       return () => next => action => next(action);
     }
+    const worker = new Worker(
+      URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
+    );
     const encoder = new Encoder(murmur, 50);
     app.attachStopCallback(() => {
       encoder.clear()
@@ -55,23 +58,30 @@ export default function(opts: Partial<Options> = {}) {
       const startTime = performance.now();
       const result = next(action);
       const duration = performance.now() - startTime;
-      try {
-        const type = options.actionType(action);
-        if (typeof type === 'string' && type) {
-          app.send(Messages.StateAction(type));
+      const actionTs = app?.timestamp() ?? 0
+      worker.postMessage({
+        type: 'action',
+        action: options.actionTransformer(action),
+        state: options.stateTransformer(getState()),
+        timestamp: actionTs,
+      })
+      worker.onmessage = ({ data }) => {
+        if (data.type === 'encoded') {
+          const _action = data.action;
+          const _currState = data.state;
+          const _table = data.table;
+          const _timestamp = data.timestamp;
+          console.log('encoded', _action, _currState, _table, _timestamp, app?.timestamp())
+          for (let key in _table) app.send(Messages.OTable(key, _table[key]));
+          app.send(Messages.Redux(_action, _currState, duration, _timestamp)); // TODO: add timestamp
         }
-        const _action = encoder.encode(options.actionTransformer(action));
-        let _currState: string
-        if (options.stateUpdateBatching.enabled) {
-          _currState = batchEncoding(getState());
-        } else {
-          _currState = encoder.encode(options.stateTransformer(getState()));
-        }
-        const _table = encoder.commit();
-        for (let key in _table) app.send(Messages.OTable(key, _table[key]));
-        app.send(Messages.Redux(_action, _currState, duration));
-      } catch {
-        encoder.clear();
+      }
+      worker.onerror = (e) => {
+        console.error('OR Redux: worker_error', e)
+      }
+      const type = options.actionType(action);
+      if (typeof type === 'string' && type) {
+        app.send(Messages.StateAction(type));
       }
       return result;
     };

@@ -370,7 +370,7 @@ class StateAction(Message):
         self.type = type
 
 
-class Redux(Message):
+class ReduxDeprecated(Message):
     __id__ = 44
 
     def __init__(self, action, state, duration):
@@ -813,6 +813,16 @@ class TagTrigger(Message):
 
     def __init__(self, tag_id):
         self.tag_id = tag_id
+
+
+class Redux(Message):
+    __id__ = 121
+
+    def __init__(self, action, state, duration, action_time):
+        self.action = action
+        self.state = state
+        self.duration = duration
+        self.action_time = action_time
 
 
 class IssueEvent(Message):
