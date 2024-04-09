@@ -15,6 +15,7 @@ type Config struct {
 	redis.Redis
 	common.Redshift
 	common.Clickhouse
+	common.ElasticSearch
 	objectstorage.ObjectsConfig
 	ConnectorType      string        `env:"CONNECTOR_TYPE,default=redshift"`
 	SessionsTableName  string        `env:"SESSIONS_TABLE_NAME,default=connector_user_sessions"`
