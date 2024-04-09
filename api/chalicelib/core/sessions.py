@@ -282,14 +282,31 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
+    extra_conditions = None
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = "events.pages"
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.location:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
-                                               user_id=None, extra_event=extra_event)
+                                               user_id=None, extra_event=extra_event, extra_conditions=extra_conditions)
     full_args["step_size"] = step_size
     with pg_client.PostgresClient() as cur:
         if isinstance(metric_of, schemas.MetricOfTable):
@@ -400,14 +417,7 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                       project_id, user_id, platform="web", extra_event=None):
-    if issue:
-        data.filters.append(
-            schemas.SessionSearchFilterSchema(value=[issue['type']],
-                                              type=schemas.FilterType.issue.value,
-                                              operator='is')
-        )
-
+                       project_id, user_id, platform="web", extra_event=None, extra_conditions=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
@@ -1092,6 +1102,24 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
         extra_join += f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
         extra_constraints.append("ev.timestamp>=%(startDate)s")
         extra_constraints.append("ev.timestamp<=%(endDate)s")
+        if extra_conditions and len(extra_conditions) > 0:
+            _extra_or_condition = []
+            for i, c in enumerate(extra_conditions):
+                if sh.isAny_opreator(c.operator):
+                    continue
+                e_k = f"ec_value{i}"
+                op = sh.get_sql_operator(c.operator)
+                c.value = helper.values_for_operator(value=c.value, op=c.operator)
+                full_args = {**full_args,
+                             **sh.multi_values(c.value, value_key=e_k)}
+                if c.type == events.EventType.LOCATION.ui_type:
+                    _extra_or_condition.append(
+                        sh.multi_conditions(f"ev.{events.EventType.LOCATION.column} {op} %({e_k})s",
+                                            c.value, value_key=e_k))
+                else:
+                    logging.warning(f"unsupported extra_event type:${c.type}")
+            if len(_extra_or_condition) > 0:
+                extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     query_part = f"""\
                         FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else "public.sessions AS s"}
                         {extra_join}

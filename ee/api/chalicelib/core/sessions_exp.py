@@ -3,7 +3,7 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, performance_event, metrics
+from chalicelib.core import events, metadata, projects, performance_event, metrics, sessions_favorite, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 
 logger = logging.getLogger(__name__)
@@ -110,6 +110,8 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False,
                     platform="web"):
+    if data.bookmarked:
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                   user_id=user_id, platform=platform)
@@ -354,6 +356,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                    density=density))
     extra_event = None
     extra_deduplication = []
+    extra_conditions = None
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
@@ -362,13 +365,30 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.project_id = %(project_id)s
                               AND ev.event_type = 'LOCATION'"""
         extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.location:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
                                                   user_id=None, extra_event=extra_event,
-                                                  extra_deduplication=extra_deduplication)
+                                                  extra_deduplication=extra_deduplication,
+                                                  extra_conditions=extra_conditions)
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
@@ -521,7 +541,8 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[]):
+                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[],
+                          extra_conditions=None):
     if issue:
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
@@ -1462,7 +1483,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                              AND events.issue_type = %(issue_type)s
                              AND events.datetime >= toDateTime(%(startDate)s/1000)
                              AND events.datetime <= toDateTime(%(endDate)s/1000)
-                             ) AS issues ON (s.session_id = issues.session_id)
+                             ) AS issues ON (f.session_id = issues.session_id)
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
@@ -1487,9 +1508,24 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
     if extra_event:
         extra_event = f"INNER JOIN ({extra_event}) AS extra_event USING(session_id)"
-        # extra_join = f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
-        # extra_constraints.append("ev.timestamp>=%(startDate)s")
-        # extra_constraints.append("ev.timestamp<=%(endDate)s")
+        if extra_conditions and len(extra_conditions) > 0:
+            _extra_or_condition = []
+            for i, c in enumerate(extra_conditions):
+                if _isAny_opreator(c.operator):
+                    continue
+                e_k = f"ec_value{i}"
+                op = __get_sql_operator(c.operator)
+                c.value = helper.values_for_operator(value=c.value, op=c.operator)
+                full_args = {**full_args,
+                             **_multiple_values(c.value, value_key=e_k)}
+                if c.type == events.EventType.LOCATION.ui_type:
+                    _extra_or_condition.append(
+                        _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                             c.value, value_key=e_k))
+                else:
+                    logging.warning(f"unsupported extra_event type:${c.type}")
+            if len(_extra_or_condition) > 0:
+                extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:
         extra_event = ""
     if errors_only:
@@ -1679,3 +1715,29 @@ def check_recording_status(project_id: int) -> dict:
         "recordingStatus": row["recording_status"],
         "sessionsCount": row["sessions_count"]
     }
+
+
+# TODO: rewrite this function to use ClickHouse
+def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
+                           ascending: bool = False) -> dict:
+    if session_ids is None or len(session_ids) == 0:
+        return {"total": 0, "sessions": []}
+    with pg_client.PostgresClient() as cur:
+        meta_keys = metadata.get(project_id=project_id)
+        params = {"project_id": project_id, "session_ids": tuple(session_ids)}
+        order_direction = 'ASC' if ascending else 'DESC'
+        main_query = cur.mogrify(f"""SELECT {sessions_legacy.SESSION_PROJECTION_BASE_COLS}
+                                            {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                     FROM public.sessions AS s
+                                        WHERE project_id=%(project_id)s 
+                                            AND session_id IN %(session_ids)s
+                                     ORDER BY {sort_by} {order_direction};""", params)
+
+        cur.execute(main_query)
+        rows = cur.fetchall()
+        if len(meta_keys) > 0:
+            for s in rows:
+                s["metadata"] = {}
+                for m in meta_keys:
+                    s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows)}
