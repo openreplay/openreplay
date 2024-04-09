@@ -39,15 +39,17 @@ function WebPlayer(props: any) {
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
 
-  if (windowActive) {
-    const handleActivation = () => {
-      if (!document.hidden) {
-        setWindowActive(true);
-        document.removeEventListener('visibilitychange', handleActivation);
+  React.useEffect(() => {
+    if (windowActive) {
+      const handleActivation = () => {
+        if (!document.hidden) {
+          setWindowActive(true);
+          document.removeEventListener('visibilitychange', handleActivation);
+        }
       }
+      document.addEventListener('visibilitychange', handleActivation);
     }
-    document.addEventListener('visibilitychange', handleActivation);
-  }
+  }, [])
 
   useEffect(() => {
     playerInst = undefined;

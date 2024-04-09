@@ -76,6 +76,9 @@ export default function(opts: Partial<Options> = {}) {
           app.send(Messages.Redux(_action, _currState, duration, _timestamp)); // TODO: add timestamp
         }
       }
+      worker.onerror = (e) => {
+        console.error('OR Redux: worker_error', e)
+      }
       const type = options.actionType(action);
       if (typeof type === 'string' && type) {
         app.send(Messages.StateAction(type));
