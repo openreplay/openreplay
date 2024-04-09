@@ -1,13 +1,20 @@
-import type { Store, SessionFilesInfo, PlayerMsg } from 'Player';
-import { decryptSessionBytes } from './network/crypto';
-import MFileReader from './messages/MFileReader';
-import { loadFiles, requestEFSDom, requestEFSDevtools, requestTarball } from './network/loadFiles';
-import logger from 'App/logger';
-import unpack from 'Player/common/unpack';
+import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
 import unpackTar from 'Player/common/tarball';
-import MessageManager from 'Player/web/MessageManager';
+import unpack from 'Player/common/unpack';
 import IOSMessageManager from 'Player/mobile/IOSMessageManager';
+import MessageManager from 'Player/web/MessageManager';
 import { MType } from 'Player/web/messages';
+
+import logger from 'App/logger';
+
+import MFileReader from './messages/MFileReader';
+import { decryptSessionBytes } from './network/crypto';
+import {
+  loadFiles,
+  requestEFSDevtools,
+  requestEFSDom,
+  requestTarball,
+} from './network/loadFiles';
 
 interface State {
   firstFileLoading: boolean;
@@ -39,9 +46,12 @@ export default class MessageLoader {
   ) {
     const decrypt =
       shouldDecrypt && this.session.fileKey
-      ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
-      : (b: Uint8Array) => Promise.resolve(b);
-    const fileReader = new MFileReader(new Uint8Array(), this.session.startedAt);
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey!)
+        : (b: Uint8Array) => Promise.resolve(b);
+    const fileReader = new MFileReader(
+      new Uint8Array(),
+      this.session.startedAt
+    );
     let fileNum = 0;
     return async (b: Uint8Array) => {
       try {
