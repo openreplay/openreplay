@@ -49,6 +49,7 @@ export default class Nodes {
   unregisterNode(node: Node): number | undefined {
     const id = (node as any)[this.node_id]
     if (id !== undefined) {
+      (node as any)[this.node_id] = undefined
       delete (node as any)[this.node_id]
       delete this.nodes[id]
       const listeners = this.elementListeners.get(id)
@@ -99,6 +100,7 @@ export default class Nodes {
       if (!node) {
         continue
       }
+      this.nodes[id] = undefined
       this.unregisterNode(node)
     }
     this.nodes.length = 0
