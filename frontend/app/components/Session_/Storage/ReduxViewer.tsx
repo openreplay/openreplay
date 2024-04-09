@@ -1,11 +1,12 @@
 import { selectStorageListNow } from 'Player';
+import { GitCommitVertical } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { durationFromMs } from 'App/date';
 import { Icon, JSONTree } from 'UI';
-import { GitCommitVertical } from 'lucide-react'
+import JumpButton from "../../shared/DevTools/JumpButton";
 
 import BottomBlock from '../BottomBlock/index';
 
@@ -55,9 +56,9 @@ function ReduxViewer() {
         <BottomBlock.Header>
           <h3
             style={{ width: '25%', marginRight: 20 }}
-            className="font-semibold"
+            className="font-semibold color-gray-medium"
           >
-            REDUX
+            Redux
           </h3>
         </BottomBlock.Header>
         <BottomBlock.Content className={'overflow-y-auto'}>
@@ -67,6 +68,7 @@ function ReduxViewer() {
               key={i}
               sessionStart={sessionStart}
               prevMsg={decodedList[i - 1]}
+              onJump={player.jump}
             />
           ))}
         </BottomBlock.Content>
@@ -79,52 +81,55 @@ function StateEvent({
   msg,
   sessionStart,
   prevMsg,
+  onJump,
 }: {
   msg: ListItem;
   sessionStart: number;
+  onJump: (time: number) => void;
   prevMsg?: ListItem;
 }) {
   const [isOpen, setOpen] = React.useState(false);
   return (
     <div
       className={
-        'w-full py-2 px-4 border-b border-gray-lightest flex flex-col hover:bg-active-blue'
+        'w-full py-2 px-4 border-b border-gray-lightest flex flex-col hover:bg-active-blue group relative'
       }
+      style={{ fontFamily: 'Menlo, Monaco, Consolas' }}
     >
       <div
-        className={
-          'w-full gap-2 flex items-center cursor-pointer text-xl h-full'
-        }
+        className={'w-full gap-2 flex items-center cursor-pointer h-full'}
         onClick={() => setOpen(!isOpen)}
       >
         <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} />
         <GitCommitVertical />
         <div className={'font-semibold'}>{msg.action.type ?? 'action'}</div>
-        <div className={'text-disabled-text'}>
+        <div className={'text-gray-medium'}>
           @ {durationFromMs(msg.actionTime - sessionStart)} (in{' '}
           {durationFromMs(msg.duration)})
         </div>
       </div>
       {isOpen ? (
-        <div className={'p-4 flex flex-col gap-2'}>
+        <div className={'py-4 flex flex-col gap-2'} style={{ paddingLeft: '3.7rem' }}>
           {prevMsg ? (
             <div className={'flex items-start gap-2'}>
-              <div className={'text-xl font-semibold text-active-blue-border'}>
+              <div className={'font-semibold text-gray-darkest'}>
                 prev state
               </div>
               <JSONTree src={prevMsg.state} collapsed />
             </div>
           ) : null}
           <div className={'flex items-start gap-2'}>
-            <div className={'text-xl font-semibold text-yellow2'}>action</div>
+            <div className={'font-semibold text-yellow2'}>action</div>
             <JSONTree src={msg.action} collapsed />
           </div>
           <div className={'flex items-start gap-2'}>
-            <div className={'text-xl font-semibold text-green'}>next state</div>
+            <div className={'font-semibold text-tealx'}>next state</div>
             <JSONTree src={msg.state} collapsed />
           </div>
         </div>
       ) : null}
+
+      <JumpButton onClick={() => onJump(msg.time)} />
     </div>
   );
 }
