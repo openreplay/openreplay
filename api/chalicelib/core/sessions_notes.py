@@ -125,16 +125,15 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         return {"errors": ["Note not found"]}
 
 
-def delete(tenant_id, user_id, project_id, note_id):
+def delete(project_id, note_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(""" UPDATE public.sessions_notes 
                             SET deleted_at = timezone('utc'::text, now())
                             WHERE note_id = %(note_id)s
                                 AND project_id = %(project_id)s
-                                AND user_id = %(user_id)s
                                 AND deleted_at ISNULL;""",
-                        {"project_id": project_id, "user_id": user_id, "note_id": note_id})
+                        {"project_id": project_id, "note_id": note_id})
         )
         return {"data": {"state": "success"}}
 
