@@ -784,9 +784,12 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
     @field_validator("filters", mode="after")
     def merge_identical_filters(cls, values):
+        # ignore 'issue' type as it could be used for step-filters and tab-filters at the same time
         i = 0
         while i < len(values):
-            if values[i].is_event:
+            if values[i].is_event or values[i].type == FilterType.issue:
+                if values[i].type == FilterType.issue:
+                    values[i] = remove_duplicate_values(values[i])
                 i += 1
                 continue
             j = i + 1
