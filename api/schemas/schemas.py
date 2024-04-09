@@ -795,6 +795,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         i = 0
         while i < len(values):
             if values[i].is_event or values[i].type == FilterType.issue:
+                if values[i].type == FilterType.issue:
+                    values[i] = remove_duplicate_values(values[i])
                 i += 1
                 continue
             j = i + 1
