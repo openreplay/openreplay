@@ -75,9 +75,12 @@ export default class MessageLoader {
         let artificialStartTime = Infinity;
         let startTimeSet = false;
         msgs.forEach((msg) => {
-          if (msg.tp === MType.Redux) {
-            if (msg.actionTime) {
+          if (msg.tp === MType.Redux || msg.tp === MType.ReduxDeprecated) {
+            if ('actionTime' in msg && msg.actionTime) {
               msg.time = msg.actionTime - this.session.startedAt;
+            } else {
+              // @ts-ignore
+              Object.assign(msg, { actionTime: msg.time + this.session.startedAt });
             }
           }
           if (
@@ -111,8 +114,10 @@ export default class MessageLoader {
         const sortedMsgs = msgs.sort((m1, m2) => {
           if (m1.time !== m2.time) return m1.time - m2.time;
 
-          if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument) return -1;
-          if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument) return 1;
+          if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
+            return -1;
+          if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
+            return 1;
 
           const m1IsDOM = DOMMessages.includes(m1.tp);
           const m2IsDOM = DOMMessages.includes(m2.tp);
@@ -204,7 +209,10 @@ export default class MessageLoader {
       try {
         await this.loadEFSMobs();
       } catch (unprocessedLoadError) {
-        this.messageManager.onFileReadFailed(sessionLoadError, unprocessedLoadError);
+        this.messageManager.onFileReadFailed(
+          sessionLoadError,
+          unprocessedLoadError
+        );
       }
     } finally {
       this.store.update({ domLoading: false, devtoolsLoading: false });
@@ -214,17 +222,23 @@ export default class MessageLoader {
   loadMobs = async () => {
     const loadMethod =
       this.session.domURL && this.session.domURL.length > 0
-      ? {
-          mobUrls: this.session.domURL,
-          parser: () => this.createNewParser(true, this.processMessages, 'dom'),
-        }
-      : {
-          mobUrls: this.session.mobsUrl,
-          parser: () => this.createNewParser(false, this.processMessages, 'dom'),
-        };
+        ? {
+            mobUrls: this.session.domURL,
+            parser: () =>
+              this.createNewParser(true, this.processMessages, 'dom'),
+          }
+        : {
+            mobUrls: this.session.mobsUrl,
+            parser: () =>
+              this.createNewParser(false, this.processMessages, 'dom'),
+          };
 
     const parser = loadMethod.parser();
-    const devtoolsParser = this.createNewParser(true, this.processMessages, 'devtools');
+    const devtoolsParser = this.createNewParser(
+      true,
+      this.processMessages,
+      'devtools'
+    );
 
     /**
      * to speed up time to replay
@@ -235,7 +249,10 @@ export default class MessageLoader {
      * */
     await loadFiles([loadMethod.mobUrls[0]], parser);
     this.messageManager.onFileReadFinally();
-    const restDomFilesPromise = this.loadDomFiles([...loadMethod.mobUrls.slice(1)], parser);
+    const restDomFilesPromise = this.loadDomFiles(
+      [...loadMethod.mobUrls.slice(1)],
+      parser
+    );
     const restDevtoolsFilesPromise = this.loadDevtools(devtoolsParser);
 
     await Promise.allSettled([restDomFilesPromise, restDevtoolsFilesPromise]);
@@ -251,16 +268,24 @@ export default class MessageLoader {
       efsDomFilePromise,
       efsDevtoolsFilePromise,
     ]);
-    const domParser = this.createNewParser(false, this.processMessages, 'domEFS');
-    const devtoolsParser = this.createNewParser(false, this.processMessages, 'devtoolsEFS');
+    const domParser = this.createNewParser(
+      false,
+      this.processMessages,
+      'domEFS'
+    );
+    const devtoolsParser = this.createNewParser(
+      false,
+      this.processMessages,
+      'devtoolsEFS'
+    );
     const parseDomPromise: Promise<any> =
       domData.status === 'fulfilled'
-      ? domParser(domData.value)
-      : Promise.reject('No dom file in EFS');
+        ? domParser(domData.value)
+        : Promise.reject('No dom file in EFS');
     const parseDevtoolsPromise: Promise<any> =
       devtoolsData.status === 'fulfilled'
-      ? devtoolsParser(devtoolsData.value)
-      : Promise.reject('No devtools file in EFS');
+        ? devtoolsParser(devtoolsData.value)
+        : Promise.reject('No devtools file in EFS');
 
     await Promise.all([parseDomPromise, parseDevtoolsPromise]);
     this.messageManager.onFileReadSuccess();
