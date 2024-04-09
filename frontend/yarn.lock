@@ -16269,6 +16269,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^0.366.0":
+  version: 0.366.0
+  resolution: "lucide-react@npm:0.366.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0
+  checksum: dcb46c9bf80921c3886f0a42289ed9adf5722d3acf60ffe7b62cabb855cf9abb035a4e532e94895216b70da1a22074973ea02337afe5cf21bf31133032c3a8a1
+  languageName: node
+  linkType: hard
+
 "luxon@npm:^1.24.1":
   version: 1.28.1
   resolution: "luxon@npm:1.28.1"
@@ -18156,6 +18165,7 @@ __metadata:
     jshint: ^2.11.1
     jspdf: ^2.5.1
     jsx-runtime: ^1.2.0
+    lucide-react: ^0.366.0
     luxon: ^1.24.1
     mini-css-extract-plugin: ^2.6.0
     minio: ^7.1.3
@@ -18195,6 +18205,7 @@ __metadata:
     react-tippy: ^1.4.0
     react-toastify: ^9.1.1
     react-virtualized: ^9.22.3
+    react18-json-view: ^0.2.8
     recharts: ^2.8.0
     redux: ^4.0.5
     redux-immutable: ^4.0.0
@@ -21147,6 +21158,15 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: b0444b472f317dce61119c07426c5e9ebfe5125d049996678da922717715a1aa83df755aa36877f4b1718aa2e181d22f15ebb807ee356418c56f922f865628c1
+  languageName: node
+  linkType: hard
+
+"react18-json-view@npm:^0.2.8":
+  version: 0.2.8
+  resolution: "react18-json-view@npm:0.2.8"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 97d0d1558e2b68f9611b5d5fbb3ff067031a3d7842805fb487fcdeaeb3a1d024ffe467ca8b137c8134b11ce4f5747057b698afe9f3c28f72276019a103dba92a
   languageName: node
   linkType: hard
 

@@ -14,6 +14,7 @@ import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
 import logger from "App/logger";
+import ReduxViewer from './ReduxViewer'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -239,6 +240,9 @@ function Storage(props: Props) {
 
   const { hintIsHidden } = props;
 
+  if (type === STORAGE_TYPES.REDUX) {
+    return <ReduxViewer />
+  }
   return (
     <BottomBlock>
       <BottomBlock.Header>

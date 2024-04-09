@@ -30,6 +30,7 @@ let playerInst: IPlayerContext['player'] | undefined;
 function WebPlayer(props: any) {
   const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList, startedAt } = props;
   const { notesStore, sessionStore, uxtestingStore } = useStore();
+  const [windowActive, setWindowActive] = useState(!document.hidden);
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
@@ -37,6 +38,18 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
+
+  React.useEffect(() => {
+    if (!windowActive) {
+      const handleActivation = () => {
+        if (!document.hidden) {
+          setWindowActive(true);
+          document.removeEventListener('visibilitychange', handleActivation);
+        }
+      }
+      document.addEventListener('visibilitychange', handleActivation);
+    }
+  }, [])
 
   useEffect(() => {
     playerInst = undefined;
@@ -78,7 +91,7 @@ function WebPlayer(props: any) {
       contextValue.player.pause();
     }
 
-    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
+    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player && windowActive) {
       const jumpToTime = props.query.get('jumpto');
       const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
@@ -93,7 +106,7 @@ function WebPlayer(props: any) {
 
       contextValue.player.play();
     }
-  }, [activeTab, noteItem, visualOffset, messagesProcessed]);
+  }, [activeTab, noteItem, visualOffset, messagesProcessed, windowActive]);
 
   React.useEffect(() => {
     if (activeTab === 'Click Map') {
