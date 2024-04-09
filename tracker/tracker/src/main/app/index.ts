@@ -409,14 +409,22 @@ export default class App {
    * */
   private _nCommit(): void {
     if (this.worker !== undefined && this.messages.length) {
-      requestIdleCb(() => {
-        this.messages.unshift(TabData(this.session.getTabId()))
-        this.messages.unshift(Timestamp(this.timestamp()))
-        // why I need to add opt chaining?
-        this.worker?.postMessage(this.messages)
-        this.commitCallbacks.forEach((cb) => cb(this.messages))
-        this.messages.length = 0
-      })
+      try {
+        requestIdleCb(() => {
+          this.messages.unshift(TabData(this.session.getTabId()))
+          this.messages.unshift(Timestamp(this.timestamp()))
+          // why I need to add opt chaining?
+          this.worker?.postMessage(this.messages)
+          this.commitCallbacks.forEach((cb) => cb(this.messages))
+          this.messages.length = 0
+        })
+      } catch (e) {
+        this._debug('worker_commit', e)
+        this.stop(true)
+        setTimeout(() => {
+          void this.start()
+        }, 500)
+      }
     }
   }
 
