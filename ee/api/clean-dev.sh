@@ -48,6 +48,7 @@ rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_mobs.py
+rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py
