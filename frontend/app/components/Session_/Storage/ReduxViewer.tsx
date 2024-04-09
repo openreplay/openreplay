@@ -101,7 +101,7 @@ function StateEvent({
         onClick={() => setOpen(!isOpen)}
       >
         <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} />
-        <GitCommitVertical />
+        <GitCommitVertical strokeWidth={1} />
         <div className={'font-semibold'}>{msg.action.type ?? 'action'}</div>
         <div className={'text-gray-medium'}>
           @ {durationFromMs(msg.actionTime - sessionStart)} (in{' '}
