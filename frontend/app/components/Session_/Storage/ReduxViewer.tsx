@@ -92,9 +92,9 @@ function StateEvent({
   return (
     <div
       className={
-        'w-full py-2 px-4 border-b border-gray-lightest flex flex-col hover:bg-active-blue group relative'
+        'w-full py-1 px-4 border-b border-gray-lightest flex flex-col hover:bg-active-blue group relative'
       }
-      style={{ fontFamily: 'Menlo, Monaco, Consolas' }}
+      style={{ fontFamily: 'Menlo, Monaco, Consolas', letterSpacing: '-0.025rem' }}
     >
       <div
         className={'w-full gap-2 flex items-center cursor-pointer h-full'}
@@ -102,7 +102,7 @@ function StateEvent({
       >
         <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} />
         <GitCommitVertical strokeWidth={1} />
-        <div className={'font-semibold'}>{msg.action.type ?? 'action'}</div>
+        <div className={'font-medium'}>{msg.action.type ?? 'action'}</div>
         <div className={'text-gray-medium'}>
           @ {durationFromMs(msg.actionTime - sessionStart)} (in{' '}
           {durationFromMs(msg.duration)})
@@ -112,18 +112,18 @@ function StateEvent({
         <div className={'py-4 flex flex-col gap-2'} style={{ paddingLeft: '3.7rem' }}>
           {prevMsg ? (
             <div className={'flex items-start gap-2'}>
-              <div className={'font-semibold text-gray-darkest'}>
+              <div className={'text-gray-darkest tracking-tight'}>
                 prev state
               </div>
               <JSONTree src={prevMsg.state} collapsed />
             </div>
           ) : null}
           <div className={'flex items-start gap-2'}>
-            <div className={'font-semibold text-yellow2'}>action</div>
+            <div className={'text-yellow2'}>action</div>
             <JSONTree src={msg.action} collapsed />
           </div>
           <div className={'flex items-start gap-2'}>
-            <div className={'font-semibold text-tealx'}>next state</div>
+            <div className={'text-tealx'}>next state</div>
             <JSONTree src={msg.state} collapsed />
           </div>
         </div>

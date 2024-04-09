@@ -297,6 +297,9 @@ svg {
     --json-boolean: #d91e18;
     --json-null: #d91e18;
 }
+.json-view .jv-size {
+    opacity: 0.6!important;
+}
 .json-view_github {
     color: #005cc5;
     --json-property: #005cc5;
