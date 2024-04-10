@@ -1,14 +1,20 @@
-import logger                                      from "App/logger";
-import type { PlayerMsg, SessionFilesInfo, Store } from "Player";
-import unpackTar                                   from "Player/common/tarball";
-import unpack                                      from "Player/common/unpack";
-import IOSMessageManager                           from "Player/mobile/IOSMessageManager";
-import MessageManager                              from "Player/web/MessageManager";
-import { MType }                                   from "Player/web/messages";
+import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
+import unpackTar from 'Player/common/tarball';
+import unpack from 'Player/common/unpack';
+import IOSMessageManager from 'Player/mobile/IOSMessageManager';
+import MessageManager from 'Player/web/MessageManager';
+import { MType } from 'Player/web/messages';
 
-import MFileReader                                                      from "./messages/MFileReader";
-import { decryptSessionBytes }                                          from "./network/crypto";
-import { loadFiles, requestEFSDevtools, requestEFSDom, requestTarball } from "./network/loadFiles";
+import logger from 'App/logger';
+
+import MFileReader from './messages/MFileReader';
+import { decryptSessionBytes } from './network/crypto';
+import {
+  loadFiles,
+  requestEFSDevtools,
+  requestEFSDom,
+  requestTarball,
+} from './network/loadFiles';
 
 interface State {
   firstFileLoading: boolean;
@@ -99,8 +105,7 @@ export default class MessageLoader {
           }
         });
 
-        const sortedMsgs = msgs
-          .sort((m1, m2) => m1.time - m2.time)
+        const sortedMsgs = msgs.sort((m1, m2) => m1.time - m2.time);
         // .sort(brokenDomSorter);
 
         if (brokenMessages > 0) {
@@ -312,13 +317,13 @@ function findBrokenNodes(nodes: any[]) {
   const result = {};
 
   // Map all nodes by id for quick access and identify potential orphans
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     // @ts-ignore
     idToNode[node.id] = { ...node, children: [] };
   });
 
   // Identify true orphans (nodes whose parentID does not exist)
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.parentID) {
       // @ts-ignore
       const parentNode = idToNode[node.parentID];
@@ -335,7 +340,7 @@ function findBrokenNodes(nodes: any[]) {
   function collectDescendants(nodeId) {
     // @ts-ignore
     const node = idToNode[nodeId];
-    node.children.forEach(child => {
+    node.children.forEach((child) => {
       collectDescendants(child.id);
     });
     return node;
@@ -350,4 +355,4 @@ function findBrokenNodes(nodes: any[]) {
   return result;
 }
 
-window.searchOrphans = findBrokenNodes
+window.searchOrphans = findBrokenNodes;
