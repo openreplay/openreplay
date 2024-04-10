@@ -107,7 +107,7 @@ class CanvasRecorder {
           this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
           if (this.snapshots[id].images.length > 9) {
             this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
-            this.snapshots[id].images = []
+          this.snapshots[id].images = []
           }
         }
       }

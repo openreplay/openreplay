@@ -1,4 +1,5 @@
 import logger from 'App/logger';
+import { resolveURL } from "../../messages/rewriter/urlResolve";
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
@@ -393,15 +394,17 @@ export default class DOMManager extends ListWalker<Message> {
         vRoot.whenReady(vNode => {
           if (vNode instanceof VShadowRoot) { logger.error(`Node ${vNode} expected to be a Document`, msg); return }
           let descr: Object | undefined
-          try {
-            descr = JSON.parse(msg.descriptors)
-            descr = typeof descr === 'object' ? descr : undefined
-          } catch {
-            logger.warn("Can't parse font-face descriptors: ", msg)
+          if (msg.descriptors) {
+            try {
+              descr = JSON.parse(msg.descriptors)
+              descr = typeof descr === 'object' ? descr : undefined
+            } catch {
+              logger.warn("Can't parse font-face descriptors: ", msg)
+            }
           }
           const ff = new FontFace(msg.family, msg.source, descr)
           vNode.node.fonts.add(ff)
-          ff.load() // TODOTODO: wait for this one in StylesManager in a common way with styles
+          void ff.load()
         })
         return
       }
@@ -410,11 +413,11 @@ export default class DOMManager extends ListWalker<Message> {
 
   /**
    * Moves and applies all the messages from the current (or from the beginning, if t < current.time) 
-   * to the one with msg.time >= `t`
+   * to the one with msg[time] >= `t`
    * 
    * This function autoresets pointer if necessary (better name?)
    * 
-   * @returns Promise that fulfulls when necessary changes get applied 
+   * @returns Promise that fulfills when necessary changes get applied
    *   (the async part exists mostly due to styles loading)
    */
   async moveReady(t: number): Promise<void> {
