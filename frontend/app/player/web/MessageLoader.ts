@@ -105,33 +105,8 @@ export default class MessageLoader {
           }
         });
 
-        const DOMMessages = [
-          MType.CreateElementNode,
-          MType.CreateTextNode,
-          MType.MoveNode,
-          MType.RemoveNode,
-        ];
-        const sortedMsgs = msgs.sort((m1, m2) => {
-          if (m1.time !== m2.time) return m1.time - m2.time;
-
-          if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
-            return -1;
-          if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
-            return 1;
-
-          const m1IsDOM = DOMMessages.includes(m1.tp);
-          const m2IsDOM = DOMMessages.includes(m2.tp);
-          if (m1IsDOM && m2IsDOM) {
-            // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
-            if (m1.id !== m2.id) return m1.id - m2.id;
-            return m1.tp - m2.tp;
-          }
-
-          if (m1IsDOM && !m2IsDOM) return -1;
-          if (!m1IsDOM && m2IsDOM) return 1;
-
-          return 0;
-        });
+        const sortedMsgs = msgs.sort((m1, m2) => m1.time - m2.time);
+        // .sort(brokenDomSorter);
 
         if (brokenMessages > 0) {
           console.warn('Broken timestamp messages', brokenMessages);
@@ -295,3 +270,89 @@ export default class MessageLoader {
     this.store.update(MessageLoader.INITIAL_STATE);
   }
 }
+
+const DOMMessages = [
+  MType.CreateElementNode,
+  MType.CreateTextNode,
+  MType.MoveNode,
+  MType.RemoveNode,
+];
+
+function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
+  if (m1.time !== m2.time) return m1.time - m2.time;
+
+  if (m1.tp === MType.CreateDocument && m2.tp !== MType.CreateDocument)
+    return -1;
+  if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
+    return 1;
+
+  // if (m1.tp === MType.CreateIFrameDocument && m2.tp === MType.CreateElementNode) {
+  //   if (m2.id === m1.frameID) return 1;
+  //   if (m2.parentID === m1.id) return -1
+  // }
+  // if (m1.tp === MType.CreateElementNode && m2.tp === MType.CreateIFrameDocument) {
+  //   if (m1.id === m2.frameID) return -1;
+  //   if (m1.parentID === m2.id) return 1
+  // }
+  const m1IsDOM = DOMMessages.includes(m1.tp);
+  const m2IsDOM = DOMMessages.includes(m2.tp);
+  if (m1IsDOM && m2IsDOM) {
+    // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
+    if (m1.id !== m2.id) return m1.id - m2.id;
+    return m1.tp - m2.tp;
+  }
+
+  if (m1IsDOM && !m2IsDOM) return -1;
+  if (!m1IsDOM && m2IsDOM) return 1;
+
+  return 0;
+}
+
+/**
+ * Search for orphan nodes in session
+ */
+function findBrokenNodes(nodes: any[]) {
+  const idToNode = {};
+  const orphans: any[] = [];
+  const result = {};
+
+  // Map all nodes by id for quick access and identify potential orphans
+  nodes.forEach((node) => {
+    // @ts-ignore
+    idToNode[node.id] = { ...node, children: [] };
+  });
+
+  // Identify true orphans (nodes whose parentID does not exist)
+  nodes.forEach((node) => {
+    if (node.parentID) {
+      // @ts-ignore
+      const parentNode = idToNode[node.parentID];
+      if (parentNode) {
+        // @ts-ignore
+        parentNode.children.push(idToNode[node.id]);
+      } else {
+        orphans.push(node.id); // parentID does not exist
+      }
+    }
+  });
+
+  // Recursively collect all descendants of a node
+  function collectDescendants(nodeId) {
+    // @ts-ignore
+    const node = idToNode[nodeId];
+    node.children.forEach((child) => {
+      collectDescendants(child.id);
+    });
+    return node;
+  }
+
+  // Build trees for each orphan
+  orphans.forEach((orId: number) => {
+    // @ts-ignore
+    result[orId] = collectDescendants(orId);
+  });
+
+  return result;
+}
+
+window.searchOrphans = findBrokenNodes;

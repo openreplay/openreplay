@@ -38,6 +38,10 @@ func main() {
 		if db, err = saver.NewClickHouse(log, cfg); err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 		}
+	case "elasticsearch":
+		if db, err = saver.NewElasticSearch(log, cfg); err != nil {
+			log.Fatal(ctx, "can't init elasticsearch connection: %s", err)
+		}
 	default:
 		log.Fatal(ctx, "unknown connector type: %s", cfg.ConnectorType)
 	}
