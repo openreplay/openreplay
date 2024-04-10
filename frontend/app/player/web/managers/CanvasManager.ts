@@ -1,8 +1,8 @@
-import { TarFile } from 'js-untar';
 import ListWalker from 'Player/common/ListWalker';
-import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
-import unpack from 'Player/common/unpack';
 import unpackTar from 'Player/common/tarball';
+import unpack from 'Player/common/unpack';
+import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
+import { TarFile } from 'js-untar';
 
 const playMode = {
   video: 'video',
@@ -21,6 +21,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
   private lastTs = 0;
   private playMode: string = playMode.snaps;
   private snapshots: Record<number, TarFile> = {};
+  private debugCanvas: HTMLCanvasElement | undefined;
 
   constructor(
     /**
@@ -32,7 +33,8 @@ export default class CanvasManager extends ListWalker<Timestamp> {
      */
     private readonly delta: number,
     private readonly links: [tar?: string, mp4?: string],
-    private readonly getNode: (id: number) => VElement | undefined
+    private readonly getNode: (id: number) => VElement | undefined,
+    private readonly sessionStart: number,
   ) {
     super();
     // first we try to grab tar, then fallback to mp4
@@ -52,9 +54,34 @@ export default class CanvasManager extends ListWalker<Timestamp> {
             }
           });
         } else {
-          return console.error('Failed to load canvas recording for node', this.nodeId);
+          return console.error(
+            'Failed to load canvas recording for node',
+            this.nodeId
+          );
         }
       });
+
+    // @ts-ignore
+    if (window.__or_debug === true) {
+      let debugContainer = document.querySelector<HTMLDivElement>('.imgDebug');
+      if (!debugContainer) {
+        debugContainer = document.createElement('div');
+        debugContainer.className = 'imgDebug';
+        Object.assign(debugContainer.style, {
+          position: 'fixed',
+          top: '0',
+          left: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        });
+        document.body.appendChild(debugContainer);
+      }
+      const debugCanvas = document.createElement('canvas');
+      debugCanvas.width = 300;
+      debugCanvas.height = 200;
+      this.debugCanvas = debugCanvas;
+      debugContainer.appendChild(debugCanvas);
+    }
   }
 
   public mapToSnapshots(files: TarFile[]) {
@@ -65,13 +92,14 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       console.error('Invalid file name format', files[0].name);
       return;
     }
-    const sessionStart = firstPair ? parseInt(firstPair[1], 10) : 0;
+
     files.forEach((file) => {
-      const [_, _1, _2, imageTimestampStr] = file.name.match(filenameRegexp) ?? [0, 0, 0, '0'];
+      const [_, _1, _2, imageTimestampStr] = file.name.match(
+        filenameRegexp
+      ) ?? [0, 0, 0, '0'];
 
       const imageTimestamp = parseInt(imageTimestampStr, 10);
-
-      const messageTime = imageTimestamp - sessionStart;
+      const messageTime = imageTimestamp - this.sessionStart;
       this.snapshots[messageTime] = file;
       tempArr.push({ time: messageTime });
     });
@@ -127,19 +155,30 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         if (node && node.node) {
           const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
           const canvasEl = node.node as HTMLVideoElement;
-          canvasCtx?.drawImage(this.snapImage, 0, 0, canvasEl.width, canvasEl.height);
+          canvasCtx?.drawImage(
+            this.snapImage,
+            0,
+            0,
+            canvasEl.width,
+            canvasEl.height
+          );
+          this.debugCanvas
+            ?.getContext('2d')
+            ?.drawImage(this.snapImage, 0, 0, 300, 200);
         } else {
           console.error(`CanvasManager: Node ${this.nodeId} not found`);
+
         }
       };
+    } else {
+      if (!this.fileData) return;
+      this.videoTag.setAttribute('autoplay', 'true');
+      this.videoTag.setAttribute('muted', 'true');
+      this.videoTag.setAttribute('playsinline', 'true');
+      this.videoTag.setAttribute('crossorigin', 'anonymous');
+      this.videoTag.src = this.fileData;
+      this.videoTag.currentTime = 0;
     }
-    if (!this.fileData) return;
-    this.videoTag.setAttribute('autoplay', 'true');
-    this.videoTag.setAttribute('muted', 'true');
-    this.videoTag.setAttribute('playsinline', 'true');
-    this.videoTag.setAttribute('crossorigin', 'anonymous');
-    this.videoTag.src = this.fileData;
-    this.videoTag.currentTime = 0;
   };
 
   move(t: number) {
@@ -163,15 +202,21 @@ export default class CanvasManager extends ListWalker<Timestamp> {
           void this.videoTag.pause();
         }
         this.videoTag.currentTime = playTime / 1000;
-        canvasCtx?.drawImage(this.videoTag, 0, 0, canvasEl.width, canvasEl.height);
+        canvasCtx?.drawImage(
+          this.videoTag,
+          0,
+          0,
+          canvasEl.width,
+          canvasEl.height
+        );
       } else {
-        console.error(`CanvasManager: Node ${this.nodeId} not found`);
+        console.error(`VideoMode CanvasManager: Node ${this.nodeId} not found`);
       }
     }
   };
 
   moveReadySnap = (t: number) => {
-    const msg = this.moveGetLast(t);
+    const msg = this.getNew(t);
     if (msg) {
       const file = this.snapshots[msg.time];
       if (file) {
@@ -179,4 +224,15 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       }
     }
   };
+}
+
+function saveImageData(imageDataUrl: string, name: string) {
+  const link = document.createElement('a');
+  link.href = imageDataUrl;
+  link.download = name;
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

@@ -137,6 +137,48 @@ export default class ListWalker<T extends Timed> {
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
 
+	prevTs = 0;
+	getNew(t: number, index?: number): T | null {
+		let key: string = "time"; //TODO
+		let val = t;
+
+		let changed = this.prevTs > t;
+		this.prevTs = t;
+		// @ts-ignore
+		while (this.p < this.length && this.list[this.p][key] <= val) {
+			this.moveNext()
+			changed = true;
+		}
+		// @ts-ignore
+		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
+			this.movePrev()
+			changed = true;
+		}
+		return changed ? this.list[ this.p - 1 ] : null;
+	}
+
+
+	findLast(t: number): T | null {
+		let left = 0;
+		let right = this.list.length - 1;
+		let result: T | null = null;
+
+		while (left <= right) {
+			const mid = Math.floor((left + right) / 2);
+			const currentItem = this.list[mid];
+
+			if (currentItem.time <= t) {
+				result = currentItem;
+				left = mid + 1;
+			} else {
+				right = mid - 1;
+			}
+		}
+
+		return result;
+	}
+
+
 	/**
 	 * Moves over the messages starting from the current+1 to the last one with the time <= t
 	 * applying callback on each of them
