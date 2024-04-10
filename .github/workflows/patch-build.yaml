@@ -23,6 +23,9 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 1
+    - name: Rebase with main branch, to make sure the code has latest main changes
+      run: |
+        git pull --rebase origin main
 
     - name: Downloading yq
       run: |
