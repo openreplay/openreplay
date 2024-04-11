@@ -8,6 +8,7 @@ import withOverlay from 'Components/hocs/withOverlay';
 import LoadInfo from './LoadInfo';
 import cls from './event.module.css';
 import { numberWithCommas } from 'App/utils';
+import { Navigation, MessageCircleQuestion, Pointer, TextCursorInput, Angry, MousePointerClick } from 'lucide-react'
 
 type Props = {
   event: any;
@@ -65,7 +66,8 @@ const Event: React.FC<Props> = ({
   const renderBody = () => {
     let title = event.type;
     let body;
-    let icon;
+    let icon = null;
+    let iconName = null;
     const isFrustration = isFrustrationEvent(event);
     const tooltip = { disabled: true, text: '' };
 
@@ -73,22 +75,22 @@ const Event: React.FC<Props> = ({
       case TYPES.LOCATION:
         title = 'Visited';
         body = event.url;
-        icon = 'event/location';
+        icon = <Navigation size={16} strokeWidth={1} />
         break;
       case TYPES.SWIPE:
         title = 'Swipe';
         body = event.direction;
-        icon = `chevron-${event.direction}`
+        iconName = `chevron-${event.direction}`
         break;
       case TYPES.TOUCH:
         title = 'Tapped';
         body = event.label;
-        icon = 'event/click';
+        iconName = 'event/click';
         break;
       case TYPES.CLICK:
         title = 'Clicked';
         body = event.label;
-        icon = isFrustration ? 'event/click_hesitation' : 'event/click';
+        icon = isFrustration ? <MessageCircleQuestion size={16} strokeWidth={1} /> : <Pointer size={16} strokeWidth={1} />;
         isFrustration
           ? Object.assign(tooltip, {
             disabled: false,
@@ -99,7 +101,7 @@ const Event: React.FC<Props> = ({
       case TYPES.INPUT:
         title = 'Input';
         body = event.value;
-        icon = isFrustration ? 'event/input_hesitation' : 'event/input';
+        icon = isFrustration ? <MessageCircleQuestion size={16} strokeWidth={1} /> : <TextCursorInput size={16} strokeWidth={1} />;
         isFrustration
           ? Object.assign(tooltip, {
             disabled: false,
@@ -111,16 +113,16 @@ const Event: React.FC<Props> = ({
       case TYPES.TAPRAGE:
         title = event.count ? `${event.count} Clicks` : 'Click Rage';
         body = event.label;
-        icon = 'event/clickrage';
+        icon = <Angry size={16} strokeWidth={1} />;
         break;
       case TYPES.IOS_VIEW:
         title = 'View';
         body = event.name;
-        icon = 'event/ios_view';
+        iconName = 'event/ios_view';
         break;
       case 'mouse_thrashing':
         title = 'Mouse Thrashing';
-        icon = 'event/mouse_thrashing';
+        icon = <MousePointerClick size={16} strokeWidth={1} />;
         break;
     }
 
@@ -134,7 +136,7 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div className={cn('flex items-center w-full', { 'px-4': isLocation })}>
-            {event.type && <Icon name={icon} size='16' color={'gray-dark'} />}
+            {event.type && iconName ? <Icon name={icon} size='16' color={'gray-dark'} /> : icon}
             <div className='ml-3 w-full'>
               <div className='flex w-full items-first justify-between'>
                 <div className='flex items-center w-full' style={{ minWidth: '0' }}>
@@ -189,7 +191,7 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['pl-4 pr-6 ml-4 py-2 border-l']: event.type !== TYPES.LOCATION,
+        ['pl-4 pr-6 py-2']: event.type !== TYPES.LOCATION,
         ['border-0 border-l-0 ml-0']: mobileTypes.includes(event.type),
       })}
       onClick={onClick}

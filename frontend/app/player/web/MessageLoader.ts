@@ -107,8 +107,9 @@ export default class MessageLoader {
           }
         });
 
-        const sortedMsgs = msgs.sort((m1, m2) => m1.time - m2.time);
-        // .sort(brokenDomSorter);
+        const sortedMsgs = msgs
+          .sort((m1, m2) => m1.time - m2.time);
+          // .sort(brokenDomSorter);
 
         if (brokenMessages > 0) {
           console.warn('Broken timestamp messages', brokenMessages);
@@ -288,14 +289,14 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
     return 1;
 
-  // if (m1.tp === MType.CreateIFrameDocument && m2.tp === MType.CreateElementNode) {
-  //   if (m2.id === m1.frameID) return 1;
-  //   if (m2.parentID === m1.id) return -1
-  // }
-  // if (m1.tp === MType.CreateElementNode && m2.tp === MType.CreateIFrameDocument) {
-  //   if (m1.id === m2.frameID) return -1;
-  //   if (m1.parentID === m2.id) return 1
-  // }
+  if (m1.tp === MType.CreateIFrameDocument && m2.tp === MType.CreateElementNode) {
+    if (m2.id === m1.frameID) return 1;
+    if (m2.parentID === m1.id) return -1
+  }
+  if (m1.tp === MType.CreateElementNode && m2.tp === MType.CreateIFrameDocument) {
+    if (m1.id === m2.frameID) return -1;
+    if (m1.parentID === m2.id) return 1
+  }
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);
   if (m1IsDOM && m2IsDOM) {
@@ -357,4 +358,4 @@ function findBrokenNodes(nodes: any[]) {
   return result;
 }
 
-window.searchOrphans = findBrokenNodes;
+window.searchOrphans = (msgs) => findBrokenNodes(msgs.filter(m => [8,9,10,70].includes(m.tp)));
