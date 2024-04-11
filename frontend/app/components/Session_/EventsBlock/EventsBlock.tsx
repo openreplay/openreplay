@@ -150,7 +150,6 @@ function EventsBlock(props: IProps) {
     };
   }, []);
   React.useEffect(() => {
-    console.log('scroller', currentTimeEventIndex, mouseOver, scroller.current)
     if (scroller.current) {
       scroller.current.forceUpdateGrid();
       if (!mouseOver) {
