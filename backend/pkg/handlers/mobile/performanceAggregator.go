@@ -1,4 +1,4 @@
-package ios
+package mobile
 
 import (
 	"openreplay/backend/pkg/handlers"
@@ -7,8 +7,8 @@ import (
 
 /*
 	Handler name: PerformanceAggregator
-	Input events: IOSPerformanceEvent,
-				  IOSSessionEnd
+	Input events: MobilePerformanceEvent,
+				  MobileSessionEnd
 	Output event: IssueEvent
 */
 
@@ -28,7 +28,7 @@ func (va *valueAggregator) aggregate() uint64 {
 
 type PerformanceAggregator struct {
 	handlers.ReadyMessageStore
-	pa            *IOSPerformanceAggregated
+	pa            *MobilePerformanceAggregated
 	fps           valueAggregator
 	cpu           valueAggregator
 	memory        valueAggregator
@@ -39,11 +39,11 @@ type PerformanceAggregator struct {
 func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	h.lastTimestamp = timestamp
 	if h.pa == nil {
-		h.pa = &IOSPerformanceAggregated{} // TODO: struct type in messages
+		h.pa = &MobilePerformanceAggregated{} // TODO: struct type in messages
 	}
 	var event Message = nil
 	switch m := message.(type) { // TODO: All Timestamp messages
-	case *IOSPerformanceEvent:
+	case *MobilePerformanceEvent:
 		if h.pa.TimestampStart == 0 {
 			h.pa.TimestampStart = m.Timestamp
 		}
@@ -88,7 +88,7 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 				h.pa.MaxBattery = m.Value
 			}
 		}
-	case *IOSSessionEnd:
+	case *MobileSessionEnd:
 		event = h.Build()
 	}
 	return event
@@ -107,7 +107,7 @@ func (h *PerformanceAggregator) Build() Message {
 
 	event := h.pa
 
-	h.pa = &IOSPerformanceAggregated{}
+	h.pa = &MobilePerformanceAggregated{}
 	for _, agg := range []valueAggregator{h.fps, h.cpu, h.memory, h.battery} {
 		agg.sum = 0
 		agg.count = 0

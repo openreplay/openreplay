@@ -62,10 +62,10 @@ func main() {
 		messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
 		messages.MsgUnbindNodes, messages.MsgCanvasNode, messages.MsgTagTrigger,
 		// Mobile messages
-		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
-		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,
-		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
-		messages.MsgIOSCrash, messages.MsgIOSIssueEvent,
+		messages.MsgMobileSessionStart, messages.MsgMobileSessionEnd, messages.MsgMobileUserID, messages.MsgMobileUserAnonymousID,
+		messages.MsgMobileMetadata, messages.MsgMobileEvent, messages.MsgMobileNetworkCall,
+		messages.MsgMobileClickEvent, messages.MsgMobileSwipeEvent, messages.MsgMobileInputEvent,
+		messages.MsgMobileCrash, messages.MsgMobileIssueEvent,
 	}
 
 	// Init consumer
@@ -73,7 +73,7 @@ func main() {
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
+			cfg.TopicRawMobile,
 			cfg.TopicAnalytics,
 		},
 		messages.NewMessageIterator(log, saver.Handle, msgFilter, true),

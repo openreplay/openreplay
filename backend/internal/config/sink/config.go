@@ -14,7 +14,7 @@ type Config struct {
 	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=5"`
 	GroupSink            string `env:"GROUP_SINK,required"`
 	TopicRawWeb          string `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS          string `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile       string `env:"TOPIC_RAW_IOS,required"`
 	TopicCache           string `env:"TOPIC_CACHE,required"`
 	TopicTrigger         string `env:"TOPIC_TRIGGER,required"`
 	TopicMobileTrigger   string `env:"TOPIC_MOBILE_TRIGGER,required"`

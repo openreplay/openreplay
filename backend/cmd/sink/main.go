@@ -81,14 +81,14 @@ func main() {
 		sessCtx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
 
 		// Send SessionEnd trigger to storage service
-		if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgIOSSessionEnd {
+		if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Error(sessCtx, "can't send SessionEnd to trigger topic: %s", err)
 			}
 			// duplicate session end message to mobile trigger topic to build video replay for mobile sessions
-			if msg.TypeID() == messages.MsgIOSSessionEnd {
+			if msg.TypeID() == messages.MsgMobileSessionEnd {
 				if err := producer.Produce(cfg.TopicMobileTrigger, msg.SessionID(), msg.Encode()); err != nil {
-					log.Error(sessCtx, "can't send iOSSessionEnd to mobile trigger topic: %s", err)
+					log.Error(sessCtx, "can't send MobileSessionEnd to mobile trigger topic: %s", err)
 				}
 			}
 			writer.Close(msg.SessionID())
@@ -190,7 +190,7 @@ func main() {
 		cfg.GroupSink,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
+			cfg.TopicRawMobile,
 		},
 		messages.NewSinkMessageIterator(log, msgHandler, nil, false),
 		false,

@@ -3,7 +3,6 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
@@ -38,12 +37,12 @@ type Connector interface {
 	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
 	// Mobile
 	InsertMobileSession(session *sessions.Session) error
-	InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error
-	InsertMobileClick(session *sessions.Session, msg *messages.IOSClickEvent) error
-	InsertMobileSwipe(session *sessions.Session, msg *messages.IOSSwipeEvent) error
-	InsertMobileInput(session *sessions.Session, msg *messages.IOSInputEvent) error
-	InsertMobileRequest(session *sessions.Session, msg *messages.IOSNetworkCall, savePayload bool) error
-	InsertMobileCrash(session *sessions.Session, msg *messages.IOSCrash) error
+	InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error
+	InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error
+	InsertMobileSwipe(session *sessions.Session, msg *messages.MobileSwipeEvent) error
+	InsertMobileInput(session *sessions.Session, msg *messages.MobileInputEvent) error
+	InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error
+	InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error
 }
 
 type task struct {
@@ -598,7 +597,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messages.IOSClickEvent) error {
+func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -616,7 +615,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messages.IOSSwipeEvent) error {
+func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messages.MobileSwipeEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -635,7 +634,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messages.IOSInputEvent) error {
+func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messages.MobileInputEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -653,7 +652,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *messages.IOSNetworkCall, savePayload bool) error {
+func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -683,7 +682,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.IOSCrash) error {
+func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {
 	if err := c.batches["ios_crashes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),

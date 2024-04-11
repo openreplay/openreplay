@@ -1,4 +1,4 @@
-package ios
+package mobile
 
 import (
 	. "openreplay/backend/pkg/messages"

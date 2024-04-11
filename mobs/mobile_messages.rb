@@ -1,4 +1,4 @@
-message 90, 'IOSSessionStart',  :replayer => false  do
+message 90, 'MobileSessionStart',  :replayer => false  do
 	uint 'Timestamp'
     uint 'ProjectID'
     string 'TrackerVersion'
@@ -11,37 +11,37 @@ message 90, 'IOSSessionStart',  :replayer => false  do
     string 'UserCountry'
 end
 
-message 91, 'IOSSessionEnd'  do
+message 91, 'MobileSessionEnd'  do
 	uint 'Timestamp'
 end
 
-message 92, 'IOSMetadata' do
+message 92, 'MobileMetadata' do
     uint 'Timestamp'
     uint 'Length'
     string 'Key'
     string 'Value'
 end
 
-message 93, 'IOSEvent', :replayer => true do
+message 93, 'MobileEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Name'
     string 'Payload'
 end
 
-message 94, 'IOSUserID' do
+message 94, 'MobileUserID' do
     uint 'Timestamp'
     uint 'Length'
     string 'ID'
 end
 
-message 95, 'IOSUserAnonymousID' do
+message 95, 'MobileUserAnonymousID' do
     uint 'Timestamp'
     uint 'Length'
     string 'ID'
 end
 
-message 96, 'IOSScreenChanges', :replayer => true do
+message 96, 'MobileScreenChanges', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     uint 'X'
@@ -50,7 +50,7 @@ message 96, 'IOSScreenChanges', :replayer => true do
     uint 'Height'
 end
 
-message 97, 'IOSCrash' do
+message 97, 'MobileCrash' do
     uint 'Timestamp'
     uint 'Length'
     string 'Name'
@@ -58,7 +58,7 @@ message 97, 'IOSCrash' do
     string 'Stacktrace'
 end
 
-message 98, 'IOSViewComponentEvent' do
+message 98, 'MobileViewComponentEvent' do
     uint 'Timestamp'
     uint 'Length'
     string 'ScreenName'
@@ -66,7 +66,7 @@ message 98, 'IOSViewComponentEvent' do
     boolean 'Visible'
 end
 
-message 100, 'IOSClickEvent', :replayer => true do
+message 100, 'MobileClickEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Label'
@@ -74,7 +74,7 @@ message 100, 'IOSClickEvent', :replayer => true do
     uint 'Y'
 end
 
-message 101, 'IOSInputEvent', :replayer => true do
+message 101, 'MobileInputEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Value'
@@ -97,27 +97,27 @@ Name/Value may be :
 "memoryUsage": Used memory in bytes
 "fps": Frames per second
 =end
-message 102, 'IOSPerformanceEvent', :replayer => true do
+message 102, 'MobilePerformanceEvent', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   string 'Name'
   uint 'Value'
 end
 
-message 103, 'IOSLog', :replayer => true do
+message 103, 'MobileLog', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   string 'Severity' # Possible values ("info", "error")
   string 'Content'
 end
 
-message 104, 'IOSInternalError', :replayer => true do
+message 104, 'MobileInternalError', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   string 'Content'
 end
 
-message 105, 'IOSNetworkCall', :replayer => true do
+message 105, 'MobileNetworkCall', :replayer => true do
    uint 'Timestamp'
    uint 'Length'
    string 'Type'
@@ -129,7 +129,7 @@ message 105, 'IOSNetworkCall', :replayer => true do
    uint 'Duration'
 end
 
-message 106, 'IOSSwipeEvent', :replayer => true do
+message 106, 'MobileSwipeEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Label'
@@ -138,13 +138,13 @@ message 106, 'IOSSwipeEvent', :replayer => true do
     string 'Direction'
 end
 
-message 107, 'IOSBatchMeta' do
+message 107, 'MobileBatchMeta' do
     uint 'Timestamp'
     uint 'Length'
     uint 'FirstIndex'
 end
 
-message 110, 'IOSPerformanceAggregated', :swift => false do 
+message 110, 'MobilePerformanceAggregated', :swift => false do 
   uint 'TimestampStart'
   uint 'TimestampEnd'
   uint 'MinFPS'
@@ -161,7 +161,7 @@ message 110, 'IOSPerformanceAggregated', :swift => false do
   uint 'MaxBattery'
 end
 
-message 111, 'IOSIssueEvent', :replayer => true do
+message 111, 'MobileIssueEvent', :replayer => true do
   uint 'Timestamp'
   string 'Type'
   string 'ContextString'

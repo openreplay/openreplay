@@ -19,7 +19,7 @@ type Config struct {
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
 	TopicRawWeb             string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS             string        `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile          string        `env:"TOPIC_RAW_IOS,required"`
 	TopicRawImages          string        `env:"TOPIC_RAW_IMAGES,required"`
 	TopicCanvasImages       string        `env:"TOPIC_CANVAS_IMAGES,required"`
 	BeaconSizeLimit         int64         `env:"BEACON_SIZE_LIMIT,required"`

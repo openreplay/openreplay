@@ -47,8 +47,8 @@ func (s *saverImpl) Handle(msg Message) {
 	if msg.TypeID() == MsgCustomEvent {
 		defer s.Handle(types.WrapCustomEvent(msg.(*CustomEvent)))
 	}
-	if IsIOSType(msg.TypeID()) {
-		// Handle iOS messages
+	if IsMobileType(msg.TypeID()) {
+		// Handle Mobile messages
 		if err := s.handleMobileMessage(msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
 				s.log.Error(sessCtx, "mobile message insertion error, msg: %+v, err: %s", msg, err)
@@ -77,41 +77,41 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		return err
 	}
 	switch m := msg.(type) {
-	case *IOSUserID:
+	case *MobileUserID:
 		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_IOS", m.ID)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_Mobile", m.ID)
 		return nil
-	case *IOSUserAnonymousID:
+	case *MobileUserAnonymousID:
 		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_IOS", m.ID)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_Mobile", m.ID)
 		return nil
-	case *IOSMetadata:
+	case *MobileMetadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
-	case *IOSEvent:
-		return s.pg.InsertIOSEvent(session, m)
-	case *IOSClickEvent:
-		if err := s.pg.InsertIOSClickEvent(session, m); err != nil {
+	case *MobileEvent:
+		return s.pg.InsertMobileEvent(session, m)
+	case *MobileClickEvent:
+		if err := s.pg.InsertMobileClickEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
-	case *IOSSwipeEvent:
-		if err := s.pg.InsertIOSSwipeEvent(session, m); err != nil {
+	case *MobileSwipeEvent:
+		if err := s.pg.InsertMobileSwipeEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
-	case *IOSInputEvent:
-		if err := s.pg.InsertIOSInputEvent(session, m); err != nil {
+	case *MobileInputEvent:
+		if err := s.pg.InsertMobileInputEvent(session, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
-	case *IOSNetworkCall:
-		return s.pg.InsertIOSNetworkCall(session, m)
-	case *IOSCrash:
-		if err := s.pg.InsertIOSCrash(session.SessionID, session.ProjectID, m); err != nil {
+	case *MobileNetworkCall:
+		return s.pg.InsertMobileNetworkCall(session, m)
+	case *MobileCrash:
+		if err := s.pg.InsertMobileCrash(session.SessionID, session.ProjectID, m); err != nil {
 			return err
 		}
 		return s.sessions.UpdateIssuesStats(session.SessionID, 1, 1000)
