@@ -126,7 +126,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID)
     if (!parent) {
-      logger.error("Insert error. Parent vNode not found", parentID, this.vElements, this.olVRoots);
+      logger.error(`${id} Insert error. Parent vNode ${parentID} not found`, this.vElements, this.olVRoots);
       return;
     }
 
