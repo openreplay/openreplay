@@ -42,7 +42,7 @@ function EventsBlock(props: IProps) {
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { playing, tabStates, tabChangeEvents = [] } = store.get();
+  const { time, endTime, playing, tabStates, tabChangeEvents = [] } = store.get();
 
   const {
     filteredEvents,
@@ -64,7 +64,6 @@ function EventsBlock(props: IProps) {
     eventListNow.concat(store.get().eventListNow);
   }
 
-  const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0;
   const usedEvents = React.useMemo(() => {
     if (tabStates !== undefined) {
       tabChangeEvents.forEach((ev) => {
@@ -100,6 +99,27 @@ function EventsBlock(props: IProps) {
     props.zoomStartTs,
     props.zoomEndTs,
   ]);
+  const findLastFitting = React.useCallback((time: number) => {
+    if (!usedEvents.length) return 0;
+    let i = usedEvents.length - 1;
+     if (time > endTime / 2) {
+      while (i >= 0) {
+        const event = usedEvents[i];
+        if ('time' in event && event.time <= time) break;
+        i--;
+      }
+      return i;
+     } else {
+       let l = 0;
+       while (l <= i) {
+         const event = usedEvents[l];
+         if ('time' in event && event.time >= time) break;
+         l++;
+       }
+       return l;
+     }
+  }, [usedEvents, time, endTime]);
+  const currentTimeEventIndex = findLastFitting(time)
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
@@ -130,6 +150,7 @@ function EventsBlock(props: IProps) {
     };
   }, []);
   React.useEffect(() => {
+    console.log('scroller', currentTimeEventIndex, mouseOver, scroller.current)
     if (scroller.current) {
       scroller.current.forceUpdateGrid();
       if (!mouseOver) {
@@ -162,7 +183,7 @@ function EventsBlock(props: IProps) {
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
-
+    const isPrev = index < currentTimeEventIndex;
     return (
       <CellMeasurer key={key} cache={cache} parent={parent} rowIndex={index}>
         {({ measure, registerChild }) => (
@@ -180,6 +201,7 @@ function EventsBlock(props: IProps) {
               showSelection={!playing}
               isNote={isNote}
               isTabChange={isTabChange}
+              isPrev={isPrev}
               filterOutNote={filterOutNote}
             />
           </div>
