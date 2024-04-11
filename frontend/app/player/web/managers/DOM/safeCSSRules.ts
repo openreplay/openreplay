@@ -4,7 +4,7 @@ function isChromium(item) {
   return ['Chromium', 'Google Chrome', 'NewBrowser'].includes(item.brand);
 }
 // @ts-ignore
-const isChromeLike = navigator.userAgentData.brands.some(isChromium)
+const isChromeLike = navigator.userAgentData?.brands?.some(isChromium)
 
 export function insertRule(
   sheet: { insertRule: (rule: string, index?: number) => void },
