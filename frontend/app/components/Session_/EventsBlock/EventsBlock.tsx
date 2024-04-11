@@ -111,7 +111,7 @@ function EventsBlock(props: IProps) {
       return i;
      } else {
        let l = 0;
-       while (l <= i) {
+       while (l < i) {
          const event = usedEvents[l];
          if ('time' in event && event.time >= time) break;
          l++;

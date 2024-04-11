@@ -125,11 +125,18 @@ class EventGroupWrapper extends React.Component {
       : this.props.isCurrent ? '#394EFF' : 'transparent'
     return (
       <>
-        <div
-          style={{
-            borderLeft: `1.5px solid ${shadowColor}`,
-          }}
-          >
+        <div>
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: 1.5,
+              height: '100%',
+              backgroundColor: shadowColor,
+              zIndex: 98,
+            }}
+          />
           {this.props.isCurrent ? (
             <div
              style={{

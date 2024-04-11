@@ -1,11 +1,6 @@
 .playerBody {
   background: $white;
-  /* border-radius: 3px; */
-  /* padding: 10px 10px 5px 10px; */
-  /* box-shadow: 0px 2px 10px 0 $gray-light; */
   height: 100%;
-  /* border: solid thin $gray-light; */
-  border-right: solid thin $gray-light;
 }
 
 .screenWrapper {
