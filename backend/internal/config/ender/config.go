@@ -16,7 +16,7 @@ type Config struct {
 	GroupEnder        string        `env:"GROUP_ENDER,required"`
 	LoggerTimeout     int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
 	TopicRawWeb       string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS       string        `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile    string        `env:"TOPIC_RAW_IOS,required"`
 	TopicCanvasImages string        `env:"TOPIC_CANVAS_IMAGES,required"`
 	TopicRawImages    string        `env:"TOPIC_RAW_IMAGES,required"`
 	ProducerTimeout   int           `env:"PRODUCER_TIMEOUT,default=2000"`

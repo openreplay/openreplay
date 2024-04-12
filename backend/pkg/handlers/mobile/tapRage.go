@@ -1,4 +1,4 @@
-package ios
+package mobile
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ func (h *TapRageDetector) createPayload() string {
 
 func (h *TapRageDetector) Build() Message {
 	if h.countsInARow >= MinTapsInARow {
-		event := &IOSIssueEvent{
+		event := &MobileIssueEvent{
 			Type:          "tap_rage",
 			ContextString: h.lastLabel,
 			Timestamp:     h.firstInARawTimestamp,
@@ -49,7 +49,7 @@ func (h *TapRageDetector) Build() Message {
 func (h *TapRageDetector) Handle(message Message, timestamp uint64) Message {
 	var event Message = nil
 	switch m := message.(type) {
-	case *IOSClickEvent:
+	case *MobileClickEvent:
 		if h.lastTimestamp+TapTimeDiff < m.Timestamp && h.lastLabel == m.Label {
 			h.lastTimestamp = m.Timestamp
 			h.countsInARow += 1
@@ -63,7 +63,7 @@ func (h *TapRageDetector) Handle(message Message, timestamp uint64) Message {
 			h.firstInARawSeqIndex = m.Index
 			h.countsInARow = 1
 		}
-	case *IOSSessionEnd:
+	case *MobileSessionEnd:
 		event = h.Build()
 	}
 	return event

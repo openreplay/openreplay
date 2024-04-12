@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	if r.Body == nil {
@@ -137,20 +137,20 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				e.log.Warn(r.Context(), "failed to add mobile session to DB: %s", err)
 			}
 
-			sessStart := &messages.IOSSessionStart{
+			sessStart := &messages.MobileSessionStart{
 				Timestamp:      req.Timestamp,
 				ProjectID:      uint64(p.ProjectID),
 				TrackerVersion: req.TrackerVersion,
 				RevID:          req.RevID,
 				UserUUID:       userUUID,
-				UserOS:         "IOS",
+				UserOS:         os,
 				UserOSVersion:  req.UserOSVersion,
 				UserDevice:     ios.MapIOSDevice(req.UserDevice),
-				UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
+				UserDeviceType: deviceType,
 				UserCountry:    geoInfo.Pack(),
 			}
 
-			if err := e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode()); err != nil {
+			if err := e.services.Producer.Produce(e.cfg.TopicRawMobile, tokenData.ID, sessStart.Encode()); err != nil {
 				e.log.Error(r.Context(), "failed to send mobile sessionStart event to queue: %s", err)
 			}
 		}
@@ -167,7 +167,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	}, startTime, r.URL.Path, 0)
 }
 
-func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
@@ -184,10 +184,10 @@ func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
-	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
+	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
 }
 
-func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
@@ -199,10 +199,10 @@ func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	// Check timestamps here?
-	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
+	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
 }
 
-func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)

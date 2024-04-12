@@ -60,7 +60,7 @@ func main() {
 		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
+			cfg.TopicRawMobile,
 		},
 		messages.NewEnderMessageIterator(
 			log,
@@ -170,14 +170,14 @@ func main() {
 					}
 				}
 				if sess != nil && (sess.Platform == "ios" || sess.Platform == "android") {
-					msg := &messages.IOSSessionEnd{Timestamp: timestamp}
-					if err := producer.Produce(cfg.TopicRawIOS, sessionID, msg.Encode()); err != nil {
-						log.Error(sessCtx, "can't send iOSSessionEnd to mobile topic: %s", err)
+					msg := &messages.MobileSessionEnd{Timestamp: timestamp}
+					if err := producer.Produce(cfg.TopicRawMobile, sessionID, msg.Encode()); err != nil {
+						log.Error(sessCtx, "can't send MobileSessionEnd to mobile topic: %s", err)
 						return false, 0
 					}
 					// Inform canvas service about session end
 					if err := producer.Produce(cfg.TopicRawImages, sessionID, msg.Encode()); err != nil {
-						log.Error(sessCtx, "can't send iOSSessionEnd signal to canvas topic: %s", err)
+						log.Error(sessCtx, "can't send MobileSessionEnd signal to canvas topic: %s", err)
 					}
 				} else {
 					if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {

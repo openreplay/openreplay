@@ -72,7 +72,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
 	)
-	if messages.IsIOSType(msg.TypeID()) {
+	if messages.IsMobileType(msg.TypeID()) {
 		msgTimestamp = messages.GetTimestamp(msg)
 	}
 	if batchTimestamp == 0 {
@@ -87,7 +87,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
-			isMobile:      messages.IsIOSType(msg.TypeID()),
+			isMobile:      messages.IsMobileType(msg.TypeID()),
 		}
 		ender.IncreaseActiveSessions()
 		ender.IncreaseTotalSessions()
