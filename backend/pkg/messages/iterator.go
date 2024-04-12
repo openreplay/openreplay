@@ -46,7 +46,7 @@ func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messag
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgIOSBatchMeta: {},
+		MsgMobileBatchMeta: {},
 	}
 	return iter
 }
@@ -115,8 +115,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		msg.Meta().SetMeta(i.messageInfo)
 
 		// Update timestamp value for iOS message types
-		if IsIOSType(msgType) {
-			msgTime := i.getIOSTimestamp(msg)
+		if IsMobileType(msgType) {
+			msgTime := i.getMobileTimestamp(msg)
 			msg.Meta().Timestamp = msgTime
 		}
 
@@ -125,7 +125,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	}
 }
 
-func (i *messageIteratorImpl) getIOSTimestamp(msg Message) uint64 {
+func (i *messageIteratorImpl) getMobileTimestamp(msg Message) uint64 {
 	return GetTimestamp(msg)
 }
 
@@ -152,7 +152,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.version = m.Version
 		i.batchInfo.version = m.Version
 
-	case *BatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
+	case *BatchMeta: // Is not required to be present in batch since Mobile doesn't have it (though we might change it)
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
@@ -194,14 +194,14 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		// Save session page url in cache for using in next batches
 		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
 
-	case *IOSBatchMeta:
+	case *MobileBatchMeta:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.FirstIndex
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
-			i.zeroTsLog("IOSBatchMeta")
+			i.zeroTsLog("MobileBatchMeta")
 		}
 	}
 	return nil
