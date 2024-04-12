@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
@@ -581,7 +582,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error {
+func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error {
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
