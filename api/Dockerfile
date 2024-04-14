@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12.3-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 ARG GIT_SHA
