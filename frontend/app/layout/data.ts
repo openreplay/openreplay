@@ -42,8 +42,6 @@ export const enum MENU {
   BOOKMARKS = 'bookmarks',
   NOTES = 'notes',
   LIVE_SESSIONS = 'live-sessions',
-  RECORDINGS = 'recordings',
-  STATS = 'assist-stats',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
   FUNNELS = 'funnels',
@@ -70,12 +68,10 @@ export const categories: Category[] = [
     ]
   },
   {
-    title: 'Assist',
+    title: '',
     key: 'assist',
     items: [
-      { label: 'Cobrowse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
-      { label: 'Recordings', key: MENU.RECORDINGS, icon: 'record-btn', isEnterprise: true },
-      { label: 'Reports', key: MENU.STATS, icon: 'file-bar-graph', isEnterprise: true }
+      { label: 'Co-Browse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
     ]
   },
   {
