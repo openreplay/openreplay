@@ -27,7 +27,7 @@ func NewBuilder(sessionID uint64, events chan Message, handlers ...handlers.Mess
 }
 
 func (b *builder) checkSessionEnd(message Message) {
-	if _, isEnd := message.(*IOSSessionEnd); isEnd {
+	if _, isEnd := message.(*MobileSessionEnd); isEnd {
 		b.ended = true
 	}
 	if _, isEnd := message.(*SessionEnd); isEnd {

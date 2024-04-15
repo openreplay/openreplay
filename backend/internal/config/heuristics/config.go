@@ -13,7 +13,7 @@ type Config struct {
 	TopicAnalytics  string `env:"TOPIC_ANALYTICS,required"`
 	LoggerTimeout   int    `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
 	TopicRawWeb     string `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS     string `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile  string `env:"TOPIC_RAW_IOS,required"`
 	ProducerTimeout int    `env:"PRODUCER_TIMEOUT,default=2000"`
 	UseProfiler     bool   `env:"PROFILER_ENABLED,default=false"`
 }

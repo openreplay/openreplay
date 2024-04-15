@@ -49,7 +49,7 @@ func main() {
 				if err != nil {
 					return nil, err
 				}
-				if msgType != messages.MsgIOSSessionEnd {
+				if msgType != messages.MsgMobileSessionEnd {
 					return nil, fmt.Errorf("not a mobile session end message")
 				}
 				msg, err := messages.ReadMessage(msgType, reader)

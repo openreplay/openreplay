@@ -1479,9 +1479,9 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSSessionStart(reader BytesReader) (Message, error) {
+func DecodeMobileSessionStart(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSSessionStart{}
+	msg := &MobileSessionStart{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1515,18 +1515,18 @@ func DecodeIOSSessionStart(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSSessionEnd(reader BytesReader) (Message, error) {
+func DecodeMobileSessionEnd(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSSessionEnd{}
+	msg := &MobileSessionEnd{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
 }
 
-func DecodeIOSMetadata(reader BytesReader) (Message, error) {
+func DecodeMobileMetadata(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSMetadata{}
+	msg := &MobileMetadata{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1542,9 +1542,9 @@ func DecodeIOSMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSEvent(reader BytesReader) (Message, error) {
+func DecodeMobileEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSEvent{}
+	msg := &MobileEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1560,9 +1560,9 @@ func DecodeIOSEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSUserID(reader BytesReader) (Message, error) {
+func DecodeMobileUserID(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSUserID{}
+	msg := &MobileUserID{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1575,9 +1575,9 @@ func DecodeIOSUserID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSUserAnonymousID(reader BytesReader) (Message, error) {
+func DecodeMobileUserAnonymousID(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSUserAnonymousID{}
+	msg := &MobileUserAnonymousID{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1590,9 +1590,9 @@ func DecodeIOSUserAnonymousID(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSScreenChanges(reader BytesReader) (Message, error) {
+func DecodeMobileScreenChanges(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSScreenChanges{}
+	msg := &MobileScreenChanges{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1614,9 +1614,9 @@ func DecodeIOSScreenChanges(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSCrash(reader BytesReader) (Message, error) {
+func DecodeMobileCrash(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSCrash{}
+	msg := &MobileCrash{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1635,9 +1635,9 @@ func DecodeIOSCrash(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSViewComponentEvent(reader BytesReader) (Message, error) {
+func DecodeMobileViewComponentEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSViewComponentEvent{}
+	msg := &MobileViewComponentEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1656,9 +1656,9 @@ func DecodeIOSViewComponentEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSClickEvent(reader BytesReader) (Message, error) {
+func DecodeMobileClickEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSClickEvent{}
+	msg := &MobileClickEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1677,9 +1677,9 @@ func DecodeIOSClickEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSInputEvent(reader BytesReader) (Message, error) {
+func DecodeMobileInputEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSInputEvent{}
+	msg := &MobileInputEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1698,9 +1698,9 @@ func DecodeIOSInputEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSPerformanceEvent(reader BytesReader) (Message, error) {
+func DecodeMobilePerformanceEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSPerformanceEvent{}
+	msg := &MobilePerformanceEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1716,9 +1716,9 @@ func DecodeIOSPerformanceEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSLog(reader BytesReader) (Message, error) {
+func DecodeMobileLog(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSLog{}
+	msg := &MobileLog{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1734,9 +1734,9 @@ func DecodeIOSLog(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSInternalError(reader BytesReader) (Message, error) {
+func DecodeMobileInternalError(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSInternalError{}
+	msg := &MobileInternalError{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1749,9 +1749,9 @@ func DecodeIOSInternalError(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSNetworkCall(reader BytesReader) (Message, error) {
+func DecodeMobileNetworkCall(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSNetworkCall{}
+	msg := &MobileNetworkCall{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1782,9 +1782,9 @@ func DecodeIOSNetworkCall(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSSwipeEvent(reader BytesReader) (Message, error) {
+func DecodeMobileSwipeEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSSwipeEvent{}
+	msg := &MobileSwipeEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1806,9 +1806,9 @@ func DecodeIOSSwipeEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
+func DecodeMobileBatchMeta(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSBatchMeta{}
+	msg := &MobileBatchMeta{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1821,9 +1821,9 @@ func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSPerformanceAggregated(reader BytesReader) (Message, error) {
+func DecodeMobilePerformanceAggregated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSPerformanceAggregated{}
+	msg := &MobilePerformanceAggregated{}
 	if msg.TimestampStart, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1869,9 +1869,9 @@ func DecodeIOSPerformanceAggregated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeIOSIssueEvent(reader BytesReader) (Message, error) {
+func DecodeMobileIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &IOSIssueEvent{}
+	msg := &MobileIssueEvent{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -2071,43 +2071,43 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 127:
 		return DecodeSessionSearch(reader)
 	case 90:
-		return DecodeIOSSessionStart(reader)
+		return DecodeMobileSessionStart(reader)
 	case 91:
-		return DecodeIOSSessionEnd(reader)
+		return DecodeMobileSessionEnd(reader)
 	case 92:
-		return DecodeIOSMetadata(reader)
+		return DecodeMobileMetadata(reader)
 	case 93:
-		return DecodeIOSEvent(reader)
+		return DecodeMobileEvent(reader)
 	case 94:
-		return DecodeIOSUserID(reader)
+		return DecodeMobileUserID(reader)
 	case 95:
-		return DecodeIOSUserAnonymousID(reader)
+		return DecodeMobileUserAnonymousID(reader)
 	case 96:
-		return DecodeIOSScreenChanges(reader)
+		return DecodeMobileScreenChanges(reader)
 	case 97:
-		return DecodeIOSCrash(reader)
+		return DecodeMobileCrash(reader)
 	case 98:
-		return DecodeIOSViewComponentEvent(reader)
+		return DecodeMobileViewComponentEvent(reader)
 	case 100:
-		return DecodeIOSClickEvent(reader)
+		return DecodeMobileClickEvent(reader)
 	case 101:
-		return DecodeIOSInputEvent(reader)
+		return DecodeMobileInputEvent(reader)
 	case 102:
-		return DecodeIOSPerformanceEvent(reader)
+		return DecodeMobilePerformanceEvent(reader)
 	case 103:
-		return DecodeIOSLog(reader)
+		return DecodeMobileLog(reader)
 	case 104:
-		return DecodeIOSInternalError(reader)
+		return DecodeMobileInternalError(reader)
 	case 105:
-		return DecodeIOSNetworkCall(reader)
+		return DecodeMobileNetworkCall(reader)
 	case 106:
-		return DecodeIOSSwipeEvent(reader)
+		return DecodeMobileSwipeEvent(reader)
 	case 107:
-		return DecodeIOSBatchMeta(reader)
+		return DecodeMobileBatchMeta(reader)
 	case 110:
-		return DecodeIOSPerformanceAggregated(reader)
+		return DecodeMobilePerformanceAggregated(reader)
 	case 111:
-		return DecodeIOSIssueEvent(reader)
+		return DecodeMobileIssueEvent(reader)
 	}
 	return nil, fmt.Errorf("unknown message code: %v", t)
 }

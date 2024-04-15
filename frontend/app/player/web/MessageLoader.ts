@@ -100,6 +100,7 @@ export default class MessageLoader {
         }
 
         let brokenMessages = 0;
+        let originalCopy = [...msgs];
         msgs.forEach((msg) => {
           if (!msg.time) {
             msg.time = artificialStartTime;
@@ -108,11 +109,12 @@ export default class MessageLoader {
         });
 
         const sortedMsgs = msgs
-          .sort((m1, m2) => m1.time - m2.time);
-          // .sort(brokenDomSorter);
+          // .sort((m1, m2) => m1.time - m2.time);
+          .sort(brokenDomSorter)
+          .sort(sortIframes);
 
         if (brokenMessages > 0) {
-          console.warn('Broken timestamp messages', brokenMessages);
+          console.warn('Broken timestamp messages', brokenMessages, originalCopy);
         }
 
         onMessagesDone(sortedMsgs, `${file} ${fileNum}`);
@@ -279,6 +281,7 @@ const DOMMessages = [
   MType.CreateTextNode,
   MType.MoveNode,
   MType.RemoveNode,
+  MType.CreateIFrameDocument
 ];
 
 function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
@@ -289,25 +292,27 @@ function brokenDomSorter(m1: PlayerMsg, m2: PlayerMsg) {
   if (m1.tp !== MType.CreateDocument && m2.tp === MType.CreateDocument)
     return 1;
 
-  if (m1.tp === MType.CreateIFrameDocument && m2.tp === MType.CreateElementNode) {
-    if (m2.id === m1.frameID) return 1;
-    if (m2.parentID === m1.id) return -1
-  }
-  if (m1.tp === MType.CreateElementNode && m2.tp === MType.CreateIFrameDocument) {
-    if (m1.id === m2.frameID) return -1;
-    if (m1.parentID === m2.id) return 1
-  }
   const m1IsDOM = DOMMessages.includes(m1.tp);
   const m2IsDOM = DOMMessages.includes(m2.tp);
   if (m1IsDOM && m2IsDOM) {
     // @ts-ignore DOM msg has id but checking for 'id' in m is expensive
-    if (m1.id !== m2.id) return m1.id - m2.id;
-    return m1.tp - m2.tp;
+    return m1.id - m2.id;
   }
 
   if (m1IsDOM && !m2IsDOM) return -1;
   if (!m1IsDOM && m2IsDOM) return 1;
 
+  return 0;
+}
+
+function sortIframes(m1, m2) {
+  if (m1.time === m2.time
+      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m1.tp)
+      && [MType.CreateIFrameDocument, MType.CreateElementNode].includes(m2.tp)
+  ) {
+    if (m1.frameID === m2.id) return 1;
+    if (m1.id === m2.frameID) return -1;
+  }
   return 0;
 }
 
@@ -358,4 +363,5 @@ function findBrokenNodes(nodes: any[]) {
   return result;
 }
 
+// @ts-ignore
 window.searchOrphans = (msgs) => findBrokenNodes(msgs.filter(m => [8,9,10,70].includes(m.tp)));

@@ -48,9 +48,9 @@ func main() {
 		messages.NewMessageIterator(
 			log,
 			func(msg messages.Message) {
-				// Convert IOSSessionEnd to SessionEnd
-				if msg.TypeID() == messages.MsgIOSSessionEnd {
-					mobileEnd, oldMeta := msg.(*messages.IOSSessionEnd), msg.Meta()
+				// Convert MobileSessionEnd to SessionEnd
+				if msg.TypeID() == messages.MsgMobileSessionEnd {
+					mobileEnd, oldMeta := msg.(*messages.MobileSessionEnd), msg.Meta()
 					msg = &messages.SessionEnd{
 						Timestamp: mobileEnd.Timestamp,
 					}
@@ -66,7 +66,7 @@ func main() {
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
 			},
-			[]int{messages.MsgSessionEnd, messages.MsgIOSSessionEnd},
+			[]int{messages.MsgSessionEnd, messages.MsgMobileSessionEnd},
 			true,
 		),
 		false,

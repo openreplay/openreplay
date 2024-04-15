@@ -15,6 +15,6 @@ python-decouple==3.8
 pydantic[email]==2.3.0
 apscheduler==3.10.4
 
-clickhouse-driver[lz4]==0.2.6
+clickhouse-driver[lz4]==0.2.7
 redis==5.0.3
-azure-storage-blob==12.19.0
+azure-storage-blob==12.19.1

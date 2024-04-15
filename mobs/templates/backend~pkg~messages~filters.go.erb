@@ -5,7 +5,7 @@ func IsReplayerType(id int) bool {
 	return <%= $messages.select { |msg| msg.replayer == false }.map{ |msg| "#{msg.id} != id" }.join(' && ') %>
 }
 
-func IsIOSType(id int) bool {
+func IsMobileType(id int) bool {
 	return <%= $messages.select { |msg| msg.context == :ios }.map{ |msg| "#{msg.id} == id"}.join(' || ') %>
 }
 
