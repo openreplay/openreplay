@@ -99,6 +99,7 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
 def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
+    data.series[0].filter.filters += data.series[0].filter.events
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
