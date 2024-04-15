@@ -252,7 +252,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             f"{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                             f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
             if is_any:
                 sessions_conditions.append('user_id IS NOT NULL')
             elif is_undefined:
@@ -263,7 +263,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.user_anonymous_id,
-                        schemas.FilterType.user_anonymous_id_ios]:
+                        schemas.FilterType.user_anonymous_id_mobile]:
             if is_any:
                 sessions_conditions.append('user_anonymous_id IS NOT NULL')
             elif is_undefined:
@@ -273,7 +273,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
             if is_any:
                 sessions_conditions.append('rev_id IS NOT NULL')
             elif is_undefined:
@@ -621,7 +621,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -710,7 +710,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -796,7 +796,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
 #             event_table = JOURNEY_TYPES[f["value"]]["table"]
 #             event_column = JOURNEY_TYPES[f["value"]]["column"]
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #
@@ -861,7 +861,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -930,7 +930,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -990,7 +990,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -1052,7 +1052,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
 #             event_table = JOURNEY_TYPES[f["value"]]["table"]
 #             event_column = JOURNEY_TYPES[f["value"]]["column"]
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     pg_sub_query.append(f"length({event_column})>2")
@@ -1086,7 +1086,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #     for f in filters:
 #         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
 #             period = f["value"]
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #
@@ -1156,7 +1156,7 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 #         elif f["type"] == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     event_table = JOURNEY_TYPES[event_type]["table"]

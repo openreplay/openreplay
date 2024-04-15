@@ -97,22 +97,22 @@ def __get_meta_constraint(project_id, data):
             if any(item in [schemas.FilterType.user_browser] \
                    for item in filter_type):
                 constraints.append(f"sessions.user_browser = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios] \
+            elif any(item in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_os = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios] \
+            elif any(item in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_device = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios] \
+            elif any(item in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_country  = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios] \
+            elif any(item in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_id = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_anonymous_id, schemas.FilterType.user_anonymous_id_ios] \
+            elif any(item in [schemas.FilterType.user_anonymous_id, schemas.FilterType.user_anonymous_id_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_anonymous_id = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios] \
+            elif any(item in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile] \
                      for item in filter_type):
                 constraints.append(f"sessions.rev_id = %({f['key']}_{i})s")
     return constraints

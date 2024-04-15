@@ -132,14 +132,14 @@ class EventType:
     ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
                   column=None)  # column=None because errors are searched by name or message
     METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
-    #     IOS
-    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.taps", column="label")
-    INPUT_IOS = Event(ui_type=schemas.EventType.input_ios, table="events_ios.inputs", column="label")
-    VIEW_IOS = Event(ui_type=schemas.EventType.view_ios, table="events_ios.views", column="name")
-    SWIPE_IOS = Event(ui_type=schemas.EventType.swipe_ios, table="events_ios.swipes", column="label")
-    CUSTOM_IOS = Event(ui_type=schemas.EventType.custom_ios, table="events_common.customs", column="name")
-    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="path")
-    CRASH_IOS = Event(ui_type=schemas.EventType.error_ios, table="events_common.crashes",
+    #     MOBILE
+    CLICK_MOBILE = Event(ui_type=schemas.EventType.click_mobile, table="events_ios.taps", column="label")
+    INPUT_MOBILE = Event(ui_type=schemas.EventType.input_mobile, table="events_ios.inputs", column="label")
+    VIEW_MOBILE = Event(ui_type=schemas.EventType.view_mobile, table="events_ios.views", column="name")
+    SWIPE_MOBILE = Event(ui_type=schemas.EventType.swipe_mobile, table="events_ios.swipes", column="label")
+    CUSTOM_MOBILE = Event(ui_type=schemas.EventType.custom_mobile, table="events_common.customs", column="name")
+    REQUEST_MOBILE = Event(ui_type=schemas.EventType.request_mobile, table="events_common.requests", column="path")
+    CRASH_MOBILE = Event(ui_type=schemas.EventType.error_mobile, table="events_common.crashes",
                       column=None)  # column=None because errors are searched by name or message
 
 
@@ -168,22 +168,22 @@ SUPPORTED_TYPES = {
     EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
                                                 query=None),
     #     IOS
-    EventType.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_IOS),
+    EventType.CLICK_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_MOBILE),
                                                  query=autocomplete.__generic_query(
-                                                     typename=EventType.CLICK_IOS.ui_type)),
-    EventType.INPUT_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_IOS),
+                                                     typename=EventType.CLICK_MOBILE.ui_type)),
+    EventType.INPUT_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_MOBILE),
                                                  query=autocomplete.__generic_query(
-                                                     typename=EventType.INPUT_IOS.ui_type)),
-    EventType.VIEW_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_IOS),
+                                                     typename=EventType.INPUT_MOBILE.ui_type)),
+    EventType.VIEW_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_MOBILE),
                                                 query=autocomplete.__generic_query(
-                                                    typename=EventType.VIEW_IOS.ui_type)),
-    EventType.CUSTOM_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_IOS),
+                                                    typename=EventType.VIEW_MOBILE.ui_type)),
+    EventType.CUSTOM_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_MOBILE),
                                                   query=autocomplete.__generic_query(
-                                                      typename=EventType.CUSTOM_IOS.ui_type)),
-    EventType.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_IOS),
+                                                      typename=EventType.CUSTOM_MOBILE.ui_type)),
+    EventType.REQUEST_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_MOBILE),
                                                    query=autocomplete.__generic_query(
-                                                       typename=EventType.REQUEST_IOS.ui_type)),
-    EventType.CRASH_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
+                                                       typename=EventType.REQUEST_MOBILE.ui_type)),
+    EventType.CRASH_MOBILE.ui_type: SupportedFilter(get=autocomplete.__search_errors_mobile,
                                                  query=None),
 }
 
@@ -207,15 +207,15 @@ def search(text, event_type, project_id, source, key):
 
     if event_type in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
-        # for IOS events autocomplete
-        # if event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,source=source)
-    elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key, source=source)
+        # for MOBILE events autocomplete
+        # if event_type + "_MOBILE" in SUPPORTED_TYPES.keys():
+        #     rows += SUPPORTED_TYPES[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key,source=source)
+    elif event_type + "_MOBILE" in SUPPORTED_TYPES.keys():
+        rows = SUPPORTED_TYPES[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key, source=source)
     elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
-    elif event_type.endswith("_IOS") \
-            and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
+    elif event_type.endswith("_MOBILE") \
+            and event_type[:-len("_MOBILE")] in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}

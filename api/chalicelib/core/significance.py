@@ -64,15 +64,15 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
             elif filter_type == schemas.FilterType.duration:
@@ -97,16 +97,16 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                             f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
                             is_not=is_not, value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
@@ -142,18 +142,18 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             next_table = events.EventType.CUSTOM.table
             next_col_name = events.EventType.CUSTOM.column
         #     IOS --------------
-        elif event_type == events.EventType.CLICK_IOS.ui_type:
-            next_table = events.EventType.CLICK_IOS.table
-            next_col_name = events.EventType.CLICK_IOS.column
-        elif event_type == events.EventType.INPUT_IOS.ui_type:
-            next_table = events.EventType.INPUT_IOS.table
-            next_col_name = events.EventType.INPUT_IOS.column
-        elif event_type == events.EventType.VIEW_IOS.ui_type:
-            next_table = events.EventType.VIEW_IOS.table
-            next_col_name = events.EventType.VIEW_IOS.column
-        elif event_type == events.EventType.CUSTOM_IOS.ui_type:
-            next_table = events.EventType.CUSTOM_IOS.table
-            next_col_name = events.EventType.CUSTOM_IOS.column
+        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
+            next_table = events.EventType.CLICK_MOBILE.table
+            next_col_name = events.EventType.CLICK_MOBILE.column
+        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
+            next_table = events.EventType.INPUT_MOBILE.table
+            next_col_name = events.EventType.INPUT_MOBILE.column
+        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
+            next_table = events.EventType.VIEW_MOBILE.table
+            next_col_name = events.EventType.VIEW_MOBILE.column
+        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
+            next_table = events.EventType.CUSTOM_MOBILE.table
+            next_col_name = events.EventType.CUSTOM_MOBILE.column
         else:
             logging.warning(f"=================UNDEFINED:{event_type}")
             continue

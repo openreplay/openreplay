@@ -43,25 +43,25 @@ SUPPORTED_TYPES = {
         get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.utm_source),
         query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.utm_source)),
     # IOS
-    schemas.FilterType.user_os_ios: SupportedFilter(
-        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_os_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_os_ios)),
-    schemas.FilterType.user_device_ios: SupportedFilter(
+    schemas.FilterType.user_os_mobile: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_os_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_os_mobile)),
+    schemas.FilterType.user_device_mobile: SupportedFilter(
         get=autocomplete.__generic_autocomplete_metas(
-            typename=schemas.FilterType.user_device_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_device_ios)),
-    schemas.FilterType.user_country_ios: SupportedFilter(
-        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country_ios)),
-    schemas.FilterType.user_id_ios: SupportedFilter(
-        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id_ios)),
-    schemas.FilterType.user_anonymous_id_ios: SupportedFilter(
-        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_anonymous_id_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_anonymous_id_ios)),
-    schemas.FilterType.rev_id_ios: SupportedFilter(
-        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.rev_id_ios),
-        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.rev_id_ios)),
+            typename=schemas.FilterType.user_device_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_device_mobile)),
+    schemas.FilterType.user_country_mobile: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_country_mobile)),
+    schemas.FilterType.user_id_mobile: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_id_mobile)),
+    schemas.FilterType.user_anonymous_id_mobile: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_anonymous_id_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.user_anonymous_id_mobile)),
+    schemas.FilterType.rev_id_mobile: SupportedFilter(
+        get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.rev_id_mobile),
+        query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.rev_id_mobile)),
 
 }
 
