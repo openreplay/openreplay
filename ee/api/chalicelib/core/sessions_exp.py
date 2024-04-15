@@ -522,7 +522,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.location_avg_cpu_load: 'PERFORMANCE',
         schemas.PerformanceEventType.location_avg_memory_usage: 'PERFORMANCE'
     }
-    defs_ios = {
+    defs_mobile = {
         schemas.EventType.click: "TAP",
         schemas.EventType.input: "INPUT",
         schemas.EventType.location: "VIEW",
@@ -532,8 +532,8 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.fetch_failed: "REQUEST",
         schemas.EventType.error: "CRASH",
     }
-    if platform == "ios" and event_type in defs_ios:
-        return defs_ios.get(event_type)
+    if platform == "ios" and event_type in defs_mobile:
+        return defs_mobile.get(event_type)
     if event_type not in defs:
         raise Exception(f"unsupported EventType:{event_type}")
     return defs.get(event_type)
@@ -605,7 +605,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_os)')
                     ss_constraints.append('isNotNull(ms.user_os)')
@@ -615,7 +615,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_device)')
                     ss_constraints.append('isNotNull(ms.user_device)')
@@ -625,7 +625,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_country)')
                     ss_constraints.append('isNotNull(ms.user_country)')
@@ -739,7 +739,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             _multiple_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_id)')
                     ss_constraints.append('isNotNull(ms.user_id)')
@@ -754,7 +754,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         _multiple_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_anonymous_id)')
                     ss_constraints.append('isNotNull(ms.user_anonymous_id)')
@@ -768,7 +768,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.rev_id)')
                     ss_constraints.append('isNotNull(ms.rev_id)')
@@ -896,7 +896,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                                         value_key=e_k))
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
-                    _column = events.EventType.CLICK_IOS.column
+                    _column = events.EventType.CLICK_MOBILE.column
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:

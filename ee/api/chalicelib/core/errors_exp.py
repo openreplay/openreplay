@@ -858,14 +858,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_os)')
                 else:
                     ch_sessions_sub_query.append(
                         _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_device)')
                 else:
@@ -873,7 +873,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_country)')
                 else:
@@ -942,7 +942,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                 f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_id)')
                 elif is_undefined:
@@ -952,7 +952,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_anonymous_id)')
                 elif is_undefined:
@@ -963,7 +963,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                              is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.rev_id)')
                 elif is_undefined:

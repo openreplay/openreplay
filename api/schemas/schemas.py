@@ -24,12 +24,12 @@ def transform_old_filter_type(cls, values):
         "USERANONYMOUSID": FilterType.user_anonymous_id.value,
         "REFERRER": FilterType.referrer.value,
         "REVID": FilterType.rev_id.value,
-        "USEROS_IOS": FilterType.user_os_ios.value,
-        "USERDEVICE_IOS": FilterType.user_device_ios.value,
-        "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
-        "USERID_IOS": FilterType.user_id_ios.value,
-        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
-        "REVID_IOS": FilterType.rev_id_ios.value,
+        "USEROS_IOS": FilterType.user_os_mobile.value,
+        "USERDEVICE_IOS": FilterType.user_device_mobile.value,
+        "USERCOUNTRY_IOS": FilterType.user_country_mobile.value,
+        "USERID_IOS": FilterType.user_id_mobile.value,
+        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_mobile.value,
+        "REVID_IOS": FilterType.rev_id_mobile.value,
         "DURATION": FilterType.duration.value,
         "PLATFORM": FilterType.platform.value,
         "METADATA": FilterType.metadata.value,
@@ -48,12 +48,12 @@ def transform_old_filter_type(cls, values):
         "GRAPHQL": EventType.graphql.value,
         "STATEACTION": EventType.state_action.value,
         "ERROR": EventType.error.value,
-        "CLICK_IOS": EventType.click_ios.value,
-        "INPUT_IOS": EventType.input_ios.value,
-        "VIEW_IOS": EventType.view_ios.value,
-        "CUSTOM_IOS": EventType.custom_ios.value,
-        "REQUEST_IOS": EventType.request_ios.value,
-        "ERROR_IOS": EventType.error_ios.value,
+        "CLICK_MOBILE": EventType.click_mobile.value,
+        "INPUT_MOBILE": EventType.input_mobile.value,
+        "VIEW_MOBILE": EventType.view_mobile.value,
+        "CUSTOM_MOBILE": EventType.custom_mobile.value,
+        "REQUEST_MOBILE": EventType.request_mobile.value,
+        "ERROR_MOBILE": EventType.error_mobile.value,
         "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
         "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
         "TTFB": PerformanceEventType.location_ttfb.value,
@@ -471,13 +471,13 @@ class EventType(str, Enum):
     state_action = "stateAction"
     error = "error"
     tag = "tag"
-    click_ios = "tapIos"
-    input_ios = "inputIos"
-    view_ios = "viewIos"
-    custom_ios = "customIos"
-    request_ios = "requestIos"
-    error_ios = "errorIos"
-    swipe_ios = "swipeIos"
+    click_mobile = "tapIos"
+    input_mobile = "inputIos"
+    view_mobile = "viewIos"
+    custom_mobile = "customIos"
+    request_mobile = "requestIos"
+    error_mobile = "errorIos"
+    swipe_mobile = "swipeIos"
 
 
 class PerformanceEventType(str, Enum):
@@ -502,12 +502,12 @@ class FilterType(str, Enum):
     referrer = "referrer"
     rev_id = "revId"
     # IOS
-    user_os_ios = "userOsIos"
-    user_device_ios = "userDeviceIos"
-    user_country_ios = "userCountryIos"
-    user_id_ios = "userIdIos"
-    user_anonymous_id_ios = "userAnonymousIdIos"
-    rev_id_ios = "revIdIos"
+    user_os_mobile = "userOsIos"
+    user_device_mobile = "userDeviceIos"
+    user_country_mobile = "userCountryIos"
+    user_id_mobile = "userIdIos"
+    user_anonymous_id_mobile = "userAnonymousIdIos"
+    rev_id_mobile = "revIdIos"
     #
     duration = "duration"
     platform = "platform"

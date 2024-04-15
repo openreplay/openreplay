@@ -457,7 +457,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
                                             value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 if is_any:
                     extra_constraints.append('s.user_os IS NOT NULL')
                     ss_constraints.append('ms.user_os IS NOT NULL')
@@ -467,7 +467,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     ss_constraints.append(
                         sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 if is_any:
                     extra_constraints.append('s.user_device IS NOT NULL')
                     ss_constraints.append('ms.user_device IS NOT NULL')
@@ -477,7 +477,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     ss_constraints.append(
                         sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 if is_any:
                     extra_constraints.append('s.user_country IS NOT NULL')
                     ss_constraints.append('ms.user_country IS NOT NULL')
@@ -591,7 +591,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                             sh.multi_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                                 f.value, is_not=is_not, value_key=f_k))
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 if is_any:
                     extra_constraints.append('s.user_id IS NOT NULL')
                     ss_constraints.append('ms.user_id IS NOT NULL')
@@ -606,7 +606,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         sh.multi_conditions(f"ms.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 if is_any:
                     extra_constraints.append('s.user_anonymous_id IS NOT NULL')
                     ss_constraints.append('ms.user_anonymous_id IS NOT NULL')
@@ -620,7 +620,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     ss_constraints.append(
                         sh.multi_conditions(f"ms.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                             value_key=f_k))
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 if is_any:
                     extra_constraints.append('s.rev_id IS NOT NULL')
                     ss_constraints.append('ms.rev_id IS NOT NULL')
@@ -723,10 +723,10 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                 sh.multi_conditions(f"main.{events.EventType.CLICK.column} {op} %({e_k})s", event.value,
                                                     value_key=e_k))
                 else:
-                    event_from = event_from % f"{events.EventType.CLICK_IOS.table} AS main "
+                    event_from = event_from % f"{events.EventType.CLICK_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.CLICK_IOS.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s", event.value,
                                                 value_key=e_k))
 
             elif event_type == events.EventType.TAG.ui_type:
@@ -747,10 +747,10 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
 
                 else:
-                    event_from = event_from % f"{events.EventType.INPUT_IOS.table} AS main "
+                    event_from = event_from % f"{events.EventType.INPUT_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.INPUT_IOS.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s", event.value,
                                                 value_key=e_k))
 
 
@@ -762,16 +762,16 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                             sh.multi_conditions(f"main.{events.EventType.LOCATION.column} {op} %({e_k})s",
                                                 event.value, value_key=e_k))
                 else:
-                    event_from = event_from % f"{events.EventType.VIEW_IOS.table} AS main "
+                    event_from = event_from % f"{events.EventType.VIEW_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.VIEW_IOS.column} {op} %({e_k})s",
+                            sh.multi_conditions(f"main.{events.EventType.VIEW_MOBILE.column} {op} %({e_k})s",
                                                 event.value, value_key=e_k))
-            elif event_type == events.EventType.SWIPE_IOS.ui_type and platform == "ios":
-                event_from = event_from % f"{events.EventType.SWIPE_IOS.table} AS main "
+            elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform == "ios":
+                event_from = event_from % f"{events.EventType.SWIPE_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.SWIPE_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.SWIPE_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{events.EventType.CUSTOM.table} AS main "
@@ -809,43 +809,43 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
 
 
             # ----- IOS
-            elif event_type == events.EventType.CLICK_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.CLICK_IOS.table} AS main "
+            elif event_type == events.EventType.CLICK_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.CLICK_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.CLICK_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
 
-            elif event_type == events.EventType.INPUT_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.INPUT_IOS.table} AS main "
+            elif event_type == events.EventType.INPUT_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.INPUT_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.INPUT_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
                     event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
                                                            value_key="custom{i}"))
                     full_args = {**full_args, **sh.multi_values(event.source, f"custom{i}")}
-            elif event_type == events.EventType.VIEW_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.VIEW_IOS.table} AS main "
+            elif event_type == events.EventType.VIEW_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.VIEW_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.VIEW_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.VIEW_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.EventType.CUSTOM_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.CUSTOM_IOS.table} AS main "
+            elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.CUSTOM_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.CUSTOM_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.CUSTOM_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.EventType.REQUEST_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.REQUEST_IOS.table} AS main "
+            elif event_type == events.EventType.REQUEST_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.REQUEST_MOBILE.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.REQUEST_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.REQUEST_MOBILE.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.EventType.CRASH_IOS.ui_type:
-                event_from = event_from % f"{events.EventType.CRASH_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
+            elif event_type == events.EventType.CRASH_MOBILE.ui_type:
+                event_from = event_from % f"{events.EventType.CRASH_MOBILE.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
