@@ -115,18 +115,6 @@ def get_ut_test(project_id: int, test_id: int):
         WHERE utt.test_id = %(test_id)s
     """
 
-    live_count_sql = """
-        WITH RankedSessions AS (
-            SELECT *,
-                   ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY timestamp DESC) as rn
-            FROM ut_tests_signals
-            WHERE test_id = %(test_id)s AND task_id IS NULL
-        )
-        SELECT COUNT(DISTINCT session_id) AS live_count
-        FROM RankedSessions
-        WHERE rn = 1 AND status = 'begin'
-    """
-
     select_columns = [
         "ut.test_id",
         "ut.title",
