@@ -105,7 +105,7 @@ function SaveSearchModal(props: Props) {
                     </Button>
                     <Button onClick={closeHandler}>{'Cancel'}</Button>
                 </div>
-                {savedSearch && (
+                {savedSearch.exists() && (
                     <Button variant="text" onClick={onDelete}>
                         <Icon name="trash" size="18" />
                     </Button>
