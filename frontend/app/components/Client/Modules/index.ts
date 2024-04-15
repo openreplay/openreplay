@@ -23,7 +23,7 @@ export interface Module {
 
 export const modules = [
   {
-    label: 'Cobrowse',
+    label: 'Co-Browse',
     description: 'Enable live session replay, remote control, annotations and webRTC call/video.',
     key: MODULES.ASSIST,
     icon: 'broadcast'

@@ -132,6 +132,7 @@ function SelectDateRange(props: Props) {
             ) {
               return false;
             }
+            console.log('outside')
             setIsCustom(false);
           }}
         >
