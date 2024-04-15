@@ -167,27 +167,70 @@ export function deleteEventListener(
   }
 }
 
-/**
- * This is a brief polyfill that suits our needs
- * I took inspiration from Microsoft Clarity polyfill on this one
- * then adapted it a little bit
- *
- * I'm very grateful for their bright idea
- * */
-export function requestIdleCb(callback: () => void) {
-  const taskTimeout = 3000
-  if (window.requestIdleCallback) {
-    return window.requestIdleCallback(callback, { timeout: taskTimeout })
-  } else {
-    const channel = new MessageChannel()
-    const incoming = channel.port1
-    const outgoing = channel.port2
 
-    incoming.onmessage = (): void => {
-      callback()
-    }
-    requestAnimationFrame((): void => {
-      outgoing.postMessage(1)
-    })
+class FIFOTaskScheduler {
+  taskQueue: any[]
+  isRunning: boolean
+  constructor() {
+    this.taskQueue = []
+    this.isRunning = false
   }
+
+  // Adds a task to the queue
+  addTask(task: () => any) {
+    this.taskQueue.push(task)
+    this.runTasks()
+  }
+
+  // Runs tasks from the queue
+  runTasks() {
+    if (this.isRunning || this.taskQueue.length === 0) {
+      return
+    }
+
+    this.isRunning = true
+
+    const executeNextTask = () => {
+      if (this.taskQueue.length === 0) {
+        this.isRunning = false
+        return
+      }
+
+      // Get the next task and execute it
+      const nextTask = this.taskQueue.shift()
+      Promise.resolve(nextTask()).then(() => {
+        requestAnimationFrame(() => executeNextTask())
+      })
+    }
+
+    executeNextTask()
+  }
+}
+
+const scheduler = new FIFOTaskScheduler()
+export function requestIdleCb(callback: () => void) {
+  // performance improvement experiment;
+  scheduler.addTask(callback)
+  /**
+   * This is a brief polyfill that suits our needs
+   * I took inspiration from Microsoft Clarity polyfill on this one
+   * then adapted it a little bit
+   *
+   * I'm very grateful for their bright idea
+   * */
+  // const taskTimeout = 3000
+  // if (window.requestIdleCallback) {
+  //   return window.requestIdleCallback(callback, { timeout: taskTimeout })
+  // } else {
+  //   const channel = new MessageChannel()
+  //   const incoming = channel.port1
+  //   const outgoing = channel.port2
+  //
+  //   incoming.onmessage = (): void => {
+  //     callback()
+  //   }
+  //   requestAnimationFrame((): void => {
+  //     outgoing.postMessage(1)
+  //   })
+  // }
 }
