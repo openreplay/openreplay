@@ -23,7 +23,6 @@ const components: any = {
   FunnelIssueDetails: lazy(() => import('Components/Funnels/FunnelIssueDetails')),
   FunnelPagePure: lazy(() => import('Components/Funnels/FunnelPage')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
-  AssistStatsPure: lazy(() => import('Components/AssistStats')),
   UsabilityTestingPure: lazy(() => import('Components/UsabilityTesting/UsabilityTesting')),
   UsabilityTestEditPure: lazy(() => import('Components/UsabilityTesting/TestEdit')),
   UsabilityTestOverviewPure: lazy(() => import('Components/UsabilityTesting/TestOverview')),
@@ -41,7 +40,6 @@ const enhancedComponents: any = {
   FunnelsDetails: withSiteIdUpdater(components.FunnelDetailsPure),
   FunnelIssue: withSiteIdUpdater(components.FunnelIssueDetails),
   Multiview: withSiteIdUpdater(components.MultiviewPure),
-  AssistStats: withSiteIdUpdater(components.AssistStatsPure),
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(components.UsabilityTestOverviewPure),
@@ -191,12 +189,6 @@ function PrivateRoutes(props: Props) {
           strict
           path={withSiteId(RECORDINGS_PATH, siteIdList)}
           component={enhancedComponents.Assist}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(ASSIST_STATS_PATH, siteIdList)}
-          component={enhancedComponents.AssistStats}
         />
         <Route
           exact

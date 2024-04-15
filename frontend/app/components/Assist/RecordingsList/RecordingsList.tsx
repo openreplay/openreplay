@@ -29,7 +29,7 @@ function RecordingsList() {
           <div className="text-center mt-4">
             {recordsSearch !== ''
               ? 'No matching results'
-              : 'No recordings available'}
+              : 'No videos have been recorded in your co-browsing sessions.'}
           </div>
         </div>
       }
