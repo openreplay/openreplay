@@ -1185,6 +1185,16 @@ export default class App {
    * and here we just apply 10ms delay just in case
    * */
   start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
+    if (
+      this.activityState === ActivityState.Active ||
+      this.activityState === ActivityState.Starting
+    ) {
+      const reason =
+        'OpenReplay: trying to call `start()` on the instance that has been started already.'
+      return Promise.resolve(UnsuccessfulStart(reason))
+    }
+    this.activityState = ActivityState.Starting
+
     if (!document.hidden) {
       return new Promise((resolve) => {
         setTimeout(() => {
