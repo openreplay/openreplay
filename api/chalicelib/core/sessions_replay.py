@@ -91,6 +91,11 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             return None
 
 
+def get_pre_replay(project_id, session_id, context: schemas.CurrentContext):
+    return {
+        'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
+
+
 def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
