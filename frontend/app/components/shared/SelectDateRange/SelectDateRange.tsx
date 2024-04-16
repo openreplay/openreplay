@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Dropdown, Space, Typography, Input } from 'antd';
-import { FilePdfOutlined, DownOutlined, TableOutlined } from '@ant-design/icons';
+import { Button, Space, Typography, Select as AntSelect } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { DATE_RANGE_OPTIONS, CUSTOM_RANGE } from 'App/dateRange';
 import Select from 'Shared/Select';
 import Period from 'Types/app/period';
@@ -31,7 +31,9 @@ function SelectDateRange(props: Props) {
 
   const onChange = (value: any) => {
     if (value === CUSTOM_RANGE) {
-      setIsCustom(true);
+      setTimeout(() => {
+        setIsCustom(true);
+      }, 1)
     } else {
       // @ts-ignore
       props.onChange(new Period({ rangeName: value }));
@@ -48,25 +50,19 @@ function SelectDateRange(props: Props) {
   const isCustomRange = period.rangeName === CUSTOM_RANGE;
   const customRange = isCustomRange ? period.rangeFormatted() : '';
 
+  console.log(isCustomRange, props.isAnt, isCustom)
   if (props.isAnt) {
-    const onAntUpdate = ({ key }: { key: string }) => {
-      onChange(key);
+    const onAntUpdate = (val) => {
+      onChange(val);
     };
     return (
       <div className={'relative'}>
-        <Dropdown
-          menu={{
-            items: options.map((o) => ({ key: o.value, label: o.label })),
-            onClick: onAntUpdate,
-          }}
-        >
-          <Button size={'small'}>
-            <Space>
-              <Typography.Text>{selectedValue?.label || 'Select Range'}</Typography.Text>
-              <DownOutlined rev={undefined} />
-            </Space>
-          </Button>
-        </Dropdown>
+        <AntSelect
+          options={options}
+          onChange={onAntUpdate}
+          style={{ width: 170 }}
+          defaultValue={selectedValue?.value ?? undefined}
+        />
         {isCustom && (
           <OutsideClickDetectingDiv
             onClickOutside={(e: any) => {
