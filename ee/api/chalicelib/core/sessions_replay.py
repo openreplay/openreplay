@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import events, metadata, events_ios, \
+from chalicelib.core import events, metadata, events_mobile, \
     sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes, canvas, user_testing
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
@@ -52,12 +52,12 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             data = helper.dict_to_camel_case(data)
             if full_data:
                 if data["platform"] in ('ios', 'android'):
-                    data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
+                    data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                     for e in data['events']:
                         if e["type"].endswith("_IOS"):
                             e["type"] = e["type"][:-len("_IOS")]
-                    data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                    data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
+                    data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
+                    data['userEvents'] = events_mobile.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = []
                 else:
@@ -176,12 +176,12 @@ def get_events(project_id, session_id):
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
             if s_data["platform"] == 'ios':
-                data['events'] = events_ios.get_by_sessionId(project_id=project_id, session_id=session_id)
+                data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
-                data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
-                data['userEvents'] = events_ios.get_customs_by_session_id(project_id=project_id,
+                data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
+                data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
