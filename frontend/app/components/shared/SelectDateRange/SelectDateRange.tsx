@@ -49,8 +49,7 @@ function SelectDateRange(props: Props) {
 
   const isCustomRange = period.rangeName === CUSTOM_RANGE;
   const customRange = isCustomRange ? period.rangeFormatted() : '';
-
-  console.log(isCustomRange, props.isAnt, isCustom)
+  
   if (props.isAnt) {
     const onAntUpdate = (val) => {
       onChange(val);
