@@ -27,27 +27,9 @@ interface Response {
   duration: number;
 }
 
-const defaultGuidelines = `Introduction:
-Thank you for participating in this important stage of our [Website/App] development. Your insights will help us enhance the [Desktop/Mobile] experience for all users.
-
-Before You Begin:
-• Device: Ensure you're using a [Desktop/Mobile] for this test.
-
-• Environment: Choose a quiet location where you can focus without interruptions.
-
-Test Guidelines:
-1. Task Flow: You will perform a series of tasks as you normally would when using a [Website/App].
-
-2. Think Aloud: Please verbalize your thoughts. If something is confusing, interesting, or pleasing, let us know.
-
-3. No Right or Wrong: There are no correct answers here, just your honest experience.
-
-4. Pace Yourself: Take your time, there's no rush to complete the tasks quickly.
-
-5. Technical Issues: If you encounter any issues, please describe what you were attempting to do when the issue occurred.
-`;
+const defaultGuidelines = '';
 const defaultConclusion =
-  'Thank you for participating in our usability test. Your feedback is invaluable to us and will contribute significantly to improving our product.';
+  `Thank you for your feedback. It's very important and will help us improve our product.`;
 
 export default class UxtestingStore {
   client = uxtestingService;

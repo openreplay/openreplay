@@ -19,7 +19,7 @@ const { Search } = Input;
 const PER_PAGE = 10;
 
 let debouncedSearch: any = () => null;
-const defaultDescription = `To evaluate the usability of [Feature Name], focusing on user interaction, efficiency, and satisfaction. The aim is to identify any usability issues that users may encounter, understand how they navigate [Feature Name], and gauge the intuitiveness of the workflow.`;
+const defaultDescription = `To assess how easy it is to use [Feature Name], we'll look at how users interact with it, how efficient it is, and if they're happy using it.`;
 
 function TestsTable() {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -76,7 +76,7 @@ function TestsTable() {
         onOk={() => onClose(true)}
         onCancel={() => onClose(false)}
         footer={
-          <Button type={'primary'} onClick={() => onClose(true)}>
+          <Button type={'primary'} disabled={newTestTitle.trim().length === 0} onClick={() => onClose(true)}>
             <Space align={'center'}>
               Continue
               <ArrowRightOutlined rev={undefined} />
