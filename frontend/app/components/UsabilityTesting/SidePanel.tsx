@@ -31,9 +31,7 @@ const SidePanel = observer(({ onSave, onPreview, taskLen, isStartingPointValid }
           />
         </div>
         <div className={'text-disabled-text text-sm'}>
-          If required, enable camera and mic access to observe participants' facial expressions and
-          verbal feedback in real-time, providing deeper insights into their user experience during
-          the test.
+          Enable camera and mic options to watch participants' reactions and hear their comments for better insights into their experience.
         </div>
       </div>
 
