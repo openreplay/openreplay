@@ -1,19 +1,23 @@
+import {
+  CaretDownOutlined,
+  FolderAddOutlined,
+} from '@ant-design/icons';
+import { Button, Divider, Dropdown, Space, Typography } from 'antd';
+import cn from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Divider, Dropdown, Menu, Space, Typography } from 'antd';
-import { CaretDownOutlined, FolderAddOutlined, FolderOutlined } from '@ant-design/icons';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { hasSiteId, siteChangeAvailable } from 'App/routes';
-import { setSiteId } from 'Duck/site';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
-import { clearSearch } from 'Duck/search';
-import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { useModal } from 'Components/Modal';
-import { init as initProject } from 'Duck/site';
-import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
+
 import { withStore } from 'App/mstore';
-import { Icon } from 'UI'
-import cn from 'classnames'
+import { hasSiteId, siteChangeAvailable } from 'App/routes';
+import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
+import { useModal } from 'Components/Modal';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
+import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
+import { clearSearch } from 'Duck/search';
+import { setSiteId } from 'Duck/site';
+import { init as initProject } from 'Duck/site';
+import { Icon } from 'UI';
 
 const { Text } = Typography;
 
@@ -39,7 +43,8 @@ function ProjectDropdown(props: Props) {
   const { sites, siteId, location, account } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
-  const showCurrent = hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
+  const showCurrent =
+    hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
 
   const handleSiteChange = (newSiteId: string) => {
@@ -56,40 +61,81 @@ function ProjectDropdown(props: Props) {
     showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
 
-  const menu = (
-    <Menu>
-      {isAdmin && (
-        <>
-          <Menu.Item icon={<FolderAddOutlined rev={undefined} />} key='all-projects' onClick={addProjectClickHandler}>
-            <Text>Add Project</Text>
-          </Menu.Item>
-          <Divider style={{ margin: 0 }} />
-        </>
-      )}
-
-      {sites.map((site) => (
-        <Menu.Item
-          icon={<Icon name={site.platform === 'web' ? 'browser/browser' : 'mobile'} color={activeSite?.host === site.host ? 'main' : undefined} />}
-          key={site.id}
-          onClick={() => handleSiteChange(site.id)}
-          className={cn('!py-2', activeSite?.host === site.host ? 'bg-active-blue' : '')}
+  // @ts-ignore immutable
+  const menuItems = sites.toJS().map((site) => ({
+    key: site.id,
+    label: (
+      <div
+        key={site.id}
+        onClick={() => handleSiteChange(site.id)}
+        className={'!py-1 flex items-center gap-2'}
+      >
+        <Icon
+          name={site.platform === 'web' ? 'browser/browser' : 'mobile'}
+          color={activeSite?.host === site.host ? 'main' : undefined}
+        />
+        <Text
+          className={cn(
+            'capitalize',
+            activeSite?.host === site.host ? 'text-main' : ''
+          )}
         >
-          <Text className={cn('capitalize', activeSite?.host === site.host ? 'text-main' : '')}>{site.host}</Text>
-        </Menu.Item>
-      ))}
-    </Menu>
-  );
+          {site.host}
+        </Text>
+      </div>
+    ),
+  }));
+  if (isAdmin) {
+    menuItems.unshift({
+      key: 'add-proj',
+      label: (
+        <>
+          <div
+            key="all-projects"
+            onClick={addProjectClickHandler}
+            className={'flex items-center gap-2'}
+          >
+            <FolderAddOutlined rev={undefined} />
+            <Text>Add Project</Text>
+          </div>
+          <Divider style={{ marginTop: 4, marginBottom: 0 }} />
+        </>
+      ),
+    });
+  }
 
   return (
-    <Dropdown overlay={menu} placement='bottomLeft'>
+    <Dropdown
+      open
+      menu={{
+        items: menuItems,
+        selectable: true,
+        defaultSelectedKeys: [siteId],
+        style: {
+          maxHeight: 500,
+          overflowY: 'auto',
+        },
+      }}
+      placement="bottomLeft"
+    >
       <Button>
         <Space>
-          <Text className='font-medium capitalize'>{showCurrent && activeSite ? (
-            <div className='flex items-center gap-2'>
-              <Icon name={activeSite?.platform === 'web' ? 'browser/browser' : 'mobile'} />
-              {activeSite.host}
-            </div>
-          ) : 'All Projects'}</Text>
+          <Text className="font-medium capitalize">
+            {showCurrent && activeSite ? (
+              <div className="flex items-center gap-2">
+                <Icon
+                  name={
+                    activeSite?.platform === 'web'
+                      ? 'browser/browser'
+                      : 'mobile'
+                  }
+                />
+                {activeSite.host}
+              </div>
+            ) : (
+              'All Projects'
+            )}
+          </Text>
           <CaretDownOutlined rev={undefined} />
         </Space>
       </Button>
@@ -100,7 +146,7 @@ function ProjectDropdown(props: Props) {
 const mapStateToProps = (state: any) => ({
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
-  account: state.getIn(['user', 'account'])
+  account: state.getIn(['user', 'account']),
 });
 
 export default withRouter(
@@ -109,6 +155,6 @@ export default withRouter(
     fetchMetadata,
     clearSearch,
     clearSearchLive,
-    initProject
+    initProject,
   })(withStore(ProjectDropdown))
 );
