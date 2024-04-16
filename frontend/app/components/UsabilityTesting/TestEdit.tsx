@@ -36,7 +36,7 @@ function TestEdit() {
   // @ts-ignore
   const { siteId, testId } = useParams();
   const [hasChanged, setHasChanged] = React.useState(testId === 'new');
-  const [typingEnabled, setTypingEnabled] = React.useState(false);
+  const [typingEnabled, setTypingEnabled] = React.useState(true);
   const { uxtestingStore } = useStore();
   const [newTestTitle, setNewTestTitle] = React.useState('');
   const [newTestDescription, setNewTestDescription] = React.useState('');
@@ -223,7 +223,7 @@ function TestEdit() {
               }}
             />
             {uxtestingStore.instance!.startingPath === 'https://' || isStartingPointValid ? (
-              <Typography.Text>Test will begin on this page.</Typography.Text>
+              <Typography.Text>The test starts at this URL, but not everyone visiting the link will see it. After publishing, you'll get a Distribution URL to share with selected participants.</Typography.Text>
             ) : (
               <Typography.Text color={'red'}>Starting point URL is invalid.</Typography.Text>
             )}
