@@ -264,7 +264,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             f"{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                             f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_id)')
             elif is_undefined:
@@ -275,7 +275,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                         value_key=f_k))
 
         elif f.type in [schemas.FilterType.user_anonymous_id,
-                        schemas.FilterType.user_anonymous_id_ios]:
+                        schemas.FilterType.user_anonymous_id_mobile]:
             if is_any:
                 sessions_conditions.append('isNotNull(user_anonymous_id)')
             elif is_undefined:
@@ -285,7 +285,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
             if is_any:
                 sessions_conditions.append('isNotNull(rev_id)')
             elif is_undefined:
@@ -683,7 +683,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
 #             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -783,7 +783,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
 #             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -890,7 +890,7 @@ ORDER BY event_number_in_session;"""
 #         if f.type == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
 #             event_table = JOURNEY_TYPES[f["value"]]["table"]
 #             event_column = JOURNEY_TYPES[f["value"]]["column"]
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
 #             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -963,7 +963,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
 #             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -1048,7 +1048,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("user_id IS NOT NULL")
 #             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -1117,7 +1117,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
 #             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
@@ -1181,7 +1181,7 @@ ORDER BY event_number_in_session;"""
 #         if f.type == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
 #             event_table = JOURNEY_TYPES[f["value"]]["table"]
 #             event_column = JOURNEY_TYPES[f["value"]]["column"]
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
 #             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
@@ -1220,7 +1220,7 @@ ORDER BY event_number_in_session;"""
 #     for f in filters:
 #         if f.type == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
 #             period = f["value"]
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             extra_values["user_id"] = f["value"]
 #     period_function = PERIOD_TO_FUNCTION[period]
@@ -1311,7 +1311,7 @@ ORDER BY event_number_in_session;"""
 #         elif f.type == "EVENT_VALUE":
 #             event_value = f["value"]
 #             default = False
-#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+#         elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
 #             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
 #             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
 #             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
