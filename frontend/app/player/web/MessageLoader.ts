@@ -32,12 +32,16 @@ export default class MessageLoader {
   };
 
   constructor(
-    private readonly session: SessionFilesInfo,
+    private session: SessionFilesInfo,
     private store: Store<State>,
     private messageManager: MessageManager | IOSMessageManager,
     private isClickmap: boolean,
     private uiErrorHandler?: { error: (msg: string) => void }
   ) {}
+
+  setSession(session: SessionFilesInfo) {
+    this.session = session
+  }
 
   createNewParser(
     shouldDecrypt = true,
@@ -145,6 +149,18 @@ export default class MessageLoader {
     }
   }
 
+  preloaded = false;
+  async preloadFirstFile(data: Uint8Array) {
+    this.mobParser = this.createNewParser(true, this.processMessages, 'p:dom');
+
+    try {
+      await this.mobParser(data)
+      this.preloaded = true;
+    } catch (e) {
+      console.error('error parsing msgs', e)
+    }
+  }
+
   async loadDomFiles(urls: string[], parser: (b: Uint8Array) => Promise<void>) {
     if (urls.length > 0) {
       this.store.update({ domLoading: true });
@@ -197,21 +213,25 @@ export default class MessageLoader {
     }
   }
 
+  mobParser: (b: Uint8Array) => Promise<void>
   loadMobs = async () => {
     const loadMethod =
       this.session.domURL && this.session.domURL.length > 0
         ? {
             mobUrls: this.session.domURL,
             parser: () =>
-              this.createNewParser(true, this.processMessages, 'dom'),
+              this.createNewParser(true, this.processMessages, 'd:dom'),
           }
         : {
             mobUrls: this.session.mobsUrl,
             parser: () =>
-              this.createNewParser(false, this.processMessages, 'dom'),
+              this.createNewParser(false, this.processMessages, 'm:dom'),
           };
 
-    const parser = loadMethod.parser();
+    if (!this.mobParser) {
+      this.mobParser = loadMethod.parser();
+    }
+    const parser = this.mobParser
     const devtoolsParser = this.createNewParser(
       true,
       this.processMessages,
@@ -225,7 +245,7 @@ export default class MessageLoader {
      * as a tradeoff we have some copy-paste code
      * for the devtools file
      * */
-    await loadFiles([loadMethod.mobUrls[0]], parser);
+    if (!this.preloaded) await loadFiles([loadMethod.mobUrls[0]], parser);
     this.messageManager.onFileReadFinally();
     const restDomFilesPromise = this.loadDomFiles(
       [...loadMethod.mobUrls.slice(1)],

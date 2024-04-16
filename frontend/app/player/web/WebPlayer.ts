@@ -20,9 +20,10 @@ export default class WebPlayer extends Player {
 
     liveTimeTravel: false,
     inspectorMode: false,
+    mobsFetched: false,
   }
 
-  private readonly inspectorController: InspectorController
+  private inspectorController: InspectorController
   protected screen: Screen
   protected readonly messageManager: MessageManager
   protected readonly messageLoader: MessageLoader
@@ -34,7 +35,8 @@ export default class WebPlayer extends Player {
     session: SessionFilesInfo,
     live: boolean,
     isClickMap = false,
-    public readonly uiErrorHandler?: { error: (msg: string) => void }
+    public readonly uiErrorHandler?: { error: (msg: string) => void },
+    private readonly prefetched?: boolean,
   ) {
     let initialLists = live ? {} : {
       event: session.events || [],
@@ -62,8 +64,10 @@ export default class WebPlayer extends Player {
     this.screen = screen
     this.messageManager = messageManager
     this.messageLoader = messageLoader
-    if (!live) { // hack. TODO: split OfflinePlayer class
+
+    if (!live && !prefetched) { // hack. TODO: split OfflinePlayer class
       void messageLoader.loadFiles()
+      wpState.update({ mobsFetched: true })
     }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
@@ -77,6 +81,30 @@ export default class WebPlayer extends Player {
 
       live,
       livePlay: live,
+      endTime, // : 0,
+    })
+
+    // @ts-ignore
+    window.playerJumpToTime = this.jump.bind(this)
+  }
+
+  preloadFirstFile(data: Uint8Array) {
+    void this.messageLoader.preloadFirstFile(data)
+  }
+
+  reinit(session: SessionFilesInfo) {
+    if (this.wpState.get().mobsFetched) return; // already initialized
+    this.messageLoader.setSession(session)
+    void this.messageLoader.loadFiles();
+
+    this.targetMarker = new TargetMarker(this.screen, this.wpState)
+    this.inspectorController = new InspectorController(this.screen, this.wpState)
+
+
+    const endTime = session.duration?.valueOf() || 0
+    this.wpState.update({
+      //@ts-ignore
+      session,
       endTime, // : 0,
     })
 

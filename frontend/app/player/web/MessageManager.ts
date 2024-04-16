@@ -237,9 +237,9 @@ export default class MessageManager {
     });
 
     if (
-      this.waitingForFiles &&
-      this.lastMessageTime <= t &&
-      t !== this.session.duration.milliseconds
+      this.waitingForFiles ||
+      (this.lastMessageTime <= t &&
+      t !== this.session.duration.milliseconds)
     ) {
       this.setMessagesLoading(true);
     }

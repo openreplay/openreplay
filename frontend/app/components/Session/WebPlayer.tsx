@@ -1,20 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { Modal, Loader } from 'UI';
-import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
-import { fetchList } from 'Duck/integrations';
+import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
-import withLocationHandlers from 'HOCs/withLocationHandlers';
-import { useStore } from 'App/mstore';
-import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
-import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import PlayerContent from './Player/ReplayPlayer/PlayerContent';
-import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
-import { Note } from 'App/services/NotesService';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+
+
+
+import { useStore } from 'App/mstore';
+import { Note } from 'App/services/NotesService';
+import { closeBottomBlock, toggleFullscreen } from 'Duck/components/player';
+import { fetchList } from 'Duck/integrations';
+import { Loader, Modal } from 'UI';
+
+
+
+import ReadNote from '../Session_/Player/Controls/components/ReadNote';
+import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
+import PlayerContent from './Player/ReplayPlayer/PlayerContent';
+import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
+
 
 const TABS = {
   EVENTS: 'Activity',
@@ -54,13 +61,21 @@ function WebPlayer(props: any) {
   useEffect(() => {
     playerInst = undefined;
     if (!session.sessionId || contextValue.player !== undefined) return;
+    const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as Record<string, any> | undefined;
+    const usePrefetched = props.prefetched && mobData?.data;
     fetchList('issues');
     sessionStore.setUserTimezone(session.timezone);
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
       (state) => makeAutoObservable(state),
-      toast
+      toast,
+      props.prefetched,
     );
+    if (usePrefetched) {
+      if (mobData?.data) {
+        WebPlayerInst.preloadFirstFile(mobData?.data)
+      }
+    }
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
     playerInst = WebPlayerInst;
 
@@ -77,6 +92,12 @@ function WebPlayer(props: any) {
       void WebPlayerInst.freeze();
     }
   }, [session.sessionId]);
+
+  useEffect(() => {
+    if (!props.prefetched && session.domURL.length > 0) {
+      playerInst?.reinit(session)
+    }
+  }, [session.domURL.length, props.prefetched])
 
   const { firstVisualEvent: visualOffset, messagesProcessed, tabStates, ready } = contextValue.store?.get() || {};
   const cssLoading = ready && tabStates ? Object.values(tabStates).some(
@@ -205,6 +226,7 @@ export default connect(
   (state: any) => ({
     session: state.getIn(['sessions', 'current']),
     insights: state.getIn(['sessions', 'insights']),
+    prefetched: state.getIn(['sessions', 'prefetched']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
