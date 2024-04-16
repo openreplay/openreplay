@@ -106,7 +106,6 @@ function ProjectDropdown(props: Props) {
 
   return (
     <Dropdown
-      open
       menu={{
         items: menuItems,
         selectable: true,
