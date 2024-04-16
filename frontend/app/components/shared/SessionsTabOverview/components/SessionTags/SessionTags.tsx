@@ -5,6 +5,7 @@ import { setActiveTab } from 'Duck/search';
 import { issues_types, types } from 'Types/session/issue';
 import { Icon } from 'UI';
 import cn from 'classnames';
+import { Segmented } from 'antd'
 
 interface Tag {
   name: string;
@@ -27,18 +28,26 @@ type Props = StateProps & DispatchProps;
 const SessionTags: React.FC<Props> = memo(({ activeTab, tags, total, setActiveTab }) => {
   const disable = activeTab.type === 'all' && total === 0;
 
+  const options = tags.map((tag, i) => ({
+    label: <div className={'flex items-center gap-2'}>
+      {tag.icon ? <Icon
+        name={tag.icon}
+        color={activeTab.type === tag.type ? "teal" : "gray-medium"}
+        size="14"
+        className={cn("group-hover:fill-teal mr-2")}
+      /> : null}
+      <div>{tag.name}</div>
+    </div>,
+    value: tag.type,
+    disabled: disable && tag.type !== 'all',
+  }))
   return (
     <div className='flex items-center'>
-      {tags.map((tag, index) => (
-        <TagItem
-          key={index} // Consider using a unique identifier instead of index if available.
-          onClick={() => setActiveTab(tag)}
-          label={tag.name}
-          isActive={activeTab.type === tag.type}
-          icon={tag.icon}
-          disabled={disable && tag.type !== 'all'}
-        />
-      ))}
+      <Segmented
+        options={options}
+        value={activeTab.type}
+        onChange={setActiveTab}
+      />
     </div>
   );
 });

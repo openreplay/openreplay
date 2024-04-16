@@ -51,7 +51,7 @@ function SessionHeader(props: Props) {
             <>
               <SessionTags />
               <div className='mr-auto' />
-              <SelectDateRange period={period} onChange={onDateChange} right={true} />
+              <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
               <div className='mx-2' />
             </>
           )}
