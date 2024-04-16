@@ -1193,7 +1193,6 @@ export default class App {
         'OpenReplay: trying to call `start()` on the instance that has been started already.'
       return Promise.resolve(UnsuccessfulStart(reason))
     }
-    this.activityState = ActivityState.Starting
 
     if (!document.hidden) {
       return new Promise((resolve) => {
