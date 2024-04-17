@@ -272,6 +272,22 @@ def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema
     return {'data': data}
 
 
+@app.get('/{projectId}/sessions/{sessionId}/first-mob', tags=["sessions", "replay"],
+         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    if not sessionId.isnumeric():
+        return {"errors": ["session not found"]}
+    else:
+        sessionId = int(sessionId)
+    data = sessions_replay.get_pre_replay(project_id=projectId, session_id=sessionId, context=context)
+    if data is None:
+        return {"errors": ["session not found"]}
+    return {
+        'data': data
+    }
+
+
 @app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"],
          dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
 def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
