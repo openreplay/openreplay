@@ -10,6 +10,7 @@ import { getDateRangeFromValue } from "App/dateRange";
 import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
 import store from 'App/store'
 import { Note } from "App/services/NotesService";
+import { loadFile } from "../player/web/network/loadFiles";
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -125,6 +126,7 @@ export default class SessionStore {
   previousId = ''
   nextId = ''
   userTimezone = ''
+  prefetchedMobUrls: Record<string, { data: Uint8Array, entryNum: number }> = {}
 
   constructor() {
     makeAutoObservable(this, {
@@ -139,6 +141,28 @@ export default class SessionStore {
 
   resetUserFilter() {
     this.userFilter = new UserFilter();
+  }
+
+  async getFirstMob(sessionId: string) {
+    const { domURL } = await sessionService.getFirstMobUrl(sessionId)
+    await loadFile(
+      domURL[0],
+      (data) => this.setPrefetchedMobUrl(sessionId, data)
+    )
+  }
+
+  setPrefetchedMobUrl(sessionId: string, fileData: Uint8Array) {
+    const keys = Object.keys(this.prefetchedMobUrls)
+    const toLimit = 10 - keys.length
+    if (toLimit < 0) {
+      const oldest = keys.sort(
+        (a, b) => this.prefetchedMobUrls[a].entryNum - this.prefetchedMobUrls[b].entryNum
+      )[0]
+      delete this.prefetchedMobUrls[oldest]
+    }
+    const nextEntryNum = keys.length > 0
+                         ? Math.max(...keys.map(key => this.prefetchedMobUrls[key].entryNum)) + 1 : 0
+    this.prefetchedMobUrls[sessionId] = { data: fileData, entryNum: nextEntryNum }
   }
 
   getSessions(filter: any): Promise<any> {
