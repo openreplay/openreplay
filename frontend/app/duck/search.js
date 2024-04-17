@@ -73,7 +73,11 @@ function reducer(state = initialState, action = {}) {
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:
-            return action.fromUrl ? state.set('instance', Filter(action.filter)).set('currentPage', 1) : state.mergeIn(['instance'], action.filter).set('currentPage', 1);
+          if (action.fromUrl) {
+              return state.set('instance', Filter(action.filter)).set('currentPage', 1)
+          } else {
+              return action.filter ? state.mergeIn(['instance'], action.filter).set('currentPage', 1) : state.mergeIn(['instance'], action.filter)
+          }
         case success(FETCH):
             return state.set('instance', action.data);
         case success(FETCH_LIST):
