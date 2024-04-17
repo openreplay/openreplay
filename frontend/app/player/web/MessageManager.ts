@@ -239,7 +239,7 @@ export default class MessageManager {
     if (
       this.waitingForFiles ||
       (this.lastMessageTime <= t &&
-      t !== this.session.duration.milliseconds)
+      t < this.session.durationMs)
     ) {
       this.setMessagesLoading(true);
     }

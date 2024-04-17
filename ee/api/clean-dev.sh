@@ -19,7 +19,7 @@ rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
 rm -rf ./chalicelib/core/errors_favorite.py
-rm -rf ./chalicelib/core/events_ios.py
+rm -rf ./chalicelib/core/events_mobile.py
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/funnels.py
 rm -rf ./chalicelib/core/heatmaps.py
