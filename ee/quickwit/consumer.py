@@ -13,7 +13,7 @@ QUICKWIT_PORT = config('QUICKWIT_PORT', default=7280, cast=int)
 #decryption = config('encrypted', cast=bool)
 decryption = False
 MessageCodec = None
-max_retry=3
+max_retry=2
 Fetch, FetchEvent, PageEvent, GraphQ = None, None, None, None
 if decryption:
     from msgcodec.msgcodec import MessageCodec
@@ -26,7 +26,7 @@ def _quickwit_ingest(index, data_list, retry=0):
     except requests.exceptions.ConnectionError as e:
         retry += 1
         assert retry <= max_retry, f'[ENDPOINT CONNECTION FAIL] Failed to connect to endpoint http://localhost:{QUICKWIT_PORT}/api/v1/{index}/ingest\n{e}\n'
-        sleep(5*retry)
+        sleep(0.25*retry)
         print(f"[ENDPOINT ERROR] Failed to connect to endpoint http://localhost:{QUICKWIT_PORT}/api/v1/{index}/ingest, retrying in {5*retry} seconds..\n")
         return _quickwit_ingest(index, data_list, retry=retry)
     return res
