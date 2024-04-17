@@ -28,6 +28,17 @@ def __get_mob_keys_deprecated(session_id):
     return [str(session_id), str(session_id) + "e"]
 
 
+def get_first_url(project_id, session_id, check_existence: bool = True):
+    k = __get_mob_keys(project_id=project_id, session_id=session_id)[0]
+    if check_existence and not StorageClient.exists(bucket=config("sessions_bucket"), key=k):
+        return None
+    return StorageClient.get_presigned_url_for_sharing(
+        bucket=config("sessions_bucket"),
+        expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900),
+        key=k
+    )
+
+
 def get_urls(project_id, session_id, check_existence: bool = True):
     results = []
     for k in __get_mob_keys(project_id=project_id, session_id=session_id):
