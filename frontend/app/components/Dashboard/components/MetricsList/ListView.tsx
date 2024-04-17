@@ -31,9 +31,10 @@ function ListView(props: Props) {
           <span>Title</span>
         </div>
 
-        <div className="col-span-4">Owner</div>
+        <div className="col-span-2">Owner</div>
         <div className="col-span-2">Visibility</div>
-        <div className="col-span-2 text-right">Last Modified</div>
+        <div className="col-span-2">Last Modified</div>
+        <div className={'col-span-2 text-right'}>Options</div>
       </div>
       {list.map((metric: any) => (
         <MetricListItem
