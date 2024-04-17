@@ -5,6 +5,10 @@ from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
 
+def __is_mobile_session(platform):
+    return platform in ('ios', 'android')
+
+
 def __group_metadata(session, project_metadata):
     meta = {}
     for m in project_metadata.keys():
@@ -14,6 +18,7 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
+# for EE
 # for backward compatibility
 # This function should not use Clickhouse because it doesn't have `file_key`
 def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False,
@@ -43,22 +48,22 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
-                if data["platform"] in ('ios', 'android'):
+                if __is_mobile_session(data["platform"]):
                     data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                     for e in data['events']:
                         if e["type"].endswith("_IOS"):
                             e["type"] = e["type"][:-len("_IOS")]
+                        elif e["type"].endswith("_MOBILE"):
+                            e["type"] = e["type"][:-len("_MOBILE")]
                     data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
-                    data['userEvents'] = events_mobile.get_customs_by_sessionId(project_id=project_id,
-                                                                             session_id=session_id)
+                    data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
+                                                                                 session_id=session_id)
                     data['mobsUrl'] = []
                 else:
                     data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
@@ -74,6 +79,8 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id,
                                                             check_existence=False)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
+                    # for EE
+                    # context is required to check if the use have the right to access devtools
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     context=context, check_existence=False)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
@@ -91,6 +98,11 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
         else:
             return None
+
+
+def get_pre_replay(project_id, session_id, context: schemas.CurrentContext):
+    return {
+        'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
 
 
 # This function should not use Clickhouse because it doesn't have `file_key`
@@ -121,20 +133,20 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         data = cur.fetchone()
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
-                if data["platform"] == 'ios':
+                if __is_mobile_session(data["platform"]):
                     data['mobsUrl'] = []
-                    data['videoURL'] = sessions_mobs.get_ios_videos(session_id=session_id, project_id=project_id,
-                                                                    check_existence=False)
+                    data['videoURL'] = sessions_mobs.get_mobile_videos(session_id=session_id, project_id=project_id,
+                                                                       check_existence=False)
                 else:
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
+                    # for EE
+                    # context is required to check if the use have the right to access devtools
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
                                                                     context=context, check_existence=False)
                     data['canvasURL'] = canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
@@ -167,22 +179,23 @@ def get_events(project_id, session_id):
                     AND s.session_id = %(session_id)s;""",
             {"project_id": project_id, "session_id": session_id}
         )
-        # print("===============")
-        # print(query)
         cur.execute(query=query)
 
         s_data = cur.fetchone()
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
-            if s_data["platform"] == 'ios':
+            if __is_mobile_session(s_data["platform"]):
                 data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
                         e["type"] = e["type"][:-len("_IOS")]
+                    elif e["type"].endswith("_MOBILE"):
+                        e["type"] = e["type"][:-len("_MOBILE")]
                 data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
                 data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
-                                                                          session_id=session_id)
+                                                                             session_id=session_id)
+                data['userTesting'] = []
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
                                                           group_clickrage=True)
@@ -196,6 +209,7 @@ def get_events(project_id, session_id):
                                                                       session_id=session_id)
                 data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                 start_ts=s_data["startTs"], duration=s_data["duration"])
+                data['userTesting'] = user_testing.get_test_signals(session_id=session_id, project_id=project_id)
 
             data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
             data['issues'] = reduce_issues(data['issues'])

@@ -5,6 +5,10 @@ from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 
 
+def __is_mobile_session(platform):
+    return platform in ('ios', 'android')
+
+
 def __group_metadata(session, project_metadata):
     meta = {}
     for m in project_metadata.keys():
@@ -47,7 +51,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
-                if data["platform"] == 'ios' or data["platform"] == 'android':
+                if __is_mobile_session(data["platform"]):
                     data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                     for e in data['events']:
                         if e["type"].endswith("_IOS"):
@@ -56,7 +60,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                             e["type"] = e["type"][:-len("_MOBILE")]
                     data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
-                                                                              session_id=session_id)
+                                                                                 session_id=session_id)
                     data['mobsUrl'] = []
                 else:
                     data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
@@ -128,10 +132,10 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
         if data is not None:
             data = helper.dict_to_camel_case(data)
             if full_data:
-                if data["platform"] == 'ios' or data["platform"] == 'android':
+                if __is_mobile_session(data["platform"]):
                     data['mobsUrl'] = []
                     data['videoURL'] = sessions_mobs.get_mobile_videos(session_id=session_id, project_id=project_id,
-                                                                    check_existence=False)
+                                                                       check_existence=False)
                 else:
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
@@ -172,7 +176,7 @@ def get_events(project_id, session_id):
         if s_data is not None:
             s_data = helper.dict_to_camel_case(s_data)
             data = {}
-            if s_data["platform"] == 'ios' or s_data["platform"] == 'android':
+            if __is_mobile_session(s_data["platform"]):
                 data['events'] = events_mobile.get_by_sessionId(project_id=project_id, session_id=session_id)
                 for e in data['events']:
                     if e["type"].endswith("_IOS"):
@@ -181,7 +185,7 @@ def get_events(project_id, session_id):
                         e["type"] = e["type"][:-len("_MOBILE")]
                 data['crashes'] = events_mobile.get_crashes_by_session_id(session_id=session_id)
                 data['userEvents'] = events_mobile.get_customs_by_session_id(project_id=project_id,
-                                                                          session_id=session_id)
+                                                                             session_id=session_id)
                 data['userTesting'] = []
             else:
                 data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
