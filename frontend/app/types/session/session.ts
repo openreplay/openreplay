@@ -73,6 +73,7 @@ export interface ISession {
   live: boolean;
   startedAt: number;
   duration: number;
+  durationMs: number;
   events: InjectedEvent[];
   crashes: IosCrash[]
   stackEvents: StackEvent[];
@@ -169,6 +170,7 @@ export default class Session {
   live: ISession['live'];
   startedAt: ISession['startedAt'];
   duration: Duration;
+  durationMs: ISession['durationMs'];
   events: ISession['events'];
   stackEvents: ISession['stackEvents'];
   metadata: ISession['metadata'];
@@ -340,6 +342,7 @@ export default class Session {
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
       uxtVideo: uxtVideo[0],
+      durationMs: session.duration,
     });
   }
 
