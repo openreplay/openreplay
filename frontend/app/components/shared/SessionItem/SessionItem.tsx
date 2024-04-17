@@ -203,6 +203,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
+        onMouseEnter={handleHover}
       >
         <div className="flex items-start">
           <div className={cn('flex items-center w-full')}>
@@ -409,7 +410,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
               ) : (
-                <div onMouseEnter={handleHover}>
+                <div>
                   <PlayLink
                     isAssist={isAssist}
                     sessionId={sessionId}
