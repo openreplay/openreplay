@@ -1,4 +1,4 @@
-FROM quickwit/quickwit:0.6.4
+FROM quickwit/quickwit:0.8.0
 
 WORKDIR /quickwit
 
@@ -18,7 +18,8 @@ ENV filter="true" \
 	fetch_maxsize=800 \
 	graphql_maxsize=800 \
 	pageevent_maxsize=800 \
-	QUICKWIT_PORT=7280
+	QUICKWIT_PORT=7280 \
+	QUICKWIT_VERSION=0.8
 
 EXPOSE 7281
 

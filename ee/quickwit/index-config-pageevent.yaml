@@ -2,7 +2,7 @@
 # Index config file for gh-archive dataset.
 #
 
-version: 0.6
+version: {{QUICKWIT_VERSION}}
 
 index_id: "pageevent"
 index_uri: "s3://openreplay-quickwit/quickwit-indexes/pageevent"
