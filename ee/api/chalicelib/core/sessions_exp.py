@@ -196,7 +196,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                     s.{sort} AS sort_key,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
                                                 {query_part}
-                                              LEFT JOIN (SELECT session_id
+                                              LEFT JOIN (SELECT DISTINCT session_id
                                                 FROM experimental.user_viewed_sessions
                                                 WHERE user_id = %(userId)s AND project_id=%(project_id)s
                                                   AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
