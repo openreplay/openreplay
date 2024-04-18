@@ -78,6 +78,17 @@ def get_mobile_videos(session_id, project_id, check_existence=False):
     return results
 
 
+def get_audio_url(project_id, session_id, check_existence=False):
+    k = "audio.mp3"
+    if check_existence and not StorageClient.exists(bucket=config("sessions_bucket"), key=k):
+        return None
+    return StorageClient.get_presigned_url_for_sharing(
+        bucket=config("sessions_bucket"),
+        expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900),
+        key=k
+    )
+
+
 def delete_mobs(project_id, session_ids):
     for session_id in session_ids:
         for k in __get_mob_keys(project_id=project_id, session_id=session_id) \
