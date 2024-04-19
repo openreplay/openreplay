@@ -63,7 +63,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You’ve entered invalid Email or Password."
+            detail="You've entered invalid Email or Password."
         )
     if "errors" in r:
         raise HTTPException(
