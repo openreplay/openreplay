@@ -66,6 +66,7 @@ interface Props {
     isCallActive?: boolean;
     agentIds?: string[];
     timezone: string;
+    platform: string;
   };
   onUserClick?: (userId: string, userAnonymousId: string) => void;
   hasUserFilter?: boolean;
@@ -131,20 +132,21 @@ function SessionItem(props: RouteComponentProps & Props) {
     metadata,
     issueTypes,
     active,
+    platform,
     timezone: userTimezone,
   } = session;
 
   const location = props.location;
   const queryParams = Object.fromEntries(new URLSearchParams(location.search));
-
+  const isMobile = platform !== 'web'
   const formattedDuration = durationFormatted(duration);
   const hasUserId = userId || userAnonymousId;
   const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
   const isAssist =
     (!ignoreAssist &&
-      (isRoute(ASSIST_ROUTE, location.pathname) ||
-        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-        location.pathname.includes('multiview'))) ||
+     (isRoute(ASSIST_ROUTE, location.pathname) ||
+      isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+      location.pathname.includes('multiview'))) ||
     props.live;
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
@@ -179,7 +181,12 @@ function SessionItem(props: RouteComponentProps & Props) {
   }, []);
 
   const handleHover = async () => {
-    if (prefetchState !== PREFETCH_STATE.none || props.live || isAssist) return;
+    if (
+      prefetchState !== PREFETCH_STATE.none
+      || props.live
+      || isAssist
+      || isMobile
+    ) return;
 
     setPrefetched(PREFETCH_STATE.loading);
     try {
@@ -190,7 +197,12 @@ function SessionItem(props: RouteComponentProps & Props) {
     }
   };
   const openSession = () => {
-    if (props.live || isAssist || prefetchState === PREFETCH_STATE.none) return
+    if (
+      props.live
+      || isAssist
+      || prefetchState === PREFETCH_STATE.none
+      || isMobile
+    ) return
     presetSession?.(session);
   };
   return (
@@ -225,13 +237,13 @@ function SessionItem(props: RouteComponentProps & Props) {
                       'color-teal cursor-pointer':
                         !disableUser && hasUserId && !props.isDisabled,
                       [stl.userName]:
-                        !disableUser && hasUserId && !props.isDisabled,
+                      !disableUser && hasUserId && !props.isDisabled,
                       'color-gray-medium': disableUser || !hasUserId,
                     })}
                     onClick={() =>
-                      !disableUser && !hasUserFilter && hasUserId
-                        ? onUserClick(userId, userAnonymousId)
-                        : null
+             !disableUser && !hasUserFilter && hasUserId
+             ? onUserClick(userId, userAnonymousId)
+             : null
                     }
                   >
                     <TextEllipsis
@@ -280,11 +292,11 @@ function SessionItem(props: RouteComponentProps & Props) {
                     text={formatTimeOrDate(
                       startedAt,
                       shownTimezone === 'user' && userTimezone
-                        ? {
-                            label: userTimezone.split('+').join(' +'),
-                            value: userTimezone.split(':')[0],
-                          }
-                        : timezone
+                      ? {
+                          label: userTimezone.split('+').join(' +'),
+                          value: userTimezone.split(':')[0],
+                        }
+                      : timezone
                     )}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
@@ -297,8 +309,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                       <span className="mr-1">{eventsCount}</span>
                       <span>
                         {eventsCount === 0 || eventsCount > 1
-                          ? 'Events'
-                          : 'Event'}
+                         ? 'Events'
+                         : 'Event'}
                       </span>
                     </div>
                     <Icon name="circle-fill" size={3} className="mx-4" />
@@ -308,8 +320,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                   {live || props.live ? (
                     <Counter startTime={startedAt} />
                   ) : (
-                    formattedDuration
-                  )}
+                     formattedDuration
+                   )}
                 </div>
               </div>
             </div>
@@ -410,23 +422,23 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
               ) : (
-                <div>
-                  <PlayLink
-                    isAssist={isAssist}
-                    sessionId={sessionId}
-                    viewed={viewed}
-                    onClick={onClick}
-                    queryParams={queryParams}
-                    query={query}
-                    beforeOpen={props.live || isAssist ? undefined : openSession}
-                  />
-                  {bookmarked && (
-                    <div className="ml-2 cursor-pointer">
-                      <ItemMenu bold items={menuItems} />
-                    </div>
-                  )}
-                </div>
-              )}
+                 <div>
+                   <PlayLink
+                     isAssist={isAssist}
+                     sessionId={sessionId}
+                     viewed={viewed}
+                     onClick={onClick}
+                     queryParams={queryParams}
+                     query={query}
+                     beforeOpen={props.live || isAssist ? undefined : openSession}
+                   />
+                   {bookmarked && (
+                     <div className="ml-2 cursor-pointer">
+                       <ItemMenu bold items={menuItems} />
+                     </div>
+                   )}
+                 </div>
+               )}
             </div>
           </div>
         </div>
