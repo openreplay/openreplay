@@ -154,6 +154,12 @@ export default class APIClient {
       edp = `${edp}/${this.siteId}`;
     }
 
+    if (path.includes('login') || path.includes('refresh') || path.includes('logout')) {
+      init.credentials = 'include';
+    } else {
+      delete init.credentials;
+    }
+
     return fetch(edp + path, init).then((response) => {
       if (response.ok) {
         return response;
