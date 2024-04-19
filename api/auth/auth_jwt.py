@@ -32,8 +32,12 @@ class JWTAuth(HTTPBearer):
 
     async def __call__(self, request: Request) -> Optional[schemas.CurrentContext]:
         if request.url.path in ["/refresh", "/api/refresh"]:
-            refresh_token = request.cookies.get("refreshToken")
-            jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=refresh_token)
+            if "refreshToken" not in request.cookies:
+                logger.warning("Missing refreshToken cookie.")
+                jwt_payload = None
+            else:
+                jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["refreshToken"])
+
             if jwt_payload is None or jwt_payload.get("jti") is None:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
             auth_exists = users.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
