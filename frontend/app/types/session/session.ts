@@ -136,6 +136,7 @@ export interface ISession {
   timezone?: string;
   videoURL?: string[]
   isMobileNative?: boolean
+  audio?: string;
 }
 
 const emptyValues = {
@@ -221,6 +222,7 @@ export default class Session {
   timezone?: ISession['timezone'];
   platform: ISession['platform'];
   isMobileNative?: ISession['isMobileNative'];
+  audio?: ISession['audio'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
@@ -343,6 +345,7 @@ export default class Session {
       frustrations: frustrationList,
       uxtVideo: uxtVideo[0],
       durationMs: session.duration,
+      audio: session.audio,
     });
   }
 
