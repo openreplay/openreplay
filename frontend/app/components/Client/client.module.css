@@ -41,7 +41,7 @@
     margin-top: 10px;
   }
 
-  & input {
+  & input:not(.ant-input-number-input) {
     display: inline-block;
     width: 100%;
     border: $gray-light solid 1px;
