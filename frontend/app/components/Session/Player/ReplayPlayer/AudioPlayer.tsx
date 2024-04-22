@@ -24,7 +24,11 @@ function DropdownAudioPlayer({ url }: { url: string }) {
         audioRef.current?.play();
       }
       audioRef.current.muted = !audioRef.current.muted;
-      setIsMuted(!isMuted);
+      if (isMuted) {
+        onVolumeChange(35)
+      } else {
+        onVolumeChange(0)
+      }
     }
   };
 
@@ -38,27 +42,36 @@ function DropdownAudioPlayer({ url }: { url: string }) {
 
   const onSync = () => {
     setDelta(deltaInputValue)
+    handleSeek(time + deltaInputValue * 1000)
   }
+
   const onCancel = () => {
     setDeltaInputValue(0)
     setIsVisible(false)
   }
+
   const onReset = () => {
     setDelta(0)
     setDeltaInputValue(0)
-    setIsVisible(false)
+    handleSeek(time)
   }
 
   const onVolumeChange = (value: number) => {
     if (audioRef.current) {
       audioRef.current.volume = value / 100;
     }
+    if (value === 0) {
+      setIsMuted(true);
+    }
+    if (value > 0) {
+      setIsMuted(false);
+    }
     setVolume(value);
   };
 
   const handleSeek = (timeMs: number) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = (timeMs + delta) / 1000;
+      audioRef.current.currentTime = (timeMs + delta * 1000) / 1000;
     }
   };
 
@@ -69,7 +82,8 @@ function DropdownAudioPlayer({ url }: { url: string }) {
   };
 
   React.useEffect(() => {
-    if (Math.abs(lastPlayerTime.current - time) >= 250) {
+    const deltaMs = delta * 1000;
+    if (Math.abs(lastPlayerTime.current - time - deltaMs) >= 250) {
       handleSeek(time);
     }
     if (audioRef.current) {
@@ -80,7 +94,7 @@ function DropdownAudioPlayer({ url }: { url: string }) {
         audioRef.current.muted = isMuted;
       }
     }
-    lastPlayerTime.current = time + delta;
+    lastPlayerTime.current = time + deltaMs;
   }, [time, delta]);
 
   React.useEffect(() => {
@@ -94,7 +108,8 @@ function DropdownAudioPlayer({ url }: { url: string }) {
       audioRef.current?.pause();
     }
     const volume = audioRef.current?.volume ?? 0
-    setVolume(volume * 100);
+    const shouldBeMuted = audioRef.current?.muted ?? isMuted
+    setVolume(shouldBeMuted ? 0 : volume * 100);
   }, [playing]);
 
   return (
@@ -171,6 +186,7 @@ function DropdownAudioPlayer({ url }: { url: string }) {
         <audio
           ref={audioRef}
           controls
+          muted={isMuted}
           className="w-full"
           style={{ height: 32 }}
         >
