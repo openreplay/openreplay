@@ -2,6 +2,7 @@ import datetime
 import logging
 from typing import Optional
 
+from decouple import config
 from fastapi import Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette import status
@@ -43,12 +44,17 @@ class JWTAuth(HTTPBearer):
                 jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["refreshToken"])
 
             if jwt_payload is None or jwt_payload.get("jti") is None:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
+                logger.warning("Null refreshToken's payload, or null JTI.")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                    detail="Invalid refresh-token or expired refresh-token.")
             auth_exists = users.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
                                                     tenant_id=jwt_payload.get("tenantId", -1),
                                                     jwt_jti=jwt_payload["jti"])
             if not auth_exists:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
+                logger.warning("refreshToken's user not found.")
+                logger.warning(jwt_payload)
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                    detail="Invalid refresh-token or expired refresh-token.")
 
             credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)
             if credentials:
@@ -56,7 +62,9 @@ class JWTAuth(HTTPBearer):
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
                 old_jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials,
-                                                             leeway=datetime.timedelta(days=3))
+                                                             leeway=datetime.timedelta(
+                                                                 days=config("JWT_LEEWAY_DAYS", cast=int, default=3)
+                                                             ))
                 if old_jwt_payload is None \
                         or old_jwt_payload.get("userId") is None \
                         or old_jwt_payload.get("userId") != jwt_payload.get("userId"):
