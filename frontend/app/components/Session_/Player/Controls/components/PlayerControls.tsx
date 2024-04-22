@@ -3,7 +3,6 @@ import { Icon } from 'UI';
 import { Button } from 'antd';
 import PlayingTime from './PlayingTime';
 import { JumpBack, IntervalSelector, JumpForward, SpeedOptions } from './ControlsComponents';
-import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
 
 interface Props {
   skip: boolean;
@@ -82,7 +81,6 @@ function PlayerControls(props: Props) {
       </div>
 
       <div className="flex items-center gap-2 ml-2">
-        <TimelineZoomButton />
         <SpeedOptions
           toggleSpeed={toggleSpeed}
           disabled={disabled}

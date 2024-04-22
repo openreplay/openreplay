@@ -18,6 +18,7 @@ import OverviewPanelContainer from './components/OverviewPanelContainer';
 import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
 import VerticalPointerLine from './components/VerticalPointerLine';
+import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
 
 function MobileOverviewPanelCont({
   issuesList,
@@ -238,7 +239,8 @@ function PanelComponent({
               </>
             ) : null}
           </div>
-          <div className="flex items-center h-20 mr-4">
+          <div className="flex items-center h-20 mr-4 gap-2">
+            <TimelineZoomButton />
             <FeatureSelection list={selectedFeatures} updateList={setSelectedFeatures} />
           </div>
         </BottomBlock.Header>
