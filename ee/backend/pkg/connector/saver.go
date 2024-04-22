@@ -1,20 +1,22 @@
 package connector
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"openreplay/backend/internal/http/geoip"
-	"openreplay/backend/pkg/projects"
-	"openreplay/backend/pkg/sessions"
 	"strconv"
 	"time"
 
 	config "openreplay/backend/internal/config/connector"
+	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/sessions"
 )
 
 // Saver collect sessions and events and saves them to Redshift
 type Saver struct {
+	log              logger.Logger
 	cfg              *config.Config
 	db               Database
 	sessModule       sessions.Sessions
@@ -26,19 +28,21 @@ type Saver struct {
 	events           []map[string]string
 }
 
-func New(cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects) *Saver {
+func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects) *Saver {
+	ctx := context.Background()
 	if cfg == nil {
-		log.Fatal("connector config is empty")
+		log.Fatal(ctx, "connector config is empty")
 	}
 	// Validate column names in sessions table
 	if err := validateColumnNames(sessionColumns); err != nil {
-		log.Printf("can't validate column names: %s", err)
+		log.Error(ctx, "can't validate sessions column names: %s", err)
 	}
 	// Validate column names in events table
 	if err := validateColumnNames(eventColumns); err != nil {
-		log.Printf("can't validate column names: %s", err)
+		log.Error(ctx, "can't validate events column names: %s", err)
 	}
 	return &Saver{
+		log:             log,
 		cfg:             cfg,
 		db:              db,
 		sessModule:      sessions,
@@ -83,14 +87,48 @@ func handleEvent(msg messages.Message) map[string]string {
 	case *messages.CustomIssue:
 		event["customissue_name"] = QUOTES(m.Name)
 		event["customissue_payload"] = QUOTES(m.Payload)
+	// Mobile events
+	case *messages.IOSEvent:
+		event["mobile_event_name"] = QUOTES(m.Name)
+		event["mobile_event_payload"] = QUOTES(m.Payload)
+	case *messages.IOSNetworkCall:
+		event["mobile_networkcall_type"] = QUOTES(m.Type)
+		event["mobile_networkcall_method"] = QUOTES(m.Method)
+		event["mobile_networkcall_url"] = QUOTES(m.URL)
+		event["mobile_networkcall_request"] = QUOTES(m.Request)
+		event["mobile_networkcall_response"] = QUOTES(m.Response)
+		event["mobile_networkcall_status"] = fmt.Sprintf("%d", m.Status)
+		event["mobile_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
+	case *messages.IOSClickEvent:
+		event["mobile_clickevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_clickevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_clickevent_label"] = QUOTES(m.Label)
+	case *messages.IOSSwipeEvent:
+		event["mobile_swipeevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_swipeevent_label"] = QUOTES(m.Label)
+	case *messages.IOSInputEvent:
+		event["mobile_inputevent_label"] = QUOTES(m.Label)
+		event["mobile_inputevent_value"] = QUOTES(m.Value)
+	case *messages.IOSCrash:
+		event["mobile_crash_name"] = QUOTES(m.Name)
+		event["mobile_crash_reason"] = QUOTES(m.Reason)
+		event["mobile_crash_stacktrace"] = QUOTES(m.Stacktrace)
+	case *messages.IOSIssueEvent:
+		event["mobile_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_issueevent_type"] = QUOTES(m.Type)
+		event["mobile_issueevent_context_string"] = QUOTES(m.ContextString)
+		event["mobile_issueevent_context"] = QUOTES(m.Context)
+		event["mobile_issueevent_payload"] = QUOTES(m.Payload)
 	}
 
 	if len(event) == 0 {
 		return nil
 	}
 	event["sessionid"] = fmt.Sprintf("%d", msg.SessionID())
-	event["received_at"] = fmt.Sprintf("%d", uint64(time.Now().UnixMilli()))
-	event["batch_order_number"] = fmt.Sprintf("%d", 0)
 	return event
 }
 
@@ -110,20 +148,18 @@ func (s *Saver) updateSessionInfoFromCache(sessID uint64, sess map[string]string
 		sess["session_end_timestamp"] = fmt.Sprintf("%d", info.Timestamp+*info.Duration)
 	}
 	if sess["session_duration"] == "" && sess["session_start_timestamp"] != "" && sess["session_end_timestamp"] != "" {
+		ctx := context.WithValue(context.Background(), "sessionID", sessID)
 		start, err := strconv.Atoi(sess["session_start_timestamp"])
 		if err != nil {
-			log.Printf("Error parsing session_start_timestamp: %v", err)
+			s.log.Error(ctx, "error parsing session_start_timestamp: %s", err)
 		}
 		end, err := strconv.Atoi(sess["session_end_timestamp"])
 		if err != nil {
-			log.Printf("Error parsing session_end_timestamp: %v", err)
+			s.log.Error(ctx, "error parsing session_end_timestamp: %s", err)
 		}
 		if start != 0 && end != 0 {
 			sess["session_duration"] = fmt.Sprintf("%d", end-start)
 		}
-	}
-	if sess["user_agent"] == "" && info.UserAgent != "" {
-		sess["user_agent"] = QUOTES(info.UserAgent)
 	}
 	if sess["user_browser"] == "" && info.UserBrowser != "" {
 		sess["user_browser"] = QUOTES(info.UserBrowser)
@@ -200,19 +236,23 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.SessionStart, *messages.SessionEnd, *messages.ConnectionInformation, *messages.Metadata,
 		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
 		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
-		*messages.IssueEvent, *messages.IssueEventDeprecated:
+		*messages.IssueEvent, *messages.IssueEventDeprecated,
+		// Mobile messages
+		*messages.IOSSessionStart, *messages.IOSSessionEnd, *messages.IOSUserID, *messages.IOSUserAnonymousID,
+		*messages.IOSMetadata:
 	default:
 		return
 	}
 	if s.sessions == nil {
 		s.sessions = make(map[uint64]map[string]string)
 	}
+	ctx := context.WithValue(context.Background(), "sessionID", msg.SessionID())
 	sess, ok := s.sessions[msg.SessionID()]
 	if !ok {
 		// Try to load session from cache
 		cached, err := s.sessModule.GetCached(msg.SessionID())
 		if err != nil && err != sessions.ErrSessionNotFound {
-			log.Printf("Failed to get cached session: %v", err)
+			s.log.Warn(ctx, "failed to get cached session: %s", err)
 		}
 		if cached != nil {
 			sess = cached
@@ -233,7 +273,6 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.SessionStart:
 		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		sess["user_uuid"] = QUOTES(m.UserUUID)
-		sess["user_agent"] = QUOTES(m.UserAgent)
 		sess["user_os"] = QUOTES(m.UserOS)
 		sess["user_os_version"] = QUOTES(m.UserOSVersion)
 		sess["user_browser"] = QUOTES(m.UserBrowser)
@@ -251,7 +290,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.SessionEnd:
 		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		if err := s.updateSessionInfoFromCache(msg.SessionID(), sess); err != nil {
-			log.Printf("Error updating session info from cache: %v", err)
+			s.log.Warn(ctx, "failed to update session info from cache: %s", err)
 		}
 	case *messages.ConnectionInformation:
 		sess["connection_effective_bandwidth"] = fmt.Sprintf("%d", m.Downlink)
@@ -259,12 +298,12 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.Metadata:
 		session, err := s.sessModule.Get(msg.SessionID())
 		if err != nil {
-			log.Printf("Error getting session info: %v", err)
+			s.log.Error(ctx, "error getting session info: %s", err)
 			break
 		}
 		project, err := s.projModule.GetProject(session.ProjectID)
 		if err != nil {
-			log.Printf("Error getting project info: %v", err)
+			s.log.Error(ctx, "error getting project info: %s", err)
 			break
 		}
 		keyNo := project.GetMetadataNo(m.Key)
@@ -320,6 +359,43 @@ func (s *Saver) handleSession(msg messages.Message) {
 			currIssuesCount = 0
 		}
 		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
+	// Mobile messages
+	case *messages.IOSSessionStart:
+		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		sess["user_uuid"] = QUOTES(m.UserUUID)
+		sess["user_os"] = QUOTES(m.UserOS)
+		sess["user_os_version"] = QUOTES(m.UserOSVersion)
+		sess["user_device"] = QUOTES(m.UserDevice)
+		sess["user_device_type"] = QUOTES(m.UserDeviceType)
+		sess["tracker_version"] = QUOTES(m.TrackerVersion)
+		sess["rev_id"] = QUOTES(m.RevID)
+	case *messages.IOSSessionEnd:
+		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		if err := s.updateSessionInfoFromCache(msg.SessionID(), sess); err != nil {
+			s.log.Warn(ctx, "failed to update session info from cache: %s", err)
+		}
+	case *messages.IOSMetadata:
+		session, err := s.sessModule.Get(msg.SessionID())
+		if err != nil {
+			s.log.Error(ctx, "error getting session info: %s", err)
+			break
+		}
+		project, err := s.projModule.GetProject(session.ProjectID)
+		if err != nil {
+			s.log.Error(ctx, "error getting project info: %s", err)
+			break
+		}
+		keyNo := project.GetMetadataNo(m.Key)
+		if keyNo == 0 {
+			break
+		}
+		sess[fmt.Sprintf("metadata_%d", keyNo)] = QUOTES(m.Value)
+	case *messages.IOSUserID:
+		if m.ID != "" {
+			sess["user_id"] = QUOTES(m.ID)
+		}
+	case *messages.IOSUserAnonymousID:
+		sess["user_anonymous_id"] = QUOTES(m.ID)
 	default:
 		updated = false
 	}
@@ -342,7 +418,7 @@ func (s *Saver) Handle(msg messages.Message) {
 		s.events = append(s.events, newEvent)
 	}
 	s.handleSession(msg)
-	if msg.TypeID() == messages.MsgSessionEnd {
+	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgIOSSessionEnd {
 		if s.finishedSessions == nil {
 			s.finishedSessions = make([]uint64, 0)
 		}
@@ -353,18 +429,18 @@ func (s *Saver) Handle(msg messages.Message) {
 
 func (s *Saver) commitEvents() {
 	if len(s.events) == 0 {
-		log.Printf("empty events batch")
+		s.log.Info(context.Background(), "empty events batch")
 		return
 	}
 	if err := s.db.InsertEvents(s.events); err != nil {
-		log.Printf("can't insert events: %s", err)
+		s.log.Error(context.Background(), "can't insert events: %s", err)
 	}
 	s.events = nil
 }
 
 func (s *Saver) commitSessions() {
 	if len(s.finishedSessions) == 0 {
-		log.Printf("empty sessions batch")
+		s.log.Info(context.Background(), "empty sessions batch")
 		return
 	}
 	l := len(s.finishedSessions)
@@ -380,10 +456,14 @@ func (s *Saver) commitSessions() {
 			toSend = append(toSend, sessionID)
 		}
 	}
-	if err := s.db.InsertSessions(sessions); err != nil {
-		log.Printf("can't insert sessions: %s", err)
+	if len(sessions) == 0 {
+		s.log.Info(context.Background(), "empty sessions batch to send")
+		return
 	}
-	log.Printf("finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
+	if err := s.db.InsertSessions(sessions); err != nil {
+		s.log.Error(context.Background(), "can't insert sessions: %s", err)
+	}
+	s.log.Info(context.Background(), "finished: %d, to keep: %d, to send: %d", l, len(toKeep), len(toSend))
 	// Clear current list of finished sessions
 	for _, sessionID := range toSend {
 		delete(s.sessions, sessionID)   // delete session info
@@ -398,10 +478,11 @@ func (s *Saver) Commit() {
 	start := time.Now()
 	for sessionID, _ := range s.updatedSessions {
 		if err := s.sessModule.AddCached(sessionID, s.sessions[sessionID]); err != nil {
-			log.Printf("Error adding session to cache: %v", err)
+			ctx := context.WithValue(context.Background(), "sessionID", sessionID)
+			s.log.Error(ctx, "can't add session to cache: %s", err)
 		}
 	}
-	log.Printf("Cached %d sessions in %s", len(s.updatedSessions), time.Since(start))
+	s.log.Info(context.Background(), "cached %d sessions in %s", len(s.updatedSessions), time.Since(start))
 	s.updatedSessions = nil
 	// Commit events and sessions (send to Redshift)
 	s.commitEvents()
@@ -428,12 +509,13 @@ func (s *Saver) checkZombieSessions() {
 			// Do that several times (save attempts number) after last attempt delete session from memory to avoid sessions with not filled fields
 			zombieSession := s.sessions[sessionID]
 			if zombieSession["session_start_timestamp"] == "" || zombieSession["session_end_timestamp"] == "" {
+				ctx := context.WithValue(context.Background(), "sessionID", sessionID)
 				// Let's try to load session from cache
 				if err := s.updateSessionInfoFromCache(sessionID, zombieSession); err != nil {
-					log.Printf("Error updating zombie session info from cache: %v", err)
+					s.log.Warn(ctx, "failed to update zombie session info from cache: %s", err)
 				} else {
 					s.sessions[sessionID] = zombieSession
-					log.Printf("Updated zombie session info from cache: %v", zombieSession)
+					s.log.Debug(ctx, "updated zombie session info from cache: %v", zombieSession)
 				}
 			}
 			if zombieSession["session_start_timestamp"] == "" || zombieSession["session_end_timestamp"] == "" {
@@ -445,7 +527,7 @@ func (s *Saver) checkZombieSessions() {
 		}
 	}
 	if zombieSessionsCount > 0 {
-		log.Printf("Found %d zombie sessions", zombieSessionsCount)
+		s.log.Info(context.Background(), "found %d zombie sessions", zombieSessionsCount)
 	}
 }
 

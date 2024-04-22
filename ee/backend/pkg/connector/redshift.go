@@ -5,23 +5,24 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
-	"log"
-	"openreplay/backend/pkg/objectstorage"
+	_ "github.com/lib/pq"
 
 	"openreplay/backend/internal/config/connector"
-
-	_ "github.com/lib/pq"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
 )
 
 type Redshift struct {
+	log        logger.Logger
 	cfg        *connector.Config
 	ctx        context.Context
 	db         *sql.DB
 	objStorage objectstorage.ObjectStorage
 }
 
-func NewRedshift(cfg *connector.Config, objStorage objectstorage.ObjectStorage) (*Redshift, error) {
+func NewRedshift(log logger.Logger, cfg *connector.Config, objStorage objectstorage.ObjectStorage) (*Redshift, error) {
 	var source string
 	if cfg.ConnectionString != "" {
 		source = cfg.ConnectionString
@@ -29,7 +30,7 @@ func NewRedshift(cfg *connector.Config, objStorage objectstorage.ObjectStorage) 
 		source = fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
 			cfg.Redshift.User, cfg.Redshift.Password, cfg.Redshift.Host, cfg.Redshift.Port, cfg.Redshift.Database)
 	}
-	log.Println("Connecting to Redshift Source: ", source)
+	log.Info(context.Background(), "Connecting to Redshift Source: ", source)
 	sqldb, err := sql.Open("postgres", source)
 	if err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func NewRedshift(cfg *connector.Config, objStorage objectstorage.ObjectStorage) 
 		return nil, err
 	}
 	return &Redshift{
+		log:        log,
 		cfg:        cfg,
 		ctx:        context.Background(),
 		db:         sqldb,
@@ -73,15 +75,13 @@ func (r *Redshift) InsertEvents(batch []map[string]string) error {
 
 	reader := bytes.NewReader(buf.Bytes())
 	if err := r.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		log.Printf("can't upload file to s3: %s", err)
-		return err
+		return fmt.Errorf("can't upload file to s3: %s", err)
 	}
 	// Copy data from s3 bucket to redshift
 	if err := r.Copy(r.cfg.EventsTableName, fileName, "|", true, false); err != nil {
-		log.Printf("can't copy data from s3 to redshift: %s", err)
-		return err
+		return fmt.Errorf("can't copy data from s3 to redshift: %s", err)
 	}
-	log.Printf("events batch of %d events is successfully saved", len(batch))
+	r.log.Info(context.Background(), "events batch of %d events is successfully saved", len(batch))
 	return nil
 }
 
@@ -113,15 +113,13 @@ func (r *Redshift) InsertSessions(batch []map[string]string) error {
 
 	reader := bytes.NewReader(buf.Bytes())
 	if err := r.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		log.Printf("can't upload file to s3: %s", err)
-		return err
+		return fmt.Errorf("can't upload file to s3: %s", err)
 	}
 	// Copy data from s3 bucket to redshift
 	if err := r.Copy(r.cfg.SessionsTableName, fileName, "|", true, false); err != nil {
-		log.Printf("can't copy data from s3 to redshift: %s", err)
-		return err
+		return fmt.Errorf("can't copy data from s3 to redshift: %s", err)
 	}
-	log.Printf("sessions batch of %d sessions is successfully saved", len(batch))
+	r.log.Info(context.Background(), "sessions batch of %d sessions is successfully saved", len(batch))
 	return nil
 }
 
@@ -131,19 +129,23 @@ func (r *Redshift) Copy(tableName, fileName, delimiter string, creds, gzip bool)
 		gzipSQL     string
 	)
 	if creds {
-		credentials = fmt.Sprintf(`ACCESS_KEY_ID '%s' SECRET_ACCESS_KEY '%s'`, r.cfg.AWSAccessKeyID, r.cfg.AWSSecretAccessKey)
+		if r.cfg.AWSAccessKeyID != "" && r.cfg.AWSSecretAccessKey != "" {
+			credentials = fmt.Sprintf(`ACCESS_KEY_ID '%s' SECRET_ACCESS_KEY '%s'`, r.cfg.AWSAccessKeyID, r.cfg.AWSSecretAccessKey)
+		} else if r.cfg.AWSIAMRole != "" {
+			credentials = fmt.Sprintf(`IAM_ROLE '%s'`, "r.cfg.AWSIAMRole")
+		} else {
+			credentials = "IAM_ROLE default"
+		}
 	}
 	if gzip {
 		gzipSQL = "GZIP"
 	}
 
-	bucketName := "rdshftbucket"
-	filePath := fmt.Sprintf("s3://%s/%s", bucketName, fileName)
+	filePath := fmt.Sprintf("s3://%s/%s", r.cfg.Redshift.Bucket, fileName)
 
-	copySQL := fmt.Sprintf(`COPY "%s" FROM '%s' WITH %s TIMEFORMAT 'auto' DATEFORMAT 'auto' TRUNCATECOLUMNS 
-		STATUPDATE ON %s DELIMITER AS '%s' IGNOREHEADER 1 REMOVEQUOTES ESCAPE TRIMBLANKS EMPTYASNULL ACCEPTANYDATE`,
+	copySQL := fmt.Sprintf(`COPY "%s" FROM '%s' WITH %s TIMEFORMAT 'auto' DATEFORMAT 'auto' TRUNCATECOLUMNS STATUPDATE ON %s DELIMITER AS '%s' IGNOREHEADER 1 REMOVEQUOTES ESCAPE TRIMBLANKS EMPTYASNULL ACCEPTANYDATE`,
 		tableName, filePath, gzipSQL, credentials, delimiter)
-	log.Printf("Running command: %s", copySQL)
+	r.log.Debug(context.Background(), "Executing COPY SQL: %s", copySQL)
 
 	_, err := r.db.ExecContext(r.ctx, copySQL)
 	return err

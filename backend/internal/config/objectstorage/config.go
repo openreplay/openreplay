@@ -14,6 +14,7 @@ type ObjectsConfig struct {
 	AzureAccountName     string `env:"AZURE_ACCOUNT_NAME"`
 	AzureAccountKey      string `env:"AZURE_ACCOUNT_KEY"`
 	UseS3Tags            bool   `env:"USE_S3_TAGS,default=true"`
+	AWSIAMRole           string `env:"AWS_IAM_ROLE"`
 }
 
 func (c *ObjectsConfig) UseFileTags() bool {
