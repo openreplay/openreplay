@@ -48,6 +48,7 @@ type Redshift struct {
 	User             string `env:"REDSHIFT_USER"`
 	Password         string `env:"REDSHIFT_PASSWORD"`
 	Database         string `env:"REDSHIFT_DATABASE"`
+	Bucket           string `env:"REDSHIFT_BUCKET,default=rdshftbucket"`
 }
 
 // Clickhouse config
@@ -57,4 +58,17 @@ type Clickhouse struct {
 	Database string `env:"CLICKHOUSE_DATABASE,default=default"`
 	UserName string `env:"CLICKHOUSE_USERNAME,default=default"`
 	Password string `env:"CLICKHOUSE_PASSWORD,default="`
+}
+
+// ElasticSearch config
+
+type ElasticSearch struct {
+	URLs     string `env:"ELASTICSEARCH_URLS"`
+	UseAWS   bool   `env:"ELASTICSEARCH_IN_AWS,default=false"`
+	User     string `env:"ELASTICSEARCH_USER"`
+	Password string `env:"ELASTICSEARCH_PASSWORD"`
+}
+
+func (cfg *ElasticSearch) GetURLs() []string {
+	return strings.Split(cfg.URLs, ",")
 }
