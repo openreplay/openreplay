@@ -36,6 +36,7 @@ import {
 import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
 
+import DropdownAudioPlayer from '../../../Session/Player/ReplayPlayer/AudioPlayer';
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
@@ -179,6 +180,7 @@ function Controls(props: any) {
                 toggleBottomTools={toggleBottomTools}
                 bottomBlock={bottomBlock}
                 disabled={disabled}
+                audioUrl={session.audio}
               />
             )}
 
@@ -201,6 +203,7 @@ interface IDevtoolsButtons {
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
   disabled: boolean;
+  audioUrl?: string;
 }
 
 const DevtoolsButtons = observer(
@@ -209,6 +212,7 @@ const DevtoolsButtons = observer(
     toggleBottomTools,
     bottomBlock,
     disabled,
+    audioUrl,
   }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
@@ -247,11 +251,7 @@ const DevtoolsButtons = observer(
     };
     return (
       <>
-        {isSaas ? (
-          <SummaryButton
-            onClick={showSummary}
-          />
-        ) : null}
+        {isSaas ? <SummaryButton onClick={showSummary} /> : null}
         <ControlButton
           popover={
             <div className={'flex items-center gap-2'}>
@@ -349,6 +349,7 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
+        {audioUrl ? <DropdownAudioPlayer url={audioUrl} /> : null}
       </>
     );
   }
