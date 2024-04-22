@@ -12,7 +12,6 @@ import { BackLink, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import DropdownAudioPlayer from "./AudioPlayer";
 import UserCard from './EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -39,7 +38,6 @@ function PlayerBlockHeader(props: any) {
     siteId,
     setActiveTab,
     activeTab,
-    location,
     history,
     sessionPath,
     fetchMetadata,
@@ -111,8 +109,6 @@ function PlayerBlockHeader(props: any) {
               <SessionMetaList className="" metaList={_metaList} maxLength={2} />
             </div>
           )}
-
-          {session.audio ? <DropdownAudioPlayer url={session.audio} /> : null}
         </div>
       </div>
         <div className="relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
