@@ -17,6 +17,12 @@ export default class NotesStore {
     makeAutoObservable(this)
   }
 
+  setLoading(loading: boolean) {
+    this.loading = loading
+  }
+  setNotes(notes: Note[]) {
+    this.notes = notes
+  }
   async fetchNotes() {
     const filter: NotesFilter = {
       page: this.page,
@@ -28,20 +34,20 @@ export default class NotesStore {
       sharedOnly: false
     }
 
-    this.loading = true
+    this.setLoading(true)
     try {
       const notes = await notesService.fetchNotes(filter)
-      this.notes = notes;
+      this.setNotes(notes);
       return notes;
     } catch (e) {
       console.error(e)
     } finally {
-      this.loading = false
+      this.setLoading(false)
     }
   }
 
   async fetchSessionNotes(sessionId: string) {
-    this.loading = true
+    this.setLoading(true)
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
       notes.forEach(note => note.time = note.timestamp)
@@ -50,47 +56,43 @@ export default class NotesStore {
     } catch (e) {
       console.error(e)
     } finally {
-      this.loading = false
+      this.setLoading(false)
     }
   }
 
-  setNotes(notes: Note[]) {
-    this.sessionNotes = notes
-  }
-
   async addNote(sessionId: string, note: WriteNote) {
-    this.loading = true
+    this.setLoading(true)
     try {
       const addedNote = await notesService.addNote(sessionId, note)
       return addedNote
     } catch (e) {
       console.error(e)
     } finally {
-      this.loading = false
+      this.setLoading(false)
     }
   }
 
   async deleteNote(noteId: number) {
-    this.loading = true
+    this.setLoading(true)
     try {
       const deleted = await notesService.deleteNote(noteId)
       return deleted
     } catch (e) {
       console.error(e)
     } finally {
-      this.loading = false
+      this.setLoading(false)
     }
   }
 
   async updateNote(noteId: string, note: WriteNote) {
-    this.loading = true
+    this.setLoading(true)
     try {
       const updated = await notesService.updateNote(noteId, note)
       return updated
     } catch (e) {
       console.error(e)
     } finally {
-      this.loading = false
+      this.setLoading(false)
     }
   }
 

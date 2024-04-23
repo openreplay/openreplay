@@ -41,12 +41,20 @@ const SessionTags: React.FC<Props> = memo(({ activeTab, tags, total, setActiveTa
     value: tag.type,
     disabled: disable && tag.type !== 'all',
   }))
+
+  const onPick = (tabValue: string) => {
+    const tab = tags.find((t) => t.type === tabValue);
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }
   return (
     <div className='flex items-center'>
       <Segmented
         options={options}
         value={activeTab.type}
-        onChange={setActiveTab}
+        onChange={onPick}
+        size={'small'}
       />
     </div>
   );
