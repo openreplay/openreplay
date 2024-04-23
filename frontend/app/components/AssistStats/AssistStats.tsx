@@ -214,7 +214,7 @@ function AssistStats() {
           <div className={'ml-auto flex items-center gap-2'}>
             <UserSearch onUserSelect={onUserSelect} />
 
-            <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt />
+            <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt small />
             <Tooltip title={!sessions || sessions.total === 0 ? 'No data at the moment to export.' : 'Export PDF'}>
               <Button
                 onClick={getPdf2}
