@@ -1,9 +1,17 @@
-import React from 'react';
-import Select from 'Shared/Select';
-import { TAGS, iTag } from 'App/services/NotesService';
-import { TagItem } from '../SessionTags';
-import { useStore } from 'App/mstore';
+import { DownOutlined } from "@ant-design/icons";
+import { Dropdown, Segmented } from 'antd';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+
+
+import { useStore } from 'App/mstore';
+import { TAGS, iTag } from 'App/services/NotesService';
+
+
+
+import Select from 'Shared/Select';
+
 
 const sortOptionsMap = {
   'createdAt-DESC': 'Newest',
@@ -14,45 +22,73 @@ const notesOwner = [
   { value: '0', label: 'All Notes' },
   { value: '1', label: 'My Notes' },
 ];
+function toTitleCase(str) {
+  return str.replace(
+    /\w\S*/g,
+    function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    }
+  );
+}
 function NoteTags() {
   const { notesStore } = useStore();
 
   return (
     <div className="flex items-center w-full">
-      <div>
-        <TagItem
-          onClick={() => notesStore.toggleTag()}
-          label="ALL"
-          isActive={notesStore.activeTags.length === 0}
-        />
-      </div>
-      {TAGS.map((tag: iTag) => (
-        <div key={tag}>
-          <TagItem
-            onClick={() => notesStore.toggleTag(tag)}
-            label={tag}
-            isActive={notesStore.activeTags.includes(tag)}
-          />
-        </div>
-      ))}
+      <Segmented
+        size="small"
+        options={[
+          {
+            value: 'ALL',
+            label: 'All',
+          },
+          ...TAGS.map((tag: iTag) => ({
+            value: tag,
+            label: toTitleCase(tag),
+          })),
+        ]}
+        onChange={(value: iTag) => notesStore.toggleTag(value)}
+      />
       <div className="ml-auto" />
-      <Select
-        name="notesOwner"
-        plain
-        right
-        options={notesOwner}
-        onChange={({ value }) => notesStore.toggleShared(value.value === '1')}
-        defaultValue={notesOwner[0].value}
-      />
-      <div className="ml-2" />
-      <Select
-        name="sortNotes"
-        plain
-        right
-        options={sortOptions}
-        onChange={({ value }) => notesStore.toggleSort(value.value)}
-        defaultValue={sortOptions[0].value}
-      />
+      <Dropdown
+        menu={{
+          items: notesOwner.map(({ value, label }) => ({ key: value, label })),
+          onClick: ({ key }) => {
+            notesStore.toggleShared(key === '1');
+          },
+        }}
+      >
+        <div
+          className={
+            'cursor-pointer flex items-center justify-end gap-2 font-semibold'
+          }
+        >
+          <div>
+            {notesStore.ownOnly ? notesOwner[1].label : notesOwner[0].label}
+          </div>
+          <DownOutlined />
+        </div>
+      </Dropdown>
+      <div className="ml-2 w-2" />
+      <Dropdown
+        menu={{
+          items: sortOptions.map(({ value, label }) => ({ key: value, label })),
+          onClick: ({ key }) => {
+            notesStore.toggleSort(key);
+          },
+        }}
+      >
+        <div
+          className={
+            'cursor-pointer flex items-center justify-end gap-2 font-semibold'
+          }
+        >
+          <div>
+            {notesStore.order === "DESC" ? "Newest" : "Oldest"}
+          </div>
+          <DownOutlined />
+        </div>
+      </Dropdown>
     </div>
   );
 }
