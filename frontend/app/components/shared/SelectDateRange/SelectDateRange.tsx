@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button, Space, Typography, Select as AntSelect } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Select as AntSelect } from 'antd';
 import { DATE_RANGE_OPTIONS, CUSTOM_RANGE } from 'App/dateRange';
 import Select from 'Shared/Select';
 import Period from 'Types/app/period';
@@ -17,13 +16,14 @@ interface Props {
   right?: boolean;
   timezone?: string;
   isAnt?: boolean;
+  small?: boolean;
 
   [x: string]: any;
 }
 
 function SelectDateRange(props: Props) {
   const [isCustom, setIsCustom] = React.useState(false);
-  const { right = false, period, disableCustom = false, timezone, ...rest } = props;
+  const { right = false, period, disableCustom = false, timezone } = props;
   let selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName);
   const options = DATE_RANGE_OPTIONS.filter((obj: any) =>
     disableCustom ? obj.value !== CUSTOM_RANGE : true
@@ -51,12 +51,13 @@ function SelectDateRange(props: Props) {
   const customRange = isCustomRange ? period.rangeFormatted() : '';
   
   if (props.isAnt) {
-    const onAntUpdate = (val) => {
+    const onAntUpdate = (val: any) => {
       onChange(val);
     };
     return (
       <div className={'relative'}>
         <AntSelect
+          size={props.small ? 'small' : undefined}
           options={options}
           onChange={onAntUpdate}
           style={{ width: 170 }}
