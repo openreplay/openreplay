@@ -132,7 +132,7 @@ func (r *Redshift) Copy(tableName, fileName, delimiter string, creds, gzip bool)
 		if r.cfg.AWSAccessKeyID != "" && r.cfg.AWSSecretAccessKey != "" {
 			credentials = fmt.Sprintf(`ACCESS_KEY_ID '%s' SECRET_ACCESS_KEY '%s'`, r.cfg.AWSAccessKeyID, r.cfg.AWSSecretAccessKey)
 		} else if r.cfg.AWSIAMRole != "" {
-			credentials = fmt.Sprintf(`IAM_ROLE '%s'`, "r.cfg.AWSIAMRole")
+			credentials = fmt.Sprintf(`IAM_ROLE '%s'`, r.cfg.AWSIAMRole)
 		} else {
 			credentials = "IAM_ROLE default"
 		}
