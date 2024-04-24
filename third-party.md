@@ -1,4 +1,4 @@
-## Licenses (as of May 25, 2023)
+## Licenses (as of November 9, 2023)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -122,3 +122,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | @medv/finder | MIT | JavaScript |
 | fflate | MIT | JavaScript |
 | fzstd | MIT | JavaScript |
+| prom-client | Apache2 | JavaScript |
