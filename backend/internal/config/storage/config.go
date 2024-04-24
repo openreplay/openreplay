@@ -23,7 +23,7 @@ type Config struct {
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`
 	UseSort              bool          `env:"USE_SESSION_SORT,default=true"`
 	UseProfiler          bool          `env:"PROFILER_ENABLED,default=false"`
-	CompressionAlgo      string        `env:"COMPRESSION_ALGO,default=gzip"` // none, gzip, brotli, zstd
+	CompressionAlgo      string        `env:"COMPRESSION_ALGO,default=zstd"` // none, gzip, brotli, zstd
 }
 
 func New() *Config {
