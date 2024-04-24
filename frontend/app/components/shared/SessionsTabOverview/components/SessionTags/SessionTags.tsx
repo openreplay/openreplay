@@ -32,11 +32,11 @@ const SessionTags: React.FC<Props> = memo(({ activeTab, tags, total, setActiveTa
     label: <div className={'flex items-center gap-2'}>
       {tag.icon ? <Icon
         name={tag.icon}
-        color={activeTab.type === tag.type ? "teal" : "gray-medium"}
+        color={activeTab.type === tag.type ? "main" : undefined}
         size="14"
-        className={cn("group-hover:fill-teal mr-2")}
+        className={cn("group-hover:fill-teal")}
       /> : null}
-      <div>{tag.name}</div>
+      <div className={activeTab.type === tag.type ? 'text-main' : ''}>{tag.name}</div>
     </div>,
     value: tag.type,
     disabled: disable && tag.type !== 'all',

@@ -84,7 +84,7 @@ function SelectDateRange(props: Props) {
           defaultValue={selectedValue?.value ?? undefined}
         >
           <div
-            className={'cursor-pointer font-semibold flex items-center gap-2'}
+            className={'cursor-pointer flex items-center gap-2'}
           >
             <div>{isCustomRange ? customRange : selectedValue?.label}</div>
             <DownOutlined />
