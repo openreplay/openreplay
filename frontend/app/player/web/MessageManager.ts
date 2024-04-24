@@ -212,13 +212,12 @@ export default class MessageManager {
   move(t: number): any {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
-    this.tabCloseManager.moveReady(t).then(m => {
-      if (m) {
+    this.activeTabManager.moveReady(t).then(async (tabId) => {
+      const closeMessage = await this.tabCloseManager.moveReady(t)
+      if (closeMessage) {
         const closedTabs = this.tabCloseManager.closedTabs
         this.state.update({ closedTabs: Array.from(closedTabs) })
       }
-    })
-    this.activeTabManager.moveReady(t).then((tabId) => {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
