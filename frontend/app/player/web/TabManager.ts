@@ -71,6 +71,7 @@ export default class TabSessionManager {
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   public readonly decoder = new Decoder();
+  public lastMessageTs = 0;
   private lists: Lists;
   private navigationStartOffset = 0;
   private canvasManagers: {
@@ -167,6 +168,7 @@ export default class TabSessionManager {
   }
 
   distributeMessage(msg: Message): void {
+    this.lastMessageTs = msg.time
     switch (msg.tp) {
       case MType.CanvasNode:
         const managerId = `${msg.timestamp}_${msg.nodeId}`;
@@ -340,7 +342,6 @@ export default class TabSessionManager {
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
     Object.keys(stateToUpdate).length > 0 && this.updateLocalState(stateToUpdate);
-
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);

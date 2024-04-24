@@ -8,6 +8,7 @@ import ListWalker from '../common/ListWalker';
 import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
+import TabClosingManager from "./managers/TabClosingManager";
 
 import { MouseThrashing, MType } from './messages';
 import type { Message, MouseClick } from './messages';
@@ -63,6 +64,7 @@ export interface State extends ScreenState {
   currentTab: string;
   tabs: Set<string>;
   tabChangeEvents: TabChangeEvent[];
+  closedTabs: string[];
   sessionStart: number;
 }
 
@@ -91,6 +93,7 @@ export default class MessageManager {
     currentTab: '',
     tabs: new Set(),
     tabChangeEvents: [],
+    closedTabs: [],
     sessionStart: 0,
   };
 
@@ -99,6 +102,7 @@ export default class MessageManager {
   private activityManager: ActivityManager | null = null;
   private mouseMoveManager: MouseMoveManager;
   private activeTabManager = new ActiveTabManager();
+  private tabCloseManager = new TabClosingManager();
 
   public readonly decoder = new Decoder();
 
@@ -177,6 +181,19 @@ export default class MessageManager {
     this.state.update({ messagesProcessed: true });
   };
 
+  public createTabCloseEvents = () => {
+    const lastMsgArr: [string, number][] = []
+    Object.entries(this.tabs).forEach((entry, i) => {
+      const [tabId, tab] = entry
+      const { lastMessageTs } = tab
+      if (lastMessageTs && tabId) lastMsgArr.push([tabId, lastMessageTs])
+    })
+    lastMsgArr.sort((a, b) => a[1] - b[1])
+    lastMsgArr.forEach(([tabId, lastMessageTs]) => {
+      this.tabCloseManager.append({ tabId, time: lastMessageTs })
+    })
+  }
+
   public startLoading = () => {
     this.waitingForFiles = true;
     this.state.update({ messagesProcessed: false });
@@ -195,7 +212,12 @@ export default class MessageManager {
   move(t: number): any {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
-    this.activeTabManager.moveReady(t).then((tabId) => {
+    this.activeTabManager.moveReady(t).then(async (tabId) => {
+      const closeMessage = await this.tabCloseManager.moveReady(t)
+      if (closeMessage) {
+        const closedTabs = this.tabCloseManager.closedTabs
+        this.state.update({ closedTabs: Array.from(closedTabs) })
+      }
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
@@ -210,6 +232,7 @@ export default class MessageManager {
       if (!this.activeTab) {
         this.activeTab = this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
+
       if (tabId) {
         if (this.activeTab !== tabId) {
           this.state.update({ currentTab: tabId });
@@ -251,9 +274,9 @@ export default class MessageManager {
 
   public changeTab(tabId: string) {
     this.activeTab = tabId;
-    this.state.update({ currentTab: tabId });
     this.tabs[tabId].clean();
     this.tabs[tabId].move(this.state.get().time);
+    this.state.update({ currentTab: tabId });
   }
 
   public updateChangeEvents() {

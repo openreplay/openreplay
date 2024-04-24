@@ -38,9 +38,13 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
 function SessionTabs({ isLive }: { isLive?: boolean }) {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
-  const { tabs = new Set('back-compat'), currentTab } = store.get();
+  const { tabs = new Set('back-compat'), currentTab, closedTabs } = store.get();
 
-  const tabsArr = Array.from(tabs).map((tab, idx) => ({ tab, idx }));
+  const tabsArr = Array.from(tabs).map((tab, idx) => ({
+    tab,
+    idx,
+    isClosed: closedTabs.includes(tab)
+  }));
   const shouldTruncate = tabsArr.length > 10;
   const actualTabs = shouldTruncate ? tabsArr.slice(0, 10) : tabsArr;
 
@@ -49,6 +53,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
       ? actualTabs
       : actualTabs.concat({
           tab: currentTab,
+          isClosed: false,
           idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
         });
   const changeTab = (tab: string) => {
@@ -74,6 +79,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
             currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
             changeTab={changeTab}
             isLive={isLive}
+            isClosed={tab.isClosed}
           />
         </React.Fragment>
       ))}

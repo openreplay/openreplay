@@ -198,7 +198,12 @@ export default class WebPlayer extends Player {
   }
 
   changeTab = (tab: string) => {
+    const playing = this.wpState.get().playing
+    this.pause()
     this.messageManager.changeTab(tab)
+    if (playing) {
+      this.play()
+    }
   }
 
   clean = () => {
