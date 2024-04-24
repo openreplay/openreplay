@@ -274,9 +274,9 @@ export default class MessageManager {
 
   public changeTab(tabId: string) {
     this.activeTab = tabId;
-    this.state.update({ currentTab: tabId });
     this.tabs[tabId].clean();
     this.tabs[tabId].move(this.state.get().time);
+    this.state.update({ currentTab: tabId });
   }
 
   public updateChangeEvents() {

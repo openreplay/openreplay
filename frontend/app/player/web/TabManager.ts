@@ -342,7 +342,6 @@ export default class TabSessionManager {
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
     Object.keys(stateToUpdate).length > 0 && this.updateLocalState(stateToUpdate);
-
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);

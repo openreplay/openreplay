@@ -18,6 +18,7 @@ export default class StylesManager {
   private linkLoadingCount: number = 0;
   private linkLoadPromises: Array<Promise<void>> = [];
   private skipCSSLinks: Array<string> = []; // should be common for all pages
+  private abortController = new AbortController()
 
   constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
 
@@ -25,17 +26,26 @@ export default class StylesManager {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
 
-    //cancel all promises? thinkaboutit
+    this.abortController.abort();
+    this.abortController = new AbortController();
   }
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const promise = new Promise<void>((resolve) => {
-      if (this.skipCSSLinks.includes(value)) resolve();
-      this.linkLoadingCount++;
+      if (
+        this.abortController.signal.aborted
+        || this.skipCSSLinks.includes(value)
+        ||  node.ownerDocument !== this.screen.document
+      ) {
+        console.log('skipped', node, value, this.abortController.signal.aborted, this.skipCSSLinks.includes(value), node.ownerDocument !== this.screen.document)
+        resolve();
+      }
       this.setLoading(true);
-      const addSkipAndResolve = () => {
+      this.linkLoadingCount++;
+      const addSkipAndResolve = (e: any) => {
         this.skipCSSLinks.push(value); // watch out
+        console.error('skip node', e)
         resolve()
       }
       timeoutId = setTimeout(addSkipAndResolve, 4000);
@@ -43,23 +53,38 @@ export default class StylesManager {
       // It would be better to make it more relyable with addEventListener
       node.onload = () => {
         const doc = this.screen.document;
-        doc && rewriteNodeStyleSheet(doc, node);
+        if (node.ownerDocument === doc && doc) {
+           rewriteNodeStyleSheet(doc, node);
+        }
         resolve();
       }
       node.onerror = addSkipAndResolve;
+      this.abortController.signal.addEventListener('abort', () => {
+        node.onload = null;
+        node.onerror = null;
+        clearTimeout(timeoutId);
+        resolve();
+      });
     }).then(() => {
       node.onload = null;
       node.onerror = null;
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
-        this.setLoading(false);
+        setTimeout(() => {
+          this.setLoading(false)
+          this.linkLoadPromises = [];
+        }, 0)
       }
     });
     this.linkLoadPromises.push(promise);
   }
 
-  moveReady(t: number): Promise<void[]> {
-    return Promise.all(this.linkLoadPromises)
+  moveReady(): Promise<void[]> {
+    if (this.linkLoadingCount > 0) {
+      return Promise.all(this.linkLoadPromises)
+    } else {
+      return Promise.resolve([])
+    }
   }
 }

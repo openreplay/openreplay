@@ -422,11 +422,10 @@ export default class DOMManager extends ListWalker<Message> {
    */
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage)
-
     this.olVRoots.forEach(rt => rt.applyChanges())
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
-    return this.stylesManager.moveReady(t).then(() => {
+    return this.stylesManager.moveReady().then(() => {
       /* Waiting for styles to be applied first */
       /* Applying focus */
       this.focusManager.move(t)
