@@ -2,7 +2,7 @@
 const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
-const { BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
+const {BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
 const URL = require('url');
 const http = require('http');
 const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
@@ -186,12 +186,18 @@ module.exports.sourcemapReader = async event => {
                     s3ForcePathStyle: true, // needed with minio?
                     signatureVersion: 'v4'
                 });
-            } else {
+            } else if (process.env.aws_access_key_id) {
                 s3 = new AWS.S3({
                     'AccessKeyID': process.env.aws_access_key_id,
                     'SecretAccessKey': process.env.aws_secret_access_key,
                     'Region': process.env.aws_region
                 });
+            } else if (process.env.aws_region) {
+                s3 = new AWS.S3({
+                    'Region': process.env.aws_region
+                });
+            } else {
+                s3 = new AWS.S3();
             }
 
             let options = {
