@@ -1,4 +1,4 @@
-import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
+ import type { PlayerMsg, SessionFilesInfo, Store } from 'Player';
 import unpackTar from 'Player/common/tarball';
 import unpack from 'Player/common/unpack';
 import IOSMessageManager from 'Player/mobile/IOSMessageManager';
@@ -132,7 +132,9 @@ export default class MessageLoader {
       this.messageManager.distributeMessage(msg);
     });
     logger.info('Messages count: ', msgs.length, msgs, file);
-
+    if (file === 'd:dom 2' && 'createTabCloseEvents' in this.messageManager) {
+      this.messageManager.createTabCloseEvents();
+    }
     this.messageManager.sortDomRemoveMessages(msgs);
     this.messageManager.setMessagesLoading(false);
   };

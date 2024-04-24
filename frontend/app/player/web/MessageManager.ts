@@ -8,6 +8,7 @@ import ListWalker from '../common/ListWalker';
 import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
+import TabClosingManager from "./managers/TabClosingManager";
 
 import { MouseThrashing, MType } from './messages';
 import type { Message, MouseClick } from './messages';
@@ -63,6 +64,7 @@ export interface State extends ScreenState {
   currentTab: string;
   tabs: Set<string>;
   tabChangeEvents: TabChangeEvent[];
+  closedTabs: string[];
   sessionStart: number;
 }
 
@@ -91,6 +93,7 @@ export default class MessageManager {
     currentTab: '',
     tabs: new Set(),
     tabChangeEvents: [],
+    closedTabs: [],
     sessionStart: 0,
   };
 
@@ -99,6 +102,7 @@ export default class MessageManager {
   private activityManager: ActivityManager | null = null;
   private mouseMoveManager: MouseMoveManager;
   private activeTabManager = new ActiveTabManager();
+  private tabCloseManager = new TabClosingManager();
 
   public readonly decoder = new Decoder();
 

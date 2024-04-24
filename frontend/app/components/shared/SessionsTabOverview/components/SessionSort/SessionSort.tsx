@@ -26,6 +26,34 @@ interface Props {
   sort: (sort: string, sign: number) => void;
 }
 
+export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }: {
+  defaultOption?: string,
+  onSort: ({ key, item }: { key: string, item: T }) => void,
+  sortOptions: any,
+  current: string
+}) {
+
+  return (
+    <Dropdown
+      menu={{
+        items: sortOptions,
+        defaultSelectedKeys: defaultOption ? [defaultOption] : undefined,
+        // @ts-ignore
+        onClick: onSort,
+      }}
+    >
+      <div
+        className={
+          'cursor-pointer flex items-center justify-end gap-2'
+        }
+      >
+        <div>{current}</div>
+        <DownOutlined />
+      </div>
+    </Dropdown>
+  )
+}
+
 function SessionSort(props: Props) {
   const { sort, order } = props.filter;
   const onSort = ({ key }: { key: string }) => {
@@ -38,22 +66,12 @@ function SessionSort(props: Props) {
   const defaultOption = `${sort}-${order}`;
 
   return (
-    <Dropdown
-      menu={{
-        items: sortOptions,
-        defaultSelectedKeys: [defaultOption],
-        onClick: onSort,
-      }}
-    >
-      <div
-        className={
-          'cursor-pointer flex items-center justify-end gap-2 font-semibold'
-        }
-      >
-        <div>{sortOptionsMap[defaultOption]}</div>
-        <DownOutlined />
-      </div>
-    </Dropdown>
+    <SortDropdown
+      defaultOption={defaultOption}
+      onSort={onSort}
+      sortOptions={sortOptions}
+      current={sortOptionsMap[defaultOption]}
+    />
   );
 }
 
