@@ -1,8 +1,8 @@
 import React from 'react';
 import DateRangePicker from 'react-daterange-picker'
-import TimePicker from 'rc-time-picker';
-import { Button } from 'UI';
 import { getDateRangeFromValue, getDateRangeLabel, dateRangeValues, CUSTOM_RANGE, moment, DATE_RANGE_VALUES } from 'App/dateRange';
+import { Button } from 'antd'
+import { TimePicker } from 'App/components/shared/DatePicker'
 
 import styles from './dateRangePopup.module.css';
 
@@ -24,8 +24,8 @@ export default class DateRangePopup extends React.PureComponent {
     if (value.isAfter(this.state.range.end)) {
       return;
     }
-    this.setState({ 
-      range: moment.range( 
+    this.setState({
+      range: moment.range(
           value,
           this.state.range.end,
         ),
@@ -36,8 +36,8 @@ export default class DateRangePopup extends React.PureComponent {
     if (value && value.isBefore(this.state.range.start)) {
       return;
     }
-    this.setState({ 
-      range: moment.range( 
+    this.setState({
+      range: moment.range(
           this.state.range.start,
           value,
         ),
@@ -72,7 +72,7 @@ export default class DateRangePopup extends React.PureComponent {
           <div className={ styles.preSelections }>
             { dateRangeValues.filter(value => value !== CUSTOM_RANGE && value !== DATE_RANGE_VALUES.LAST_30_MINUTES).map(value => (
               <div
-                key={ value } 
+                key={ value }
                 onClick={ () => this.selectValue(value) }
               >
                 { getDateRangeLabel(value) }
@@ -92,29 +92,31 @@ export default class DateRangePopup extends React.PureComponent {
           />
         </div>
         <div className="flex items-center justify-between py-2 px-3">
-          <div>
+          <div className="flex items-center gap-2">
             <label>From: </label>
             <span>{range.start.format("DD/MM")} </span>
             <TimePicker
-              value={ range.start }              
-              showSecond={ false }
-              allowEmpty={false}
-              onChange={ this.setRangeTimeStart }
-              className="mr-2 w-24"
+              format={"HH:mm"}
+              defaultValue={ range.start }
+              className="w-24"
+              onChange={this.setRangeTimeStart}
+              needConfirm={false}
+              showNow={false}
             />
             <label>To: </label>
             <span>{range.end.format("DD/MM")} </span>
-            <TimePicker 
-              value={ range.end }               
-              showSecond={ false }
-              allowEmpty={false}
-              onChange={ this.setRangeTimeEnd }
+            <TimePicker
+              format={"HH:mm"}
+              defaultValue={ range.end }
+              onChange={this.setRangeTimeEnd}
               className="w-24"
+              needConfirm={false}
+              showNow={false}
             />
           </div>
           <div className="flex items-center">
             <Button onClick={ onCancel }>{ 'Cancel' }</Button>
-            <Button variant="primary" className="ml-2" onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
+            <Button type="primary" className="ml-2" onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
           </div>
         </div>
       </div>
