@@ -6,9 +6,9 @@ SMR_URL = config("sourcemaps_reader")
 
 if '%s' in SMR_URL:
     if config("SMR_KEY", default=None) is not None:
-        SMR_URL = SMR_URL % config("SMR_KEY")
+        SMR_URL = SMR_URL.format(config("SMR_KEY"))
     else:
-        SMR_URL = SMR_URL % "smr"
+        SMR_URL = SMR_URL.format("smr")
 
 
 def get_original_trace(key, positions, is_url=False):
