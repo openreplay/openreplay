@@ -159,8 +159,7 @@ def get_details(project_id, error_id, user_id, **data):
                  INNER JOIN (SELECT MAX(timestamp) AS last_occurrence,
                                     MIN(timestamp) AS first_occurrence
                              FROM events.errors
-                             WHERE error_id = %(error_id)s
-                             GROUP BY error_id) AS time_details ON (TRUE)
+                             WHERE error_id = %(error_id)s) AS time_details ON (TRUE)
                  INNER JOIN (SELECT session_id AS last_session_id,
                                     coalesce(custom_tags, '[]')::jsonb AS custom_tags
                              FROM events.errors
