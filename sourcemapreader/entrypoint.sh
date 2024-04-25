@@ -1,3 +1,3 @@
 #!/bin/sh
-SERVICE_NAME='sourcemaps-reader'
+export SERVICE_NAME='sourcemaps-reader'
 npm start
