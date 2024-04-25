@@ -42,7 +42,7 @@ export default class AiService extends BaseService {
   }
 
   async getCardData(query: string, chartData: Record<string, any>): Promise<Record<string, any>> {
-    const r = await this.client.post('/intelligent/search-plus', {
+    const r = await this.client.post('/intelligent/ask-or/charts', {
       ...chartData,
       question: query,
     });
