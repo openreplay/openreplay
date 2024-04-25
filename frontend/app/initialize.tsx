@@ -25,6 +25,7 @@ const customTheme: ThemeConfig = {
     },
     Segmented: {
       itemSelectedBg: '#FFFFFF',
+      itemSelectedColor: colors['main'],
     },
     Menu: {
       colorPrimary: colors.teal,

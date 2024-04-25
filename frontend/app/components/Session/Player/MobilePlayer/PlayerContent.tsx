@@ -9,8 +9,8 @@ import Session from 'Types/session'
 import PlayerBlock from './PlayerBlock';
 
 const TABS = {
-  EVENTS: 'User Events',
-  HEATMAPS: 'Click Map',
+  EVENTS: 'Activity',
+  HEATMAPS: 'Click map',
 };
 
 interface IProps {

@@ -40,4 +40,13 @@ export default class AiService extends BaseService {
     const { data } = await r.json();
     return data;
   }
+
+  async getCardData(query: string, chartData: Record<string, any>): Promise<Record<string, any>> {
+    const r = await this.client.post('/intelligent/search-plus', {
+      ...chartData,
+      question: query,
+    });
+    const { data } = await r.json();
+    return data;
+  }
 }

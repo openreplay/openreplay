@@ -25,9 +25,10 @@ import { IPlayerContext, PlayerContext, defaultContextValue } from './playerCont
 
 const TABS = {
   EVENTS: 'Activity',
-  CLICKMAP: 'Click Map',
+  CLICKMAP: 'Click map',
   INSPECTOR: 'Tag'
 };
+
 const UXTTABS = {
   EVENTS: TABS.EVENTS
 };
@@ -141,7 +142,7 @@ function WebPlayer(props: any) {
   }, [cssLoading, ready])
 
   React.useEffect(() => {
-    if (activeTab === 'Click Map') {
+    if (activeTab === 'Click map') {
       contextValue.player?.pause();
     }
   }, [activeTab]);
