@@ -2,11 +2,11 @@ import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
-import { Button } from 'UI';
+import { Button } from 'antd';
 import FilterSource from '../FilterSource';
 import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
-import {toJS} from "mobx";
+import { CircleMinus } from 'lucide-react';
 
 interface Props {
   filterIndex?: number;
@@ -153,12 +153,12 @@ function FilterItem(props: Props) {
         <div className="flex flex-shrink-0 self-start ml-auto">
           <Button
             disabled={disableDelete}
-            variant="text"
-            icon="trash"
+            type="text"
             onClick={props.onRemoveFilter}
             size="small"
-            iconSize={14}
-          />
+          >
+            <CircleMinus size={14} />
+          </Button>
         </div>
       }
     </div>

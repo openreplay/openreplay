@@ -124,6 +124,8 @@ function FilterList(props: Props) {
       disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
     },
   ];
+
+  const eventsNum = filters.filter((i: any) => i.isEvent).size
   return (
     <div className="flex flex-col">
       {hasEvents && (
@@ -174,16 +176,18 @@ function FilterList(props: Props) {
                       hoveredItem.position === 'bottom'
                         ? '1.5rem'
                         : '0.5rem',
+                    marginLeft: '-1.25rem',
+                    width: 'calc(100% + 2.5rem)',
                   }}
                   className={
-                    'hover:bg-active-blue -mx-5 px-5 gap-2 items-center flex w-full'
+                    'hover:bg-active-blue px-5 gap-2 items-center flex'
                   }
                   id={`${filter.key}-${filterIndex}`}
                   onDragOver={(e) => handleDragOverEv(e, filterIndex)}
                   onDrop={(e) => handleDrop(e)}
                   key={`${filter.key}-${filterIndex}`}
                 >
-                  {!!props.onFilterMove ? (
+                  {!!props.onFilterMove && eventsNum > 1 ? (
                     <div
                       className={'p-2 cursor-grab'}
                       draggable={!!props.onFilterMove}

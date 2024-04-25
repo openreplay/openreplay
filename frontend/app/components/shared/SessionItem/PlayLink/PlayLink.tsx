@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import {
@@ -7,7 +8,6 @@ import {
   withSiteId,
 } from 'App/routes';
 import { Icon, Link } from 'UI';
-import { connect } from 'react-redux';
 
 const PLAY_ICON_NAMES = {
   notPlayed: 'play-fill',
@@ -49,17 +49,26 @@ function PlayLink(props: Props) {
   const handleBeforeOpen = () => {
     if (props.beforeOpen) {
       props.beforeOpen();
-      history.push(withSiteId(link + (props.query ? props.query : ''), props.siteId));
+      history.push(
+        withSiteId(link + (props.query ? props.query : ''), props.siteId)
+      );
     }
   };
 
   const onLinkClick = props.beforeOpen ? handleBeforeOpen : onClick;
+
+  const onLeave = () => {
+    toggleHover(false);
+  };
+  const onOver = () => {
+    toggleHover(true);
+  };
   return (
     <Link
       onClick={onLinkClick}
       to={link + (props.query ? props.query : '')}
-      onMouseEnter={() => toggleHover(true)}
-      onMouseLeave={() => toggleHover(false)}
+      onMouseOver={onOver}
+      onMouseOut={onLeave}
       target={props.newTab ? '_blank' : undefined}
       rel={props.newTab ? 'noopener noreferrer' : undefined}
     >
@@ -68,7 +77,6 @@ function PlayLink(props: Props) {
   );
 }
 
-
 export default connect((state: any, props: Props) => ({
-    siteId: props.siteId || state.getIn([ 'site', 'siteId' ])
+  siteId: props.siteId || state.getIn(['site', 'siteId']),
 }))(PlayLink);

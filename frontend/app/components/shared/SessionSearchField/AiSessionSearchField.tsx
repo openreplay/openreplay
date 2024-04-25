@@ -33,6 +33,7 @@ interface Props {
   appliedFilter: any;
   edit: typeof edit;
   clearSearch: typeof clearSearch;
+  setFocused?: (focused: boolean) => void;
 }
 
 function SessionSearchField(props: Props) {
@@ -63,10 +64,12 @@ function SessionSearchField(props: Props) {
 
   const onFocus = () => {
     setShowModal(true);
+    props.setFocused?.(true);
   };
   const onBlur = () => {
     setTimeout(() => {
       setShowModal(false);
+      props.setFocused?.(false);
     }, 200);
   };
   return (
@@ -82,7 +85,7 @@ function SessionSearchField(props: Props) {
         id="search"
         type="search"
         autoComplete="off"
-        className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg focus:!border-0 focus:ring-0"
+        className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg nofocus"
       />
 
       {showModal && (
@@ -143,7 +146,7 @@ const AiSearchField = observer(
           value={searchQuery}
           style={{ minWidth: 360, height: 33 }}
           autoComplete="off"
-          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg focus:!border-0 focus:ring-0"
+          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg nofocus"
           leadingButton={
             searchQuery !== '' ? (
               <div
@@ -169,6 +172,7 @@ function AiSessionSearchField(props: Props) {
   const isTourShown = localStorage.getItem(askTourKey) !== null;
   const [tab, setTab] = useState(localStorage.getItem(tabKey) || 'search');
   const [touring, setTouring] = useState(!isTourShown);
+  const [isFocused, setFocused] = React.useState(false);
   const askAiRef = React.useRef(null);
 
   const closeTour = () => {
@@ -180,11 +184,15 @@ function AiSessionSearchField(props: Props) {
     setTab(newTab);
     localStorage.setItem(tabKey, newTab);
   };
+
+  const boxStyle = tab === 'ask'
+                   ? gradientBox
+                   : isFocused ? regularBoxFocused : regularBoxUnfocused;
   return (
     <div className={'bg-white rounded-lg'}>
       <div
         className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''}
-        style={tab === 'ask' ? gradientBox : gradientBoxUnfocused}
+        style={boxStyle}
       >
         <div ref={askAiRef} className={'px-2'}>
           <AskAiSwitchToggle
@@ -196,7 +204,7 @@ function AiSessionSearchField(props: Props) {
         {tab === 'ask' ? (
           <AiSearchField {...props} />
         ) : (
-          <SessionSearchField {...props} />
+          <SessionSearchField {...props} setFocused={setFocused} />
         )}
         <Tour
           open={touring}
@@ -319,7 +327,7 @@ const gradientBox = {
   width: '100%',
 };
 
-const gradientBoxUnfocused = {
+const regularBoxUnfocused = {
   borderRadius: '6px',
   border: 'solid 1.5px #BFBFBF',
   background: '#fffff',
@@ -328,6 +336,16 @@ const gradientBoxUnfocused = {
   alignItems: 'center',
   width: '100%',
 };
+
+const regularBoxFocused = {
+  borderRadius: '6px',
+  border: 'solid 1.5px #394EFF',
+  background: '#fffff',
+  display: 'flex',
+  gap: '0.25rem',
+  alignItems: 'center',
+  width: '100%',
+}
 
 export default connect(
   (state: any) => ({
