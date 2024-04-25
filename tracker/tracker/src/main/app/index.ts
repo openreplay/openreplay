@@ -262,8 +262,10 @@ export default class App {
         this._debug('webworker_error', e)
       }
       this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
-        if (data === 'restart') {
+        // handling 401 auth restart (new token assignment)
+        if (data === 'a_stop') {
           this.stop(false)
+        } else if (data === 'a_start') {
           void this.start({}, true)
         } else if (data === 'not_init') {
           this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')

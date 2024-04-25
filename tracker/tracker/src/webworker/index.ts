@@ -49,28 +49,34 @@ function resetSender(): void {
   }
 }
 
-function reset(): void {
-  workerStatus = WorkerStatus.Stopping
-  if (sendIntervalID !== null) {
-    clearInterval(sendIntervalID)
-    sendIntervalID = null
-  }
-  resetWriter()
-  resetSender()
-  setTimeout(() => {
-    workerStatus = WorkerStatus.NotActive
-  }, 100)
+function reset(): Promise<any> {
+  return new Promise((res) => {
+    workerStatus = WorkerStatus.Stopping
+    if (sendIntervalID !== null) {
+      clearInterval(sendIntervalID)
+      sendIntervalID = null
+    }
+    resetWriter()
+    resetSender()
+    setTimeout(() => {
+      workerStatus = WorkerStatus.NotActive
+      res(null)
+    }, 100)
+  })
 }
 
 function initiateRestart(): void {
   if (workerStatus === WorkerStatus.Stopped) return
-  postMessage('restart')
-  reset()
+  postMessage('a_stop')
+  // eslint-disable-next-line
+  reset().then(() => {
+    postMessage('a_start')
+  })
 }
 
 function initiateFailure(reason: string): void {
   postMessage({ type: 'failure', reason })
-  reset()
+  void reset()
 }
 
 let sendIntervalID: ReturnType<typeof setInterval> | null = null
@@ -84,8 +90,11 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
   if (data === 'stop') {
     finalize()
-    reset()
-    return (workerStatus = WorkerStatus.Stopped)
+    // eslint-disable-next-line
+    reset().then(() => {
+      workerStatus = WorkerStatus.Stopped
+    })
+    return
   }
   if (data === 'forceFlushBatch') {
     finalize()

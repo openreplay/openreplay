@@ -41,7 +41,8 @@ type QEmpty = {
 }
 
 export type FromWorkerData =
-  | 'restart'
+  | 'a_stop'
+  | 'a_start'
   | Failure
   | 'not_init'
   | { type: 'compress'; batch: Uint8Array }

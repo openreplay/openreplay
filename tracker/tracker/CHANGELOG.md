@@ -1,3 +1,7 @@
+# 12.0.11
+
+- better restart on unauth (new token assign for long sessions)
+
 # 12.0.10
 
 - improved logs for node binding errors, full nodelist clear before start, getSessionInfo method

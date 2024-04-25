@@ -199,7 +199,9 @@ export default class MessageLoader {
    * if EFS fails, then session doesn't exist
    * */
   async loadFiles() {
-    this.messageManager.startLoading();
+    if (!this.preloaded) {
+      this.messageManager.startLoading();
+    }
 
     try {
       await this.loadMobs();
