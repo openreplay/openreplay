@@ -25,6 +25,11 @@ export default class AiFiltersStore {
     this.filtersSetKey += 1;
   };
 
+  getCardData = async (query: string, chartData: Record<string, any>) => {
+    const r = await aiService.getCardData(query, chartData);
+    console.log(r)
+  }
+
   getCardFilters = async (query: string, chartType: string): Promise<any> => {
     this.isLoading = true;
     try {

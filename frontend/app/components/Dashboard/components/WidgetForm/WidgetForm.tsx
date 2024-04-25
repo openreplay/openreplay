@@ -42,6 +42,7 @@ function WidgetForm(props: Props) {
     }
   } = props;
   const [aiQuery, setAiQuery] = useState('')
+  const [aiAskChart, setAiAskChart] = useState('')
   const { metricStore, dashboardStore, aiFiltersStore } = useStore();
   const isSaving = metricStore.isSaving;
   const metric: any = metricStore.instance;
@@ -139,9 +140,18 @@ function WidgetForm(props: Props) {
       })
   };
 
+  const fetchChartData = () => {
+    void aiFiltersStore.getCardData(aiAskChart, metric.toJson())
+  }
+
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
       fetchResults();
+    }
+  };
+  const handleChartKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      fetchChartData();
     }
   };
 
@@ -259,6 +269,13 @@ function WidgetForm(props: Props) {
         onChange={(e: any) => setAiQuery(e.target.value)}
         className="w-full mb-2"
         onKeyDown={handleKeyDown}
+      /> : null}
+      {testingKey ? <Input
+        placeholder="AI Ask Chart"
+        value={aiAskChart}
+        onChange={(e: any) => setAiAskChart(e.target.value)}
+        className="w-full mb-2"
+        onKeyDown={handleChartKeyDown}
       /> : null}
       {aiFiltersStore.isLoading ? (
         <div>
