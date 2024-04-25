@@ -10,7 +10,7 @@ interface UserInfo {
   userState: string
 }
 
-interface SessionInfo {
+export interface SessionInfo {
   sessionID: string | undefined
   metadata: Record<string, string>
   userID: string | null

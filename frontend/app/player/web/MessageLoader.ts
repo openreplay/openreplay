@@ -84,7 +84,9 @@ export default class MessageLoader {
               msg.time = msg.actionTime - this.session.startedAt;
             } else {
               // @ts-ignore
-              Object.assign(msg, { actionTime: msg.time + this.session.startedAt });
+              Object.assign(msg, {
+                actionTime: msg.time + this.session.startedAt,
+              });
             }
           }
           if (

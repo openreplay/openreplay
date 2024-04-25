@@ -206,10 +206,14 @@ export default abstract class Observer {
       node,
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
-        acceptNode: (node) =>
-          isIgnored(node) || this.app.nodes.getID(node) !== undefined
+        acceptNode: (node) => {
+          if (this.app.nodes.getID(node) !== undefined) {
+            this.app.debug.error('! Node is already bound', node)
+          }
+          return isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT
-            : NodeFilter.FILTER_ACCEPT,
+            : NodeFilter.FILTER_ACCEPT
+        },
       },
       // @ts-ignore
       false,

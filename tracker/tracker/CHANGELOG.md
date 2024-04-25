@@ -1,3 +1,7 @@
+# 12.0.10
+
+- improved logs for node binding errors, full nodelist clear before start, getSessionInfo method
+
 # 12.0.9
 
 - moved logging to query

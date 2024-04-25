@@ -39,6 +39,7 @@ import type { Options as PerformanceOptions } from './modules/performance.js'
 import type { Options as TimingOptions } from './modules/timing.js'
 import type { Options as NetworkOptions } from './modules/network.js'
 import type { MouseHandlerOptions } from './modules/mouse.js'
+import type { SessionInfo } from './app/session.js'
 
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
@@ -379,6 +380,13 @@ export default class API {
       return null
     }
     return this.app.getSessionToken()
+  }
+
+  getSessionInfo(): SessionInfo | null {
+    if (this.app === null) {
+      return null
+    }
+    return this.app.session.getInfo()
   }
 
   getSessionID(): string | null | undefined {
