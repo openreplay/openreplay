@@ -2,13 +2,7 @@ import requests
 
 from decouple import config
 
-SMR_URL = config("sourcemaps_reader")
-
-if '%s' in SMR_URL:
-    if config("SMR_KEY", default=None) is not None:
-        SMR_URL = SMR_URL.format(config("SMR_KEY"))
-    else:
-        SMR_URL = SMR_URL.format("smr")
+SMR_URL = config("sourcemaps_reader").format(config("SMR_KEY", default="smr"))
 
 
 def get_original_trace(key, positions, is_url=False):
