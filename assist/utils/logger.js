@@ -9,10 +9,10 @@ const logger = winston.createLogger({
         winston.format.timestamp({
             format: 'YYYY-MM-DD HH:mm:ss.SSS' // The same format as in backend services
         }),
-        winston.format.errors({ stack: true }),
+        winston.format.errors({stack: true}),
         winston.format.json()
     ),
-    defaultMeta: { service: 'assist' },
+    defaultMeta: {service: process.env.SERVICE_NAME || 'assist'},
     transports: [
         new winston.transports.Console(),
     ],
