@@ -1,6 +1,9 @@
-import React from 'react';
-import { Icon } from 'UI';
+import { Segmented } from 'antd';
 import cn from 'classnames';
+import React from 'react';
+
+import { Icon } from 'UI';
+
 
 interface Props {
   onChange: any;
@@ -10,31 +13,29 @@ interface Props {
 
 const allItem = { key: 'all', title: 'All' };
 
-function FilterButton(props: { activeItem: string, item: any, onClick: () => any }) {
-  return <div
-    className={cn('cursor-pointer transition group rounded px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal', {
-      'bg-active-blue text-teal': props.activeItem === props.item.key
-    })}
-    style={{ height: '36px' }}
-    onClick={props.onClick}
-  >
-    {props.item.icon && <Icon name={props.item.icon} className='mr-2' />}
-    <span>{props.item.title}</span>
-  </div>;
-}
-
 function IntegrationFilters(props: Props) {
 
+  const segmentItems = [allItem, ...props.filters].map((item: any) => ({
+    key: item.key,
+    value: item.key,
+    label: (
+      <div className={'flex items-center gap-2'}>
+        {item.icon ? <Icon name={item.icon} color={'inherit'} /> : null}
+        <div>{item.title}</div>
+      </div>
+    ),
+  }))
+
+  const onChange = (val) => {
+    props.onChange(val)
+  }
   return (
     <div className='flex items-center gap-4'>
-      <FilterButton
-        activeItem={props.activeItem}
-        item={allItem}
-        onClick={() => props.onChange(allItem.key)}
+      <Segmented
+        value={props.activeItem}
+        onChange={onChange}
+        options={segmentItems}
       />
-      {props.filters.map((item: any) => (
-        <FilterButton activeItem={props.activeItem} item={item} onClick={() => props.onChange(item.key)} />
-      ))}
     </div>
   );
 }

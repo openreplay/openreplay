@@ -8,11 +8,6 @@ import { PlayerContext } from 'Components/Session/playerContext';
 import Session from 'Types/session'
 import PlayerBlock from './PlayerBlock';
 
-const TABS = {
-  EVENTS: 'User Events',
-  HEATMAPS: 'Click Map',
-};
-
 interface IProps {
   fullscreen: boolean;
   activeTab: string;

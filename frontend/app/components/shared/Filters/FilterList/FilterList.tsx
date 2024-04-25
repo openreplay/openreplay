@@ -148,6 +148,7 @@ function FilterList(props: Props) {
                 </div>
 
                 <Segmented
+                  size={'small'}
                   onChange={(v) =>
                     props.onChangeEventsOrder(
                       null,
