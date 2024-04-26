@@ -41,6 +41,16 @@ export default class AiService extends BaseService {
     return data;
   }
 
+  async omniSearch(query: string, filters: Record<any, any>): Promise<Record<string, any>> {
+    const r = await this.client.post('/intelligent/ask-or/charts', {
+      ...filters,
+      question: query,
+      metricType: 'omnisearch',
+    });
+    const { data } = await r.json();
+    return data;
+  }
+
   async getCardData(query: string, chartData: Record<string, any>): Promise<Record<string, any>> {
     const r = await this.client.post('/intelligent/ask-or/charts', {
       ...chartData,

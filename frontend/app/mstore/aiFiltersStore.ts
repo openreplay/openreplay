@@ -30,6 +30,11 @@ export default class AiFiltersStore {
     console.log(r)
   }
 
+  omniSearch = async (query: string, filters: Record<any, any>) => {
+    const r = await aiService.omniSearch(query, filters);
+    console.log(r)
+  }
+
   getCardFilters = async (query: string, chartType: string): Promise<any> => {
     this.isLoading = true;
     try {
