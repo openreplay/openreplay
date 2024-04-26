@@ -7,6 +7,7 @@ import { DateTime } from 'luxon';
 export default class Dashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId?: string = undefined
+    key: string = ""
     name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true
@@ -21,6 +22,14 @@ export default class Dashboard {
         makeAutoObservable(this)
 
         this.validate();
+    }
+
+    get updatedAt() {
+        return this.createdAt as unknown as DateTime
+    }
+
+    get updatedBy() {
+        return "no api"
     }
 
     update(data: any) {
@@ -54,6 +63,7 @@ export default class Dashboard {
             this.name = json.name
             this.description = json.description
             this.isPublic = json.isPublic
+            this.key = json.dashboardId
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
             if (json.widgets) {
                 const smallWidgets: any[] = json.widgets.filter(wi => wi.config.col === 1)

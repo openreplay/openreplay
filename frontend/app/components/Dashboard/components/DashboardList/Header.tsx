@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button, PageTitle, Toggler, Icon } from 'UI';
-import Select from 'Shared/Select';
+import { PageTitle } from 'UI';
 import DashboardSearch from './DashboardSearch';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
+import { Button } from 'antd'
+import { PlusOutlined } from "@ant-design/icons";
 
 function Header({ history, siteId }: { history: any; siteId: string }) {
   const { dashboardStore } = useStore();
@@ -19,46 +20,32 @@ function Header({ history, siteId }: { history: any; siteId: string }) {
   };
 
   return (
-    <>
-      <div className="flex items-center justify-between px-6">
+      <div className="flex items-center justify-between px-4 pb-2">
         <div className="flex items-baseline mr-3">
           <PageTitle title="Dashboards" />
         </div>
         <div className="ml-auto flex items-center">
-          <Button variant="primary" onClick={onAddDashboardClick}>
-            New Dashboard
+          <Button
+            icon={<PlusOutlined />}
+            type="primary" onClick={onAddDashboardClick}>
+            Create Dashboard
           </Button>
           <div className="mx-2"></div>
           <div className="w-1/4" style={{ minWidth: 300 }}>
             <DashboardSearch />
           </div>
         </div>
+        {/*<Select*/}
+        {/*  options={[*/}
+        {/*    { label: 'Newest', value: 'desc' },*/}
+        {/*    { label: 'Oldest', value: 'asc' },*/}
+        {/*  ]}*/}
+        {/*  defaultValue={sort.by}*/}
+        {/*  plain*/}
+        {/*  onChange={({ value }) => dashboardStore.updateKey('sort', { by: value.value })}*/}
+        {/*/>*/}
       </div>
-      <div className="border-y px-3 py-1 mt-2 flex items-center w-full justify-end gap-4">
-        <Toggler
-          label="Private Dashboards"
-          checked={dashboardStore.filter.showMine}
-          name="test"
-          className="font-medium mr-2"
-          onChange={() =>
-            dashboardStore.updateKey('filter', {
-              ...dashboardStore.filter,
-              showMine: !dashboardStore.filter.showMine,
-            })
-          }
-        />
 
-        <Select
-          options={[
-            { label: 'Newest', value: 'desc' },
-            { label: 'Oldest', value: 'asc' },
-          ]}
-          defaultValue={sort.by}
-          plain
-          onChange={({ value }) => dashboardStore.updateKey('sort', { by: value.value })}
-        />
-      </div>
-    </>
   );
 }
 

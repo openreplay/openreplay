@@ -26,7 +26,7 @@ button {
 }
 
 textarea:focus,
-input:not(.ant-input-number-input, .nofocus):focus {
+input:not(.ant-input-number-input, .ant-input, .nofocus):focus {
   border: solid thin $teal !important;
 }
 
