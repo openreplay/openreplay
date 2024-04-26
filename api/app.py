@@ -92,6 +92,7 @@ async def or_middleware(request: Request, call_next):
         if now > 2:
             now = round(now, 2)
             logging.warning(f"Execution time: {now} s for {request.method}: {request.url.path}")
+    response.headers["x-robots-tag"] = 'noindex, nofollow'
     return response
 
 
