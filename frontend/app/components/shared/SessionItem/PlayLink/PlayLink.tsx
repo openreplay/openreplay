@@ -13,13 +13,13 @@ const PLAY_ICON_NAMES = {
   notPlayed: 'play-fill',
   played: 'play-circle-light',
   hovered: 'play-hover',
-};
+} as const
 
 const getDefaultIconName = (isViewed: any) =>
   !isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played;
 
 interface Props {
-  isAssist: boolean;
+  isAssist?: boolean;
   viewed: boolean;
   sessionId: string;
   onClick?: () => void;
@@ -35,7 +35,7 @@ function PlayLink(props: Props) {
   const defaultIconName = getDefaultIconName(viewed);
 
   const [isHovered, toggleHover] = useState(false);
-  const [iconName, setIconName] = useState(defaultIconName);
+  const [iconName, setIconName] = useState<typeof PLAY_ICON_NAMES[keyof typeof PLAY_ICON_NAMES]>(defaultIconName);
 
   useEffect(() => {
     if (isHovered) setIconName(PLAY_ICON_NAMES.hovered);
@@ -46,12 +46,21 @@ function PlayLink(props: Props) {
     ? liveSessionRoute(sessionId, queryParams)
     : sessionRoute(sessionId);
 
-  const handleBeforeOpen = () => {
+  const handleBeforeOpen = (e: any) => {
+    const replayLink = withSiteId(
+      link + (props.query ? props.query : ''),
+      props.siteId
+    );
     if (props.beforeOpen) {
-      props.beforeOpen();
-      history.push(
-        withSiteId(link + (props.query ? props.query : ''), props.siteId)
-      );
+      // check for ctrl or shift
+      if (e.ctrlKey || e.shiftKey || e.metaKey) {
+        e.preventDefault();
+        return window.open(replayLink, '_blank');
+      } else {
+        e.preventDefault();
+        props.beforeOpen();
+        history.push(replayLink);
+      }
     }
   };
 

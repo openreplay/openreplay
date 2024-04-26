@@ -196,7 +196,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       console.error('Error while prefetching first mob', e);
     }
   };
-  const openSession = () => {
+  const populateData = () => {
     if (
       props.live
       || isAssist
@@ -430,7 +430,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                      onClick={onClick}
                      queryParams={queryParams}
                      query={query}
-                     beforeOpen={props.live || isAssist ? undefined : openSession}
+                     beforeOpen={props.live || isAssist ? undefined : populateData}
                    />
                    {bookmarked && (
                      <div className="ml-2 cursor-pointer">
