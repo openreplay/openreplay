@@ -65,10 +65,8 @@ function CreateNote({
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
-      if (teamsChannels.size === 0 || slackChannels.size === 0) {
-        fetchSlack();
-        fetchTeams();
-      }
+      fetchSlack();
+      fetchTeams();
     }
   }, []);
 
