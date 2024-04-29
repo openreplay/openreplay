@@ -16,4 +16,4 @@ python-decouple==3.8
 pydantic[email]==2.3.0
 apscheduler==3.10.4
 
-redis==5.0.3
+redis==5.0.4
