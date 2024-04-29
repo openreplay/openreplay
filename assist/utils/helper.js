@@ -70,6 +70,9 @@ const isValidSession = function (sessionInfo, filters, counter) {
         if (body.values === undefined || body.values === null) {
             return false;
         }
+        if (!counter[filterName]) {
+            counter[filterName] = {};
+        }
         let found = false;
         for (const [sessKey, sessValue] of Object.entries(sessionInfo)) {
             if (sessValue === undefined || sessValue === null) {
