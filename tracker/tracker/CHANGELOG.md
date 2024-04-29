@@ -1,6 +1,11 @@
+# 12.0.12
+
+- fix for potential redux plugin issues after .11 ...
+
 # 12.0.11
 
 - better restart on unauth (new token assign for long sessions)
+- more safeguards around arraybuffer and dataview types for network proxy
 
 # 12.0.10
 
