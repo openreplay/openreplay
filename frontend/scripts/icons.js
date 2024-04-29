@@ -25,8 +25,9 @@ const plugins = (removeFill = true) => {
         name: 'preset-default',
         params: {
           overrides: {
+            removeViewBox: false,
             inlineStyles: {
-              onlyMatchedOnce: false
+              onlyMatchedOnce: false,
             }
           }
         }
@@ -51,8 +52,6 @@ const plugins = (removeFill = true) => {
 const iconPaths = [];
 const dirs = getDirectories(ICONS_DIRNAME);
 
-console.log(ICONS_DIRNAME, UI_DIRNAME, icons, dirs)
-
 fs.mkdirSync(`${UI_DIRNAME}/Icons`, { recursive: true });
 dirs.forEach((dir) => {
   fs.mkdirSync(`${UI_DIRNAME}/Icons/${dir.replaceAll('-', '_')}`, { recursive: true });
@@ -66,6 +65,9 @@ icons.forEach((icon) => {
   const svg = fs.readFileSync(`${ICONS_DIRNAME}/${icon}`, 'utf-8');
   const canOptimize = !icon.includes('integrations');
   const { data } = optimize(svg, plugins(canOptimize));
+  if (titleCase(fileName) === 'Integrations_slack_bw') {
+    console.log(data, svg)
+  }
   fs.writeFileSync(path, `
 /* Auto-generated, do not edit */
 import React from 'react';

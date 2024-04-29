@@ -199,13 +199,14 @@ function ShareModalComp({
                       onChange={(value) => setShareTo(value as 'slack' | 'teams')}
                     />
                   ) : (
-                    <div>
+                    <div className={'flex items-center gap-2'}>
                       <Icon
                         name={
                           slackOptions.length > 0
                             ? 'integrations/slack-bw'
                             : 'integrations/teams-white'
                         }
+                        size={16}
                       />
                       <div>{slackOptions.length > 0 ? 'Slack' : 'MS Teams'}</div>
                     </div>

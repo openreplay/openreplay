@@ -3,7 +3,7 @@ import { toggleFavorite } from 'Duck/sessions';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { Button, Popover } from 'antd'
-import { SaveOutlined } from '@ant-design/icons';
+import { Vault } from 'lucide-react'
 
 interface Props {
   toggleFavorite: (sessionId: string) => Promise<void>;
@@ -37,7 +37,7 @@ function Bookmark(props: Props) {
     <div onClick={toggleFavorite} className="w-full">
       <Popover content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
           <Button type={isFavorite ? 'primary' : undefined} ghost={isFavorite} size={'small'} className={'flex items-center justify-center'}>
-            <SaveOutlined />
+            <Vault size={16} strokeWidth={1} />
           </Button>
       </Popover>
     </div>
