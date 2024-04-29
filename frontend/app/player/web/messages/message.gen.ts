@@ -28,7 +28,7 @@ import type {
   RawFetch,
   RawProfiler,
   RawOTable,
-  RawReduxDeprecated,
+  RawRedux,
   RawVuex,
   RawMobX,
   RawNgRx,
@@ -64,17 +64,17 @@ import type {
   RawTabData,
   RawCanvasNode,
   RawTagTrigger,
-  RawRedux,
-  RawIosEvent,
-  RawIosScreenChanges,
-  RawIosClickEvent,
-  RawIosInputEvent,
-  RawIosPerformanceEvent,
-  RawIosLog,
-  RawIosInternalError,
-  RawIosNetworkCall,
-  RawIosSwipeEvent,
-  RawIosIssueEvent,
+  RawReduxNew,
+  RawMobileEvent,
+  RawMobileScreenChanges,
+  RawMobileClickEvent,
+  RawMobileInputEvent,
+  RawMobilePerformanceEvent,
+  RawMobileLog,
+  RawMobileInternalError,
+  RawMobileNetworkCall,
+  RawMobileSwipeEvent,
+  RawMobileIssueEvent,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -128,7 +128,7 @@ export type Profiler = RawProfiler & Timed
 
 export type OTable = RawOTable & Timed
 
-export type ReduxDeprecated = RawReduxDeprecated & Timed
+export type Redux = RawRedux & Timed
 
 export type Vuex = RawVuex & Timed
 
@@ -200,25 +200,25 @@ export type CanvasNode = RawCanvasNode & Timed
 
 export type TagTrigger = RawTagTrigger & Timed
 
-export type Redux = RawRedux & Timed
+export type ReduxNew = RawReduxNew & Timed
 
-export type IosEvent = RawIosEvent & Timed
+export type MobileEvent = RawMobileEvent & Timed
 
-export type IosScreenChanges = RawIosScreenChanges & Timed
+export type MobileScreenChanges = RawMobileScreenChanges & Timed
 
-export type IosClickEvent = RawIosClickEvent & Timed
+export type MobileClickEvent = RawMobileClickEvent & Timed
 
-export type IosInputEvent = RawIosInputEvent & Timed
+export type MobileInputEvent = RawMobileInputEvent & Timed
 
-export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
+export type MobilePerformanceEvent = RawMobilePerformanceEvent & Timed
 
-export type IosLog = RawIosLog & Timed
+export type MobileLog = RawMobileLog & Timed
 
-export type IosInternalError = RawIosInternalError & Timed
+export type MobileInternalError = RawMobileInternalError & Timed
 
-export type IosNetworkCall = RawIosNetworkCall & Timed
+export type MobileNetworkCall = RawMobileNetworkCall & Timed
 
-export type IosSwipeEvent = RawIosSwipeEvent & Timed
+export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
 
-export type IosIssueEvent = RawIosIssueEvent & Timed
+export type MobileIssueEvent = RawMobileIssueEvent & Timed
 

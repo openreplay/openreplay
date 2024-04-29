@@ -639,9 +639,9 @@ func DecodeStateAction(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeReduxDeprecated(reader BytesReader) (Message, error) {
+func DecodeRedux(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &ReduxDeprecated{}
+	msg := &Redux{}
 	if msg.Action, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1410,9 +1410,9 @@ func DecodeTagTrigger(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRedux(reader BytesReader) (Message, error) {
+func DecodeReduxNew(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &Redux{}
+	msg := &ReduxNew{}
 	if msg.Action, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1969,7 +1969,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 42:
 		return DecodeStateAction(reader)
 	case 44:
-		return DecodeReduxDeprecated(reader)
+		return DecodeRedux(reader)
 	case 45:
 		return DecodeVuex(reader)
 	case 46:
@@ -2063,7 +2063,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 120:
 		return DecodeTagTrigger(reader)
 	case 121:
-		return DecodeRedux(reader)
+		return DecodeReduxNew(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

@@ -134,7 +134,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1])
     break
 
-    case Messages.Type.ReduxDeprecated:
+    case Messages.Type.Redux:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
@@ -298,7 +298,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.int(msg[1])
     break
 
-    case Messages.Type.Redux:
+    case Messages.Type.ReduxNew:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
     break
 

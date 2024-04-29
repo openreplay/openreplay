@@ -224,7 +224,7 @@ message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
 ## 43
-message 44, 'ReduxDeprecated', :replayer => :devtools do
+message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
@@ -522,7 +522,7 @@ message 120, 'TagTrigger', :replayer => :devtools do
     int 'TagId'
 end
 
-message 121, 'Redux', :replayer => :devtools do
+message 121, 'ReduxNew', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'

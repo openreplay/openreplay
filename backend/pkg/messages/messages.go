@@ -40,7 +40,7 @@ const (
 	MsgProfiler                    = 40
 	MsgOTable                      = 41
 	MsgStateAction                 = 42
-	MsgReduxDeprecated             = 44
+	MsgRedux                       = 44
 	MsgVuex                        = 45
 	MsgMobX                        = 46
 	MsgNgRx                        = 47
@@ -87,7 +87,7 @@ const (
 	MsgTabData                     = 118
 	MsgCanvasNode                  = 119
 	MsgTagTrigger                  = 120
-	MsgRedux                       = 121
+	MsgReduxNew                    = 121
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -1105,14 +1105,14 @@ func (msg *StateAction) TypeID() int {
 	return 42
 }
 
-type ReduxDeprecated struct {
+type Redux struct {
 	message
 	Action   string
 	State    string
 	Duration uint64
 }
 
-func (msg *ReduxDeprecated) Encode() []byte {
+func (msg *Redux) Encode() []byte {
 	buf := make([]byte, 31+len(msg.Action)+len(msg.State))
 	buf[0] = 44
 	p := 1
@@ -1122,11 +1122,11 @@ func (msg *ReduxDeprecated) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ReduxDeprecated) Decode() Message {
+func (msg *Redux) Decode() Message {
 	return msg
 }
 
-func (msg *ReduxDeprecated) TypeID() int {
+func (msg *Redux) TypeID() int {
 	return 44
 }
 
@@ -2324,7 +2324,7 @@ func (msg *TagTrigger) TypeID() int {
 	return 120
 }
 
-type Redux struct {
+type ReduxNew struct {
 	message
 	Action     string
 	State      string
@@ -2332,7 +2332,7 @@ type Redux struct {
 	ActionTime uint64
 }
 
-func (msg *Redux) Encode() []byte {
+func (msg *ReduxNew) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Action)+len(msg.State))
 	buf[0] = 121
 	p := 1
@@ -2343,11 +2343,11 @@ func (msg *Redux) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *Redux) Decode() Message {
+func (msg *ReduxNew) Decode() Message {
 	return msg
 }
 
-func (msg *Redux) TypeID() int {
+func (msg *ReduxNew) TypeID() int {
 	return 121
 }
 
