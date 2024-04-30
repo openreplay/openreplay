@@ -23,6 +23,19 @@ func GetURLParts(rawURL string) (string, string, string, error) {
 	return u.Host, path, u.RawQuery, nil
 }
 
+func GetURLQueryParams(rawURL string) (map[string]string, error) {
+	rawURL = strings.Replace(rawURL, "\t", "", -1)
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	params := make(map[string]string)
+	for key, values := range u.Query() {
+		params[key] = values[0]
+	}
+	return params, nil
+}
+
 func getURLExtension(URL string) string {
 	u, err := url.Parse(URL)
 	if err != nil {

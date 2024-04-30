@@ -17,6 +17,7 @@ type Updates interface {
 	AddAnonID(sessionID uint64, userID string)
 	SetReferrer(sessionID uint64, referrer, baseReferrer string)
 	SetMetadata(sessionID uint64, keyNo uint, value string)
+	SetUTM(sessionID uint64, utmSource, utmMedium, utmCampaign string)
 	AddEvents(sessionID uint64, events, pages int)
 	AddIssues(sessionID uint64, errors, issues int)
 	Commit()
@@ -62,6 +63,13 @@ func (u *updatesImpl) SetMetadata(sessionID uint64, keyNo uint, value string) {
 		u.updates[sessionID] = NewSessionUpdate(sessionID)
 	}
 	u.updates[sessionID].setMetadata(keyNo, value)
+}
+
+func (u *updatesImpl) SetUTM(sessionID uint64, utmSource, utmMedium, utmCampaign string) {
+	if u.updates[sessionID] == nil {
+		u.updates[sessionID] = NewSessionUpdate(sessionID)
+	}
+	u.updates[sessionID].setUTM(utmSource, utmMedium, utmCampaign)
 }
 
 func (u *updatesImpl) AddEvents(sessionID uint64, events, pages int) {
@@ -128,6 +136,9 @@ type sessionUpdate struct {
 	events       int
 	errors       int
 	issues       int
+	utmSource    *string
+	utmMedium    *string
+	utmCampaign  *string
 }
 
 func NewSessionUpdate(sessionID uint64) *sessionUpdate {
@@ -156,6 +167,18 @@ func (su *sessionUpdate) setReferrer(referrer, baseReferrer string) {
 
 func (su *sessionUpdate) setMetadata(keyNo uint, value string) {
 	su.metadata[keyNo] = value
+}
+
+func (su *sessionUpdate) setUTM(utmSource, utmMedium, utmCampaign string) {
+	if utmSource != "" {
+		su.utmSource = &utmSource
+	}
+	if utmMedium != "" {
+		su.utmMedium = &utmMedium
+	}
+	if utmCampaign != "" {
+		su.utmCampaign = &utmCampaign
+	}
 }
 
 func (su *sessionUpdate) addEvents(events, pages int) {
@@ -212,6 +235,21 @@ func (su *sessionUpdate) request() (string, []interface{}) {
 		varsCounter++
 		sqlReq += fmt.Sprintf(" issue_score = issue_score + $%d,", varsCounter)
 		sqlArgs = append(sqlArgs, su.issues)
+	}
+	if su.utmSource != nil {
+		varsCounter++
+		sqlReq += fmt.Sprintf(" utm_source = LEFT($%d, 8000),", varsCounter)
+		sqlArgs = append(sqlArgs, *su.utmSource)
+	}
+	if su.utmMedium != nil {
+		varsCounter++
+		sqlReq += fmt.Sprintf(" utm_medium = LEFT($%d, 8000),", varsCounter)
+		sqlArgs = append(sqlArgs, *su.utmMedium)
+	}
+	if su.utmCampaign != nil {
+		varsCounter++
+		sqlReq += fmt.Sprintf(" utm_campaign = LEFT($%d, 8000),", varsCounter)
+		sqlArgs = append(sqlArgs, *su.utmCampaign)
 	}
 
 	if varsCounter == 0 {
