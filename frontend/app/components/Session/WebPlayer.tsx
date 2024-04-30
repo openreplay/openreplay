@@ -112,34 +112,31 @@ function WebPlayer(props: any) {
   }, [session.events, session.errors, contextValue.player, messagesProcessed]);
 
   React.useEffect(() => {
-    if (noteItem !== undefined) {
-      contextValue.player.pause();
-    } else {
-      if (activeTab === '' && ready && contextValue.player && windowActive) {
+    if (noteItem === undefined) {
+      if (activeTab === '' && contextValue.player && windowActive) {
         const jumpToTime = props.query.get('jumpto');
         const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
         if (jumpToTime || shouldAdjustOffset) {
           if (jumpToTime > visualOffset) {
-            contextValue.player.jump(parseInt(String(jumpToTime - startedAt)));
+            const diff = startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime
+            contextValue.player.jump(Math.max(diff, 0));
           } else {
             contextValue.player.jump(visualOffset);
             setAdjusted(true);
           }
         }
-
-        contextValue.player.play();
       }
     }
-  }, [activeTab, noteItem, visualOffset, ready, windowActive]);
+  }, [activeTab, noteItem, visualOffset, windowActive]);
 
   useEffect(() => {
-    if (cssLoading) {
+    if (cssLoading || noteItem) {
       contextValue.player?.pause();
     } else if (ready) {
       contextValue.player?.play();
     }
-  }, [cssLoading, ready])
+  }, [cssLoading, ready, noteItem])
 
   React.useEffect(() => {
     if (activeTab === 'Click map') {
@@ -168,7 +165,6 @@ function WebPlayer(props: any) {
 
   const onNoteClose = () => {
     setNoteItem(undefined);
-    contextValue.player.play();
   };
 
   useEffect(() => {

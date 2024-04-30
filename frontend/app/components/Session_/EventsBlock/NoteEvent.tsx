@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 import { confirm } from 'UI';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
+import { Tag } from 'antd'
 
 interface Props {
   note: Note;
@@ -107,20 +108,11 @@ function NoteEvent(props: Props) {
         {props.note.message}
       </div>
       <div>
-        <div className="flex items-center gap-2 flex-wrap w-full">
+        <div className="flex items-center flex-wrap w-full">
           {props.note.tag ? (
-            <div
-              key={props.note.tag}
-              style={{
-                // @ts-ignore
-                background: tagProps[props.note.tag],
-                userSelect: 'none',
-                padding: '1px 6px',
-              }}
-              className="rounded-full text-white text-xs select-none w-fit"
-            >
+            <Tag color={tagProps[props.note.tag]}>
               {props.note.tag}
-            </div>
+            </Tag>
           ) : null}
           {!props.note.isPublic ? null : <TeamBadge />}
         </div>

@@ -10,6 +10,7 @@ import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 import TeamBadge from './TeamBadge';
+import { Tag } from 'antd'
 
 interface Props {
   note: Note;
@@ -53,18 +54,13 @@ function NoteItem(props: Props) {
       >
         <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
           <div className="py-1 capitalize-first text-lg">{safeStrMessage}</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {props.note.tag ? (
-              <div
-                style={{
-                  // @ts-ignore
-                  background: tagProps[props.note.tag],
-                  padding: '1px 6px',
-                }}
-                className="rounded-full text-white text-xs select-none w-fit"
+              <Tag
+                color={tagProps[props.note.tag]}
               >
                 {props.note.tag}
-              </div>
+              </Tag>
             ) : null}
             <div className="text-disabled-text flex items-center text-sm">
               <span className="color-gray-darkest mr-1">By </span>

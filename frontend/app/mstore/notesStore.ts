@@ -46,12 +46,16 @@ export default class NotesStore {
     }
   }
 
+  setSessionNotes(notes: Note[]) {
+    this.sessionNotes = notes
+  }
+
   async fetchSessionNotes(sessionId: string) {
     this.setLoading(true)
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
       notes.forEach(note => note.time = note.timestamp)
-      this.setNotes(notes)
+      this.setSessionNotes(notes)
       return notes;
     } catch (e) {
       console.error(e)

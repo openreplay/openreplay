@@ -5,6 +5,7 @@ import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
+import { Tag } from 'antd'
 
 interface Props {
   note?: Note;
@@ -72,13 +73,11 @@ function ReadNote(props: Props) {
         <div className="w-full">
           <div className="flex items-center gap-2 flex-wrap w-full">
             {props.note.tag ? (
-              <div
-                // @ts-ignore
-                style={{ background: tagProps[props.note.tag], userSelect: 'none', fontSize: 11 }}
-                className="rounded-full text-sm px-2 py-1 text-white flex items-center justify-center"
+              <Tag
+                color={tagProps[props.note.tag]}
               >
                 {props.note.tag}
-              </div>
+              </Tag>
             ) : null}
             {!props.note.isPublic ? null : <TeamBadge />}
 

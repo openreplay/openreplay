@@ -196,7 +196,7 @@ export default class Animator {
 
   // jump by index?
   jump = (time: number) => {
-    if (this.store.get().playing) {
+    if (this.store.get().playing && this.store.get().ready) {
       cancelAnimationFrame(this.animationFrameRequestId)
       this.setTime(time)
       this.startAnimation()
