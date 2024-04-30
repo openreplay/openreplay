@@ -1,16 +1,24 @@
-import { makeAutoObservable, observable, action } from 'mobx';
-import { sessionService } from 'App/services';
-import { filterMap } from 'Duck/search';
-import Session from 'Types/session';
 import Record, { LAST_7_DAYS } from 'Types/app/period';
-import Watchdog from "Types/watchdog";
+import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import { Location, InjectedEvent } from 'Types/session/event'
-import { getDateRangeFromValue } from "App/dateRange";
-import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
-import store from 'App/store'
-import { Note } from "App/services/NotesService";
-import { loadFile } from "../player/web/network/loadFiles";
+import { InjectedEvent, Location } from 'Types/session/event';
+import Watchdog from 'Types/watchdog';
+import { action, makeAutoObservable, observable } from 'mobx';
+
+import { getDateRangeFromValue } from 'App/dateRange';
+import { sessionService } from 'App/services';
+import { Note } from 'App/services/NotesService';
+import store from 'App/store';
+import {
+  cleanSessionFilters,
+  compareJsonObjects,
+  getRE,
+  getSessionFilter,
+  setSessionFilter,
+} from 'App/utils';
+import { filterMap } from 'Duck/search';
+
+import { loadFile } from '../player/web/network/loadFiles';
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -71,7 +79,12 @@ class DevTools {
 
   constructor() {
     this.network = { index: 0, filter: '', activeTab: 'ALL', isError: false };
-    this.stackEvent = { index: 0, filter: '', activeTab: 'ALL', isError: false };
+    this.stackEvent = {
+      index: 0,
+      filter: '',
+      activeTab: 'ALL',
+      isError: false,
+    };
     this.console = { index: 0, filter: '', activeTab: 'ALL', isError: false };
     makeAutoObservable(this, {
       update: action,
@@ -96,37 +109,44 @@ export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
   devTools: DevTools = new DevTools();
 
-  list: Session[] = []
-  sessionIds: string[] = []
-  current = new Session()
-  total = 0
-  keyMap = {}
-  wdTypeCount = {}
-  favoriteList: Session[] = []
-  activeTab = Watchdog({ name: 'All', type: 'all' })
-  timezone = 'local'
-  errorStack: ErrorStack[] = []
-  eventsIndex = []
-  sourcemapUploaded = true
-  filteredEvents: InjectedEvent[] | null = null
-  eventsQuery = ''
-  showChatWindow = false
-  liveSessions: Session[] = []
-  visitedEvents = []
-  insights: any[] = []
-  insightFilters = defaultDateFilters
-  host = ''
-  funnelPage = {}
+  list: Session[] = [];
+  sessionIds: string[] = [];
+  current = new Session();
+  total = 0;
+  keyMap = {};
+  wdTypeCount = {};
+  favoriteList: Session[] = [];
+  activeTab = Watchdog({ name: 'All', type: 'all' });
+  timezone = 'local';
+  errorStack: ErrorStack[] = [];
+  eventsIndex = [];
+  sourcemapUploaded = true;
+  filteredEvents: InjectedEvent[] | null = null;
+  eventsQuery = '';
+  showChatWindow = false;
+  liveSessions: Session[] = [];
+  visitedEvents = [];
+  insights: any[] = [];
+  insightFilters = defaultDateFilters;
+  host = '';
+  funnelPage = {};
   /** @Deprecated */
-  timelinePointer = {}
-  sessionPath = {}
-  lastPlayedSessionId: string
-  timeLineTooltip = { time: 0, offset: 0, isVisible: false, localTime: '', userTime: '' }
-  createNoteTooltip = { time: 0, isVisible: false, isEdit: false, note: null }
-  previousId = ''
-  nextId = ''
-  userTimezone = ''
-  prefetchedMobUrls: Record<string, { data: Uint8Array, entryNum: number }> = {}
+  timelinePointer = {};
+  sessionPath = {};
+  lastPlayedSessionId: string;
+  timeLineTooltip = {
+    time: 0,
+    offset: 0,
+    isVisible: false,
+    localTime: '',
+    userTime: '',
+  };
+  createNoteTooltip = { time: 0, isVisible: false, isEdit: false, note: null };
+  previousId = '';
+  nextId = '';
+  userTimezone = '';
+  prefetchedMobUrls: Record<string, { data: Uint8Array; entryNum: number }> =
+    {};
 
   constructor() {
     makeAutoObservable(this, {
@@ -144,25 +164,32 @@ export default class SessionStore {
   }
 
   async getFirstMob(sessionId: string) {
-    const { domURL } = await sessionService.getFirstMobUrl(sessionId)
-    await loadFile(
-      domURL[0],
-      (data) => this.setPrefetchedMobUrl(sessionId, data)
-    )
+    const { domURL } = await sessionService.getFirstMobUrl(sessionId);
+    await loadFile(domURL[0], (data) =>
+      this.setPrefetchedMobUrl(sessionId, data)
+    );
   }
 
   setPrefetchedMobUrl(sessionId: string, fileData: Uint8Array) {
-    const keys = Object.keys(this.prefetchedMobUrls)
-    const toLimit = 10 - keys.length
+    const keys = Object.keys(this.prefetchedMobUrls);
+    const toLimit = 10 - keys.length;
     if (toLimit < 0) {
       const oldest = keys.sort(
-        (a, b) => this.prefetchedMobUrls[a].entryNum - this.prefetchedMobUrls[b].entryNum
-      )[0]
-      delete this.prefetchedMobUrls[oldest]
+        (a, b) =>
+          this.prefetchedMobUrls[a].entryNum -
+          this.prefetchedMobUrls[b].entryNum
+      )[0];
+      delete this.prefetchedMobUrls[oldest];
     }
-    const nextEntryNum = keys.length > 0
-                         ? Math.max(...keys.map(key => this.prefetchedMobUrls[key].entryNum)) + 1 : 0
-    this.prefetchedMobUrls[sessionId] = { data: fileData, entryNum: nextEntryNum }
+    const nextEntryNum =
+      keys.length > 0
+        ? Math.max(...keys.map((key) => this.prefetchedMobUrls[key].entryNum)) +
+          1
+        : 0;
+    this.prefetchedMobUrls[sessionId] = {
+      data: fileData,
+      entryNum: nextEntryNum,
+    };
   }
 
   getSessions(filter: any): Promise<any> {
@@ -171,7 +198,9 @@ export default class SessionStore {
         .getSessions(filter.toJson?.() || filter)
         .then((response: any) => {
           resolve({
-            sessions: response.sessions.map((session: any) => new Session(session)),
+            sessions: response.sessions.map(
+              (session: any) => new Session(session)
+            ),
             total: response.total,
           });
         })
@@ -184,9 +213,11 @@ export default class SessionStore {
   async fetchLiveSessions(params = {}) {
     try {
       const data = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.map(session => new Session({ ...session, live: true }));
+      this.liveSessions = data.map(
+        (session) => new Session({ ...session, live: true })
+      );
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
@@ -200,22 +231,22 @@ export default class SessionStore {
       }
       setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getSessions(params);
-      const list = data.sessions.map(s => new Session(s))
+      const list = data.sessions.map((s) => new Session(s));
 
       this.list = list;
       this.total = data.total;
-      this.sessionIds = data.sessions.map(s => s.sessionId);
-      this.favoriteList = list.filter(s => s.favorite);
+      this.sessionIds = data.sessions.map((s) => s.sessionId);
+      this.favoriteList = list.filter((s) => s.favorite);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   async fetchSessionInfo(sessionId: string, isLive = false) {
     try {
       const { events } = store.getState().getIn(['filters', 'appliedFilter']);
-      const data = await sessionService.getSessionInfo(sessionId, isLive)
-      const session = new Session(data)
+      const data = await sessionService.getSessionInfo(sessionId, isLive);
+      const session = new Session(data);
 
       const matching: number[] = [];
       const visitedEvents: Location[] = [];
@@ -227,7 +258,6 @@ export default class SessionStore {
           visitedEvents.push(event);
         }
       });
-
 
       (events as {}[]).forEach(({ key, operator, value }: any) => {
         session.events.forEach((e, index) => {
@@ -243,16 +273,16 @@ export default class SessionStore {
         });
       });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   async fetchErrorStack(sessionId: string, errorId: string) {
     try {
       const data = await sessionService.getErrorStack(sessionId, errorId);
-      this.errorStack = data.trace.map(es => new ErrorStack(es))
+      this.errorStack = data.trace.map((es) => new ErrorStack(es));
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
@@ -260,68 +290,74 @@ export default class SessionStore {
     try {
       setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getAutoplayList(params);
-      const list = [...this.sessionIds, ...data.map(s => s.sessionId)]
+      const list = [...this.sessionIds, ...data.map((s) => s.sessionId)];
       this.sessionIds = list.filter((id, ind) => list.indexOf(id) === ind);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   setAutoplayValues() {
-    const currentId = this.current.sessionId
-    const currentIndex = this.sessionIds.indexOf(currentId)
+    const currentId = this.current.sessionId;
+    const currentIndex = this.sessionIds.indexOf(currentId);
 
-    this.previousId = this.sessionIds[currentIndex - 1]
-    this.nextId = this.sessionIds[currentIndex + 1]
+    this.previousId = this.sessionIds[currentIndex - 1];
+    this.nextId = this.sessionIds[currentIndex + 1];
   }
 
   setEventQuery(filter: { query: string }) {
-    const events = this.current.events
+    const events = this.current.events;
     const query = filter.query;
-    const searchRe = getRE(query, 'i')
+    const searchRe = getRE(query, 'i');
 
-    const filteredEvents = query ? events.filter(
-      (e) => searchRe.test(e.url)
-        || searchRe.test(e.value)
-        || searchRe.test(e.label)
-        || searchRe.test(e.type)
-        || (e.type === 'LOCATION' && searchRe.test('visited'))
-    ) : null;
+    const filteredEvents = query
+      ? events.filter(
+          (e) =>
+            searchRe.test(e.url) ||
+            searchRe.test(e.value) ||
+            searchRe.test(e.label) ||
+            searchRe.test(e.type) ||
+            (e.type === 'LOCATION' && searchRe.test('visited'))
+        )
+      : null;
 
-    this.filteredEvents = filteredEvents
-    this.eventsQuery = query
+    this.filteredEvents = filteredEvents;
+    this.eventsQuery = query;
   }
 
   async toggleFavorite(id: string) {
     try {
-      const r = await sessionService.toggleFavorite(id)
+      const r = await sessionService.toggleFavorite(id);
       if (r.success) {
         const list = this.list;
         const current = this.current;
         const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
-        const session = list[sessionIdx]
-        const wasInFavorite = this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
+        const session = list[sessionIdx];
+        const wasInFavorite =
+          this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
 
         if (session && !wasInFavorite) {
-          session.favorite = true
-          this.list[sessionIdx] = session
+          session.favorite = true;
+          this.list[sessionIdx] = session;
         }
         if (current.sessionId === id) {
-          this.current.favorite = !wasInFavorite
+          this.current.favorite = !wasInFavorite;
         }
 
         if (session) {
           if (wasInFavorite) {
-            this.favoriteList = this.favoriteList.filter(({ sessionId }) => sessionId !== id)
+            this.favoriteList = this.favoriteList.filter(
+              ({ sessionId }) => sessionId !== id
+            );
           } else {
-            this.favoriteList.push(session)
+            this.favoriteList.push(session);
           }
         }
       } else {
-        console.error(r)
+        console.error(r);
       }
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
@@ -333,18 +369,20 @@ export default class SessionStore {
       return sign * diff;
     };
 
-    this.list = this.list.sort(comparator)
-    this.favoriteList = this.favoriteList.sort(comparator)
+    this.list = this.list.sort(comparator);
+    this.favoriteList = this.favoriteList.sort(comparator);
     return;
   }
 
   setActiveTab(tab: { type: string }) {
-    const list = tab.type === 'all'
-      ? this.list : this.list.filter(s => s.issueTypes.includes(tab.type))
+    const list =
+      tab.type === 'all'
+        ? this.list
+        : this.list.filter((s) => s.issueTypes.includes(tab.type));
 
     // @ts-ignore
-    this.activeTab = tab
-    this.sessionIds = list.map(s => s.sessionId)
+    this.activeTab = tab;
+    this.sessionIds = list.map((s) => s.sessionId);
   }
 
   setTimezone(tz: string) {
@@ -352,80 +390,85 @@ export default class SessionStore {
   }
 
   toggleChatWindow(isActive: boolean) {
-    this.showChatWindow = isActive
+    this.showChatWindow = isActive;
   }
 
   async fetchInsights(filters = {}) {
     try {
-      const data = await sessionService.getClickMap(filters)
+      const data = await sessionService.getClickMap(filters);
 
-      this.insights = data
+      this.insights = data;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   setFunnelPage(page = {}) {
-    this.funnelPage = page || false
+    this.funnelPage = page || false;
   }
 
   /* @deprecated */
   setTimelinePointer(pointer: {}) {
-    this.timelinePointer = pointer
+    this.timelinePointer = pointer;
   }
 
-  setTimelineTooltip(tp: { time: number, offset: number, isVisible: boolean, localTime: string, userTime?: string }) {
-    this.timeLineTooltip = tp
+  setTimelineTooltip(tp: {
+    time: number;
+    offset: number;
+    isVisible: boolean;
+    localTime: string;
+    userTime?: string;
+  }) {
+    this.timeLineTooltip = tp;
   }
 
   filterOutNote(noteId: string) {
-    const current = this.current
+    const current = this.current;
 
-    current.notesWithEvents = current.notesWithEvents.filter(n => {
+    current.notesWithEvents = current.notesWithEvents.filter((n) => {
       if ('noteId' in item) {
-        return item.noteId !== noteId
+        return item.noteId !== noteId;
       }
-      return true
-    })
+      return true;
+    });
 
-    this.current = current
+    this.current = current;
   }
 
   addNote(note: Note) {
-    const current = this.current
+    const current = this.current;
 
-    current.notesWithEvents.push(note)
-    current.notesWithEvents.sort((a,b) => {
-      const aTs = a.time || a.timestamp
-      const bTs = b.time || b.timestamp
+    current.notesWithEvents.push(note);
+    current.notesWithEvents.sort((a, b) => {
+      const aTs = a.time || a.timestamp;
+      const bTs = b.time || b.timestamp;
 
-      return aTs - bTs
-    })
+      return aTs - bTs;
+    });
 
-    this.current = current
+    this.current = current;
   }
 
   updateNote(note: Note) {
-    const noteIndex = this.current.notesWithEvents.findIndex(item => {
-        if ('noteId' in item) {
-          return item.noteId === note.noteId
-        }
-        return false
-      })
+    const noteIndex = this.current.notesWithEvents.findIndex((item) => {
+      if ('noteId' in item) {
+        return item.noteId === note.noteId;
+      }
+      return false;
+    });
 
-    this.current.notesWithEvents[noteIndex] = note
+    this.current.notesWithEvents[noteIndex] = note;
   }
 
   setSessionPath(path = {}) {
-    this.sessionPath = path
+    this.sessionPath = path;
   }
 
   setLastPlayed(sessionId: string) {
-    const list = this.list
-    const sIndex = list.findIndex((s) => s.sessionId === sessionId)
+    const list = this.list;
+    const sIndex = list.findIndex((s) => s.sessionId === sessionId);
     if (sIndex !== -1) {
-      this.list[sIndex].viewed = true
+      this.list[sIndex].viewed = true;
     }
   }
-
 }
