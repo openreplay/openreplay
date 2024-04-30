@@ -9,7 +9,7 @@ export const genResponseByType = (
     case '':
     case 'text':
     case 'json':
-      if (typeof response == 'string') {
+      if (typeof response === 'string') {
         try {
           result = JSON.parse(response);
         } catch (e) {
@@ -44,7 +44,7 @@ export const getStringResponseByType = (
     case '':
     case 'text':
     case 'json':
-      if (typeof response == 'string') {
+      if (typeof response === 'string') {
         result = response;
       } else if (isPureObject(response) || Array.isArray(response)) {
         result = JSON.stringify(response);
@@ -161,7 +161,7 @@ export const genFormattedBody = (body?: BodyInit) => {
       // 'a=1&b=2' => try to parse as query
       const arr = body.split('&');
       result = {};
-      // eslint-disable-next-line
+
       for (let q of arr) {
         const kv = q.split('=');
         result[kv[0]] = kv[1] === undefined ? 'undefined' : kv[1];
@@ -189,7 +189,7 @@ export const genFormattedBody = (body?: BodyInit) => {
 };
 
 export function isPureObject(input: any): input is Record<any, any> {
-  return null !== input && typeof input === 'object';
+  return input !== null && typeof input === 'object';
 }
 
 export function isIterable(value: any) {

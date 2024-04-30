@@ -37,7 +37,7 @@ export default class NetworkMessage {
   readyState?: RequestState = 0;
   header: { [key: string]: string } = {};
   responseType: XMLHttpRequest['responseType'] = '';
-  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon' = 'xhr'
+  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon' = 'xhr';
   requestHeader: any = {};
   response: any;
   responseSize = 0; // bytes
@@ -79,7 +79,7 @@ export default class NetworkMessage {
       JSON.stringify(messageInfo.response),
       messageInfo.status ?? 0,
       this.duration ?? 0,
-    ]
+    ];
   }
 
   writeHeaders() {
