@@ -2,45 +2,61 @@ package com.openreplay.reactnative
 
 import android.content.Context
 import android.view.View
-import com.facebook.react.uimanager.SimpleViewManager
+import android.widget.FrameLayout
 import com.facebook.react.uimanager.ThemedReactContext
-
+import com.facebook.react.uimanager.ViewGroupManager
+import com.facebook.react.uimanager.annotations.ReactProp
 import com.openreplay.tracker.listeners.Analytics
 
-class RnTrackerViewManager : SimpleViewManager<View>() {
+class RnTrackerViewManager : ViewGroupManager<FrameLayout>() {
   override fun getName(): String = "RnTrackerView"
 
-  override fun createViewInstance(reactContext: ThemedReactContext): View =
-    RnTrackerView(reactContext)
+  override fun createViewInstance(reactContext: ThemedReactContext): FrameLayout {
+    return TrackingFrameLayout(reactContext)
+  }
 
-  companion object {
-    fun requiresMainQueueSetup(): Boolean = true
+  @ReactProp(name = "screenName")
+  fun setScreenName(view: TrackingFrameLayout, screenName: String) {
+    view.screenName = screenName
+  }
+
+  @ReactProp(name = "viewName")
+  fun setViewName(view: TrackingFrameLayout, viewName: String) {
+    view.viewName = viewName
+  }
+
+  override fun addView(parent: FrameLayout, child: View, index: Int) {
+    parent.addView(child, index)
+  }
+
+  override fun getChildCount(parent: FrameLayout): Int = parent.childCount
+
+  override fun getChildAt(parent: FrameLayout, index: Int): View = parent.getChildAt(index)
+
+  override fun removeViewAt(parent: FrameLayout, index: Int) {
+    parent.removeViewAt(index)
+  }
+
+  override fun removeAllViews(parent: FrameLayout) {
+    parent.removeAllViews()
   }
 }
 
-class RnTrackerView(context: Context) : View(context) {
-  private var orViewName: String = ""
-  private var orScreenName: String = ""
-
-  var viewName: String = ""
-    set(value) {
-      field = value
-      orViewName = value
-    }
-
-  var screenName: String = ""
-    set(value) {
-      field = value
-      orScreenName = value
-    }
+class TrackingFrameLayout(context: Context) : FrameLayout(context) {
+  var viewName: String? = null
+  var screenName: String? = null
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
-    Analytics.addObservedView(this, orScreenName, orViewName)
+    if (viewName != null && screenName != null) {
+      Analytics.addObservedView(this, screenName!!, viewName!!)
+    }
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
-//        Analytics.removeObservedView(this)
+//    if (viewName != null && screenName != null) {
+//      Analytics.removeObservedView(this)
+//    }
   }
 }

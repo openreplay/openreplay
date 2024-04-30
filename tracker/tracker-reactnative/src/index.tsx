@@ -47,6 +47,11 @@ interface IORTrackerConnector {
 }
 
 // const ReactNative = NativeModules.ORTrackerConnector as IORTrackerConnector;
+type RnTrackerProps = ViewProps & {
+  viewName: string;
+  screenName: string;
+  children: any;
+};
 
 const RnTrackerTouchTrackingView =
   UIManager.getViewManagerConfig('RnTrackerTouchView') != null
@@ -69,6 +74,13 @@ const ORSanitizedView =
         throw new Error('RnSanitizedView; ' + LINKING_ERROR);
       };
 
+const ORAnalyticsView =
+  UIManager.getViewManagerConfig('RnTrackerView') != null
+    ? requireNativeComponent<RnTrackerProps>('RnTrackerView')
+    : () => {
+        throw new Error('RnTrackerView; ' + LINKING_ERROR);
+      };
+
 let patched = false;
 const patchNetwork = (
   ctx = global,
@@ -84,6 +96,7 @@ const patchNetwork = (
 export default {
   tracker: ORTrackerConnector as IORTrackerConnector,
   patchNetwork: patchNetwork,
+  ORAnalyticsView: ORAnalyticsView,
   ORTouchTrackingView: RnTrackerTouchTrackingView,
   ORTrackedInput: ORTrackedInput,
   ORSanitizedView: ORSanitizedView,

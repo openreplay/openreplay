@@ -30,7 +30,7 @@ class RnTrackerTouchManager : ViewGroupManager<FrameLayout>() {
         when (event.action) {
           MotionEvent.ACTION_DOWN -> {
             touchStart.set(event.x, event.y)
-            false
+            true
           }
 
           MotionEvent.ACTION_UP -> {
@@ -47,8 +47,7 @@ class RnTrackerTouchManager : ViewGroupManager<FrameLayout>() {
               Analytics.sendSwipe(SwipeDirection.valueOf(direction), event.x, event.y)
             } else {
               Analytics.sendClick(event)
-              view.performClick()  // Perform click for accessibility
-              false
+              view.performClick()
             }
             true
           }

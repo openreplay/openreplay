@@ -16,6 +16,7 @@ class ReactNativePackage : ReactPackage {
       RnTrackerSanitizedViewManager(),
       RnTrackerInputManager(),
       RnTrackerTouchManager(),
+      RnTrackerViewManager(),
     )
   }
 }
