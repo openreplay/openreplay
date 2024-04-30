@@ -45,6 +45,9 @@ type Session struct {
 	EncryptionKey        string
 	ScreenWidth          int
 	ScreenHeight         int
+	UtmSource            *string
+	UtmMedium            *string
+	UtmCampaign          *string
 }
 
 func (s *Session) SetMetadata(keyNo uint, value string) {
