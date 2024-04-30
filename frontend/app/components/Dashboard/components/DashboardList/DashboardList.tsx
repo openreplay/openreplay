@@ -17,7 +17,6 @@ function DashboardList({ history, siteId }: { history: any; siteId: string }) {
   const { dashboardStore } = useStore();
   const list = dashboardStore.filteredList;
   const dashboardsSearch = dashboardStore.filter.query;
-  const lenth = list.length;
 
 
   const tableConfig: TableColumnsType<Dashboard> = [
@@ -72,7 +71,7 @@ function DashboardList({ history, siteId }: { history: any; siteId: string }) {
   ];
   return (
     <NoContent
-      show={lenth === 0}
+      show={list.length === 0 && !dashboardStore.filter.showMine}
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />

@@ -1,25 +1,41 @@
+import { PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { PageTitle } from 'UI';
-import DashboardSearch from './DashboardSearch';
+
 import { useStore } from 'App/mstore';
-import { observer, useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
-import { Button } from 'antd'
-import { PlusOutlined } from "@ant-design/icons";
+import { PageTitle } from 'UI';
+
+import DashboardSearch from './DashboardSearch';
+import NewDashboardModal from './NewDashModal';
 
 function Header({ history, siteId }: { history: any; siteId: string }) {
+  const [showModal, setShowModal] = React.useState(false);
   const { dashboardStore } = useStore();
-  const sort = useObserver(() => dashboardStore.sort);
+
+  const onSaveDashboard = () => {
+    dashboardStore.initDashboard();
+    dashboardStore
+      .save(dashboardStore.dashboardInstance)
+      .then(async (syncedDashboard) => {
+        dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
+        history.push(
+          withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId)
+        );
+      });
+  };
 
   const onAddDashboardClick = () => {
-    dashboardStore.initDashboard();
-    dashboardStore.save(dashboardStore.dashboardInstance).then(async (syncedDashboard) => {
-      dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
-      history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId));
-    });
+    setShowModal(true);
+  };
+
+  const onClose = () => {
+    setShowModal(false);
   };
 
   return (
+    <>
       <div className="flex items-center justify-between px-4 pb-2">
         <div className="flex items-baseline mr-3">
           <PageTitle title="Dashboards" />
@@ -27,7 +43,9 @@ function Header({ history, siteId }: { history: any; siteId: string }) {
         <div className="ml-auto flex items-center">
           <Button
             icon={<PlusOutlined />}
-            type="primary" onClick={onAddDashboardClick}>
+            type="primary"
+            onClick={onAddDashboardClick}
+          >
             Create Dashboard
           </Button>
           <div className="mx-2"></div>
@@ -35,17 +53,9 @@ function Header({ history, siteId }: { history: any; siteId: string }) {
             <DashboardSearch />
           </div>
         </div>
-        {/*<Select*/}
-        {/*  options={[*/}
-        {/*    { label: 'Newest', value: 'desc' },*/}
-        {/*    { label: 'Oldest', value: 'asc' },*/}
-        {/*  ]}*/}
-        {/*  defaultValue={sort.by}*/}
-        {/*  plain*/}
-        {/*  onChange={({ value }) => dashboardStore.updateKey('sort', { by: value.value })}*/}
-        {/*/>*/}
       </div>
-
+      <NewDashboardModal onClose={onClose} open={showModal} onSave={onSaveDashboard} />
+    </>
   );
 }
 

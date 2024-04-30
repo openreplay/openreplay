@@ -4,7 +4,7 @@ import cn from 'classnames';
 interface Props {
     children: React.ReactNode;
     open?: boolean;
-    size ?: 'tiny' | 'small' | 'large' | 'fullscreen';
+    size ?: 'tiny' | 'small' | 'large' | 'fullscreen' | 'xlarge';
     onClose?: () => void;
 }
 function Modal(props: Props) {
@@ -20,14 +20,22 @@ function Modal(props: Props) {
     }, [open]);
 
     const style: any = {};
-    if (size === 'tiny') {
-        style.width = '300px';
-    } else if (size === 'small') {
-        style.width = '400px';
-    } else if (size === 'large') {
-        style.width = '700px';
-    } else if (size === 'fullscreen') {
-        style.width = '100%';
+    switch (size) {
+        case 'tiny':
+            style.width = '300px';
+            break;
+        case 'small':
+            style.width = '400px';
+            break;
+        case 'large':
+            style.width = '700px';
+            break;
+        case 'xlarge':
+            style.width = '846px';
+            break;
+        case 'fullscreen':
+            style.width = '100%';
+            break;
     }
 
     const handleClose = (e: React.MouseEvent<HTMLDivElement>) => {
