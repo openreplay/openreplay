@@ -7,9 +7,27 @@ import ExampleCount from "./Examples/Count";
 
 import ExampleFunnel from './Examples/Funnel';
 import ExamplePath from './Examples/Path';
+import PerfBreakdown from "./Examples/PerfBreakdown";
+import SessionsByErrors from "./Examples/SessionsByErrors";
+import SessionsByIssues from "./Examples/SessionsByIssues";
+import SlowestDomain from "./Examples/SlowestDomain";
 import ExampleTrend from './Examples/Trend';
 
 function NewDashboardModal(props: { onClose: () => void; open: boolean }) {
+  const initial = 'performance-monitoring' //'product-analytics';
+  const [selected, setSelected] = React.useState(initial);
+  let item;
+  switch (selected) {
+    case 'product-analytics':
+      item = <ProductAnalytics />
+      break;
+    case 'performance-monitoring':
+      item = <PerformanceMonitoring />
+      break;
+    default:
+      item = <div>under construction</div>
+      break;
+  }
   return (
     <Modal onClose={props.onClose} open={props.open} size={'xlarge'}>
       <Modal.Content className={'bg-[#FAFAFA]'}>
@@ -62,19 +80,39 @@ function NewDashboardModal(props: { onClose: () => void; open: boolean }) {
                   value: 'core-web-vitals',
                 },
               ]}
+              onChange={(v) => setSelected(v)}
             />
 
-            <div className={'mt-2 w-full flex flex-wrap gap-2 overflow-scroll'}>
-              <ExampleFunnel />
-              <ExamplePath />
-              <ExampleTrend />
-              <ExampleCount />
+            <div style={{ maxHeight: 'calc(100vh - 210px)'}} className={'mt-2 w-full flex flex-wrap gap-2 overflow-scroll'}>
+              {item}
             </div>
           </div>
         </div>
       </Modal.Content>
     </Modal>
   );
+}
+
+function ProductAnalytics() {
+  return (
+    <>
+      <ExampleFunnel />
+      <ExamplePath />
+      <ExampleTrend />
+      <ExampleCount />
+    </>
+  )
+}
+
+function PerformanceMonitoring() {
+  return (
+    <>
+      <PerfBreakdown />
+      <SlowestDomain />
+      <SessionsByErrors />
+      <SessionsByIssues />
+    </>
+  )
 }
 
 export default NewDashboardModal;

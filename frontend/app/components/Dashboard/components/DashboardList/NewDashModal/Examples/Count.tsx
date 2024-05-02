@@ -1,3 +1,4 @@
+import { Segmented } from 'antd';
 import { Angry, ArrowDownUp, Mouse, MousePointerClick, Unlink } from 'lucide-react';
 import React from 'react';
 
@@ -6,13 +7,44 @@ import React from 'react';
 import ExCard from './ExCard';
 
 
-function ExampleCount() {
-  return <ExCard title={'Sessions by'}>
-    <Frustrations />
-  </ExCard>;
+const TYPES = {
+  Frustrations: 0,
+  Errors: 1,
+  Users: 2
 }
 
-function Frustrations() {
+function ExampleCount() {
+  const [type, setType] = React.useState(TYPES.Frustrations);
+
+  const el = {
+    [TYPES.Frustrations]: <Frustrations />,
+    [TYPES.Errors]: <Errors />,
+    [TYPES.Users]: <Users />
+  };
+  return (
+    <ExCard
+      title={
+        <div className={'flex items-center gap-2'}>
+          <div>Sessions by</div>
+          <div className={'font-normal'}>
+          <Segmented
+            options={[
+              { label: 'Frustrations', value: '0' },
+              { label: 'Errors', value: '1' },
+              { label: 'Users', value: '2'}
+            ]}
+            onChange={(v) => setType(Number(v))}
+          />
+          </div>
+        </div>
+      }
+    >
+      {el[type]}
+    </ExCard>
+  );
+}
+
+export function Frustrations() {
   const rows = [
     {
       label: 'Rage Clicks',
@@ -46,12 +78,13 @@ function Frustrations() {
     },
   ];
 
+  const lineWidth = 140
   return (
-    <div className={'flex gap-2 flex-col'}>
+    <div className={'flex gap-1 flex-col'}>
       {rows.map((r) => (
         <div
           className={
-            'flex items-center gap-2 border-b border-dotted last:border-0 py-2 first:pt-0 last:pb-0'
+            'flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0'
           }
         >
           <Circle badgeType={0}>{r.icon}</Circle>
@@ -60,7 +93,7 @@ function Frustrations() {
             <div
               style={{
                 height: 2,
-                width: 140 * (0.01 * r.progress),
+                width: lineWidth * (0.01 * r.progress),
                 background: '#394EFF',
               }}
               className={'rounded-l'}
@@ -68,7 +101,7 @@ function Frustrations() {
             <div
               style={{
                 height: 2,
-                width: 140-(140 * (0.01 * r.progress)),
+                width: lineWidth - lineWidth * (0.01 * r.progress),
                 background: '#E2E4F6',
               }}
               className={'rounded-r'}
@@ -81,7 +114,7 @@ function Frustrations() {
   );
 }
 
-function Errors() {
+export function Errors() {
   const rows = [
     {
       label: 'HTTP response status code (404 Not Found)',
@@ -114,9 +147,89 @@ function Errors() {
       icon: <div className={'text-red text-xs'}>XHR</div>,
     },
   ];
+
+  const lineWidth = 270
+  return (
+    <div className={'flex gap-1 flex-col'}>
+      {rows.map((r) => (
+        <div
+          className={
+            'flex items-center gap-2 border-b border-dotted last:border-0 py-2 first:pt-0 last:pb-0'
+          }
+        >
+          <Circle badgeType={1}>{r.icon}</Circle>
+          <div className={'ml-2 flex flex-col gap-0'}>
+            <div>{r.label}</div>
+              <div style={{ display: 'flex' }}>
+                <div
+                  style={{
+                    height: 2,
+                    width: lineWidth * (0.01 * r.progress),
+                    background: '#394EFF',
+                  }}
+                  className={'rounded-l'}
+                />
+                <div
+                  style={{
+                    height: 2,
+                    width: lineWidth - lineWidth * (0.01 * r.progress),
+                    background: '#E2E4F6',
+                  }}
+                  className={'rounded-r'}
+                />
+            </div>
+          </div>
+          <div className={'min-w-8 ml-auto'}>{r.value}</div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
-function Circle({
+export function Users() {
+  const rows = [
+    {
+      label: 'pedro@mycompany.com',
+      value: '9.5K',
+    },
+    {
+      label: 'mauricio@mycompany.com',
+      value: '2.5K',
+    },
+    {
+      label: 'alex@mycompany.com',
+      value: '405',
+    },
+    {
+      label: 'jose@mycompany.com',
+      value: '150',
+    },
+    {
+      label: 'maria@mycompany.com',
+      value: '123',
+    }
+  ]
+
+  return (
+    <div className={'flex gap-1 flex-col'}>
+      {rows.map((r) => (
+        <div
+          className={
+            'flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0'
+          }
+        >
+          <Circle badgeType={2}>{r.label[0].toUpperCase()}</Circle>
+          <div className={'ml-2'}>
+            <div>{r.label}</div>
+          </div>
+          <div className={'min-w-8 ml-auto'}>{r.value}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function Circle({
   children,
   badgeType,
 }: {
@@ -124,14 +237,17 @@ function Circle({
   badgeType: 0 | 1 | 2;
 }) {
   const colors = {
+    // frustrations
     0: '#FFFBE6',
+    // errors
     1: '#FFF1F0',
+    // users and domains
     2: '#EBF4F5',
   };
 
   return (
     <div
-      className={'p-2 rounded-full'}
+      className={'w-8 h-8 flex items-center justify-center rounded-full'}
       style={{ background: colors[badgeType] }}
     >
       {children}

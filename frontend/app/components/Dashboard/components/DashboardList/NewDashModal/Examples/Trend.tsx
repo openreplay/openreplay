@@ -13,6 +13,7 @@ function ExampleTrend() {
       title={
         <div className={'flex items-center gap-2'}>
           <div>Trend</div>
+          <div className={'font-normal'}>
           <Segmented
             options={[
               { label: 'Single-Series', value: 'single' },
@@ -20,6 +21,7 @@ function ExampleTrend() {
             ]}
             onChange={(v) => setIsMulti(v === 'multi')}
           />
+          </div>
         </div>
       }
     >
