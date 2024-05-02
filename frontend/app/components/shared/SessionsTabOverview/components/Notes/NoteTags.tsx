@@ -59,7 +59,7 @@ function NoteTags() {
             ),
           })),
         ]}
-        onChange={(value: iTag) => notesStore.toggleTag(value)}
+        onChange={(value: iTag) => notesStore.toggleTag(value === 'ALL' ? undefined : value)}
       />
       <div className="ml-auto" />
       <SortDropdown
