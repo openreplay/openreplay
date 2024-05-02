@@ -240,7 +240,7 @@ function AiSessionSearchField(props: Props) {
                   </OutsideClickDetectingDiv>
                 ),
                 onClick: () => {
-                  changeValue('tab');
+                  changeValue('ask');
                   closeTour();
                 },
               },
