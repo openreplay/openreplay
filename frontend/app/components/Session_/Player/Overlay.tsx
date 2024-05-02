@@ -78,12 +78,12 @@ const menuItems: MenuProps['items'] = [
   {
     key: ItemKey.CopySessionUrl,
     label: 'Copy Session URL',
-    icon: <Link2 />,
+    icon: <Link2 size={14} strokeWidth={1} />,
   },
   {
     key: ItemKey.CopySessionUrlTs,
     label: 'Copy Session URL At Current Time',
-    icon: <Link2 />,
+    icon: <Link2 size={14} strokeWidth={1} />,
   },
 ];
 
