@@ -230,6 +230,10 @@ function FilterList(props: Props) {
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
           {filters.map((filter: any, filterIndex: any) =>
             !filter.isEvent ? (
+              <div className={'py-2 hover:bg-active-blue px-5'} style={{
+                marginLeft: '-1.25rem',
+                width: 'calc(100% + 2.5rem)',
+              }}>
               <FilterItem
                 key={filterIndex}
                 readonly={props.readonly}
@@ -241,6 +245,7 @@ function FilterList(props: Props) {
                 excludeFilterKeys={excludeFilterKeys}
                 isConditional={isConditional}
               />
+              </div>
             ) : null
           )}
         </>
