@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 
 from decouple import config
@@ -7,12 +8,14 @@ from starlette import status
 
 import schemas
 from chalicelib.core import authorizers, metadata, projects
+from chalicelib.core import roles
 from chalicelib.core import tenants, assist
 from chalicelib.utils import email_helper, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core import roles
+
+logger = logging.getLogger(__name__)
 
 
 def __generate_invitation_token():
@@ -861,7 +864,7 @@ def authenticate_sso(email, internal_id, exp=None):
                                                              jwt_jti=jwt_r_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
         }
-
+    logger.warning(f"SSO user not found with email: {email} and internal_id: {internal_id}")
     return None
 
 
