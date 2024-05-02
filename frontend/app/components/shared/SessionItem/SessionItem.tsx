@@ -1,11 +1,9 @@
 import cn from 'classnames';
-import copy from 'copy-to-clipboard';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { toast } from 'react-toastify';
 
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import { presetSession } from 'App/duck/sessions';
@@ -14,7 +12,6 @@ import {
   assist as assistRoute,
   isRoute,
   liveSession,
-  session as sessionRoute,
   sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
@@ -22,7 +19,6 @@ import {
   Avatar,
   CountryFlag,
   Icon,
-  ItemMenu,
   Label,
   TextEllipsis,
   Tooltip,
@@ -157,28 +153,6 @@ function SessionItem(props: RouteComponentProps & Props) {
       const value = metadata[key];
       return { label: key, value };
     });
-
-  const menuItems = useMemo(() => {
-    return [
-      {
-        icon: 'link-45deg',
-        text: 'Copy Session URL',
-        onClick: () => {
-          const sessionPath = `${window.location.origin}/${
-            window.location.pathname.split('/')[1]
-          }${sessionRoute(sessionId)}`;
-          copy(sessionPath);
-          toast.success('Session URL copied to clipboard');
-        },
-      },
-      {
-        icon: 'trash',
-        text: 'Remove',
-        onClick: () =>
-          props.toggleFavorite ? props.toggleFavorite(sessionId) : null,
-      },
-    ];
-  }, []);
 
   const handleHover = async () => {
     if (
@@ -422,7 +396,6 @@ function SessionItem(props: RouteComponentProps & Props) {
                   </div>
                 </div>
               ) : (
-                 <div>
                    <PlayLink
                      isAssist={isAssist}
                      sessionId={sessionId}
@@ -432,12 +405,6 @@ function SessionItem(props: RouteComponentProps & Props) {
                      query={query}
                      beforeOpen={props.live || isAssist ? undefined : populateData}
                    />
-                   {bookmarked && (
-                     <div className="ml-2 cursor-pointer">
-                       <ItemMenu bold items={menuItems} />
-                     </div>
-                   )}
-                 </div>
                )}
             </div>
           </div>
