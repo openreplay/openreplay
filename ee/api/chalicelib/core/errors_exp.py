@@ -744,7 +744,7 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     else:
         table_name = ""
     if type_condition:
-        ch_sub_query.append(f"{table_name}EventType='ERROR'")
+        ch_sub_query.append(f"{table_name}event_type='ERROR'")
     if time_constraint:
         ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
@@ -789,24 +789,25 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
 
 
 def search(data: schemas.SearchErrorsSchema, project_id, user_id):
-    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startDate)
-    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startDate)
+    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startTimestamp)
+    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startTimestamp)
 
     platform = None
     for f in data.filters:
         if f.type == schemas.FilterType.platform and len(f.value) > 0:
             platform = f.value[0]
     ch_sessions_sub_query = __get_basic_constraints(platform, type_condition=False)
-    ch_sub_query = __get_basic_constraints(platform, type_condition=True)
+    # ignore platform for errors table
+    ch_sub_query = __get_basic_constraints(None, type_condition=True)
     ch_sub_query.append("source ='js_exception'")
     # To ignore Script error
     ch_sub_query.append("message!='Script error.'")
     error_ids = None
 
-    if data.startDate is None:
-        data.startDate = TimeUTC.now(-7)
-    if data.endDate is None:
-        data.endDate = TimeUTC.now(1)
+    if data.startTimestamp is None:
+        data.startTimestamp = TimeUTC.now(-7)
+    if data.endTimestamp is None:
+        data.endTimestamp = TimeUTC.now(1)
 
     subquery_part = ""
     params = {}
@@ -995,7 +996,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                          value_key=f_k))
 
     with ch_client.ClickHouseClient() as ch:
-        step_size = __get_step_size(data.startDate, data.endDate, data.density)
+        step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
@@ -1004,8 +1005,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             order = data.order
         params = {
             **params,
-            "startDate": data.startDate,
-            "endDate": data.endDate,
+            "startDate": data.startTimestamp,
+            "endDate": data.endTimestamp,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
@@ -1062,7 +1063,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                             toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
                                      FROM {MAIN_EVENTS_TABLE}
                                      WHERE project_id=%(project_id)s
-                                        AND EventType='ERROR'
+                                        AND event_type='ERROR'
                                      GROUP BY error_id) AS time_details
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
@@ -1085,8 +1086,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         r["chart"] = list(r["chart"])
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
-        r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
-                                                      end_time=data.endDate,
+        r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startTimestamp,
+                                                      end_time=data.endTimestamp,
                                                       density=data.density, neutral={"count": 0})
     return {
         'total': total,
