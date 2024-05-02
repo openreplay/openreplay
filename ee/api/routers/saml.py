@@ -149,8 +149,29 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
 
-    redirect_to_link2 = json.loads(req.get("post_data", {}) \
-                                   .get('RelayState', '{}')).get("iFrame")
+    post_data = req.get("post_data")
+    if post_data is None:
+        post_data = {}
+    elif isinstance(post_data, str):
+        post_data = json.loads(post_data)
+    elif not isinstance(post_data, dict):
+        logger.error("Received invalid post_data")
+        logger.error("type: {}".format(type(post_data)))
+        logger.error(post_data)
+        post_data = {}
+
+    redirect_to_link2 = None
+    relay_state = post_data.get('RelayState')
+    if relay_state:
+        if isinstance(relay_state, str):
+            relay_state = json.loads(relay_state)
+        elif not isinstance(relay_state, dict):
+            logger.error("Received invalid relay_state")
+            logger.error("type: {}".format(type(relay_state)))
+            logger.error(relay_state)
+            relay_state = {}
+        redirect_to_link2 = relay_state.get("iFrame")
+
     request_id = None
     if 'AuthNRequestID' in session:
         request_id = session['AuthNRequestID']
