@@ -1,8 +1,8 @@
 from typing import Optional
 
 import schemas
-import schemas
 from chalicelib.core import metrics
+from chalicelib.core import sessions_exp
 from chalicelib.utils import ch_client
 
 
@@ -188,7 +188,8 @@ def __filter_subquery(project_id: int, filters: Optional[schemas.SessionsSearchP
                                                                   errors_only=True, favorite_only=None,
                                                                   issue=None, user_id=None)
         params = {**params, **qp_params}
-        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+        # TODO: test if this line impacts other cards beside insights
+        # sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     return params, sub_query
 
 
@@ -351,7 +352,7 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
                        'value': cpu_newvalue,
                        'oldValue': cpu_oldvalue,
                        'change': 100 * (
-                                   cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
+                               cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
                        'isNew': True if cpu_newvalue is not None and cpu_oldvalue is None else False})
     if mem_oldvalue is not None or mem_newvalue is not None:
         output.append({'category': schemas.InsightCategories.resources,
@@ -359,12 +360,9 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
                        'value': mem_newvalue,
                        'oldValue': mem_oldvalue,
                        'change': 100 * (
-                                   mem_newvalue - mem_oldvalue) / mem_oldvalue if mem_ratio is not None else mem_ratio,
+                               mem_newvalue - mem_oldvalue) / mem_oldvalue if mem_ratio is not None else mem_ratio,
                        'isNew': True if mem_newvalue is not None and mem_oldvalue is None else False})
     return output
-
-
-from chalicelib.core import sessions_exp
 
 
 def query_click_rage_by_period(project_id, start_time, end_time,
