@@ -457,7 +457,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     # To ignore Script error
     pg_sub_query.append("pe.message!='Script error.'")
     pg_sub_query_chart = __get_basic_constraints(platform, time_constraint=False, chart=True, project_key=None)
-    # pg_sub_query_chart.append("source ='js_exception'")
+    if platform:
+        pg_sub_query_chart += ["start_ts>=%(startDate)s", "start_ts<%(endDate)s", "project_id=%(project_id)s"]
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
@@ -544,7 +545,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                                                       COUNT(session_id)   AS count
                                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
                                                                         LEFT JOIN LATERAL (SELECT DISTINCT session_id
-                                                                                           FROM events.errors
+                                                                                           FROM events.errors 
+                                                                                                {"INNER JOIN public.sessions USING(session_id)" if platform else ""}
                                                                                            WHERE {" AND ".join(pg_sub_query_chart)}
                                                                             ) AS sessions ON (TRUE)
                                                                GROUP BY timestamp
