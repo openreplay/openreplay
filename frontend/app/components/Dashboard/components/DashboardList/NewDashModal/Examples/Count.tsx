@@ -1,40 +1,45 @@
 import { Segmented } from 'antd';
-import { Angry, ArrowDownUp, Mouse, MousePointerClick, Unlink } from 'lucide-react';
+import {
+  Angry,
+  ArrowDownUp,
+  Mouse,
+  MousePointerClick,
+  Unlink,
+} from 'lucide-react';
 import React from 'react';
-
-
 
 import ExCard from './ExCard';
 
-
 const TYPES = {
-  Frustrations: 0,
-  Errors: 1,
-  Users: 2
-}
+  Frustrations: 'frustrations',
+  Errors: 'errors',
+  Users: 'users',
+};
 
-function ExampleCount() {
+function ExampleCount({ onCard }: { onCard: (card: string) => void }) {
   const [type, setType] = React.useState(TYPES.Frustrations);
 
   const el = {
     [TYPES.Frustrations]: <Frustrations />,
     [TYPES.Errors]: <Errors />,
-    [TYPES.Users]: <Users />
+    [TYPES.Users]: <Users />,
   };
   return (
     <ExCard
+      onCard={onCard}
+      type={'count' + `-${type}`}
       title={
         <div className={'flex items-center gap-2'}>
           <div>Sessions by</div>
           <div className={'font-normal'}>
-          <Segmented
-            options={[
-              { label: 'Frustrations', value: '0' },
-              { label: 'Errors', value: '1' },
-              { label: 'Users', value: '2'}
-            ]}
-            onChange={(v) => setType(Number(v))}
-          />
+            <Segmented
+              options={[
+                { label: 'Frustrations', value: '0' },
+                { label: 'Errors', value: '1' },
+                { label: 'Users', value: '2' },
+              ]}
+              onChange={(v) => setType(v)}
+            />
           </div>
         </div>
       }
@@ -78,7 +83,7 @@ export function Frustrations() {
     },
   ];
 
-  const lineWidth = 140
+  const lineWidth = 140;
   return (
     <div className={'flex gap-1 flex-col'}>
       {rows.map((r) => (
@@ -148,7 +153,7 @@ export function Errors() {
     },
   ];
 
-  const lineWidth = 270
+  const lineWidth = 270;
   return (
     <div className={'flex gap-1 flex-col'}>
       {rows.map((r) => (
@@ -160,30 +165,30 @@ export function Errors() {
           <Circle badgeType={1}>{r.icon}</Circle>
           <div className={'ml-2 flex flex-col gap-0'}>
             <div>{r.label}</div>
-              <div style={{ display: 'flex' }}>
-                <div
-                  style={{
-                    height: 2,
-                    width: lineWidth * (0.01 * r.progress),
-                    background: '#394EFF',
-                  }}
-                  className={'rounded-l'}
-                />
-                <div
-                  style={{
-                    height: 2,
-                    width: lineWidth - lineWidth * (0.01 * r.progress),
-                    background: '#E2E4F6',
-                  }}
-                  className={'rounded-r'}
-                />
+            <div style={{ display: 'flex' }}>
+              <div
+                style={{
+                  height: 2,
+                  width: lineWidth * (0.01 * r.progress),
+                  background: '#394EFF',
+                }}
+                className={'rounded-l'}
+              />
+              <div
+                style={{
+                  height: 2,
+                  width: lineWidth - lineWidth * (0.01 * r.progress),
+                  background: '#E2E4F6',
+                }}
+                className={'rounded-r'}
+              />
             </div>
           </div>
           <div className={'min-w-8 ml-auto'}>{r.value}</div>
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function Users() {
@@ -207,8 +212,8 @@ export function Users() {
     {
       label: 'maria@mycompany.com',
       value: '123',
-    }
-  ]
+    },
+  ];
 
   return (
     <div className={'flex gap-1 flex-col'}>
@@ -226,7 +231,7 @@ export function Users() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function Circle({
@@ -234,7 +239,7 @@ export function Circle({
   badgeType,
 }: {
   children: React.ReactNode;
-  badgeType: 0 | 1 | 2;
+  badgeType: 0 | 1 | 2 | 3;
 }) {
   const colors = {
     // frustrations
@@ -243,6 +248,8 @@ export function Circle({
     1: '#FFF1F0',
     // users and domains
     2: '#EBF4F5',
+    // sessions by url
+    3: '#E2E4F6',
   };
 
   return (
@@ -255,5 +262,4 @@ export function Circle({
   );
 }
 
-
-export default ExampleCount
+export default ExampleCount;

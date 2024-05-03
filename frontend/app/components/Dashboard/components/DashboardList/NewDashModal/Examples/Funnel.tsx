@@ -3,7 +3,7 @@ import React from 'react';
 
 import ExCard from './ExCard';
 
-function ExampleFunnel() {
+function ExampleFunnel({ onCard }: { onCard: (card: string) => void }) {
   const steps = [
     {
       progress: 500,
@@ -16,7 +16,11 @@ function ExampleFunnel() {
     },
   ];
   return (
-    <ExCard title={'Funnel'}>
+    <ExCard
+      title={'Funnel'}
+      onCard={onCard}
+      type={'funnel'}
+    >
       <>
         {steps.map((step, index) => (
           <div key={index}>

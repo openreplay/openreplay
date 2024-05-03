@@ -6,7 +6,7 @@ import CustomNode from 'App/components/shared/Insights/SankeyChart/CustomNode';
 
 import ExCard from './ExCard';
 
-function ExamplePath() {
+function ExamplePath({ onCard }: { onCard: (card: string) => void }) {
   const data = {
     nodes: [
       { idd: 0, name: 'Home' },
@@ -30,7 +30,11 @@ function ExamplePath() {
     ],
   };
   return (
-    <ExCard title={'Path Finder'}>
+    <ExCard
+      title={'Path Finder'}
+      onCard={onCard}
+      type={'path-finder'}
+    >
       <ResponsiveContainer width={'100%'} height={230}>
         <Sankey
           nodeWidth={6}

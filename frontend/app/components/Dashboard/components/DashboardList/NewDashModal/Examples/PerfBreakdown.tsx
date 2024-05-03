@@ -3,7 +3,7 @@ import React from 'react';
 
 import ExCard from './ExCard';
 
-function PerfBreakdown() {
+function PerfBreakdown({ onCard }: { onCard: (card: string) => void }) {
   const rows = [
     ['5K', '1K'],
     ['4K', '750'],
@@ -21,7 +21,11 @@ function PerfBreakdown() {
   ];
   const bgs = ['#E2E4F6', '#A7BFFF', '#394EFF'];
   return (
-    <ExCard title={'Breakdown'}>
+    <ExCard
+      title={'Breakdown'}
+      onCard={onCard}
+      type={'perf-breakdown'}
+    >
       <div className={'relative'}>
         <div className={'flex flex-col gap-4'}>
           {rows.map((r) => (
