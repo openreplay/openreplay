@@ -31,7 +31,7 @@ interface IORTrackerConnector {
     projectKey: string,
     optionsDict: Options,
     projectUrl?: string
-  ) => Promise<string>;
+  ) => void;
   setMetadata: (key: string, value: string) => void;
   event: (name: string, payload?: string) => void;
   setUserID: (userID: string) => void;
@@ -45,13 +45,6 @@ interface IORTrackerConnector {
     duration: number
   ) => void;
 }
-
-// const ReactNative = NativeModules.ORTrackerConnector as IORTrackerConnector;
-type RnTrackerProps = ViewProps & {
-  viewName: string;
-  screenName: string;
-  children: any;
-};
 
 const RnTrackerTouchTrackingView =
   UIManager.getViewManagerConfig('RnTrackerTouchView') != null
@@ -74,12 +67,28 @@ const ORSanitizedView =
         throw new Error('RnSanitizedView; ' + LINKING_ERROR);
       };
 
-const ORAnalyticsView =
-  UIManager.getViewManagerConfig('RnTrackerView') != null
-    ? requireNativeComponent<RnTrackerProps>('RnTrackerView')
-    : () => {
-        throw new Error('RnTrackerView; ' + LINKING_ERROR);
-      };
+export function start(): void {
+  return ORTrackerConnector.startSession(
+    '34LtpOwyUI2ELFUNVkMn',
+    {
+      analytics: true,
+      crashes: true,
+      debugLogs: true,
+      logs: true,
+      performances: true,
+      screen: true,
+    },
+    'https://foss.openreplay.com/ingest'
+  );
+}
+
+export function setMetadata(key: string, value: string) {
+  ORTrackerConnector.setMetadata(key, value);
+}
+
+export function setUserID(userID: string) {
+  ORTrackerConnector.setUserID(userID);
+}
 
 let patched = false;
 const patchNetwork = (
@@ -96,7 +105,6 @@ const patchNetwork = (
 export default {
   tracker: ORTrackerConnector as IORTrackerConnector,
   patchNetwork: patchNetwork,
-  ORAnalyticsView: ORAnalyticsView,
   ORTouchTrackingView: RnTrackerTouchTrackingView,
   ORTrackedInput: ORTrackedInput,
   ORSanitizedView: ORSanitizedView,

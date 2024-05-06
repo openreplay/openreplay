@@ -1,34 +1,21 @@
 import * as React from 'react';
-import { REACT_APP_KEY, REACT_APP_INGEST } from '@env';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
+
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import Openreplay from '@openreplay/react-native';
 
 export default function App() {
+  // const [result, setResult] = React.useState<number | undefined>();
+  const [number, onChangeNumber] = React.useState('');
+
   const start = () => {
-    Openreplay.tracker
-      .startSession(
-        REACT_APP_KEY!,
-        {
-          analytics: true,
-          crashes: true,
-          debugLogs: true,
-          logs: true,
-          performances: true,
-          screen: true,
-        },
-        REACT_APP_INGEST
-      )
-      .then((resp: string) => {
-        console.log(resp);
-        Openreplay.tracker.setMetadata('key', 'value');
-        Openreplay.tracker.setUserID('user-id');
-      });
+    console.log(process.env)
+    Openreplay.tracker.startSession(
+      process.env.REACT_APP_KEY!,
+      {},
+      process.env.REACT_APP_INGEST
+    );
+    Openreplay.tracker.setMetadata('key', 'value');
+    Openreplay.tracker.setUserID('user-id');
     Openreplay.patchNetwork(global, () => false, {});
   };
 
@@ -48,38 +35,45 @@ export default function App() {
 
   const apiTest = () => {
     fetch('https://pokeapi.co/api/v2/pokemon/ditto')
-      .then((res) => res.json())
-      .then((res) => console.log(res));
+      .then((res) => {
+        return res.json();
+      })
+      .then((res) => {
+        console.log(res);
+      });
   };
 
   return (
     <Openreplay.ORTouchTrackingView style={styles.container}>
-      <ScrollView>
-        <View style={styles.content}>
-          <TouchableOpacity onPress={setMetadata} style={styles.button}>
-            <Text>Set Metadata</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={event} style={styles.button}>
-            <Text>Event</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={setID} style={styles.button}>
-            <Text>Set User ID</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={apiTest} style={styles.button}>
-            <Text>API Test</Text>
-          </TouchableOpacity>
-          <Openreplay.ORAnalyticsView
-            screenName="view title"
-            viewName="view name"
-            style={styles.analyticsView}
-          >
-            <Text>This is a tracker view with text</Text>
-          </Openreplay.ORAnalyticsView>
-          <Openreplay.ORSanitizedView style={styles.sanitizedView}>
-            <Text>This is a sanitized view</Text>
-          </Openreplay.ORSanitizedView>
-        </View>
-      </ScrollView>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={setMetadata}>
+          <Text>Set Metadata</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={event}>
+          <Text>event</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={setID}>
+          <Text>Set user id</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={apiTest}>
+          <Text>Request</Text>
+        </TouchableOpacity>
+
+        <Openreplay.ORTrackedInput
+          style={styles.input}
+          onChangeText={onChangeNumber}
+          value={number}
+          placeholder="Enter a number"
+          numberOfLines={1}
+        />
+
+        <Openreplay.ORSanitizedView style={styles.sanitizedView}>
+          <Text>This is a sanitized view</Text>
+        </Openreplay.ORSanitizedView>
+      </View>
     </Openreplay.ORTouchTrackingView>
   );
 }
@@ -89,23 +83,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ccc', // Un-commented for background color
+    // backgroundColor: '#ccc',
   },
   content: {
-    flex: 1,
-    width: '90%', // Adjusts the width to use 90% of the container width
+    width: '90%', // adjusts the width to use 90% of the container width
     padding: 20,
   },
   button: {
     backgroundColor: '#ddd',
     padding: 10,
     marginTop: 10,
-    alignSelf: 'stretch', // Added to make buttons stretch to full width
   },
-  analyticsView: {
-    padding: 10,
-    marginTop: 10,
-  },
+  input: { height: 30, width: 100, borderWidth: 1 },
   sanitizedView: {
     padding: 10,
     marginTop: 10,
