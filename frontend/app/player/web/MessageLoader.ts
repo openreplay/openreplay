@@ -45,7 +45,11 @@ export default class MessageLoader {
         const mobBytes = await decrypt(b);
         const data = unpack(mobBytes);
         fileReader.append(data);
-        fileReader.checkForIndexes();
+        if (file?.endsWith('EFS')) {
+          fileReader.forceSkipIndexes()
+        } else {
+         fileReader.checkForIndexes();
+        }
         const msgs: Array<PlayerMsg> = [];
         let finished = false;
         while (!finished) {
