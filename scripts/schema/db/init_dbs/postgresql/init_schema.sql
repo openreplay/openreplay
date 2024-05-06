@@ -689,6 +689,7 @@ CREATE TABLE events.graphql
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX graphql_name_idx ON events.graphql (name);
+CREATE INDEX graphql_session_id_idx ON events.graphql (session_id);
 CREATE INDEX graphql_name_gin_idx ON events.graphql USING GIN (name gin_trgm_ops);
 CREATE INDEX graphql_timestamp_idx ON events.graphql (timestamp);
 CREATE INDEX graphql_request_body_nn_idx ON events.graphql (request_body) WHERE request_body IS NOT NULL;
@@ -1078,6 +1079,7 @@ CREATE TABLE events_common.crashes
     PRIMARY KEY (session_id, timestamp, seq_index)
 );
 CREATE INDEX crashes_crash_ios_id_timestamp_idx ON events_common.crashes (crash_ios_id, timestamp);
+CREATE INDEX crashes_session_id_idx ON events_common.crashes (session_id);
 CREATE INDEX crashes_timestamp_idx ON events_common.crashes (timestamp);
 
 

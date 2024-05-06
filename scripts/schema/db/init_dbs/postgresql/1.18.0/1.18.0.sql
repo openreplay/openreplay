@@ -24,6 +24,9 @@ ALTER TABLE IF EXISTS public.sessions
     ADD COLUMN IF NOT EXISTS screen_width  integer DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS screen_height integer DEFAULT NULL;
 
+CREATE INDEX IF NOT EXISTS graphql_session_id_idx ON events.graphql (session_id);
+CREATE INDEX IF NOT EXISTS crashes_session_id_idx ON events_common.crashes (session_id);
+
 COMMIT;
 
 \elif :is_next
