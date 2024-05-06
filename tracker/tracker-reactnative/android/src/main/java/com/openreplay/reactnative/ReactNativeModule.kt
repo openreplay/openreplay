@@ -36,6 +36,10 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     val wifiOnly: Boolean = true  // assuming you want this as well
   )
 
+  private fun getBooleanOrDefault(map: ReadableMap, key: String, default: Boolean): Boolean {
+    return if (map.hasKey(key)) map.getBoolean(key) else default
+  }
+
   //    optionsMap: ReadableMap?,
   @ReactMethod
   fun startSession(
@@ -46,14 +50,13 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
   ) {
     val serverURL = projectUrl ?: "https://foss.openreplay.com/ingest"
     val options = OROptions(
-      crashes = optionsMap.getBoolean("crashes"),
-      analytics = optionsMap.getBoolean("analytics"),
-//      performances = optionsMap.getBoolean("performances") ?: true,
-//      logs = optionsMap.getBoolean("logs") ?: true,
-      screen = optionsMap.getBoolean("screen"),
-//      debugLogs = optionsMap.getBoolean("debugLogs") ?: false
-//      wifiOnly = optionsMap.getBoolean("wifiOnly") ?: false,
-//      debugImages = optionsMap.getBoolean("debugImages") ?: false
+      crashes = getBooleanOrDefault(optionsMap, "crashes", true),
+      analytics = getBooleanOrDefault(optionsMap, "analytics", true),
+      performances = getBooleanOrDefault(optionsMap, "performances", true),
+      logs = getBooleanOrDefault(optionsMap, "logs", true),
+      screen = getBooleanOrDefault(optionsMap, "screen", true),
+      debugLogs = getBooleanOrDefault(optionsMap, "debugLogs", true),
+      wifiOnly = getBooleanOrDefault(optionsMap, "wifiOnly", true),
     )
 
     val context = currentActivity as Activity
@@ -63,7 +66,6 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
       println("OpenReplay started")
       promise.resolve("OpenReplay Started")
     })
-//    promise.resolve("OpenReplay Started")
   }
 
   @ReactMethod
