@@ -62,7 +62,7 @@ serviceMonitor:
 
 ingress:
   enabled: false
-  className: ""
+  className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
