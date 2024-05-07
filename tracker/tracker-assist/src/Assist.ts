@@ -42,6 +42,7 @@ export interface Options {
   config: RTCConfiguration;
   serverURL: string
   callUITemplate?: string;
+  noPeer?: boolean;
 }
 
 
@@ -89,6 +90,7 @@ export default class Assist {
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
+        noPeer: false,
       },
       options,
     )
@@ -121,7 +123,13 @@ export default class Assist {
       if (this.agentsConnected) {
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
-        this.emit('messages', messages)
+        const middlePoint = Math.floor(messages.length / 2)
+        const msgEvents = messages.length < 10000
+                          ? [messages,]
+                          : [messages.slice(0, middlePoint), ...messages.slice(middlePoint),]
+        msgEvents.forEach(batch => {
+          this.emit('messages', batch)
+        })
       }
     })
     app.session.attachUpdateCallback(sessInfo => this.emit('UPDATE_SESSION', sessInfo))
@@ -379,23 +387,25 @@ export default class Assist {
       }
     }
 
-    // PeerJS call (todo: use native WebRTC)
-    const peerOptions = {
-      host: this.getHost(),
-      path: this.getBasePrefixUrl()+'/assist',
-      port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
-      //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
-    }
-    if (this.options.config) {
-      peerOptions['config'] = this.options.config
-    }
+    if (!this.options.noPeer) {
+      // PeerJS call (todo: use native WebRTC)
+      const peerOptions = {
+        host: this.getHost(),
+        path: this.getBasePrefixUrl()+'/assist',
+        port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
+        //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
+      }
+      if (this.options.config) {
+        peerOptions['config'] = this.options.config
+      }
 
-    const peer = new safeCastedPeer(peerID, peerOptions) as Peer
-    this.peer = peer
+      const peer = new safeCastedPeer(peerID, peerOptions) as Peer
+      this.peer = peer
 
-    // @ts-ignore (peerjs typing)
-    peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
-    peer.on('disconnected', () => peer.reconnect())
+      // @ts-ignore
+      peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
+      peer.on('disconnected', () => peer.reconnect())
+    }
 
     function updateCallerNames() {
       callUI?.setAssistentName(callingAgents)
@@ -453,7 +463,7 @@ export default class Assist {
     }
     const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
-    peer.on('call', (call) => {
+    this.peer?.on('call', (call) => {
       app.debug.log('Incoming call from', call.peer)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
