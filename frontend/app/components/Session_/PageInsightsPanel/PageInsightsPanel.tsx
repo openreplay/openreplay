@@ -20,9 +20,10 @@ interface Props {
     loading: boolean;
     host: string;
     setActiveTab: (tab: string) => void;
+    sessionId: string;
 }
 
-function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab }: Props) {
+function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab, sessionId }: Props) {
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
@@ -54,7 +55,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
         if (urlOptions && urlOptions[0]) {
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             Player.pause();
-            fetchInsights({ ...insightsFilters, url });
+            fetchInsights({ ...insightsFilters, sessionId, url });
             markTargets([]);
         }
         prevInsights.current = insightsFilters;
@@ -114,6 +115,7 @@ export default connect(
             events: events,
             urlOptions: events.map(({ url, host }: any) => ({ label: url, value: url, host })),
             loading: state.getIn(['sessions', 'fetchInsightsRequest', 'loading']),
+            sessionId: state.getIn(['sessions', 'current']).sessionId,
         };
     },
     { fetchInsights }
