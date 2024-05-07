@@ -208,7 +208,7 @@ export default class WebPlayer extends Player {
 
   clean = () => {
     super.clean()
-    this.screen.clean()
+    this.screen?.clean?.()
     // @ts-ignore
     this.screen = undefined;
     this.messageLoader.clean()
