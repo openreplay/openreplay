@@ -125,7 +125,7 @@ func (v *VideoStorage) sendToS3(task *Task) {
 	} else {
 		key += "/replay.mp4"
 	}
-	if err := v.objStorage.Upload(bytes.NewReader(video), key, "video/mp4", objectstorage.NoCompression); err != nil {
+	if err := v.objStorage.Upload(bytes.NewReader(video), key, "video/mp4", "", objectstorage.NoCompression); err != nil {
 		log.Fatalf("Storage: start upload video replay failed. %s", err)
 	}
 	log.Printf("Video file (size: %d) uploaded successfully in %v", len(video), time.Since(start))

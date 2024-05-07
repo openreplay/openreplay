@@ -142,6 +142,7 @@ func (c *cacher) cacheURL(t *Task) {
 	if contentType == "" {
 		contentType = mime.TypeByExtension(filepath.Ext(res.Request.URL.Path))
 	}
+	contentEncoding := res.Header.Get("Content-Encoding")
 
 	// Skip html file (usually it's a CDN mock for 404 error)
 	if strings.HasPrefix(contentType, "text/html") {
@@ -158,7 +159,7 @@ func (c *cacher) cacheURL(t *Task) {
 
 	// TODO: implement in streams
 	start = time.Now()
-	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, objectstorage.NoCompression)
+	err = c.objStorage.Upload(strings.NewReader(strData), t.cachePath, contentType, contentEncoding, objectstorage.NoCompression)
 	if err != nil {
 		metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 		c.Errors <- errors.Wrap(err, t.urlContext)
