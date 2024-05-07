@@ -373,7 +373,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.domsRawSize/float64(task.doms.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.objStorage.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", task.compression); err != nil {
+			if err := s.objStorage.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", "", task.compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDoms = time.Now().Sub(start).Milliseconds()
@@ -386,7 +386,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.domeRawSize/float64(task.dome.Len()), DOM.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.objStorage.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", task.compression); err != nil {
+			if err := s.objStorage.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", "", task.compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDome = time.Now().Sub(start).Milliseconds()
@@ -399,7 +399,7 @@ func (s *Storage) uploadSession(task *Task) {
 			metrics.RecordSessionCompressionRatio(task.devRawSize/float64(task.dev.Len()), DEV.String())
 			// Upload session to s3
 			start := time.Now()
-			if err := s.objStorage.Upload(task.dev, task.id+string(DEV), "application/octet-stream", task.compression); err != nil {
+			if err := s.objStorage.Upload(task.dev, task.id+string(DEV), "application/octet-stream", "", task.compression); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
 			uploadDev = time.Now().Sub(start).Milliseconds()

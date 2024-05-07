@@ -63,18 +63,21 @@ func NewS3(cfg *objConfig.ObjectsConfig) (objectstorage.ObjectStorage, error) {
 	}, nil
 }
 
-func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
+func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentEncoding string, compression objectstorage.CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
-	var contentEncoding *string
+	var encoding *string
 	switch compression {
 	case objectstorage.Gzip:
 		encodeStr := "gzip"
-		contentEncoding = &encodeStr
+		encoding = &encodeStr
 	case objectstorage.Brotli:
 		encodeStr := "br"
-		contentEncoding = &encodeStr
+		encoding = &encodeStr
 	case objectstorage.Zstd:
 		// Have to ignore contentEncoding for Zstd (otherwise will be an error in browser)
+	}
+	if contentEncoding != "" {
+		encoding = &contentEncoding
 	}
 
 	_, err := s.uploader.Upload(&s3manager.UploadInput{
@@ -83,7 +86,7 @@ func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, c
 		Key:             &key,
 		ContentType:     &contentType,
 		CacheControl:    &cacheControl,
-		ContentEncoding: contentEncoding,
+		ContentEncoding: encoding,
 		Tagging:         s.fileTag,
 	})
 	return err
