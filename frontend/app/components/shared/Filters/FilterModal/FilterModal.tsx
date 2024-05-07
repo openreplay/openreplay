@@ -7,11 +7,11 @@ import {
   CircleAlert,
   Clock2,
   Code,
-  ContactRound,
+  ContactRound, CornerDownRight,
   Cpu,
   Earth,
-  FileStack,
-  MapPin,
+  FileStack, Layers,
+  MapPin, Megaphone,
   MemoryStick,
   MonitorSmartphone,
   Navigation,
@@ -64,6 +64,9 @@ const IconMap = {
   [FilterKey.DURATION]: <Clock2 size={18} />,
   [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={18} />,
   [FilterKey.METADATA]: <ContactRound size={18} />,
+  [FilterKey.UTM_SOURCE]: <CornerDownRight size={18}/>,
+  [FilterKey.UTM_MEDIUM]: <Layers size={18}/>,
+  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18}/>,
 };
 
 function filterJson(
