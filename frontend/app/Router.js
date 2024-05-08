@@ -127,6 +127,11 @@ const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
 class Router extends React.Component {
   constructor(props) {
     super(props);
+    const urlJWT = new URLSearchParams(window.location.search).get('jwt');
+    if (urlJWT) {
+      props.setJwt(urlJWT);
+    }
+    
     if (props.isLoggedIn) {
       this.fetchInitialData();
     }
@@ -136,10 +141,7 @@ class Router extends React.Component {
       isJwt: checkParam('jwt', JWT_PARAM)
     };
 
-    const urlJWT = new URLSearchParams(window.location.search).get('jwt');
-    if (urlJWT && !props.isLoggedIn) {
-      props.setJwt(urlJWT);
-    }
+
   }
 
   fetchInitialData = async () => {
