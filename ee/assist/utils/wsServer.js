@@ -60,9 +60,10 @@ const createSocketIOServer = function (server, prefix) {
     if (io) {
         return io;
     }
+    let bufferSize = (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6
     if (process.env.uws !== "true") {
         io = _io(server, {
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: bufferSize,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"],
@@ -71,9 +72,10 @@ const createSocketIOServer = function (server, prefix) {
             path: (prefix ? prefix : '') + '/socket',
             ...getCompressionConfig()
         });
+        console.log('The maximum http buffer size:', bufferSize);
     } else {
         io = new _io.Server({
-            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: bufferSize,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"],
@@ -82,6 +84,7 @@ const createSocketIOServer = function (server, prefix) {
             path: (prefix ? prefix : '') + '/socket',
             ...getCompressionConfig()
         });
+        console.log('The maximum http buffer size:', bufferSize);
         io.attachApp(server);
     }
     return io;
