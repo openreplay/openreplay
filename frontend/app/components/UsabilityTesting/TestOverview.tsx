@@ -403,7 +403,7 @@ const Title = observer(({ testId, siteId }: any) => {
     return null;
   }
 
-  const truncatedDescr =
+  const truncatedDescr = uxtestingStore.instance?.description &&
     uxtestingStore.instance.description.length > 250 && truncate
       ? uxtestingStore.instance?.description.substring(0, 250) + '...'
       : uxtestingStore.instance?.description;
@@ -504,7 +504,7 @@ const Title = observer(({ testId, siteId }: any) => {
         </Dropdown>
       </div>
       <div className={'whitespace-pre-wrap mt-2'}>{truncatedDescr}</div>
-      {uxtestingStore.instance.description.length > 250 ? (
+      {uxtestingStore.instance?.description && uxtestingStore.instance.description.length > 250 ? (
         <div className={'link'} onClick={() => setTruncate(!truncate)}>
           {truncate ? 'Show more' : 'Show less'}
         </div>
