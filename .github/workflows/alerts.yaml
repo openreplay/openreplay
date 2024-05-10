@@ -34,6 +34,17 @@ jobs:
           # to see which workers got changed.
           fetch-depth: 2
 
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
+          license_key: ${{ secrets.OSS_LICENSE_KEY }}
+          jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+          minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.OSS_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
+
       - name: Docker login
         run: |
           docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
@@ -133,12 +144,15 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
           SLACK_USERNAME: "OR Bot"
           SLACK_MESSAGE: 'Build failed :bomb:'
+   # - name: Debug Job
+   #   # if: ${{ failure() }}
+   #   uses: mxschmitt/action-tmate@v3
+   #   env:
+   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+   #     IMAGE_TAG: ${{ github.sha }}-ee
+   #     ENVIRONMENT: staging
+   #    with:
+   #      limit-access-to-actor: true
 
-    # - name: Debug Job
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}
-    #     ENVIRONMENT: staging
+
 

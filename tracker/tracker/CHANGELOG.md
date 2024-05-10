@@ -1,6 +1,46 @@
-# 12.1.0
+# 12.0.12
 
-- Rewrite of webworker service to move all network activity to main thread (chrome SIGSEGV bug caused by network requests from worker thread)
+- fix for potential redux plugin issues after .11 ...
+
+# 12.0.11
+
+- better restart on unauth (new token assign for long sessions)
+- more safeguards around arraybuffer and dataview types for network proxy
+
+# 12.0.10
+
+- improved logs for node binding errors, full nodelist clear before start, getSessionInfo method
+
+# 12.0.9
+
+- moved logging to query
+
+# 12.0.8
+
+- better logging for network batches
+
+# 12.0.7
+
+- fixes for window.open reinit method
+
+# 12.0.6
+
+- allow network sanitizer to return null (will ignore network req)
+
+# 12.0.5
+
+- patch for img.ts srcset detector
+
+# 12.0.4
+
+- patch for email sanitizer (supports + now)
+- update fflate version for better compression
+- `disableCanvas` option to disable canvas capture
+- better check for adopted stylesheets in doc (old browser support)
+
+# 12.0.3
+
+- fixed scaling option for canvas (to ignore window.devicePixelRatio and always render the canvas as 1)
 
 # 12.0.2
 

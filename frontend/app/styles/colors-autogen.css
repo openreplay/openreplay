@@ -4,6 +4,7 @@
 .fill-main { fill: #394EFF }
 .fill-gray-light-shade { fill: #EEEEEE }
 .fill-gray-lightest { fill: #f6f6f6 }
+.fill-gray-lighter { fill: #f1f1f1 }
 .fill-gray-light { fill: #ddd }
 .fill-gray-bg { fill: #CCC }
 .fill-gray-medium { fill: #888 }
@@ -40,6 +41,7 @@
 .fill-borderColor-primary { fill: #3490dc }
 .fill-borderColor-transparent { fill: transparent }
 .fill-transparent { fill: transparent }
+.fill-cyan { fill: #EBF4F5 }
 .fill-figmaColors-accent-secondary { fill: rgba(62, 170, 175, 1) }
 .fill-figmaColors-main { fill: rgba(57, 78, 255, 1) }
 .fill-figmaColors-primary-outlined-hover-background { fill: rgba(62, 170, 175, 0.08) }
@@ -53,6 +55,7 @@
 .hover-fill-main:hover svg { fill: #394EFF }
 .hover-fill-gray-light-shade:hover svg { fill: #EEEEEE }
 .hover-fill-gray-lightest:hover svg { fill: #f6f6f6 }
+.hover-fill-gray-lighter:hover svg { fill: #f1f1f1 }
 .hover-fill-gray-light:hover svg { fill: #ddd }
 .hover-fill-gray-bg:hover svg { fill: #CCC }
 .hover-fill-gray-medium:hover svg { fill: #888 }
@@ -89,6 +92,7 @@
 .hover-fill-borderColor-primary:hover svg { fill: #3490dc }
 .hover-fill-borderColor-transparent:hover svg { fill: transparent }
 .hover-fill-transparent:hover svg { fill: transparent }
+.hover-fill-cyan:hover svg { fill: #EBF4F5 }
 .hover-fill-figmaColors-accent-secondary:hover svg { fill: rgba(62, 170, 175, 1) }
 .hover-fill-figmaColors-main:hover svg { fill: rgba(57, 78, 255, 1) }
 .hover-fill-figmaColors-primary-outlined-hover-background:hover svg { fill: rgba(62, 170, 175, 0.08) }
@@ -104,6 +108,7 @@
 .color-main { color: #394EFF }
 .color-gray-light-shade { color: #EEEEEE }
 .color-gray-lightest { color: #f6f6f6 }
+.color-gray-lighter { color: #f1f1f1 }
 .color-gray-light { color: #ddd }
 .color-gray-bg { color: #CCC }
 .color-gray-medium { color: #888 }
@@ -140,6 +145,7 @@
 .color-borderColor-primary { color: #3490dc }
 .color-borderColor-transparent { color: transparent }
 .color-transparent { color: transparent }
+.color-cyan { color: #EBF4F5 }
 .color-figmaColors-accent-secondary { color: rgba(62, 170, 175, 1) }
 .color-figmaColors-main { color: rgba(57, 78, 255, 1) }
 .color-figmaColors-primary-outlined-hover-background { color: rgba(62, 170, 175, 0.08) }
@@ -155,6 +161,7 @@
 .hover-main:hover { color: #394EFF }
 .hover-gray-light-shade:hover { color: #EEEEEE }
 .hover-gray-lightest:hover { color: #f6f6f6 }
+.hover-gray-lighter:hover { color: #f1f1f1 }
 .hover-gray-light:hover { color: #ddd }
 .hover-gray-bg:hover { color: #CCC }
 .hover-gray-medium:hover { color: #888 }
@@ -191,6 +198,7 @@
 .hover-borderColor-primary:hover { color: #3490dc }
 .hover-borderColor-transparent:hover { color: transparent }
 .hover-transparent:hover { color: transparent }
+.hover-cyan:hover { color: #EBF4F5 }
 .hover-figmaColors-accent-secondary:hover { color: rgba(62, 170, 175, 1) }
 .hover-figmaColors-main:hover { color: rgba(57, 78, 255, 1) }
 .hover-figmaColors-primary-outlined-hover-background:hover { color: rgba(62, 170, 175, 0.08) }
@@ -205,6 +213,7 @@
 .border-main { border-color: #394EFF }
 .border-gray-light-shade { border-color: #EEEEEE }
 .border-gray-lightest { border-color: #f6f6f6 }
+.border-gray-lighter { border-color: #f1f1f1 }
 .border-gray-light { border-color: #ddd }
 .border-gray-bg { border-color: #CCC }
 .border-gray-medium { border-color: #888 }
@@ -241,6 +250,7 @@
 .border-borderColor-primary { border-color: #3490dc }
 .border-borderColor-transparent { border-color: transparent }
 .border-transparent { border-color: transparent }
+.border-cyan { border-color: #EBF4F5 }
 .border-figmaColors-accent-secondary { border-color: rgba(62, 170, 175, 1) }
 .border-figmaColors-main { border-color: rgba(57, 78, 255, 1) }
 .border-figmaColors-primary-outlined-hover-background { border-color: rgba(62, 170, 175, 0.08) }

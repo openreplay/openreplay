@@ -12,7 +12,7 @@ export default function setProxy(
   context: typeof globalThis,
   ignoredHeaders: boolean | string[],
   setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-  sanitize: (data: RequestResponseData) => RequestResponseData,
+  sanitize: (data: RequestResponseData) => RequestResponseData | null,
   sendMessage: (message: NetworkRequest) => void,
   isServiceUrl: (url: string) => boolean,
   tokenUrlMatcher?: (url: string) => boolean,

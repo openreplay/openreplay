@@ -21,7 +21,7 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
   constructor(
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData,
+    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
     private readonly sendMessage: (item: NetworkRequest) => void,
     private readonly isServiceUrl: (url: string) => boolean,
   ) {}
@@ -66,7 +66,10 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
       item.statusText = 'Unknown'
     }
 
-    this.sendMessage(item.getMessage())
+    const msg = item.getMessage()
+    if (msg) {
+      this.sendMessage(msg)
+    }
     return isSuccess
   }
 }
@@ -81,7 +84,7 @@ export default class BeaconProxy {
   public static create(
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    sanitize: (data: RequestResponseData) => RequestResponseData,
+    sanitize: (data: RequestResponseData) => RequestResponseData | null,
     sendMessage: (item: NetworkRequest) => void,
     isServiceUrl: (url: string) => boolean,
   ) {

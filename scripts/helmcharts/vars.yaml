@@ -1,9 +1,9 @@
-fromVersion: "v1.17.0"
+fromVersion: "v1.18.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
   # `openssl rand -hex 20`
-  postgresqlPassword: "changeMePassword"
+  postgresqlPassword: "{{ randAlphaNum 20}}"
   postgresqlHost: "postgresql.db.svc.cluster.local"
   postgresqlPort: "5432"
   postgresqlUser: "postgres"
@@ -61,8 +61,8 @@ minio:
     minio:
       # For generating passwords
       # `openssl rand -hex 20`
-      accessKey: "changeMeMinioAccessKey"
-      secretKey: "changeMeMinioPassword"
+      accessKey: &accessKey "{{ randAlphaNum 20 }}"
+      secretKey: &secretKey "{{ randAlphaNum 20 }}"
 
 ingress-nginx: &ingress-nginx
   # If you're using an external proxy in front of OpenReplay, update the proxy ports below.
@@ -115,8 +115,8 @@ global:
   # Registry URL from where the OR images should be pulled.
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
-  assistKey: "SetARandomStringHere"
-  assistJWTSecret: "SetARandomStringHere"
+  assistKey: "{{ randAlphaNum 20}}"
+  assistJWTSecret: "{{ randAlphaNum 20}}"
   # In case of multiple nodes in the kubernetes cluster,
   # we'll have to create an RWX PVC for shared components.
   # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
@@ -134,8 +134,8 @@ global:
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
-    accessKey: "changeMeMinioAccessKey"
-    secretKey: "changeMeMinioPassword"
+    accessKey: *accessKey
+    secretKey: *secretKey
   email:
     emailHost: ''
     emailPort: '587'
@@ -152,7 +152,7 @@ global:
 
 chalice:
   env:
-    jwt_secret: "SetARandomStringHere"
+    jwt_secret: "{{ randAlphaNum 20}}"
     # captcha_server: ''
     # captcha_key: ''
     # SAML2_MD_URL: ''

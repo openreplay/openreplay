@@ -1,13 +1,14 @@
 package sessions
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
 )
 
@@ -22,12 +23,14 @@ type Updates interface {
 }
 
 type updatesImpl struct {
+	log     logger.Logger
 	db      pool.Pool
 	updates map[uint64]*sessionUpdate
 }
 
-func NewSessionUpdates(db pool.Pool) Updates {
+func NewSessionUpdates(log logger.Logger, db pool.Pool) Updates {
 	return &updatesImpl{
+		log:     log,
 		db:      db,
 		updates: make(map[uint64]*sessionUpdate),
 	}
@@ -93,19 +96,19 @@ func (u *updatesImpl) Commit() {
 	failed := false
 	for i := 0; i < l; i++ {
 		if _, err := br.Exec(); err != nil {
-			log.Printf("Error in PG batch.Exec(): %v \n", err)
+			u.log.Error(context.Background(), "error in PG batch.Exec(): %s", err)
 			failed = true
 			break
 		}
 	}
 	if err := br.Close(); err != nil {
-		log.Printf("Error in PG batch.Close(): %v \n", err)
+		u.log.Error(context.Background(), "error in PG batch.Close(): %s", err)
 	}
 	if failed {
 		for _, upd := range u.updates {
 			if str, args := upd.request(); str != "" {
 				if err := u.db.Exec(str, args...); err != nil {
-					log.Printf("Error in PG Exec(): %v \n", err)
+					u.log.Error(context.Background(), "error in PG Exec(): %s", err)
 				}
 			}
 		}

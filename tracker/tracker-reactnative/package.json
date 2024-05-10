@@ -1,6 +1,6 @@
 {
   "name": "@openreplay/react-native",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Openreplay React-native connector for iOS applications",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -86,7 +86,6 @@
   "engines": {
     "node": ">= 18.0.0"
   },
-  "packageManager": "^yarn@1.22.15",
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [

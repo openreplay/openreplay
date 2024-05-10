@@ -204,41 +204,20 @@ describe('ngSafeBrowserMethod', () => {
 })
 
 describe('requestIdleCb', () => {
-  test('uses window.requestIdleCallback when available', () => {
-    const callback = jest.fn()
+  test('testing FIFO scheduler', async () => {
+    jest.useFakeTimers()
     // @ts-ignore
-    window.requestIdleCallback = callback
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => cb())
+    const cb1 = jest.fn()
+    const cb2 = jest.fn()
 
-    requestIdleCb(callback)
+    requestIdleCb(cb1)
+    requestIdleCb(cb2)
 
-    expect(callback).toBeCalled()
-  })
+    expect(cb1).toBeCalled()
+    expect(cb2).toBeCalledTimes(0)
+    await jest.advanceTimersToNextTimerAsync(1)
 
-  test('falls back to using a MessageChannel if requestIdleCallback is not available', () => {
-    const callback = jest.fn()
-    class MessageChannelMock {
-      port1 = {
-        // @ts-ignore
-        postMessage: (v: any) => this.port2.onmessage(v),
-        onmessage: null,
-      }
-      port2 = {
-        onmessage: null,
-        // @ts-ignore
-        postMessage: (v: any) => this.port1.onmessage(v),
-      }
-    }
-    // @ts-ignore
-    globalThis.MessageChannel = MessageChannelMock
-    // @ts-ignore
-    globalThis.requestAnimationFrame = (cb: () => void) => cb()
-    // @ts-ignore
-    window.requestIdleCallback = undefined
-
-    requestIdleCb(callback)
-
-    // You can assert that the callback was called using the MessageChannel approach.
-    // This is more challenging to test, so it's recommended to mock MessageChannel.
-    expect(callback).toBeCalled()
+    expect(cb2).toBeCalledTimes(1)
   })
 })

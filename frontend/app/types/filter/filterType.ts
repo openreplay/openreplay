@@ -2,7 +2,7 @@ export enum FilterCategory {
   INTERACTIONS = 'Interactions',
   GEAR = 'Gear',
   RECORDING_ATTRIBUTES = 'Recording Attributes',
-  JAVASCRIPT = 'Javascript',
+  TECHNICAL = 'Technical',
   USER = 'User Identification',
   METADATA = 'Session & User Metadata',
   PERFORMANCE = 'Performance',

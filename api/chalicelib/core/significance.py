@@ -1,10 +1,7 @@
-__author__ = "AZNAUROV David"
-__maintainer__ = "KRAIEM Taha Yassine"
-
 import logging
 
 import schemas
-from chalicelib.core import events, metadata, sessions
+from chalicelib.core import events, metadata
 from chalicelib.utils import sql_helper as sh
 
 """
@@ -57,30 +54,27 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             op = sh.get_sql_operator(f.operator)
 
             filter_type = f.type
-            # values[f_k] = sessions.__get_sql_value_multiple(f["value"])
             f_k = f"f_value{i}"
             values = {**values,
-                      **sh.multi_values(helper.values_for_operator(value=f.value, op=f.operator),
-                                        value_key=f_k)}
+                      **sh.multi_values(f.value, value_key=f_k)}
+            is_not = False
+            if sh.is_negation_operator(f.operator):
+                is_not = True
             if filter_type == schemas.FilterType.user_browser:
-                # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
-                # op = sessions.__get_sql_operator_multiple(f["operator"])
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
-                # op = sessions.__get_sql_operator_multiple(f["operator"])
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
-                # op = sessions.__get_sql_operator_multiple(f["operator"])
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
             elif filter_type == schemas.FilterType.duration:
                 if len(f.value) > 0 and f.value[0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
@@ -91,35 +85,30 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             elif filter_type == schemas.FilterType.referrer:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
-                # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, value_key=f_k))
+                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
-                # op = sessions.__get_sql_operator(f["operator"])
                 if f.source in meta_keys.keys():
                     first_stage_extra_constraints.append(
                         sh.multi_conditions(
                             f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
-                            value_key=f_k))
+                            is_not=is_not, value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
-                # op = sessions.__get_sql_operator(f["operator"])
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
-                # op = sessions.__get_sql_operator(f["operator"])
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
-                # op = sessions.__get_sql_operator(f["operator"])
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 first_stage_extra_constraints.append(
-                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, value_key=f_k))
+                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
     i = -1
     for s in stages:
@@ -153,18 +142,18 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             next_table = events.EventType.CUSTOM.table
             next_col_name = events.EventType.CUSTOM.column
         #     IOS --------------
-        elif event_type == events.EventType.CLICK_IOS.ui_type:
-            next_table = events.EventType.CLICK_IOS.table
-            next_col_name = events.EventType.CLICK_IOS.column
-        elif event_type == events.EventType.INPUT_IOS.ui_type:
-            next_table = events.EventType.INPUT_IOS.table
-            next_col_name = events.EventType.INPUT_IOS.column
-        elif event_type == events.EventType.VIEW_IOS.ui_type:
-            next_table = events.EventType.VIEW_IOS.table
-            next_col_name = events.EventType.VIEW_IOS.column
-        elif event_type == events.EventType.CUSTOM_IOS.ui_type:
-            next_table = events.EventType.CUSTOM_IOS.table
-            next_col_name = events.EventType.CUSTOM_IOS.column
+        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
+            next_table = events.EventType.CLICK_MOBILE.table
+            next_col_name = events.EventType.CLICK_MOBILE.column
+        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
+            next_table = events.EventType.INPUT_MOBILE.table
+            next_col_name = events.EventType.INPUT_MOBILE.column
+        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
+            next_table = events.EventType.VIEW_MOBILE.table
+            next_col_name = events.EventType.VIEW_MOBILE.column
+        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
+            next_table = events.EventType.CUSTOM_MOBILE.table
+            next_col_name = events.EventType.CUSTOM_MOBILE.column
         else:
             logging.warning(f"=================UNDEFINED:{event_type}")
             continue
@@ -553,35 +542,11 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
 def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
     output = []
     stages = filter_d.events
-    # TODO: handle 1 stage alone
+
     if len(stages) == 0:
         logging.debug("no stages found")
         return output, 0
-    elif len(stages) == 1:
-        # TODO: count sessions, and users for single stage
-        output = [{
-            "type": stages[0].type,
-            "value": stages[0].value,
-            "dropPercentage": None,
-            "operator": stages[0].operator,
-            "sessionsCount": 0,
-            "dropPct": 0,
-            "usersCount": 0,
-            "dropDueToIssues": 0
 
-        }]
-        # original
-        # counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
-        #                                   project_id=project_id, user_id=None, count_only=True)
-        # first change
-        # counts = sessions.search_sessions(data=schemas.FlatSessionsSearchPayloadSchema.parse_obj(filter_d),
-        #                                   project_id=project_id, user_id=None, count_only=True)
-        # last change
-        counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.model_validate(filter_d),
-                                          project_id=project_id, user_id=None, count_only=True)
-        output[0]["sessionsCount"] = counts["countSessions"]
-        output[0]["usersCount"] = counts["countUsers"]
-        return output, 0
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:

@@ -46,6 +46,14 @@ export default class SettingsService {
       .catch((e) => Promise.reject(e));
   }
 
+  getFirstMobUrl(sessionId: string): Promise<{ domURL: string[] }> {
+    return this.client
+      .get(`/sessions/${sessionId}/first-mob`)
+      .then((r) => r.json())
+      .then((j) => j.data || {})
+      .catch(console.error);
+  }
+
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
     return this.client
       .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`)

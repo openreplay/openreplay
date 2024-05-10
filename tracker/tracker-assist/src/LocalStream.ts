@@ -6,6 +6,7 @@ declare global {
 
 function dummyTrack(): MediaStreamTrack { 
   const canvas = document.createElement('canvas')//, { width: 0, height: 0})
+  canvas.setAttribute('data-openreplay-hidden', '1')
   canvas.width=canvas.height=2 // Doesn't work when 1 (?!)
   const ctx = canvas.getContext('2d')
   ctx?.fillRect(0, 0, canvas.width, canvas.height)

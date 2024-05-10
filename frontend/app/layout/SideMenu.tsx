@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Tooltip, Typography } from 'antd';
+import { Divider, Menu, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
@@ -65,11 +65,10 @@ function SideMenu(props: Props) {
         if (item.hidden) return item;
 
         const isHidden = [
-          (item.key === MENU.STATS && modules.includes(MODULES.ASSIST_STATS)),
           (item.key === MENU.RECOMMENDATIONS && modules.includes(MODULES.RECOMMENDATIONS)),
           (item.key === MENU.FEATURE_FLAGS && modules.includes(MODULES.FEATURE_FLAGS)),
           (item.key === MENU.NOTES && modules.includes(MODULES.NOTES)),
-          (item.key === MENU.LIVE_SESSIONS || item.key === MENU.RECORDINGS || item.key === MENU.STATS) && modules.includes(MODULES.ASSIST),
+          (item.key === MENU.LIVE_SESSIONS && modules.includes(MODULES.ASSIST)),
           (item.key === MENU.SESSIONS && modules.includes(MODULES.OFFLINE_RECORDINGS)),
           (item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS)),
           (item.isAdmin && !isAdmin),
@@ -107,8 +106,6 @@ function SideMenu(props: Props) {
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
-    [MENU.STATS]: () => withSiteId(routes.assistStats(), siteId),
-    [MENU.RECORDINGS]: () => withSiteId(routes.recordings(), siteId),
     [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
     [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
     [MENU.ALERTS]: () => withSiteId(routes.alerts(), siteId),

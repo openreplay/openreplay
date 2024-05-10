@@ -1,39 +1,36 @@
 package license
 
 import (
-	"log"
-	"net/http"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"bytes"
+	"log"
+	"net/http"
 
 	"openreplay/backend/pkg/env"
 )
 
-
-
 type request struct {
-	MID string  `json:"mid"`
+	MID     string `json:"mid"`
 	License string `json:"license"`
 }
 
 type response struct {
 	Data struct {
-		IsValid bool `json:"valid"`
+		IsValid             bool  `json:"valid"`
 		ExpirationTimestamp int64 `json:"expiration"`
 	} `json:"data"`
 }
 
-
 func CheckLicense() {
 	license := env.String("LICENSE_KEY")
 
-	requestBody, err := json.Marshal(request{ License: license })
+	requestBody, err := json.Marshal(request{License: license})
 	if err != nil {
 		log.Fatal("Can not form a license check request.")
 	}
 
-	resp, err := http.Post("https://api.openreplay.com/os/license", "application/json", bytes.NewReader(requestBody))
+	resp, err := http.Post("https://api.openreplay.com/os/license/validate", "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		log.Fatalf("Error while checking license. %v", err)
 	}
@@ -56,6 +53,5 @@ func CheckLicense() {
 	if !respJson.Data.IsValid {
 		log.Fatal("License is not valid.")
 	}
-
 
 }

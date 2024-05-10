@@ -31,6 +31,17 @@ jobs:
         # to see which workers got changed.
         fetch-depth: 2
 
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+        license_key: ${{ secrets.EE_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+        minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.EE_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Docker login
       run: |
         docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
@@ -99,15 +110,6 @@ jobs:
       run: |
         cd scripts/helmcharts/
 
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
-        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
-
         # Update changed image tag
         sed -i "/peers/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
@@ -133,11 +135,12 @@ jobs:
         SLACK_USERNAME: "OR Bot"
         SLACK_MESSAGE: 'Build failed :bomb:'
 
-    # - name: Debug Job
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}
-    #     ENVIRONMENT: staging
-    #
+   # - name: Debug Job
+   #   # if: ${{ failure() }}
+   #   uses: mxschmitt/action-tmate@v3
+   #   env:
+   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+   #     IMAGE_TAG: ${{ github.sha }}-ee
+   #     ENVIRONMENT: staging
+   #    with:
+   #      iimit-access-to-actor: true

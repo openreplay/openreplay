@@ -7,12 +7,12 @@ export class Conditions {
   filter = new Filter().fromJson({ name: 'Rollout conditions', filters: [] });
   name = 'Condition Set';
 
-  constructor(data?: Record<string, any>, isConditional?: boolean) {
+  constructor(data?: Record<string, any>, isConditional?: boolean, isMobile?: boolean) {
     makeAutoObservable(this);
     this.name = data?.name;
     if (data && (data.rolloutPercentage || data.captureRate)) {
       this.rolloutPercentage = data.rolloutPercentage ?? data.captureRate;
-      this.filter = new Filter(isConditional).fromJson(data);
+      this.filter = new Filter(isConditional, isMobile).fromJson(data);
     }
   }
 

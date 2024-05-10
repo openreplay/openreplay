@@ -12,7 +12,8 @@ import {
     filtersMap,
     liveFiltersMap,
     conditionalFiltersMap,
-    generateFilterOptions
+    generateFilterOptions,
+    mobileConditionalFiltersMap,
 } from "Types/filter/newFilter";
 import { DURATION_FILTER } from 'App/constants/storageKeys';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
@@ -20,7 +21,6 @@ import Period, { CUSTOM_RANGE } from 'Types/app/period';
 const ERRORS_ROUTE = errorsRoute();
 
 const name = 'search';
-const idKey = 'searchId';
 const PER_PAGE = 10;
 
 const FETCH_LIST = fetchListType(name);
@@ -43,19 +43,11 @@ const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 const CHECK_LATEST = fetchListType(`${name}/CHECK_LATEST`);
 const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 
-// function chartWrapper(chart = []) {
-//     return chart.map((point) => ({ ...point, count: Math.max(point.count, 0) }));
-// }
-
-// const savedSearchIdKey = 'searchId';
-// const updateItemInList = createListUpdater(savedSearchIdKey);
-// const updateInstance = (state, instance) =>
-//     state.getIn(['savedSearch', savedSearchIdKey]) === instance[savedSearchIdKey] ? state.mergeIn(['savedSearch'], SavedFilter(instance)) : state;
-
 const initialState = Map({
     filterList: generateFilterOptions(filtersMap),
     filterListLive: generateFilterOptions(liveFiltersMap),
     filterListConditional: generateFilterOptions(conditionalFiltersMap),
+    filterListMobileConditional: generateFilterOptions(mobileConditionalFiltersMap),
     list: List(),
     latestRequestTime: null,
     latestList: List(),
@@ -76,11 +68,16 @@ function reducer(state = initialState, action = {}) {
             return state
               .set('filterList', generateFilterOptions(filtersMap))
               .set('filterListLive', generateFilterOptions(liveFiltersMap))
-              .set('filterListConditional', generateFilterOptions(conditionalFiltersMap));
+              .set('filterListConditional', generateFilterOptions(conditionalFiltersMap))
+              .set('filterListMobileConditional', generateFilterOptions(mobileConditionalFiltersMap))
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:
-            return action.fromUrl ? state.set('instance', Filter(action.filter)).set('currentPage', 1) : state.mergeIn(['instance'], action.filter).set('currentPage', 1);
+          if (action.fromUrl) {
+              return state.set('instance', Filter(action.filter)).set('currentPage', 1)
+          } else {
+              return action.filter ? state.mergeIn(['instance'], action.filter).set('currentPage', 1) : state.mergeIn(['instance'], action.filter)
+          }
         case success(FETCH):
             return state.set('instance', action.data);
         case success(FETCH_LIST):

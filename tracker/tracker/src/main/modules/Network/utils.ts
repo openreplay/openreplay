@@ -153,13 +153,13 @@ export const genFormattedBody = (body?: BodyInit) => {
       result[key] = typeof value === 'string' ? value : '[object Object]'
     }
   } else if (
+    ArrayBuffer.isView(body) ||
     body instanceof Blob ||
     body instanceof ReadableStream ||
     body instanceof ArrayBuffer
   ) {
-    result = 'byte data'
+    result = '[byte data]'
   } else if (isPureObject(body)) {
-    // overriding ArrayBufferView which is not convertable to string
     result = <any>body
   } else {
     result = `can't parse body ${typeof body}`
@@ -173,6 +173,9 @@ export function isPureObject(input: any): input is Record<any, any> {
 
 export function isIterable(value: any) {
   if (value === null || value === undefined) {
+    return false
+  }
+  if (ArrayBuffer.isView(value)) {
     return false
   }
   return typeof Symbol !== 'undefined' && typeof value[Symbol.iterator] === 'function'

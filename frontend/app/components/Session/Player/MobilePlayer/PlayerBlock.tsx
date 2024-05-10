@@ -13,6 +13,7 @@ interface IProps {
   activeTab: string;
   jiraConfig: Record<string, any>
   fullView?: boolean
+  setActiveTab: (tab: string) => void
 }
 
 function PlayerBlock(props: IProps) {
@@ -23,6 +24,7 @@ function PlayerBlock(props: IProps) {
     activeTab,
     jiraConfig,
     fullView = false,
+    setActiveTab,
   } = props;
 
   const shouldShowSubHeader = !fullscreen && !fullView
@@ -34,6 +36,7 @@ function PlayerBlock(props: IProps) {
         <MobilePlayerSubheader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
       ) : null}
       <Player
+        setActiveTab={setActiveTab}
         activeTab={activeTab}
         fullView={fullView}
       />

@@ -30,7 +30,6 @@ async def get_all_signup():
                      "edition": license.EDITION}}
 
 
-
 if not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
@@ -58,7 +57,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You’ve entered invalid Email or Password."
+            detail="You've entered invalid Email or Password."
         )
     if "errors" in r:
         raise HTTPException(
@@ -101,10 +100,15 @@ def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
 @app.get('/account', tags=['accounts'])
 def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    if r is None:
+        return {"errors": ["current user not found"]}
     t = tenants.get_by_tenant_id(context.tenant_id)
     if t is not None:
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
         t["tenantName"] = t.pop("name")
+    else:
+        return {"errors": ["current tenant not found"]}
+
     return {
         'data': {
             **r,
@@ -247,6 +251,21 @@ def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
                                     platform=context.project.platform)
     return {'data': data}
+
+
+@app.get('/{projectId}/sessions/{sessionId}/first-mob', tags=["sessions", "replay"])
+def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    if not sessionId.isnumeric():
+        return {"errors": ["session not found"]}
+    else:
+        sessionId = int(sessionId)
+    data = sessions_replay.get_pre_replay(project_id=projectId, session_id=sessionId, context=context)
+    if data is None:
+        return {"errors": ["session not found"]}
+    return {
+        'data': data
+    }
 
 
 @app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"])
@@ -481,8 +500,7 @@ def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema
 
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
 def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
-                                 note_id=noteId)
+    data = sessions_notes.delete(project_id=projectId, note_id=noteId)
     return data
 
 

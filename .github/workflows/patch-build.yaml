@@ -1,0 +1,158 @@
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+on:
+  workflow_dispatch:
+    description: 'This workflow will build for patches for latest tag, and will Always use commit from main branch.'
+    inputs:
+      services:
+        description: 'Comma separated names of services to build(in small letters).'
+        required: true
+        default: 'chalice,frontend'
+
+name: Build patches from main branch, Raise PR to Main, and Push to tag
+
+jobs:
+  deploy:
+    name: Build Patch from main
+    runs-on: ubuntu-latest
+    env:
+      DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
+      DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - name: Rebase with main branch, to make sure the code has latest main changes
+      run: |
+        git pull --rebase origin main
+
+    - name: Downloading yq
+      run: |
+        VERSION="v4.42.1"
+        sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+
+    # Configure AWS credentials for the first registry
+    - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
+      id: login-ecr-arm
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
+        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
+
+    - uses: depot/setup-action@v1
+    - name: Get HEAD Commit ID
+      run: echo "HEAD_COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+    - name: Define Branch Name
+      run: echo "BRANCH_NAME=patch/main/${HEAD_COMMIT_ID}" >> $GITHUB_ENV
+    - name: Set Remote with GITHUB_TOKEN
+      run: |
+        git config --unset http.https://github.com/.extraheader
+        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
+
+    - name: Build
+      id: build-image
+      env:
+        DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+        DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+        MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+        MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+        MSAAS_REPO_FOLDER: /tmp/msaas
+      run: |
+        set -exo pipefail
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b $BRANCH_NAME
+        working_dir=$(pwd)
+        function image_version(){
+          local service=$1
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$service/Chart.yaml"
+          current_version=$(yq eval '.AppVersion' $chart_path)
+          new_version=$(echo $current_version | awk -F. '{$NF += 1 ; print $1"."$2"."$3}')
+          echo $new_version
+          # yq eval ".AppVersion = \"$new_version\"" -i $chart_path
+        }
+        function clone_msaas() {
+          [ -d $MSAAS_REPO_FOLDER ] || {
+          git clone -b dev --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
+          cd $MSAAS_REPO_FOLDER
+          bash git-init.sh
+          git checkout
+          }
+        }
+        function build_managed() {
+          local service=$1
+          local version=$2
+          echo building managed
+          clone_msaas
+          if [[ $service == 'chalice' ]]; then
+            cd $MSAAS_REPO_FOLDER/openreplay/api
+          else
+            cd $MSAAS_REPO_FOLDER/openreplay/$service
+          fi
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+        }
+        # Checking for backend images
+        ls backend/cmd >> /tmp/backend.txt
+        echo Services: "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        # Build FOSS
+        for SERVICE in "${SERVICES[@]}"; do
+          # Check if service is backend
+          if grep -q $SERVICE /tmp/backend.txt; then 
+            cd backend 
+            foss_build_args="nil $SERVICE"
+            ee_build_args="ee $SERVICE"
+          else 
+            [[ $SERVICE == 'chalice' ]] && cd $working_dir/api || cd $SERVICE
+            ee_build_args="ee"
+          fi  
+          version=$(image_version $SERVICE)
+          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $foss_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $foss_build_args
+          echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
+          IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash build.sh $ee_build_args
+          if [[ "$SERVICE" != "chalice" && "$SERVICE" != "frontend" ]]; then
+            IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+            echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh $foss_build_args
+          else
+            build_managed $SERVICE $version
+          fi
+          cd $working_dir
+          chart_path="$working_dir/scripts/helmcharts/openreplay/charts/$SERVICE/Chart.yaml"
+          yq eval ".AppVersion = \"$version\"" -i $chart_path
+          git add $chart_path
+          git commit -m "Increment $SERVICE chart version"
+          git push --set-upstream origin $BRANCH_NAME
+        done
+
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
+      with:
+        github_token: ${{ secrets.ACTIONS_COMMMIT_TOKEN }}
+        source_branch: ${{ env.BRANCH_NAME }}
+        destination_branch: "main"
+        pr_title: "Updated patch build from main ${{ env.HEAD_COMMIT_ID }}"
+        pr_body: | 
+          This PR updates the Helm chart version after building the patch from $HEAD_COMMIT_ID.
+          Once this PR is merged, To update the latest tag, run the following workflow.
+          https://github.com/openreplay/openreplay/actions/workflows/update-tag.yaml
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO_ARM: ${{ secrets.RELEASE_ARM_REGISTRY }}
+    #     DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+    #     MSAAS_REPO_CLONE_TOKEN: ${{ secrets.MSAAS_REPO_CLONE_TOKEN }}
+    #     MSAAS_REPO_URL: ${{ secrets.MSAAS_REPO_URL }}
+    #     MSAAS_REPO_FOLDER: /tmp/msaas
+    #   with:
+    #     limit-access-to-actor: true

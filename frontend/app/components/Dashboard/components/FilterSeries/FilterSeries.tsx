@@ -43,6 +43,11 @@ function FilterSeries(props: Props) {
     observeChanges();
   };
 
+  const onFilterMove = (newFilters: any) => {
+    series.filter.replaceFilters(newFilters.toArray())
+    observeChanges();
+  }
+
   const onChangeEventsOrder = (_: any, { name, value }: any) => {
     series.filter.updateKey(name, value);
     observeChanges();
@@ -85,6 +90,7 @@ function FilterSeries(props: Props) {
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
                 supportsEmpty={supportsEmpty}
+                onFilterMove={onFilterMove}
                 excludeFilterKeys={excludeFilterKeys}
               />
             ) : (

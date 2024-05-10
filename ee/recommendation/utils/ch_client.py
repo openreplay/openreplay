@@ -22,6 +22,8 @@ class ClickHouseClient:
         self.__client = clickhouse_driver.Client(host=config("ch_host"),
                                                  database="default",
                                                  port=config("ch_port", cast=int),
+                                                 user=config("ch_user", cast=str),
+                                                 password=config("ch_password", cast=str),
                                                  settings=settings) \
             if self.__client is None else self.__client
 

@@ -61,7 +61,6 @@ ENV TZ=UTC \
     TOPIC_MOBILE_TRIGGER=mobile-trigger \
     TOPIC_CANVAS_IMAGES=canvas-images \
     TOPIC_CANVAS_TRIGGER=canvas-trigger \
-    TOPIC_REPLAY_TRIGGER=replay-trigger \
     GROUP_SINK=sink \
     GROUP_STORAGE=storage \
     GROUP_DB=db \
@@ -69,7 +68,6 @@ ENV TZ=UTC \
     GROUP_CACHE=cache \
     GROUP_HEURISTICS=heuristics \
     GROUP_IMAGE_STORAGE=image-storage \
-    GROUP_VIDEO_STORAGE=video-storage \
     GROUP_CANVAS_IMAGE=canvas-image \
     GROUP_CANVAS_VIDEO=canvas-video \
     AWS_REGION_WEB=eu-central-1 \
@@ -111,8 +109,10 @@ ENV TZ=UTC \
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
       wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
       wget https://static.openreplay.com/geoip/GeoLite2-City.mmdb -O "$MAXMINDDB_FILE"; \
-    elif [ "$SERVICE_NAME" = "videostorage" ]; then \
-      apk add --no-cache ffmpeg; \
+    elif [ "$SERVICE_NAME" = "imagestorage" ]; then \
+      apk add --no-cache zstd; \
+    elif [ "$SERVICE_NAME" = "canvas-handler" ]; then \
+          apk add --no-cache zstd; \
     elif [ "$SERVICE_NAME" = "canvas-maker" ]; then \
           apk add --no-cache ffmpeg; \
     fi

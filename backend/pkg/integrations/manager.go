@@ -1,20 +1,23 @@
 package integrations
 
 import (
-	"log"
+	"context"
 	"openreplay/backend/pkg/integrations/clients"
 	"openreplay/backend/pkg/integrations/model"
+	"openreplay/backend/pkg/logger"
 )
 
 type Manager struct {
+	log                logger.Logger
 	clientMap          clients.ClientMap
 	Events             chan *clients.SessionErrorEvent
 	Errors             chan error
 	RequestDataUpdates chan model.Integration // not pointer because it could change in other thread
 }
 
-func NewManager() *Manager {
+func NewManager(log logger.Logger) *Manager {
 	return &Manager{
+		log:                log,
 		clientMap:          make(clients.ClientMap),
 		RequestDataUpdates: make(chan model.Integration, 100),
 		Events:             make(chan *clients.SessionErrorEvent, 100),
@@ -23,7 +26,7 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) Update(i *model.Integration) (err error) {
-	log.Printf("Integration initialization: %v\n", *i)
+	m.log.Info(context.Background(), "Integration initialization: %v\n", *i)
 	key := i.GetKey()
 	if i.Options == nil {
 		delete(m.clientMap, key)
@@ -41,7 +44,7 @@ func (m *Manager) Update(i *model.Integration) (err error) {
 }
 
 func (m *Manager) RequestAll() {
-	log.Printf("Requesting all...\n")
+	m.log.Info(context.Background(), "Requesting all...")
 	for _, c := range m.clientMap {
 		go c.Request()
 	}

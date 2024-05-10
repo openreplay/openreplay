@@ -16,7 +16,7 @@ export default class Filter {
     page: number = 1
     limit: number = 10
 
-    constructor(private readonly isConditional = false) {
+    constructor(private readonly isConditional = false, private readonly isMobile = false) {
         makeAutoObservable(this, {
             filters: observable,
             eventsOrder: observable,
@@ -28,6 +28,8 @@ export default class Filter {
             updateKey: action,
             merge: action,
             addExcludeFilter: action,
+            updateFilter: action,
+            replaceFilters: action,
         })
     }
 
@@ -48,6 +50,10 @@ export default class Filter {
         this.filters.push(new FilterItem(filter))
     }
 
+    replaceFilters(filters: any) {
+        this.filters = filters;
+    }
+
     updateFilter(index: number, filter: any) {
         this.filters[index] = new FilterItem(filter)
     }
@@ -64,9 +70,18 @@ export default class Filter {
     fromJson(json: any) {
         this.name = json.name
         this.filters = json.filters.map((i: Record<string, any>) =>
-          new FilterItem(undefined, this.isConditional).fromJson(i)
+          new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i)
         );
         this.eventsOrder = json.eventsOrder
+        return this
+    }
+
+    fromData(data) {
+        this.name = data.name
+        this.filters = data.filters.map((i: Record<string, any>) =>
+          new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
+        )
+        this.eventsOrder = data.eventsOrder
         return this
     }
 

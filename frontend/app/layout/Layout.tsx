@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Layout as AntLayout } from 'antd';
 import SideMenu from 'App/layout/SideMenu';
 import TopHeader from 'App/layout/TopHeader';
@@ -9,7 +9,7 @@ import { init as initSite } from 'Duck/site';
 import { connect } from 'react-redux';
 
 
-const { Header, Sider, Content } = AntLayout;
+const { Sider, Content } = AntLayout;
 
 interface Props {
   children: React.ReactNode;

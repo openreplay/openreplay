@@ -1,16 +1,16 @@
 const fs = require('fs');
 const v8 = require('v8');
 const express = require('express');
-const router = express.Router();
+const {logger} = require('./logger');
 
-const heapdump = process.env.heapdump === "1";
+const router = express.Router();
 const location = '/tmp/';
 let creationStatus = null;
 let fileName = null;
 
 async function createHeapSnapshot() {
     if (creationStatus) {
-        return console.log(`In progress ${fileName}`);
+        return logger.info(`In progress ${fileName}`);
     }
     if (fileName === null) {
         fileName = `${Date.now()}.heapsnapshot`;
@@ -20,7 +20,7 @@ async function createHeapSnapshot() {
         location + fileName,
         v8.getHeapSnapshot()
     );
-    console.log(`Created ${fileName}`);
+    logger.info(`Created ${fileName}`);
     creationStatus = true;
 }
 
@@ -33,13 +33,12 @@ async function downloadHeapSnapshot(req, res) {
     }
     res.download(location + fileName, function (err) {
         if (err) {
-            return console.error("error while uploading HeapSnapshot file");
+            return logger.error("error while uploading HeapSnapshot file");
         }
         try {
             fs.unlinkSync(location + fileName)
         } catch (err) {
-            console.error("error while deleting heapsnapshot file");
-            console.error(err);
+            logger.error(`error while deleting heap snapshot file, err: ${err}`);
         }
     });
 }
@@ -61,11 +60,11 @@ function createNewHeapSnapshot(req, res) {
     res.end(JSON.stringify({path: location + fileName, 'done': creationStatus}));
 }
 
-if (heapdump) {
+if (process.env.heapdump === "1") {
     router.get(`/status`, getHeapSnapshotStatus);
     router.get(`/new`, createNewHeapSnapshot);
     router.get(`/download`, downloadHeapSnapshot);
+    logger.info(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);
 }
-module.exports = {router}
 
-heapdump && console.log(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);
+module.exports = {router};

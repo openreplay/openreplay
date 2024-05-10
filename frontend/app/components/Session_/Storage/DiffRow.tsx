@@ -27,12 +27,29 @@ function DiffRow({ diff, path }: Props) {
   const [shortenOldVal, setShortenOldVal] = React.useState(true);
   const [shortenNewVal, setShortenNewVal] = React.useState(true);
 
-  const oldValue = diff.item
-    ? JSON.stringify(diff.item.lhs, getCircularReplacer(), 1)
-    : JSON.stringify(diff.lhs, getCircularReplacer(), 1);
-  const newValue = diff.item
-    ? JSON.stringify(diff.item.rhs, getCircularReplacer(), 1)
-    : JSON.stringify(diff.rhs, getCircularReplacer(), 1);
+  // Adjust to handle the difference based on its type
+  let oldValue;
+  let newValue;
+
+  switch (diff.type) {
+    case 'CHANGE':
+      oldValue = JSON.stringify(diff.oldValue, null, 2);
+      newValue = JSON.stringify(diff.value, null, 2);
+      break;
+    case 'CREATE':
+      oldValue = 'undefined'; // No oldValue in CREATE type
+      newValue = JSON.stringify(diff.value, null, 2);
+      break;
+    case 'REMOVE':
+      oldValue = JSON.stringify(diff.oldValue, null, 2);
+      newValue = 'undefined'; // No newValue in REMOVE type
+      break;
+    default:
+      // Handle unexpected types, though not expected in current microdiff version
+      console.error('Unexpected diff type:', diff.type);
+      oldValue = 'error';
+      newValue = 'error';
+  }
 
   const length = path.length;
   const diffLengths = [oldValue?.length || 0, newValue?.length || 0];

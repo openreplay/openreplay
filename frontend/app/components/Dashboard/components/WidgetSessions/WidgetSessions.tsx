@@ -11,12 +11,15 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import { CLICKMAP } from 'App/constants/card';
+import { connect } from 'react-redux';
 
 interface Props {
   className?: string;
+  metaList: any;
 }
+
 function WidgetSessions(props: Props) {
-  const { className = '' } = props;
+  const { className = '', metaList } = props;
   const [activeSeries, setActiveSeries] = useState('all');
   const [data, setData] = useState<any>([]);
   const isMounted = useIsMounted();
@@ -35,7 +38,7 @@ function WidgetSessions(props: Props) {
     if (!data) return;
     const seriesOptions = data.map((item: any) => ({
       label: item.seriesName,
-      value: item.seriesId,
+      value: item.seriesId
     }));
     setSeriesOptions([{ label: 'All', value: 'all' }, ...seriesOptions]);
   }, [data]);
@@ -71,17 +74,17 @@ function WidgetSessions(props: Props) {
         operator: 'onSelector',
         isEvent: true,
         // @ts-ignore
-        filters: [],
+        filters: []
       };
       const timeRange = {
         rangeValue: dashboardStore.drillDownPeriod.rangeValue,
         startDate: dashboardStore.drillDownPeriod.start,
-        endDate: dashboardStore.drillDownPeriod.end,
+        endDate: dashboardStore.drillDownPeriod.end
       };
       const customFilter = {
         ...filter,
         ...timeRange,
-        filters: [...sessionStore.userFilter.filters, clickFilter],
+        filters: [...sessionStore.userFilter.filters, clickFilter]
       };
       debounceClickMapSearch(customFilter);
     } else {
@@ -89,7 +92,7 @@ function WidgetSessions(props: Props) {
         ...filter,
         series: widget.series.map((s) => s.toJson()),
         page: metricStore.sessionsPage,
-        limit: metricStore.sessionsPageSize,
+        limit: metricStore.sessionsPageSize
       });
     }
   };
@@ -102,46 +105,46 @@ function WidgetSessions(props: Props) {
     filter.filters,
     depsString,
     metricStore.clickMapSearch,
-    activeSeries,
+    activeSeries
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);
     dashboardStore.resetDrillDownFilter();
-  }
+  };
 
   return (
     <div className={cn(className, 'bg-white p-3 pb-0 rounded border')}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-baseline">
-          <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
-          <div className="ml-2 color-gray-medium">
+      <div className='flex items-center justify-between'>
+        <div className='flex items-baseline'>
+          <h2 className='text-xl'>{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
+          <div className='ml-2 color-gray-medium'>
             {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
-            between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
-            <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
+            between <span className='font-medium color-gray-darkest'>{startTime}</span> and{' '}
+            <span className='font-medium color-gray-darkest'>{endTime}</span>{' '}
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
+        <div className='flex items-center gap-4'>
+          {hasFilters && <Button variant='text-primary' onClick={clearFilters}>Clear Filters</Button>}
           {widget.metricType !== 'table' && widget.metricType !== CLICKMAP && (
-            <div className="flex items-center ml-6">
-              <span className="mr-2 color-gray-medium">Filter by Series</span>
+            <div className='flex items-center ml-6'>
+              <span className='mr-2 color-gray-medium'>Filter by Series</span>
               <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
             </div>
           )}
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className='mt-3'>
         <Loader loading={loading}>
           <NoContent
             title={
-              <div className="flex items-center justify-center flex-col">
+              <div className='flex items-center justify-center flex-col'>
                 <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
-                <div className="mt-4" />
-                <div className="text-center">
+                <div className='mt-4' />
+                <div className='text-center'>
                   No relevant sessions found for the selected time period
                 </div>
               </div>
@@ -150,28 +153,28 @@ function WidgetSessions(props: Props) {
           >
             {filteredSessions.sessions.map((session: any) => (
               <React.Fragment key={session.sessionId}>
-                <SessionItem session={session} />
-                <div className="border-b" />
+                <SessionItem session={session} metaList={metaList} />
+                <div className='border-b' />
               </React.Fragment>
             ))}
 
-            <div className="flex items-center justify-between p-5">
+            <div className='flex items-center justify-between p-5'>
               <div>
                 Showing{' '}
-                <span className="font-medium">
+                <span className='font-medium'>
                   {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize + 1}
                 </span>{' '}
                 to{' '}
-                <span className="font-medium">
+                <span className='font-medium'>
                   {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize +
                     filteredSessions.sessions.length}
                 </span>{' '}
-                of <span className="font-medium">{numberWithCommas(filteredSessions.total)}</span>{' '}
+                of <span className='font-medium'>{numberWithCommas(filteredSessions.total)}</span>{' '}
                 sessions.
               </div>
               <Pagination
                 page={metricStore.sessionsPage}
-                totalPages={Math.ceil(filteredSessions.total / metricStore.sessionsPageSize)}
+                total={filteredSessions.total}
                 onPageChange={(page: any) => metricStore.updateKey('sessionsPage', page)}
                 limit={metricStore.sessionsPageSize}
                 debounceRequest={500}
@@ -209,4 +212,8 @@ const getListSessionsBySeries = (data: any, seriesId: any) => {
   return arr;
 };
 
-export default observer(WidgetSessions);
+const mapStateToProps = (state: any) => ({
+  metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
+});
+
+export default connect(mapStateToProps)(observer(WidgetSessions));

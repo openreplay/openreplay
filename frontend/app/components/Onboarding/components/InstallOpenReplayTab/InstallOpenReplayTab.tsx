@@ -8,6 +8,7 @@ import { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
 import { Segmented } from 'antd';
+import { Button as AntButton } from 'antd'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -19,14 +20,15 @@ interface Props extends WithOnboardingProps {
     value: string;
   };
   setPlatform: (val: { label: string; value: string }) => void;
+  platformMap: Record<string, any>
 }
 
 function InstallOpenReplayTab(props: Props) {
-  const { site, platforms, platform, setPlatform } = props;
+  const { site, platforms, platform, setPlatform, platformMap } = props;
 
   React.useEffect(() => {
     if (site.platform)
-      setPlatform(platforms.find(({ value }) => value === site.platform) || platforms[0]);
+      setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) || platforms[0]);
   }, [site]);
   return (
     <>
@@ -38,14 +40,15 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href="https://docs.openreplay.com/en/sdk/" target="_blank">
-          <Button variant="text-primary" icon="question-circle" className="ml-2">
-            See Documentation
-          </Button>
+        <a href={"https://docs.openreplay.com/en/using-or/"} target="_blank">
+          <AntButton size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
+            <Icon name={"question-circle"} />
+            <div className={"text-main"}>See Documentation</div>
+          </AntButton>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
-        <span className="font-medium">Your platform</span>
+        <span className="font-medium">Project Type</span>
         <Segmented
           options={platforms}
           value={platform.value}

@@ -4,6 +4,7 @@ export default class AnnotationCanvas {
   private painting = false
   constructor() {
     this.canvas = document.createElement('canvas')
+    this.canvas.setAttribute('data-openreplay-hidden', '1')
     Object.assign(this.canvas.style, {
       position: 'fixed',
       left: 0,

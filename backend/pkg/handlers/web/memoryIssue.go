@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"log"
 	"math"
 
 	. "openreplay/backend/pkg/messages"
@@ -32,7 +31,7 @@ func (f *MemoryIssueDetector) Build() Message {
 	}
 	payload, err := json.Marshal(struct{ Rate int }{f.rate - 100})
 	if err != nil {
-		log.Printf("can't marshal MemoryIssue payload to json: %s", err)
+		payload = []byte("{}")
 	}
 	event := &IssueEvent{
 		Type:          "memory",

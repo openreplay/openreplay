@@ -19,7 +19,7 @@ rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
 rm -rf ./chalicelib/core/errors_favorite.py
-rm -rf ./chalicelib/core/events_ios.py
+rm -rf ./chalicelib/core/events_mobile.py
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/funnels.py
 rm -rf ./chalicelib/core/heatmaps.py
@@ -48,6 +48,7 @@ rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_mobs.py
+rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py

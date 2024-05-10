@@ -3,6 +3,7 @@ package sink
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/pkg/logger"
 )
 
 type Config struct {
@@ -13,7 +14,7 @@ type Config struct {
 	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=5"`
 	GroupSink            string `env:"GROUP_SINK,required"`
 	TopicRawWeb          string `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS          string `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile       string `env:"TOPIC_RAW_IOS,required"`
 	TopicCache           string `env:"TOPIC_CACHE,required"`
 	TopicTrigger         string `env:"TOPIC_TRIGGER,required"`
 	TopicMobileTrigger   string `env:"TOPIC_MOBILE_TRIGGER,required"`
@@ -26,8 +27,8 @@ type Config struct {
 	UseProfiler          bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

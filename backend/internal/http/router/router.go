@@ -2,11 +2,12 @@ package router
 
 import (
 	"fmt"
+	"github.com/docker/distribution/context"
 	"github.com/tomasen/realip"
-	"log"
 	"net"
 	"net/http"
 	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/pkg/logger"
 	"sync"
 	"time"
 
@@ -22,25 +23,29 @@ type BeaconSize struct {
 }
 
 type Router struct {
-	router               *mux.Router
+	log                  logger.Logger
 	cfg                  *http3.Config
-	services             *http2.ServicesBuilder
+	router               *mux.Router
 	mutex                *sync.RWMutex
+	services             *http2.ServicesBuilder
 	beaconSizeCache      map[uint64]*BeaconSize // Cache for session's beaconSize
 	compressionThreshold int64
 }
 
-func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case services == nil:
 		return nil, fmt.Errorf("services is empty")
+	case log == nil:
+		return nil, fmt.Errorf("logger is empty")
 	}
 	e := &Router{
+		log:                  log,
 		cfg:                  cfg,
-		services:             services,
 		mutex:                &sync.RWMutex{},
+		services:             services,
 		beaconSizeCache:      make(map[uint64]*BeaconSize),
 		compressionThreshold: cfg.CompressionThreshold,
 	}
@@ -91,7 +96,11 @@ func (e *Router) clearBeaconSizes() {
 
 func (e *Router) ExtractGeoData(r *http.Request) *geoip.GeoRecord {
 	ip := net.ParseIP(realip.FromRequest(r))
-	return e.services.GeoIP.Parse(ip)
+	geoRec, err := e.services.GeoIP.Parse(ip)
+	if err != nil {
+		e.log.Warn(r.Context(), "failed to parse geo data: %v", err)
+	}
+	return geoRec
 }
 
 func (e *Router) init() {
@@ -106,18 +115,19 @@ func (e *Router) init() {
 		"/v1/web/i":                e.pushMessagesHandlerWeb,
 		"/v1/web/feature-flags":    e.featureFlagsHandlerWeb,
 		"/v1/web/images":           e.imagesUploaderHandlerWeb,
-		"/v1/mobile/start":         e.startSessionHandlerIOS,
-		"/v1/mobile/i":             e.pushMessagesHandlerIOS,
-		"/v1/mobile/late":          e.pushLateMessagesHandlerIOS,
-		"/v1/mobile/images":        e.imagesUploadHandlerIOS,
+		"/v1/mobile/start":         e.startMobileSessionHandler,
+		"/v1/mobile/i":             e.pushMobileMessagesHandler,
+		"/v1/mobile/late":          e.pushMobileLateMessagesHandler,
+		"/v1/mobile/images":        e.mobileImagesUploadHandler,
 		"/v1/web/uxt/signals/test": e.sendUXTestSignal,
 		"/v1/web/uxt/signals/task": e.sendUXTaskSignal,
 	}
 	getHandlers := map[string]func(http.ResponseWriter, *http.Request){
-		"/v1/web/uxt/test/{id}":        e.getUXTestInfo,
-		"/v1/web/uxt/upload-url":       e.getUXUploadUrl,
-		"/v1/web/tags":                 e.getTags,
-		"/v1/web/conditions/{project}": e.getConditions,
+		"/v1/web/uxt/test/{id}":           e.getUXTestInfo,
+		"/v1/web/uxt/upload-url":          e.getUXUploadUrl,
+		"/v1/web/tags":                    e.getTags,
+		"/v1/web/conditions/{project}":    e.getConditions,
+		"/v1/mobile/conditions/{project}": e.getConditions,
 	}
 	prefix := "/ingest"
 
@@ -151,8 +161,7 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-
-		log.Printf("Request: %v  -  %v  ", r.Method, util.SafeString(r.URL.Path))
+		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "url": util.SafeString(r.URL.Path)}))
 
 		// Serve request
 		next.ServeHTTP(w, r)

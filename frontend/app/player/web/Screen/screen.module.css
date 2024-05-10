@@ -5,7 +5,7 @@
   transform-origin: left top;
   top: 50%;
   left: 50%;
-  box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.1);
+  background: white;
 }
 .iframe {
   position: absolute;

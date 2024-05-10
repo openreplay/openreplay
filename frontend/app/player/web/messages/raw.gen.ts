@@ -62,16 +62,17 @@ export const enum MType {
   TabData = 118,
   CanvasNode = 119,
   TagTrigger = 120,
-  IosEvent = 93,
-  IosScreenChanges = 96,
-  IosClickEvent = 100,
-  IosInputEvent = 101,
-  IosPerformanceEvent = 102,
-  IosLog = 103,
-  IosInternalError = 104,
-  IosNetworkCall = 105,
-  IosSwipeEvent = 106,
-  IosIssueEvent = 111,
+  ReduxNew = 121,
+  MobileEvent = 93,
+  MobileScreenChanges = 96,
+  MobileClickEvent = 100,
+  MobileInputEvent = 101,
+  MobilePerformanceEvent = 102,
+  MobileLog = 103,
+  MobileInternalError = 104,
+  MobileNetworkCall = 105,
+  MobileSwipeEvent = 106,
+  MobileIssueEvent = 111,
 }
 
 
@@ -500,16 +501,24 @@ export interface RawTagTrigger {
   tagId: number,
 }
 
-export interface RawIosEvent {
-  tp: MType.IosEvent,
+export interface RawReduxNew {
+  tp: MType.ReduxNew,
+  action: string,
+  state: string,
+  duration: number,
+  actionTime: number,
+}
+
+export interface RawMobileEvent {
+  tp: MType.MobileEvent,
   timestamp: number,
   length: number,
   name: string,
   payload: string,
 }
 
-export interface RawIosScreenChanges {
-  tp: MType.IosScreenChanges,
+export interface RawMobileScreenChanges {
+  tp: MType.MobileScreenChanges,
   timestamp: number,
   length: number,
   x: number,
@@ -518,8 +527,8 @@ export interface RawIosScreenChanges {
   height: number,
 }
 
-export interface RawIosClickEvent {
-  tp: MType.IosClickEvent,
+export interface RawMobileClickEvent {
+  tp: MType.MobileClickEvent,
   timestamp: number,
   length: number,
   label: string,
@@ -527,8 +536,8 @@ export interface RawIosClickEvent {
   y: number,
 }
 
-export interface RawIosInputEvent {
-  tp: MType.IosInputEvent,
+export interface RawMobileInputEvent {
+  tp: MType.MobileInputEvent,
   timestamp: number,
   length: number,
   value: string,
@@ -536,31 +545,31 @@ export interface RawIosInputEvent {
   label: string,
 }
 
-export interface RawIosPerformanceEvent {
-  tp: MType.IosPerformanceEvent,
+export interface RawMobilePerformanceEvent {
+  tp: MType.MobilePerformanceEvent,
   timestamp: number,
   length: number,
   name: string,
   value: number,
 }
 
-export interface RawIosLog {
-  tp: MType.IosLog,
+export interface RawMobileLog {
+  tp: MType.MobileLog,
   timestamp: number,
   length: number,
   severity: string,
   content: string,
 }
 
-export interface RawIosInternalError {
-  tp: MType.IosInternalError,
+export interface RawMobileInternalError {
+  tp: MType.MobileInternalError,
   timestamp: number,
   length: number,
   content: string,
 }
 
-export interface RawIosNetworkCall {
-  tp: MType.IosNetworkCall,
+export interface RawMobileNetworkCall {
+  tp: MType.MobileNetworkCall,
   timestamp: number,
   length: number,
   type: string,
@@ -572,8 +581,8 @@ export interface RawIosNetworkCall {
   duration: number,
 }
 
-export interface RawIosSwipeEvent {
-  tp: MType.IosSwipeEvent,
+export interface RawMobileSwipeEvent {
+  tp: MType.MobileSwipeEvent,
   timestamp: number,
   length: number,
   label: string,
@@ -582,8 +591,8 @@ export interface RawIosSwipeEvent {
   direction: string,
 }
 
-export interface RawIosIssueEvent {
-  tp: MType.IosIssueEvent,
+export interface RawMobileIssueEvent {
+  tp: MType.MobileIssueEvent,
   timestamp: number,
   type: string,
   contextString: string,
@@ -592,4 +601,4 @@ export interface RawIosIssueEvent {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawIosEvent | RawIosScreenChanges | RawIosClickEvent | RawIosInputEvent | RawIosPerformanceEvent | RawIosLog | RawIosInternalError | RawIosNetworkCall | RawIosSwipeEvent | RawIosIssueEvent;
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawReduxNew | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileIssueEvent;

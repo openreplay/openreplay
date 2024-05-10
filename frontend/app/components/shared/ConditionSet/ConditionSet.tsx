@@ -23,6 +23,7 @@ interface Props {
   onChangeEventsOrder: (_: any, { name, value }: any) => void;
   isConditional?: boolean;
   changeName: (name: string) => void;
+  isMobile?: boolean;
 }
 
 function ConditionSetComponent({
@@ -40,6 +41,7 @@ function ConditionSetComponent({
   onRemoveFilter,
   onChangeEventsOrder,
   isConditional,
+  isMobile,
   changeName,
 }: Props) {
   return (
@@ -97,6 +99,7 @@ function ConditionSetComponent({
               filter={undefined}
               onFilterClick={onAddFilter}
               excludeFilterKeys={excludeFilterKeys}
+              isMobile={isMobile}
             >
               <Button variant="text-primary" icon="plus">
                 Add Condition

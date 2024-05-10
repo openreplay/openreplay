@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/sink"
 )
 
@@ -9,11 +10,11 @@ type sinkIteratorImpl struct {
 	handler      MessageHandler
 }
 
-func NewSinkMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
+func NewSinkMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	iter := &sinkIteratorImpl{
 		handler: messageHandler,
 	}
-	iter.coreIterator = NewMessageIterator(iter.handle, messageFilter, autoDecode)
+	iter.coreIterator = NewMessageIterator(log, iter.handle, messageFilter, autoDecode)
 	return iter
 }
 

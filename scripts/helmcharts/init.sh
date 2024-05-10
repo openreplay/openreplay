@@ -8,14 +8,10 @@ YELLOW='\033[0;33m'
 BWHITE='\033[1;37m'
 NC='\033[0m' # No Color
 # --- helper functions for logs ---
-info() {
-    echo -e "${GREEN}[INFO] " "$@" "$NC"
-}
-warn() {
-    echo -e "${YELLOW}[INFO] " "$@" "$NC"
-}
+info() { echo -e "${GREEN}[INFO] $*${NC}"; }
+warn() { echo -e "${YELLOW}[WARN] $*${NC}"; }
 fatal() {
-    echo -e "${RED}[INFO] " "$@" "$NC"
+    echo -e "${RED}[FATAL] $*${NC}"
     exit 1
 }
 
@@ -44,63 +40,11 @@ function exists() {
     return $?
 }
 
-# Instal the toolings needed for installation/maintaining k8s
-function install_tools() {
-    ## installing kubectl
-    exists kubectl || {
-        info "$install_status kubectl"
-        sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl
-        sudo chmod +x /usr/local/bin/kubectl
-    }
-
-    ## $install_status GH package manager
-    exists eget || {
-        info "$install_status eget"
-        download_url=$(curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4)
-        curl -SsL ${download_url} -o /tmp/eget.tar.gz
-        tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
-        sudo mv /tmp/eget /usr/local/bin/eget
-        sudo chmod +x /usr/local/bin/eget
-    }
-
-    ## installing stern, log viewer for K8s
-    exists stern || {
-        info "$install_status Stern"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin stern/stern
-    }
-
-    ## installing k9s, TUI K8s
-    exists k9s || {
-        info "$install_status K9s"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin derailed/k9s
-        sudo /usr/local/bin/eget -q --upgrade-only --to "$OR_DIR" derailed/k9s --asset=tar.gz --asset=^sbom
-    }
-
-    ## installing helm, package manager for K8s
-    exists helm || {
-        info "$install_status Helm"
-        sudo /usr/local/bin/eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
-    }
-}
-
-# ## Installing openssl
-# sudo apt update &> /dev/null
-# sudo apt install openssl -y &> /dev/null
-
-randomPass() {
-    ## Installing openssl
-    exists openssl || {
-        sudo apt update &>/dev/null
-        sudo apt install openssl -y &>/dev/null
-    }
-    openssl rand -hex 10
-}
-
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.16.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.16.0"
+# This wrapper will help to check the sed, and use the correct version="v1.18.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.18.0"
 function is_gnu_sed() {
     sed --version >/dev/null 2>&1
 }
@@ -117,23 +61,16 @@ function sed_i_wrapper() {
     fi
 }
 
-function create_passwords() {
-    # Error out only if the domain name is empty in vars.yaml
-    existing_domain_name=$(awk '/domainName/ {print $2}' vars.yaml | xargs)
-    [[ -z $existing_domain_name ]] && {
-        [[ -z $DOMAIN_NAME ]] && {
-            fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
-        }
-    }
+# Create dynamic passwords and update domain
+create_passwords() {
+    local domain_name=${DOMAIN_NAME:-$(yq e '.domainName' vars.yaml)}
+    if [[ -z $domain_name ]]; then
+        fatal 'DOMAIN_NAME variable is empty. Rerun the script with `DOMAIN_NAME=openreplay.mycomp.org bash init.sh`'
+    fi
 
     info "Creating dynamic passwords"
-    sed_i_wrapper -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/assistKey: \"SetARandomStringHere\"/assistKey: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/assistJWTSecret: \"SetARandomStringHere\"/assistJWTSecret: \"$(randomPass)\"/g" vars.yaml
-    sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+    templater -i vars.yaml -o vars.yaml
+    yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
 }
 
 function set_permissions() {
@@ -155,44 +92,45 @@ function install_openreplay() {
     helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic --debug ${HELM_OPTIONS}
 }
 
+function conditional_step() {
+    local skip_var=$1
+    local action=$2
+    local message=$3
+
+    if [[ ${!skip_var} == "1" ]]; then
+        echo "$message"
+    else
+        $action
+    fi
+}
+
+function install_openreplay_actions() {
+    set_permissions
+    sudo mkdir -p /var/lib/openreplay
+    sudo cp -f openreplay-cli /bin/openreplay
+    install_openreplay
+
+    local openreplay_dir="/var/lib/openreplay/openreplay"
+    if [[ -d $openreplay_dir ]]; then
+        local versions_file="/var/lib/openreplay/or_versions.txt"
+        date +%m-%d-%Y-%H%M%S | sudo tee -a $versions_file
+        sudo git log -1 2>&1 | sudo tee -a $versions_file
+        sudo rm -rf $openreplay_dir
+    fi
+    sudo mkdir -p $openreplay_dir
+    sudo cp -rfb ./vars.yaml $openreplay_dir/../
+    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_dir
+}
+
 function main() {
-    [[ x$SKIP_K8S_INSTALL == "x1" ]] && {
-        info "Skipping Kuberntes installation"
-    } || {
-        install_k8s
-    }
-    [[ x$SKIP_K8S_TOOLS == "x1" ]] && {
-        info "Skipping Kuberntes tools installation"
-    } || {
-        install_tools
-    }
-    [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
-        info "Skipping random password generation"
-    } || {
-        create_passwords
-    }
-    [[ x$SKIP_OR_INSTALL == "x1" ]] && {
-        info "Skipping OpenReplay installation"
-    } || {
-        set_permissions
-        sudo mkdir -p /var/lib/openreplay
-        sudo cp -f openreplay-cli /bin/openreplay
-        install_openreplay
-        # If you install multiple times using init.sh, Only keep the latest installation
-        if [[ -d /var/lib/openreplay/openreplay ]]; then
-            cd /var/lib/openreplay/openreplay
-            date +%m-%d-%Y-%H%M%S | sudo tee -a /var/lib/openreplay/or_versions.txt
-            sudo git log -1 2>&1 | sudo tee -a /var/lib/openreplay/or_versions.txt
-            sudo rm -rf /var/lib/openreplay/openreplay
-            cd -
-        fi
-        sudo cp -rf $(cd ../.. && pwd) /var/lib/openreplay/openreplay
-        sudo cp -rf ./vars.yaml /var/lib/openreplay/
-    }
+    conditional_step "SKIP_K8S_INSTALL" install_k8s "Skipping Kubernetes installation."
+    conditional_step "SKIP_K8S_TOOLS" install_tools "Skipping Kubernetes tools installation."
+    conditional_step "SKIP_ROTATE_SECRETS" create_passwords "Skipping secrets rotation."
+    conditional_step "SKIP_OR_INSTALL" install_openreplay_actions "Skipping OpenReplay installation."
 }
 
 main
 
 info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
-info "You can delete the directory $(echo $(cd ../.. && pwd)). Backup stored in /var/lib/openreplay"
+info "You can delete the directory $(cd ../.. && pwd). Backup stored in /var/lib/openreplay"
 info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."

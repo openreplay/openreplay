@@ -110,11 +110,13 @@ type AppOptions = {
   __debug_report_edp: string | null
   __debug__?: ILogLevel
   __save_canvas_locally?: boolean
+  fixedCanvasScaling?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
   disableStringDict?: boolean
   assistSocketHost?: string
+  disableCanvas?: boolean
 
   /** @deprecated */
   onStart?: StartCallback
@@ -204,6 +206,8 @@ export default class App {
         disableStringDict: false,
         forceSingleTab: false,
         assistSocketHost: '',
+        fixedCanvasScaling: false,
+        disableCanvas: false,
       },
       options,
     )
@@ -657,6 +661,8 @@ export default class App {
           deviceMemory,
           jsHeapSizeLimit,
           timezone: getTimezone(),
+          width: window.innerWidth,
+          height: window.innerHeight,
         }),
       })
       const {
@@ -1047,13 +1053,14 @@ export default class App {
         await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
         this.activityState = ActivityState.Active
 
-        if (canvasEnabled) {
+        if (canvasEnabled && !this.options.disableCanvas) {
           this.canvasRecorder =
             this.canvasRecorder ??
             new CanvasRecorder(this, {
               fps: canvasFPS,
               quality: canvasQuality,
               isDebug: this.options.__save_canvas_locally,
+              fixedScaling: this.options.fixedCanvasScaling,
             })
           this.canvasRecorder.startTracking()
         }
@@ -1122,8 +1129,9 @@ export default class App {
         }
 
         this._debug('session_start', reason)
-        this.signalError(START_ERROR, [])
-        return UnsuccessfulStart(START_ERROR)
+        const errorMessage = reason instanceof Error ? reason.message : reason.toString()
+        this.signalError(errorMessage, [])
+        return UnsuccessfulStart(errorMessage)
       })
   }
 
@@ -1164,6 +1172,15 @@ export default class App {
    * and here we just apply 10ms delay just in case
    * */
   start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
+    if (
+      this.activityState === ActivityState.Active ||
+      this.activityState === ActivityState.Starting
+    ) {
+      const reason =
+        'OpenReplay: trying to call `start()` on the instance that has been started already.'
+      return Promise.resolve(UnsuccessfulStart(reason))
+    }
+
     if (!document.hidden) {
       return new Promise((resolve) => {
         setTimeout(() => {

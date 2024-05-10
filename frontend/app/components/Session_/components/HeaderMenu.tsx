@@ -6,11 +6,13 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 interface MenuItem {
   key: number;
+  autoclose?: boolean;
   component?: React.ReactElement;
 }
 
 interface Props {
   items: MenuItem[];
+  useSc?: boolean;
 }
 
 export default class ItemMenu extends React.PureComponent<Props> {
@@ -19,12 +21,19 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && this.state.displayed && this.toggleMenu();
+  handleSc = (e: KeyboardEvent) => e.key === 'M' && e.shiftKey ? this.toggleMenu() : null;
 
   componentDidMount() {
     document.addEventListener('keydown', this.handleEsc, false);
+    if (this.props.useSc) {
+      document.addEventListener('keydown', this.handleSc, false)
+    }
   }
   componentWillUnmount() {
     document.removeEventListener('keydown', this.handleEsc, false);
+    if (this.props.useSc) {
+      document.removeEventListener('keydown', this.handleSc, false)
+    }
   }
 
   toggleMenu = () => {
@@ -53,6 +62,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
               item.component ? (
                 <div
                   key={item.key}
+                  onClick={item.autoclose ? this.closeMenu : undefined}
                   role="menuitem"
                   className="hover:bg-gray-light-shade cursor-pointer flex items-center w-full"
                 >

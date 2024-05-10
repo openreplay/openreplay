@@ -73,6 +73,7 @@ export interface ISession {
   live: boolean;
   startedAt: number;
   duration: number;
+  durationMs: number;
   events: InjectedEvent[];
   crashes: IosCrash[]
   stackEvents: StackEvent[];
@@ -133,6 +134,9 @@ export interface ISession {
   userUUID: string;
   userEvents: any[];
   timezone?: string;
+  videoURL?: string[]
+  isMobileNative?: boolean
+  audio?: string;
 }
 
 const emptyValues = {
@@ -167,6 +171,7 @@ export default class Session {
   live: ISession['live'];
   startedAt: ISession['startedAt'];
   duration: Duration;
+  durationMs: ISession['durationMs'];
   events: ISession['events'];
   stackEvents: ISession['stackEvents'];
   metadata: ISession['metadata'];
@@ -216,6 +221,8 @@ export default class Session {
   frustrations: Array<IIssue | InjectedEvent>
   timezone?: ISession['timezone'];
   platform: ISession['platform'];
+  isMobileNative?: ISession['isMobileNative'];
+  audio?: ISession['audio'];
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
@@ -240,6 +247,7 @@ export default class Session {
       notes = [],
       canvasURL = [],
       uxtVideo = [],
+      videoURL = [],
       ...session
     } = sessionData;
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -302,7 +310,7 @@ export default class Session {
 
     Object.assign(this, {
       ...session,
-      isIOS: session.platform === 'ios',
+      isMobileNative: ['ios', 'android'].includes(session.platform),
       errors: exceptions,
       siteId: projectId,
       events,
@@ -332,9 +340,12 @@ export default class Session {
       devtoolsURL,
       notes,
       canvasURL,
+      videoURL: Array.isArray(videoURL) ? videoURL : [videoURL],
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
       uxtVideo: uxtVideo[0],
+      durationMs: session.duration,
+      audio: session.audio,
     });
   }
 

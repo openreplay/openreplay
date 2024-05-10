@@ -522,6 +522,13 @@ message 120, 'TagTrigger', :replayer => :devtools do
     int 'TagId'
 end
 
+message 121, 'ReduxNew', :replayer => :devtools do
+  string 'Action'
+  string 'State'
+  uint 'Duration'
+  uint 'ActionTime'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

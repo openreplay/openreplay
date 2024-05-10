@@ -118,11 +118,8 @@ function Controls(props: any) {
             <ControlButton
               onClick={() => toggleBottomTools(CONSOLE)}
               active={bottomBlock === CONSOLE}
-              label="CONSOLE"
-              noIcon
-              labelClassName="!text-base font-semibold"
+              label="Console"
               hasErrors={logRedCount > 0 || showExceptions}
-              containerClassName="mx-2"
             />
           </div>
         </div>

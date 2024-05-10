@@ -1,8 +1,9 @@
 package messages
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"openreplay/backend/pkg/logger"
 )
 
 // MessageHandler processes one message using service logic
@@ -14,6 +15,7 @@ type MessageIterator interface {
 }
 
 type messageIteratorImpl struct {
+	log         logger.Logger
 	filter      map[int]struct{}
 	preFilter   map[int]struct{}
 	handler     MessageHandler
@@ -27,8 +29,9 @@ type messageIteratorImpl struct {
 	urls        *pageLocations
 }
 
-func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
+func NewMessageIterator(log logger.Logger, messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
 	iter := &messageIteratorImpl{
+		log:        log,
 		handler:    messageHandler,
 		autoDecode: autoDecode,
 		urls:       NewPageLocations(),
@@ -43,7 +46,7 @@ func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, auto
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgIOSBatchMeta: {},
+		MsgMobileBatchMeta: {},
 	}
 	return iter
 }
@@ -58,12 +61,14 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 }
 
 func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
+	ctx := context.WithValue(context.Background(), "sessionID", batchInfo.sessionID)
+
 	// Create new message reader
 	reader := NewMessageReader(batchData)
 
 	// Pre-decode batch data
 	if err := reader.Parse(); err != nil {
-		log.Printf("pre-decode batch err: %s, info: %s", err, batchInfo.Info())
+		i.log.Error(ctx, "pre-decode batch err: %s, info: %s", err, batchInfo.Info())
 		return
 	}
 
@@ -81,12 +86,12 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 			msg = transformDeprecated(msg)
 			if err := i.preprocessing(msg); err != nil {
-				log.Printf("message preprocessing err: %s", err)
+				i.log.Error(ctx, "message preprocessing err: %s", err)
 				return
 			}
 		}
@@ -101,7 +106,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if i.autoDecode {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
+				i.log.Error(ctx, "decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 		}
@@ -110,8 +115,8 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		msg.Meta().SetMeta(i.messageInfo)
 
 		// Update timestamp value for iOS message types
-		if IsIOSType(msgType) {
-			msgTime := i.getIOSTimestamp(msg)
+		if IsMobileType(msgType) {
+			msgTime := i.getMobileTimestamp(msg)
 			msg.Meta().Timestamp = msgTime
 		}
 
@@ -120,12 +125,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	}
 }
 
-func (i *messageIteratorImpl) getIOSTimestamp(msg Message) uint64 {
+func (i *messageIteratorImpl) getMobileTimestamp(msg Message) uint64 {
 	return GetTimestamp(msg)
 }
 
 func (i *messageIteratorImpl) zeroTsLog(msgType string) {
-	log.Printf("zero timestamp in %s, info: %s", msgType, i.batchInfo.Info())
+	ctx := context.WithValue(context.Background(), "sessionID", i.batchInfo.sessionID)
+	i.log.Warn(ctx, "zero timestamp in %s, info: %s", msgType, i.batchInfo.Info())
 }
 
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
@@ -146,7 +152,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.version = m.Version
 		i.batchInfo.version = m.Version
 
-	case *BatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
+	case *BatchMeta: // Is not required to be present in batch since Mobile doesn't have it (though we might change it)
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
@@ -170,7 +176,8 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionStart")
-			log.Printf("zero session start, project: %d, UA: %s, tracker: %s, info: %s",
+			ctx := context.WithValue(context.Background(), "sessionID", i.batchInfo.sessionID)
+			i.log.Warn(ctx, "zero timestamp in SessionStart, project: %d, UA: %s, tracker: %s, info: %s",
 				m.ProjectID, m.UserAgent, m.TrackerVersion, i.batchInfo.Info())
 		}
 
@@ -187,14 +194,14 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		// Save session page url in cache for using in next batches
 		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
 
-	case *IOSBatchMeta:
+	case *MobileBatchMeta:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.FirstIndex
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
-			i.zeroTsLog("IOSBatchMeta")
+			i.zeroTsLog("MobileBatchMeta")
 		}
 	}
 	return nil

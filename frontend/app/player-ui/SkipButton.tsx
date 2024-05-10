@@ -1,6 +1,7 @@
 import React from 'react'
 import { Icon } from 'UI'
 import cn from 'classnames'
+import { ForwardOutlined } from '@ant-design/icons';
 
 interface IProps {
   size: number;
@@ -9,18 +10,14 @@ interface IProps {
   customClasses: string;
 }
 
-export function SkipButton({ size = 18, onClick, isBackwards, customClasses }: IProps) {
+export function SkipButton({ onClick, isBackwards, customClasses }: IProps) {
 
   return (
     <div
       onClick={onClick}
-      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', customClasses)}
+      className={cn('py-1 px-2 cursor-pointer', customClasses)}
     >
-      <Icon
-        name={ isBackwards ? "arrow-counterclockwise" : "arrow-clockwise" }
-        size={size}
-        color="inherit"
-      />
+      <ForwardOutlined rotate={isBackwards ? 180 : 0} />
     </div>
   )
 }

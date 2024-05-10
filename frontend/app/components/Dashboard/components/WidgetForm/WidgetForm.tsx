@@ -22,10 +22,11 @@ import {
   USER_PATH,
   RETENTION
 } from 'App/constants/card';
-import { eventKeys, filtersMap } from 'App/types/filter/newFilter';
+import { eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
 import Widget from 'App/mstore/types/widget';
 import FilterItem from 'Shared/Filters/FilterItem';
+import { Input } from 'antd'
 
 interface Props {
   history: any;
@@ -40,7 +41,9 @@ function WidgetForm(props: Props) {
       params: { siteId, dashboardId }
     }
   } = props;
-  const { metricStore, dashboardStore } = useStore();
+  const [aiQuery, setAiQuery] = useState('')
+  const [aiAskChart, setAiAskChart] = useState('')
+  const { metricStore, dashboardStore, aiFiltersStore } = useStore();
   const isSaving = metricStore.isSaving;
   const metric: any = metricStore.instance;
   const [initialInstance, setInitialInstance] = useState();
@@ -54,7 +57,7 @@ function WidgetForm(props: Props) {
   const isPathAnalysis = metric.metricType === USER_PATH;
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
-  const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
+  const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
   const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(
@@ -103,7 +106,7 @@ function WidgetForm(props: Props) {
         history.replace(
           withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
         );
-        dashboardStore.addWidgetToDashboard(
+        void dashboardStore.addWidgetToDashboard(
           dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
           [savedMetric.metricId]
         );
@@ -130,6 +133,29 @@ function WidgetForm(props: Props) {
     metricStore.merge(w.fromJson(initialInstance), false);
   };
 
+  const fetchResults = () => {
+    aiFiltersStore.getCardFilters(aiQuery, metric.metricType)
+      .then((f) => {
+        metric.createSeries(f.filters);
+      })
+  };
+
+  const fetchChartData = () => {
+    void aiFiltersStore.getCardData(aiAskChart, metric.toJson())
+  }
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      fetchResults();
+    }
+  };
+  const handleChartKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      fetchChartData();
+    }
+  };
+
+  const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
   return (
     <div className='p-6'>
       <div className='form-group'>
@@ -237,9 +263,29 @@ function WidgetForm(props: Props) {
           </div>
         </div>
       )}
-
+      {testingKey ? <Input
+        placeholder="AI Query"
+        value={aiQuery}
+        onChange={(e: any) => setAiQuery(e.target.value)}
+        className="w-full mb-2"
+        onKeyDown={handleKeyDown}
+      /> : null}
+      {testingKey ? <Input
+        placeholder="AI Ask Chart"
+        value={aiAskChart}
+        onChange={(e: any) => setAiAskChart(e.target.value)}
+        className="w-full mb-2"
+        onKeyDown={handleChartKeyDown}
+      /> : null}
+      {aiFiltersStore.isLoading ? (
+        <div>
+          <div className='flex items-center font-medium py-2'>
+            Loading
+          </div>
+        </div>
+      ) : null}
       {!isPredefined && (
-        <div className='form-group'>
+        <div>
           <div className='flex items-center font-medium py-2'>
             {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
             {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (

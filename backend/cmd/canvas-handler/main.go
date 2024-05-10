@@ -1,36 +1,37 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
+	"openreplay/backend/internal/canvas-handler"
+	config "openreplay/backend/internal/config/canvas-handler"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(storageMetrics.List())
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, storageMetrics.List())
 
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := config.New()
-
-	srv, err := imagestorage.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
-		log.Printf("can't init storage service: %s", err)
-		return
+		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	srv, err := canvas_handler.New(cfg, log, objStore)
+	if err != nil {
+		log.Fatal(ctx, "can't init canvas service: %s", err)
+	}
 
 	canvasConsumer := queue.NewConsumer(
 		cfg.GroupCanvasImage,
@@ -38,38 +39,30 @@ func main() {
 			cfg.TopicCanvasImages,
 		},
 		messages.NewImagesMessageIterator(func(data []byte, sessID uint64) {
-			checkSessionEnd := func(data []byte) (messages.Message, error) {
+			isSessionEnd := func(data []byte) bool {
 				reader := messages.NewBytesReader(data)
 				msgType, err := reader.ReadUint()
 				if err != nil {
-					return nil, err
+					return false
 				}
 				if msgType != messages.MsgSessionEnd {
-					return nil, fmt.Errorf("not a session end message")
+					return false
 				}
-				msg, err := messages.ReadMessage(msgType, reader)
+				_, err = messages.ReadMessage(msgType, reader)
 				if err != nil {
-					return nil, fmt.Errorf("read message err: %s", err)
+					return false
 				}
-				return msg, nil
+				return true
 			}
+			sessCtx := context.WithValue(context.Background(), "sessionID", sessID)
 
-			if msg, err := checkSessionEnd(data); err == nil {
-				sessEnd := msg.(*messages.SessionEnd)
-				// Received session end
-				if list, err := srv.PrepareCanvas(sessID); err != nil {
-					log.Printf("can't prepare canvas: %s", err)
-				} else {
-					for _, name := range list {
-						sessEnd.EncryptionKey = name
-						if err := producer.Produce(cfg.TopicCanvasTrigger, sessID, sessEnd.Encode()); err != nil {
-							log.Printf("can't send session end signal to video service: %s", err)
-						}
-					}
+			if isSessionEnd(data) {
+				if err := srv.PackSessionCanvases(sessCtx, sessID); err != nil {
+					log.Error(sessCtx, "can't pack session's canvases: %s", err)
 				}
 			} else {
-				if err := srv.ProcessCanvas(sessID, data); err != nil {
-					log.Printf("can't process canvas image: %s", err)
+				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {
+					log.Error(sessCtx, "can't process canvas image: %s", err)
 				}
 			}
 		}, nil, true),
@@ -77,7 +70,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Canvas handler service started\n")
+	log.Info(ctx, "canvas handler service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -86,21 +79,21 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Info(ctx, "caught signal %v: terminating", sig)
 			srv.Wait()
 			canvasConsumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
 			if err := canvasConsumer.Commit(); err != nil {
-				log.Printf("can't commit messages: %s", err)
+				log.Error(ctx, "can't commit messages: %s", err)
 			}
 		case msg := <-canvasConsumer.Rebalanced():
-			log.Println(msg)
+			log.Info(ctx, "consumer group rebalanced: %+v", msg)
 		default:
 			err = canvasConsumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on images consumption: %v", err)
+				log.Fatal(ctx, "can't consume next message: %s", err)
 			}
 		}
 	}

@@ -48,7 +48,7 @@ function FunnelList(props) {
             <div className="w-full flex items-center justify-center py-8">
                 <Pagination
                     page={funnelStore.page}
-                    totalPages={Math.ceil(list.length / funnelStore.pageSize)}
+                    total={list.length}
                     onPageChange={(page) => funnelStore.updateKey('page', page)}
                     limit={funnelStore.pageSize}
                     debounceRequest={100}

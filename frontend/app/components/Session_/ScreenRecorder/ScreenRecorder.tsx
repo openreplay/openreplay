@@ -142,7 +142,8 @@ function ScreenRecorder({
 }
 
 export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
+    state.getIn(['user', 'account', 'edition']) === 'msaas',
   siteId: state.getIn(['site', 'siteId']),
   sessionId: state.getIn(['sessions', 'current']).sessionId,
   agentId: state.getIn(['user', 'account', 'id']),

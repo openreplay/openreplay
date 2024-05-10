@@ -23,36 +23,6 @@ func New(db pool.Pool) Conditions {
 	}
 }
 
-type ConditionType string
-
-const (
-	VisitedURL      ConditionType = "visited_url"
-	RequestURL      ConditionType = "request_url"
-	ClickLabel      ConditionType = "click_label"
-	ClickSelector   ConditionType = "click_selector"
-	CustomEvent     ConditionType = "custom_event"
-	Exception       ConditionType = "exception"
-	FeatureFlag     ConditionType = "feature_flag"
-	SessionDuration ConditionType = "session_duration"
-)
-
-type ConditionOperator string
-
-const (
-	Is          ConditionOperator = "is"
-	IsNot       ConditionOperator = "isNot"
-	Contains    ConditionOperator = "contains"
-	NotContains ConditionOperator = "notContains"
-	StartsWith  ConditionOperator = "startsWith"
-	EndsWith    ConditionOperator = "endsWith"
-)
-
-type Condition struct {
-	Type     ConditionType     `json:"type"`
-	Operator ConditionOperator `json:"operator"`
-	Values   []string          `json:"value"`
-}
-
 type ConditionSet struct {
 	Name    string      `json:"name"`
 	Filters interface{} `json:"filters"`

@@ -3,8 +3,6 @@ package redisstream
 import (
 	"log"
 	"net"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/queue/types"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,6 +10,9 @@ import (
 
 	_redis "github.com/go-redis/redis"
 	"github.com/pkg/errors"
+
+	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
 )
 
 type idsInfo struct {
@@ -32,7 +33,10 @@ type Consumer struct {
 }
 
 func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
-	redis := getRedisClient()
+	redis, err := getRedisClient()
+	if err != nil {
+		log.Fatalln(err)
+	}
 	for _, stream := range streams {
 		err := redis.XGroupCreateMkStream(stream, group, "0").Err()
 		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {

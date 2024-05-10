@@ -38,12 +38,12 @@ type Connector interface {
 	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
 	// Mobile
 	InsertMobileSession(session *sessions.Session) error
-	InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error
-	InsertMobileClick(session *sessions.Session, msg *messages.IOSClickEvent) error
-	InsertMobileSwipe(session *sessions.Session, msg *messages.IOSSwipeEvent) error
-	InsertMobileInput(session *sessions.Session, msg *messages.IOSInputEvent) error
-	InsertMobileRequest(session *sessions.Session, msg *messages.IOSNetworkCall, savePayload bool) error
-	InsertMobileCrash(session *sessions.Session, msg *messages.IOSCrash) error
+	InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error
+	InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error
+	InsertMobileSwipe(session *sessions.Session, msg *messages.MobileSwipeEvent) error
+	InsertMobileInput(session *sessions.Session, msg *messages.MobileInputEvent) error
+	InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error
+	InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error
 }
 
 type task struct {
@@ -119,7 +119,7 @@ var batches = map[string]string{
 	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type, selector) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -387,6 +387,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
 		"CLICK",
+		msg.Selector,
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
@@ -406,6 +407,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 	default:
 		return fmt.Errorf("unknown error source: %s", msg.Source)
 	}
+	msgID, _ := msg.ID(session.ProjectID)
 	// Insert event to batch
 	if err := c.batches["errors"].Append(
 		session.SessionID,
@@ -415,7 +417,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		msg.Source,
 		nullableString(msg.Name),
 		msg.Message,
-		msg.ID(session.ProjectID),
+		msgID,
 		"ERROR",
 		keys,
 		values,
@@ -581,7 +583,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.IOSEvent) error {
+func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error {
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -597,7 +599,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messages.IOSClickEvent) error {
+func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -615,7 +617,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messages.IOSSwipeEvent) error {
+func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messages.MobileSwipeEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -634,7 +636,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messages.IOSInputEvent) error {
+func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messages.MobileInputEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -652,7 +654,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *messages.IOSNetworkCall, savePayload bool) error {
+func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *messages.MobileNetworkCall, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -682,7 +684,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 	return nil
 }
 
-func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.IOSCrash) error {
+func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {
 	if err := c.batches["ios_crashes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),

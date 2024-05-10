@@ -40,7 +40,8 @@ export function createIOSPlayer(
 export function createWebPlayer(
   session: SessionFilesInfo,
   wrapStore?: (s: IWebPlayerStore) => IWebPlayerStore,
-  uiErrorHandler?: { error: (msg: string) => void }
+  uiErrorHandler?: { error: (msg: string) => void },
+  prefetched?: boolean,
 ): [IWebPlayer, IWebPlayerStore] {
   let store: WebPlayerStore = new SimpleStore<WebState>({
     ...WebPlayer.INITIAL_STATE,
@@ -49,7 +50,7 @@ export function createWebPlayer(
     store = wrapStore(store);
   }
 
-  const player = new WebPlayer(store, session, false, false, uiErrorHandler);
+  const player = new WebPlayer(store, session, false, false, uiErrorHandler, prefetched);
   return [player, store];
 }
 

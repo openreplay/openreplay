@@ -1,7 +1,7 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body
+from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -448,10 +448,10 @@ def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
 
 
 @public_app.post('/password/reset-link', tags=["reset password"])
-def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)):
+def reset_password_handler(background_tasks: BackgroundTasks, data: schemas.ForgetPasswordPayloadSchema = Body(...)):
     if len(data.email) < 5:
         return {"errors": ["please provide a valid email address"]}
-    return reset_password.reset(data=data)
+    return reset_password.reset(data=data, background_tasks=background_tasks)
 
 
 @app.get('/{projectId}/metadata', tags=["metadata"])
@@ -872,16 +872,19 @@ async def check_recording_status(project_id: int):
 def health_check():
     return {}
 
+
 # tags
 
 @app.post('/{projectId}/tags', tags=["tags"])
-def tags_create(projectId: int, data: schemas.TagCreate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
+def tags_create(projectId: int, data: schemas.TagCreate = Body(),
+                context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.create_tag(project_id=projectId, data=data)
     return {'data': data}
 
 
 @app.put('/{projectId}/tags/{tagId}', tags=["tags"])
-def tags_update(projectId: int, tagId: int, data: schemas.TagUpdate = Body(), context: schemas.CurrentContext = Depends(OR_context)):
+def tags_update(projectId: int, tagId: int, data: schemas.TagUpdate = Body(),
+                context: schemas.CurrentContext = Depends(OR_context)):
     data = tags.update_tag(project_id=projectId, tag_id=tagId, data=data)
     return {'data': data}
 

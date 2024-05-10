@@ -1203,6 +1203,21 @@ cdef class TagTrigger(PyMessage):
         self.tag_id = tag_id
 
 
+cdef class ReduxNew(PyMessage):
+    cdef public int __id__
+    cdef public str action
+    cdef public str state
+    cdef public unsigned long duration
+    cdef public unsigned long action_time
+
+    def __init__(self, str action, str state, unsigned long duration, unsigned long action_time):
+        self.__id__ = 121
+        self.action = action
+        self.state = state
+        self.duration = duration
+        self.action_time = action_time
+
+
 cdef class IssueEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long message_id
@@ -1246,7 +1261,7 @@ cdef class SessionSearch(PyMessage):
         self.partition = partition
 
 
-cdef class IOSSessionStart(PyMessage):
+cdef class MobileSessionStart(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long project_id
@@ -1273,7 +1288,7 @@ cdef class IOSSessionStart(PyMessage):
         self.user_country = user_country
 
 
-cdef class IOSSessionEnd(PyMessage):
+cdef class MobileSessionEnd(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
 
@@ -1282,7 +1297,7 @@ cdef class IOSSessionEnd(PyMessage):
         self.timestamp = timestamp
 
 
-cdef class IOSMetadata(PyMessage):
+cdef class MobileMetadata(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1297,7 +1312,7 @@ cdef class IOSMetadata(PyMessage):
         self.value = value
 
 
-cdef class IOSEvent(PyMessage):
+cdef class MobileEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1312,7 +1327,7 @@ cdef class IOSEvent(PyMessage):
         self.payload = payload
 
 
-cdef class IOSUserID(PyMessage):
+cdef class MobileUserID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1325,7 +1340,7 @@ cdef class IOSUserID(PyMessage):
         self.id = id
 
 
-cdef class IOSUserAnonymousID(PyMessage):
+cdef class MobileUserAnonymousID(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1338,7 +1353,7 @@ cdef class IOSUserAnonymousID(PyMessage):
         self.id = id
 
 
-cdef class IOSScreenChanges(PyMessage):
+cdef class MobileScreenChanges(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1357,7 +1372,7 @@ cdef class IOSScreenChanges(PyMessage):
         self.height = height
 
 
-cdef class IOSCrash(PyMessage):
+cdef class MobileCrash(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1374,7 +1389,7 @@ cdef class IOSCrash(PyMessage):
         self.stacktrace = stacktrace
 
 
-cdef class IOSViewComponentEvent(PyMessage):
+cdef class MobileViewComponentEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1391,7 +1406,7 @@ cdef class IOSViewComponentEvent(PyMessage):
         self.visible = visible
 
 
-cdef class IOSClickEvent(PyMessage):
+cdef class MobileClickEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1408,7 +1423,7 @@ cdef class IOSClickEvent(PyMessage):
         self.y = y
 
 
-cdef class IOSInputEvent(PyMessage):
+cdef class MobileInputEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1425,7 +1440,7 @@ cdef class IOSInputEvent(PyMessage):
         self.label = label
 
 
-cdef class IOSPerformanceEvent(PyMessage):
+cdef class MobilePerformanceEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1440,7 +1455,7 @@ cdef class IOSPerformanceEvent(PyMessage):
         self.value = value
 
 
-cdef class IOSLog(PyMessage):
+cdef class MobileLog(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1455,7 +1470,7 @@ cdef class IOSLog(PyMessage):
         self.content = content
 
 
-cdef class IOSInternalError(PyMessage):
+cdef class MobileInternalError(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1468,7 +1483,7 @@ cdef class IOSInternalError(PyMessage):
         self.content = content
 
 
-cdef class IOSNetworkCall(PyMessage):
+cdef class MobileNetworkCall(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1493,7 +1508,7 @@ cdef class IOSNetworkCall(PyMessage):
         self.duration = duration
 
 
-cdef class IOSSwipeEvent(PyMessage):
+cdef class MobileSwipeEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1512,7 +1527,7 @@ cdef class IOSSwipeEvent(PyMessage):
         self.direction = direction
 
 
-cdef class IOSBatchMeta(PyMessage):
+cdef class MobileBatchMeta(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public unsigned long length
@@ -1525,7 +1540,7 @@ cdef class IOSBatchMeta(PyMessage):
         self.first_index = first_index
 
 
-cdef class IOSPerformanceAggregated(PyMessage):
+cdef class MobilePerformanceAggregated(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp_start
     cdef public unsigned long timestamp_end
@@ -1560,7 +1575,7 @@ cdef class IOSPerformanceAggregated(PyMessage):
         self.max_battery = max_battery
 
 
-cdef class IOSIssueEvent(PyMessage):
+cdef class MobileIssueEvent(PyMessage):
     cdef public int __id__
     cdef public unsigned long timestamp
     cdef public str type

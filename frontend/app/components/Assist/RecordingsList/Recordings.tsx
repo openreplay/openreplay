@@ -6,12 +6,10 @@ import RecordingsList from './RecordingsList';
 import { useStore } from 'App/mstore';
 import { connect } from 'react-redux';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
-import Period from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
   userId: string;
-  filter: any;
 }
 
 function Recordings(props: Props) {
@@ -28,10 +26,10 @@ function Recordings(props: Props) {
   };
 
   return (
-    <div style={{ maxWidth: '1360px', margin: 'auto' }} className='bg-white rounded py-4 border'>
+    <div style={{ maxWidth: '1360px', margin: 'auto' }} className='bg-white rounded py-4 border h-screen overflow-y-scroll'>
       <div className='flex items-center mb-4 justify-between px-6'>
         <div className='flex items-baseline mr-3'>
-          <PageTitle title='Recordings' />
+          <PageTitle title='Training Videos' />
         </div>
         <div className='ml-auto flex items-center gap-4'>
           <SelectDateRange period={recordingsStore.period} onChange={onDateChange} right={true} />

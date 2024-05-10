@@ -14,7 +14,6 @@ import Period, { LAST_24_HOURS } from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { durationFromMsFormatted, formatTimeOrDate } from 'App/date'
-import withPageTitle from 'HOCs/withPageTitle';
 import { exportCSVFile } from 'App/utils';
 import { assistStatsService } from 'App/services';
 
@@ -206,16 +205,16 @@ function AssistStats() {
   };
 
   return (
-    <div className={'w-full'}>
+    <div className={'w-full h-screen overflow-y-auto'}>
       <div className={'mx-auto p-4 bg-white rounded border'} style={{ maxWidth: 1360 }} id={'pdf-anchor'}>
         <div id={'pdf-ignore'} className={'w-full flex items-center mb-2'}>
           <Typography.Title style={{ marginBottom: 0 }} level={4}>
-            Reports
+            Co-browsing Reports
           </Typography.Title>
           <div className={'ml-auto flex items-center gap-2'}>
             <UserSearch onUserSelect={onUserSelect} />
 
-            <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt />
+            <SelectDateRange period={period} onChange={onChangePeriod} right={true} isAnt small />
             <Tooltip title={!sessions || sessions.total === 0 ? 'No data at the moment to export.' : 'Export PDF'}>
               <Button
                 onClick={getPdf2}
@@ -227,8 +226,7 @@ function AssistStats() {
             </Tooltip>
           </div>
         </div>
-        <div className={'w-full grid grid-cols-3 gap-2'}>
-          <div className={'grid grid-cols-3 gap-2 flex-2 col-span-2'}>
+          <div className={'w-full grid grid-cols-3 gap-2 flex-2 col-span-2'}>
             {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
               <div className={'bg-white rounded border'}>
                 <div className={'pt-2 px-2'}>
@@ -238,15 +236,15 @@ function AssistStats() {
                   <div className={'flex gap-1 items-center'}>
                     <Typography.Title style={{ marginBottom: 0 }} level={5}>
                       {graphs.currentPeriod[i]
-                        ? durationFromMsFormatted(graphs.currentPeriod[i])
-                        : null}
+                       ? durationFromMsFormatted(graphs.currentPeriod[i])
+                       : null}
                     </Typography.Title>
                     {graphs.previousPeriod[i] ? (
                       <div
                         className={
                           graphs.currentPeriod[i] > graphs.previousPeriod[i]
-                            ? 'flex items-center gap-1 text-green'
-                            : 'flex items-center gap-2 text-red'
+                          ? 'flex items-center gap-1 text-green'
+                          : 'flex items-center gap-2 text-red'
                         }
                       >
                         <ArrowUpOutlined
@@ -268,15 +266,14 @@ function AssistStats() {
                 </Loader>
               </div>
             ))}
-          </div>
-          <div className={'flex-1 col-span-1'}>
-            <TeamMembers
-              isLoading={isLoading}
-              topMembers={topMembers}
-              onMembersSort={onMembersSort}
-              membersSort={membersSort}
-            />
-          </div>
+        </div>
+        <div className={'w-full mt-2'}>
+          <TeamMembers
+            isLoading={isLoading}
+            topMembers={topMembers}
+            onMembersSort={onMembersSort}
+            membersSort={membersSort}
+          />
         </div>
         <div className={'w-full mt-2'}>
           <StatsTable
@@ -294,4 +291,4 @@ function AssistStats() {
   );
 }
 
-export default withPageTitle('Reports - OpenReplay')(AssistStats);
+export default AssistStats;

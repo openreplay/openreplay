@@ -19,8 +19,10 @@ def get(error_id, family=False):
     if family:
         return get_batch([error_id])
     with pg_client.PostgresClient() as cur:
+        # trying: return only 1 error, without event details
         query = cur.mogrify(
-            "SELECT * FROM events.errors AS e INNER JOIN public.errors AS re USING(error_id) WHERE error_id = %(error_id)s;",
+            # "SELECT * FROM events.errors AS e INNER JOIN public.errors AS re USING(error_id) WHERE error_id = %(error_id)s;",
+            "SELECT * FROM public.errors WHERE error_id = %(error_id)s LIMIT 1;",
             {"error_id": error_id})
         cur.execute(query=query)
         result = cur.fetchone()
@@ -157,8 +159,7 @@ def get_details(project_id, error_id, user_id, **data):
                  INNER JOIN (SELECT MAX(timestamp) AS last_occurrence,
                                     MIN(timestamp) AS first_occurrence
                              FROM events.errors
-                             WHERE error_id = %(error_id)s
-                             GROUP BY error_id) AS time_details ON (TRUE)
+                             WHERE error_id = %(error_id)s) AS time_details ON (TRUE)
                  INNER JOIN (SELECT session_id AS last_session_id,
                                     coalesce(custom_tags, '[]')::jsonb AS custom_tags
                              FROM events.errors

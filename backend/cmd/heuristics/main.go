@@ -1,14 +1,15 @@
 package main
 
 import (
-	"log"
+	"context"
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/heuristics"
 	"openreplay/backend/pkg/builders"
 	"openreplay/backend/pkg/handlers"
 	"openreplay/backend/pkg/handlers/custom"
-	"openreplay/backend/pkg/handlers/ios"
+	"openreplay/backend/pkg/handlers/mobile"
 	"openreplay/backend/pkg/handlers/web"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -18,11 +19,10 @@ import (
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(heuristicsMetrics.List())
-
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	cfg := config.New()
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, heuristicsMetrics.List())
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
@@ -35,34 +35,33 @@ func main() {
 			&web.NetworkIssueDetector{},
 			&web.PerformanceAggregator{},
 			web.NewAppCrashDetector(),
-			&ios.TapRageDetector{},
-			ios.NewViewComponentDurations(),
+			&mobile.TapRageDetector{},
+			mobile.NewViewComponentDurations(),
 		}
 	}
 
-	eventBuilder := builders.NewBuilderMap(handlersFabric)
+	eventBuilder := builders.NewBuilderMap(log, handlersFabric)
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewConsumer(
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
+			cfg.TopicRawMobile,
 		},
-		messages.NewMessageIterator(eventBuilder.HandleMessage, nil, true),
+		messages.NewMessageIterator(log, eventBuilder.HandleMessage, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
 
 	// Init memory manager
-	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
+	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
-		log.Printf("can't init memory manager: %s", err)
+		log.Fatal(ctx, "can't init memory manager: %s", err)
 		return
 	}
 
 	// Run service and wait for TERM signal
-	service := heuristics.New(cfg, producer, consumer, eventBuilder, memoryManager)
-	log.Printf("Heuristics service started\n")
-	terminator.Wait(service)
-	log.Printf("Heuristics service stopped\n")
+	service := heuristics.New(log, cfg, producer, consumer, eventBuilder, memoryManager)
+	log.Info(ctx, "Heuristics service started")
+	terminator.Wait(log, service)
 }

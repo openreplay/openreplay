@@ -41,10 +41,14 @@ describe('Network utility function tests', () => {
   it('genFormattedBody should format body correctly', () => {
     const param = new URLSearchParams('key=value&other=test')
     const blob = new Blob([param.toString()], { type: 'text/plain' })
+    const uArr = new Uint8Array([1, 2, 3])
+    const dataView = new DataView(uArr.buffer)
     expect(genFormattedBody('{"key":"value"}')).toEqual({ key: 'value' })
     expect(genFormattedBody('key=value&other=test')).toEqual({ key: 'value', other: 'test' })
     expect(genFormattedBody(param)).toEqual({ key: 'value', other: 'test' })
-    expect(genFormattedBody(blob)).toEqual('byte data')
+    expect(genFormattedBody(blob)).toEqual('[byte data]')
+    expect(genFormattedBody(dataView)).toEqual('[byte data]')
+    expect(genFormattedBody(uArr)).toEqual('[byte data]')
   })
 
   it('isPureObject should return true for objects', () => {

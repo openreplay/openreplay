@@ -166,7 +166,7 @@ spec:
       - name: datadir
         hostPath:
           # Ensure the file directory is created.
-          path: {{ .Values.pvc.hostMountPath }}
+          path: {{ tpl .Values.pvc.hostMountPath . }}
           type: DirectoryOrCreate
       {{- with .Values.persistence.volumes  }}
       {{- toYaml . | nindent 6 }}

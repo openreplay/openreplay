@@ -1,5 +1,6 @@
 import React from 'react';
-import { PageTitle, Button, Link, Toggler } from 'UI';
+import { PageTitle, Button, Toggler, Icon } from "UI";
+import { Segmented } from 'antd';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
@@ -102,25 +103,33 @@ function DashboardDropdown({ onChange, plain = false }: { plain?: boolean; onCha
   );
 }
 
-function ListViewToggler({}) {
+function ListViewToggler() {
   const { metricStore } = useStore();
   const listView = useObserver(() => metricStore.listView);
   return (
     <div className='flex items-center'>
-      <Button
-        icon='list-alt'
-        variant={listView ? 'text-primary' : 'text'}
-        onClick={() => metricStore.updateKey('listView', true)}
-      >
-        List
-      </Button>
-      <Button
-        icon='grid'
-        variant={!listView ? 'text-primary' : 'text'}
-        onClick={() => metricStore.updateKey('listView', false)}
-      >
-        Grid
-      </Button>
+      <Segmented
+        options={[
+          {
+            label: <div className={'flex items-center gap-2'}>
+              <Icon name={'list-alt'} color={'inherit'} />
+              <div>List</div>
+            </div>,
+            value: 'list'
+          },
+          {
+            label: <div className={'flex items-center gap-2'}>
+              <Icon name={'grid'} color={'inherit'} />
+              <div>Grid</div>
+            </div>,
+            value: 'grid'
+          }
+        ]}
+        onChange={(val) => {
+          metricStore.updateKey('listView', val === 'list')
+        }}
+        value={listView ? 'list' : 'grid'}
+      />
     </div>
   );
 }

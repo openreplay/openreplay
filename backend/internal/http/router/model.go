@@ -17,6 +17,8 @@ type StartSessionRequest struct {
 	BufferDiff      uint64  `json:"bufferDiff"`  // buffer diff in ms for start record session
 	IsOffline       bool    `json:"isOffline"`   // to indicate that we have to use user's start timestamp
 	Condition       string  `json:"condition"`   // condition for start record session
+	Width           int     `json:"width"`
+	Height          int     `json:"height"`
 }
 
 type StartSessionResponse struct {
@@ -46,7 +48,7 @@ type NotStartedRequest struct {
 	DoNotTrack     bool    `json:"DoNotTrack"`
 }
 
-type StartIOSSessionRequest struct {
+type StartMobileSessionRequest struct {
 	Token          string  `json:"token"`
 	ProjectKey     *string `json:"projectKey"`
 	TrackerVersion string  `json:"trackerVersion"`
@@ -54,12 +56,18 @@ type StartIOSSessionRequest struct {
 	UserUUID       *string `json:"userUUID"`
 	UserOSVersion  string  `json:"userOSVersion"`
 	UserDevice     string  `json:"userDevice"`
+	UserDeviceType string  `json:"userDeviceType"`
 	Timestamp      uint64  `json:"timestamp"`
 	Timezone       string  `json:"timezone"`
 	DeviceMemory   uint64  `json:"deviceMemory"`
+	DoNotRecord    bool    `json:"doNotRecord"` // start record session or not
+	Condition      string  `json:"condition"`   // condition for start record session
+	Platform       string  `json:"platform"`
+	Width          int     `json:"width"`
+	Height         int     `json:"height"`
 }
 
-type StartIOSSessionResponse struct {
+type StartMobileSessionResponse struct {
 	Token           string   `json:"token"`
 	ImagesHashList  []string `json:"imagesHashList"`
 	UserUUID        string   `json:"userUUID"`
@@ -67,4 +75,5 @@ type StartIOSSessionResponse struct {
 	SessionID       string   `json:"sessionID"`
 	ImageQuality    string   `json:"quality"`
 	FrameRate       int      `json:"fps"`
+	ProjectID       string   `json:"projectID"`
 }

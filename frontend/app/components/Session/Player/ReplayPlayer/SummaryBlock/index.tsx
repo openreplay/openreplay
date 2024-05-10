@@ -1,44 +1,102 @@
-import React from 'react';
-import Icon from 'UI/Icon';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { connect } from 'react-redux';
+
+import { useStore } from 'App/mstore';
+import { debounce }                          from 'App/utils';
+import { IResourceRequest, IResourceTiming } from "../../../../../player";
+import { WsChannel }                         from "../../../../../player/web/messages";
+import { PlayerContext } from "../../../playerContext";
+
+let debounceUpdate: any = () => {};
 
 const userBehaviorRegex = /User\s+(\w+\s+)?Behavior/i;
 const issuesErrorsRegex = /Issues\s+(and\s+|,?\s+)?(\w+\s+)?Errors/i;
 
-function testLine(line: string): boolean {
+function isTitleLine(line: string): boolean {
   return userBehaviorRegex.test(line) || issuesErrorsRegex.test(line);
 }
 
-function SummaryBlock({ sessionId }: { sessionId: string }) {
+function SummaryBlock({
+  sessionId,
+  zoomEnabled,
+  zoomStartTs,
+  zoomEndTs,
+  zoomTab,
+  duration,
+}: {
+  sessionId: string;
+  zoomEnabled: boolean;
+  zoomStartTs: number;
+  zoomEndTs: number;
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
+  duration: any;
+}) {
+  const { store } = React.useContext(PlayerContext)
+  const { tabStates } = store.get();
   const { aiSummaryStore } = useStore();
 
   React.useEffect(() => {
-    void aiSummaryStore.getSummary(sessionId);
+    debounceUpdate = debounce(
+      (
+        sessionId: string,
+        events: any[],
+        feat: 'journey' | 'issues' | 'errors',
+        startTs: number,
+        endTs: number
+      ) => aiSummaryStore.getDetailedSummary(sessionId, events, feat, startTs, endTs),
+      500
+    );
   }, []);
 
+  React.useEffect(() => {
+    if (zoomTab === 'overview') {
+      void aiSummaryStore.getSummary(sessionId);
+    } else {
+        const totalFetchList: IResourceRequest[] = [];
+        const totalResourceList: IResourceTiming[] = [];
+        const totalWebsocketList: WsChannel[] = [];
+      Object.values(tabStates).forEach(({
+        fetchList,
+        resourceList,
+        websocketList,
+      }) => {
+        totalFetchList.push(...fetchList);
+        totalResourceList.push(...resourceList);
+        totalWebsocketList.push(...websocketList);
+      })
+      const resultingEvents = [
+        ...totalFetchList,
+        ...totalResourceList,
+        ...totalWebsocketList,
+      ]
+      const range = !zoomEnabled ? [0, duration] : [zoomStartTs, zoomEndTs];
+      void debounceUpdate(sessionId, resultingEvents, zoomTab, range[0], range[1]);
+    }
+  }, [zoomTab]);
+
   const formattedText = aiSummaryStore.text.split('\n').map((line) => {
-    if (testLine(line)) {
+    if (isTitleLine(line)) {
       return <div className={'font-semibold mt-2'}>{line}</div>;
     }
     if (line.startsWith('*')) {
-      return <li className={'ml-1 marker:mr-1'}>{line.replace('* ', '')}</li>;
+      return (
+        <li className={'ml-1 marker:mr-1 flex items-center gap-1'}>
+            <CodeStringFormatter text={line.replace('* ', '')} />
+        </li>
+      );
     }
-    return <div>{line}</div>;
+    return (
+      <div className={'flex items-center gap-1'}>
+        <CodeStringFormatter text={line} />
+      </div>
+    );
   });
 
   return (
     <div style={summaryBlockStyle}>
-      <div className={'flex items-center gap-2'}>
-        <Icon name={'sparkles'} size={18} />
-        <div className={'font-semibold text-xl'}>AI Summary</div>
-      </div>
-
       {aiSummaryStore.text ? (
         <div className={'rounded p-4 bg-white whitespace-pre-wrap flex flex-col'}>
-          <div>
-            Here’s the AI breakdown of the session, covering user behavior and technical insights.
-          </div>
           <>{formattedText.map((v) => v)}</>
         </div>
       ) : (
@@ -71,10 +129,24 @@ function TextPlaceholder() {
   );
 }
 
+const CodeStringFormatter = ({ text }: { text: string }) => {
+  const parts = text.split(/(`[^`]*`)/).map((part, index) =>
+    part.startsWith('`') && part.endsWith('`') ? (
+      <div key={index} className="whitespace-nowrap bg-gray-lightest font-mono mx-1 px-1 border">
+        {part.substring(1, part.length - 1)}
+      </div>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  );
+
+  return <>{parts}</>;
+};
+
 const summaryBlockStyle: React.CSSProperties = {
-  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
+  background: 'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
   width: '100%',
-  height: '100vh',
+  maxHeight: '25vh',
   overflow: 'auto',
   display: 'flex',
   flexDirection: 'column',
@@ -82,4 +154,10 @@ const summaryBlockStyle: React.CSSProperties = {
   padding: '1rem',
 };
 
-export default observer(SummaryBlock);
+export default connect((state: Record<string, any>) => ({
+  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomTab: state.getIn(['components', 'player']).zoomTab,
+  duration: state.getIn(['sessions', 'current']).durationSeconds,
+}))(observer(SummaryBlock));

@@ -1,13 +1,14 @@
 package batch
 
 import (
-	"log"
+	"context"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
 )
 
@@ -49,16 +50,20 @@ func NewBatchesTask(size int) *batchesTask {
 }
 
 type BatchSet struct {
+	log        logger.Logger
 	c          pool.Pool
+	ctx        context.Context
 	batches    map[uint64]*SessionBatch
 	workerTask chan *batchesTask
 	done       chan struct{}
 	finished   chan struct{}
 }
 
-func NewBatchSet(c pool.Pool) *BatchSet {
+func NewBatchSet(log logger.Logger, c pool.Pool) *BatchSet {
 	bs := &BatchSet{
+		log:        log,
 		c:          c,
+		ctx:        context.Background(),
 		batches:    make(map[uint64]*SessionBatch),
 		workerTask: make(chan *batchesTask, 1),
 		done:       make(chan struct{}),
@@ -108,10 +113,10 @@ func (conn *BatchSet) sendBatches(t *batchesTask) {
 		l := batch.Len()
 		for i := 0; i < l; i++ {
 			if _, err := br.Exec(); err != nil {
-				log.Printf("Error in PG batch: %v \n", err)
+				conn.log.Error(conn.ctx, "Error in PG batch: %v", err)
 				failedSql := batch.items[i]
 				query := strings.ReplaceAll(failedSql.query, "\n", " ")
-				log.Println("failed sql req:", query, failedSql.arguments)
+				conn.log.Error(conn.ctx, "failed sql req: %s", query)
 			}
 		}
 		br.Close() // returns err

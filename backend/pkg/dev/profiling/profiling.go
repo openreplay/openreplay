@@ -1,17 +1,16 @@
 package profiling
 
 import (
-	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/gorilla/mux"
 )
 
 func Profile() {
 	go func() {
 		router := mux.NewRouter()
 		router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-		log.Println("Starting profiler...")
 		if err := http.ListenAndServe(":6060", router); err != nil {
 			panic(err)
 		}

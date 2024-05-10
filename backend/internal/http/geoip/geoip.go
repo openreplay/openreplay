@@ -1,10 +1,11 @@
 package geoip
 
 import (
-	"github.com/oschwald/maxminddb-golang"
-	"log"
+	"errors"
 	"net"
 	"strings"
+
+	"github.com/oschwald/maxminddb-golang"
 )
 
 type geoIPRecord struct {
@@ -44,34 +45,33 @@ func UnpackGeoRecord(pkg string) *GeoRecord {
 }
 
 type GeoParser interface {
-	Parse(ip net.IP) *GeoRecord
+	Parse(ip net.IP) (*GeoRecord, error)
 }
 
 type geoParser struct {
 	r *maxminddb.Reader
 }
 
-func New(file string) GeoParser {
+func New(file string) (GeoParser, error) {
 	r, err := maxminddb.Open(file)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
-	return &geoParser{r}
+	return &geoParser{r}, nil
 }
 
-func (geoIP *geoParser) Parse(ip net.IP) *GeoRecord {
+func (geoIP *geoParser) Parse(ip net.IP) (*GeoRecord, error) {
 	res := &GeoRecord{
 		Country: "UN",
 		State:   "",
 		City:    "",
 	}
 	if ip == nil {
-		return res
+		return res, errors.New("IP is nil")
 	}
 	var record geoIPRecord
 	if err := geoIP.r.Lookup(ip, &record); err != nil {
-		log.Println(err)
-		return res
+		return res, err
 	}
 	if record.Country.ISOCode != "" {
 		res.Country = record.Country.ISOCode
@@ -80,5 +80,5 @@ func (geoIP *geoParser) Parse(ip net.IP) *GeoRecord {
 		res.State = record.States[0].Names["en"]
 	}
 	res.City = record.City.Names["en"]
-	return res
+	return res, nil
 }

@@ -91,7 +91,6 @@ const getFiltersFromEntries = (entries: any) => {
         }
 
         filter.value = valueArr;
-        filter.operator = operator;
         if (filter.icon === 'filters/metadata') {
           filter.source = filter.type;
           filter.type = 'MULTIPLE';
@@ -101,6 +100,7 @@ const getFiltersFromEntries = (entries: any) => {
         }
       }
 
+      filter.operator = operator;
       if (!filter.filters || filter.filters.size === 0) {
         // TODO support subfilters in url
         filters.push(filter);

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button} from 'UI';
 import { confirmable } from 'react-confirm';
 import { Modal } from 'UI'
- 
+import { Button } from 'antd'
+
 const Confirmation = ({
   show,
   proceed,
@@ -31,7 +31,7 @@ const Confirmation = ({
       <Modal.Footer>
         <Button
           onClick={() => proceed(true)}
-          variant="primary"
+          type={'primary'}
           className="mr-2"
         >
             {confirmButton}

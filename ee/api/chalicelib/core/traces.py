@@ -3,6 +3,7 @@ import queue
 import re
 from typing import Optional, List
 
+from apscheduler.triggers.interval import IntervalTrigger
 from decouple import config
 from fastapi import Request, Response, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -205,6 +206,6 @@ def get_available_actions(tenant_id):
 
 
 cron_jobs = [
-    {"func": process_traces_queue, "trigger": "interval", "seconds": config("TRACE_PERIOD", cast=int, default=60),
-     "misfire_grace_time": 20}
+    {"func": process_traces_queue, "trigger": IntervalTrigger(seconds=config("TRACE_PERIOD", cast=int, default=60)),
+     "misfire_grace_time": 20, "max_instances": 1}
 ]

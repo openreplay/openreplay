@@ -122,6 +122,7 @@ export default class TopObserver extends Observer {
       return shadow
     }
 
+    this.app.nodes.clear()
     // Can observe documentElement (<html>) here, because it is not supposed to be changing.
     // However, it is possible in some exotic cases and may cause an ignorance of the newly created <html>
     // In this case context.document have to be observed, but this will cause

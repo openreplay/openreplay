@@ -58,9 +58,10 @@ spec:
           - |
             set -x
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
-            git clone https://github.com/openreplay/openreplay .
+            git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
+            {{ .Values.global.dbMigrationPreCommand | default "" }}
 
             # Checking variable is empty. Shell independant method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
@@ -345,7 +346,7 @@ spec:
       - name: datadir
         hostPath:
           # Ensure the file directory is created.
-          path: /openreplay/storage/nfs
+          path: {{.Values.global.orTmpDir}}
           type: DirectoryOrCreate
       {{- else }}
       - name: datadir

@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"openreplay/backend/pkg/logger"
+
 	"openreplay/backend/pkg/integrations/model"
 	"time"
 
@@ -21,11 +22,13 @@ type Storage interface {
 
 type storageImpl struct {
 	conn *pgx.Conn
+	log  logger.Logger
 }
 
-func NewStorage(conn *pgx.Conn) Storage {
+func NewStorage(conn *pgx.Conn, log logger.Logger) Storage {
 	return &storageImpl{
 		conn: conn,
+		log:  log,
 	}
 }
 
@@ -69,7 +72,7 @@ func (s *storageImpl) GetAll() ([]*model.Integration, error) {
 	for rows.Next() {
 		i := new(model.Integration)
 		if err := rows.Scan(&i.ProjectID, &i.Provider, &i.Options, &i.RequestData); err != nil {
-			log.Printf("Postgres scan error: %v\n", err)
+			s.log.Error(context.Background(), "postgres scan error: %v", err)
 			continue
 		}
 		integrations = append(integrations, i)

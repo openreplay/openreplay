@@ -5,7 +5,7 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip, Popover } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from 'Components/Session_/SessionInfoItem';
@@ -13,10 +13,12 @@ import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
 import { IFRAME } from 'App/constants/storageKeys';
 import { capitalize } from "App/utils";
+import { Popover } from 'antd'
 
 function UserCard({ className, request, session, width, height, similarSessions, loading }) {
     const { settingsStore } = useStore();
     const { timezone } = settingsStore.sessionSettings;
+    const [showMore, setShowMore] = React.useState(false)
 
     const {
         userBrowser,
@@ -51,6 +53,29 @@ function UserCard({ className, request, session, width, height, similarSessions,
     const avatarbgSize = '38px';
 
     const safeOs = userOs === 'IOS' ? 'iOS' : userOs;
+
+    React.useEffect(() => {
+      const handler = (e) => {
+        if (e.shiftKey) {
+          if (
+            e.target instanceof HTMLInputElement ||
+            e.target instanceof HTMLTextAreaElement
+          ) {
+            return false;
+          }
+          e.preventDefault()
+          if (e.key === 'I') {
+            setShowMore(!showMore)
+          }
+        }
+      }
+
+      document.addEventListener('keydown', handler, false)
+
+      return () => {
+        document.removeEventListener('keydown', handler)
+      }
+    }, [showMore])
     return (
       <div className={cn('bg-white flex items-center w-full', className)}>
         <div className="flex items-center">
@@ -84,7 +109,8 @@ function UserCard({ className, request, session, width, height, similarSessions,
               </span>
               <span className="mx-1 font-bold text-xl">&#183;</span>
               <Popover
-                render={() => (
+                open={showMore ? true : undefined}
+                content={() => (
                   <div className="text-left bg-white rounded">
                     <SessionInfoItem
                       comp={<CountryFlag country={userCountry} height={11} />}

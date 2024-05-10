@@ -65,12 +65,12 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
   };
 
   const onSSOClick = () => {
-    if (params.get('iframe')) {
-      window.parent.location.href = "/api/sso/saml2?iFrame=true";
+    if (window !== window.top) { // if in iframe
+      window.parent.location.href = `${window.location.origin}/api/sso/saml2?iFrame=true`;
     } else {
-      window.location.href = "/api/sso/saml2";
+      window.location.href = `${window.location.origin}/api/sso/saml2`;
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center h-screen">
@@ -159,7 +159,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
               {authDetails.sso ? (
-                <a href="/api/sso/saml2" rel="noopener noreferrer">
+                <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
                   <Button variant="text-primary" type="submit">
                     {`Login with SSO ${
                       authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''

@@ -48,7 +48,7 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
           </div>
           <Pagination
             page={notesStore.page}
-            totalPages={Math.ceil(list.length / notesStore.pageSize)}
+            total={list.length}
             onPageChange={(page) => notesStore.changePage(page)}
             limit={notesStore.pageSize}
             debounceRequest={100}

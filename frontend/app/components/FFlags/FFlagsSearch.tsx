@@ -33,7 +33,7 @@ function FFlagsSearch() {
         value={query}
         name="flagsSearch"
         className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
-        placeholder="Search by key"
+        placeholder="Filter by key"
         onChange={write}
       />
     </div>

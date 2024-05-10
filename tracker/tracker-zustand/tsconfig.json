@@ -2,11 +2,12 @@
   "compilerOptions": {
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "alwaysStrict": true,
-    "target": "es6",
+    "alwaysStrict": false,
+    "target": "es2017",
     "module": "es6",
     "moduleResolution": "nodenext",
     "declaration": true,
-    "outDir": "./lib"
+    "outDir": "./lib",
+    "lib": ["es2020", "dom"]
   }
 }

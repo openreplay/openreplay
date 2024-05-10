@@ -8,10 +8,12 @@ function ConditionalRecordingSettings({
   conditions,
   setConditions,
   setChanged,
+  isMobile,
 }: {
   setChanged: (changed: boolean) => void;
   conditions: Conditions[];
   setConditions: (conditions: Conditions[]) => void;
+  isMobile?: boolean;
 }) {
   const addConditionSet = () => {
     setChanged(true);
@@ -47,7 +49,7 @@ function ConditionalRecordingSettings({
       </div>
       <div className={'mt-2 flex flex-col gap-4'}>
         {conditions.map((condition, index) => (
-          <>
+          <React.Fragment key={`${index}_${condition.name}`}>
             <ConditionSet
               key={index}
               set={index + 1}
@@ -60,13 +62,14 @@ function ConditionalRecordingSettings({
               setChanged={setChanged}
               excludeFilterKeys={nonConditionalFlagFilters}
               isConditional
+              isMobile={isMobile}
             />
             {index !== conditions.length - 1 ? (
               <div className={'text-disabled-text flex justify-center w-full'}>
                 <span>OR</span>
               </div>
             ) : null}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>

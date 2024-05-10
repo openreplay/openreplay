@@ -72,4 +72,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: tracker
-          name: tracker
+          iame: tracker

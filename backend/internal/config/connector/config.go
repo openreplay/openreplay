@@ -5,6 +5,7 @@ import (
 	"openreplay/backend/internal/config/configurator"
 	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/internal/config/redis"
+	"openreplay/backend/pkg/logger"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type Config struct {
 	redis.Redis
 	common.Redshift
 	common.Clickhouse
+	common.ElasticSearch
 	objectstorage.ObjectsConfig
 	ConnectorType      string        `env:"CONNECTOR_TYPE,default=redshift"`
 	SessionsTableName  string        `env:"SESSIONS_TABLE_NAME,default=connector_user_sessions"`
@@ -26,8 +28,8 @@ type Config struct {
 	UseProfiler        bool          `env:"PROFILER_ENABLED,default=false"`
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

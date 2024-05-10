@@ -951,3 +951,18 @@ export function TagTrigger(
   ]
 }
 
+export function ReduxNew(
+  action: string,
+  state: string,
+  duration: number,
+  actionTime: number,
+): Messages.ReduxNew {
+  return [
+    Messages.Type.ReduxNew,
+    action,
+    state,
+    duration,
+    actionTime,
+  ]
+}
+

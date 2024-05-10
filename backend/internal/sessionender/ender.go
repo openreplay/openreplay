@@ -1,7 +1,6 @@
 package sessionender
 
 import (
-	"log"
 	"time"
 
 	"openreplay/backend/pkg/messages"
@@ -63,8 +62,6 @@ func (se *SessionEnder) ActivePartitions(parts []uint64) {
 			activeSessions++
 		}
 	}
-	log.Printf("SessionEnder: %d sessions left in active partitions: %+v, removed %d sessions",
-		activeSessions, parts, removedSessions)
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
@@ -75,12 +72,10 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		msgTimestamp   = msg.Meta().Timestamp
 		localTimestamp = time.Now().UnixMilli()
 	)
-	if messages.IsIOSType(msg.TypeID()) {
+	if messages.IsMobileType(msg.TypeID()) {
 		msgTimestamp = messages.GetTimestamp(msg)
-		log.Printf("got timestamp from iOS message, session: %d, ts: %d", msg.SessionID(), msgTimestamp)
 	}
 	if batchTimestamp == 0 {
-		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
 	}
 	se.timeCtrl.UpdateTime(sessionID, batchTimestamp, localTimestamp)
@@ -92,7 +87,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			lastUpdate:    localTimestamp,
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
-			isMobile:      messages.IsIOSType(msg.TypeID()),
+			isMobile:      messages.IsMobileType(msg.TypeID()),
 		}
 		ender.IncreaseActiveSessions()
 		ender.IncreaseTotalSessions()
@@ -113,11 +108,10 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	if !se.enabled {
-		log.Printf("SessionEnder is disabled")
 		return
 	}
 	currTime := time.Now().UnixMilli()
-	allSessions, removedSessions := len(se.sessions), 0
+	removedSessions := 0
 	brokerTime := make(map[int]int, 0)
 	serverTime := make(map[int]int, 0)
 
@@ -154,11 +148,7 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 				if endCase == 3 {
 					serverTime[1]++
 				}
-			} else {
-				log.Printf("sessID: %d, userTime: %d", sessID, sess.lastUserTime)
 			}
 		}
 	}
-	log.Printf("Removed %d of %d sessions; brokerTime: %d, serverTime: %d",
-		removedSessions, allSessions, brokerTime, serverTime)
 }

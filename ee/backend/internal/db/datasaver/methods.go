@@ -56,7 +56,8 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 	case *messages.ResourceTiming:
 		return s.ch.InsertWebResourceEvent(session, m)
 	case *messages.JSException:
-		return s.ch.InsertWebErrorEvent(session, types.WrapJSException(m))
+		wrapper, _ := types.WrapJSException(m)
+		return s.ch.InsertWebErrorEvent(session, wrapper)
 	case *messages.IntegrationEvent:
 		return s.ch.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	case *messages.IssueEvent:
@@ -75,19 +76,19 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return s.ch.InsertMouseThrashing(session, m)
 
 	// Mobile messages
-	case *messages.IOSSessionEnd:
+	case *messages.MobileSessionEnd:
 		return s.ch.InsertMobileSession(session)
-	case *messages.IOSEvent:
+	case *messages.MobileEvent:
 		return s.ch.InsertMobileCustom(session, m)
-	case *messages.IOSClickEvent:
+	case *messages.MobileClickEvent:
 		return s.ch.InsertMobileClick(session, m)
-	case *messages.IOSSwipeEvent:
+	case *messages.MobileSwipeEvent:
 		return s.ch.InsertMobileSwipe(session, m)
-	case *messages.IOSInputEvent:
+	case *messages.MobileInputEvent:
 		return s.ch.InsertMobileInput(session, m)
-	case *messages.IOSNetworkCall:
+	case *messages.MobileNetworkCall:
 		return s.ch.InsertMobileRequest(session, m, session.SaveRequestPayload)
-	case *messages.IOSCrash:
+	case *messages.MobileCrash:
 		return s.ch.InsertMobileCrash(session, m)
 	}
 	return nil

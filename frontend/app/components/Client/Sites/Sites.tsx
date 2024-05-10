@@ -77,7 +77,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
           </div>
           <span className="ml-2">{project.host}</span>
           <div className={'ml-4 flex items-center gap-2'}>
-            {project.platform === 'web' ? null : <Tag color="error">iOS BETA</Tag>}
+            {project.platform === 'web' ? null : <Tag color="error">MOBILE BETA</Tag>}
           </div>
         </div>
       </div>
@@ -151,16 +151,16 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
             <Divider className="m-0" />
 
             {sliceListPerPage(filteredSites, page - 1, pageSize).map((project: Project) => (
-              <>
+              <React.Fragment key={project.id}>
                 <ProjectItem project={project} />
                 <Divider className="m-0" />
-              </>
+              </React.Fragment>
             ))}
 
             <div className="w-full flex items-center justify-center py-10">
               <Pagination
                 page={page}
-                totalPages={Math.ceil(filteredSites.size / pageSize)}
+                total={filteredSites.size}
                 onPageChange={(page) => updatePage(page)}
                 limit={pageSize}
               />
@@ -173,6 +173,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
         setShowCaptureRate={setShowCaptureRate}
         showCaptureRate={showCaptureRate}
         projectId={activeProject?.id}
+        isMobile={activeProject?.platform !== 'web'}
         open={showCaptureRate && !!activeProject}
       />
     </Loader>

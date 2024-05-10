@@ -3,38 +3,33 @@ import { Icon, Button, Checkbox } from 'UI';
 import { Duration } from 'luxon';
 import { connect } from 'react-redux';
 import { WriteNote, tagProps, TAGS, iTag, Note } from 'App/services/NotesService';
-import { setCreateNoteTooltip, addNote, updateNote } from 'Duck/sessions';
-import stl from './styles.module.css';
+import { addNote, updateNote } from 'Duck/sessions';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import { fetchList as fetchTeams } from 'Duck/integrations/teams';
+import { Tag } from 'antd';
 
 import Select from 'Shared/Select';
-import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 import { List } from 'immutable';
 
 interface Props {
-  isVisible: boolean;
   time: number;
-  setCreateNoteTooltip: (state: any) => void;
   addNote: (note: Note) => void;
   updateNote: (note: Note) => void;
   sessionId: string;
-  isEdit: string;
-  editNote: WriteNote;
+  isEdit?: boolean;
+  editNote?: WriteNote;
   slackChannels: List<Record<string, any>>;
   teamsChannels: List<Record<string, any>>;
   fetchSlack: () => void;
   fetchTeams: () => void;
+  hideModal: () => void;
 }
 
 function CreateNote({
-  isVisible,
   time,
-  setCreateNoteTooltip,
   sessionId,
-  addNote,
   isEdit,
   editNote,
   updateNote,
@@ -42,6 +37,7 @@ function CreateNote({
   fetchSlack,
   teamsChannels,
   fetchTeams,
+  hideModal,
 }: Props) {
   const [text, setText] = React.useState('');
   const [slackChannel, setSlackChannel] = React.useState('');
@@ -56,7 +52,7 @@ function CreateNote({
   const { notesStore } = useStore();
 
   React.useEffect(() => {
-    if (isEdit) {
+    if (isEdit && editNote) {
       setTag(editNote.tag);
       setText(editNote.message);
       setPublic(editNote.isPublic);
@@ -67,29 +63,29 @@ function CreateNote({
   }, [isEdit]);
 
   React.useEffect(() => {
-    if (inputRef.current && isVisible) {
+    if (inputRef.current) {
       inputRef.current.focus();
       if (teamsChannels.size === 0 || slackChannels.size === 0) {
         fetchSlack();
         fetchTeams();
       }
     }
-  }, [isVisible]);
+  }, []);
 
   const duration = Duration.fromMillis(time || 0).toFormat('mm:ss');
 
   const cleanUp = () => {
-    setCreateNoteTooltip({ isVisible: false, time: 0 });
     setText('');
     setTag(TAGS[0]);
-  }
+    hideModal();
+  };
   const onSubmit = () => {
     if (text === '') return;
 
     const note: WriteNote = {
       message: text,
       tag,
-      timestamp: useTimestamp ? Math.floor((isEdit ? editNote.timestamp : time)) : -1,
+      timestamp: useTimestamp ? Math.floor(isEdit && editNote ? editNote.timestamp : time) : -1,
       isPublic,
     };
     const onSuccess = (noteId: string) => {
@@ -100,7 +96,7 @@ function CreateNote({
         notesStore.sendMsTeamsNotification(noteId, teamsChannel);
       }
     };
-    if (isEdit) {
+    if (isEdit && editNote) {
       return notesStore
         .updateNote(editNote.noteId!, note)
         .then((r) => {
@@ -115,7 +111,7 @@ function CreateNote({
           console.error(e);
         })
         .finally(() => {
-          cleanUp()
+          cleanUp();
         });
     }
 
@@ -124,20 +120,19 @@ function CreateNote({
       .then((r) => {
         onSuccess(r!.noteId as unknown as string);
         toast.success('Note added');
-        void notesStore.fetchSessionNotes(sessionId)
+        void notesStore.fetchSessionNotes(sessionId);
       })
       .catch((e) => {
         toast.error('Error adding note');
         console.error(e);
       })
       .finally(() => {
-        cleanUp()
+        cleanUp();
       });
   };
 
   const closeTooltip = () => {
-    cleanUp()
-    setCreateNoteTooltip({ isVisible: false, time: 100 });
+    hideModal();
   };
 
   const tagActive = (noteTag: iTag) => tag === noteTag;
@@ -174,69 +169,68 @@ function CreateNote({
 
   return (
     <div
-      className={stl.noteTooltip}
-      style={{
-        width: 350,
-        left: 'calc(50% - 175px)',
-        display: isVisible ? 'flex' : 'none',
-        flexDirection: 'column',
-        gap: '1rem',
-        bottom: '15vh',
-        zIndex: 110,
-      }}
+      className={'bg-white h-screen w-full p-4 flex flex-col gap-4'}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center bg-gray-lightest">
+      <div className="flex items-center">
         <Icon name="quotes" size={20} />
         <h3 className="text-xl ml-2 mr-4 font-semibold">{isEdit ? 'Edit Note' : 'Add Note'}</h3>
-        <div className="flex items-center cursor-pointer" onClick={() => setUseTs(!useTimestamp)}>
-          <Checkbox checked={useTimestamp} />
-          <span className="ml-1"> {`at ${duration}`} </span>
-        </div>
-
         <div className="ml-auto cursor-pointer" onClick={closeTooltip}>
           <Icon name="close" size={20} />
         </div>
       </div>
+      <div
+        className="flex items-center cursor-pointer gap-2"
+        onClick={() => setUseTs(!useTimestamp)}
+      >
+        <Checkbox checked={useTimestamp} />
+        <span>Add note at current time frame</span>
+        <div className={'border px-1 bg-gray-lightest rounded'}>{duration}</div>
+      </div>
 
       <div className="">
+        <div className={'font-semibold'}>Note</div>
         <textarea
           ref={inputRef}
           name="message"
           id="message"
-          placeholder="Note..."
+          placeholder="Enter your note here..."
           rows={3}
           value={text}
           autoFocus
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)}
+          }
           className="text-area"
         />
-      </div>
 
-      <div className="flex items-center gap-2" style={{ lineHeight: '15px' }}>
-        {TAGS.map((tag) => (
-          <div
-            key={tag}
-            style={{
-              background: tagActive(tag) ? tagProps[tag] : 'rgba(0,0,0, 0.38)',
-              userSelect: 'none',
-              minWidth: 50,
-              fontSize: 11,
-            }}
-            className="cursor-pointer rounded-full justify-center px-2 py-1 text-white flex items-center gap-2"
-            onClick={() => addTag(tag)}
-          >
-            {tagActive(tag) ? <Icon name="check-circle-fill" color="white" size={13} /> : null}
-            <div>{tag}</div>
-          </div>
-        ))}
+        <div className="flex items-center gap-1" style={{ lineHeight: '15px' }}>
+          {TAGS.map((tag) => (
+            <Tag
+              onClick={() => addTag(tag)}
+              key={tag}
+              className={'cursor-pointer'}
+              color={tagActive(tag) ? tagProps[tag] : undefined}
+            >
+              <div className={'flex items-center gap-2'}>
+                {tagActive(tag) ? (
+                  <Icon name="check-circle-fill" color="inherit" size={13} />
+                ) : null}
+                {tag}
+              </div>
+            </Tag>
+          ))}
+        </div>
       </div>
-
+      <div className={'flex items-center gap-2 cursor-pointer'} onClick={() => setPublic(!isPublic)}>
+        <Checkbox checked={isPublic} />
+        <div>Visible to team members</div>
+      </div>
       {slackChannelsOptions.length > 0 ? (
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
             <Checkbox checked={useSlack} />
-            <span className="ml-1 mr-3"> Send to Slack? </span>
+            <span className="ml-1 mr-3"> Share via Slack </span>
           </div>
 
           {useSlack && (
@@ -257,7 +251,7 @@ function CreateNote({
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setTeams(!useTeams)}>
             <Checkbox checked={useTeams} />
-            <span className="ml-1 mr-3"> Send to MSTeams? </span>
+            <span className="ml-1 mr-3"> Share via MS Teams </span>
           </div>
 
           {useTeams && (
@@ -276,12 +270,11 @@ function CreateNote({
 
       <div className="flex">
         <Button variant="primary" className="mr-4" disabled={text === ''} onClick={onSubmit}>
-          {isEdit ? 'Save Note' : 'Add Note'}
+          {isEdit ? 'Save Note' : `Add Note ${useTeams || useSlack ? '& Share' : ''}`}
         </Button>
-        <div className="flex items-center cursor-pointer" onClick={() => setPublic(!isPublic)}>
-          <Checkbox checked={isPublic} />
-          <TeamBadge />
-        </div>
+        <Button variant={'text'} onClick={closeTooltip}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
@@ -289,16 +282,10 @@ function CreateNote({
 
 export default connect(
   (state: any) => {
-    const {
-      isVisible,
-      time = 0,
-      isEdit,
-      note: editNote,
-    } = state.getIn(['sessions', 'createNoteTooltip']);
     const slackChannels = state.getIn(['slack', 'list']);
     const teamsChannels = state.getIn(['teams', 'list']);
     const sessionId = state.getIn(['sessions', 'current']).sessionId;
-    return { isVisible, time, sessionId, isEdit, editNote, slackChannels, teamsChannels };
+    return { sessionId, slackChannels, teamsChannels };
   },
-  { setCreateNoteTooltip, addNote, updateNote, fetchSlack, fetchTeams }
+  { addNote, updateNote, fetchSlack, fetchTeams }
 )(CreateNote);

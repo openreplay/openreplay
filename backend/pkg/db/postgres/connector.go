@@ -1,9 +1,11 @@
 package postgres
 
 import (
-	"log"
+	"context"
+
 	"openreplay/backend/pkg/db/postgres/batch"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/sessions"
 )
 
@@ -13,6 +15,7 @@ type CH interface {
 
 // Conn contains batches, bulks and cache for all sessions
 type Conn struct {
+	log     logger.Logger
 	Pool    pool.Pool
 	batches *batch.BatchSet
 	bulks   *BulkSet
@@ -23,14 +26,15 @@ func (conn *Conn) SetClickHouse(ch CH) {
 	conn.chConn = ch
 }
 
-func NewConn(pool pool.Pool) *Conn {
+func NewConn(log logger.Logger, pool pool.Pool) *Conn {
 	if pool == nil {
-		log.Fatalf("pool is nil")
+		log.Fatal(context.Background(), "pg pool is empty")
 	}
 	return &Conn{
+		log:     log,
 		Pool:    pool,
-		bulks:   NewBulkSet(pool),
-		batches: batch.NewBatchSet(pool),
+		bulks:   NewBulkSet(log, pool),
+		batches: batch.NewBatchSet(log, pool),
 	}
 }
 
@@ -45,14 +49,14 @@ func (conn *Conn) InsertAutocompleteValue(sessionID uint64, projectID uint32, tp
 		return
 	}
 	if err := conn.bulks.Get("autocompletes").Append(value, tp, projectID); err != nil {
-		log.Printf("autocomplete bulk err: %s", err)
+		conn.log.Error(context.Background(), "can't add autocomplete to PG, err: %s", err)
 	}
 	if conn.chConn == nil {
 		return
 	}
 	// Send autocomplete data to clickhouse
 	if err := conn.chConn.InsertAutocomplete(&sessions.Session{SessionID: sessionID, ProjectID: projectID}, tp, value); err != nil {
-		log.Printf("click house autocomplete err: %s", err)
+		conn.log.Error(context.Background(), "can't add autocomplete to CH, err: %s", err)
 	}
 }
 

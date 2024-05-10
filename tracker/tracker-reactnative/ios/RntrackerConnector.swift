@@ -18,7 +18,9 @@ public class ORTrackerConnector: NSObject {
           performances: optionsDict["performances"] as? Bool ?? true,
           logs: optionsDict["logs"] as? Bool ?? true,
           screen: optionsDict["screen"] as? Bool ?? true,
-          wifiOnly: optionsDict["wifiOnly"] as? Bool ?? true
+          wifiOnly: optionsDict["wifiOnly"] as? Bool ?? true,
+          debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
+          debugImages: false
         )
         Openreplay.shared.serverURL = projectUrl ?? "https://app.openreplay.com/ingest"
         Openreplay.shared.start(projectKey: projectKey, options: options)
@@ -37,7 +39,9 @@ public class ORTrackerConnector: NSObject {
           performances: optionsDict["performances"] as? Bool ?? true,
           logs: optionsDict["logs"] as? Bool ?? true,
           screen: optionsDict["screen"] as? Bool ?? true,
-          wifiOnly: false
+          wifiOnly: false,
+          debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
+          debugImages: false
         )
         Openreplay.shared.serverURL = projectUrl ?? "https://app.openreplay.com/ingest"
         Openreplay.shared.startSession(projectKey: projectKey, options: options)

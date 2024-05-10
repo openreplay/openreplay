@@ -88,7 +88,7 @@ function LiveSessionList(props: Props) {
         <div className="flex mb-6 justify-between items-center">
           <div className="flex items-center">
             <h3 className="text-2xl capitalize mr-2">
-              <span>Cobrowse</span>
+              <span>Co-Browse</span>
               {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
             </h3>
 
@@ -172,7 +172,7 @@ function LiveSessionList(props: Props) {
               </div>
               <Pagination
                 page={currentPage}
-                totalPages={Math.ceil(total / PER_PAGE)}
+                total={total}
                 onPageChange={(page: any) => props.updateCurrentPage(page)}
                 limit={PER_PAGE}
                 debounceRequest={500}

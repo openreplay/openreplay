@@ -136,7 +136,7 @@
   left: 0;
   right: 0;
   height: 10px;
-  border: 1px solid $gray-light;
+  border: 1px solid $gray-lighter;
   display: flex;
   align-items: center;
 }

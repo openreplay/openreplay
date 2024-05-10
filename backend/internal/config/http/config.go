@@ -6,6 +6,7 @@ import (
 	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/internal/config/redis"
 	"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/logger"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type Config struct {
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
 	TopicRawWeb             string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS             string        `env:"TOPIC_RAW_IOS,required"`
+	TopicRawMobile          string        `env:"TOPIC_RAW_IOS,required"`
 	TopicRawImages          string        `env:"TOPIC_RAW_IMAGES,required"`
 	TopicCanvasImages       string        `env:"TOPIC_CANVAS_IMAGES,required"`
 	BeaconSizeLimit         int64         `env:"BEACON_SIZE_LIMIT,required"`
@@ -34,11 +35,13 @@ type Config struct {
 	RecordCanvas            bool          `env:"RECORD_CANVAS,default=false"`
 	CanvasQuality           string        `env:"CANVAS_QUALITY,default=low"`
 	CanvasFps               int           `env:"CANVAS_FPS,default=1"`
+	MobileQuality           string        `env:"MOBILE_QUALITY,default=low"` // (low, standard, high)
+	MobileFps               int           `env:"MOBILE_FPS,default=1"`
 	WorkerID                uint16
 }
 
-func New() *Config {
+func New(log logger.Logger) *Config {
 	cfg := &Config{WorkerID: env.WorkerID()}
-	configurator.Process(cfg)
+	configurator.Process(log, cfg)
 	return cfg
 }

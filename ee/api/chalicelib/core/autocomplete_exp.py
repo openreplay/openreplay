@@ -220,7 +220,7 @@ def __search_errors(project_id, value, key=None, source=None):
     return helper.list_to_camel_case(results)
 
 
-def __search_errors_ios(project_id, value, key=None, source=None):
+def __search_errors_mobile(project_id, value, key=None, source=None):
     # TODO: define this when ios events are supported in CH
     return []
 

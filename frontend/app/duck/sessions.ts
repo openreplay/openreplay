@@ -48,6 +48,8 @@ const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
 const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION'
 
+const PREFETCH_SESSION = 'sessions/PREFETCH_SESSION'
+
 const range = getDateRangeFromValue(LAST_7_DAYS);
 const defaultDateFilters = {
     url: '',
@@ -60,6 +62,7 @@ const initObj = {
     list: [],
     sessionIds: [],
     current: new Session(),
+    prefetched: false,
     eventsAsked: false,
     total: 0,
     keyMap: Map(),
@@ -185,6 +188,13 @@ const reducer = (state = initialState, action: IAction) => {
 
             return state
                 .set('current', session)
+                .set('prefetched', false)
+        }
+        case PREFETCH_SESSION: {
+            const { data } = action;
+            return state
+              .set('current', data)
+              .set('prefetched', true);
         }
         case FETCH_EVENTS.SUCCESS: {
             const {
@@ -454,6 +464,13 @@ export const fetchV2 = (sessionId: string) =>
 
   }
 
+  export function presetSession(sessionData) {
+    return {
+        type: PREFETCH_SESSION,
+        data: sessionData
+    }
+  }
+
 export function clearCurrentSession() {
     return {
         type: CLEAR_CURRENT_SESSION
@@ -550,20 +567,6 @@ export function setTimelineHoverTime(timeLineTooltip) {
         type: SET_TIMELINE_HOVER_POINTER,
         timeLineTooltip
     };
-}
-
-export function setCreateNoteTooltip(noteTooltip) {
-    return {
-        type: SET_CREATE_NOTE_TOOLTIP,
-        noteTooltip
-    }
-}
-
-export function setEditNoteTooltip(noteTooltip) {
-    return {
-        type: SET_EDIT_NOTE_TOOLTIP,
-        noteTooltip
-    }
 }
 
 export function filterOutNote(noteId) {

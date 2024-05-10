@@ -68,5 +68,5 @@ function MetricTypeList(props: Props) {
 }
 
 export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' || state.getIn(['user', 'account', 'edition']) === 'msaas'
 }))(withRouter(MetricTypeList));

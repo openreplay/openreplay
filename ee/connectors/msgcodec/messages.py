@@ -815,6 +815,16 @@ class TagTrigger(Message):
         self.tag_id = tag_id
 
 
+class ReduxNew(Message):
+    __id__ = 121
+
+    def __init__(self, action, state, duration, action_time):
+        self.action = action
+        self.state = state
+        self.duration = duration
+        self.action_time = action_time
+
+
 class IssueEvent(Message):
     __id__ = 125
 
@@ -844,7 +854,7 @@ class SessionSearch(Message):
         self.partition = partition
 
 
-class IOSSessionStart(Message):
+class MobileSessionStart(Message):
     __id__ = 90
 
     def __init__(self, timestamp, project_id, tracker_version, rev_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country):
@@ -860,14 +870,14 @@ class IOSSessionStart(Message):
         self.user_country = user_country
 
 
-class IOSSessionEnd(Message):
+class MobileSessionEnd(Message):
     __id__ = 91
 
     def __init__(self, timestamp):
         self.timestamp = timestamp
 
 
-class IOSMetadata(Message):
+class MobileMetadata(Message):
     __id__ = 92
 
     def __init__(self, timestamp, length, key, value):
@@ -877,7 +887,7 @@ class IOSMetadata(Message):
         self.value = value
 
 
-class IOSEvent(Message):
+class MobileEvent(Message):
     __id__ = 93
 
     def __init__(self, timestamp, length, name, payload):
@@ -887,7 +897,7 @@ class IOSEvent(Message):
         self.payload = payload
 
 
-class IOSUserID(Message):
+class MobileUserID(Message):
     __id__ = 94
 
     def __init__(self, timestamp, length, id):
@@ -896,7 +906,7 @@ class IOSUserID(Message):
         self.id = id
 
 
-class IOSUserAnonymousID(Message):
+class MobileUserAnonymousID(Message):
     __id__ = 95
 
     def __init__(self, timestamp, length, id):
@@ -905,7 +915,7 @@ class IOSUserAnonymousID(Message):
         self.id = id
 
 
-class IOSScreenChanges(Message):
+class MobileScreenChanges(Message):
     __id__ = 96
 
     def __init__(self, timestamp, length, x, y, width, height):
@@ -917,7 +927,7 @@ class IOSScreenChanges(Message):
         self.height = height
 
 
-class IOSCrash(Message):
+class MobileCrash(Message):
     __id__ = 97
 
     def __init__(self, timestamp, length, name, reason, stacktrace):
@@ -928,7 +938,7 @@ class IOSCrash(Message):
         self.stacktrace = stacktrace
 
 
-class IOSViewComponentEvent(Message):
+class MobileViewComponentEvent(Message):
     __id__ = 98
 
     def __init__(self, timestamp, length, screen_name, view_name, visible):
@@ -939,7 +949,7 @@ class IOSViewComponentEvent(Message):
         self.visible = visible
 
 
-class IOSClickEvent(Message):
+class MobileClickEvent(Message):
     __id__ = 100
 
     def __init__(self, timestamp, length, label, x, y):
@@ -950,7 +960,7 @@ class IOSClickEvent(Message):
         self.y = y
 
 
-class IOSInputEvent(Message):
+class MobileInputEvent(Message):
     __id__ = 101
 
     def __init__(self, timestamp, length, value, value_masked, label):
@@ -961,7 +971,7 @@ class IOSInputEvent(Message):
         self.label = label
 
 
-class IOSPerformanceEvent(Message):
+class MobilePerformanceEvent(Message):
     __id__ = 102
 
     def __init__(self, timestamp, length, name, value):
@@ -971,7 +981,7 @@ class IOSPerformanceEvent(Message):
         self.value = value
 
 
-class IOSLog(Message):
+class MobileLog(Message):
     __id__ = 103
 
     def __init__(self, timestamp, length, severity, content):
@@ -981,7 +991,7 @@ class IOSLog(Message):
         self.content = content
 
 
-class IOSInternalError(Message):
+class MobileInternalError(Message):
     __id__ = 104
 
     def __init__(self, timestamp, length, content):
@@ -990,7 +1000,7 @@ class IOSInternalError(Message):
         self.content = content
 
 
-class IOSNetworkCall(Message):
+class MobileNetworkCall(Message):
     __id__ = 105
 
     def __init__(self, timestamp, length, type, method, url, request, response, status, duration):
@@ -1005,7 +1015,7 @@ class IOSNetworkCall(Message):
         self.duration = duration
 
 
-class IOSSwipeEvent(Message):
+class MobileSwipeEvent(Message):
     __id__ = 106
 
     def __init__(self, timestamp, length, label, x, y, direction):
@@ -1017,7 +1027,7 @@ class IOSSwipeEvent(Message):
         self.direction = direction
 
 
-class IOSBatchMeta(Message):
+class MobileBatchMeta(Message):
     __id__ = 107
 
     def __init__(self, timestamp, length, first_index):
@@ -1026,7 +1036,7 @@ class IOSBatchMeta(Message):
         self.first_index = first_index
 
 
-class IOSPerformanceAggregated(Message):
+class MobilePerformanceAggregated(Message):
     __id__ = 110
 
     def __init__(self, timestamp_start, timestamp_end, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_memory, avg_memory, max_memory, min_battery, avg_battery, max_battery):
@@ -1046,7 +1056,7 @@ class IOSPerformanceAggregated(Message):
         self.max_battery = max_battery
 
 
-class IOSIssueEvent(Message):
+class MobileIssueEvent(Message):
     __id__ = 111
 
     def __init__(self, timestamp, type, context_string, context, payload):

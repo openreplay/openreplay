@@ -198,7 +198,7 @@ Pipfile.lock
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py
 /chalicelib/core/errors_favorite.py
-/chalicelib/core/events_ios.py
+/chalicelib/core/events_mobile.py
 /chalicelib/core/feature_flags.py
 /chalicelib/core/funnels.py
 /chalicelib/core/heatmaps.py
@@ -227,6 +227,7 @@ Pipfile.lock
 /chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_mobs.py
+/chalicelib/core/significance.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py

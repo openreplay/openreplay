@@ -1,13 +1,15 @@
 package main
 
 import (
-	"log"
+	"context"
+
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
@@ -20,38 +22,34 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, databaseMetrics.List())
 
-	m := metrics.New()
-	m.Register(databaseMetrics.List())
-
-	cfg := config.New()
-
-	// Init postgres connection
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
-		log.Printf("can't init postgres connection: %s", err)
-		return
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close()
 
 	// Init events module
-	pg := postgres.NewConn(pgConn)
+	pg := postgres.NewConn(log, pgConn)
 	defer pg.Close()
 
 	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
 	if err != nil {
-		log.Printf("can't init redis connection: %s", err)
+		log.Warn(ctx, "can't init redis connection: %s", err)
 	}
 	defer redisClient.Close()
 
-	projManager := projects.New(pgConn, redisClient)
-	sessManager := sessions.New(pgConn, projManager, redisClient)
-	tagsManager := tags.New(pgConn)
+	projManager := projects.New(log, pgConn, redisClient)
+	sessManager := sessions.New(log, pgConn, projManager, redisClient)
+	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver
-	saver := datasaver.New(cfg, pg, sessManager, tagsManager)
+	saver := datasaver.New(log, cfg, pg, sessManager, tagsManager)
 
 	// Message filter
 	msgFilter := []int{
@@ -64,10 +62,10 @@ func main() {
 		messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange,
 		messages.MsgUnbindNodes, messages.MsgCanvasNode, messages.MsgTagTrigger,
 		// Mobile messages
-		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
-		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,
-		messages.MsgIOSClickEvent, messages.MsgIOSSwipeEvent, messages.MsgIOSInputEvent,
-		messages.MsgIOSCrash, messages.MsgIOSIssueEvent,
+		messages.MsgMobileSessionStart, messages.MsgMobileSessionEnd, messages.MsgMobileUserID, messages.MsgMobileUserAnonymousID,
+		messages.MsgMobileMetadata, messages.MsgMobileEvent, messages.MsgMobileNetworkCall,
+		messages.MsgMobileClickEvent, messages.MsgMobileSwipeEvent, messages.MsgMobileInputEvent,
+		messages.MsgMobileCrash, messages.MsgMobileIssueEvent,
 	}
 
 	// Init consumer
@@ -75,24 +73,22 @@ func main() {
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
+			cfg.TopicRawMobile,
 			cfg.TopicAnalytics,
 		},
-		messages.NewMessageIterator(saver.Handle, msgFilter, true),
+		messages.NewMessageIterator(log, saver.Handle, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
 
 	// Init memory manager
-	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
+	memoryManager, err := memory.NewManager(log, cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
 	if err != nil {
-		log.Printf("can't init memory manager: %s", err)
-		return
+		log.Fatal(ctx, "can't init memory manager: %s", err)
 	}
 
 	// Run service and wait for TERM signal
-	service := db.New(cfg, consumer, saver, memoryManager, sessManager)
-	log.Printf("Db service started\n")
-	terminator.Wait(service)
-	log.Printf("Db service stopped\n")
+	service := db.New(log, cfg, consumer, saver, memoryManager, sessManager)
+	log.Info(ctx, "Db service started")
+	terminator.Wait(log, service)
 }

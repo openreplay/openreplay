@@ -17,7 +17,7 @@ function SubHeader() {
         <SessionTabs isLive />
       </div>
       {location && (
-        <div className={'w-full bg-white border-b border-gray-light'}>
+        <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Icon size="20" name="event/link" className="mr-1" />
             <Tooltip title="Open in new tab" delay={0}>

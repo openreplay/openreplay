@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { withSiteId, session as sessionRoute } from 'App/routes';
-import { Link, Icon, Tooltip } from 'UI';
+import AutoplayToggle from "Shared/AutoplayToggle/AutoplayToggle";
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import { fetchAutoplaySessions } from 'Duck/search';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Popover } from 'antd'
 
 const PER_PAGE = 10;
 
@@ -60,36 +62,41 @@ function QueueControls(props: Props) {
   };
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-1">
       <div
         onClick={prevHandler}
-        className={cn('p-1 bg-gray-bg group rounded-full color-gray-darkest font-medium', {
+        className={cn('p-1 group rounded-full', {
           'pointer-events-none opacity-50': !previousId,
           'cursor-pointer': !!previousId,
         })}
       >
-        <Tooltip
+        <Popover
           placement="bottom"
-          title={<div className="whitespace-nowrap">Play Previous Session</div>}
-          disabled={!previousId}
+          content={<div className="whitespace-nowrap">Play Previous Session</div>}
+          open={previousId ? undefined : false}
         >
-          <Icon name="prev1" className="group-hover:fill-main" color="inherit" size="16" />
-        </Tooltip>
+          <Button size={'small'} shape={'circle'} disabled={!previousId} className={'flex items-center justify-center'}>
+            <LeftOutlined />
+          </Button>
+        </Popover>
       </div>
+      <AutoplayToggle />
       <div
         onClick={nextHandler}
-        className={cn('p-1 bg-gray-bg group ml-1 rounded-full color-gray-darkest font-medium', {
+        className={cn('p-1 group ml-1 rounded-full', {
           'pointer-events-none opacity-50': !nextId,
           'cursor-pointer': !!nextId,
         })}
       >
-        <Tooltip
+        <Popover
           placement="bottom"
-          title={<div className="whitespace-nowrap">Play Next Session</div>}
-          disabled={!nextId}
+          content={<div className="whitespace-nowrap">Play Next Session</div>}
+          open={nextId ? undefined : false}
         >
-          <Icon name="next1" className="group-hover:fill-main" color="inherit" size="16" />
-        </Tooltip>
+          <Button size={'small'} shape={'circle'} disabled={!previousId} className={'flex items-center justify-center'}>
+            <RightOutlined />
+          </Button>
+        </Popover>
       </div>
     </div>
   );
@@ -99,11 +106,11 @@ export default connect(
   (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
+    siteId: state.getIn(['site', 'siteId']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
     total: state.getIn(['sessions', 'total']) || 0,
     sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
-    siteId: state.getIn(['site', 'siteId']),
   }),
   { setAutoplayValues, fetchAutoplaySessions }
 )(withRouter(QueueControls));

@@ -1,8 +1,11 @@
-import { aiService } from 'App/services';
 import { makeAutoObservable } from 'mobx';
+
+import { aiService } from 'App/services';
 
 export default class AiSummaryStore {
   text = '';
+  toggleSummary = false;
+  isLoading = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -12,48 +15,45 @@ export default class AiSummaryStore {
     this.text = text;
   }
 
-  appendText(text: string) {
-    this.text += text;
+  setToggleSummary(toggleSummary: boolean) {
+    this.toggleSummary = toggleSummary;
+  }
+
+  setLoading(loading: boolean) {
+    this.isLoading = loading;
   }
 
   getSummary = async (sessionId: string) => {
+    if (this.isLoading) return;
+
+    this.setLoading(true);
     this.setText('');
-    const respBody = await aiService.getSummary(sessionId);
-    if (!respBody) return;
-
-    const reader = respBody.getReader();
-
-    let lastIncompleteWord = '';
-
-    const processTextChunk = (textChunk: string) => {
-      textChunk = lastIncompleteWord + textChunk;
-      const words = textChunk.split(' ');
-
-      lastIncompleteWord = words.pop() || '';
-
-      words.forEach((word) => {
-        if(word) this.appendText(word + ' ');
-      });
-    };
-
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          // Processing any remaining incomplete word at the end of the stream
-          if (lastIncompleteWord) {
-            this.appendText(lastIncompleteWord + ' ');
-          }
-          break;
-        }
-        let textChunk = new TextDecoder().decode(value, { stream: true });
-        if (this.text === '') {
-          textChunk = textChunk.trimStart()
-        }
-        processTextChunk(textChunk);
-      }
-    } catch (error) {
-      console.log(error);
+      const respText = await aiService.getSummary(sessionId);
+      if (!respText) return;
+
+      this.setText(respText);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
     }
   };
+
+  getDetailedSummary = async (sessionId: string, networkEvents: any[], feat: 'errors' | 'issues' | 'journey', startTs: number, endTs: number) => {
+    if (this.isLoading) return;
+
+    this.setLoading(true);
+    this.setText('');
+    try {
+      const respText = await aiService.getDetailedSummary(sessionId, networkEvents,feat, startTs, endTs);
+      if (!respText) return;
+
+      this.setText(respText);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.setLoading(false);
+    }
+  }
 }

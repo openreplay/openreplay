@@ -930,7 +930,8 @@ def get_user_settings(user_id):
                     LIMIT 1""",
                 {"user_id": user_id})
         )
-        return helper.dict_to_camel_case(cur.fetchone())
+        settings = cur.fetchone()
+        return helper.dict_to_camel_case(settings)
 
 
 def update_user_module(user_id, data: schemas.ModuleStatus):

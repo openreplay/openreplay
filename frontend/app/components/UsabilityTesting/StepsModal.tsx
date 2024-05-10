@@ -1,6 +1,10 @@
-import { UxTask } from 'App/services/UxtestingService';
-import React from 'react';
 import { Button, Input, Switch, Typography } from 'antd';
+import React from 'react';
+
+
+
+import { UxTask } from 'App/services/UxtestingService';
+
 
 function StepsModal({
   onAdd,
@@ -14,8 +18,12 @@ function StepsModal({
   typingEnabled?: boolean;
 }) {
   const [title, setTitle] = React.useState(editTask?.title ?? '');
-  const [description, setDescription] = React.useState(editTask?.description ?? '');
-  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(editTask?.allowTyping ?? typingEnabled);
+  const [description, setDescription] = React.useState(
+    editTask?.description ?? ''
+  );
+  const [isAnswerEnabled, setIsAnswerEnabled] = React.useState(
+    editTask?.allowTyping ?? typingEnabled
+  );
 
   const save = () => {
     onAdd({
@@ -39,8 +47,14 @@ function StepsModal({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={'Task title'}
-          className={'mb-4'}
         />
+        <div className={'text-sm mb-4 mt-2'}>
+          <div className={'font-semibold'}>Example:</div>
+          <ul className={'list-disc list-inside'}>
+            <li>Task: Finding a specific product on shopping.com</li>
+            <li>Question: Find a specific product on shopping.com?</li>
+          </ul>
+        </div>
         <Typography.Title level={5} style={{ marginBottom: 4 }}>
           Instructions
         </Typography.Title>
@@ -49,8 +63,15 @@ function StepsModal({
           rows={5}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={'Task instructions'}
-          className={'mb-4'}
         />
+        <div className={'text-sm mb-4 mt-2'}>
+          <div className={'font-semibold'}>Example:</div>
+          <ol className={'list-decimal list-inside'}>
+            <li>Search for "Sustainable T-shirt".</li>
+            <li>Pick a product from the results.</li>
+            <li>Note/Callout the ease of finding it.</li>
+          </ol>
+        </div>
         <Typography.Title level={5} style={{ marginBottom: 4 }}>
           Allow participants to type an answer
         </Typography.Title>
@@ -61,7 +82,8 @@ function StepsModal({
           unCheckedChildren="No"
         />
         <div className={'text-disabled-text mb-4 mt-1'}>
-          Enabling this option will show a text field for participants to type their answer.
+          Enabling this option will show a text field for participants to type
+          their answer.
         </div>
       </div>
       <div className={'flex gap-2'}>

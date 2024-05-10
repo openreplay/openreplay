@@ -99,6 +99,7 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
 def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
+    data.series[0].filter.filters += data.series[0].filter.events
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
@@ -213,10 +214,10 @@ def __merge_metric_with_data(metric: schemas.CardSchema,
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
 
-    if len(data.filters) > 0:
-        for s in metric.series:
-            s.filter.filters += data.filters
-    metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
+    # if len(data.filters) > 0:
+    #     for s in metric.series:
+    #         s.filter.filters += data.filters
+    # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
     return metric
 
 
@@ -277,11 +278,11 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
 
 def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
     if len(data.series) == 0:
-        return {"data": []}
+        return []
     data.series[0].filter.startTimestamp = data.startTimestamp
     data.series[0].filter.endTimestamp = data.endTimestamp
     data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    return {"data": data}
+    return data
 
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):

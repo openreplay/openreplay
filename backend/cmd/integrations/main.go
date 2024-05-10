@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/integrations"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/queue"
@@ -18,44 +18,42 @@ import (
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(databaseMetrics.List())
-
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := config.New()
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, databaseMetrics.List())
 
 	pgConn, err := pgx.Connect(context.Background(), cfg.Postgres.String())
 	if err != nil {
-		log.Fatalf("can't init postgres connection: %s", err)
+		log.Fatal(ctx, "can't init postgres connection: %s", err)
 	}
 	defer pgConn.Close(context.Background())
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	storage := integrations.NewStorage(pgConn)
+	storage := integrations.NewStorage(pgConn, log)
 	if err := storage.Listen(); err != nil {
-		log.Fatalf("Listener error: %v", err)
+		log.Fatal(ctx, "can't init storage listener: %s", err)
 	}
 
-	listener, err := integrations.New(cfg, storage, producer, integrations.NewManager(), token.NewTokenizer(cfg.TokenSecret))
+	listener, err := integrations.New(log, cfg, storage, producer, integrations.NewManager(log), token.NewTokenizer(cfg.TokenSecret))
 	if err != nil {
-		log.Fatalf("Listener error: %v", err)
+		log.Fatal(ctx, "can't init service: %s", err)
 	}
 	defer listener.Close()
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("Integration service started\n")
+	log.Info(ctx, "integration service started")
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Info(ctx, "caught signal %v: terminating", sig)
 			os.Exit(0)
 		case err := <-listener.Errors:
-			log.Printf("Listener error: %v", err)
+			log.Error(ctx, "listener error: %s", err)
 			os.Exit(0)
 		}
 	}

@@ -58,3 +58,14 @@ type Clickhouse struct {
 	UserName string `env:"CLICKHOUSE_USERNAME,default=default"`
 	Password string `env:"CLICKHOUSE_PASSWORD,default="`
 }
+
+// ElasticSearch config
+
+type ElasticSearch struct {
+	URLs   string `env:"ELASTICSEARCH_URLS"`
+	UseAWS bool   `env:"ELASTICSEARCH_IN_AWS,default=false"`
+}
+
+func (cfg *ElasticSearch) GetURLs() []string {
+	return strings.Split(cfg.URLs, ",")
+}

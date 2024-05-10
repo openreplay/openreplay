@@ -1,10 +1,10 @@
 import ast
+import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, performance_event, metrics
+from chalicelib.core import events, metadata, projects, performance_event, metrics, sessions_favorite, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-import logging
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -110,6 +110,8 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False,
                     platform="web"):
+    if data.bookmarked:
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                   user_id=user_id, platform=platform)
@@ -194,7 +196,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                     s.{sort} AS sort_key,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
                                                 {query_part}
-                                              LEFT JOIN (SELECT session_id
+                                              LEFT JOIN (SELECT DISTINCT session_id
                                                 FROM experimental.user_viewed_sessions
                                                 WHERE user_id = %(userId)s AND project_id=%(project_id)s
                                                   AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
@@ -354,6 +356,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                                    density=density))
     extra_event = None
     extra_deduplication = []
+    extra_conditions = None
     if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
@@ -362,13 +365,30 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                               AND ev.project_id = %(project_id)s
                               AND ev.event_type = 'LOCATION'"""
         extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.location:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
+
     elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                   favorite_only=False, issue=None, project_id=project_id,
                                                   user_id=None, extra_event=extra_event,
-                                                  extra_deduplication=extra_deduplication)
+                                                  extra_deduplication=extra_deduplication,
+                                                  extra_conditions=extra_conditions)
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
@@ -502,7 +522,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.location_avg_cpu_load: 'PERFORMANCE',
         schemas.PerformanceEventType.location_avg_memory_usage: 'PERFORMANCE'
     }
-    defs_ios = {
+    defs_mobile = {
         schemas.EventType.click: "TAP",
         schemas.EventType.input: "INPUT",
         schemas.EventType.location: "VIEW",
@@ -512,8 +532,8 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.fetch_failed: "REQUEST",
         schemas.EventType.error: "CRASH",
     }
-    if platform == "ios" and event_type in defs_ios:
-        return defs_ios.get(event_type)
+    if platform == "ios" and event_type in defs_mobile:
+        return defs_mobile.get(event_type)
     if event_type not in defs:
         raise Exception(f"unsupported EventType:{event_type}")
     return defs.get(event_type)
@@ -521,7 +541,14 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
-                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[]):
+                          project_id, user_id, platform="web", extra_event=None, extra_deduplication=[],
+                          extra_conditions=None):
+    if issue:
+        data.filters.append(
+            schemas.SessionSearchFilterSchema(value=[issue['type']],
+                                              type=schemas.FilterType.issue.value,
+                                              operator='is')
+        )
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
                  "projectId": project_id, "userId": user_id}
@@ -578,7 +605,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_os)')
                     ss_constraints.append('isNotNull(ms.user_os)')
@@ -588,7 +615,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_device)')
                     ss_constraints.append('isNotNull(ms.user_device)')
@@ -598,7 +625,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_country)')
                     ss_constraints.append('isNotNull(ms.user_country)')
@@ -712,7 +739,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             _multiple_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_id)')
                     ss_constraints.append('isNotNull(ms.user_id)')
@@ -727,7 +754,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         _multiple_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_ios]:
+                                 schemas.FilterType.user_anonymous_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.user_anonymous_id)')
                     ss_constraints.append('isNotNull(ms.user_anonymous_id)')
@@ -741,7 +768,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append(
                         _multiple_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.rev_id)')
                     ss_constraints.append('isNotNull(ms.rev_id)')
@@ -869,7 +896,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                                         value_key=e_k))
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
-                    _column = events.EventType.CLICK_IOS.column
+                    _column = events.EventType.CLICK_MOBILE.column
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
@@ -1446,12 +1473,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     extra_join = ""
     if issue is not None:
         extra_join = """
-                INNER JOIN LATERAL(SELECT TRUE FROM events_common.issues INNER JOIN public.issues AS p_issues USING (issue_id)
-                WHERE issues.session_id=f.session_id 
-                    AND p_issues.type=%(issue_type)s 
-                    AND p_issues.context_string=%(issue_contextString)s
-                    AND timestamp >= f.first_event_ts
-                    AND timestamp <= f.last_event_ts) AS issues ON(TRUE)
+                INNER JOIN (SELECT session_id
+                           FROM experimental.issues
+                                    INNER JOIN experimental.events USING (issue_id)
+                           WHERE issues.type = %(issue_type)s
+                             AND issues.context_string = %(issue_contextString)s
+                             AND issues.project_id = %(projectId)s
+                             AND events.project_id = %(projectId)s
+                             AND events.issue_type = %(issue_type)s
+                             AND events.datetime >= toDateTime(%(startDate)s/1000)
+                             AND events.datetime <= toDateTime(%(endDate)s/1000)
+                             ) AS issues ON (f.session_id = issues.session_id)
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
@@ -1476,9 +1508,24 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
     if extra_event:
         extra_event = f"INNER JOIN ({extra_event}) AS extra_event USING(session_id)"
-        # extra_join = f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
-        # extra_constraints.append("ev.timestamp>=%(startDate)s")
-        # extra_constraints.append("ev.timestamp<=%(endDate)s")
+        if extra_conditions and len(extra_conditions) > 0:
+            _extra_or_condition = []
+            for i, c in enumerate(extra_conditions):
+                if _isAny_opreator(c.operator):
+                    continue
+                e_k = f"ec_value{i}"
+                op = __get_sql_operator(c.operator)
+                c.value = helper.values_for_operator(value=c.value, op=c.operator)
+                full_args = {**full_args,
+                             **_multiple_values(c.value, value_key=e_k)}
+                if c.type == events.EventType.LOCATION.ui_type:
+                    _extra_or_condition.append(
+                        _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                             c.value, value_key=e_k))
+                else:
+                    logging.warning(f"unsupported extra_event type:${c.type}")
+            if len(_extra_or_condition) > 0:
+                extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     else:
         extra_event = ""
     if errors_only:
@@ -1668,3 +1715,29 @@ def check_recording_status(project_id: int) -> dict:
         "recordingStatus": row["recording_status"],
         "sessionsCount": row["sessions_count"]
     }
+
+
+# TODO: rewrite this function to use ClickHouse
+def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
+                           ascending: bool = False) -> dict:
+    if session_ids is None or len(session_ids) == 0:
+        return {"total": 0, "sessions": []}
+    with pg_client.PostgresClient() as cur:
+        meta_keys = metadata.get(project_id=project_id)
+        params = {"project_id": project_id, "session_ids": tuple(session_ids)}
+        order_direction = 'ASC' if ascending else 'DESC'
+        main_query = cur.mogrify(f"""SELECT {sessions_legacy.SESSION_PROJECTION_BASE_COLS}
+                                            {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                     FROM public.sessions AS s
+                                        WHERE project_id=%(project_id)s 
+                                            AND session_id IN %(session_ids)s
+                                     ORDER BY {sort_by} {order_direction};""", params)
+
+        cur.execute(main_query)
+        rows = cur.fetchall()
+        if len(meta_keys) > 0:
+            for s in rows:
+                s["metadata"] = {}
+                for m in meta_keys:
+                    s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows)}

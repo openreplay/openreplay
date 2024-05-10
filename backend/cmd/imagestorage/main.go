@@ -1,36 +1,41 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	config "openreplay/backend/internal/config/imagestorage"
-	"openreplay/backend/internal/imagestorage"
+	"openreplay/backend/internal/screenshot-handler"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/imagestorage"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	m := metrics.New()
-	m.Register(storageMetrics.List())
+	ctx := context.Background()
+	log := logger.New()
+	cfg := config.New(log)
+	metrics.New(log, storageMetrics.List())
 
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	cfg := config.New()
-
-	srv, err := imagestorage.New(cfg)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
-		log.Printf("can't init storage service: %s", err)
-		return
+		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	srv, err := screenshot_handler.New(cfg, log, objStore)
+	if err != nil {
+		log.Fatal(ctx, "can't init storage service: %s", err)
+	}
+
+	workDir := cfg.FSDir
 
 	consumer := queue.NewConsumer(
 		cfg.GroupImageStorage,
@@ -44,7 +49,7 @@ func main() {
 				if err != nil {
 					return nil, err
 				}
-				if msgType != messages.MsgIOSSessionEnd {
+				if msgType != messages.MsgMobileSessionEnd {
 					return nil, fmt.Errorf("not a mobile session end message")
 				}
 				msg, err := messages.ReadMessage(msgType, reader)
@@ -53,20 +58,15 @@ func main() {
 				}
 				return msg, nil
 			}
+			sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessID))
 
-			if msg, err := checkSessionEnd(data); err == nil {
-				sessEnd := msg.(*messages.IOSSessionEnd)
-				// Received session end
-				if err := srv.Prepare(sessID); err != nil {
-					log.Printf("can't prepare mobile session: %s", err)
-				} else {
-					if err := producer.Produce(cfg.TopicReplayTrigger, sessID, sessEnd.Encode()); err != nil {
-						log.Printf("can't send session end signal to video service: %s", err)
-					}
+			if _, err := checkSessionEnd(data); err == nil {
+				if err := srv.PackScreenshots(sessCtx, sessID, workDir+"/screenshots/"+strconv.FormatUint(sessID, 10)+"/"); err != nil {
+					log.Error(sessCtx, "can't pack screenshots: %s", err)
 				}
 			} else {
-				if err := srv.Process(sessID, data); err != nil {
-					log.Printf("can't process mobile screenshots: %s", err)
+				if err := srv.Process(sessCtx, sessID, data); err != nil {
+					log.Error(sessCtx, "can't process screenshots: %s", err)
 				}
 			}
 		}, nil, true),
@@ -74,7 +74,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	log.Printf("Image storage service started\n")
+	log.Info(ctx, "Image storage service started")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -83,21 +83,21 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Info(ctx, "Caught signal %v: terminating", sig)
 			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			srv.Wait()
 			if err := consumer.Commit(); err != nil {
-				log.Printf("can't commit messages: %s", err)
+				log.Error(ctx, "can't commit messages: %s", err)
 			}
 		case msg := <-consumer.Rebalanced():
-			log.Println(msg)
+			log.Info(ctx, "Rebalanced: %v", msg)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on images consumption: %v", err)
+				log.Fatal(ctx, "Error on images consumption: %v", err)
 			}
 		}
 	}

@@ -74,14 +74,12 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
           Export CSV
         </Button>
       </div>
-      <div className={'bg-gray-lightest grid grid-cols-8 items-center font-semibold p-4'}>
-        <Cell size={1}>Date</Cell>
+      <div className={'bg-gray-lightest grid grid-cols-9 items-center font-semibold p-4'}>
+        <Cell size={2}>Date</Cell>
         <Cell size={2}>Team Members</Cell>
         <Cell size={1}>Live Duration</Cell>
         <Cell size={1}>Call Duration</Cell>
-        <Cell size={1}>Remote Duration</Cell>
-        <Cell size={1} />
-        {/* SPACER */}
+        <Cell size={2}>Remote Duration</Cell>
         <Cell size={1}>{/* BUTTONS */}</Cell>
       </div>
       <div className={'bg-white'}>
@@ -113,7 +111,7 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         )}
         <Pagination
           page={sessions.total > 0 ? page : 0}
-          totalPages={Math.ceil(sessions.total / PER_PAGE)}
+          total={sessions.total}
           onPageChange={onPageChange}
           limit={10}
           debounceRequest={200}
@@ -125,10 +123,10 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
 
 function Row({ session }: { session: AssistStatsSession }) {
   return (
-    <div className={'grid grid-cols-8 p-4 border-b hover:bg-active-blue'}>
-      <Cell size={1}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, hh:mm a')}</Cell>
+    <div className={'grid grid-cols-9 p-4 border-b hover:bg-active-blue'}>
+      <Cell size={2}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, hh:mm a')}</Cell>
       <Cell size={2}>
-        <div className={'flex gap-2'}>
+        <div className={'flex gap-2 flex-wrap'}>
           {session.teamMembers.map((member) => (
             <div className={'p-1 rounded border bg-gray-lightest w-fit'}>{member.name}</div>
           ))}
@@ -136,8 +134,7 @@ function Row({ session }: { session: AssistStatsSession }) {
       </Cell>
       <Cell size={1}>{durationFromMsFormatted(session.assistDuration)}</Cell>
       <Cell size={1}>{durationFromMsFormatted(session.callDuration)}</Cell>
-      <Cell size={1}>{durationFromMsFormatted(session.controlDuration)}</Cell>
-      <Cell size={1} />
+      <Cell size={2}>{durationFromMsFormatted(session.controlDuration)}</Cell>
       <Cell size={1}>
         <div className={'w-full flex justify-end gap-4'}>
           {session.recordings?.length > 0 ? (

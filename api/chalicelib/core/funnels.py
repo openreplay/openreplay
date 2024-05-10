@@ -9,8 +9,8 @@ from chalicelib.utils import sql_helper as sh
 def filter_stages(stages: List[schemas.SessionSearchEventSchema2]):
     ALLOW_TYPES = [schemas.EventType.click, schemas.EventType.input,
                    schemas.EventType.location, schemas.EventType.custom,
-                   schemas.EventType.click_ios, schemas.EventType.input_ios,
-                   schemas.EventType.view_ios, schemas.EventType.custom_ios, ]
+                   schemas.EventType.click_mobile, schemas.EventType.input_mobile,
+                   schemas.EventType.view_mobile, schemas.EventType.custom_mobile, ]
     return [s for s in stages if s.type in ALLOW_TYPES and s.value is not None]
 
 

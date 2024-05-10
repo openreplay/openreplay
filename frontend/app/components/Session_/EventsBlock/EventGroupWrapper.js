@@ -1,6 +1,5 @@
 import UxtEvent from "Components/Session_/EventsBlock/UxtEvent";
 import React from 'react';
-import { durationFromMsFormatted } from "App/date";
 import { connect } from 'react-redux';
 import { TextEllipsis, Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
@@ -8,7 +7,6 @@ import { TYPES } from 'Types/session/event';
 import Event from './Event';
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
-import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle('showLoadInfo', 'toggleLoadInfo')
@@ -17,7 +15,6 @@ import { setEditNoteTooltip } from 'Duck/sessions';
     members: state.getIn(['members', 'list']),
     currentUserId: state.getIn(['user', 'account', 'id'])
   }),
-  { setEditNoteTooltip }
 )
 class EventGroupWrapper extends React.Component {
   toggleLoadInfo = (e) => {
@@ -80,7 +77,6 @@ class EventGroupWrapper extends React.Component {
           <NoteEvent
             note={event}
             filterOutNote={filterOutNote}
-            onEdit={this.props.setEditNoteTooltip}
             noEdit={this.props.currentUserId !== event.userId}
           />
         )
@@ -123,9 +119,38 @@ class EventGroupWrapper extends React.Component {
         />
       )
     }
+
+    const shadowColor = this.props.isPrev
+      ? '#A7BFFF'
+      : this.props.isCurrent ? '#394EFF' : 'transparent'
     return (
       <>
         <div>
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: 1.5,
+              height: '100%',
+              backgroundColor: shadowColor,
+              zIndex: 98,
+            }}
+          />
+          {this.props.isCurrent ? (
+            <div
+             style={{
+               position: 'absolute',
+               top: '50%',
+               left: -7,
+               width: 10,
+               height: 10,
+               transform: 'rotate(45deg) translate(0, -50%)',
+               background: '#394EFF',
+               zIndex: 99,
+            }}
+            />
+          ) : null}
           {isFirst && isLocation && event.referrer && (
             <TextEllipsis>
               <div className={stl.referrer}>
@@ -166,4 +191,4 @@ function TabChange({ from, to, activeUrl, onClick }) {
     )
 }
 
-export default EventGroupWrapper;
+export default React.memo(EventGroupWrapper);

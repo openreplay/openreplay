@@ -139,7 +139,7 @@ end
 require './messages.rb'
 
 $context = :ios
-require './ios_messages.rb'
+require './mobile_messages.rb'
 
 Dir["templates/*.erb"].each do |tpl|
   e = ERB.new(File.read(tpl))

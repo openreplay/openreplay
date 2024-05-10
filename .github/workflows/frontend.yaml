@@ -27,6 +27,17 @@ jobs:
           ${{ runner.OS }}-build-
           ${{ runner.OS }}-
 
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
+        license_key: ${{ secrets.OSS_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+        minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.OSS_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Docker login
       run: |
         docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
@@ -65,14 +76,6 @@ jobs:
             tag: ${IMAGE_TAG}
         EOF
 
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
-
         # Update changed image tag
         sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
@@ -96,9 +99,17 @@ jobs:
         kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontextee
 
-    - name: Resetting vars file
-      run: |
-        git checkout -- scripts/helmcharts/vars.yaml
+    - uses: ./.github/composite-actions/update-keys
+      with:
+        domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+        license_key: ${{ secrets.EE_LICENSE_KEY }}
+        jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+        minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+        minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+        pg_password: ${{ secrets.EE_PG_PASSWORD }}
+        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+      name: Update Keys
+
     - name: Deploy to kubernetes ee
       run: |
         cd scripts/helmcharts/
@@ -108,15 +119,6 @@ jobs:
             # We've to strip off the -ee, as helm will append it.
             tag: ${IMAGE_TAG}
         EOF
-
-        ## Update secerts
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
-        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
 
         # Update changed image tag
         sed -i "/frontend/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
@@ -133,11 +135,12 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
-    # - name: Debug Job
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #     AWS_REGION: eu-central-1
-    #     AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+   # - name: Debug Job
+   #   # if: ${{ failure() }}
+   #   uses: mxschmitt/action-tmate@v3
+   #   env:
+   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+   #     IMAGE_TAG: ${{ github.sha }}-ee
+   #     ENVIRONMENT: staging
+   #    with:
+   #      iimit-access-to-actor: true

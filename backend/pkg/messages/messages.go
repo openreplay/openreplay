@@ -87,28 +87,29 @@ const (
 	MsgTabData                     = 118
 	MsgCanvasNode                  = 119
 	MsgTagTrigger                  = 120
+	MsgReduxNew                    = 121
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
-	MsgIOSSessionStart             = 90
-	MsgIOSSessionEnd               = 91
-	MsgIOSMetadata                 = 92
-	MsgIOSEvent                    = 93
-	MsgIOSUserID                   = 94
-	MsgIOSUserAnonymousID          = 95
-	MsgIOSScreenChanges            = 96
-	MsgIOSCrash                    = 97
-	MsgIOSViewComponentEvent       = 98
-	MsgIOSClickEvent               = 100
-	MsgIOSInputEvent               = 101
-	MsgIOSPerformanceEvent         = 102
-	MsgIOSLog                      = 103
-	MsgIOSInternalError            = 104
-	MsgIOSNetworkCall              = 105
-	MsgIOSSwipeEvent               = 106
-	MsgIOSBatchMeta                = 107
-	MsgIOSPerformanceAggregated    = 110
-	MsgIOSIssueEvent               = 111
+	MsgMobileSessionStart          = 90
+	MsgMobileSessionEnd            = 91
+	MsgMobileMetadata              = 92
+	MsgMobileEvent                 = 93
+	MsgMobileUserID                = 94
+	MsgMobileUserAnonymousID       = 95
+	MsgMobileScreenChanges         = 96
+	MsgMobileCrash                 = 97
+	MsgMobileViewComponentEvent    = 98
+	MsgMobileClickEvent            = 100
+	MsgMobileInputEvent            = 101
+	MsgMobilePerformanceEvent      = 102
+	MsgMobileLog                   = 103
+	MsgMobileInternalError         = 104
+	MsgMobileNetworkCall           = 105
+	MsgMobileSwipeEvent            = 106
+	MsgMobileBatchMeta             = 107
+	MsgMobilePerformanceAggregated = 110
+	MsgMobileIssueEvent            = 111
 )
 
 type Timestamp struct {
@@ -2323,6 +2324,33 @@ func (msg *TagTrigger) TypeID() int {
 	return 120
 }
 
+type ReduxNew struct {
+	message
+	Action     string
+	State      string
+	Duration   uint64
+	ActionTime uint64
+}
+
+func (msg *ReduxNew) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Action)+len(msg.State))
+	buf[0] = 121
+	p := 1
+	p = WriteString(msg.Action, buf, p)
+	p = WriteString(msg.State, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.ActionTime, buf, p)
+	return buf[:p]
+}
+
+func (msg *ReduxNew) Decode() Message {
+	return msg
+}
+
+func (msg *ReduxNew) TypeID() int {
+	return 121
+}
+
 type IssueEvent struct {
 	message
 	MessageID     uint64
@@ -2402,7 +2430,7 @@ func (msg *SessionSearch) TypeID() int {
 	return 127
 }
 
-type IOSSessionStart struct {
+type MobileSessionStart struct {
 	message
 	Timestamp      uint64
 	ProjectID      uint64
@@ -2416,7 +2444,7 @@ type IOSSessionStart struct {
 	UserCountry    string
 }
 
-func (msg *IOSSessionStart) Encode() []byte {
+func (msg *MobileSessionStart) Encode() []byte {
 	buf := make([]byte, 101+len(msg.TrackerVersion)+len(msg.RevID)+len(msg.UserUUID)+len(msg.UserOS)+len(msg.UserOSVersion)+len(msg.UserDevice)+len(msg.UserDeviceType)+len(msg.UserCountry))
 	buf[0] = 90
 	p := 1
@@ -2433,20 +2461,20 @@ func (msg *IOSSessionStart) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSSessionStart) Decode() Message {
+func (msg *MobileSessionStart) Decode() Message {
 	return msg
 }
 
-func (msg *IOSSessionStart) TypeID() int {
+func (msg *MobileSessionStart) TypeID() int {
 	return 90
 }
 
-type IOSSessionEnd struct {
+type MobileSessionEnd struct {
 	message
 	Timestamp uint64
 }
 
-func (msg *IOSSessionEnd) Encode() []byte {
+func (msg *MobileSessionEnd) Encode() []byte {
 	buf := make([]byte, 11)
 	buf[0] = 91
 	p := 1
@@ -2454,15 +2482,15 @@ func (msg *IOSSessionEnd) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSSessionEnd) Decode() Message {
+func (msg *MobileSessionEnd) Decode() Message {
 	return msg
 }
 
-func (msg *IOSSessionEnd) TypeID() int {
+func (msg *MobileSessionEnd) TypeID() int {
 	return 91
 }
 
-type IOSMetadata struct {
+type MobileMetadata struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2470,7 +2498,7 @@ type IOSMetadata struct {
 	Value     string
 }
 
-func (msg *IOSMetadata) Encode() []byte {
+func (msg *MobileMetadata) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Key)+len(msg.Value))
 	buf[0] = 92
 	p := 1
@@ -2481,15 +2509,15 @@ func (msg *IOSMetadata) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSMetadata) Decode() Message {
+func (msg *MobileMetadata) Decode() Message {
 	return msg
 }
 
-func (msg *IOSMetadata) TypeID() int {
+func (msg *MobileMetadata) TypeID() int {
 	return 92
 }
 
-type IOSEvent struct {
+type MobileEvent struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2497,7 +2525,7 @@ type IOSEvent struct {
 	Payload   string
 }
 
-func (msg *IOSEvent) Encode() []byte {
+func (msg *MobileEvent) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Name)+len(msg.Payload))
 	buf[0] = 93
 	p := 1
@@ -2508,22 +2536,22 @@ func (msg *IOSEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSEvent) Decode() Message {
+func (msg *MobileEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSEvent) TypeID() int {
+func (msg *MobileEvent) TypeID() int {
 	return 93
 }
 
-type IOSUserID struct {
+type MobileUserID struct {
 	message
 	Timestamp uint64
 	Length    uint64
 	ID        string
 }
 
-func (msg *IOSUserID) Encode() []byte {
+func (msg *MobileUserID) Encode() []byte {
 	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 94
 	p := 1
@@ -2533,22 +2561,22 @@ func (msg *IOSUserID) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSUserID) Decode() Message {
+func (msg *MobileUserID) Decode() Message {
 	return msg
 }
 
-func (msg *IOSUserID) TypeID() int {
+func (msg *MobileUserID) TypeID() int {
 	return 94
 }
 
-type IOSUserAnonymousID struct {
+type MobileUserAnonymousID struct {
 	message
 	Timestamp uint64
 	Length    uint64
 	ID        string
 }
 
-func (msg *IOSUserAnonymousID) Encode() []byte {
+func (msg *MobileUserAnonymousID) Encode() []byte {
 	buf := make([]byte, 31+len(msg.ID))
 	buf[0] = 95
 	p := 1
@@ -2558,15 +2586,15 @@ func (msg *IOSUserAnonymousID) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSUserAnonymousID) Decode() Message {
+func (msg *MobileUserAnonymousID) Decode() Message {
 	return msg
 }
 
-func (msg *IOSUserAnonymousID) TypeID() int {
+func (msg *MobileUserAnonymousID) TypeID() int {
 	return 95
 }
 
-type IOSScreenChanges struct {
+type MobileScreenChanges struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2576,7 +2604,7 @@ type IOSScreenChanges struct {
 	Height    uint64
 }
 
-func (msg *IOSScreenChanges) Encode() []byte {
+func (msg *MobileScreenChanges) Encode() []byte {
 	buf := make([]byte, 61)
 	buf[0] = 96
 	p := 1
@@ -2589,15 +2617,15 @@ func (msg *IOSScreenChanges) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSScreenChanges) Decode() Message {
+func (msg *MobileScreenChanges) Decode() Message {
 	return msg
 }
 
-func (msg *IOSScreenChanges) TypeID() int {
+func (msg *MobileScreenChanges) TypeID() int {
 	return 96
 }
 
-type IOSCrash struct {
+type MobileCrash struct {
 	message
 	Timestamp  uint64
 	Length     uint64
@@ -2606,7 +2634,7 @@ type IOSCrash struct {
 	Stacktrace string
 }
 
-func (msg *IOSCrash) Encode() []byte {
+func (msg *MobileCrash) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Name)+len(msg.Reason)+len(msg.Stacktrace))
 	buf[0] = 97
 	p := 1
@@ -2618,15 +2646,15 @@ func (msg *IOSCrash) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSCrash) Decode() Message {
+func (msg *MobileCrash) Decode() Message {
 	return msg
 }
 
-func (msg *IOSCrash) TypeID() int {
+func (msg *MobileCrash) TypeID() int {
 	return 97
 }
 
-type IOSViewComponentEvent struct {
+type MobileViewComponentEvent struct {
 	message
 	Timestamp  uint64
 	Length     uint64
@@ -2635,7 +2663,7 @@ type IOSViewComponentEvent struct {
 	Visible    bool
 }
 
-func (msg *IOSViewComponentEvent) Encode() []byte {
+func (msg *MobileViewComponentEvent) Encode() []byte {
 	buf := make([]byte, 51+len(msg.ScreenName)+len(msg.ViewName))
 	buf[0] = 98
 	p := 1
@@ -2647,15 +2675,15 @@ func (msg *IOSViewComponentEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSViewComponentEvent) Decode() Message {
+func (msg *MobileViewComponentEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSViewComponentEvent) TypeID() int {
+func (msg *MobileViewComponentEvent) TypeID() int {
 	return 98
 }
 
-type IOSClickEvent struct {
+type MobileClickEvent struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2664,7 +2692,7 @@ type IOSClickEvent struct {
 	Y         uint64
 }
 
-func (msg *IOSClickEvent) Encode() []byte {
+func (msg *MobileClickEvent) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Label))
 	buf[0] = 100
 	p := 1
@@ -2676,15 +2704,15 @@ func (msg *IOSClickEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSClickEvent) Decode() Message {
+func (msg *MobileClickEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSClickEvent) TypeID() int {
+func (msg *MobileClickEvent) TypeID() int {
 	return 100
 }
 
-type IOSInputEvent struct {
+type MobileInputEvent struct {
 	message
 	Timestamp   uint64
 	Length      uint64
@@ -2693,7 +2721,7 @@ type IOSInputEvent struct {
 	Label       string
 }
 
-func (msg *IOSInputEvent) Encode() []byte {
+func (msg *MobileInputEvent) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Value)+len(msg.Label))
 	buf[0] = 101
 	p := 1
@@ -2705,15 +2733,15 @@ func (msg *IOSInputEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSInputEvent) Decode() Message {
+func (msg *MobileInputEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSInputEvent) TypeID() int {
+func (msg *MobileInputEvent) TypeID() int {
 	return 101
 }
 
-type IOSPerformanceEvent struct {
+type MobilePerformanceEvent struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2721,7 +2749,7 @@ type IOSPerformanceEvent struct {
 	Value     uint64
 }
 
-func (msg *IOSPerformanceEvent) Encode() []byte {
+func (msg *MobilePerformanceEvent) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Name))
 	buf[0] = 102
 	p := 1
@@ -2732,15 +2760,15 @@ func (msg *IOSPerformanceEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSPerformanceEvent) Decode() Message {
+func (msg *MobilePerformanceEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSPerformanceEvent) TypeID() int {
+func (msg *MobilePerformanceEvent) TypeID() int {
 	return 102
 }
 
-type IOSLog struct {
+type MobileLog struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2748,7 +2776,7 @@ type IOSLog struct {
 	Content   string
 }
 
-func (msg *IOSLog) Encode() []byte {
+func (msg *MobileLog) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Severity)+len(msg.Content))
 	buf[0] = 103
 	p := 1
@@ -2759,22 +2787,22 @@ func (msg *IOSLog) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSLog) Decode() Message {
+func (msg *MobileLog) Decode() Message {
 	return msg
 }
 
-func (msg *IOSLog) TypeID() int {
+func (msg *MobileLog) TypeID() int {
 	return 103
 }
 
-type IOSInternalError struct {
+type MobileInternalError struct {
 	message
 	Timestamp uint64
 	Length    uint64
 	Content   string
 }
 
-func (msg *IOSInternalError) Encode() []byte {
+func (msg *MobileInternalError) Encode() []byte {
 	buf := make([]byte, 31+len(msg.Content))
 	buf[0] = 104
 	p := 1
@@ -2784,15 +2812,15 @@ func (msg *IOSInternalError) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSInternalError) Decode() Message {
+func (msg *MobileInternalError) Decode() Message {
 	return msg
 }
 
-func (msg *IOSInternalError) TypeID() int {
+func (msg *MobileInternalError) TypeID() int {
 	return 104
 }
 
-type IOSNetworkCall struct {
+type MobileNetworkCall struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2805,7 +2833,7 @@ type IOSNetworkCall struct {
 	Duration  uint64
 }
 
-func (msg *IOSNetworkCall) Encode() []byte {
+func (msg *MobileNetworkCall) Encode() []byte {
 	buf := make([]byte, 91+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
 	buf[0] = 105
 	p := 1
@@ -2821,15 +2849,15 @@ func (msg *IOSNetworkCall) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSNetworkCall) Decode() Message {
+func (msg *MobileNetworkCall) Decode() Message {
 	return msg
 }
 
-func (msg *IOSNetworkCall) TypeID() int {
+func (msg *MobileNetworkCall) TypeID() int {
 	return 105
 }
 
-type IOSSwipeEvent struct {
+type MobileSwipeEvent struct {
 	message
 	Timestamp uint64
 	Length    uint64
@@ -2839,7 +2867,7 @@ type IOSSwipeEvent struct {
 	Direction string
 }
 
-func (msg *IOSSwipeEvent) Encode() []byte {
+func (msg *MobileSwipeEvent) Encode() []byte {
 	buf := make([]byte, 61+len(msg.Label)+len(msg.Direction))
 	buf[0] = 106
 	p := 1
@@ -2852,22 +2880,22 @@ func (msg *IOSSwipeEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSSwipeEvent) Decode() Message {
+func (msg *MobileSwipeEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSSwipeEvent) TypeID() int {
+func (msg *MobileSwipeEvent) TypeID() int {
 	return 106
 }
 
-type IOSBatchMeta struct {
+type MobileBatchMeta struct {
 	message
 	Timestamp  uint64
 	Length     uint64
 	FirstIndex uint64
 }
 
-func (msg *IOSBatchMeta) Encode() []byte {
+func (msg *MobileBatchMeta) Encode() []byte {
 	buf := make([]byte, 31)
 	buf[0] = 107
 	p := 1
@@ -2877,15 +2905,15 @@ func (msg *IOSBatchMeta) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSBatchMeta) Decode() Message {
+func (msg *MobileBatchMeta) Decode() Message {
 	return msg
 }
 
-func (msg *IOSBatchMeta) TypeID() int {
+func (msg *MobileBatchMeta) TypeID() int {
 	return 107
 }
 
-type IOSPerformanceAggregated struct {
+type MobilePerformanceAggregated struct {
 	message
 	TimestampStart uint64
 	TimestampEnd   uint64
@@ -2903,7 +2931,7 @@ type IOSPerformanceAggregated struct {
 	MaxBattery     uint64
 }
 
-func (msg *IOSPerformanceAggregated) Encode() []byte {
+func (msg *MobilePerformanceAggregated) Encode() []byte {
 	buf := make([]byte, 141)
 	buf[0] = 110
 	p := 1
@@ -2924,15 +2952,15 @@ func (msg *IOSPerformanceAggregated) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSPerformanceAggregated) Decode() Message {
+func (msg *MobilePerformanceAggregated) Decode() Message {
 	return msg
 }
 
-func (msg *IOSPerformanceAggregated) TypeID() int {
+func (msg *MobilePerformanceAggregated) TypeID() int {
 	return 110
 }
 
-type IOSIssueEvent struct {
+type MobileIssueEvent struct {
 	message
 	Timestamp     uint64
 	Type          string
@@ -2941,7 +2969,7 @@ type IOSIssueEvent struct {
 	Payload       string
 }
 
-func (msg *IOSIssueEvent) Encode() []byte {
+func (msg *MobileIssueEvent) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Type)+len(msg.ContextString)+len(msg.Context)+len(msg.Payload))
 	buf[0] = 111
 	p := 1
@@ -2953,10 +2981,10 @@ func (msg *IOSIssueEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *IOSIssueEvent) Decode() Message {
+func (msg *MobileIssueEvent) Decode() Message {
 	return msg
 }
 
-func (msg *IOSIssueEvent) TypeID() int {
+func (msg *MobileIssueEvent) TypeID() int {
 	return 111
 }

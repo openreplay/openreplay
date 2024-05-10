@@ -98,8 +98,9 @@ function Integrations(props: Props) {
   const filters = integrations.map((cat: any) => ({
     key: cat.key,
     title: cat.title,
+    label: cat.title,
     icon: cat.icon
-  }));
+  }))
 
 
   const allIntegrations = filteredIntegrations.flatMap(cat => cat.integrations);

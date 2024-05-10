@@ -38,8 +38,12 @@ interface IProps {
   sessionId: string;
   activeTab: string;
   updateLastPlayedSession: (id: string) => void
-  videoURL: string;
+  videoURL: string[];
+  setActiveTab: (tab: string) => void;
   userDevice: string;
+  screenWidth: number;
+  screenHeight: number;
+  platform: string;
 }
 
 function Player(props: IProps) {
@@ -54,6 +58,9 @@ function Player(props: IProps) {
     fullView,
     videoURL,
     userDevice,
+    screenWidth,
+    screenHeight,
+    platform,
   } = props;
   const playerContext = React.useContext(MobilePlayerContext);
   const isReady = playerContext.store.get().ready
@@ -97,6 +104,7 @@ function Player(props: IProps) {
       const max = diff > window.innerHeight / 2 ? window.innerHeight / 2 : diff;
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
+      playerContext.player.scale();
       debounceUpdate(newHeight)
     };
 
@@ -104,6 +112,7 @@ function Player(props: IProps) {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const isAndroid = platform === 'android';
   return (
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
@@ -114,7 +123,13 @@ function Player(props: IProps) {
         <Overlay nextId={nextId} />
 
         <div className={cn(stl.mobileScreenWrapper)} ref={screenWrapper}>
-          <ReplayWindow videoURL={videoURL} userDevice={userDevice} />
+          <ReplayWindow
+            videoURL={videoURL}
+            userDevice={userDevice}
+            isAndroid={isAndroid}
+            screenWidth={screenWidth}
+            screenHeight={screenHeight}
+          />
           <PerfWarnings userDevice={userDevice} />
         </div>
       </div>
@@ -142,6 +157,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <MobileControls
+          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
@@ -159,6 +175,9 @@ export default connect(
     userDevice: state.getIn(['sessions', 'current']).userDevice,
     videoURL: state.getIn(['sessions', 'current']).videoURL,
     bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+    platform: state.getIn(['sessions', 'current']).platform,
+    screenWidth: state.getIn(['sessions', 'current']).screenWidth,
+    screenHeight: state.getIn(['sessions', 'current']).screenHeight,
   }),
   {
     fullscreenOff,

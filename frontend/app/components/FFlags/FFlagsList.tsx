@@ -108,7 +108,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
               </div>
               <Pagination
                 page={featureFlagsStore.page}
-                totalPages={Math.ceil(featureFlagsStore.total / featureFlagsStore.pageSize)}
+                total={featureFlagsStore.total}
                 onPageChange={(page) => featureFlagsStore.setPage(page)}
                 limit={featureFlagsStore.pageSize}
                 debounceRequest={100}
