@@ -31,6 +31,7 @@ import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import XRayButton from 'Shared/XRayButton';
 import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
+import { IFRAME } from 'App/constants/storageKeys';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -61,6 +62,7 @@ function getStorageName(type: any) {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
+  const [isHideDev, setHideDev] = React.useState(false);
 
   const {
     playing,
@@ -84,6 +86,11 @@ function Controls(props: any) {
   } = props;
 
   const disabled = disabledRedux || messagesLoading || inspectorMode || markedTargets;
+
+  React.useEffect(() => {
+    const isHideDev = new URLSearchParams(window.location.search).get('hideDev');
+    setHideDev(isHideDev === 'true');
+  }, []);
 
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -168,16 +175,19 @@ function Controls(props: any) {
             />
           </div>
 
-          <div className="flex items-center h-full">
-            <DevtoolsButtons
-              showStorageRedux={showStorageRedux}
-              disabledRedux={disabledRedux}
-              toggleBottomTools={toggleBottomTools}
-              bottomBlock={bottomBlock}
-              markedTargets={markedTargets}
-              messagesLoading={messagesLoading}
 
-            />
+          <div className="flex items-center h-full">
+            {!isHideDev && (
+              <DevtoolsButtons
+                showStorageRedux={showStorageRedux}
+                disabledRedux={disabledRedux}
+                toggleBottomTools={toggleBottomTools}
+                bottomBlock={bottomBlock}
+                markedTargets={markedTargets}
+                messagesLoading={messagesLoading}
+
+              />
+            )}
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
               <FullScreenButton
                 size={16}

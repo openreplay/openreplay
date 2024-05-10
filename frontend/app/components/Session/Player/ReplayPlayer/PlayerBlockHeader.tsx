@@ -24,6 +24,7 @@ const SESSIONS_ROUTE = sessionsRoute();
 // TODO props
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
+  const [isHideEvents, setHideEvents] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
 
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
@@ -46,6 +47,9 @@ function PlayerBlockHeader(props: any) {
   React.useEffect(() => {
     const iframe = localStorage.getItem(IFRAME) || false;
     setHideBack(!!iframe && iframe === 'true');
+
+    const isHideEvents = new URLSearchParams(window.location.search).get('hideEvents');
+    setHideEvents(isHideEvents === 'true');
 
     if (metaList.size === 0) fetchMetadata();
   }, []);
@@ -110,6 +114,7 @@ function PlayerBlockHeader(props: any) {
           )}
         </div>
       </div>
+      {!isHideEvents && (
         <div className="relative border-l" style={{ minWidth: '270px' }}>
           <Tabs
             tabs={TABS}
@@ -126,6 +131,7 @@ function PlayerBlockHeader(props: any) {
             border={false}
           />
         </div>
+      )}
     </div>
   );
 }
