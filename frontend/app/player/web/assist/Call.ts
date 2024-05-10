@@ -55,6 +55,13 @@ export default class Call {
         this.store.update({ calling: CallingState.NoCall });
       }
     });
+    socket.on('messages_gz', () => {
+      if (reconnecting) {
+        // 'messages' come frequently, so it is better to have Reconnecting
+        this._callSessionPeer();
+        reconnecting = false;
+      }
+    })
     socket.on('messages', () => {
       if (reconnecting) {
         // 'messages' come frequently, so it is better to have Reconnecting

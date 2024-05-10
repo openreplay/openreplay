@@ -258,7 +258,6 @@ export default class MessageManager {
         );
       }
     });
-
     if (
       this.waitingForFiles ||
       (this.lastMessageTime <= t &&

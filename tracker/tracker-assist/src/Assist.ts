@@ -5,7 +5,7 @@ import Peer, { MediaConnection, } from 'peerjs'
 import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
-import RequestLocalStream, { LocalStream } from './LocalStream.js';
+import RequestLocalStream, { LocalStream, } from './LocalStream.js'
 import {hasTag,} from './guards.js'
 import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
@@ -16,7 +16,7 @@ import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 import ScreenRecordingState from './ScreenRecordingState.js'
 import { pkgVersion, } from './version.js'
 import Canvas from './Canvas.js'
-
+import { gzip, } from 'fflate'
 // TODO: fully specified strict check with no-any (everywhere)
 // @ts-ignore
 const safeCastedPeer = Peer.default || Peer
@@ -54,6 +54,12 @@ export interface Options {
   config: RTCConfiguration;
   serverURL: string
   callUITemplate?: string;
+  compressionEnabled: boolean;
+  /**
+   * Minimum amount of messages in a batch to trigger compression run
+   * @default 5000
+   * */
+  compressionMinBatchSize: number
 }
 
 
@@ -107,6 +113,8 @@ export default class Assist {
         controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
         socketHost: '',
+        compressionEnabled: false,
+        compressionMinBatchSize: 5000,
       },
       options,
     )
@@ -146,7 +154,19 @@ export default class Assist {
       if (this.agentsConnected) {
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
-        this.emit('messages', messages)
+        if (messages.length > this.options.compressionMinBatchSize && this.options.compressionEnabled) {
+          const str = JSON.stringify(messages)
+          const byteArr = new TextEncoder().encode(str)
+          gzip(byteArr, { mtime: 0, }, (err, result) => {
+            if (err) {
+              this.emit('messages', messages)
+            } else {
+              this.emit('messages_gz', result)
+            }
+          })
+        } else {
+          this.emit('messages', messages)
+        }
       }
     })
     app.session.attachUpdateCallback(sessInfo => this.emit('UPDATE_SESSION', sessInfo))
