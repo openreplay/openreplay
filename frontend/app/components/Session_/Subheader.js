@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Icon, Tooltip, Button } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
@@ -25,6 +25,7 @@ function SubHeader(props) {
     const { player, store } = React.useContext(PlayerContext);
     const { width, height, endTime, location: currentLocation = 'loading...', } = store.get();
     const hasIframe = localStorage.getItem(IFRAME) === "true";
+    const [hideTools, setHideTools] = useState(false);
 
     const enabledIntegration = useMemo(() => {
         const { integrations } = props;
@@ -41,6 +42,11 @@ function SubHeader(props) {
         currentLocation && currentLocation.length > 70
             ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
             : currentLocation;
+
+    useEffect(() => {
+        const isHideTools = new URLSearchParams(window.location.search).get('hideTools');
+        setHideTools(isHideTools === 'true');
+    }, []);
 
     const showReportModal = () => {
         const { tabStates, currentTab } = store.get();
@@ -105,6 +111,7 @@ function SubHeader(props) {
                     </div>
                 ) : null}
                 <SessionTabs />
+                {!hideTools && (
                 <div
                     className={cn("ml-auto text-sm flex items-center color-gray-medium gap-2", { 'opacity-50 pointer-events-none' : hasIframe })}
                     style={{ width: 'max-content' }}
@@ -143,6 +150,7 @@ function SubHeader(props) {
                         <QueueControls />
                     </div>
                 </div>
+              )}
             </div>
             {location && (
                 <div className={'w-full bg-white border-b border-gray-light'}>
