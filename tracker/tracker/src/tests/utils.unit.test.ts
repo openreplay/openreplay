@@ -207,7 +207,7 @@ describe('requestIdleCb', () => {
   test('testing FIFO scheduler', async () => {
     jest.useFakeTimers()
     // @ts-ignore
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => cb())
     const cb1 = jest.fn()
     const cb2 = jest.fn()
 

@@ -35,16 +35,9 @@ import type { Options as NetworkOptions } from '../modules/network.js'
 import CanvasRecorder from './canvas.js'
 import UserTestManager from '../modules/userTesting/index.js'
 import TagWatcher from '../modules/tagWatcher.js'
+import WebWorkerManager from './workerManager/index.js'
 
-import type {
-  Options as WebworkerOptions,
-  ToWorkerData,
-  FromWorkerData,
-} from '../../common/interaction.js'
-
-interface TypedWorker extends Omit<Worker, 'postMessage'> {
-  postMessage(data: ToWorkerData): void
-}
+import type { Options as WebworkerOptions, FromWorkerData } from '../../common/interaction.js'
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -136,7 +129,7 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
-function getTimezone() {
+function getTimezone(): string {
   const offset = new Date().getTimezoneOffset() * -1
   const sign = offset >= 0 ? '+' : '-'
   const hours = Math.floor(Math.abs(offset) / 60)
@@ -171,7 +164,7 @@ export default class App {
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
-  private readonly worker?: TypedWorker
+  private readonly workerManager?: WebWorkerManager
 
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
@@ -182,7 +175,7 @@ export default class App {
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
-  private tagWatcher: TagWatcher
+  private readonly tagWatcher: TagWatcher
 
   constructor(
     projectKey: string,
@@ -255,46 +248,13 @@ export default class App {
     }
 
     try {
-      this.worker = new Worker(
+      const webworker = new Worker(
         URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
       )
-      this.worker.onerror = (e) => {
-        this._debug('webworker_error', e)
-      }
-      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
-        // handling 401 auth restart (new token assignment)
-        if (data === 'a_stop') {
-          this.stop(false)
-        } else if (data === 'a_start') {
-          void this.start({}, true)
-        } else if (data === 'not_init') {
-          this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
-        } else if (data.type === 'failure') {
-          this.stop(false)
-          this.debug.error('worker_failed', data.reason)
-          this._debug('worker_failed', data.reason)
-        } else if (data.type === 'compress') {
-          const batch = data.batch
-          const batchSize = batch.byteLength
-          if (batchSize > this.compressionThreshold) {
-            gzip(data.batch, { mtime: 0 }, (err, result) => {
-              if (err) {
-                this.debug.error('Openreplay compression error:', err)
-                this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-              } else {
-                this.worker?.postMessage({ type: 'compressed', batch: result })
-              }
-            })
-          } else {
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-          }
-        } else if (data.type === 'queue_empty') {
-          this.onSessionSent()
-        }
-      }
+      this.workerManager = new WebWorkerManager(this, webworker, this._debug)
       const alertWorker = () => {
-        if (this.worker) {
-          this.worker.postMessage(null)
+        if (this.workerManager) {
+          this.workerManager.processMessage(null)
         }
       }
       // keep better tactics, discard others?
@@ -314,7 +274,7 @@ export default class App {
       // yes, there are someone out there
       resp: 'never-gonna-let-you-down',
       // you stole someone's identity
-      reg: 'never-gonna-run-around-and-desert-you',
+      regen: 'never-gonna-run-around-and-desert-you',
     } as const
 
     if (this.bc) {
@@ -334,7 +294,7 @@ export default class App {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
         }
-        if (ev.data.line === proto.reg) {
+        if (ev.data.line === proto.regen) {
           const sessionToken = ev.data.token
           this.session.regenerateTabId()
           this.session.setSessionToken(sessionToken)
@@ -343,7 +303,7 @@ export default class App {
           const token = this.session.getSessionToken()
           if (token && this.bc) {
             this.bc.postMessage({
-              line: ev.data.source === thisTab ? proto.reg : proto.resp,
+              line: ev.data.source === thisTab ? proto.regen : proto.resp,
               token,
               source: thisTab,
               context: this.contextId,
@@ -354,7 +314,41 @@ export default class App {
     }
   }
 
-  private _debug(context: string, e: any) {
+  handleWorkerMsg(data: FromWorkerData) {
+    if (data.type === 'restart') {
+      this.stop(false)
+      void this.start({}, true)
+    } else if (data.type === 'not_init') {
+      this.debug.warn('OR WebWorker: writer not initialised; restarting worker')
+    } else if (data.type === 'failure') {
+      this.stop(false)
+      this.debug.error('worker_failed', data.reason)
+      this._debug('worker_failed', data.reason)
+    } else if (data.type === 'compress') {
+      const batch = data.batch
+      const batchSize = batch.byteLength
+      if (batchSize > this.compressionThreshold) {
+        gzip(data.batch, { mtime: 0 }, (err, result) => {
+          if (err) {
+            this.debug.error('Openreplay compression error:', err)
+            this.stop(false)
+            if (this.restartAttempts < 3) {
+              this.restartAttempts += 1
+              void this.start({}, true)
+            }
+          } else {
+            this.workerManager?.sendCompressedBatch(result)
+          }
+        })
+      } else {
+        this.workerManager?.sendUncompressedBatch(batch)
+      }
+    } else if (data.type === 'queue_empty') {
+      this.onSessionSent()
+    }
+  }
+
+  private readonly _debug = (context: string, e: any): void => {
     if (this.options.__debug_report_edp !== null) {
       void fetch(this.options.__debug_report_edp, {
         method: 'POST',
@@ -410,23 +404,15 @@ export default class App {
    * every ~30ms
    * */
   private _nCommit(): void {
-    if (this.worker !== undefined && this.messages.length) {
-      try {
-        requestIdleCb(() => {
-          this.messages.unshift(TabData(this.session.getTabId()))
-          this.messages.unshift(Timestamp(this.timestamp()))
-          // why I need to add opt chaining?
-          this.worker?.postMessage(this.messages)
-          this.commitCallbacks.forEach((cb) => cb(this.messages))
-          this.messages.length = 0
-        })
-      } catch (e) {
-        this._debug('worker_commit', e)
-        this.stop(true)
-        setTimeout(() => {
-          void this.start()
-        }, 500)
-      }
+    if (this.workerManager !== undefined && this.messages.length) {
+      requestIdleCb(() => {
+        this.messages.unshift(TabData(this.session.getTabId()))
+        this.messages.unshift(Timestamp(this.timestamp()))
+        // why I need to add opt chaining?
+        this.workerManager?.processMessage({ type: 'batch', data: this.messages })
+        this.commitCallbacks.forEach((cb) => cb(this.messages))
+        this.messages.length = 0
+      })
     }
   }
 
@@ -458,7 +444,7 @@ export default class App {
   }
 
   private postToWorker(messages: Array<Message>) {
-    this.worker?.postMessage(messages)
+    this.workerManager?.processMessage({ type: 'batch', data: messages })
     this.commitCallbacks.forEach((cb) => cb(messages))
     messages.length = 0
   }
@@ -649,7 +635,7 @@ export default class App {
 
   /**
    * start buffering messages without starting the actual session, which gives
-   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
+   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger,
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
@@ -799,7 +785,7 @@ export default class App {
   /**
    * Saves the captured messages in localStorage (or whatever is used in its place)
    *
-   * Then when this.offlineRecording is called, it will preload this messages and clear the storage item
+   * Then, when this.offlineRecording is called, it will preload this messages and clear the storage item
    *
    * Keeping the size of local storage reasonable is up to the end users of this library
    * */
@@ -831,7 +817,7 @@ export default class App {
   public async uploadOfflineRecording() {
     this.stop(false)
     const timestamp = now()
-    this.worker?.postMessage({
+    this.workerManager?.processMessage({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -869,8 +855,8 @@ export default class App {
       beaconSizeLimit,
       projectID,
     } = await r.json()
-    this.worker?.postMessage({
-      type: 'auth',
+
+    this.workerManager?.authorizeWorker({
       token,
       beaconSizeLimit,
     })
@@ -899,7 +885,7 @@ export default class App {
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
     }
-    if (!this.worker) {
+    if (!this.workerManager) {
       const reason = 'No worker found: perhaps, CSP is not set.'
       this.signalError(reason, [])
       return Promise.resolve(UnsuccessfulStart(reason))
@@ -931,7 +917,7 @@ export default class App {
     })
 
     const timestamp = now()
-    this.worker.postMessage({
+    this.workerManager?.startWorker({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -985,7 +971,7 @@ export default class App {
         }
       })
       .then(async (r) => {
-        if (!this.worker) {
+        if (!this.workerManager) {
           const reason = 'no worker found after start request (this might not happen)'
           this.signalError(reason, [])
           return Promise.reject(reason)
@@ -1042,8 +1028,7 @@ export default class App {
           projectID,
         })
 
-        this.worker.postMessage({
-          type: 'auth',
+        this.workerManager?.authorizeWorker({
           token,
           beaconSizeLimit,
         })
@@ -1218,7 +1203,7 @@ export default class App {
   }
 
   forceFlushBatch() {
-    this.worker?.postMessage('forceFlushBatch')
+    this.workerManager?.processMessage({ type: 'forceFlushBatch' })
   }
 
   getTabId() {
@@ -1261,8 +1246,8 @@ export default class App {
         this.stopCallbacks.forEach((cb) => cb())
         this.debug.log('OpenReplay tracking stopped.')
         this.tagWatcher.clear()
-        if (this.worker && stopWorker) {
-          this.worker.postMessage('stop')
+        if (this.workerManager && stopWorker) {
+          this.workerManager?.stopWorker()
         }
         this.canvasRecorder?.clear()
       } finally {

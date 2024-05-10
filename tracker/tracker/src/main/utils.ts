@@ -167,7 +167,6 @@ export function deleteEventListener(
   }
 }
 
-
 class FIFOTaskScheduler {
   taskQueue: any[]
   isRunning: boolean

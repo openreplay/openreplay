@@ -5,7 +5,7 @@ import Peer, { MediaConnection, } from 'peerjs'
 import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
-import RequestLocalStream, { LocalStream } from './LocalStream.js';
+import RequestLocalStream, { LocalStream, } from './LocalStream.js'
 import {hasTag,} from './guards.js'
 import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
