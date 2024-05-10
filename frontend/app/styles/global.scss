@@ -22,3 +22,11 @@ input.no-focus:focus {
     @apply inline-block;
   }
 }
+
+.lucide {
+  stroke-width: 1.5px;
+}
+
+.ant-pagination-simple-pager input {
+  min-width: 80px;
+}
