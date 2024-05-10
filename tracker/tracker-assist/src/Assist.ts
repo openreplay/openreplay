@@ -152,9 +152,10 @@ export default class Assist {
     })
     app.attachCommitCallback((messages) => {
       if (this.agentsConnected) {
+        const batchSize = messages.length
         // @ts-ignore No need in statistics messages. TODO proper filter
-        if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
-        if (messages.length > this.options.compressionMinBatchSize && this.options.compressionEnabled) {
+        if (batchSize === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
+        if (batchSize > this.options.compressionMinBatchSize && this.options.compressionEnabled) {
           const str = JSON.stringify(messages)
           const byteArr = new TextEncoder().encode(str)
           gzip(byteArr, { mtime: 0, }, (err, result) => {
