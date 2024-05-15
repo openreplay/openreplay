@@ -79,7 +79,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                 if len(f.value) > 0 and f.value[0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
                     values["minDuration"] = f.value[0]
-                if len(f["value"]) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                     first_stage_extra_constraints.append('s.duration <= %(maxDuration)s')
                     values["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
