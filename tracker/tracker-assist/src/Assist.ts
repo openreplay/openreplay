@@ -156,15 +156,18 @@ export default class Assist {
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (batchSize === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
         if (batchSize > this.options.compressionMinBatchSize && this.options.compressionEnabled) {
-          const str = JSON.stringify(messages)
-          const byteArr = new TextEncoder().encode(str)
-          gzip(byteArr, { mtime: 0, }, (err, result) => {
-            if (err) {
-              this.emit('messages', messages)
-            } else {
-              this.emit('messages_gz', result)
-            }
-          })
+          while (messages.length > 0) {
+            const batch = messages.splice(0, this.options.compressionMinBatchSize)
+            const str = JSON.stringify(batch)
+            const byteArr = new TextEncoder().encode(str)
+            gzip(byteArr, { mtime: 0, }, (err, result) => {
+              if (err) {
+                this.emit('messages', batch)
+              } else {
+                this.emit('messages_gz', result)
+              }
+            })
+          }
         } else {
           this.emit('messages', messages)
         }
