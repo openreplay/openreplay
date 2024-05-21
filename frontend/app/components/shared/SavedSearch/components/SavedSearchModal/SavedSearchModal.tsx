@@ -77,32 +77,34 @@ function SavedSearchModal(props: Props) {
                     />
                 </div>
             )}
-            {shownItems.map((item) => (
-                <div
-                    key={item.key}
-                    className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue', item.isPublic && 'pb-10')}
-                    onClick={(e) => onClick(item, e)}
-                >
-                    <Icon name="search" color="gray-medium" size="16" />
-                    <div className="ml-4">
-                        <div className="text-lg">{item.name} </div>
-                        {item.isPublic && (
-                            <div className={cn(stl.iconContainer, 'absolute color-gray-medium flex items-center px-2 mt-2')}>
-                                <Icon name="user-friends" size="11" />
-                                <div className="ml-1 text-sm"> Team </div>
+            <div style={{ maxHeight: 'calc(100vh - 106px)', overflowY: 'auto' }}>
+                {shownItems.map((item) => (
+                    <div
+                        key={item.key}
+                        className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue', item.isPublic && 'pb-10')}
+                        onClick={(e) => onClick(item, e)}
+                    >
+                        <Icon name="search" color="gray-medium" size="16" />
+                        <div className="ml-4">
+                            <div className="text-lg">{item.name} </div>
+                            {item.isPublic && (
+                                <div className={cn(stl.iconContainer, 'absolute color-gray-medium flex items-center px-2 mt-2')}>
+                                    <Icon name="user-friends" size="11" />
+                                    <div className="ml-1 text-sm"> Team </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center ml-auto self-center">
+                            <div className={cn(stl.iconCircle, 'mr-2 invisible group-hover:visible')}>
+                                <TooltipIcon name="pencil" onClick={(e) => onEdit(item, e)} title="Rename" />
                             </div>
-                        )}
-                    </div>
-                    <div className="flex items-center ml-auto self-center">
-                        <div className={cn(stl.iconCircle, 'mr-2 invisible group-hover:visible')}>
-                            <TooltipIcon name="pencil" onClick={(e) => onEdit(item, e)} title="Rename" />
-                        </div>
-                        <div className={cn(stl.iconCircle, 'invisible group-hover:visible')}>
-                            <TooltipIcon name="trash" onClick={(e) => onDelete(item, e)} title="Delete" />
+                            <div className={cn(stl.iconCircle, 'invisible group-hover:visible')}>
+                                <TooltipIcon name="trash" onClick={(e) => onDelete(item, e)} title="Delete" />
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
             {showModal && <SaveSearchModal show closeHandler={() => setshowModal(false)} rename={true} />}
         </div>
     );
