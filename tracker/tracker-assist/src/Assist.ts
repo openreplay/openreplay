@@ -401,7 +401,13 @@ export default class Assist {
       if (app.getTabId() !== info.meta.tabId) return
       const name = info.data
       callingAgents.set(id, name)
+
+      if (!this.peer) {
+        setupPeer()
+      }
       updateCallerNames()
+
+      this.emit('call_ready')
     })
     socket.on('videofeed', (_, info) => {
       if (app.getTabId() !== info.meta.tabId) return
@@ -429,7 +435,10 @@ export default class Assist {
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
     const calls: Record<string, MediaConnection> = {} // !! uses peerJS ID
     const lStreams: Record<string, LocalStream> = {}
-    // const callingPeers: Map<string, { call: MediaConnection, lStream: LocalStream }> = new Map() // Maybe
+
+    function updateCallerNames() {
+      callUI?.setAssistentName(callingAgents)
+    }
     function endAgentCall(id: string) {
       callingAgents.delete(id)
       if (callingAgents.size === 0) {
@@ -439,59 +448,6 @@ export default class Assist {
         //TODO: close() specific call and corresponding lStreams (after connecting peerId & socket.io id)
       }
     }
-
-    // PeerJS call (todo: use native WebRTC)
-    const peerOptions = {
-      host: this.getHost(),
-      path: this.getBasePrefixUrl()+'/assist',
-      port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
-      debug: 2, //appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
-    }
-    if (this.options.config) {
-      peerOptions['config'] = this.options.config
-    }
-
-    const peer = new safeCastedPeer(peerID, peerOptions) as Peer
-    this.peer = peer
-    let peerReconnectAttempts = 0
-    // @ts-ignore (peerjs typing)
-    peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
-    peer.on('disconnected', () => {
-      if (peerReconnectAttempts < 30) {
-        this.peerReconnectTimeout = setTimeout(() => {
-          if (this.app.active() && !peer.destroyed) {
-            peer.reconnect()
-          }
-        }, Math.min(peerReconnectAttempts, 8) * 2 * 1000)
-        peerReconnectAttempts += 1
-      }
-    })
-
-    function updateCallerNames() {
-      callUI?.setAssistentName(callingAgents)
-    }
-
-    const closeCallConfirmWindow = () => {
-      if (callConfirmWindow) {
-        callConfirmWindow.remove()
-        callConfirmWindow = null
-        callConfirmAnswer = null
-      }
-    }
-    const requestCallConfirm = () => {
-      if (callConfirmAnswer) { // Already asking
-        return callConfirmAnswer
-      }
-      callConfirmWindow = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || {
-        text: this.options.confirmText,
-        style: this.options.confirmStyle,
-      })) // TODO: reuse ?
-      return callConfirmAnswer = callConfirmWindow.mount().then(answer => {
-        closeCallConfirmWindow()
-        return answer
-      })
-    }
-
     const handleCallEnd = () => { // Complete stop and clear all calls
       // Streams
       Object.values(calls).forEach(call => call.close())
@@ -517,102 +473,154 @@ export default class Assist {
 
       callEndCallback?.()
     }
-    const initiateCallEnd = () => {
-      this.emit('call_end')
-      handleCallEnd()
+    const closeCallConfirmWindow = () => {
+      if (callConfirmWindow) {
+        callConfirmWindow.remove()
+        callConfirmWindow = null
+        callConfirmAnswer = null
+      }
     }
-    const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
-    peer.on('call', (call) => {
-      app.debug.log('Incoming call from', call.peer)
-      let confirmAnswer: Promise<boolean>
-      const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
-      if (callingPeerIds.includes(call.peer) || this.callingState === CallingState.True) {
-        confirmAnswer = Promise.resolve(true)
-      } else {
-        this.setCallingState(CallingState.Requesting)
-        confirmAnswer = requestCallConfirm()
-        this.playNotificationSound() // For every new agent during confirmation here
-
-        // TODO: only one (latest) timeout
-        setTimeout(() => {
-          if (this.callingState !== CallingState.Requesting) { return }
-          initiateCallEnd()
-        }, 30000)
+    // PeerJS call (todo: use native WebRTC)
+    const peerOptions = {
+      host: this.getHost(),
+      path: this.getBasePrefixUrl()+'/assist',
+      port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
+      debug: 2, //appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
+    }
+    const setupPeer = () => {
+      if (this.options.config) {
+        peerOptions['config'] = this.options.config
       }
 
-      confirmAnswer.then(async agreed => {
-        if (!agreed) {
-          initiateCallEnd()
-          this.options.onCallDeny?.()
-          return
+      const peer = new safeCastedPeer(peerID, peerOptions) as Peer
+      this.peer = peer
+      let peerReconnectAttempts = 0
+      // @ts-ignore (peerjs typing)
+      peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
+      peer.on('disconnected', () => {
+        if (peerReconnectAttempts < 30) {
+          this.peerReconnectTimeout = setTimeout(() => {
+            if (this.app.active() && !peer.destroyed) {
+              peer.reconnect()
+            }
+          }, Math.min(peerReconnectAttempts, 8) * 2 * 1000)
+          peerReconnectAttempts += 1
         }
-        // Request local stream for the new connection
-        try {
-          // lStreams are reusable so fare we don't delete them in the `endAgentCall`
-          if (!lStreams[call.peer]) {
-            app.debug.log('starting new stream for', call.peer)
-            lStreams[call.peer] = await RequestLocalStream()
-          }
-          calls[call.peer] = call
-        } catch (e) {
-          app.debug.error('Audio media device request error:', e)
-          initiateCallEnd()
-          return
-        }
+      })
 
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-          callUI.setVideoToggleCallback(updateVideoFeed)
-        }
-        callUI.showControls(initiateCallEnd)
 
-        if (!annot) {
-          annot = new AnnotationCanvas()
-          annot.mount()
+      const requestCallConfirm = () => {
+        if (callConfirmAnswer) { // Already asking
+          return callConfirmAnswer
         }
-        // have to be updated
-        callUI.setLocalStreams(Object.values(lStreams))
-
-        call.on('error', e => {
-          app.debug.warn('Call error:', e)
-          initiateCallEnd()
+        callConfirmWindow = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || {
+          text: this.options.confirmText,
+          style: this.options.confirmStyle,
+        })) // TODO: reuse ?
+        return callConfirmAnswer = callConfirmWindow.mount().then(answer => {
+          closeCallConfirmWindow()
+          return answer
         })
-        call.on('stream', (rStream) => {
-          callUI?.addRemoteStream(rStream, call.peer)
-          const onInteraction = () => { // do only if document.hidden ?
-            callUI?.playRemote()
-            document.removeEventListener('click', onInteraction)
-          }
-          document.addEventListener('click', onInteraction)
-        })
+      }
 
-        // remote video on/off/camera change
-        lStreams[call.peer].onVideoTrack(vTrack => {
-          const sender = call.peerConnection.getSenders().find(s => s.track?.kind === 'video')
-          if (!sender) {
-            app.debug.warn('No video sender found')
+      const initiateCallEnd = () => {
+        this.emit('call_end')
+        handleCallEnd()
+      }
+      const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
+
+      peer.on('call', (call) => {
+        app.debug.log('Incoming call from', call.peer)
+        let confirmAnswer: Promise<boolean>
+        const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
+        if (callingPeerIds.includes(call.peer) || this.callingState === CallingState.True) {
+          confirmAnswer = Promise.resolve(true)
+        } else {
+          this.setCallingState(CallingState.Requesting)
+          confirmAnswer = requestCallConfirm()
+          this.playNotificationSound() // For every new agent during confirmation here
+
+          // TODO: only one (latest) timeout
+          setTimeout(() => {
+            if (this.callingState !== CallingState.Requesting) { return }
+            initiateCallEnd()
+          }, 30000)
+        }
+
+        confirmAnswer.then(async agreed => {
+          if (!agreed) {
+            initiateCallEnd()
+            this.options.onCallDeny?.()
             return
           }
-          app.debug.log('sender found:', sender)
-          void sender.replaceTrack(vTrack)
+          // Request local stream for the new connection
+          try {
+            // lStreams are reusable so fare we don't delete them in the `endAgentCall`
+            if (!lStreams[call.peer]) {
+              app.debug.log('starting new stream for', call.peer)
+              lStreams[call.peer] = await RequestLocalStream()
+            }
+            calls[call.peer] = call
+          } catch (e) {
+            app.debug.error('Audio media device request error:', e)
+            initiateCallEnd()
+            return
+          }
+
+          if (!callUI) {
+            callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+            callUI.setVideoToggleCallback(updateVideoFeed)
+          }
+          callUI.showControls(initiateCallEnd)
+
+          if (!annot) {
+            annot = new AnnotationCanvas()
+            annot.mount()
+          }
+          // have to be updated
+          callUI.setLocalStreams(Object.values(lStreams))
+
+          call.on('error', e => {
+            app.debug.warn('Call error:', e)
+            initiateCallEnd()
+          })
+          call.on('stream', (rStream) => {
+            callUI?.addRemoteStream(rStream, call.peer)
+            const onInteraction = () => { // do only if document.hidden ?
+              callUI?.playRemote()
+              document.removeEventListener('click', onInteraction)
+            }
+            document.addEventListener('click', onInteraction)
+          })
+
+          // remote video on/off/camera change
+          lStreams[call.peer].onVideoTrack(vTrack => {
+            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === 'video')
+            if (!sender) {
+              app.debug.warn('No video sender found')
+              return
+            }
+            app.debug.log('sender found:', sender)
+            void sender.replaceTrack(vTrack)
+          })
+
+          call.answer(lStreams[call.peer].stream)
+          document.addEventListener('visibilitychange', () => {
+            initiateCallEnd()
+          })
+
+          this.setCallingState(CallingState.True)
+          if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
+
+          const callingPeerIds = Object.keys(calls)
+          sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIds))
+          this.emit('UPDATE_SESSION', { agentIds: callingPeerIds, isCallActive: true, })
+        }).catch(reason => { // in case of Confirm.remove() without user answer (not an error)
+          app.debug.log(reason)
         })
-
-        call.answer(lStreams[call.peer].stream)
-        document.addEventListener('visibilitychange', () => {
-          initiateCallEnd()
-        })
-
-        this.setCallingState(CallingState.True)
-        if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
-
-        const callingPeerIds = Object.keys(calls)
-        sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIds))
-        this.emit('UPDATE_SESSION', { agentIds: callingPeerIds, isCallActive: true, })
-      }).catch(reason => { // in case of Confirm.remove() without user answer (not a error)
-        app.debug.log(reason)
       })
-    })
+    }
 
 
     const startCanvasStream = (stream: MediaStream, id: number) => {
@@ -668,7 +676,7 @@ export default class Assist {
   }
 
   private clean() {
-    // sometimes means new agent connected so we keep id for control
+    // sometimes means new agent connected, so we keep id for control
     this.remoteControl?.releaseControl(false, true)
     if (this.peerReconnectTimeout) {
       clearTimeout(this.peerReconnectTimeout)
