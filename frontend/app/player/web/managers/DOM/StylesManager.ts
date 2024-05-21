@@ -1,5 +1,6 @@
 import type Screen from '../../Screen/Screen';
 import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage'
+import logger from 'App/logger'
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
@@ -38,14 +39,15 @@ export default class StylesManager {
         || this.skipCSSLinks.includes(value)
         ||  node.ownerDocument !== this.screen.document
       ) {
-        console.log('skipped', node, value, this.abortController.signal.aborted, this.skipCSSLinks.includes(value), node.ownerDocument !== this.screen.document)
+
+        logger.log('skipped', node, value, this.abortController.signal.aborted, this.skipCSSLinks.includes(value), node.ownerDocument !== this.screen.document)
         resolve();
       }
       this.setLoading(true);
       this.linkLoadingCount++;
       const addSkipAndResolve = (e: any) => {
         this.skipCSSLinks.push(value); // watch out
-        console.error('skip node', e)
+        logger.error('skip node', e)
         resolve()
       }
       timeoutId = setTimeout(addSkipAndResolve, 4000);

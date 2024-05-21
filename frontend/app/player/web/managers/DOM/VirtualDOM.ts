@@ -241,19 +241,23 @@ export class VText extends VNode<Text> {
 }
 
 class PromiseQueue<T> {
-	constructor(private promise: Promise<T>) {}
+	onCatch?: (err?: any) => void
+
+	constructor(private promise: Promise<void | T>) {}
 	/**
 	 * Call sequence is concerned.
 	 */
 	// Doing this with callbacks list instead might be more efficient (but more wordy). TODO: research
 	whenReady(cb: Callback<T>) {
 		this.promise = this.promise.then(vRoot => {
-			cb(vRoot)
+			cb(vRoot as T)
 			return vRoot
+		}).catch(e => {
+			this.onCatch?.(e)
 		})
 	}
-	catch(cb: Parameters<Promise<T>['catch']>[0]) {
-		this.promise.catch(cb)
+	catch(cb:(err?: any) => void) {
+		this.onCatch = cb
 	}
 }
 
