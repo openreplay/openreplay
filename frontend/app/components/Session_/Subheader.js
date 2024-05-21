@@ -7,8 +7,6 @@ import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
-import { useModal } from 'App/components/Modal';
-import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
@@ -16,7 +14,7 @@ import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs'
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
 import { Switch, Button as AntButton, Popover } from 'antd';
-import { BugOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { ShareAltOutlined } from '@ant-design/icons';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -25,8 +23,8 @@ function SubHeader(props) {
   const localhostWarnKey = localhostWarn(props.siteId);
   const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1';
   const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
-  const { player, store } = React.useContext(PlayerContext);
-  const { width, height, endTime, location: currentLocation = 'loading...' } = store.get();
+  const { store } = React.useContext(PlayerContext);
+  const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const { uxtestingStore } = useStore();
 
@@ -39,39 +37,10 @@ function SubHeader(props) {
     return integrations.some((i) => i.token);
   }, [props.integrations]);
 
-  const { showModal, hideModal } = useModal();
-
   const location =
     currentLocation && currentLocation.length > 70
       ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
       : currentLocation;
-
-  const showReportModal = () => {
-    const { tabStates, currentTab } = store.get();
-    const resourceList = tabStates[currentTab]?.resourceList || [];
-    const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-    const eventsList = tabStates[currentTab]?.eventList || [];
-    const graphqlList = tabStates[currentTab]?.graphqlList || [];
-    const fetchList = tabStates[currentTab]?.fetchList || [];
-
-    const mappedResourceList = resourceList
-      .filter((r) => r.isRed || r.isYellow)
-      .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
-      .concat(graphqlList.filter((i) => parseInt(i.status) >= 400));
-
-    player.pause();
-    const xrayProps = {
-      currentLocation: currentLocation,
-      resourceList: mappedResourceList,
-      exceptionsList: exceptionsList,
-      eventsList: eventsList,
-      endTime: endTime,
-    };
-    showModal(
-      <BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />,
-      { right: true, width: 620 }
-    );
-  };
 
   const showWarning =
     location && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(location) && showWarningModal;
@@ -128,15 +97,6 @@ function SubHeader(props) {
           style={{ width: 'max-content' }}
         >
           <KeyboardHelp />
-          <Popover content={'Create Bug Report'}>
-            <AntButton
-              size={'small'}
-              className={'flex items-center justify-center'}
-              onClick={showReportModal}
-            >
-              <BugOutlined />
-            </AntButton>
-          </Popover>
           <Bookmark sessionId={props.sessionId} />
           <NotePopup />
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
