@@ -7,6 +7,8 @@ export default class TabClosingManager extends ListWalker<{ tabId: string, time:
   moveReady(t: number): Promise<string | null> {
     if (t < this.currentTime) {
       this.reset()
+      this.closedTabs = new Set()
+      return Promise.resolve(null)
     }
     this.currentTime = t
     const msg = this.moveGetLast(t)
