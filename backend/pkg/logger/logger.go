@@ -9,6 +9,7 @@ import (
 )
 
 type Logger interface {
+	Debug(ctx context.Context, message string, args ...interface{})
 	Info(ctx context.Context, message string, args ...interface{})
 	Warn(ctx context.Context, message string, args ...interface{})
 	Error(ctx context.Context, message string, args ...interface{})
@@ -49,6 +50,10 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 		logger = logger.With(zap.String("batch", batch))
 	}
 	return logger
+}
+
+func (l *loggerImpl) Debug(ctx context.Context, message string, args ...interface{}) {
+	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(fmt.Sprintf(message, args...))
 }
 
 func (l *loggerImpl) Info(ctx context.Context, message string, args ...interface{}) {

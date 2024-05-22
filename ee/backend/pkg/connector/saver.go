@@ -87,14 +87,48 @@ func handleEvent(msg messages.Message) map[string]string {
 	case *messages.CustomIssue:
 		event["customissue_name"] = QUOTES(m.Name)
 		event["customissue_payload"] = QUOTES(m.Payload)
+	// Mobile events
+	case *messages.MobileEvent:
+		event["mobile_event_name"] = QUOTES(m.Name)
+		event["mobile_event_payload"] = QUOTES(m.Payload)
+	case *messages.MobileNetworkCall:
+		event["mobile_networkcall_type"] = QUOTES(m.Type)
+		event["mobile_networkcall_method"] = QUOTES(m.Method)
+		event["mobile_networkcall_url"] = QUOTES(m.URL)
+		event["mobile_networkcall_request"] = QUOTES(m.Request)
+		event["mobile_networkcall_response"] = QUOTES(m.Response)
+		event["mobile_networkcall_status"] = fmt.Sprintf("%d", m.Status)
+		event["mobile_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
+	case *messages.MobileClickEvent:
+		event["mobile_clickevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_clickevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_clickevent_label"] = QUOTES(m.Label)
+	case *messages.MobileSwipeEvent:
+		event["mobile_swipeevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_swipeevent_label"] = QUOTES(m.Label)
+	case *messages.MobileInputEvent:
+		event["mobile_inputevent_label"] = QUOTES(m.Label)
+		event["mobile_inputevent_value"] = QUOTES(m.Value)
+	case *messages.MobileCrash:
+		event["mobile_crash_name"] = QUOTES(m.Name)
+		event["mobile_crash_reason"] = QUOTES(m.Reason)
+		event["mobile_crash_stacktrace"] = QUOTES(m.Stacktrace)
+	case *messages.MobileIssueEvent:
+		event["mobile_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_issueevent_type"] = QUOTES(m.Type)
+		event["mobile_issueevent_context_string"] = QUOTES(m.ContextString)
+		event["mobile_issueevent_context"] = QUOTES(m.Context)
+		event["mobile_issueevent_payload"] = QUOTES(m.Payload)
 	}
 
 	if len(event) == 0 {
 		return nil
 	}
 	event["sessionid"] = fmt.Sprintf("%d", msg.SessionID())
-	event["received_at"] = fmt.Sprintf("%d", uint64(time.Now().UnixMilli()))
-	event["batch_order_number"] = fmt.Sprintf("%d", 0)
 	return event
 }
 
@@ -126,9 +160,6 @@ func (s *Saver) updateSessionInfoFromCache(sessID uint64, sess map[string]string
 		if start != 0 && end != 0 {
 			sess["session_duration"] = fmt.Sprintf("%d", end-start)
 		}
-	}
-	if sess["user_agent"] == "" && info.UserAgent != "" {
-		sess["user_agent"] = QUOTES(info.UserAgent)
 	}
 	if sess["user_browser"] == "" && info.UserBrowser != "" {
 		sess["user_browser"] = QUOTES(info.UserBrowser)
@@ -205,7 +236,10 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.SessionStart, *messages.SessionEnd, *messages.ConnectionInformation, *messages.Metadata,
 		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
 		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
-		*messages.IssueEvent, *messages.IssueEventDeprecated:
+		*messages.IssueEvent, *messages.IssueEventDeprecated,
+		// Mobile messages
+		*messages.MobileSessionStart, *messages.MobileSessionEnd, *messages.MobileUserID, *messages.MobileUserAnonymousID,
+		*messages.MobileMetadata:
 	default:
 		return
 	}
@@ -239,7 +273,6 @@ func (s *Saver) handleSession(msg messages.Message) {
 	case *messages.SessionStart:
 		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		sess["user_uuid"] = QUOTES(m.UserUUID)
-		sess["user_agent"] = QUOTES(m.UserAgent)
 		sess["user_os"] = QUOTES(m.UserOS)
 		sess["user_os_version"] = QUOTES(m.UserOSVersion)
 		sess["user_browser"] = QUOTES(m.UserBrowser)
@@ -326,6 +359,43 @@ func (s *Saver) handleSession(msg messages.Message) {
 			currIssuesCount = 0
 		}
 		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
+	// Mobile messages
+	case *messages.MobileSessionStart:
+		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		sess["user_uuid"] = QUOTES(m.UserUUID)
+		sess["user_os"] = QUOTES(m.UserOS)
+		sess["user_os_version"] = QUOTES(m.UserOSVersion)
+		sess["user_device"] = QUOTES(m.UserDevice)
+		sess["user_device_type"] = QUOTES(m.UserDeviceType)
+		sess["tracker_version"] = QUOTES(m.TrackerVersion)
+		sess["rev_id"] = QUOTES(m.RevID)
+	case *messages.MobileSessionEnd:
+		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		if err := s.updateSessionInfoFromCache(msg.SessionID(), sess); err != nil {
+			s.log.Warn(ctx, "failed to update session info from cache: %s", err)
+		}
+	case *messages.MobileMetadata:
+		session, err := s.sessModule.Get(msg.SessionID())
+		if err != nil {
+			s.log.Error(ctx, "error getting session info: %s", err)
+			break
+		}
+		project, err := s.projModule.GetProject(session.ProjectID)
+		if err != nil {
+			s.log.Error(ctx, "error getting project info: %s", err)
+			break
+		}
+		keyNo := project.GetMetadataNo(m.Key)
+		if keyNo == 0 {
+			break
+		}
+		sess[fmt.Sprintf("metadata_%d", keyNo)] = QUOTES(m.Value)
+	case *messages.MobileUserID:
+		if m.ID != "" {
+			sess["user_id"] = QUOTES(m.ID)
+		}
+	case *messages.MobileUserAnonymousID:
+		sess["user_anonymous_id"] = QUOTES(m.ID)
 	default:
 		updated = false
 	}
@@ -348,7 +418,7 @@ func (s *Saver) Handle(msg messages.Message) {
 		s.events = append(s.events, newEvent)
 	}
 	s.handleSession(msg)
-	if msg.TypeID() == messages.MsgSessionEnd {
+	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
 		if s.finishedSessions == nil {
 			s.finishedSessions = make([]uint64, 0)
 		}
@@ -385,6 +455,10 @@ func (s *Saver) commitSessions() {
 			sessions = append(sessions, s.sessions[sessionID])
 			toSend = append(toSend, sessionID)
 		}
+	}
+	if len(sessions) == 0 {
+		s.log.Info(context.Background(), "empty sessions batch to send")
+		return
 	}
 	if err := s.db.InsertSessions(sessions); err != nil {
 		s.log.Error(context.Background(), "can't insert sessions: %s", err)
@@ -441,7 +515,7 @@ func (s *Saver) checkZombieSessions() {
 					s.log.Warn(ctx, "failed to update zombie session info from cache: %s", err)
 				} else {
 					s.sessions[sessionID] = zombieSession
-					s.log.Info(ctx, "updated zombie session info from cache: %v", zombieSession)
+					s.log.Debug(ctx, "updated zombie session info from cache: %v", zombieSession)
 				}
 			}
 			if zombieSession["session_start_timestamp"] == "" || zombieSession["session_end_timestamp"] == "" {

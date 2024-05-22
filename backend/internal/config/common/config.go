@@ -48,6 +48,7 @@ type Redshift struct {
 	User             string `env:"REDSHIFT_USER"`
 	Password         string `env:"REDSHIFT_PASSWORD"`
 	Database         string `env:"REDSHIFT_DATABASE"`
+	Bucket           string `env:"REDSHIFT_BUCKET,default=rdshftbucket"`
 }
 
 // Clickhouse config
