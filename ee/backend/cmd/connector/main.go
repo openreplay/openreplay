@@ -42,10 +42,6 @@ func main() {
 		if db, err = saver.NewClickHouse(log, cfg, batches); err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
 		}
-	case "elasticsearch":
-		if db, err = saver.NewElasticSearch(log, cfg); err != nil {
-			log.Fatal(ctx, "can't init elasticsearch connection: %s", err)
-		}
 	case "s3":
 		if db, err = saver.NewS3Storage(log, cfg, batches); err != nil {
 			log.Fatal(ctx, "can't init s3 connection: %s", err)
