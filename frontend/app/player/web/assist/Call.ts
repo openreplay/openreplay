@@ -253,8 +253,8 @@ export default class Call {
         ? this.peerID
         : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
 
-    void this._peerConnection(peerId);
     this.emitData('_agent_name', appStore.getState().getIn(['user', 'account', 'name']));
+    void this._peerConnection(peerId);
   }
 
   private async _peerConnection(remotePeerId: string) {
