@@ -99,42 +99,42 @@ func handleEvent(msg messages.Message) map[string]string {
 	case *messages.CustomIssue:
 		event["customissue_name"] = QUOTES(m.Name)
 		event["customissue_payload"] = QUOTES(m.Payload)
-	// Mobile events
-	case *messages.MobileEvent:
-		event["mobile_event_name"] = QUOTES(m.Name)
-		event["mobile_event_payload"] = QUOTES(m.Payload)
-	case *messages.MobileNetworkCall:
-		event["mobile_networkcall_type"] = QUOTES(m.Type)
-		event["mobile_networkcall_method"] = QUOTES(m.Method)
-		event["mobile_networkcall_url"] = QUOTES(m.URL)
-		event["mobile_networkcall_request"] = QUOTES(m.Request)
-		event["mobile_networkcall_response"] = QUOTES(m.Response)
-		event["mobile_networkcall_status"] = fmt.Sprintf("%d", m.Status)
-		event["mobile_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["mobile_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
-	case *messages.MobileClickEvent:
-		event["mobile_clickevent_x"] = fmt.Sprintf("%d", m.X)
-		event["mobile_clickevent_y"] = fmt.Sprintf("%d", m.Y)
-		event["mobile_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["mobile_clickevent_label"] = QUOTES(m.Label)
-	case *messages.MobileSwipeEvent:
-		event["mobile_swipeevent_x"] = fmt.Sprintf("%d", m.X)
-		event["mobile_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
-		event["mobile_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["mobile_swipeevent_label"] = QUOTES(m.Label)
-	case *messages.MobileInputEvent:
-		event["mobile_inputevent_label"] = QUOTES(m.Label)
-		event["mobile_inputevent_value"] = QUOTES(m.Value)
-	case *messages.MobileCrash:
-		event["mobile_crash_name"] = QUOTES(m.Name)
-		event["mobile_crash_reason"] = QUOTES(m.Reason)
-		event["mobile_crash_stacktrace"] = QUOTES(m.Stacktrace)
-	case *messages.MobileIssueEvent:
-		event["mobile_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["mobile_issueevent_type"] = QUOTES(m.Type)
-		event["mobile_issueevent_context_string"] = QUOTES(m.ContextString)
-		event["mobile_issueevent_context"] = QUOTES(m.Context)
-		event["mobile_issueevent_payload"] = QUOTES(m.Payload)
+	// IOS events
+	case *messages.IOSEvent:
+		event["IOS_event_name"] = QUOTES(m.Name)
+		event["IOS_event_payload"] = QUOTES(m.Payload)
+	case *messages.IOSNetworkCall:
+		event["IOS_networkcall_type"] = QUOTES(m.Type)
+		event["IOS_networkcall_method"] = QUOTES(m.Method)
+		event["IOS_networkcall_url"] = QUOTES(m.URL)
+		event["IOS_networkcall_request"] = QUOTES(m.Request)
+		event["IOS_networkcall_response"] = QUOTES(m.Response)
+		event["IOS_networkcall_status"] = fmt.Sprintf("%d", m.Status)
+		event["IOS_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["IOS_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
+	case *messages.IOSClickEvent:
+		event["IOS_clickevent_x"] = fmt.Sprintf("%d", m.X)
+		event["IOS_clickevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["IOS_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["IOS_clickevent_label"] = QUOTES(m.Label)
+	case *messages.IOSSwipeEvent:
+		event["IOS_swipeevent_x"] = fmt.Sprintf("%d", m.X)
+		event["IOS_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["IOS_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["IOS_swipeevent_label"] = QUOTES(m.Label)
+	case *messages.IOSInputEvent:
+		event["IOS_inputevent_label"] = QUOTES(m.Label)
+		event["IOS_inputevent_value"] = QUOTES(m.Value)
+	case *messages.IOSCrash:
+		event["IOS_crash_name"] = QUOTES(m.Name)
+		event["IOS_crash_reason"] = QUOTES(m.Reason)
+		event["IOS_crash_stacktrace"] = QUOTES(m.Stacktrace)
+	case *messages.IOSIssueEvent:
+		event["IOS_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["IOS_issueevent_type"] = QUOTES(m.Type)
+		event["IOS_issueevent_context_string"] = QUOTES(m.ContextString)
+		event["IOS_issueevent_context"] = QUOTES(m.Context)
+		event["IOS_issueevent_payload"] = QUOTES(m.Payload)
 	}
 
 	if len(event) == 0 {
@@ -249,9 +249,9 @@ func (s *Saver) handleSession(msg messages.Message) {
 		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
 		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
 		*messages.IssueEvent, *messages.IssueEventDeprecated,
-		// Mobile messages
-		*messages.MobileSessionStart, *messages.MobileSessionEnd, *messages.MobileUserID, *messages.MobileUserAnonymousID,
-		*messages.MobileMetadata:
+		// IOS messages
+		*messages.IOSSessionStart, *messages.IOSSessionEnd, *messages.IOSUserID, *messages.IOSUserAnonymousID,
+		*messages.IOSMetadata:
 	default:
 		return
 	}
@@ -371,8 +371,8 @@ func (s *Saver) handleSession(msg messages.Message) {
 			currIssuesCount = 0
 		}
 		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
-	// Mobile messages
-	case *messages.MobileSessionStart:
+	// IOS messages
+	case *messages.IOSSessionStart:
 		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		sess["user_uuid"] = QUOTES(m.UserUUID)
 		sess["user_os"] = QUOTES(m.UserOS)
@@ -381,12 +381,12 @@ func (s *Saver) handleSession(msg messages.Message) {
 		sess["user_device_type"] = QUOTES(m.UserDeviceType)
 		sess["tracker_version"] = QUOTES(m.TrackerVersion)
 		sess["rev_id"] = QUOTES(m.RevID)
-	case *messages.MobileSessionEnd:
+	case *messages.IOSSessionEnd:
 		sess["session_end_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		if err := s.updateSessionInfoFromCache(msg.SessionID(), sess); err != nil {
 			s.log.Warn(ctx, "failed to update session info from cache: %s", err)
 		}
-	case *messages.MobileMetadata:
+	case *messages.IOSMetadata:
 		session, err := s.sessModule.Get(msg.SessionID())
 		if err != nil {
 			s.log.Error(ctx, "error getting session info: %s", err)
@@ -402,11 +402,11 @@ func (s *Saver) handleSession(msg messages.Message) {
 			break
 		}
 		sess[fmt.Sprintf("metadata_%d", keyNo)] = QUOTES(m.Value)
-	case *messages.MobileUserID:
+	case *messages.IOSUserID:
 		if m.ID != "" {
 			sess["user_id"] = QUOTES(m.ID)
 		}
-	case *messages.MobileUserAnonymousID:
+	case *messages.IOSUserAnonymousID:
 		sess["user_anonymous_id"] = QUOTES(m.ID)
 	default:
 		updated = false
@@ -443,7 +443,7 @@ func (s *Saver) Handle(msg messages.Message) {
 		s.events = append(s.events, newEvent)
 	}
 	s.handleSession(msg)
-	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
+	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgIOSSessionEnd {
 		if s.finishedSessions == nil {
 			s.finishedSessions = make([]uint64, 0)
 		}
