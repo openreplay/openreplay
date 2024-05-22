@@ -14,12 +14,13 @@ import (
 )
 
 type ClickHouse struct {
-	log  logger.Logger
-	cfg  *connector.Config
-	conn driver.Conn
+	log     logger.Logger
+	cfg     *connector.Config
+	conn    driver.Conn
+	batches *Batches
 }
 
-func NewClickHouse(log logger.Logger, cfg *connector.Config) (*ClickHouse, error) {
+func NewClickHouse(log logger.Logger, cfg *connector.Config, batches *Batches) (*ClickHouse, error) {
 	url := cfg.Clickhouse.URL
 	url = strings.TrimPrefix(url, "tcp://")
 	url = strings.TrimSuffix(url, "/default")
@@ -45,16 +46,21 @@ func NewClickHouse(log logger.Logger, cfg *connector.Config) (*ClickHouse, error
 		return nil, err
 	}
 	c := &ClickHouse{
-		log:  log,
-		cfg:  cfg,
-		conn: conn,
+		log:     log,
+		cfg:     cfg,
+		conn:    conn,
+		batches: batches,
 	}
 	return c, nil
 }
 
+func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
+	return c.insertEventsUsingBuffer(batch)
+}
+
 const eventsSQL = "INSERT INTO connector_events_buffer (sessionid, consolelog_level, consolelog_value, customevent_name, customevent_payload, jsexception_message, jsexception_name, jsexception_payload, jsexception_metadata, networkrequest_type, networkrequest_method, networkrequest_url, networkrequest_request, networkrequest_response, networkrequest_status, networkrequest_timestamp, networkrequest_duration, issueevent_message_id, issueevent_timestamp, issueevent_type, issueevent_context_string, issueevent_context, issueevent_payload, issueevent_url, customissue_name, customissue_payload, received_at, batch_order_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
+func (c *ClickHouse) insertEventsUsingBuffer(batch []map[string]string) error {
 	bulk, err := c.conn.PrepareBatch(context.Background(), eventsSQL)
 	if err != nil {
 		return err
@@ -98,9 +104,13 @@ func (c *ClickHouse) InsertEvents(batch []map[string]string) error {
 	return bulk.Send()
 }
 
+func (c *ClickHouse) InsertSessions(batch []map[string]string) error {
+	return c.insertSessionsUsingBuffer(batch)
+}
+
 const sessionsSQL = "INSERT INTO connector_user_sessions_buffer (sessionid, user_agent, user_browser, user_browser_version, user_country, user_device, user_device_heap_size, user_device_memory_size, user_device_type, user_os, user_os_version, user_uuid, connection_effective_bandwidth, connection_type, referrer, user_anonymous_id, user_id, session_start_timestamp, session_end_timestamp, session_duration, first_contentful_paint, speed_index, visually_complete, timing_time_to_interactive, avg_cpu, avg_fps, max_cpu, max_fps, max_total_js_heap_size, max_used_js_heap_size, js_exceptions_count, inputs_count, clicks_count, issues_count, pages_count, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-func (c *ClickHouse) InsertSessions(batch []map[string]string) error {
+func (c *ClickHouse) insertSessionsUsingBuffer(batch []map[string]string) error {
 	bulk, err := c.conn.PrepareBatch(context.Background(), sessionsSQL)
 	if err != nil {
 		return err
