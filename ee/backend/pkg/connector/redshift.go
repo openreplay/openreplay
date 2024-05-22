@@ -1,28 +1,25 @@
 package connector
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	"openreplay/backend/internal/config/connector"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
 )
 
 type Redshift struct {
-	log        logger.Logger
-	cfg        *connector.Config
-	ctx        context.Context
-	db         *sql.DB
-	objStorage objectstorage.ObjectStorage
+	log     logger.Logger
+	cfg     *connector.Config
+	ctx     context.Context
+	db      *sql.DB
+	batches *Batches
 }
 
-func NewRedshift(log logger.Logger, cfg *connector.Config, objStorage objectstorage.ObjectStorage) (*Redshift, error) {
+func NewRedshift(log logger.Logger, cfg *connector.Config, batches *Batches) (*Redshift, error) {
 	var source string
 	if cfg.ConnectionString != "" {
 		source = cfg.ConnectionString
@@ -39,91 +36,41 @@ func NewRedshift(log logger.Logger, cfg *connector.Config, objStorage objectstor
 		return nil, err
 	}
 	return &Redshift{
-		log:        log,
-		cfg:        cfg,
-		ctx:        context.Background(),
-		db:         sqldb,
-		objStorage: objStorage,
+		log:     log,
+		cfg:     cfg,
+		ctx:     context.Background(),
+		db:      sqldb,
+		batches: batches,
 	}, nil
 }
 
-func eventsToBuffer(batch []map[string]string) *bytes.Buffer {
-	buf := bytes.NewBuffer(nil)
-
-	// Write header
-	for _, column := range eventColumns {
-		buf.WriteString(column + "|")
-	}
-	buf.Truncate(buf.Len() - 1)
-
-	// Write data
-	for _, event := range batch {
-		buf.WriteString("\n")
-		for _, column := range eventColumns {
-			buf.WriteString(event[column] + "|")
-		}
-		buf.Truncate(buf.Len() - 1)
-	}
-	return buf
-}
-
-func (r *Redshift) InsertEvents(batch []map[string]string) error {
-	// Send data to S3
-	fileName := fmt.Sprintf("connector_data/%s-%s.csv", r.cfg.EventsTableName, uuid.New().String())
-	// Create csv file
-	buf := eventsToBuffer(batch)
-
-	reader := bytes.NewReader(buf.Bytes())
-	if err := r.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		return fmt.Errorf("can't upload file to s3: %s", err)
-	}
-	// Copy data from s3 bucket to redshift
-	if err := r.Copy(r.cfg.EventsTableName, fileName, "|", true, false); err != nil {
-		return fmt.Errorf("can't copy data from s3 to redshift: %s", err)
-	}
-	r.log.Info(context.Background(), "events batch of %d events is successfully saved", len(batch))
-	return nil
-}
-
-func sessionsToBuffer(batch []map[string]string) *bytes.Buffer {
-	buf := bytes.NewBuffer(nil)
-
-	// Write header
-	for _, column := range sessionColumns {
-		buf.WriteString(column + "|")
-	}
-	buf.Truncate(buf.Len() - 1)
-
-	// Write data
-	for _, sess := range batch {
-		buf.WriteString("\n")
-		for _, column := range sessionColumns {
-			buf.WriteString(sess[column] + "|")
-		}
-		buf.Truncate(buf.Len() - 1)
-	}
-	return buf
-}
-
 func (r *Redshift) InsertSessions(batch []map[string]string) error {
-	// Send data to S3
-	fileName := fmt.Sprintf("connector_data/%s-%s.csv", r.cfg.SessionsTableName, uuid.New().String())
-	// Create csv file
-	buf := sessionsToBuffer(batch)
-
-	reader := bytes.NewReader(buf.Bytes())
-	if err := r.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
-		return fmt.Errorf("can't upload file to s3: %s", err)
+	fileName := generateName(r.cfg.SessionsTableName)
+	if err := r.batches.Insert(batch, fileName, sessionColumns); err != nil {
+		return fmt.Errorf("can't insert sessions batch: %s", err)
 	}
 	// Copy data from s3 bucket to redshift
-	if err := r.Copy(r.cfg.SessionsTableName, fileName, "|", true, false); err != nil {
+	if err := r.copy(r.cfg.SessionsTableName, fileName, "|", true, false); err != nil {
 		return fmt.Errorf("can't copy data from s3 to redshift: %s", err)
 	}
 	r.log.Info(context.Background(), "sessions batch of %d sessions is successfully saved", len(batch))
 	return nil
 }
 
-func (r *Redshift) Copy(tableName, fileName, delimiter string, creds, gzip bool) error {
+func (r *Redshift) InsertEvents(batch []map[string]string) error {
+	fileName := generateName(r.cfg.EventsTableName)
+	if err := r.batches.Insert(batch, fileName, eventColumns); err != nil {
+		return fmt.Errorf("can't insert events batch: %s", err)
+	}
+	// Copy data from s3 bucket to redshift
+	if err := r.copy(r.cfg.EventsTableName, fileName, "|", true, false); err != nil {
+		return fmt.Errorf("can't copy data from s3 to redshift: %s", err)
+	}
+	r.log.Info(context.Background(), "events batch of %d events is successfully saved", len(batch))
+	return nil
+}
+
+func (r *Redshift) copy(tableName, fileName, delimiter string, creds, gzip bool) error {
 	var (
 		credentials string
 		gzipSQL     string
@@ -149,10 +96,6 @@ func (r *Redshift) Copy(tableName, fileName, delimiter string, creds, gzip bool)
 
 	_, err := r.db.ExecContext(r.ctx, copySQL)
 	return err
-}
-
-func (r *Redshift) ExecutionDuration(fileName string) (int, error) {
-	return 0, nil
 }
 
 func (r *Redshift) Close() error {

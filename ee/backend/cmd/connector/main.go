@@ -27,16 +27,28 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "can't init object storage: %s", err)
 	}
+	batches, err := saver.NewBatches(cfg, objStore)
+	if err != nil {
+		log.Fatal(ctx, "can't init s3 buckets: %s", err)
+	}
 
 	var db saver.Database
 	switch cfg.ConnectorType {
 	case "redshift":
-		if db, err = saver.NewRedshift(log, cfg, objStore); err != nil {
+		if db, err = saver.NewRedshift(log, cfg, batches); err != nil {
 			log.Fatal(ctx, "can't init redshift connection: %s", err)
 		}
 	case "clickhouse":
-		if db, err = saver.NewClickHouse(log, cfg); err != nil {
+		if db, err = saver.NewClickHouse(log, cfg, batches); err != nil {
 			log.Fatal(ctx, "can't init clickhouse connection: %s", err)
+		}
+	case "elasticsearch":
+		if db, err = saver.NewElasticSearch(log, cfg); err != nil {
+			log.Fatal(ctx, "can't init elasticsearch connection: %s", err)
+		}
+	case "s3":
+		if db, err = saver.NewS3Storage(log, cfg, batches); err != nil {
+			log.Fatal(ctx, "can't init s3 connection: %s", err)
 		}
 	default:
 		log.Fatal(ctx, "unknown connector type: %s", cfg.ConnectorType)
