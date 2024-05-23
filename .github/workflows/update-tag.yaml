@@ -1,11 +1,11 @@
 on:
   workflow_dispatch:
-    description: 'This workflow will build for patches for latest tag, and will Always use commit from main branch.'
+    description: "This workflow will build for patches for latest tag, and will Always use commit from main branch."
     inputs:
       services:
-        description: 'This action will update the latest tag with current main branch HEAD. Should I proceed ? true/false'
+        description: "This action will update the latest tag with current main branch HEAD. Should I proceed ? true/false"
         required: true
-        default: 'false'
+        default: "false"
 
 name: Force Push tag with main branch HEAD
 
@@ -17,17 +17,17 @@ jobs:
       DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
       DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Set Remote with GITHUB_TOKEN
-      run: |
-        git config --unset http.https://github.com/.extraheader
-        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
-    - name: Push main branch to tag
-      run: |
-        git fetch --tags
-        git checkout main
-        git push origin HEAD:refs/tags/$(git describe --tags `git rev-list --tags --max-count=1`) --force
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set Remote with GITHUB_TOKEN
+        run: |
+          git config --unset http.https://github.com/.extraheader
+          git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
+      - name: Push main branch to tag
+        run: |
+          git fetch --tags
+          git checkout main
+          git push origin HEAD:refs/tags/$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1) --force
     # - name: Debug Job
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
