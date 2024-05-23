@@ -77,7 +77,7 @@ func main() {
 		messages.MsgSessionStart, messages.MsgSessionEnd, messages.MsgConnectionInformation,
 		messages.MsgMetadata, messages.MsgPageEvent, messages.MsgPerformanceTrackAggr, messages.MsgUserID,
 		messages.MsgUserAnonymousID, messages.MsgJSException, messages.MsgJSExceptionDeprecated,
-		messages.MsgInputEvent, messages.MsgMouseClick, messages.MsgIssueEventDeprecated,
+		messages.MsgInputEvent, messages.MsgMouseClick, messages.MsgIssueEventDeprecated, messages.MsgInputChange,
 		// Mobile messages
 		messages.MsgIOSSessionStart, messages.MsgIOSSessionEnd, messages.MsgIOSUserID, messages.MsgIOSUserAnonymousID,
 		messages.MsgIOSMetadata, messages.MsgIOSEvent, messages.MsgIOSNetworkCall,
