@@ -17,8 +17,10 @@ postgresql: &postgres
   # asdf
   #     cpu: 2
 
-clickhouse: &clickhouse
-  # For enterpriseEdition
+connector: &connector # For enterpriseEdition
+  enabled: false
+
+clickhouse: &clickhouse # For enterpriseEdition
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   username: default
@@ -26,8 +28,7 @@ clickhouse: &clickhouse
   service:
     webPort: 9000
 
-quickwit: &quickwit
-  # For enterpriseEdition
+quickwit: &quickwit # For enterpriseEdition
   enabled: false
 
 kafka: &kafka
@@ -73,8 +74,8 @@ ingress-nginx: &ingress-nginx
     ingressClassResource:
       # -- Name of the ingressClass
       name: openreplay
-  # -- For backwards compatibility with ingress.class annotation, use ingressClass.
-  # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+    # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
     ingressClass: openreplay
     addHeaders:
       # Enable only if you know what you're doing!!!
@@ -112,6 +113,7 @@ global:
   redis: *redis
   quickwit: *quickwit
   clickhouse: *clickhouse
+  connector: *connector
   # Registry URL from where the OR images should be pulled.
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
@@ -137,15 +139,15 @@ global:
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
-    emailHost: ''
-    emailPort: '587'
-    emailUser: ''
-    emailPassword: ''
-    emailUseTls: 'true'
-    emailUseSsl: 'false'
-    emailSslKey: ''
-    emailSslCert: ''
-    emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
+    emailHost: ""
+    emailPort: "587"
+    emailUser: ""
+    emailPassword: ""
+    emailUseTls: "true"
+    emailUseSsl: "false"
+    emailSslKey: ""
+    emailSslCert: ""
+    emailFrom: "OpenReplay<do-not-reply@openreplay.com>"
 
   enterpriseEditionLicense: ""
   domainName: ""
@@ -163,7 +165,6 @@ chalice:
     # idp_name: ''
     # idp_tenantKey: ''
     # enforce_SSO: 'false'
-
 # Below is an example on how to override values
 # chartname:
 #   filedFrom chart/Values.yaml:
