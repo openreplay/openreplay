@@ -183,6 +183,7 @@ export default class App {
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
   private tagWatcher: TagWatcher
+  private socketMode = true
 
   constructor(
     projectKey: string,
@@ -410,6 +411,13 @@ export default class App {
    * every ~30ms
    * */
   private _nCommit(): void {
+    if (this.socketMode) {
+      this.messages.unshift(TabData(this.session.getTabId()))
+      this.messages.unshift(Timestamp(this.timestamp()))
+      this.commitCallbacks.forEach((cb) => cb(this.messages))
+      this.messages.length = 0
+      return
+    }
     if (this.worker !== undefined && this.messages.length) {
       try {
         requestIdleCb(() => {
@@ -1013,6 +1021,7 @@ export default class App {
           canvasEnabled,
           canvasQuality,
           canvasFPS,
+          socketOnly = true,
         } = r
         if (
           typeof token !== 'string' ||
@@ -1042,11 +1051,16 @@ export default class App {
           projectID,
         })
 
-        this.worker.postMessage({
-          type: 'auth',
-          token,
-          beaconSizeLimit,
-        })
+        if (socketOnly) {
+          this.socketMode = true
+          this.worker.postMessage('stop')
+        } else {
+          this.worker.postMessage({
+            type: 'auth',
+            token,
+            beaconSizeLimit,
+          })
+        }
 
         if (!isNewSession && token === sessionToken) {
           this.debug.log('continuing session on new tab', this.session.getTabId())
