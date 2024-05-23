@@ -26,6 +26,7 @@ type Saver struct {
 	lastUpdate       map[uint64]time.Time
 	finishedSessions []uint64
 	events           []map[string]string
+	projectIDs       map[uint32]bool
 }
 
 func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.Sessions, projects projects.Projects) *Saver {
@@ -41,6 +42,16 @@ func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.S
 	if err := validateColumnNames(eventColumns); err != nil {
 		log.Error(ctx, "can't validate events column names: %s", err)
 	}
+	// Parse project IDs
+	projectIDs := make(map[uint32]bool, len(cfg.ProjectIDs))
+	if len(cfg.GetAllowedProjectIDs()) == 0 {
+		log.Info(ctx, "empty project IDs white list")
+		projectIDs = nil
+	} else {
+		for _, id := range cfg.GetAllowedProjectIDs() {
+			projectIDs[uint32(id)] = true
+		}
+	}
 	return &Saver{
 		log:             log,
 		cfg:             cfg,
@@ -49,6 +60,7 @@ func New(log logger.Logger, cfg *config.Config, db Database, sessions sessions.S
 		projModule:      projects,
 		updatedSessions: make(map[uint64]bool, 0),
 		lastUpdate:      make(map[uint64]time.Time, 0),
+		projectIDs:      projectIDs,
 	}
 }
 
@@ -87,6 +99,22 @@ func handleEvent(msg messages.Message) map[string]string {
 	case *messages.CustomIssue:
 		event["customissue_name"] = QUOTES(m.Name)
 		event["customissue_payload"] = QUOTES(m.Payload)
+	case *messages.MouseClick:
+		event["mouseclick_label"] = QUOTES(m.Label)
+		event["mouseclick_selector"] = QUOTES(m.Selector)
+		event["mouseclick_url"] = QUOTES(msg.Meta().Url)
+		event["mouseclick_hesitation_time"] = fmt.Sprintf("%d", m.HesitationTime)
+		event["mouseclick_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+	case *messages.PageEvent:
+		event["pageevent_url"] = QUOTES(m.URL)
+		event["pageevent_referrer"] = QUOTES(m.Referrer)
+		event["pageevent_speed_index"] = fmt.Sprintf("%d", m.SpeedIndex)
+		event["pageevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+	case *messages.InputChange:
+		event["inputevent_label"] = QUOTES(m.Label)
+		event["inputevent_hesitation_time"] = fmt.Sprintf("%d", m.HesitationTime)
+		event["inputevent_input_duration"] = fmt.Sprintf("%d", m.InputDuration)
+		event["inputevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 	// Mobile events
 	case *messages.MobileEvent:
 		event["mobile_event_name"] = QUOTES(m.Name)
@@ -123,6 +151,11 @@ func handleEvent(msg messages.Message) map[string]string {
 		event["mobile_issueevent_context_string"] = QUOTES(m.ContextString)
 		event["mobile_issueevent_context"] = QUOTES(m.Context)
 		event["mobile_issueevent_payload"] = QUOTES(m.Payload)
+	case *messages.MobileViewComponentEvent:
+		event["mobile_viewcomponentevent_screen_name"] = QUOTES(m.ScreenName)
+		event["mobile_viewcomponentevent_view_name"] = QUOTES(m.ViewName)
+		event["mobile_viewcomponentevent_visible"] = fmt.Sprintf("%t", m.Visible)
+		event["mobile_viewcomponentevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 	}
 
 	if len(event) == 0 {
@@ -410,6 +443,19 @@ func (s *Saver) handleSession(msg messages.Message) {
 }
 
 func (s *Saver) Handle(msg messages.Message) {
+	if s.projectIDs != nil {
+		// Check if project ID is allowed
+		sessInfo, err := s.sessModule.Get(msg.SessionID())
+		if err != nil {
+			s.log.Error(context.Background(), "can't get session info: %s, skipping message", err)
+			return
+		}
+		if !s.projectIDs[sessInfo.ProjectID] {
+			s.log.Debug(context.Background(), "project ID %d is not allowed, skipping message", sessInfo.ProjectID)
+			return
+		}
+		s.log.Info(context.Background(), "project ID %d is allowed", sessInfo.ProjectID)
+	}
 	newEvent := handleEvent(msg)
 	if newEvent != nil {
 		if s.events == nil {
