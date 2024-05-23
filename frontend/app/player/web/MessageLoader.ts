@@ -292,6 +292,7 @@ export default class MessageLoader {
         : Promise.reject('No devtools file in EFS');
 
     await Promise.all([parseDomPromise, parseDevtoolsPromise]);
+    this.messageManager.onFileReadFinally();
     this.messageManager.onFileReadSuccess();
   };
 
