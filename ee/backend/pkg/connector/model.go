@@ -101,6 +101,19 @@ var eventColumns = []string{
 	"issueevent_url",
 	"customissue_name",
 	"customissue_payload",
+	"mouseclick_label",
+	"mouseclick_selector",
+	"mouseclick_url",
+	"mouseclick_hesitation_time",
+	"mouseclick_timestamp",
+	"pageevent_url",
+	"pageevent_referrer",
+	"pageevent_speed_index",
+	"pageevent_timestamp",
+	"inputevent_label",
+	"inputevent_hesitation_time",
+	"inputevent_input_duration",
+	"inputevent_timestamp",
 	"mobile_event_name",
 	"mobile_event_payload",
 	"mobile_networkcall_type",
@@ -129,6 +142,10 @@ var eventColumns = []string{
 	"mobile_issueevent_context_string",
 	"mobile_issueevent_context",
 	"mobile_issueevent_payload",
+	"mobile_viewcomponentevent_screen_name",
+	"mobile_viewcomponentevent_view_name",
+	"mobile_viewcomponentevent_visible",
+	"mobile_viewcomponentevent_timestamp",
 }
 
 var eventInts = []string{
@@ -137,6 +154,13 @@ var eventInts = []string{
 	"networkrequest_duration",
 	"issueevent_message_id",
 	"issueevent_timestamp",
+	"mouseclick_hesitation_time",
+	"mouseclick_timestamp",
+	"pageevent_speed_index",
+	"pageevent_timestamp",
+	"inputevent_hesitation_time",
+	"inputevent_input_duration",
+	"inputevent_timestamp",
 	"mobile_networkcall_status",
 	"mobile_networkcall_timestamp",
 	"mobile_networkcall_duration",
@@ -147,6 +171,7 @@ var eventInts = []string{
 	"mobile_swipeevent_y",
 	"mobile_swipeevent_timestamp",
 	"mobile_issueevent_timestamp",
+	"mobile_viewcomponentevent_timestamp",
 }
 
 func QUOTES(s string) string {

@@ -99,42 +99,63 @@ func handleEvent(msg messages.Message) map[string]string {
 	case *messages.CustomIssue:
 		event["customissue_name"] = QUOTES(m.Name)
 		event["customissue_payload"] = QUOTES(m.Payload)
-	// IOS events
+	case *messages.MouseClick:
+		event["mouseclick_label"] = QUOTES(m.Label)
+		event["mouseclick_selector"] = QUOTES(m.Selector)
+		event["mouseclick_url"] = QUOTES(msg.Meta().Url)
+		event["mouseclick_hesitation_time"] = fmt.Sprintf("%d", m.HesitationTime)
+		event["mouseclick_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+	case *messages.PageEvent:
+		event["pageevent_url"] = QUOTES(m.URL)
+		event["pageevent_referrer"] = QUOTES(m.Referrer)
+		event["pageevent_speed_index"] = fmt.Sprintf("%d", m.SpeedIndex)
+		event["pageevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+	case *messages.InputChange:
+		event["inputevent_label"] = QUOTES(m.Label)
+		event["inputevent_hesitation_time"] = fmt.Sprintf("%d", m.HesitationTime)
+		event["inputevent_input_duration"] = fmt.Sprintf("%d", m.InputDuration)
+		event["inputevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+	// Mobile events
 	case *messages.IOSEvent:
-		event["IOS_event_name"] = QUOTES(m.Name)
-		event["IOS_event_payload"] = QUOTES(m.Payload)
+		event["mobile_event_name"] = QUOTES(m.Name)
+		event["mobile_event_payload"] = QUOTES(m.Payload)
 	case *messages.IOSNetworkCall:
-		event["IOS_networkcall_type"] = QUOTES(m.Type)
-		event["IOS_networkcall_method"] = QUOTES(m.Method)
-		event["IOS_networkcall_url"] = QUOTES(m.URL)
-		event["IOS_networkcall_request"] = QUOTES(m.Request)
-		event["IOS_networkcall_response"] = QUOTES(m.Response)
-		event["IOS_networkcall_status"] = fmt.Sprintf("%d", m.Status)
-		event["IOS_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["IOS_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
+		event["mobile_networkcall_type"] = QUOTES(m.Type)
+		event["mobile_networkcall_method"] = QUOTES(m.Method)
+		event["mobile_networkcall_url"] = QUOTES(m.URL)
+		event["mobile_networkcall_request"] = QUOTES(m.Request)
+		event["mobile_networkcall_response"] = QUOTES(m.Response)
+		event["mobile_networkcall_status"] = fmt.Sprintf("%d", m.Status)
+		event["mobile_networkcall_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_networkcall_duration"] = fmt.Sprintf("%d", m.Duration)
 	case *messages.IOSClickEvent:
-		event["IOS_clickevent_x"] = fmt.Sprintf("%d", m.X)
-		event["IOS_clickevent_y"] = fmt.Sprintf("%d", m.Y)
-		event["IOS_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["IOS_clickevent_label"] = QUOTES(m.Label)
+		event["mobile_clickevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_clickevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_clickevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_clickevent_label"] = QUOTES(m.Label)
 	case *messages.IOSSwipeEvent:
-		event["IOS_swipeevent_x"] = fmt.Sprintf("%d", m.X)
-		event["IOS_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
-		event["IOS_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["IOS_swipeevent_label"] = QUOTES(m.Label)
+		event["mobile_swipeevent_x"] = fmt.Sprintf("%d", m.X)
+		event["mobile_swipeevent_y"] = fmt.Sprintf("%d", m.Y)
+		event["mobile_swipeevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_swipeevent_label"] = QUOTES(m.Label)
 	case *messages.IOSInputEvent:
-		event["IOS_inputevent_label"] = QUOTES(m.Label)
-		event["IOS_inputevent_value"] = QUOTES(m.Value)
+		event["mobile_inputevent_label"] = QUOTES(m.Label)
+		event["mobile_inputevent_value"] = QUOTES(m.Value)
 	case *messages.IOSCrash:
-		event["IOS_crash_name"] = QUOTES(m.Name)
-		event["IOS_crash_reason"] = QUOTES(m.Reason)
-		event["IOS_crash_stacktrace"] = QUOTES(m.Stacktrace)
+		event["mobile_crash_name"] = QUOTES(m.Name)
+		event["mobile_crash_reason"] = QUOTES(m.Reason)
+		event["mobile_crash_stacktrace"] = QUOTES(m.Stacktrace)
 	case *messages.IOSIssueEvent:
-		event["IOS_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
-		event["IOS_issueevent_type"] = QUOTES(m.Type)
-		event["IOS_issueevent_context_string"] = QUOTES(m.ContextString)
-		event["IOS_issueevent_context"] = QUOTES(m.Context)
-		event["IOS_issueevent_payload"] = QUOTES(m.Payload)
+		event["mobile_issueevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
+		event["mobile_issueevent_type"] = QUOTES(m.Type)
+		event["mobile_issueevent_context_string"] = QUOTES(m.ContextString)
+		event["mobile_issueevent_context"] = QUOTES(m.Context)
+		event["mobile_issueevent_payload"] = QUOTES(m.Payload)
+	case *messages.IOSViewComponentEvent:
+		event["mobile_viewcomponentevent_screen_name"] = QUOTES(m.ScreenName)
+		event["mobile_viewcomponentevent_view_name"] = QUOTES(m.ViewName)
+		event["mobile_viewcomponentevent_visible"] = fmt.Sprintf("%t", m.Visible)
+		event["mobile_viewcomponentevent_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 	}
 
 	if len(event) == 0 {
@@ -249,7 +270,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 		*messages.PageEvent, *messages.PerformanceTrackAggr, *messages.UserID, *messages.UserAnonymousID,
 		*messages.JSException, *messages.JSExceptionDeprecated, *messages.InputEvent, *messages.MouseClick,
 		*messages.IssueEvent, *messages.IssueEventDeprecated,
-		// IOS messages
+		// Mobile messages
 		*messages.IOSSessionStart, *messages.IOSSessionEnd, *messages.IOSUserID, *messages.IOSUserAnonymousID,
 		*messages.IOSMetadata:
 	default:
@@ -371,7 +392,7 @@ func (s *Saver) handleSession(msg messages.Message) {
 			currIssuesCount = 0
 		}
 		sess["issues_count"] = fmt.Sprintf("%d", currIssuesCount+1)
-	// IOS messages
+	// Mobile messages
 	case *messages.IOSSessionStart:
 		sess["session_start_timestamp"] = fmt.Sprintf("%d", m.Timestamp)
 		sess["user_uuid"] = QUOTES(m.UserUUID)
