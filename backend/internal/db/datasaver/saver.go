@@ -180,6 +180,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 			return err
 		}
 		s.sessions.UpdateReferrer(session.SessionID, m.Referrer)
+		s.sessions.UpdateUTM(session.SessionID, m.URL)
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 1)
 	case *NetworkRequest:
 		return s.pg.InsertWebNetworkRequest(session, m)

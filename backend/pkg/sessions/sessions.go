@@ -24,6 +24,7 @@ type Sessions interface {
 	UpdateUserID(sessionID uint64, userID string) error
 	UpdateAnonymousID(sessionID uint64, userAnonymousID string) error
 	UpdateReferrer(sessionID uint64, referrer string) error
+	UpdateUTM(sessionID uint64, url string) error
 	UpdateMetadata(sessionID uint64, key, value string) error
 	UpdateEventsStats(sessionID uint64, events, pages int) error
 	UpdateIssuesStats(sessionID uint64, errors, issueScore int) error
@@ -208,6 +209,21 @@ func (s *sessionsImpl) UpdateReferrer(sessionID uint64, referrer string) error {
 	}
 	baseReferrer := url.DiscardURLQuery(referrer)
 	s.updates.SetReferrer(sessionID, referrer, baseReferrer)
+	return nil
+}
+
+func (s *sessionsImpl) UpdateUTM(sessionID uint64, pageUrl string) error {
+	params, err := url.GetURLQueryParams(pageUrl)
+	if err != nil {
+		return err
+	}
+	utmSource := params["utm_source"]
+	utmMedium := params["utm_medium"]
+	utmCampaign := params["utm_campaign"]
+	if utmSource == "" && utmMedium == "" && utmCampaign == "" {
+		return nil
+	}
+	s.updates.SetUTM(sessionID, utmSource, utmMedium, utmCampaign)
 	return nil
 }
 
