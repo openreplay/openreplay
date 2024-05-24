@@ -226,6 +226,7 @@ export default class Session {
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
+  liveOnly: boolean;
 
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession);
@@ -346,6 +347,7 @@ export default class Session {
       uxtVideo: uxtVideo[0],
       durationMs: session.duration,
       audio: session.audio,
+      liveOnly: true,
     });
   }
 
