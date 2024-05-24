@@ -315,9 +315,9 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 		session.Metadata9,
 		session.Metadata10,
 		session.Timezone,
-		nullableString(session.UtmSource),
-		nullableString(session.UtmMedium),
-		nullableString(session.UtmCampaign),
+		session.UtmSource,
+		session.UtmMedium,
+		session.UtmCampaign,
 	); err != nil {
 		c.checkError("sessions", err)
 		return fmt.Errorf("can't append to sessions batch: %s", err)
