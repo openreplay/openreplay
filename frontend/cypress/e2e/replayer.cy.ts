@@ -90,7 +90,7 @@ describe(
           jumpMethod(SECOND * 20)
         })
         cy.wait(SECOND * 3);
-        cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
+        cy.get('#control-button-redux').click()
         cy.wait(SECOND * 0.5)
         cy.matchImageSnapshot('Tracker-19-redux');
 
