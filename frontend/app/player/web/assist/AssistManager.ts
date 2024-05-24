@@ -1,5 +1,6 @@
 import MessageManager from 'Player/web/MessageManager';
 import type { Socket } from 'socket.io-client';
+import { Message } from "../messages";
 import type Screen from '../Screen/Screen';
 import type { PlayerMsg, Store } from 'App/player';
 import MStreamReader from '../messages/MStreamReader';
@@ -8,6 +9,7 @@ import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
 import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
+import { gunzipSync } from 'fflate';
 
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 
@@ -196,7 +198,7 @@ export default class AssistManager {
         this.setStatus(ConnectionStatus.WaitingMessages);
       });
 
-      socket.on('messages', (messages) => {
+      const processMessages = (messages: { meta: { version: number, tabId: string }, data: Message[] }) => {
         const isOldVersion = messages.meta.version === 1;
         this.assistVersion = isOldVersion ? 1 : 2;
 
@@ -217,7 +219,17 @@ export default class AssistManager {
         for (let msg = reader.readNext(); msg !== null; msg = reader.readNext()) {
           this.handleMessage(msg, msg._index);
         }
+      }
+
+      socket.on('messages', (messages) => {
+        processMessages(messages)
       });
+      socket.on('messages_gz', (gzBuf) => {
+        const unpackData = gunzipSync(new Uint8Array(gzBuf.data));
+        const str = new TextDecoder().decode(unpackData);
+        const messages = JSON.parse(str);
+        processMessages({ ...gzBuf, data: messages })
+      })
 
       socket.on('SESSION_RECONNECTED', () => {
         this.clearDisconnectTimeout();

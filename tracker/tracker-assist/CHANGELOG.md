@@ -1,3 +1,7 @@
+## 9.0.0
+
+- support for message compression inside plugin
+
 ## 8.0.4
 
 - fix for multiple canvas streaming
