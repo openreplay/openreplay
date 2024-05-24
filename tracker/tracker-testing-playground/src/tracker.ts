@@ -18,7 +18,7 @@ const tracker = new Tracker({
   // @ts-ignore
   network: { capturePayload: true },
   verbose: true,
-  __debug__: true,
+  __debug__: 5,
   onStart: () => {
     tracker.setUserID('Testing_bot');
     tracker.setMetadata('test', 'cypress')

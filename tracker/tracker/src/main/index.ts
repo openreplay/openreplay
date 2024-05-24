@@ -179,7 +179,7 @@ export default class API {
     Tabs(app)
     ;(window as any).__OPENREPLAY__ = this
 
-    if (options.flags?.onFlagsLoad) {
+    if (options.flags && options.flags.onFlagsLoad) {
       this.onFlagsLoad(options.flags.onFlagsLoad)
     }
     const wOpen = window.open

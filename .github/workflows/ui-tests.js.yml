@@ -144,6 +144,7 @@ jobs:
 #        run: yarn cy:test-firefox
 #      - name: (Edge) Run visual tests
 #        run: yarn cy:test-edge
+        timeout-minutes: 5
       - name: Upload Debug
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
