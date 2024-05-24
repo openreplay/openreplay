@@ -22,7 +22,6 @@ export interface State {
 
 export default class Call {
   private assistVersion = 1;
-  private sessionPeerCreated = false;
   static readonly INITIAL_STATE: Readonly<State> = {
     calling: CallingState.NoCall,
   };
@@ -62,9 +61,6 @@ export default class Call {
         this._callSessionPeer();
         reconnecting = false;
       }
-    })
-    socket.on('call_ready', () => {
-      this.sessionPeerCreated = true
     })
     socket.on('messages', () => {
       if (reconnecting) {
@@ -195,7 +191,7 @@ export default class Call {
     onStream: (s: MediaStream) => void;
     onCallEnd: () => void;
     onReject: () => void;
-    onError?: () => void;
+    onError?: (arg?: any) => void;
   } | null = null;
 
   setCallArgs(
@@ -257,27 +253,41 @@ export default class Call {
     void this._peerConnection(peerId);
   }
 
+  connectAttempts = 0;
   private async _peerConnection(remotePeerId: string) {
     try {
       const peer = await this.getPeer();
-      let canCall = false
-      while (!canCall) {
-        canCall = this.sessionPeerCreated
-        if (!canCall) {
+      // let canCall = false
+
+      const tryReconnect = async (e: any) => {
+        peer.off('error', tryReconnect)
+        console.log(e.type, this.connectAttempts);
+        if (e.type === 'peer-unavailable' && this.connectAttempts < 5) {
+          this.connectAttempts++;
+          console.log('reconnecting', this.connectAttempts);
           await new Promise((resolve) => setTimeout(resolve, 250));
+          await this._peerConnection(remotePeerId);
+        } else {
+          console.log('error', this.connectAttempts);
+          this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
         }
       }
       const call = peer.call(remotePeerId, this.callArgs!.localStream.stream);
-      this.callConnection.push(call);
+      peer.on('error', tryReconnect);
 
-      this.callArgs?.localStream.onVideoTrack((vTrack) => {
-        const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
-        if (!sender) {
-          console.warn('No video sender found');
-          return;
-        }
-        sender.replaceTrack(vTrack);
-      });
+      peer.on('connection', () => {
+        this.callConnection.push(call);
+        this.connectAttempts = 0;
+
+        this.callArgs?.localStream.onVideoTrack((vTrack) => {
+          const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
+          if (!sender) {
+            console.warn('No video sender found');
+            return;
+          }
+          sender.replaceTrack(vTrack);
+        });
+      })
 
       call.on('stream', (stream) => {
         this.store.get().calling !== CallingState.OnCall &&

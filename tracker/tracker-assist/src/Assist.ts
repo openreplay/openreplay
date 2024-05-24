@@ -156,8 +156,18 @@ export default class Assist {
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (batchSize === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
         if (batchSize > this.options.compressionMinBatchSize && this.options.compressionEnabled) {
-          while (messages.length > 0) {
-            const batch = messages.splice(0, this.options.compressionMinBatchSize)
+          const toSend: any[] = []
+          if (batchSize > 10000) {
+            const middle = Math.floor(batchSize / 2)
+            const firstHalf = messages.slice(0, middle)
+            const secondHalf = messages.slice(middle)
+
+            toSend.push(firstHalf)
+            toSend.push(secondHalf)
+          } else {
+            toSend.push(messages)
+          }
+          toSend.forEach(batch => {
             const str = JSON.stringify(batch)
             const byteArr = new TextEncoder().encode(str)
             gzip(byteArr, { mtime: 0, }, (err, result) => {
@@ -167,7 +177,7 @@ export default class Assist {
                 this.emit('messages_gz', result)
               }
             })
-          }
+          })
         } else {
           this.emit('messages', messages)
         }
@@ -406,8 +416,6 @@ export default class Assist {
         setupPeer()
       }
       updateCallerNames()
-
-      this.emit('call_ready')
     })
     socket.on('videofeed', (_, info) => {
       if (app.getTabId() !== info.meta.tabId) return
