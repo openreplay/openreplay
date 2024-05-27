@@ -1,4 +1,4 @@
-name: Frontend Foss Deployment 
+name: Frontend Foss Deployment
 on:
   workflow_dispatch:
   push:
@@ -7,7 +7,7 @@ on:
     paths:
       - frontend/**
 # Disable previous workflows for this action.
-concurrency: 
+concurrency:
   group: ${{ github.workflow }} #-${{ github.ref }}
   cancel-in-progress: true
 
@@ -15,132 +15,133 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Cache node modules
-      uses: actions/cache@v1
-      with:
-        path: node_modules
-        key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.OS }}-build-
-          ${{ runner.OS }}-
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
 
-    - uses: ./.github/composite-actions/update-keys
-      with:
-        domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
-        license_key: ${{ secrets.OSS_LICENSE_KEY }}
-        jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
-        minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
-        minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
-        pg_password: ${{ secrets.OSS_PG_PASSWORD }}
-        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
-      name: Update Keys
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
+          license_key: ${{ secrets.OSS_LICENSE_KEY }}
+          jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+          minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.OSS_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
 
-    - name: Docker login
-      run: |
-        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+      - name: Docker login
+        run: |
+          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
-    - uses: azure/k8s-set-context@v1
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
-      id: setcontext
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+        id: setcontext
 
-    - name: Building and Pushing frontend image
-      id: build-image
-      env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
-        ENVIRONMENT: staging
-      run: |
-        set -x
-        cd frontend
-        mv .env.sample .env
-        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:18-slim /bin/bash -c "yarn && yarn build"
-        # https://github.com/docker/cli/issues/1134#issuecomment-613516912
-        DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
-        docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
-        docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
-        docker push $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
+      - name: Building and Pushing frontend image
+        id: build-image
+        env:
+          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          ENVIRONMENT: staging
+        run: |
+          set -x
+          cd frontend
+          mv .env.sample .env
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:18-slim /bin/bash -c "yarn && yarn build"
+          # https://github.com/docker/cli/issues/1134#issuecomment-613516912
+          DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
+          docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
+          docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
+          docker push $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
 
-    - name: Deploy to kubernetes foss
-      run: |
-        cd scripts/helmcharts/
+      - name: Deploy to kubernetes foss
+        run: |
+          cd scripts/helmcharts/
 
-        set -x
-        cat <<EOF>>/tmp/image_override.yaml
-        frontend:
-          image:
-            tag: ${IMAGE_TAG}
-        EOF
+          set -x
+          cat <<EOF>>/tmp/image_override.yaml
+          frontend:
+            image:
+              tag: ${IMAGE_TAG}
+          EOF
 
-        # Update changed image tag
-        sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          # Update changed image tag
+          sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
-        cat /tmp/image_override.yaml
-        # Deploy command
-        mv openreplay/charts/{ingress-nginx,frontend,quickwit} /tmp
-        rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,frontend,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
-      env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
-        ENVIRONMENT: staging
+          cat /tmp/image_override.yaml
+          # Deploy command
+          mkdir -p /tmp/charts
+          mv openreplay/charts/{ingress-nginx,frontend,quickwit,connector} /tmp/charts/
+          rm -rf  openreplay/charts/*
+          mv /tmp/charts/* openreplay/charts/
+          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+        env:
+          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          ENVIRONMENT: staging
 
+      ### Enterprise code deployment
 
-### Enterprise code deployment 
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+        id: setcontextee
 
-    - uses: azure/k8s-set-context@v1
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
-      id: setcontextee
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+          license_key: ${{ secrets.EE_LICENSE_KEY }}
+          jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+          minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.EE_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
 
-    - uses: ./.github/composite-actions/update-keys
-      with:
-        domain_name: ${{ secrets.EE_DOMAIN_NAME }}
-        license_key: ${{ secrets.EE_LICENSE_KEY }}
-        jwt_secret: ${{ secrets.EE_JWT_SECRET }}
-        minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
-        minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
-        pg_password: ${{ secrets.EE_PG_PASSWORD }}
-        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
-      name: Update Keys
+      - name: Deploy to kubernetes ee
+        run: |
+          cd scripts/helmcharts/
+          cat <<EOF>/tmp/image_override.yaml
+          frontend:
+            image:
+              # We've to strip off the -ee, as helm will append it.
+              tag: ${IMAGE_TAG}
+          EOF
 
-    - name: Deploy to kubernetes ee
-      run: |
-        cd scripts/helmcharts/
-        cat <<EOF>/tmp/image_override.yaml
-        frontend:
-          image:
-            # We've to strip off the -ee, as helm will append it.
-            tag: ${IMAGE_TAG}
-        EOF
+          # Update changed image tag
+          sed -i "/frontend/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
-        # Update changed image tag
-        sed -i "/frontend/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          cat /tmp/image_override.yaml
+          # Deploy command
+          mkdir -p /tmp/charts
+          mv openreplay/charts/{ingress-nginx,frontend,quickwit,connector} /tmp/charts/
+          rm -rf  openreplay/charts/*
+          mv /tmp/charts/* openreplay/charts/
+          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+        env:
+          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+          # We're not passing -ee flag, because helm will add that.
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+          ENVIRONMENT: staging
 
-        cat /tmp/image_override.yaml
-        # Deploy command
-        mv openreplay/charts/{ingress-nginx,frontend,quickwit} /tmp
-        rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,frontend,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
-      env:
-        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        # We're not passing -ee flag, because helm will add that.
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
-        ENVIRONMENT: staging
-
-   # - name: Debug Job
-   #   # if: ${{ failure() }}
-   #   uses: mxschmitt/action-tmate@v3
-   #   env:
-   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-   #     IMAGE_TAG: ${{ github.sha }}-ee
-   #     ENVIRONMENT: staging
-   #    with:
-   #      iimit-access-to-actor: true
+    # - name: Debug Job
+    #   # if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}-ee
+    #     ENVIRONMENT: staging
+    #    with:
+    #      iimit-access-to-actor: true

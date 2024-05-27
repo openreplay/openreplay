@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       skip_security_checks:
-        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        description: "Skip Security checks if there is a unfixable vuln or error. Value: true/false"
         required: false
-        default: 'false'
+        default: "false"
   push:
     branches:
       - dev
@@ -25,7 +25,6 @@ on:
       - "!ee/api/*-dev.sh"
       - "!ee/api/requirements.txt"
       - "!ee/api/requirements-crons.txt"
-
 
 name: Build and Deploy Alerts EE
 
@@ -55,7 +54,7 @@ jobs:
 
       - name: Docker login
         run: |
-          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
       - uses: azure/k8s-set-context@v1
         with:
@@ -67,7 +66,6 @@ jobs:
       - uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
-
 
       - name: Building and Pushing api image
         id: build-image
@@ -103,9 +101,9 @@ jobs:
           #
           kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
           tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-          
+
           echo > /tmp/image_override.yaml
-          
+
           for line in `cat /tmp/image_tag.txt`;
           do
               image_array=($(echo "$line" | tr ':' '\n'))
@@ -120,15 +118,16 @@ jobs:
       - name: Deploy to kubernetes
         run: |
           cd scripts/helmcharts/
-          
+
           # Update changed image tag
           sed -i "/alerts/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
-          
+
           cat /tmp/image_override.yaml
           # Deploy command
-          mv openreplay/charts/{ingress-nginx,alerts,quickwit} /tmp
+          mkdir -p /tmp/charts
+          mv openreplay/charts/{ingress-nginx,alerts,quickwit,connector} /tmp/charts/
           rm -rf  openreplay/charts/*
-          mv /tmp/{ingress-nginx,alerts,quickwit} openreplay/charts/
+          mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
         env:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
@@ -145,16 +144,14 @@ jobs:
           SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
           SLACK_USERNAME: "OR Bot"
-          SLACK_MESSAGE: 'Build failed :bomb:'
+          SLACK_MESSAGE: "Build failed :bomb:"
 
-   # - name: Debug Job
-   #   # if: ${{ failure() }}
-   #   uses: mxschmitt/action-tmate@v3
-   #   env:
-   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-   #     IMAGE_TAG: ${{ github.sha }}-ee
-   #     ENVIRONMENT: staging
-   #    with:
-   #      limit-access-to-actor: true
-
-
+    # - name: Debug Job
+    #   # if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}-ee
+    #     ENVIRONMENT: staging
+    #    with:
+    #      limit-access-to-actor: true

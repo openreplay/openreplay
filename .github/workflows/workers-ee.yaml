@@ -6,14 +6,14 @@ on:
       build_service:
         description: 'Name of a single service to build(in small letters). "all" to build everything'
         required: false
-        default: 'false'
+        default: "false"
       skip_security_checks:
-        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        description: "Skip Security checks if there is a unfixable vuln or error. Value: true/false"
         required: false
-        default: 'false'
+        default: "false"
   push:
     branches:
-    - dev
+      - dev
     paths:
       - ee/backend/**
       - backend/**
@@ -26,162 +26,163 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        # We need to diff with old commit 
-        # to see which workers got changed.
-        fetch-depth: 2
-        # ref: staging
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # We need to diff with old commit
+          # to see which workers got changed.
+          fetch-depth: 2
+          # ref: staging
 
-    - uses: ./.github/composite-actions/update-keys
-      with:
-        domain_name: ${{ secrets.EE_DOMAIN_NAME }}
-        license_key: ${{ secrets.EE_LICENSE_KEY }}
-        jwt_secret: ${{ secrets.EE_JWT_SECRET }}
-        minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
-        minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
-        pg_password: ${{ secrets.EE_PG_PASSWORD }}
-        registry_url: ${{ secrets.OSS_REGISTRY_URL }}
-      name: Update Keys
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+          license_key: ${{ secrets.EE_LICENSE_KEY }}
+          jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+          minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.EE_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
 
-    - name: Docker login
-      run: |
-        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+      - name: Docker login
+        run: |
+          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
 
-    - name: Downloading yq
-      run: |
-        VERSION="v4.42.1"
-        sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq
+      - name: Downloading yq
+        run: |
+          VERSION="v4.42.1"
+          sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
 
-    - uses: azure/k8s-set-context@v1
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
-      id: setcontext
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+        id: setcontext
 
-    # # Caching docker images
-    # - uses: satackey/action-docker-layer-caching@v0.0.11
-    #   # Ignore the failure of a step and avoid terminating the job.
-    #   continue-on-error: true
+      # # Caching docker images
+      # - uses: satackey/action-docker-layer-caching@v0.0.11
+      #   # Ignore the failure of a step and avoid terminating the job.
+      #   continue-on-error: true
 
-    - name: Build, tag
-      id: build-image
-      env:
-        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
-        ENVIRONMENT: staging
-      run: |
-        #
-        # TODO: Check the container tags are same, then skip the build and deployment.
-        #
-        # Build a docker container and push it to Docker Registry so that it can be deployed to Kubernetes cluster.
-        #
-        # Getting the images to build
-        #
-        set -x
-        touch /tmp/images_to_build.txt
-        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
-        tmp_param=${{ github.event.inputs.build_service }}
-        build_param=${tmp_param:-'false'}
-        case ${build_param} in
-          false)
-            {
-              git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
-                grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
-              done
-            } | awk '!seen[$0]++' > /tmp/images_to_build.txt
-          ;;
-          all)
-            ls backend/cmd > /tmp/images_to_build.txt
+      - name: Build, tag
+        id: build-image
+        env:
+          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
+          ENVIRONMENT: staging
+        run: |
+          #
+          # TODO: Check the container tags are same, then skip the build and deployment.
+          #
+          # Build a docker container and push it to Docker Registry so that it can be deployed to Kubernetes cluster.
+          #
+          # Getting the images to build
+          #
+          set -x
+          touch /tmp/images_to_build.txt
+          skip_security_checks=${{ github.event.inputs.skip_security_checks }}
+          tmp_param=${{ github.event.inputs.build_service }}
+          build_param=${tmp_param:-'false'}
+          case ${build_param} in
+            false)
+              {
+                git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
+                  grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
+                done
+              } | awk '!seen[$0]++' > /tmp/images_to_build.txt
             ;;
-          *)
-            echo ${{github.event.inputs.build_service }} > /tmp/images_to_build.txt
-            ;;
-        esac
+            all)
+              ls backend/cmd > /tmp/images_to_build.txt
+              ;;
+            *)
+              echo ${{github.event.inputs.build_service }} > /tmp/images_to_build.txt
+              ;;
+          esac
 
-        if [[ $(cat /tmp/images_to_build.txt) == "" ]]; then
-          echo "Nothing to build here"
-          touch /tmp/nothing-to-build-here
-          exit 0
-        fi
-        #
-        # Pushing image to registry
-        #
-        cd backend
-        cat /tmp/images_to_build.txt
-        for image in $(cat /tmp/images_to_build.txt);
-        do
-          echo "Bulding $image"
-          PUSH_IMAGE=0 bash -x ./build.sh ee $image
-          [[ "x$skip_security_checks" == "xtrue" ]]  || {
-            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
-            ./trivy image --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
-            err_code=$?
-            [[ $err_code -ne 0 ]] && {
-              exit $err_code
+          if [[ $(cat /tmp/images_to_build.txt) == "" ]]; then
+            echo "Nothing to build here"
+            touch /tmp/nothing-to-build-here
+            exit 0
+          fi
+          #
+          # Pushing image to registry
+          #
+          cd backend
+          cat /tmp/images_to_build.txt
+          for image in $(cat /tmp/images_to_build.txt);
+          do
+            echo "Bulding $image"
+            PUSH_IMAGE=0 bash -x ./build.sh ee $image
+            [[ "x$skip_security_checks" == "xtrue" ]]  || {
+              curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+              ./trivy image --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+              err_code=$?
+              [[ $err_code -ne 0 ]] && {
+                exit $err_code
+              }
+            } && {
+              echo "Skipping Security Checks"
             }
-          } && {
-            echo "Skipping Security Checks"
-          }
-          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
-          echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
-        done
+            docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+            echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
+          done
 
-    - name: Deploying to kuberntes
-      env:
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
-      run: |
-        #
-        # Deploying image to environment.
-        #
-        set -x
-        [[ -f /tmp/nothing-to-build-here ]] && exit 0
-        cd scripts/helmcharts/
+      - name: Deploying to kuberntes
+        env:
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        run: |
+          #
+          # Deploying image to environment.
+          #
+          set -x
+          [[ -f /tmp/nothing-to-build-here ]] && exit 0
+          cd scripts/helmcharts/
 
-        set -x
-        echo > /tmp/image_override.yaml
-        mkdir /tmp/helmcharts
-        mv openreplay/charts/ingress-nginx /tmp/helmcharts/
-        mv openreplay/charts/quickwit /tmp/helmcharts/
-        ## Update images
-        for image in $(cat /tmp/images_to_build.txt);
-        do
-        mv openreplay/charts/$image /tmp/helmcharts/
-        cat <<EOF>>/tmp/image_override.yaml
-        ${image}:
-          image:
-            # We've to strip off the -ee, as helm will append it.
-            tag: ${IMAGE_TAG}
-        EOF
-        done
-        ls /tmp/helmcharts
-        rm -rf openreplay/charts/*
-        ls openreplay/charts
-        mv /tmp/helmcharts/* openreplay/charts/
-        ls openreplay/charts
+          set -x
+          echo > /tmp/image_override.yaml
+          mkdir /tmp/helmcharts
+          mv openreplay/charts/ingress-nginx /tmp/helmcharts/
+          mv openreplay/charts/quickwit /tmp/helmcharts/
+          mv openreplay/charts/connector /tmp/helmcharts/
+          ## Update images
+          for image in $(cat /tmp/images_to_build.txt);
+          do
+          mv openreplay/charts/$image /tmp/helmcharts/
+          cat <<EOF>>/tmp/image_override.yaml
+          ${image}:
+            image:
+              # We've to strip off the -ee, as helm will append it.
+              tag: ${IMAGE_TAG}
+          EOF
+          done
+          ls /tmp/helmcharts
+          rm -rf openreplay/charts/*
+          ls openreplay/charts
+          mv /tmp/helmcharts/* openreplay/charts/
+          ls openreplay/charts
 
-        # Deploy command
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
+          # Deploy command
+          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
 
-    - name: Alert slack
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ee
-        SLACK_TITLE: "Failed ${{ github.workflow }}"
-        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
-        SLACK_USERNAME: "OR Bot"
-        SLACK_MESSAGE: 'Build failed :bomb:'
+      - name: Alert slack
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ee
+          SLACK_TITLE: "Failed ${{ github.workflow }}"
+          SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+          SLACK_USERNAME: "OR Bot"
+          SLACK_MESSAGE: "Build failed :bomb:"
 
-   # - name: Debug Job
-   #   # if: ${{ failure() }}
-   #   uses: mxschmitt/action-tmate@v3
-   #   env:
-   #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-   #     IMAGE_TAG: ${{ github.sha }}-ee
-   #     ENVIRONMENT: staging
-   #    with:
-   #      iimit-access-to-actor: true
+    # - name: Debug Job
+    #   # if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}-ee
+    #     ENVIRONMENT: staging
+    #    with:
+    #      iimit-access-to-actor: true
