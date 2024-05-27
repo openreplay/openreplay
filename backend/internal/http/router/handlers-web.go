@@ -202,7 +202,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		// Add sessionID to context
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
-		if !req.DoNotRecord {
+		if recordSession(req) {
 			sessionStart := &SessionStart{
 				Timestamp:            getSessionTimestamp(req, startTimeMili),
 				ProjectID:            uint64(p.ProjectID),
@@ -263,7 +263,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Save information about session beacon size
 	e.addBeaconSize(tokenData.ID, p.BeaconSize)
 
-	e.ResponseWithJSON(r.Context(), w, &StartSessionResponse{
+	startResponse := &StartSessionResponse{
 		Token:                e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:             userUUID,
 		UserOS:               ua.OS,
@@ -281,7 +281,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		CanvasEnabled:        e.cfg.RecordCanvas,
 		CanvasImageQuality:   e.cfg.CanvasQuality,
 		CanvasFrameRate:      e.cfg.CanvasFps,
-	}, startTime, r.URL.Path, bodySize)
+	}
+	modifyResponse(req, startResponse)
+
+	e.ResponseWithJSON(r.Context(), w, startResponse, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
