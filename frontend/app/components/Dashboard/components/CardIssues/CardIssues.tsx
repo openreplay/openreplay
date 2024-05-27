@@ -21,6 +21,11 @@ function CardIssues() {
   const isMounted = useIsMounted();
   const pageSize = 5;
   const { showModal } = useModal();
+  const filter = useObserver(() => dashboardStore.drillDownFilter);
+  const hasFilters = filter.filters.length > 0 || (filter.startTimestamp !== dashboardStore.drillDownPeriod.start || filter.endTimestamp !== dashboardStore.drillDownPeriod.end);
+  const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+  const depsString = JSON.stringify(widget.series);
+
 
   function getFilters(filter: any) {
     const mapSeries = (item: any) => {
@@ -61,15 +66,12 @@ function CardIssues() {
     }
   };
 
+  const debounceRequest: any = React.useCallback(debounce(fetchIssues, 1000), []);
+
   const handleClick = (issue?: any) => {
     // const filters = getFilters(widget.filter);
     showModal(<SessionsModal issue={issue} />, { right: true, width: 900 });
   };
-
-  const filter = useObserver(() => dashboardStore.drillDownFilter);
-  const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
-  const debounceRequest: any = React.useCallback(debounce(fetchIssues, 1000), []);
-  const depsString = JSON.stringify(widget.series);
 
   useEffect(() => {
     const newPayload = {
@@ -80,6 +82,11 @@ function CardIssues() {
     };
     debounceRequest(newPayload);
   }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
+
+    const clearFilters = () => {
+        metricStore.updateKey('page', 1);
+        dashboardStore.resetDrillDownFilter();
+    };
 
   return useObserver(() => (
     <div className='my-8 bg-white rounded p-4 border'>
@@ -94,7 +101,8 @@ function CardIssues() {
             </div>
           )}
         </div>
-        <div>
+        <div className='flex items-center gap-4'>
+          {hasFilters && <Button variant='text-primary' onClick={clearFilters}>Clear Filters</Button>}
           <Button variant='text-primary' onClick={() => handleClick()}>All Sessions</Button>
         </div>
       </div>

@@ -78,7 +78,7 @@
     "react-toastify": "^9.1.1",
     "react-virtualized": "^9.22.3",
     "react18-json-view": "^0.2.8",
-    "recharts": "^2.8.0",
+    "recharts": "^2.12.6",
     "redux": "^4.0.5",
     "redux-immutable": "^4.0.0",
     "redux-thunk": "^2.3.0",
