@@ -65,13 +65,11 @@ const extractSessionIdFromRequest = function (req) {
     return undefined;
 }
 
-const isValidSession = function (sessionInfo, filters, counter) {
+const isValidSession = function (sessionInfo, filters) {
+    const result = {matched: false, filters: {}};
     for (const [filterName, body] of Object.entries(filters)) { // range by filter names (key)
         if (body.values === undefined || body.values === null) {
-            return false;
-        }
-        if (!counter[filterName]) {
-            counter[filterName] = {};
+            return result;
         }
         let found = false;
         for (const [sessKey, sessValue] of Object.entries(sessionInfo)) {
@@ -79,8 +77,10 @@ const isValidSession = function (sessionInfo, filters, counter) {
                 continue;
             }
             if (typeof (sessValue) === "object") {
-                if (isValidSession(sessValue, {[filterName]: body}, counter)) {
+                const partRes = isValidSession(sessValue, {[filterName]: body})
+                if (partRes.matched) {
                     found = true;
+                    Object.assign(result.filters, partRes.filters);
                     break;
                 }
             } else if (sessKey.toLowerCase() === filterName.toLowerCase()) {
@@ -88,8 +88,7 @@ const isValidSession = function (sessionInfo, filters, counter) {
                     if (body.operator === "is" && v && String(sessValue).toLowerCase() === String(v).toLowerCase()
                         || body.operator !== "is" && String(sessValue).toLowerCase().indexOf(String(v).toLowerCase()) >= 0) {
                         found = true;
-                        if (counter[filterName][v]) counter[filterName][v]++;
-                        else counter[filterName][v] = 1;
+                        result.filters[filterName] = v;
                         break;
                     }
                 }
@@ -99,10 +98,11 @@ const isValidSession = function (sessionInfo, filters, counter) {
             }
         }
         if (!found) {
-            return false;
+            return result;
         }
     }
-    return true;
+    result.matched = true;
+    return result;
 }
 
 const getValidAttributes = function (sessionInfo, query) {

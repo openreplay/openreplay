@@ -52,7 +52,8 @@ const getParticularSession = async function (roomId, filters) {
     if (!hasFilters(filters)) {
         return sessInfo;
     }
-    if (isValidSession(sessInfo, filters.filter, {})) {
+    const result = isValidSession(sessInfo, filters.filter)
+    if (result.matched) {
         return sessInfo;
     }
     return null;
@@ -88,8 +89,19 @@ const getAllSessions = async  function (projectKey, filters, counters, onlineOnl
         }
 
         // Add session to the list if it passes the filter
-        if (isValidSession(item.handshake.query.sessionInfo, filters.filter, counters)) {
+        const result = isValidSession(item.handshake.query.sessionInfo, filters.filter)
+        if (result.matched) {
             sessions.push(item.handshake.query.sessionInfo);
+            // Add filter name/value to counter
+            for (const [filterName, filterValue] of Object.entries(result.filters)) {
+                if (counters[filterName] === undefined) {
+                    counters[filterName] = {};
+                }
+                if (counters[filterName][filterValue] === undefined) {
+                    counters[filterName][filterValue] = 0;
+                }
+                counters[filterName][filterValue] += 1;
+            }
         }
     }
 
