@@ -30,7 +30,7 @@ func CheckLicense() {
 		log.Fatal("Can not form a license check request.")
 	}
 
-	resp, err := http.Post("https://api.openreplay.com/os/license/validate", "application/json", bytes.NewReader(requestBody))
+	resp, err := http.Post("https://api.openreplay.com/license/validate", "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		log.Fatalf("Error while checking license. %v", err)
 	}
