@@ -18352,7 +18352,7 @@ __metadata:
     react-toastify: ^9.1.1
     react-virtualized: ^9.22.3
     react18-json-view: ^0.2.8
-    recharts: ^2.8.0
+    recharts: ^2.12.6
     redux: ^4.0.5
     redux-immutable: ^4.0.0
     redux-thunk: ^2.3.0
@@ -21455,9 +21455,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recharts@npm:^2.8.0":
-  version: 2.12.4
-  resolution: "recharts@npm:2.12.4"
+"recharts@npm:^2.12.6":
+  version: 2.12.7
+  resolution: "recharts@npm:2.12.7"
   dependencies:
     clsx: ^2.0.0
     eventemitter3: ^4.0.1
@@ -21470,7 +21470,7 @@ __metadata:
   peerDependencies:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 15b250b0b45bf26cb3e3913aa0f2ef931fbf1511d5e535c871f0ac3443a9e71bd1c105ec673761d73cbe492d83e98f66f03bea3e30f905118a606249733d0f5c
+  checksum: 2522d841a1f4e4c0a37046ddb61fa958ac37a66df63dcd4c6cb9113e3f7a71892d74e44494a55bc40faa0afd74d9cf58fec3d2ce53a8ddf997e75367bdd033fc
   languageName: node
   linkType: hard
 
