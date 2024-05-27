@@ -8,6 +8,8 @@
 
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
+ARCH=${ARCH:-'amd64'}
+
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
@@ -51,7 +53,7 @@ function build_api() {
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/assist/* ./
     }
-    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
+    docker build -f ./Dockerfile --platform linux/${ARCH} --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
 
     cd ../assist
     rm -rf ../${destination}
