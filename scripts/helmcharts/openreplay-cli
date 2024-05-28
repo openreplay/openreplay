@@ -192,6 +192,18 @@ function status() {
     return
 }
 
+function patch_version() {
+    # Patching config version for console
+    version=$(/var/lib/openreplay/yq '.fromVersion' /var/lib/openreplay/vars.yaml)-$(sudo git rev-parse --short HEAD)
+    # Create a temporary YAML file with the generated version
+    cat <<EOF >/tmp/version_snippet.yaml
+config:
+  version: $version
+EOF
+    sudo /var/lib/openreplay/yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
+    rm /tmp/version_snippet.yaml
+}
+
 # Function to upgrade helm openreplay app.
 function or_helm_upgrade() {
     set -o pipefail
@@ -375,28 +387,16 @@ function upgrade() {
 
     # Update the version
     busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
-    patch_version
     sudo mv ./openreplay-cli /bin/openreplay
     sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
     sudo cp -rf ../../../openreplay $OR_DIR/
+    patch_version
     log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
     log info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
 
     err_cd -
     return
-}
-
-function patch_version() {
-    # Patching config version for console
-    version=$(/var/lib/openreplay/yq '.fromVersion' /var/lib/openreplay/vars.yaml)-$(sudo git rev-parse --short HEAD)
-    # Create a temporary YAML file with the generated version
-    cat <<EOF >/tmp/version_snippet.yaml
-config:
-  version: $version
-EOF
-    sudo /var/lib/openreplay/yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' vars.yaml /tmp/version_snippet.yaml -i
-    rm /tmp/version_snippet.yaml
 }
 
 function reload() {
