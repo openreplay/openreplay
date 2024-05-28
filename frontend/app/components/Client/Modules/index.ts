@@ -49,12 +49,6 @@ export const modules = [
     isEnabled: true
   },
   {
-    label: 'Bug Reports',
-    description: 'Make PDF reports bugs and issues while replaying sessions.',
-    key: MODULES.BUG_REPORTS,
-    icon: 'filetype-pdf'
-  },
-  {
     label: 'Alerts',
     description: 'Create alerts on cards and get notified when a metric hits a certain threshold.',
     key: MODULES.ALERTS,

@@ -10,6 +10,7 @@ import {
 import { Button } from 'UI';
 import { useModal } from 'App/components/Modal';
 import SessionSearchField from 'Shared/SessionSearchField';
+import { MODULES } from 'Components/Client/Modules';
 
 import AssistStats from '../../AssistStats';
 import Recordings from '../RecordingsList/Recordings'
@@ -20,6 +21,7 @@ interface Props {
   addFilterByKeyAndValue: any;
   clearSearch: any;
   isEnterprise: boolean;
+  modules: string[]
 }
 function AssistSearchField(props: Props) {
   const hasEvents =
@@ -39,7 +41,9 @@ function AssistSearchField(props: Props) {
       <div style={{ width: '60%' }}>
         <SessionSearchField />
       </div>
-      {props.isEnterprise ? <Button variant="outline" onClick={showRecords}>Training Videos</Button> : null}
+      {props.isEnterprise && props.modules.includes(MODULES.OFFLINE_RECORDINGS)
+       ? <Button variant="outline" onClick={showRecords}>Training Videos</Button> : null
+      }
       <Button variant="outline" onClick={showStats}>Co-Browsing Reports</Button>
       <Button
         variant="text-primary"
@@ -56,6 +60,7 @@ function AssistSearchField(props: Props) {
 export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['liveSearch', 'instance']),
+    modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
     isEnterprise:
       state.getIn(['user', 'account', 'edition']) === 'ee' ||
       state.getIn(['user', 'authDetails', 'edition']) === 'ee'
