@@ -52,6 +52,7 @@ export interface StartOptions {
   metadata?: Record<string, string>
   forceNew?: boolean
   sessionHash?: string
+  assistOnly?: boolean
 }
 
 interface OnStartInfo {
@@ -183,7 +184,7 @@ export default class App {
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
   private tagWatcher: TagWatcher
-  private socketMode = true
+  private socketMode = false
 
   constructor(
     projectKey: string,
@@ -216,6 +217,7 @@ export default class App {
         assistSocketHost: '',
         fixedCanvasScaling: false,
         disableCanvas: false,
+        assistOnly: false,
       },
       options,
     )
@@ -977,6 +979,7 @@ export default class App {
           jsHeapSizeLimit,
           timezone: getTimezone(),
           condition: conditionName,
+          assistOnly: startOpts.assistOnly,
         }),
       })
       .then((r) => {
@@ -1021,7 +1024,7 @@ export default class App {
           canvasEnabled,
           canvasQuality,
           canvasFPS,
-          socketOnly = true,
+          assistOnly: socketOnly,
         } = r
         if (
           typeof token !== 'string' ||

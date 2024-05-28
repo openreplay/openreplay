@@ -1,3 +1,7 @@
+# 13.0.0
+
+- `assistOnly` flag for tracker options (EE only feature)
+
 # 12.0.12
 
 - fix for potential redux plugin issues after .11 ...

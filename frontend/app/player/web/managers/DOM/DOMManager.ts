@@ -118,7 +118,8 @@ export default class DOMManager extends ListWalker<Message> {
     return this.vElements.get(id) || this.vTexts.get(id)
   }
 
-  private insertNode({ parentID, id, index }: { parentID: number, id: number, index: number }): void {
+  private insertNode(msg: { parentID: number, id: number, index: number }): void {
+    const { parentID, id, index } = msg
     const child = this.vElements.get(id) || this.vTexts.get(id)
     if (!child) {
       logger.error("Insert error. Node not found", id);
@@ -126,7 +127,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID)
     if (!parent) {
-      logger.error(`${id} Insert error. Parent vNode ${parentID} not found`, this.vElements, this.olVRoots);
+      logger.error(`${id} Insert error. Parent vNode ${parentID} not found`, msg, this.vElements, this.olVRoots);
       return;
     }
 
