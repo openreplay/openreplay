@@ -9,7 +9,7 @@ function VersionTag({version}: { version: string }) {
     return (
         <Space>
             <img src={Logo} width={20}/>
-            <div>{`v${version}`}</div>
+            <div>{version}</div>
         </Space>
     );
 }
