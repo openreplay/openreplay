@@ -44,7 +44,7 @@ function AssistSearchField(props: Props) {
       {props.isEnterprise && props.modules.includes(MODULES.OFFLINE_RECORDINGS)
        ? <Button variant="outline" onClick={showRecords}>Training Videos</Button> : null
       }
-      <Button variant="outline" onClick={showStats}>Co-Browsing Reports</Button>
+      <Button variant="outline" onClick={showStats} disabled={!props.modules.includes(MODULES.ASSIST_STATS) || !props.modules.includes(MODULES.ASSIST)}>Co-Browsing Reports</Button>
       <Button
         variant="text-primary"
         className="ml-auto font-medium"

@@ -137,6 +137,7 @@ export interface ISession {
   videoURL?: string[]
   isMobileNative?: boolean
   audio?: string;
+  assistOnly?: boolean;
 }
 
 const emptyValues = {
@@ -347,7 +348,7 @@ export default class Session {
       uxtVideo: uxtVideo[0],
       durationMs: session.duration,
       audio: session.audio,
-      liveOnly: true,
+      liveOnly: session.assistOnly,
     });
   }
 

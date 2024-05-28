@@ -63,6 +63,7 @@ function Controls(props: any) {
     previousSessionId,
     nextSessionId,
     siteId,
+    disableDevtools,
   } = props;
 
   const disabled = messagesLoading;
@@ -84,6 +85,7 @@ function Controls(props: any) {
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
     setActiveTab,
+    disableDevtools
   });
 
   const forthTenSeconds = () => {
@@ -284,7 +286,7 @@ export default connect(
     const permissions = state.getIn(['user', 'account', 'permissions']) || [];
     const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
     return {
-      disabledRedux: isEnterprise && !permissions.includes('DEV_TOOLS'),
+      disableDevtools: isEnterprise && !permissions.includes('DEV_TOOLS'),
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
       bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
       showStorageRedux: !state.getIn([

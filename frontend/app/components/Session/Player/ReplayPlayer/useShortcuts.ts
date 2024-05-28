@@ -12,6 +12,7 @@ function useShortcuts({
   openNextSession,
   openPrevSession,
   setActiveTab,
+  disableDevtools,
 }: {
   skipInterval: keyof typeof SKIP_INTERVALS;
   fullScreenOn: () => void;
@@ -20,6 +21,7 @@ function useShortcuts({
   openNextSession: () => void;
   openPrevSession: () => void;
   setActiveTab: (tab: string) => void;
+  disableDevtools?: boolean;
 }) {
   const { player } = useContext(PlayerContext);
 
@@ -47,17 +49,17 @@ function useShortcuts({
             case 'F':
               return fullScreenOn();
             case 'X':
-              return toggleBottomBlock(blocks.overview);
+              return disableDevtools ? null : toggleBottomBlock(blocks.overview);
             case 'P':
-              return toggleBottomBlock(blocks.performance);
+              return disableDevtools ? null : toggleBottomBlock(blocks.performance);
             case 'N':
-              return toggleBottomBlock(blocks.network);
+              return disableDevtools ? null : toggleBottomBlock(blocks.network);
             case 'C':
-              return toggleBottomBlock(blocks.console);
+              return disableDevtools ? null : toggleBottomBlock(blocks.console);
             case 'R':
-              return toggleBottomBlock(blocks.storage);
+              return disableDevtools ? null : toggleBottomBlock(blocks.storage);
             case 'E':
-              return toggleBottomBlock(blocks.stackEvents);
+              return disableDevtools ? null : toggleBottomBlock(blocks.stackEvents);
             case '>':
               return openNextSession();
             case '<':
@@ -98,4 +100,4 @@ function useShortcuts({
   }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
 }
 
-export default useShortcuts;
+export default useShortcuts

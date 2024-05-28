@@ -240,6 +240,7 @@ export default class Assist {
           'uxtId': this.app.getUxtId() ?? undefined,
           pageTitle: document.title,
           active: true,
+          assistOnly: this.app.socketMode,
           ...this.app.getSessionInfo(),
         }),
       },

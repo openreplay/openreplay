@@ -1,6 +1,7 @@
 ## 9.0.0
 
 - support for message compression inside plugin (requires v1.18 frontend)
+- support for assist-only mode (requires EE license)
 - open peer connection dynamically on call
 
 ## 8.0.4

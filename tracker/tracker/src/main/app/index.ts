@@ -174,17 +174,17 @@ export default class App {
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: TypedWorker
 
+  public attributeSender: AttributeSender
+  public featureFlags: FeatureFlags
+  public socketMode = false
   private compressionThreshold = 24 * 1000
   private restartAttempts = 0
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId
-  public attributeSender: AttributeSender
   private canvasRecorder: CanvasRecorder | null = null
   private uxtManager: UserTestManager
   private conditionsManager: ConditionsManager | null = null
-  public featureFlags: FeatureFlags
-  private tagWatcher: TagWatcher
-  private socketMode = false
+  private readonly tagWatcher: TagWatcher
 
   constructor(
     projectKey: string,
