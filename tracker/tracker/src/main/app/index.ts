@@ -979,7 +979,7 @@ export default class App {
           jsHeapSizeLimit,
           timezone: getTimezone(),
           condition: conditionName,
-          assistOnly: startOpts.assistOnly,
+          assistOnly: startOpts.assistOnly ?? this.socketMode,
         }),
       })
       .then((r) => {
