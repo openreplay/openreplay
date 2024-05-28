@@ -172,9 +172,7 @@ EOF
 
 function status() {
     log info OpenReplay Version
-    # awk '(NR<2)' < "$OR_DIR/vars.yaml"
-    awk '/fromVersion/{print $2}' <"${OR_DIR}/vars.yaml"
-    yq .config.version /var/lib/openreplay/vars.yaml || true
+    yq eval '.config.version // .fromVersion' /var/lib/openreplay/vars.yaml
     log info Disk
     df -h /var
     log info Memory
