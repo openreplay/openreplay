@@ -19,6 +19,7 @@ interface Props {
   fetchFilterSearch: any;
   addFilterByKeyAndValue: any;
   clearSearch: any;
+  isEnterprise: boolean;
 }
 function AssistSearchField(props: Props) {
   const hasEvents =
@@ -38,7 +39,7 @@ function AssistSearchField(props: Props) {
       <div style={{ width: '60%' }}>
         <SessionSearchField />
       </div>
-      <Button variant="outline" onClick={showRecords}>Training Videos</Button>
+      {props.isEnterprise ? <Button variant="outline" onClick={showRecords}>Training Videos</Button> : null}
       <Button variant="outline" onClick={showStats}>Co-Browsing Reports</Button>
       <Button
         variant="text-primary"
