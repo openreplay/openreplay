@@ -192,7 +192,7 @@ function status() {
 
 function patch_version() {
     # Patching config version for console
-    version=$(/var/lib/openreplay/yq '.fromVersion' /var/lib/openreplay/vars.yaml)-$(sudo git rev-parse --short HEAD)
+    version=$(/var/lib/openreplay/yq '.fromVersion' vars.yaml)-$(sudo git rev-parse --short HEAD)
     # Create a temporary YAML file with the generated version
     cat <<EOF >/tmp/version_snippet.yaml
 config:
