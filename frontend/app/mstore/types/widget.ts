@@ -303,7 +303,6 @@ export default class Widget {
             // }));
 
             Object.assign(this.data, _data);
-            console.log('data', _data);
             return _data;
         }
         if (this.metricOf === FilterKey.ERRORS) {

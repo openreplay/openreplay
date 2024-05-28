@@ -44,9 +44,6 @@ export default function <Value extends ValueObject>({
     defaultValue.map((value) => options.find((option) => option.value === value)) :
     options.find((option) => option.value === defaultValue
     ) || null;
-  if (Array.isArray(defaultSelected) && defaultSelected.length === 0) {
-    console.log('defaultSelected', defaultSelected);
-  }
   const customStyles = {
     option: (provided: any, state: any) => ({
       ...provided,
