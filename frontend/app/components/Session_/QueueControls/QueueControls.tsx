@@ -93,7 +93,7 @@ function QueueControls(props: Props) {
           content={<div className="whitespace-nowrap">Play Next Session</div>}
           open={nextId ? undefined : false}
         >
-          <Button size={'small'} shape={'circle'} disabled={!previousId} className={'flex items-center justify-center'}>
+          <Button size={'small'} shape={'circle'} disabled={!nextId} className={'flex items-center justify-center'}>
             <RightOutlined />
           </Button>
         </Popover>
