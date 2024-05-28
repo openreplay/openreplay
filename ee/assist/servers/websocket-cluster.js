@@ -15,7 +15,7 @@ const {
     socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
-const {logger} = require('./logger');
+const {logger} = require('../utils/logger');
 
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");

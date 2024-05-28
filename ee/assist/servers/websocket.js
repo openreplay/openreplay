@@ -15,7 +15,7 @@ const {
     socketsLiveBySession,
     autocomplete
 } = require('../utils/httpHandlers');
-const {logger} = require('./logger');
+const {logger} = require('../utils/logger');
 
 const wsRouter = express.Router();
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete); // autocomplete

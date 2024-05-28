@@ -10,7 +10,7 @@ if (process.env.redis === "true") {
 } else {
     socket = require("./servers/websocket");
 }
-const {logger} = require('./logger');
+const {logger} = require('./utils/logger');
 
 health.healthApp.get('/metrics', async (req, res) => {
     try {

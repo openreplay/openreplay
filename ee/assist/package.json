@@ -26,6 +26,7 @@
     "redis": "^4.6.10",
     "socket.io": "^4.7.2",
     "ua-parser-js": "^1.0.37",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0",
+    "winston": "^3.13.0"
   }
 }
