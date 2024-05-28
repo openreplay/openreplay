@@ -277,7 +277,8 @@ function install() {
         mv vars.yaml "$override_tmpdir"
         err_cd "$override_tmpdir"
     }
-    SKIP_K8S_TOOLS=1 DOMAIN_NAME=$domain_name bash init.sh
+    [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
+    HELM_OPTIONS=${HELM_OPTIONS} SKIP_K8S_TOOLS=1 DOMAIN_NAME=$domain_name bash init.sh
     return
 }
 
