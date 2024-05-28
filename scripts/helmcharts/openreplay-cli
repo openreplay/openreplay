@@ -387,11 +387,11 @@ function upgrade() {
 
     # Update the version
     busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
+    patch_version
     sudo mv ./openreplay-cli /bin/openreplay
     sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
     sudo cp -rf ../../../openreplay $OR_DIR/
-    patch_version
     log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
     log info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
 
