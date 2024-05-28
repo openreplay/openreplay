@@ -4,8 +4,7 @@ import ServiceCategory from 'Components/Header/HealthStatus/ServiceCategory';
 import cn from 'classnames';
 import { IServiceStats } from './HealthStatus';
 import { Divider, Space } from 'antd';
-
-const Logo = require('../../../svg/logo-gray.svg').default;
+import VersionTag from "Components/Header/VersionTag";
 
 function HealthWidget({
                         healthResponse,
@@ -43,10 +42,7 @@ function HealthWidget({
   return (
     <div className='w-full flex flex-col gap-2 items-center' style={{ minWidth: '200px'}}>
       <div className='self-start mb-2'>
-        <Space>
-          <img src={Logo} width={20} />
-          <div>{`v${window.env.VERSION}`}</div>
-        </Space>
+          <VersionTag />
       </div>
       <div
         className={cn(

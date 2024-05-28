@@ -21,6 +21,7 @@ export interface IAccount extends IMember {
   tenantKey: string
   edition: string
   optOut: string
+  versionNumber: string
 }
 
 export default Member.extend({
@@ -42,6 +43,7 @@ export default Member.extend({
   tenantName: undefined,
   edition: undefined,
   optOut: false,
+  versionNumber: undefined,
 }, {
   fromJS: ({ ...account})=> ({
     ...account,
