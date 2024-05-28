@@ -1,4 +1,4 @@
-FROM python:3.11-alpine3.17
+FROM python:3.11-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
 
@@ -7,7 +7,8 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
     APP_NAME=chalice \
     LISTEN_PORT=8000 \
     PRIVATE_ENDPOINTS=false \
-    ENTERPRISE_BUILD=${envarg}
+    ENTERPRISE_BUILD=${envarg} \
+    GIT_SHA=$GIT_SHA
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
