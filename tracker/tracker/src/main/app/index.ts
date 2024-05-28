@@ -52,6 +52,7 @@ export interface StartOptions {
   metadata?: Record<string, string>
   forceNew?: boolean
   sessionHash?: string
+  assistOnly?: boolean
 }
 
 interface OnStartInfo {
@@ -183,6 +184,7 @@ export default class App {
   private conditionsManager: ConditionsManager | null = null
   public featureFlags: FeatureFlags
   private tagWatcher: TagWatcher
+  private socketMode = false
 
   constructor(
     projectKey: string,
@@ -215,6 +217,7 @@ export default class App {
         assistSocketHost: '',
         fixedCanvasScaling: false,
         disableCanvas: false,
+        assistOnly: false,
       },
       options,
     )
@@ -410,6 +413,13 @@ export default class App {
    * every ~30ms
    * */
   private _nCommit(): void {
+    if (this.socketMode) {
+      this.messages.unshift(TabData(this.session.getTabId()))
+      this.messages.unshift(Timestamp(this.timestamp()))
+      this.commitCallbacks.forEach((cb) => cb(this.messages))
+      this.messages.length = 0
+      return
+    }
     if (this.worker !== undefined && this.messages.length) {
       try {
         requestIdleCb(() => {
@@ -969,6 +979,7 @@ export default class App {
           jsHeapSizeLimit,
           timezone: getTimezone(),
           condition: conditionName,
+          assistOnly: startOpts.assistOnly ?? this.socketMode,
         }),
       })
       .then((r) => {
@@ -1013,6 +1024,7 @@ export default class App {
           canvasEnabled,
           canvasQuality,
           canvasFPS,
+          assistOnly: socketOnly,
         } = r
         if (
           typeof token !== 'string' ||
@@ -1042,11 +1054,16 @@ export default class App {
           projectID,
         })
 
-        this.worker.postMessage({
-          type: 'auth',
-          token,
-          beaconSizeLimit,
-        })
+        if (socketOnly) {
+          this.socketMode = true
+          this.worker.postMessage('stop')
+        } else {
+          this.worker.postMessage({
+            type: 'auth',
+            token,
+            beaconSizeLimit,
+          })
+        }
 
         if (!isNewSession && token === sessionToken) {
           this.debug.log('continuing session on new tab', this.session.getTabId())
