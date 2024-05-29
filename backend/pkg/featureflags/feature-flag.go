@@ -134,7 +134,10 @@ func parseFlagConditions(conditions *pgtype.TextArray, rolloutPercentages *pgtyp
 	conds := make([]*FeatureFlagCondition, 0, len(conditions.Elements))
 	for i, currCond := range conditions.Elements {
 		var filters []*FeatureFlagFilter
-
+		cutInx := strings.Index(currCond.String, "[")
+		if cutInx >= 0 {
+			currCond.String = currCond.String[cutInx:]
+		}
 		err := json.Unmarshal([]byte(currCond.String), &filters)
 		if err != nil {
 			return nil, fmt.Errorf("filter unmarshal error: %v", err)
