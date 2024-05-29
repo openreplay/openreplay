@@ -136,7 +136,7 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div className={cn('flex items-center w-full', { 'px-4': isLocation })}>
-            {event.type && iconName ? <Icon name={icon} size='16' color={'gray-dark'} /> : icon}
+            {event.type && iconName ? <Icon name={iconName} size='16' color={'gray-dark'} /> : icon}
             <div className='ml-3 w-full'>
               <div className='flex w-full items-first justify-between'>
                 <div className='flex items-center w-full' style={{ minWidth: '0' }}>
