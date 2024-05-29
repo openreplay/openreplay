@@ -78,9 +78,11 @@ function WebPlayer(props: any) {
       contextValue.player.pause();
     }
 
-    if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
+    if (activeTab === '' && messagesProcessed && contextValue.player) {
       const jumpToTime = props.query.get('jumpto');
       const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
+
+      if (noteItem === undefined) contextValue.player.play();
 
       if (jumpToTime || shouldAdjustOffset) {
         if (jumpToTime > visualOffset) {
@@ -92,8 +94,6 @@ function WebPlayer(props: any) {
           setAdjusted(true);
         }
       }
-
-      contextValue.player.play();
     }
   }, [activeTab, noteItem, visualOffset, messagesProcessed]);
 
