@@ -116,9 +116,9 @@ func (c *connectorImpl) newBatch(name, query string) error {
 var batches = map[string]string{
 	// Web
 	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?)",
-	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
+	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success, url_path) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000))",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
-	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, url_path, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?)",
 	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -328,6 +328,17 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 	if resourceType == "" {
 		return fmt.Errorf("can't parse resource type, sess: %d, type: %s", session.SessionID, msgType)
 	}
+	fullPath := ""
+	_, path, query, err := url.GetURLParts(msg.URL)
+	if err == nil {
+		pathQuery := path
+		if query != "" {
+			pathQuery += "?" + query
+		}
+		fullPath = strings.ToLower(pathQuery)
+	} else {
+		log.Printf("can't parse url: %s", err)
+	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -341,6 +352,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
 		msg.Duration != 0,
+		fullPath,
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -349,6 +361,17 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
+	fullPath := ""
+	_, path, query, err := url.GetURLParts(msg.URL)
+	if err == nil {
+		pathQuery := path
+		if query != "" {
+			pathQuery += "?" + query
+		}
+		fullPath = strings.ToLower(pathQuery)
+	} else {
+		log.Printf("can't parse url: %s", err)
+	}
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -367,6 +390,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		nullableUint16(uint16(msg.SpeedIndex)),
 		nullableUint16(uint16(msg.VisuallyComplete)),
 		nullableUint16(uint16(msg.TimeToInteractive)),
+		fullPath,
 		"LOCATION",
 	); err != nil {
 		c.checkError("pages", err)
