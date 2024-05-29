@@ -24,7 +24,7 @@ const SharePopup = ({
   trigger,
   showCopyLink = false,
 }: {
-  trigger: string;
+  trigger: React.ReactNode;
   showCopyLink?: boolean;
 }) => {
   const { store } = React.useContext(PlayerContext);

@@ -101,8 +101,6 @@ function SubHeader(props) {
           <NotePopup />
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
           <SharePopup
-            entity="sessions"
-            id={props.sessionId}
             showCopyLink={true}
             trigger={
               <div className="relative">
