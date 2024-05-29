@@ -71,11 +71,10 @@ function MobilePlayer(props: any) {
     if (activeTab === '' && !noteItem !== undefined && messagesProcessed && contextValue.player) {
       const jumpToTime = props.query.get('jumpto');
 
+      contextValue.player.play();
       if (jumpToTime) {
         contextValue.player.jump(parseInt(jumpToTime));
       }
-
-      contextValue.player.play();
     }
   }, [activeTab, noteItem, messagesProcessed]);
 
