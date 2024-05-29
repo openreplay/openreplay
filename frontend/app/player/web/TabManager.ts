@@ -175,6 +175,7 @@ export default class TabSessionManager {
         if (!this.canvasManagers[managerId]) {
           const fileId = managerId;
           const delta = msg.timestamp - this.sessionStart;
+
           const canvasNodeLinks = this.session.canvasURL.filter((url: string) => url.includes(fileId)) as string[];
           const tarball = canvasNodeLinks.find((url: string) => url.includes('.tar.'));
           const mp4file = canvasNodeLinks.find((url: string) => url.includes('.mp4'));

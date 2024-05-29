@@ -15,6 +15,7 @@ function hashString(s: string): number {
 }
 
 export default class Session {
+    intertag = "_mobx"
     sessionId: string = "";
     viewed: boolean = false
     duration: number = 0
@@ -31,6 +32,9 @@ export default class Session {
     eventsCount: number = 0
     userNumericHash: number = 0
     userDisplayName: string = ""
+    canvasURL: string[] = []
+    domURL: string[] = []
+    devtoolsURL: string[] = []
 
     constructor() {
         makeAutoObservable(this, {

@@ -100,7 +100,6 @@ export default class WebPlayer extends Player {
     this.targetMarker = new TargetMarker(this.screen, this.wpState)
     this.inspectorController = new InspectorController(this.screen, this.wpState)
 
-
     const endTime = session.duration?.valueOf() || 0
     this.wpState.update({
       //@ts-ignore

@@ -103,11 +103,12 @@ function WebPlayer(props: any) {
     }
   }, [session.sessionId]);
 
+  const domFiles = session?.domURL?.length ?? 0
   useEffect(() => {
-    if (!props.prefetched && session.domURL.length > 0) {
+    if (!props.prefetched && domFiles > 0) {
       playerInst?.reinit(session);
     }
-  }, [session.domURL.length, props.prefetched]);
+  }, [session, domFiles, props.prefetched]);
 
   const {
     firstVisualEvent: visualOffset,

@@ -310,7 +310,6 @@ export default class Session {
       frustrationIssues
     ).sort(sortEvents)
 
-    console.log(session.platform)
     Object.assign(this, {
       ...session,
       isMobileNative: ['ios', 'android'].includes(session.platform),
