@@ -17,7 +17,7 @@ function IntegrateSlackTeamsButton({ history, tenantId }) {
         variant="text-primary"
       >
         <Icon name="integrations/slack" size={16} />
-        <Icon name="integrations/teams" size={24} className="mr-2" />
+        <Icon name="integrations/teams" size={24} className="mr-2 ml-1" />
 
         <span>Integrate Slack or MS Teams</span>
       </Button>

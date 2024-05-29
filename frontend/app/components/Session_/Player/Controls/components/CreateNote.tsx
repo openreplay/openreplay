@@ -1,17 +1,23 @@
-import React from 'react';
-import { Icon, Button, Checkbox } from 'UI';
+import { Tag } from 'antd';
+import { List } from 'immutable';
 import { Duration } from 'luxon';
+import React from 'react';
 import { connect } from 'react-redux';
-import { WriteNote, tagProps, TAGS, iTag, Note } from 'App/services/NotesService';
-import { addNote, updateNote } from 'Duck/sessions';
-import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
+
+
+
+import { useStore } from 'App/mstore';
+import { Note, TAGS, WriteNote, iTag, tagProps } from 'App/services/NotesService';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import { fetchList as fetchTeams } from 'Duck/integrations/teams';
-import { Tag } from 'antd';
+import { addNote, updateNote } from 'Duck/sessions';
+import { Button, Checkbox, Icon } from 'UI';
+
+
 
 import Select from 'Shared/Select';
-import { List } from 'immutable';
+
 
 interface Props {
   time: number;
@@ -152,17 +158,36 @@ function CreateNote({
     }))
     .toJS() as unknown as { value: string; label: string }[];
 
+  slackChannelsOptions.unshift({
   // @ts-ignore
-  slackChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
+    value: null,
+    // @ts-ignore
+    label: <div className={'text-disabled-text'}>Pick a channel</div>,
+    disabled: true
+  });
+  teamsChannelsOptions.unshift({
   // @ts-ignore
-  teamsChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
+    value: null,
+    // @ts-ignore
+    label: <div className={'text-disabled-text'}>Pick a channel</div>,
+    disabled: true,
+  });
 
-  const changeSlackChannel = ({ value }: { value: Record<string, string>; name: string }) => {
-    setSlackChannel(value.value);
+  const changeSlackChannel = ({
+    value,
+  }: {
+    value: Record<string, string>;
+    name: string;
+  }) => {
+    if (value) {
+      setSlackChannel(value.value);
+    }
   };
 
   const changeTeamsChannel = ({ value }: { value: Record<string, string>; name: string }) => {
-    setTeamsChannel(value.value);
+    if (value) {
+      setTeamsChannel(value.value);
+    }
   };
 
   return (
@@ -224,7 +249,7 @@ function CreateNote({
         <Checkbox checked={isPublic} />
         <div>Visible to team members</div>
       </div>
-      {slackChannelsOptions.length > 0 ? (
+      {slackChannelsOptions.length > 1 ? (
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
             <Checkbox checked={useSlack} />
@@ -239,13 +264,14 @@ function CreateNote({
                 defaultValue
                 // @ts-ignore
                 onChange={changeSlackChannel}
+                value={slackChannel}
               />
             </div>
           )}
         </div>
       ) : null}
 
-      {teamsChannelsOptions.length > 0 ? (
+      {teamsChannelsOptions.length > 1 ? (
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setTeams(!useTeams)}>
             <Checkbox checked={useTeams} />
@@ -260,6 +286,7 @@ function CreateNote({
                 defaultValue
                 // @ts-ignore
                 onChange={changeTeamsChannel}
+                value={teamsChannel}
               />
             </div>
           )}
