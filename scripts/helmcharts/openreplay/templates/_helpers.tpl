@@ -135,3 +135,23 @@ Create the volume mount config for redis TLS certificates
   subPath: {{ .tls.certCAFilename }}
 {{- end }}
 {{- end }}
+
+{{/*
+Retrieve secret values from Kubernetes secrets if available, otherwise use default values specified in values.yaml.
+*/}}
+{{- define "chart.secretValueOrDefault" -}}
+{{- $secretName := .Release.Name | printf "%s-external-secrets" -}}
+{{- $envVar := index .Values.global.env .name -}}
+{{- $key := $envVar.key -}}
+{{- $default := $envVar.default -}}
+{{- if $key -}}
+- name: {{ .name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secretName }}
+      key: {{ $key }}
+{{- else -}}
+- name: {{ .name }}
+  value: {{ $default | quote }}
+{{- end }}
+{{- end }}

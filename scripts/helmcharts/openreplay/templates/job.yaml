@@ -13,7 +13,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
-    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+    "helm.sh/hook-weight": "-6" # Higher precedence, so the first the config map will get created.
 data:
   {{- (.Files.Glob "files/*").AsConfig | nindent 2 }}
 ---
@@ -63,7 +63,7 @@ spec:
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
             {{ .Values.global.dbMigrationPreCommand | default "" }}
 
-            # Checking variable is empty. Shell independant method.
+            # Checking variable is empty. Shell independent method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
               exit_count=0
               error_connection=1
@@ -162,9 +162,23 @@ spec:
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
           - name: MINIO_ACCESS_KEY
+            {{- if .Values.minio.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.minio.existingSecret }}
+                key: access-key
+            {{- else }}
             value: "{{ .Values.minio.global.minio.accessKey }}"
+            {{- end }}
           - name: MINIO_SECRET_KEY
+            {{- if .Values.minio.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.minio.existingSecret }}
+                key: secret-key
+            {{- else }}
             value: "{{ .Values.minio.global.minio.secretKey }}"
+            {{- end }}
           - name: MINIO_HOST
             value: "{{ .Values.global.s3.endpoint }}"
         command: 
@@ -202,7 +216,14 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
+            {{- if .Values.global.postgresql.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.postgresql.existingSecret }}
+                key: postgresql-postgres-password
+            {{- else }}
             value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            {{- end }}
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
@@ -225,9 +246,23 @@ spec:
             value: '{{ $val }}'
           {{- end }}
           - name: AWS_ACCESS_KEY_ID
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: access-key
+            {{- else }}
             value: "{{ .Values.global.s3.accessKey }}"
+            {{- end }}
           - name: AWS_SECRET_ACCESS_KEY
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: secret-key
+            {{- else }}
             value: "{{ .Values.global.s3.secretKey }}"
+            {{- end }}
           - name: AWS_DEFAULT_REGION
             value: "{{ .Values.global.s3.region }}"
           - name: AWS_ENDPOINT
@@ -289,7 +324,14 @@ spec:
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
-            value: "{{.Values.global.clickhouse.password}}"
+            {{- if .Values.global.clickhouse.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.clickhouse.existingSecret }}
+                key: clickhouse-password
+            {{- else }}
+            value: "{{ .Values.global.clickhouse.password }}"
+            {{- end }}
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

@@ -34,7 +34,14 @@ spec:
                 value: '{{ $val }}'
               {{- end }}
               - name: LICENSE_KEY
+                {{- if .Values.global.existingsecret.name }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.existingsecret.name }}
+                    key: enterpriseEditionLicense
+                {{- else }}
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
+                {{- end }}
               - name: version_number
                 value: '{{ .Chart.AppVersion }}'
               - name: pg_host
@@ -93,15 +100,36 @@ spec:
               - name: EMAIL_USER
                 value: '{{ .Values.global.email.emailUser }}'
               - name: EMAIL_PASSWORD
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-password
+                {{- else }}
                 value: '{{ .Values.global.email.emailPassword }}'
+                {{- end }}
               - name: EMAIL_USE_TLS
                 value: '{{ .Values.global.email.emailUseTls }}'
               - name: EMAIL_USE_SSL
                 value: '{{ .Values.global.email.emailUseSsl }}'
               - name: EMAIL_SSL_KEY
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-ssl-key
+                {{- else }}
                 value: '{{ .Values.global.email.emailSslKey }}'
+                {{- end }}
               - name: EMAIL_SSL_CERT
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-ssl-cert
+                {{- else }}
                 value: '{{ .Values.global.email.emailSslCert }}'
+                {{- end }}
               - name: EMAIL_FROM
                 value: '{{ .Values.global.email.emailFrom }}'
               {{- range $key, $val := .Values.telemetry.env }}

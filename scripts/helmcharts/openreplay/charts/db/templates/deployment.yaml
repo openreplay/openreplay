@@ -44,13 +44,34 @@ spec:
           {{- end}}
           env:
             - name: CH_USERNAME
+              {{- if .Values.global.clickhouse.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.clickhouse.existingSecret }}
+                  key: clickhouse-username
+              {{- else }}
               value: '{{ .Values.global.clickhouse.username }}'
+              {{- end }}
             - name: CH_PASSWORD
+              {{- if .Values.global.clickhouse.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.clickhouse.existingSecret }}
+                  key: clickhouse-password
+              {{- else }}
               value: '{{ .Values.global.clickhouse.password }}'
+              {{- end }}
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
@@ -60,10 +81,10 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
+                  key: postgresql-password
               {{- else }}
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
+              {{- end }}
             - name: QUICKWIT_ENABLED
               value: '{{ .Values.global.quickwit.enabled }}'
             - name: POSTGRES_STRING
@@ -76,7 +97,7 @@ spec:
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
-            {{- end}}
+            {{- end }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

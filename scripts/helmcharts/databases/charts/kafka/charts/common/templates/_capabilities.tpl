@@ -134,7 +134,7 @@ Return the appropriate apiVersion for Horizontal Pod Autoscaler.
 {{- if .beta2 -}}
 {{- print "autoscaling/v2beta2" -}}
 {{- else -}}
-{{- print "autoscaling/v2beta1" -}}
+{{- print "autoscaling/v2" -}}
 {{- end -}}
 {{- else -}}
 {{- print "autoscaling/v2" -}}

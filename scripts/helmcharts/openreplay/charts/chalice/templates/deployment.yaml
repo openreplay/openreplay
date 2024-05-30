@@ -49,7 +49,14 @@ spec:
             - name: ch_username
               value: "{{ .Values.global.clickhouse.username }}"
             - name: ch_password
+              {{- if .Values.global.clickhouse.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.clickhouse.existingSecret }}
+                  key: clickhouse-password
+              {{- else }}
               value: "{{ .Values.global.clickhouse.password }}"
+              {{- end }}
             - name: ch_host
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port
@@ -59,11 +66,32 @@ spec:
             - name: ASSIST_URL
               value: "http://assist-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9001/assist/%s"
             - name: ASSIST_JWT_SECRET
-              value: {{ .Values.global.assistJWTSecret }}
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: assistJWTSecret
+              {{- else }}
+              value: '{{ .Values.global.assistJWTSecret }}'
+              {{- end }}
             - name: ASSIST_KEY
-              value: {{ .Values.global.assistKey }}
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: assistKey
+              {{- else }}
+              value: '{{ .Values.global.assistKey }}'
+              {{- end }}
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             - name: version_number
               value: '{{ .Chart.AppVersion }}'
             - name: pg_host
@@ -124,15 +152,36 @@ spec:
             - name: EMAIL_USER
               value: '{{ .Values.global.email.emailUser }}'
             - name: EMAIL_PASSWORD
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: emailPassword
+              {{- else }}
               value: '{{ .Values.global.email.emailPassword }}'
+              {{- end }}
             - name: EMAIL_USE_TLS
               value: '{{ .Values.global.email.emailUseTls }}'
             - name: EMAIL_USE_SSL
               value: '{{ .Values.global.email.emailUseSsl }}'
             - name: EMAIL_SSL_KEY
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: emailSslKey
+              {{- else }}
               value: '{{ .Values.global.email.emailSslKey }}'
+              {{- end }}
             - name: EMAIL_SSL_CERT
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: emailSslCert
+              {{- else }}
               value: '{{ .Values.global.email.emailSslCert }}'
+              {{- end }}
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
             {{- range $key, $val := .Values.global.env }}
