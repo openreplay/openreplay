@@ -251,7 +251,7 @@ def get_by_project_key(project_key):
                             {"project_key": project_key})
         cur.execute(query=query)
         row = cur.fetchone()
-        return row["project_id"] if row else None
+        return helper.dict_to_camel_case(row)
 
 
 def get_project_key(project_id):
