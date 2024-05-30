@@ -71,9 +71,8 @@ export default function(opts: Partial<Options> = {}) {
           const _currState = data.state;
           const _table = data.table;
           const _timestamp = data.timestamp;
-          console.log('encoded', _action, _currState, _table, _timestamp, app?.timestamp())
           for (let key in _table) app.send(Messages.OTable(key, _table[key]));
-          app.send(Messages.Redux(_action, _currState, duration, _timestamp)); // TODO: add timestamp
+          app.send(Messages.Redux(_action, _currState, duration, _timestamp));
         }
       }
       worker.onerror = (e) => {
