@@ -21,7 +21,6 @@ function SubHeader(props: any) {
     return integrations.some((i: Record<string, any>) => i.token);
   }, [props.integrations]);
 
-  console.log(props.isIOS, props.session)
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
