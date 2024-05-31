@@ -58,10 +58,13 @@ export default class FilterItem {
   }
 
   fromJson(json: any, mainFilterKey = '') {
-    const isMetadata = json.type === FilterKey.METADATA;
+    const isMetadata = json.type === FilterKey.METADATA && json.source !== 'featureFlag';
     let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
     if (this.isConditional) {
-      _filter = conditionalFiltersMap[json.type] || conditionalFiltersMap[json.source];
+      _filter = isMetadata
+                ? conditionalFiltersMap['_' + json.source]
+                : conditionalFiltersMap[json.type]
+                  || conditionalFiltersMap[json.source];
     }
     if (mainFilterKey) {
       const mainFilter = filtersMap[mainFilterKey];
