@@ -50,6 +50,9 @@ export interface State extends ScreenState {
   tabStates: {
     [tabId: string]: TabState;
   };
+  tabNames: {
+    [tabId: string]: string;
+  }
 
   domContentLoadedTime?: { time: number; value: number };
   domBuildingTime?: number;
@@ -183,8 +186,10 @@ export default class MessageManager {
 
   public createTabCloseEvents = () => {
     const lastMsgArr: [string, number][] = []
+    const namesObj: Record<string, string> = {}
     Object.entries(this.tabs).forEach((entry, i) => {
       const [tabId, tab] = entry
+      namesObj[tabId] = `Tab ${i + 1}`
       const { lastMessageTs } = tab
       if (lastMessageTs && tabId) lastMsgArr.push([tabId, lastMessageTs])
     })
@@ -192,6 +197,8 @@ export default class MessageManager {
     lastMsgArr.forEach(([tabId, lastMessageTs]) => {
       this.tabCloseManager.append({ tabId, time: lastMessageTs })
     })
+
+    this.state.update({ tabNames: namesObj })
   }
 
   public startLoading = () => {
