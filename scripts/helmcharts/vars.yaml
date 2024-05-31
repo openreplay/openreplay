@@ -17,18 +17,20 @@ postgresql: &postgres
   # asdf
   #     cpu: 2
 
-connector: &connector # For enterpriseEdition
+# For enterpriseEdition
+connector: &connector
   enabled: false
 
-clickhouse: &clickhouse # For enterpriseEdition
+# For enterpriseEdition
+clickhouse: &clickhouse
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   username: default
   password: ""
   service:
     webPort: 9000
-
-quickwit: &quickwit # For enterpriseEdition
+# For enterpriseEdition
+quickwit: &quickwit
   enabled: false
 
 kafka: &kafka
