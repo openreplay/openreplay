@@ -77,9 +77,9 @@ func DecodeSessionEndDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetPageLocation(reader BytesReader) (Message, error) {
+func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &SetPageLocation{}
+	msg := &SetPageLocationDeprecated{}
 	if msg.URL, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1428,6 +1428,24 @@ func DecodeRedux(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeSetPageLocation(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetPageLocation{}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Referrer, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.NavigationStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DocumentTitle, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1899,7 +1917,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 3:
 		return DecodeSessionEndDeprecated(reader)
 	case 4:
-		return DecodeSetPageLocation(reader)
+		return DecodeSetPageLocationDeprecated(reader)
 	case 5:
 		return DecodeSetViewportSize(reader)
 	case 6:
@@ -2064,6 +2082,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTagTrigger(reader)
 	case 121:
 		return DecodeRedux(reader)
+	case 122:
+		return DecodeSetPageLocation(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

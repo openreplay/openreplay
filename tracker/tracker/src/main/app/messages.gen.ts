@@ -14,13 +14,13 @@ export function Timestamp(
   ]
 }
 
-export function SetPageLocation(
+export function SetPageLocationDeprecated(
   url: string,
   referrer: string,
   navigationStart: number,
-): Messages.SetPageLocation {
+): Messages.SetPageLocationDeprecated {
   return [
-    Messages.Type.SetPageLocation,
+    Messages.Type.SetPageLocationDeprecated,
     url,
     referrer,
     navigationStart,
@@ -963,6 +963,21 @@ export function Redux(
     state,
     duration,
     actionTime,
+  ]
+}
+
+export function SetPageLocation(
+  url: string,
+  referrer: string,
+  navigationStart: number,
+  documentTitle: string,
+): Messages.SetPageLocation {
+  return [
+    Messages.Type.SetPageLocation,
+    url,
+    referrer,
+    navigationStart,
+    documentTitle,
   ]
 }
 

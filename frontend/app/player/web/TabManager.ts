@@ -81,7 +81,7 @@ export default class TabSessionManager {
 
   constructor(
     private session: any,
-    private readonly state: Store<{ tabStates: { [tabId: string]: TabState } }>,
+    private readonly state: Store<{ tabStates: { [tabId: string]: TabState }, tabNames: { [tabId: string]: string } }>,
     private readonly screen: Screen,
     private readonly id: string,
     private readonly setSize: ({ height, width }: { height: number; width: number }) => void,
@@ -198,6 +198,7 @@ export default class TabSessionManager {
           this.canvasReplayWalker.append(msg);
         }
         break;
+      case MType.SetPageLocationDeprecated:
       case MType.SetPageLocation:
         this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
@@ -336,8 +337,12 @@ export default class TabSessionManager {
     /* === */
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
+      const tabNames = this.state.get().tabNames;
+      if (lastLocationMsg.documentTitle) {
+        tabNames[this.id] = lastLocationMsg.documentTitle
+      }
       // @ts-ignore comes from parent state
-      this.state.update({ location: lastLocationMsg.url });
+      this.state.update({ location: lastLocationMsg.url, tabNames });
     }
 
     const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);

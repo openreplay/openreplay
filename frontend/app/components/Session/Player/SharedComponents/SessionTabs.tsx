@@ -38,7 +38,7 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
 function SessionTabs({ isLive }: { isLive?: boolean }) {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
-  const { tabs = new Set('back-compat'), currentTab, closedTabs } = store.get();
+  const { tabs = new Set('back-compat'), currentTab, closedTabs, tabNames } = store.get();
 
   const tabsArr = Array.from(tabs).map((tab, idx) => ({
     tab,
@@ -80,6 +80,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
             changeTab={changeTab}
             isLive={isLive}
             isClosed={tab.isClosed}
+            name={tabNames[tab.tab]}
           />
         </React.Fragment>
       ))}
