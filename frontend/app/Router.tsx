@@ -99,10 +99,11 @@ const Router: React.FC<RouterProps> = (props) => {
 
   useEffect(() => {
     checkParams();
+    handleJwtFromUrl();
   }, []);
 
   useEffect(() => {
-    handleJwtFromUrl();
+    // handleJwtFromUrl();
     handleDestinationPath();
 
 
