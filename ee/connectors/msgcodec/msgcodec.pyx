@@ -222,7 +222,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 4:
-            return SetPageLocation(
+            return SetPageLocationDeprecated(
                 url=self.read_string(reader),
                 referrer=self.read_string(reader),
                 navigation_start=self.read_uint(reader)
@@ -838,6 +838,14 @@ cdef class MessageCodec:
                 action_time=self.read_uint(reader)
             )
 
+        if message_id == 122:
+            return SetPageLocation(
+                url=self.read_string(reader),
+                referrer=self.read_string(reader),
+                navigation_start=self.read_uint(reader),
+                document_title=self.read_string(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),
@@ -862,7 +870,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 90:
-            return IOSSessionStart(
+            return MobileSessionStart(
                 timestamp=self.read_uint(reader),
                 project_id=self.read_uint(reader),
                 tracker_version=self.read_string(reader),
@@ -876,12 +884,12 @@ cdef class MessageCodec:
             )
 
         if message_id == 91:
-            return IOSSessionEnd(
+            return MobileSessionEnd(
                 timestamp=self.read_uint(reader)
             )
 
         if message_id == 92:
-            return IOSMetadata(
+            return MobileMetadata(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 key=self.read_string(reader),
@@ -889,7 +897,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 93:
-            return IOSEvent(
+            return MobileEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -897,21 +905,21 @@ cdef class MessageCodec:
             )
 
         if message_id == 94:
-            return IOSUserID(
+            return MobileUserID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 id=self.read_string(reader)
             )
 
         if message_id == 95:
-            return IOSUserAnonymousID(
+            return MobileUserAnonymousID(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 id=self.read_string(reader)
             )
 
         if message_id == 96:
-            return IOSScreenChanges(
+            return MobileScreenChanges(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 x=self.read_uint(reader),
@@ -921,7 +929,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 97:
-            return IOSCrash(
+            return MobileCrash(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -930,7 +938,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 98:
-            return IOSViewComponentEvent(
+            return MobileViewComponentEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 screen_name=self.read_string(reader),
@@ -939,7 +947,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 100:
-            return IOSClickEvent(
+            return MobileClickEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 label=self.read_string(reader),
@@ -948,7 +956,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 101:
-            return IOSInputEvent(
+            return MobileInputEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 value=self.read_string(reader),
@@ -957,7 +965,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 102:
-            return IOSPerformanceEvent(
+            return MobilePerformanceEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -965,7 +973,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 103:
-            return IOSLog(
+            return MobileLog(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 severity=self.read_string(reader),
@@ -973,14 +981,14 @@ cdef class MessageCodec:
             )
 
         if message_id == 104:
-            return IOSInternalError(
+            return MobileInternalError(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 content=self.read_string(reader)
             )
 
         if message_id == 105:
-            return IOSNetworkCall(
+            return MobileNetworkCall(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 type=self.read_string(reader),
@@ -993,7 +1001,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 106:
-            return IOSSwipeEvent(
+            return MobileSwipeEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 label=self.read_string(reader),
@@ -1003,14 +1011,14 @@ cdef class MessageCodec:
             )
 
         if message_id == 107:
-            return IOSBatchMeta(
+            return MobileBatchMeta(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 first_index=self.read_uint(reader)
             )
 
         if message_id == 110:
-            return IOSPerformanceAggregated(
+            return MobilePerformanceAggregated(
                 timestamp_start=self.read_uint(reader),
                 timestamp_end=self.read_uint(reader),
                 min_fps=self.read_uint(reader),
@@ -1028,7 +1036,7 @@ cdef class MessageCodec:
             )
 
         if message_id == 111:
-            return IOSIssueEvent(
+            return MobileIssueEvent(
                 timestamp=self.read_uint(reader),
                 type=self.read_string(reader),
                 context_string=self.read_string(reader),

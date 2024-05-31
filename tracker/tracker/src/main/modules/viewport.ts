@@ -11,7 +11,7 @@ export default function (app: App): void {
     const { URL } = document
     if (URL !== url) {
       url = URL
-      app.send(SetPageLocation(url, referrer, navigationStart))
+      app.send(SetPageLocation(url, referrer, navigationStart, document.title))
       navigationStart = 0
       referrer = url
     }

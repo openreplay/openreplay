@@ -8,9 +8,10 @@ interface Props {
   changeTab?: (tab: string) => void;
   isLive?: boolean;
   isClosed?: boolean;
+  name?: string;
 }
 
-function Tab({ i, tab, currentTab, changeTab, isLive, isClosed }: Props) {
+function Tab({ i, tab, currentTab, changeTab, isLive, isClosed, name }: Props) {
   return (
     <div
       key={tab}
@@ -25,7 +26,7 @@ function Tab({ i, tab, currentTab, changeTab, isLive, isClosed }: Props) {
         isClosed ? 'line-through': ''
       )}
     >
-      Tab {i + 1}
+      {name ? name : `Tab ${i + 1}`}
     </div>
   );
 }

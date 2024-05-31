@@ -14,7 +14,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1])
     break
 
-    case Messages.Type.SetPageLocation:
+    case Messages.Type.SetPageLocationDeprecated:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
@@ -300,6 +300,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.Redux:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
+    break
+
+    case Messages.Type.SetPageLocation:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.string(msg[4])
     break
 
     }
