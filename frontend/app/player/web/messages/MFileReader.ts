@@ -12,7 +12,6 @@ export default class MFileReader extends RawMessageReader {
   private currentTime: number
   public error: boolean = false
   private noIndexes: boolean = false
-  private skipIndexes: boolean = false
   constructor(data: Uint8Array, private startTime?: number, private logger= console) {
     super(data)
   }
@@ -28,10 +27,6 @@ export default class MFileReader extends RawMessageReader {
       }
       this.noIndexes = true
     }
-  }
-
-  public forceSkipIndexes() {
-    this.skipIndexes = true
   }
 
   private needSkipMessage(): boolean {
@@ -60,14 +55,18 @@ export default class MFileReader extends RawMessageReader {
    * via super.append
    * */
   private readRawMessage(): RawMessage | null {
+    if (!this.noIndexes) {
+      this.skip(8)
+    }
     try {
-      if (this.skipIndexes) {
-        this.skip(8)
+      const msg = super.readMessage()
+      if (!msg && !this.noIndexes) {
+        this.skip(-8)
       }
-      return super.readMessage()
+      return msg
     } catch (e) {
-      this.logger.error("Read message error:", e)
       this.error = true
+      this.logger.error("Read message error:", e)
       return null
     }
   }
