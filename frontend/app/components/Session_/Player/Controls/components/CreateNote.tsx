@@ -5,19 +5,20 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 
-
-
 import { useStore } from 'App/mstore';
-import { Note, TAGS, WriteNote, iTag, tagProps } from 'App/services/NotesService';
+import {
+  Note,
+  TAGS,
+  WriteNote,
+  iTag,
+  tagProps,
+} from 'App/services/NotesService';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import { fetchList as fetchTeams } from 'Duck/integrations/teams';
 import { addNote, updateNote } from 'Duck/sessions';
 import { Button, Checkbox, Icon } from 'UI';
 
-
-
 import Select from 'Shared/Select';
-
 
 interface Props {
   time: number;
@@ -89,7 +90,9 @@ function CreateNote({
     const note: WriteNote = {
       message: text,
       tag,
-      timestamp: useTimestamp ? Math.floor(isEdit && editNote ? editNote.timestamp : time) : -1,
+      timestamp: useTimestamp
+        ? Math.floor(isEdit && editNote ? editNote.timestamp : time)
+        : -1,
       isPublic,
     };
     const onSuccess = (noteId: string) => {
@@ -117,14 +120,12 @@ function CreateNote({
         .finally(() => {
           cleanUp();
         });
-    }
-
+    } else {
     return notesStore
       .addNote(sessionId, note)
       .then((r) => {
         onSuccess(r!.noteId as unknown as string);
         toast.success('Note added');
-        void notesStore.fetchSessionNotes(sessionId);
       })
       .catch((e) => {
         toast.error('Error adding note');
@@ -133,6 +134,7 @@ function CreateNote({
       .finally(() => {
         cleanUp();
       });
+    }
   };
 
   const closeTooltip = () => {
@@ -159,14 +161,14 @@ function CreateNote({
     .toJS() as unknown as { value: string; label: string }[];
 
   slackChannelsOptions.unshift({
-  // @ts-ignore
+    // @ts-ignore
     value: null,
     // @ts-ignore
     label: <div className={'text-disabled-text'}>Pick a channel</div>,
-    disabled: true
+    disabled: true,
   });
   teamsChannelsOptions.unshift({
-  // @ts-ignore
+    // @ts-ignore
     value: null,
     // @ts-ignore
     label: <div className={'text-disabled-text'}>Pick a channel</div>,
@@ -184,7 +186,12 @@ function CreateNote({
     }
   };
 
-  const changeTeamsChannel = ({ value }: { value: Record<string, string>; name: string }) => {
+  const changeTeamsChannel = ({
+    value,
+  }: {
+    value: Record<string, string>;
+    name: string;
+  }) => {
     if (value) {
       setTeamsChannel(value.value);
     }
@@ -197,7 +204,9 @@ function CreateNote({
     >
       <div className="flex items-center">
         <Icon name="quotes" size={20} />
-        <h3 className="text-xl ml-2 mr-4 font-semibold">{isEdit ? 'Edit Note' : 'Add Note'}</h3>
+        <h3 className="text-xl ml-2 mr-4 font-semibold">
+          {isEdit ? 'Edit Note' : 'Add Note'}
+        </h3>
         <div className="ml-auto cursor-pointer" onClick={closeTooltip}>
           <Icon name="close" size={20} />
         </div>
@@ -222,8 +231,8 @@ function CreateNote({
           value={text}
           autoFocus
           onChange={(e) => {
-            setText(e.target.value)}
-          }
+            setText(e.target.value);
+          }}
           className="text-area"
         />
 
@@ -245,13 +254,19 @@ function CreateNote({
           ))}
         </div>
       </div>
-      <div className={'flex items-center gap-2 cursor-pointer'} onClick={() => setPublic(!isPublic)}>
+      <div
+        className={'flex items-center gap-2 cursor-pointer'}
+        onClick={() => setPublic(!isPublic)}
+      >
         <Checkbox checked={isPublic} />
         <div>Visible to team members</div>
       </div>
       {slackChannelsOptions.length > 1 ? (
         <div className="flex flex-col">
-          <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => setSlack(!useSlack)}
+          >
             <Checkbox checked={useSlack} />
             <span className="ml-1 mr-3"> Share via Slack </span>
           </div>
@@ -273,7 +288,10 @@ function CreateNote({
 
       {teamsChannelsOptions.length > 1 ? (
         <div className="flex flex-col">
-          <div className="flex items-center cursor-pointer" onClick={() => setTeams(!useTeams)}>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => setTeams(!useTeams)}
+          >
             <Checkbox checked={useTeams} />
             <span className="ml-1 mr-3"> Share via MS Teams </span>
           </div>
@@ -294,8 +312,15 @@ function CreateNote({
       ) : null}
 
       <div className="flex">
-        <Button variant="primary" className="mr-4" disabled={text === ''} onClick={onSubmit}>
-          {isEdit ? 'Save Note' : `Add Note ${useTeams || useSlack ? '& Share' : ''}`}
+        <Button
+          variant="primary"
+          className="mr-4"
+          disabled={text === ''}
+          onClick={onSubmit}
+        >
+          {isEdit
+            ? 'Save Note'
+            : `Add Note ${useTeams || useSlack ? '& Share' : ''}`}
         </Button>
         <Button variant={'text'} onClick={closeTooltip}>
           Cancel
