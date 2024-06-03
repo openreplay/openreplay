@@ -98,6 +98,7 @@ export default class MessageManager {
     tabChangeEvents: [],
     closedTabs: [],
     sessionStart: 0,
+    tabNames: {},
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -196,9 +197,11 @@ export default class MessageManager {
     const namesObj: Record<string, string> = {}
     Object.entries(this.tabs).forEach((entry, i) => {
       const [tabId, tab] = entry
-      namesObj[tabId] = `Tab ${i + 1}`
       const { lastMessageTs } = tab
-      if (lastMessageTs && tabId) lastMsgArr.push([tabId, lastMessageTs])
+      if (lastMessageTs && tabId) {
+        lastMsgArr.push([tabId, lastMessageTs])
+        namesObj[tabId] = ''
+      }
     })
     lastMsgArr.sort((a, b) => a[1] - b[1])
     lastMsgArr.forEach(([tabId, lastMessageTs]) => {
