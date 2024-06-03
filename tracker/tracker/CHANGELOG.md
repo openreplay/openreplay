@@ -1,3 +1,7 @@
+# 14.0.0
+
+- titles for tabs
+
 # 13.0.2
 
 - more file extensions for canvas
