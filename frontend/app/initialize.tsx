@@ -11,7 +11,7 @@ import { DndProvider } from 'react-dnd';
 import { ConfigProvider, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
-import { Notification } from 'UI';
+import { Notification, MountPoint } from 'UI';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <Router />
             </BrowserRouter>
           </DndProvider>
+          <MountPoint />
         </StoreProvider>
       </Provider>
     </ConfigProvider>
