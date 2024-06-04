@@ -29,7 +29,7 @@ function build_crons() {
     envarg="default-ee"
     tag="ee-"
     mv Dockerfile_crons.dockerignore .dockerignore
-    docker build -f ./Dockerfile_crons --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/crons:${git_sha1} .
+    docker build -f ./Dockerfile_crons --platform=linux/${ARCH:-'amd64'} --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/crons:${git_sha1} .
     cd ../api
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
