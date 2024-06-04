@@ -515,13 +515,31 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 68: {
+      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      const selector = this.readString(); if (selector === null) { return resetPointer() }
+      const normalizedX = this.readUint(); if (normalizedX === null) { return resetPointer() }
+      const normalizedY = this.readUint(); if (normalizedY === null) { return resetPointer() }
+      return {
+        tp: MType.MouseClick,
+        id,
+        hesitationTime,
+        label,
+        selector,
+        normalizedX,
+        normalizedY,
+      };
+    }
+
     case 69: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
       const label = this.readString(); if (label === null) { return resetPointer() }
       const selector = this.readString(); if (selector === null) { return resetPointer() }
       return {
-        tp: MType.MouseClick,
+        tp: MType.MouseClickDeprecated,
         id,
         hesitationTime,
         label,

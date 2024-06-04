@@ -221,6 +221,15 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       }
       const id = app.nodes.getID(target)
       if (id !== undefined) {
+        const clickX = e.pageX
+        const clickY = e.pageY
+
+        const contentWidth = document.documentElement.clientWidth
+        const contentHeight = document.documentElement.clientHeight
+
+        const normalizedX = roundNumber(clickX / contentWidth)
+        const normalizedY = roundNumber(clickY / contentHeight)
+
         sendMouseMove()
         app.send(
           MouseClick(
@@ -228,6 +237,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
             isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
+            normalizedX,
+            normalizedY,
           ),
           true,
         )
@@ -244,4 +255,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   patchDocument(document, true)
 
   app.ticker.attach(sendMouseMove, options?.trackingOffset || 7)
+}
+
+function roundNumber(num: number) {
+  return Math.round(num * 1e3) / 1e3
 }

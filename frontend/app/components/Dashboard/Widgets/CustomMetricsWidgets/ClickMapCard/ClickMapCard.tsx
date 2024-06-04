@@ -3,9 +3,9 @@ import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
 import { connect } from 'react-redux'
-import { setCustomSession, clearCurrentSession } from 'App/duck/sessions'
-import { fetchInsights } from 'Duck/sessions';
+import { setCustomSession, clearCurrentSession, fetchInsights } from 'App/duck/sessions'
 import { NoContent, Icon } from 'App/components/ui'
+import Session from 'Types/session'
 
 function ClickMapCard({
     setCustomSession,
@@ -32,6 +32,7 @@ function ClickMapCard({
     }, [metricStore.instance])
 
     React.useEffect(() => {
+        console.log(visitedEvents.length)
         if (visitedEvents.length) {
             const rangeValue = dashboardStore.drillDownPeriod.rangeValue
             const startDate = dashboardStore.drillDownPeriod.start
@@ -40,6 +41,7 @@ function ClickMapCard({
         }
     }, [visitedEvents, metricStore.clickMapFilter])
 
+    console.log(metricStore.instance.data.domURL, insights.size === 0, visitedEvents)
     if (!metricStore.instance.data.domURL || insights.size === 0) {
         return (
             <NoContent

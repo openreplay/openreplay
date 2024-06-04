@@ -14,7 +14,6 @@ function WebPlayer(props: any) {
     customSession,
     insights,
     jumpTimestamp,
-    onMarkerClick,
   } = props;
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
@@ -43,7 +42,9 @@ function WebPlayer(props: any) {
         contextValue.player.pause()
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.scale()
-        setTimeout(() => { contextValue.player.showClickmap(insights, onMarkerClick) }, 250)
+        const demoData: { normalizedX: number, normalizedY: number }[] = generateNormalizedCoordinatesArray(100)
+
+        setTimeout(() => { contextValue.player.showClickmap(demoData) }, 250)
       }, 500)
     }
     return () => {
@@ -67,3 +68,23 @@ export default connect(
     jwt: state.getIn(['user', 'jwt']),
   })
 )(withLocationHandlers()(observer(WebPlayer)));
+
+function getRandomNormalizedValue() {
+  return Math.random();
+}
+
+function generateNormalizedCoordinatesArray(num: number) {
+  const normalizedCoordinatesArray = [];
+
+  for (let i = 0; i < num; i++) {
+    const normalizedX = getRandomNormalizedValue();
+    const normalizedY = getRandomNormalizedValue();
+
+    normalizedCoordinatesArray.push({
+      normalizedX: normalizedX,
+      normalizedY: normalizedY
+    });
+  }
+
+  return normalizedCoordinatesArray;
+}

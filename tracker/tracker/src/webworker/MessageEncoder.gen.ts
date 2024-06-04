@@ -211,6 +211,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.MouseClick:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5]) && this.uint(msg[6])
+    break
+
+    case Messages.Type.MouseClickDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3]) && this.string(msg[4])
     break
 

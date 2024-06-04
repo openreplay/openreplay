@@ -2,6 +2,7 @@ import type Screen from '../Screen/Screen'
 import type { Point } from '../Screen/types'
 import type { Store } from '../../common/types'
 import { clickmapStyles } from './clickmapStyles'
+import heatmapRenderer from "./simpleHeatmap";
 
 const zIndexMap = {
   400: 3,
@@ -46,7 +47,7 @@ export interface State {
 
 
 export default class TargetMarker {
-  private clickMapOverlay: HTMLDivElement | null = null
+  private clickMapOverlay: HTMLCanvasElement | null = null
   private clickContainers: HTMLDivElement[] = []
   private smallClicks: HTMLDivElement[] = []
 	static INITIAL_STATE: State = {
@@ -147,107 +148,21 @@ export default class TargetMarker {
 
 
   injectTargets(
-    selections: { selector: string, count: number, clickRage?: boolean }[] | null,
-    onMarkerClick?: (selector: string, innerText: string) => void,
+    clicks: { normalizedX: number, normalizedY: number }[] | null,
   ) {
-    if (selections) {
-      const totalCount = selections.reduce((a, b) => {
-        return a + b.count
-      }, 0);
-
+    if (clicks) {
       this.clickMapOverlay?.remove()
-      const overlay = document.createElement("div")
+      const overlay = document.createElement("canvas")
       const iframeSize = this.screen.iframeStylesRef
       const scaleRatio = this.screen.getScale()
       Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
 
       this.clickMapOverlay = overlay
-      selections.forEach((s, i) => {
-        const el = this.screen.getElementBySelector(s.selector);
-        if (!el) return;
-
-        const bubbleContainer = document.createElement("div")
-        const {top, left, width, height} = el.getBoundingClientRect()
-        const totalClicks = document.createElement("div")
-        totalClicks.innerHTML = `${s.count} ${s.count !== 1 ? 'Clicks' : 'Click'}`
-        Object.assign(totalClicks.style, clickmapStyles.totalClicks)
-
-        const percent = document.createElement("div")
-        percent.style.fontSize = "14px"
-        percent.innerHTML = `${Math.round((s.count * 100) / totalCount)}% of the clicks recorded in this page`
-
-        bubbleContainer.appendChild(totalClicks)
-        bubbleContainer.appendChild(percent)
-        const containerId = `clickmap-bubble-${i}`
-        bubbleContainer.id = containerId
-        this.clickContainers.push(bubbleContainer)
-        const frameWidth = iframeSize.width.replace('px', '')
-
-        // @ts-ignore
-        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left: Math.max(100, frameWidth - left > 250 ? left : frameWidth - 220), height }))
-
-        const border = document.createElement("div")
-
-        let key = 0
-
-        if (width > 50) {
-          let diff = widths[key] - width
-          while (diff > 0) {
-            key++
-            diff = widths[key] - width
-          }
-        } else {
-          key = 3
-        }
-        const borderZindex = zIndexMap[widths[key]]
-
-        Object.assign(border.style, clickmapStyles.highlight({ width, height, top, left, zIndex: borderZindex }))
-
-        const smallClicksBubble = document.createElement("div")
-        smallClicksBubble.innerHTML = `${s.count}`
-        const smallClicksId =  containerId + '-small'
-        smallClicksBubble.id = smallClicksId
-        this.smallClicks.push(smallClicksBubble)
-
-        border.onclick = (e) => {
-          e.stopPropagation()
-          const innerText = el.innerText.length > 25 ? `${el.innerText.slice(0, 20)}...` : el.innerText
-          onMarkerClick?.(s.selector, innerText)
-          this.clickContainers.forEach(container => {
-            if (container.id === containerId) {
-              container.style.visibility = "visible"
-            } else {
-              container.style.visibility = "hidden"
-            }
-          })
-          this.smallClicks.forEach(container => {
-            if (container.id !== smallClicksId) {
-              container.style.visibility = "visible"
-            } else {
-              container.style.visibility = "hidden"
-            }
-          })
-        }
-
-        overlay.onclick = (e) => {
-          e.stopPropagation()
-          onMarkerClick?.('', '')
-          this.clickContainers.forEach(container => {
-            container.style.visibility = "hidden"
-          })
-          this.smallClicks.forEach(container => {
-            container.style.visibility = "visible"
-          })
-        }
-
-        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage, left }))
-
-        border.appendChild(smallClicksBubble)
-        overlay.appendChild(bubbleContainer)
-        overlay.appendChild(border)
-      });
-
       this.screen.getParentElement()?.appendChild(overlay)
+
+      const data = clicks.map(({ normalizedX, normalizedY }) => [normalizedX * overlay.width, normalizedY * overlay.height, 1])
+
+      heatmapRenderer.setCanvas(overlay).setData(data).setMax(6).draw()
     } else {
       this.store.update({ markedTargets: null });
       this.clickMapOverlay?.remove()

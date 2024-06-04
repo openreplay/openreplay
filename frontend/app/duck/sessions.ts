@@ -215,6 +215,8 @@ const reducer = (state = initialState, action: IAction) => {
           }
         });
       });
+
+      console.log(session, visitedEvents)
       return state
         .set('current', session)
         .set('eventsIndex', matching)

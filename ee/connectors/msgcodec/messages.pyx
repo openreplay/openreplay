@@ -872,6 +872,25 @@ cdef class MouseClick(PyMessage):
     cdef public unsigned long hesitation_time
     cdef public str label
     cdef public str selector
+    cdef public unsigned long normalized_x
+    cdef public unsigned long normalized_y
+
+    def __init__(self, unsigned long id, unsigned long hesitation_time, str label, str selector, unsigned long normalized_x, unsigned long normalized_y):
+        self.__id__ = 68
+        self.id = id
+        self.hesitation_time = hesitation_time
+        self.label = label
+        self.selector = selector
+        self.normalized_x = normalized_x
+        self.normalized_y = normalized_y
+
+
+cdef class MouseClickDeprecated(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public unsigned long hesitation_time
+    cdef public str label
+    cdef public str selector
 
     def __init__(self, unsigned long id, unsigned long hesitation_time, str label, str selector):
         self.__id__ = 69
