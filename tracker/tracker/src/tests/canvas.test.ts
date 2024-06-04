@@ -75,6 +75,20 @@ describe('CanvasRecorder', () => {
       canvasRecorder.captureCanvas(nodeMock)
       expect(observeMock).toHaveBeenCalledWith(nodeMock)
     })
+
+    test('does not capture canvas if it is obscured', () => {
+      appMock.sanitizer.isObscured.mockReturnValue(true)
+      const observeMock = jest.fn()
+      window.IntersectionObserver = jest.fn().mockImplementation((callback) => {
+        return {
+          observe: observeMock,
+          disconnect: jest.fn(),
+        }
+      })
+
+      canvasRecorder.captureCanvas(nodeMock)
+      expect(observeMock).not.toHaveBeenCalled()
+    })
   })
 
   describe('recordCanvas', () => {
