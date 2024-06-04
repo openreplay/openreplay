@@ -41,7 +41,6 @@ function ClickMapCard({
         }
     }, [visitedEvents, metricStore.clickMapFilter])
 
-    console.log(metricStore.instance.data.domURL, insights.size === 0, visitedEvents)
     if (!metricStore.instance.data.domURL || insights.size === 0) {
         return (
             <NoContent
