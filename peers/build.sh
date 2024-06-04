@@ -52,7 +52,7 @@ function build_api() {
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/peers/* ./
     }
-    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/peers:${image_tag} .
+    docker build -f ./Dockerfile --platform linux/${ARCH:-"amd64"} --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/peers:${image_tag} .
     cd ../peers
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {

@@ -51,7 +51,7 @@ function build_api() {
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/assist/* ./
     }
-    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
+    docker build -f ./Dockerfile --platform linux/${ARCH:-"amd64"} --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
 
     cd ../assist
     rm -rf ../${destination}
