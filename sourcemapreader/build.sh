@@ -61,7 +61,7 @@ function build_api() {
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
+    docker build -f ./Dockerfile --platform linux/${ARCH:-"amd64"} --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
     cd ../sourcemapreader
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
