@@ -195,8 +195,7 @@ export default class MessageManager {
   public createTabCloseEvents = () => {
     const lastMsgArr: [string, number][] = []
     const namesObj: Record<string, string> = {}
-    Object.entries(this.tabs).forEach((entry, i) => {
-      const [tabId, tab] = entry
+    for (const [tabId, tab] of Object.entries(this.tabs)) {
       const { lastMessageTs } = tab
       if (lastMessageTs && tabId) {
         lastMsgArr.push([tabId, lastMessageTs])
