@@ -5,9 +5,9 @@ cd $(dirname $0)
 
 is_migrate=$1
 
-# Converting alphaneumeric to number.
-PREVIOUS_APP_VERSION=`echo $PREVIOUS_APP_VERSION | cut -d "v" -f2`
-CHART_APP_VERSION=`echo $CHART_APP_VERSION | cut -d "v" -f2`
+# Passed from env
+# PREVIOUS_APP_VERSION
+# CHART_APP_VERSION
 
 function migration() {
     ls -la /opt/openreplay/openreplay
@@ -36,54 +36,58 @@ function migration() {
 
     # We need to remove version dots
     function normalise_version {
-      echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+        version=$1
+        echo $(echo ${version:1} | tr -d '.')
     }
-    all_versions=(`ls -l db/init_dbs/$db | grep -E ^d | grep -v create | awk '{print $NF}'`)
-    migration_versions=(`for ver in ${all_versions[*]}; do if [[ $(normalise_version $ver) > $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then echo $ver; fi; done | sort -V`)
+    all_versions=($(ls -l db/init_dbs/$db | grep -E ^d | grep -v create | awk '{print $NF}'))
+    migration_versions=($(for ver in ${all_versions[*]}; do if [[ $(normalise_version $ver) > $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then echo $ver; fi; done | sort -V))
     echo "Migration version: ${migration_versions[*]}"
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
-    joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")
-    
+    joined_migration_versions=$(
+        IFS=,
+        echo "${migration_versions[*]}"
+    )
+
     cd -
 
     case "$1" in
-        postgresql)
-            /bin/bash postgresql.sh migrate $joined_migration_versions
-            ;;
-        minio)
-            /bin/bash minio.sh migrate $joined_migration_versions
-            ;;
-        clickhouse)
-            /bin/bash clickhouse.sh migrate $joined_migration_versions
-            ;;
-        kafka)
-            /bin/bash kafka.sh migrate $joined_migration_versions
-            ;;
-        *)
-            echo "Unknown operation for db migration; exiting."
-            exit 1
-            ;;
-        esac
+    postgresql)
+        /bin/bash postgresql.sh migrate $joined_migration_versions
+        ;;
+    minio)
+        /bin/bash minio.sh migrate $joined_migration_versions
+        ;;
+    clickhouse)
+        /bin/bash clickhouse.sh migrate $joined_migration_versions
+        ;;
+    kafka)
+        /bin/bash kafka.sh migrate $joined_migration_versions
+        ;;
+    *)
+        echo "Unknown operation for db migration; exiting."
+        exit 1
+        ;;
+    esac
 }
 
-function init(){
+function init() {
     case $1 in
-        postgresql)
-            /bin/bash postgresql.sh init
-            ;;
-        minio)
-            /bin/bash minio.sh migrate $migration_versions
-            ;;
-        clickhouse)
-            /bin/bash clickhouse.sh init
-            ;;
-        kafka)
-            /bin/bash kafka.sh init
-            ;;
-        *)
-            echo "Unknown operation for db init; exiting."
-            exit 1
-            ;;
+    postgresql)
+        /bin/bash postgresql.sh init
+        ;;
+    minio)
+        /bin/bash minio.sh migrate $migration_versions
+        ;;
+    clickhouse)
+        /bin/bash clickhouse.sh init
+        ;;
+    kafka)
+        /bin/bash kafka.sh init
+        ;;
+    *)
+        echo "Unknown operation for db init; exiting."
+        exit 1
+        ;;
 
     esac
 }
@@ -94,14 +98,14 @@ fi
 
 # dbops.sh true(upgrade) clickhouse
 case "$is_migrate" in
-    "false")
-        init $2
-        ;;
-    "true")
-        migration $2
-        ;;
-    *)
-        echo "Unknown operation for db migration; exiting."
-        exit 1
-        ;;
+"false")
+    init $2
+    ;;
+"true")
+    migration $2
+    ;;
+*)
+    echo "Unknown operation for db migration; exiting."
+    exit 1
+    ;;
 esac
