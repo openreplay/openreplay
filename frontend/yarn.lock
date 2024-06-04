@@ -5366,6 +5366,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-confirm@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@types/react-confirm@npm:0.2.3"
+  dependencies:
+    "@types/react": "*"
+  checksum: 2a1e24de5adf70c4d4ab1408fe770b0e003f0a6f8f643ec0e195915e13654fe68943b8c57e8842eff17910f171923f32682588b8b5d4aca18e6786ef251e3052
+  languageName: node
+  linkType: hard
+
 "@types/react-dom@npm:^18.0.4":
   version: 18.2.24
   resolution: "@types/react-dom@npm:18.2.24"
@@ -18269,6 +18278,7 @@ __metadata:
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/luxon": ^3.0.0
     "@types/react": ^18.0.9
+    "@types/react-confirm": ^0.2.3
     "@types/react-dom": ^18.0.4
     "@types/react-redux": ^7.1.24
     "@types/react-router-dom": ^5.3.3
@@ -18333,7 +18343,7 @@ __metadata:
     rc-time-picker: ^3.7.3
     react: ^18.2.0
     react-circular-progressbar: ^2.1.0
-    react-confirm: ^0.2.3
+    react-confirm: ^0.3.0-7
     react-daterange-picker: ^2.0.1
     react-dnd: ^16.0.1
     react-dnd-html5-backend: ^15.1.2
@@ -20845,13 +20855,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-confirm@npm:^0.2.3":
-  version: 0.2.4
-  resolution: "react-confirm@npm:0.2.4"
+"react-confirm@npm:^0.3.0-7":
+  version: 0.3.0-7
+  resolution: "react-confirm@npm:0.3.0-7"
   peerDependencies:
     react: 18.x
     react-dom: 18.x
-  checksum: b06897e41a50985bc2107b3f3b5abf658e2de84177f8c1c39968e64f2afd20e44c3506c5ba6b51b6dd9ba2289ea9df9a4e39008aa8d8de73af6f0cbfd6515d46
+  checksum: 38c863bce5f3b8c4c17b59f995da77d69f1b442c5c7e812d8a62f2721a426d859ae17d3e4ed3eaf878cf458b3be047cedb1ec125aa5a29cd2a03eaef773923c8
   languageName: node
   linkType: hard
 
