@@ -13,6 +13,7 @@ import {
   generateRandomId,
   ngSafeBrowserMethod,
   requestIdleCb,
+  inIframe,
 } from '../main/utils.js'
 
 describe('adjustTimeOrigin', () => {
@@ -185,6 +186,15 @@ describe('generateRandomId', () => {
     expect(id).toHaveLength(40)
     expect(/^[0-9a-f]+$/.test(id)).toBe(true)
   })
+
+  test('falls back to Math.random if crypto api is not available', () => {
+    const originalCrypto = window.crypto
+    // @ts-ignore
+    window.crypto = undefined
+    const id = generateRandomId(20)
+    expect(id).toHaveLength(20)
+    expect(/^[0-9a-f]+$/.test(id)).toBe(true)
+  })
 })
 
 describe('ngSafeBrowserMethod', () => {
@@ -207,7 +217,7 @@ describe('requestIdleCb', () => {
   test('testing FIFO scheduler', async () => {
     jest.useFakeTimers()
     // @ts-ignore
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => cb())
     const cb1 = jest.fn()
     const cb2 = jest.fn()
 
@@ -219,5 +229,20 @@ describe('requestIdleCb', () => {
     await jest.advanceTimersToNextTimerAsync(1)
 
     expect(cb2).toBeCalledTimes(1)
+  })
+})
+
+describe('inIframe', () => {
+  test('returns true if the code is running inside an iframe', () => {
+    const originalSelf = window.self
+    const originalTop = window.top
+
+    Object.defineProperty(window, 'self', { value: {} })
+    Object.defineProperty(window, 'top', { value: {} })
+
+    expect(inIframe()).toBe(true)
+
+    Object.defineProperty(window, 'self', { value: originalSelf })
+    Object.defineProperty(window, 'top', { value: originalTop })
   })
 })
