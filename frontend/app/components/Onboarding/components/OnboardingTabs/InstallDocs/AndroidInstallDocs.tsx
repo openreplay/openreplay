@@ -5,7 +5,7 @@ import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
 import {CopyButton} from 'UI';
 
-const installationCommand = `// Add it in your root build.gradle at the end of repositories:
+export const installationCommand = `// Add it in your root build.gradle at the end of repositories:
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -20,7 +20,7 @@ dependencies {
 }
 `;
 
-const usageCode = `// MainActivity.kt
+export const usageCode = `// MainActivity.kt
 import com.openreplay.tracker.OpenReplay
 
 //...

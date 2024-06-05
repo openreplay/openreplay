@@ -5,7 +5,7 @@ import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
 import { CopyButton } from 'UI';
 
-const installationCommand = `
+export const installationCommand = `
 // make sure to grab latest version from https://github.com/openreplay/ios-tracker
 // Cocoapods
 pod 'Openreplay', '~> 1.0.5'
@@ -16,7 +16,7 @@ dependencies: [
 ]
 `;
 
-const usageCode = `// AppDelegate.swift
+export const usageCode = `// AppDelegate.swift
 import OpenReplay
 
 //... 
@@ -24,7 +24,7 @@ import OpenReplay
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
+        // not required if you're using our SaaS version
         OpenReplay.shared.serverURL = "https://your.instance.com/ingest"
         OpenReplay.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
         
