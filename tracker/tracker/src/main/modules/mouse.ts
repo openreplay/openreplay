@@ -257,6 +257,10 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   app.ticker.attach(sendMouseMove, options?.trackingOffset || 7)
 }
 
+/**
+ * we get 0 to 1 decimal number, convert and round it, then turn to %
+ * 0.39643 => 396.43 => 396 => 39.6%
+ * */
 function roundNumber(num: number) {
-  return Math.round(num * 1e3) / 1e3
+  return Math.round(num * 1e3) / 1e1
 }
