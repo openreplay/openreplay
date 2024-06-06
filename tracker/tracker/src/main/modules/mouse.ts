@@ -224,8 +224,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         const clickX = e.pageX
         const clickY = e.pageY
 
-        const contentWidth = document.documentElement.clientWidth
-        const contentHeight = document.documentElement.clientHeight
+        const contentWidth = document.documentElement.scrollWidth
+        const contentHeight = document.documentElement.scrollHeight
 
         const normalizedX = roundNumber(clickX / contentWidth)
         const normalizedY = roundNumber(clickY / contentHeight)
