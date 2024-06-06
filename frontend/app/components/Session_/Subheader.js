@@ -38,7 +38,7 @@ function SubHeader(props) {
   }, [props.integrations]);
 
   const location =
-    currentLocation && currentLocation.length > 70
+    currentLocation && currentLocation.length > 140
       ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
       : currentLocation;
 
