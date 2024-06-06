@@ -129,8 +129,35 @@ export default class MessageLoader {
     };
   }
 
+  waitForCanvasURL = () => {
+    const start = Date.now();
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (Boolean(this.session.canvasURL?.length)) {
+          clearInterval(checkInterval);
+          resolve(true);
+        } else {
+          if (Date.now() - start > 15000) {
+            clearInterval(checkInterval);
+            throw new Error('could not load canvas data after 15 seconds')
+          }
+        }
+      }, 100);
+    });
+  };
+
   processMessages = (msgs: PlayerMsg[], file?: string) => {
-    msgs.forEach((msg) => {
+    msgs.forEach(async (msg) => {
+      if (msg.tp === MType.CanvasNode) {
+        /**
+         * in case of prefetched sessions with canvases,
+         * we wait for signed urls and then parse the session
+         * */
+        if (file?.includes('p:dom') && !Boolean(this.session.canvasURL?.length)) {
+          console.warn('⚠️Openreplay is waiting for canvas node to load')
+          await this.waitForCanvasURL();
+        }
+      }
       this.messageManager.distributeMessage(msg);
     });
     logger.info('Messages count: ', msgs.length, msgs, file);

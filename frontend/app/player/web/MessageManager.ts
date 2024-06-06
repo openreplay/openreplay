@@ -106,7 +106,7 @@ export default class MessageManager {
 
   public readonly decoder = new Decoder();
 
-  private readonly sessionStart: number;
+  private sessionStart: number;
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
@@ -114,7 +114,7 @@ export default class MessageManager {
   private activeTab = '';
 
   constructor(
-    private readonly session: SessionFilesInfo,
+    private session: SessionFilesInfo,
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly initialLists?: Partial<InitialLists>,
@@ -133,6 +133,13 @@ export default class MessageManager {
     }
     return Object.values(this.tabs)[0].getListsFullState();
   };
+
+  public setSession = (session: SessionFilesInfo) => {
+    this.session = session;
+    this.sessionStart = this.session.startedAt;
+    this.state.update({ sessionStart: this.sessionStart });
+    Object.values(this.tabs).forEach((tab) => tab.setSession(session));
+  }
 
   public updateLists(lists: RawList) {
     Object.keys(this.tabs).forEach((tab) => {
