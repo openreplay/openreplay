@@ -95,6 +95,7 @@ export default class WebPlayer extends Player {
   reinit(session: SessionFilesInfo) {
     if (this.wpState.get().mobsFetched) return; // already initialized
     this.messageLoader.setSession(session)
+    this.messageManager.setSession(session)
     void this.messageLoader.loadFiles();
 
     this.targetMarker = new TargetMarker(this.screen, this.wpState)
