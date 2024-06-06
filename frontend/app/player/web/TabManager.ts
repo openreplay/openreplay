@@ -80,7 +80,7 @@ export default class TabSessionManager {
   private canvasReplayWalker: ListWalker<CanvasNode> = new ListWalker();
 
   constructor(
-    private readonly session: any,
+    private session: any,
     private readonly state: Store<{ tabStates: { [tabId: string]: TabState } }>,
     private readonly screen: Screen,
     private readonly id: string,
@@ -96,6 +96,10 @@ export default class TabSessionManager {
         this.locationEventManager.append(e);
       }
     });
+  }
+
+  setSession = (session: any) => {
+    this.session = session;
   }
 
   public getNode = (id: number) => {

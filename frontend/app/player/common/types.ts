@@ -51,6 +51,7 @@ export interface SessionFilesInfo {
   frustrations: Record<string, any>[]
   errors: Record<string, any>[]
   agentInfo?: { email: string, name: string }
+  canvasURL?: string[]
 }
 
 export type PlayerMsg = Message & { tabId: string }
