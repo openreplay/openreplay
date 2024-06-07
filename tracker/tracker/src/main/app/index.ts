@@ -117,19 +117,36 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: ILogLevel
+  /** @deprecated see canvas prop */
   __save_canvas_locally?: boolean
+  /** @deprecated see canvas prop */
   fixedCanvasScaling?: boolean
   localStorage: Storage | null
   sessionStorage: Storage | null
   forceSingleTab?: boolean
+  /** Sometimes helps to prevent session breaking due to dict reset */
   disableStringDict?: boolean
   assistSocketHost?: string
+  /** @deprecated see canvas prop */
   disableCanvas?: boolean
   canvas: {
     disableCanvas?: boolean
+    /**
+     * If you expect HI-DPI users mostly, this will render canvas
+     * in 1:1 pixel ratio
+     * */
     fixedCanvasScaling?: boolean
     __save_canvas_locally?: boolean
+    /**
+     * Use with care since it hijacks one frame each time it captures
+     * snapshot for every canvas
+     * */
     useAnimationFrame?: boolean
+    /**
+     * Use webp unless it produces too big images
+     * @default webp
+     * */
+    fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
   }
 
   /** @deprecated */

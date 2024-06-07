@@ -1,3 +1,7 @@
+# 13.0.2
+
+- more file extensions for canvas
+
 # 13.0.1
 
 - moved canvas snapshots to webp, additional option to utilize useAnimationFrame method (for webgl)
