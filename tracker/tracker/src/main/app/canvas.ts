@@ -15,17 +15,20 @@ interface Options {
   isDebug?: boolean
   fixedScaling?: boolean
   useAnimationFrame?: boolean
+  fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
 }
 
 class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
   private readonly intervals: NodeJS.Timeout[] = []
   private readonly interval: number
+  private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
 
   constructor(
     private readonly app: App,
     private readonly options: Options,
   ) {
+    this.fileExt = options.fileExt ?? 'webp'
     this.interval = 1000 / options.fps
   }
 
@@ -98,6 +101,7 @@ class CanvasRecorder {
         this.options.quality,
         this.snapshots[id].dummy,
         this.options.fixedScaling,
+        this.fileExt,
         (blob) => {
           if (!blob) return
           this.snapshots[id].images.push({ id: this.app.timestamp(), data: blob })
@@ -137,9 +141,9 @@ class CanvasRecorder {
     images.forEach((snapshot) => {
       const blob = snapshot.data
       if (!blob) return
-      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.webp`)
+      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`)
       if (this.options.isDebug) {
-        saveImageData(blob, `${createdAt}_${canvasId}_${snapshot.id}.webp`)
+        saveImageData(blob, `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`)
       }
     })
 
@@ -175,9 +179,10 @@ function captureSnapshot(
   quality: 'low' | 'medium' | 'high' = 'medium',
   dummy: HTMLCanvasElement,
   fixedScaling = false,
+  fileExt: 'webp' | 'png' | 'jpeg' | 'avif',
   onBlob: (blob: Blob | null) => void,
 ) {
-  const imageFormat = 'image/webp'
+  const imageFormat = `image/${fileExt}`
   if (fixedScaling) {
     const canvasScaleRatio = window.devicePixelRatio || 1
     dummy.width = canvas.width / canvasScaleRatio
