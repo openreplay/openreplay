@@ -3,7 +3,7 @@ import { hasTag } from './guards.js'
 import Message, { CanvasNode } from './messages.gen.js'
 
 interface CanvasSnapshot {
-  images: { data: string; id: number }[]
+  images: { data: Blob; id: number }[]
   createdAt: number
   paused: boolean
   dummy: HTMLCanvasElement
@@ -14,6 +14,7 @@ interface Options {
   quality: 'low' | 'medium' | 'high'
   isDebug?: boolean
   fixedScaling?: boolean
+  useAnimationFrame?: boolean
 }
 
 class CanvasRecorder {
@@ -90,6 +91,23 @@ class CanvasRecorder {
     }
     const canvasMsg = CanvasNode(id.toString(), ts)
     this.app.send(canvasMsg as Message)
+
+    const captureFn = (canvas: HTMLCanvasElement) => {
+      captureSnapshot(
+        canvas,
+        this.options.quality,
+        this.snapshots[id].dummy,
+        this.options.fixedScaling,
+        (blob) => {
+          if (!blob) return
+          this.snapshots[id].images.push({ id: this.app.timestamp(), data: blob })
+          if (this.snapshots[id].images.length > 9) {
+            this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
+            this.snapshots[id].images = []
+          }
+        },
+      )
+    }
     const int = setInterval(() => {
       const cid = this.app.nodes.getID(node)
       const canvas = cid ? this.app.nodes.getNode(cid) : undefined
@@ -98,16 +116,12 @@ class CanvasRecorder {
         clearInterval(int)
       } else {
         if (!this.snapshots[id].paused) {
-          const snapshot = captureSnapshot(
-            canvas,
-            this.options.quality,
-            this.snapshots[id].dummy,
-            this.options.fixedScaling,
-          )
-          this.snapshots[id].images.push({ id: this.app.timestamp(), data: snapshot })
-          if (this.snapshots[id].images.length > 9) {
-            this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
-          this.snapshots[id].images = []
+          if (this.options.useAnimationFrame) {
+            requestAnimationFrame(() => {
+              captureFn(canvas)
+            })
+          } else {
+            captureFn(canvas)
           }
         }
       }
@@ -115,17 +129,17 @@ class CanvasRecorder {
     this.intervals.push(int)
   }
 
-  sendSnaps(images: { data: string; id: number }[], canvasId: number, createdAt: number) {
+  sendSnaps(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
     if (Object.keys(this.snapshots).length === 0) {
       return
     }
     const formData = new FormData()
     images.forEach((snapshot) => {
-      const blob = dataUrlToBlob(snapshot.data)
+      const blob = snapshot.data
       if (!blob) return
-      formData.append('snapshot', blob[0], `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+      formData.append('snapshot', blob, `${createdAt}_${canvasId}_${snapshot.id}.webp`)
       if (this.options.isDebug) {
-        saveImageData(snapshot.data, `${createdAt}_${canvasId}_${snapshot.id}.jpeg`)
+        saveImageData(blob, `${createdAt}_${canvasId}_${snapshot.id}.webp`)
       }
     })
 
@@ -161,8 +175,9 @@ function captureSnapshot(
   quality: 'low' | 'medium' | 'high' = 'medium',
   dummy: HTMLCanvasElement,
   fixedScaling = false,
+  onBlob: (blob: Blob | null) => void,
 ) {
-  const imageFormat = 'image/jpeg' // or /png'
+  const imageFormat = 'image/webp'
   if (fixedScaling) {
     const canvasScaleRatio = window.devicePixelRatio || 1
     dummy.width = canvas.width / canvasScaleRatio
@@ -172,9 +187,9 @@ function captureSnapshot(
       return ''
     }
     ctx.drawImage(canvas, 0, 0, dummy.width, dummy.height)
-    return dummy.toDataURL(imageFormat, qualityInt[quality])
+    dummy.toBlob(onBlob, imageFormat, qualityInt[quality])
   } else {
-    return canvas.toDataURL(imageFormat, qualityInt[quality])
+    canvas.toBlob(onBlob, imageFormat, qualityInt[quality])
   }
 }
 
@@ -195,7 +210,8 @@ function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
   return [new Blob([u8arr], { type: mime }), u8arr]
 }
 
-function saveImageData(imageDataUrl: string, name: string) {
+function saveImageData(imageDataBlob: Blob, name: string) {
+  const imageDataUrl = URL.createObjectURL(imageDataBlob)
   const link = document.createElement('a')
   link.href = imageDataUrl
   link.download = name
