@@ -144,6 +144,7 @@ function Controls(props: any) {
     ? PlayingState.Playing
     : PlayingState.Paused;
 
+  const events = session.stackEvents ?? [];
   return (
     <div className={styles.controls}>
       <Timeline />
@@ -181,7 +182,7 @@ function Controls(props: any) {
                 toggleBottomTools={toggleBottomTools}
                 bottomBlock={bottomBlock}
                 disabled={disabled}
-                audioUrl={session.audio}
+                events={events}
               />
             )}
 
@@ -204,7 +205,7 @@ interface IDevtoolsButtons {
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
   disabled: boolean;
-  audioUrl?: string;
+  events: any[];
 }
 
 const DevtoolsButtons = observer(
@@ -213,7 +214,7 @@ const DevtoolsButtons = observer(
     toggleBottomTools,
     bottomBlock,
     disabled,
-    audioUrl,
+    events,
   }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
@@ -350,7 +351,7 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
-        {audioUrl ? <DropdownAudioPlayer url={audioUrl} /> : null}
+        <DropdownAudioPlayer events={events} />
       </>
     );
   }
