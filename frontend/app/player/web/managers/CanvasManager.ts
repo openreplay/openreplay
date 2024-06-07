@@ -86,7 +86,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
 
   public mapToSnapshots(files: TarFile[]) {
     const tempArr: Timestamp[] = [];
-    const filenameRegexp = /(\d+)_(\d+)_(\d+)\.jpeg$/;
+    const filenameRegexp = /(\d+)_(\d+)_(\d+)\.webp$/;
     const firstPair = files[0].name.match(filenameRegexp);
     if (!firstPair) {
       console.error('Invalid file name format', files[0].name);

@@ -125,6 +125,12 @@ type AppOptions = {
   disableStringDict?: boolean
   assistSocketHost?: string
   disableCanvas?: boolean
+  canvas: {
+    disableCanvas?: boolean
+    fixedCanvasScaling?: boolean
+    __save_canvas_locally?: boolean
+    useAnimationFrame?: boolean
+  }
 
   /** @deprecated */
   onStart?: StartCallback
@@ -192,6 +198,23 @@ export default class App {
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
   ) {
+    if (
+      Object.keys(options).findIndex((k) => ['fixedCanvasScaling', 'disableCanvas'].includes(k)) !==
+      -1
+    ) {
+      console.warn(
+        'Openreplay: canvas options are moving to separate key "canvas" in next update. Please update your configuration.',
+      )
+      options = {
+        ...options,
+        canvas: {
+          __save_canvas_locally: options.__save_canvas_locally,
+          fixedCanvasScaling: options.fixedCanvasScaling,
+          disableCanvas: options.disableCanvas,
+        },
+      }
+    }
+
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
     this.networkOptions = options.network
@@ -218,6 +241,12 @@ export default class App {
         fixedCanvasScaling: false,
         disableCanvas: false,
         assistOnly: false,
+        canvas: {
+          disableCanvas: false,
+          fixedCanvasScaling: false,
+          __save_canvas_locally: false,
+          useAnimationFrame: false,
+        },
       },
       options,
     )
@@ -1085,14 +1114,15 @@ export default class App {
         await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
         this.activityState = ActivityState.Active
 
-        if (canvasEnabled && !this.options.disableCanvas) {
+        if (canvasEnabled && !this.options.canvas.disableCanvas) {
           this.canvasRecorder =
             this.canvasRecorder ??
             new CanvasRecorder(this, {
               fps: canvasFPS,
               quality: canvasQuality,
-              isDebug: this.options.__save_canvas_locally,
-              fixedScaling: this.options.fixedCanvasScaling,
+              isDebug: this.options.canvas.__save_canvas_locally,
+              fixedScaling: this.options.canvas.fixedCanvasScaling,
+              useAnimationFrame: this.options.canvas.useAnimationFrame,
             })
           this.canvasRecorder.startTracking()
         }
